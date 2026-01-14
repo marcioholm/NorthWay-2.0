@@ -66,8 +66,20 @@ def create_app():
     app.supabase = init_supabase(app)
     
     # Ensure directories exist
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
+    # Ensure directories exist (Handle Read-Only Filesystem for Vercel)
+    try:
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
+    except OSError:
+        # Likely read-only filesystem (Vercel)
+        print("Warning: Could not create upload directories. Using /tmp if needed.")
+        app.config['UPLOAD_FOLDER'] = '/tmp/uploads/profiles'
+        app.config['COMPANY_UPLOAD_FOLDER'] = '/tmp/uploads/company'
+        try:
+           os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+           os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
+        except:
+           pass
 
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB limit
 
