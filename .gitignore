@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+Chrome Apps.localized/
+instance/
+.env
+venv/
