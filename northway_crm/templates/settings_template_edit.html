@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col overflow-hidden bg-gray-100">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('main.settings_templates') }}"
+                class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-northway-red hover:bg-red-50 transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 leading-tight">
+                    {{ 'Novo Modelo' if not template else 'Editar Modelo' }}
+                </h1>
+                <p class="text-xs text-gray-400">Edite o conteúdo ao lado. A pré-visualização (A4) é atualizada
+                    automaticamente.</p>
+            </div>
+        </div>
+        <button type="submit" form="templateForm"
+            class="bg-[#fa0102] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg flex items-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+        </button>
+    </div>
+
+    <!-- Split View Container -->
+    <div class="flex flex-1 overflow-hidden">
+        <!-- LEFT: Editor & Config (Scrollable) -->
+        <div class="w-1/2 min-w-[50%] flex flex-col border-r border-gray-200 bg-white z-10">
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 pb-20">
+                <form id="templateForm" method="POST" class="space-y-6">
+                    <!-- Config Box -->
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nome
+                                    do Modelo</label>
+                                <input type="text" name="name" value="{{ template.name if template else '' }}" required
+                                    class="w-full bg-white px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red"
+                                    placeholder="Ex: Contrato de Prestação de Serviços">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Tipo</label>
+                                <select name="type" required
+                                    class="w-full bg-white px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                                    <option value="contract" {{ 'selected' if template and template.type=='contract' }}>
+                                        Contrato</option>
+                                    <option value="attachment" {{ 'selected' if template and template.type=='attachment'
+                                        }}>Anexo</option>
+                                    <option value="library_doc" {{ 'selected' if template and
+                                        template.type=='library_doc' }}>Material de Biblioteca</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Editor Area -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">Editor de
+                                Conteúdo</label>
+                            <div class="flex items-center gap-2">
+                                <!-- Optional Toolbar Extensions could go here -->
+                            </div>
+                        </div>
+
+                        <!-- Quill Wrapper -->
+                        <div
+                            class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden pointer-events-auto">
+                            <div id="editor-container" class="bg-white font-sans text-base min-h-[500px]"
+                                style="border:none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Variables Quick Access (Accordion or Compact) -->
+                    <div class="border-t border-gray-100 pt-6">
+                        {% include "settings_template_variables.html" ignore missing %}
+                        <!-- If file doesn't exist yet, we inline logic below or user creates partial. 
+                            Let's INLINE simpler variable list for now to avoid complexity of new file creation in replace_file tool 
+                            Actually, I will keep the variable section here but compact. -->
+
+                        <div class="bg-blue-50/50 rounded-lg border border-blue-100 p-4">
+                            <h3 class="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
+                                <i data-lucide="code" class="w-4 h-4 text-blue-500"></i> Variáveis Disponíveis
+                            </h3>
+                            <p class="text-xs text-blue-400 mb-4">Clique para copiar ou inserir onde estiver o cursor.
+                            </p>
+
+                            <div class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                                <!-- Partial List for brevity in this view, user can see full manual -->
+                                {% set vars = [
+                                ('{{CONTRATANTE_NOME_EMPRESARIAL}}', 'Cliente: Empresa'),
+                                ('{{CONTRATANTE_DOCUMENTO}}', 'Cliente: CNPJ/CPF'),
+                                ('{{CONTRATANTE_ENDERECO}}', 'Cliente: Endereço'),
+                                ('{{CONTRATANTE_REPRESENTANTE}}', 'Cliente: Representante'),
+                                ('{{CONTRATADA_NOME_EMPRESARIAL}}', 'Minha: Empresa'),
+                                ('{{CONTRATADA_DOCUMENTO}}', 'Minha: CNPJ'),
+                                ('{{VALOR_TOTAL_CONTRATO}}', 'Fin: Valor Total'),
+                                ('{{VALOR_PARCELA}}', 'Fin: Parcela'),
+                                ('{{DATA_INICIO}}', 'Data: Início'),
+                                ('{{DATA_FINAL}}', 'Data: Fim')
+                                ] %}
+                                {% for code, label in vars %}
+                                <button type="button" onclick="insertVar('{{ code }}')"
+                                    class="text-left text-xs bg-white border border-blue-100 hover:border-blue-300 hover:text-blue-600 rounded px-3 py-2 transition-all flex items-center justify-between group">
+                                    <span>{{ label }}</span>
+                                    <i data-lucide="plus" class="w-3 h-3 opacity-0 group-hover:opacity-100"></i>
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <textarea name="content" id="templateContent" class="hidden"
+                        required>{{ template.content if template else '' }}</textarea>
+                </form>
+            </div>
+        </div>
+
+        <!-- RIGHT: Preview (Fixed) -->
+        <div class="w-1/2 min-w-[50%] bg-slate-200/50 flex flex-col relative overflow-hidden" id="preview-wrapper">
+            <div class="absolute top-4 right-4 z-20 flex gap-2">
+                <div
+                    class="bg-gray-900/80 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg flex items-center gap-2">
+                    <span id="zoom-level">Auto</span>
+                    <i data-lucide="maximize" class="w-3 h-3"></i>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-8 flex flex-col items-center justify-start gap-8"
+                id="preview-scroll-area">
+                <!-- Pages get injected here -->
+                <div id="pages-container"
+                    class="flex flex-col gap-8 transition-transform duration-200 ease-out origin-top">
+                    <!-- Initial State -->
+                    <div class="w-[210mm] h-[297mm] bg-white shadow-xl flex items-center justify-center text-gray-300">
+                        <p class="text-sm">Comece a digitar para ver o resultado...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+    }
+
+    /* A4 CSS Logic (Shared) */
+    .a4-page {
+        width: 210mm;
+        height: 297mm;
+        background: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        position: relative;
+        padding-top: 30mm;
+        padding-bottom: 20mm;
+        padding-left: 30mm;
+        padding-right: 20mm;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .a4-content {
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 12pt;
+        line-height: 1.5;
+        color: #000;
+        height: 100%;
+    }
+
+    /* Default Paragraph Styling (Juridical) */
+    .a4-content p {
+        margin-bottom: 6pt;
+        text-align: justify;
+        text-indent: 1.25cm;
+    }
+
+    /* Quill Alignment Overrides */
+    .a4-content .ql-align-center {
+        text-align: center !important;
+        text-indent: 0 !important;
+    }
+
+    .a4-content .ql-align-right {
+        text-align: right !important;
+        text-indent: 0 !important;
+    }
+
+    .a4-content .ql-align-justify {
+        text-align: justify !important;
+    }
+
+    /* Titles and Clauses */
+    .a4-content h1,
+    .a4-content h2,
+    .a4-content h3,
+    .a4-content strong,
+    .a4-content b {
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 12pt;
+        font-weight: bold;
+        text-align: justify;
+        margin-bottom: 6pt;
+        text-indent: 0;
+    }
+
+    /* Allow headers to be centered if they have the class */
+    .a4-content h1.ql-align-center,
+    .a4-content h2.ql-align-center,
+    .a4-content h3.ql-align-center {
+        text-align: center !important;
+    }
+
+    .a4-content h1 {
+        text-transform: uppercase;
+        text-align: center;
+        margin-bottom: 24pt;
+    }
+
+    .a4-content h2 {
+        text-transform: uppercase;
+        margin-top: 12pt;
+    }
+
+    .a4-content ul {
+        list-style-type: disc;
+        padding-left: 2cm;
+        margin-bottom: 6pt;
+    }
+
+    .a4-content ol {
+        list-style-type: decimal;
+        padding-left: 2cm;
+        margin-bottom: 6pt;
+    }
+</style>
+
+<!-- Quill JS -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+    // Auto-Scale Logic
+    function fitPreview() {
+        const wrapper = document.getElementById('preview-wrapper');
+        const container = document.getElementById('pages-container');
+        if (!wrapper || !container) return;
+
+        const availableWidth = wrapper.clientWidth - 64; // 32px padding each side (p-8 = 2rem = 32px)
+        const a4WidthPx = 794; // 210mm * 3.78px/mm approx at 96dpi (CSS pixels)
+
+        let scale = availableWidth / a4WidthPx;
+        if (scale > 1) scale = 1; // Don't upsale beyond 100%
+
+        container.style.transform = `scale(${scale})`;
+
+        // Update Zoom Indicator
+        document.getElementById('zoom-level').innerText = Math.round(scale * 100) + '%';
+
+        // Adjust height of scroll area to accommodate scaled content?
+        // Transform doesn't affect flow layout. We might get scrollbars for original size.
+        // Actually, if we scale down, we simply occupy less space.
+    }
+
+    // Observe Resize
+    const resizeObserver = new ResizeObserver(() => fitPreview());
+    document.addEventListener('DOMContentLoaded', () => {
+        const wrapper = document.getElementById('preview-wrapper');
+        if (wrapper) resizeObserver.observe(wrapper);
+        fitPreview();
+    });
+
+    var quill = new Quill('#editor-container', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'align': [] }],
+                ['clean']
+            ]
+        }
+    });
+
+    // Initial Content
+    const hiddenTextarea = document.getElementById('templateContent');
+    if (hiddenTextarea.value) {
+        quill.clipboard.dangerouslyPasteHTML(hiddenTextarea.value);
+        // Trigger initial render
+        setTimeout(updatePreview, 100);
+    }
+
+    // Sync Content on Change & Update Preview
+    quill.on('text-change', function () {
+        hiddenTextarea.value = quill.root.innerHTML;
+        updatePreview();
+    });
+
+    function insertVar(text) {
+        const range = quill.getSelection(true);
+        if (range) {
+            quill.insertText(range.index, text);
+            quill.setSelection(range.index + text.length);
+        } else {
+            const length = quill.getLength();
+            quill.insertText(length - 1, text); // Insert at end
+        }
+    }
+
+    // --- Pagination Logic ---
+    function updatePreview() {
+        // Use a slight delay to ensure latest edits are captured if needed, though 'text-change' is fast.
+        const content = quill.root.innerHTML;
+        requestAnimationFrame(() => renderPaginatedContent(content));
+    }
+
+    function hasOverflow(element) {
+        return element.scrollHeight > element.clientHeight + 1;
+    }
+
+    function renderPaginatedContent(htmlContent) {
+        const container = document.getElementById('pages-container');
+        container.innerHTML = '';
+
+        const sourceDiv = document.createElement('div');
+        sourceDiv.innerHTML = htmlContent;
+
+        let nodes = Array.from(sourceDiv.childNodes);
+
+        let pageNum = 1;
+        let currentPage = createA4Page(pageNum);
+        container.appendChild(currentPage);
+        let currentContentArea = currentPage.querySelector('.a4-content');
+
+        nodes.forEach(node => {
+            // Skip empty text nodes between tags
+            if (node.nodeType === 3 && node.textContent.trim() === '') return;
+
+            // Append node
+            const clone = node.cloneNode(true);
+            currentContentArea.appendChild(clone);
+
+            if (hasOverflow(currentContentArea)) {
+                currentContentArea.removeChild(clone);
+
+                // Attempt split if ELEMENT_NODE and P
+                if (node.nodeType === 1 && node.tagName === 'P') {
+                    const words = node.innerText.split(' ');
+                    let currentWordIndex = 0;
+
+                    // Loop until all words are placed
+                    while (currentWordIndex < words.length) {
+                        const pChunk = document.createElement('p');
+                        for (let attr of node.attributes) {
+                            pChunk.setAttribute(attr.name, attr.value);
+                        }
+
+                        // Remove indentation for continuations
+                        if (currentWordIndex > 0) {
+                            pChunk.style.textIndent = '0';
+                        }
+
+                        currentContentArea.appendChild(pChunk);
+
+                        let chunkWords = [];
+                        let overflowDetected = false;
+
+                        // Add words one by one
+                        for (let i = currentWordIndex; i < words.length; i++) {
+                            chunkWords.push(words[i]);
+                            pChunk.innerText = chunkWords.join(' ');
+
+                            if (hasOverflow(currentContentArea)) {
+                                chunkWords.pop(); // Remove overflowing word
+                                pChunk.innerText = chunkWords.join(' ');
+
+                                // If even one word didn't fit and chunk is empty
+                                if (chunkWords.length === 0) {
+                                    currentContentArea.removeChild(pChunk);
+
+                                    // Force new page
+                                    pageNum++;
+                                    currentPage = createA4Page(pageNum);
+                                    container.appendChild(currentPage);
+                                    currentContentArea = currentPage.querySelector('.a4-content');
+
+                                    // Retry logic handled by next loop iteration (break here)
+                                    overflowDetected = true;
+                                    break;
+                                }
+
+                                currentWordIndex = i; // Next iteration starts with this word
+                                overflowDetected = true;
+                                break;
+                            }
+                        }
+
+                        if (!overflowDetected) {
+                            // Fitted all remaining words
+                            currentWordIndex = words.length;
+                        } else {
+                            // If we broke due to overflow (and not 0-word retry), create new page for next chunk
+                            if (chunkWords.length > 0) {
+                                pageNum++;
+                                currentPage = createA4Page(pageNum);
+                                container.appendChild(currentPage);
+                                currentContentArea = currentPage.querySelector('.a4-content');
+                            }
+                        }
+                    }
+                } else {
+                    // Heavy move (Header, Table, or non-P)
+                    pageNum++;
+                    currentPage = createA4Page(pageNum);
+                    container.appendChild(currentPage);
+                    currentContentArea = currentPage.querySelector('.a4-content');
+                    currentContentArea.appendChild(node.cloneNode(true));
+                }
+            }
+        });
+
+        updateAutoZoom();
+    }
+
+    function updateAutoZoom() {
+        if (typeof fitPreview === 'function') fitPreview();
+    }
+
+    function createA4Page(pageNum) {
+        const page = document.createElement('div');
+        page.className = 'a4-page';
+        // Fixed: Remove backslash for correct interpolation
+        page.innerHTML = `
+            <div class="a4-content"></div>
+            <div class="absolute bottom-4 right-8 text-[10px] text-gray-400 font-sans">Página ${pageNum}</div>
+             <div class="absolute bottom-4 left-8 text-[10px] text-gray-300 font-sans uppercase tracking-widest">NorthWay System</div>
+        `;
+        return page;
+    }
+</script>
+{% endblock %}

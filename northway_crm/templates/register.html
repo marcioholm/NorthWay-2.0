@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex bg-white">
+    <!-- Left Side: Image & Branding -->
+    <div class="hidden lg:flex lg:w-1/2 relative bg-northway-dark overflow-hidden">
+        <div id="login-bg-image"
+            class="absolute inset-0 bg-cover bg-center transition-transform duration-[20s] transform scale-105 hover:scale-110"
+            data-bg="{{ url_for('static', filename='images/login-bg.png') }}"></div>
+        <!-- Red Overlay -->
+        <div class="absolute inset-0 bg-northway-red/60 mix-blend-multiply"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+
+        <div class="relative z-10 p-12 flex flex-col justify-between h-full w-full">
+            <div>
+                <!-- Original Logo with style -->
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay"
+                    class="h-16 w-auto rounded-lg shadow-xl border border-white/20">
+            </div>
+
+            <div class="mb-12">
+                <blockquote class="text-white text-3xl font-bold leading-tight mb-6">
+                    "A melhor maneira de prever o futuro é criá-lo."
+                </blockquote>
+                <p class="text-gray-300 font-medium">— NorthWay CRM</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side: Register Form -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-gray-50">
+        <div class="w-full max-w-md space-y-8">
+            <div class="text-center lg:text-left">
+                <div class="flex justify-center lg:justify-start lg:hidden mb-10">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-10 w-auto">
+                </div>
+                <h2 class="text-3xl font-bold text-gray-900 tracking-tight">Crie sua conta</h2>
+                <p class="mt-2 text-sm text-gray-500">Comece a gerenciar suas vendas hoje mesmo.</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="p-4 rounded-lg bg-red-50 border border-red-100 flex items-start gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"></i>
+                <p class="text-sm text-red-700">{{ message }}</p>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form class="mt-8 space-y-6" action="{{ url_for('auth.register') }}" method="POST">
+
+                <!-- Company Name -->
+                <div>
+                    <label for="company_name" class="block text-sm font-medium text-gray-700">Nome da Empresa</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="building" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                        </div>
+                        <input id="company_name" name="company_name" type="text" required
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
+                            placeholder="Ex: Minha Empresa Ltda">
+                    </div>
+                </div>
+
+                <!-- User Name -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Seu Nome Completo</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="user" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                        </div>
+                        <input id="name" name="name" type="text" required
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
+                            placeholder="Ex: João Silva">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email Profissional</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="mail" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                        </div>
+                        <input id="email" name="email" type="email" autocomplete="email" required
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
+                            placeholder="seu@email.com">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                        </div>
+                        <input id="password" name="password" type="password" autocomplete="new-password" required
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
+                            placeholder="••••••••">
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Mínimo de 6 caracteres.</p>
+                </div>
+
+                <button type="submit"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-northway-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-northway-red transition-all transform hover:scale-[1.01]">
+                    Criar Conta
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-600">
+                    Já tem uma conta?
+                    <a href="{{ url_for('auth.login') }}"
+                        class="font-medium text-northway-red hover:text-red-700 hover:underline">
+                        Faça login
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        // Apply Background Image
+        const bg = document.getElementById('login-bg-image');
+        if (bg) {
+            bg.style.backgroundImage = `url('${bg.getAttribute('data-bg')}')`;
+        }
+    })();
+</script>
+{% endblock %}

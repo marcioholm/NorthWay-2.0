@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playbook de Objeções e Processos - NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Montserrat:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .prose-premium h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: #fa0102;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+        }
+
+        .prose-premium h3 {
+            color: white;
+            font-weight: 700;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .prose-premium p {
+            color: #d1d5db;
+            /* gray-300 */
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .prose-premium ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 2rem;
+        }
+
+        .prose-premium li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #9ca3af;
+            /* gray-400 */
+        }
+
+        .prose-premium li::before {
+            content: "•";
+            color: #fa0102;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .chapter-card {
+            background-color: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 1rem;
+            padding: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .chapter-card:hover {
+            border-color: #fa0102;
+            transition: border-color 0.3s ease;
+        }
+
+        .dialog-box {
+            background-color: #252525;
+            border-left: 4px solid #fa0102;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .dialog-label {
+            display: block;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .dialog-text {
+            color: white;
+            font-style: italic;
+            font-size: 1.05rem;
+        }
+
+        @media print {
+            @page {
+                margin: 2cm;
+                size: A4;
+            }
+
+            body {
+                background-color: white !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .fixed,
+            aside,
+            button,
+            nav,
+            .backdrop-blur-md {
+                display: none !important;
+            }
+
+            main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+
+            .pt-20 {
+                padding-top: 0 !important;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4,
+            strong {
+                color: black !important;
+            }
+
+            p,
+            li,
+            span,
+            ol {
+                color: #333 !important;
+            }
+
+            .text-white,
+            .text-gray-300,
+            .text-gray-400,
+            .text-gray-500 {
+                color: #000 !important;
+            }
+
+            .chapter-card,
+            .bg-\[\#0f0f0f\] {
+                background-color: white !important;
+                border: 1px solid #ddd !important;
+                color: black !important;
+                padding: 1.5rem !important;
+                margin-bottom: 2rem !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+            }
+
+            /* Specific Dialog Box Print Styles */
+            .dialog-box {
+                background-color: #f9fafb !important;
+                border-left: 4px solid #fa0102 !important;
+                border: 1px solid #e5e7eb !important;
+                color: black !important;
+                padding: 1rem !important;
+            }
+
+            .dialog-text {
+                color: #000 !important;
+            }
+
+            .dialog-label {
+                color: #374151 !important;
+            }
+
+            /* Prose Overrides */
+            .prose-premium h2 {
+                color: #fa0102 !important;
+                margin-top: 1rem !important;
+                font-size: 1.5rem !important;
+            }
+
+            .prose-premium p,
+            .prose-premium li {
+                color: black !important;
+            }
+
+            .bg-gray-800 {
+                background-color: #f3f4f6 !important;
+                border: 1px solid #ddd !important;
+                color: black !important;
+            }
+
+            /* Footer */
+            footer {
+                margin-top: 2rem !important;
+                padding-top: 1rem !important;
+                border-top: 1px solid #000 !important;
+            }
+
+            footer img {
+                filter: invert(1) !important;
+                opacity: 1 !important;
+                height: 1.5rem !important;
+            }
+
+            footer p {
+                color: #000 !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#0f0f0f] text-gray-300 font-sans selection:bg-[#fa0102] selection:text-white">
+
+    <!-- Fixed Header -->
+    <div class="fixed top-0 left-0 right-0 bg-[#0f0f0f]/90 backdrop-blur-md border-b border-gray-800 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="max-h-12 w-auto">
+                <span class="text-xs text-gray-500 font-medium ml-2 border-l border-gray-700 pl-3">Playbook de
+                    Objeções</span>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <a href="{{ url_for('docs.library') }}"
+                    class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    Voltar para Biblioteca
+                </a>
+                <button onclick="window.print()"
+                    class="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex max-w-7xl mx-auto pt-20 min-h-screen">
+
+        <!-- Sidebar Navigation (Sticky) -->
+        <aside
+            class="hidden lg:block w-72 fixed left-[calc(50%-3.5rem-36rem)] top-20 bottom-0 overflow-y-auto px-6 py-12 border-r border-gray-800">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6 px-3">Índice</h3>
+            <nav class="space-y-1">
+                <a href="#objections"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">1.
+                    Playbook de Objeções</a>
+                <a href="#sdr"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">2.
+                    Playbook SDR</a>
+                <a href="#closer"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">3.
+                    Playbook Closer</a>
+                <a href="#onboarding"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">4.
+                    Atendimento + Onboarding</a>
+                <a href="#rules"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">5.
+                    Regra Final</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-72 px-8 py-12 lg:py-16 max-w-4xl mx-auto">
+
+            <!-- Hero -->
+            <div class="mb-16 border-b border-gray-800 pb-12">
+                <div
+                    class="inline-block bg-red-900/20 text-[#fa0102] px-3 py-1 rounded text-xs font-bold uppercase tracking-wider mb-6 border border-red-900/30">
+                    Uso Interno | Processos
+                </div>
+                <h1 class="text-5xl font-black text-white mb-6 font-display tracking-tight">
+                    Objeções e Processos<br>
+                    <span class="text-gray-500">Manual de Execução</span>
+                </h1>
+                <p class="text-xl text-gray-400 font-light max-w-2xl">
+                    Guias operacionais para SDRs, Closers e Time de Sucesso. Como contornar objeções e garantir a
+                    qualidade da entrega.
+                </p>
+            </div>
+
+            <div class="prose-premium">
+
+                <!-- 1. Objeções -->
+                <section id="objections" class="chapter-card">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-10 h-10 bg-[#fa0102] rounded flex items-center justify-center text-white"><i
+                                data-lucide="shield-alert"></i></div>
+                        <h2 class="!mt-0 !mb-0">1. Playbook de Objeções</h2>
+                    </div>
+
+                    <div class="bg-gray-800 p-4 rounded mb-8 border border-gray-700">
+                        <strong class="text-white block mb-1">REGRA DE OURO</strong>
+                        <p class="mb-0 text-sm">Nunca rebata. Sempre <span class="text-[#fa0102] font-bold">Valide →
+                                Esclareça → Direcione</span>.</p>
+                    </div>
+
+                    <!-- Objeção 1 -->
+                    <div class="mb-12">
+                        <h3>Objeção 1: "Está caro"</h3>
+                        <div class="dialog-box">
+                            <span class="dialog-label">Resposta Padrão (Closer)</span>
+                            <p class="dialog-text">"Entendo. Antes de falarmos de preço, posso confirmar uma coisa? O
+                                que você está comparando hoje: valor ou estrutura?"</p>
+                            <p class="dialog-text mt-4">"O que a Northway entrega não é um serviço isolado, é a
+                                responsabilidade de organizar e direcionar o marketing do seu negócio. Quando comparamos
+                                com o custo de improviso ou de montar um time interno, o investimento deixa de ser caro
+                                e passa a ser inteligente."</p>
+                        </div>
+                        <div class="pl-4 border-l border-gray-700">
+                            <span class="text-xs uppercase font-bold text-gray-500">Fechamento</span>
+                            <p class="text-white italic">"Faz mais sentido olhar isso como custo mensal ou como
+                                estrutura de crescimento?"</p>
+                        </div>
+                    </div>
+
+                    <!-- Objeção 2 -->
+                    <div class="mb-12">
+                        <h3>Objeção 2: "Já tentei marketing antes e não funcionou"</h3>
+                        <div class="dialog-box">
+                            <span class="dialog-label">Resposta</span>
+                            <p class="dialog-text">"Isso é mais comum do que parece. Normalmente o problema não foi o
+                                marketing, foi a falta de direção."</p>
+                            <p class="dialog-text mt-4">"Aqui nós não começamos executando. Começamos organizando,
+                                definindo metas e conectando marketing com o negócio."</p>
+                        </div>
+                        <div class="pl-4 border-l border-gray-700">
+                            <span class="text-xs uppercase font-bold text-gray-500">Fechamento</span>
+                            <p class="text-white italic">"Você concorda que tentar de novo, mas com método, faz mais
+                                sentido do que continuar no improviso?"</p>
+                        </div>
+                    </div>
+
+                    <!-- Objeção 3 -->
+                    <div class="mb-12">
+                        <h3>Objeção 3: "Quero pensar melhor"</h3>
+                        <div class="dialog-box">
+                            <span class="dialog-label">Resposta</span>
+                            <p class="dialog-text">"Claro, faz sentido. Só quero te ajudar a pensar da forma certa. O
+                                que exatamente você quer analisar melhor: o investimento, o escopo ou o momento do
+                                negócio?"</p>
+                        </div>
+                        <div class="pl-4 border-l border-gray-700">
+                            <span class="text-xs uppercase font-bold text-gray-500">Direcionamento</span>
+                            <p class="text-white italic">"Porque se for direção e estrutura, isso não melhora com o
+                                tempo — só fica mais caro de corrigir depois."</p>
+                        </div>
+                    </div>
+
+                    <!-- Objeção 4 -->
+                    <div class="mb-12">
+                        <h3>Objeção 4: "Agora não é o momento"</h3>
+                        <div class="dialog-box">
+                            <span class="dialog-label">Resposta</span>
+                            <p class="dialog-text">"Posso ser bem direto?" [aguarde] "Normalmente, quando não é o
+                                momento de organizar o marketing, é exatamente quando ele começa a travar o
+                                crescimento."</p>
+                        </div>
+                        <div class="pl-4 border-l border-gray-700">
+                            <span class="text-xs uppercase font-bold text-gray-500">Fechamento</span>
+                            <p class="text-white italic">"O que precisaria acontecer para esse se tornar o momento
+                                certo?"</p>
+                        </div>
+                    </div>
+
+                    <!-- Objeção 5 -->
+                    <div class="mb-12">
+                        <h3>Objeção 5: "Quero algo mais simples"</h3>
+                        <div class="dialog-box">
+                            <span class="dialog-label">Entrada para Downsell</span>
+                            <p class="dialog-text">"Perfeito. Nem toda empresa precisa começar pelo plano completo.
+                                Temos uma versão essencial, que mantém direção, execução e acompanhamento — sem a
+                                complexidade maior."</p>
+                        </div>
+                        <div class="pl-4 border-l border-gray-700">
+                            <span class="text-xs uppercase font-bold text-gray-500">Fechamento</span>
+                            <p class="text-white italic">"Assim você começa estruturando e evolui no ritmo do negócio."
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. SDR -->
+                <section id="sdr" class="chapter-card">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-white font-bold">
+                            02</div>
+                        <h2 class="!mt-0 !mb-0">Playbook SDR</h2>
+                    </div>
+
+                    <div class="bg-[#0f0f0f] p-6 rounded mb-8">
+                        <ul class="mb-0 grid grid-cols-2 gap-4">
+                            <li><strong>Objetivo:</strong> Qualificar e criar consciência.</li>
+                            <li><strong>Não fazer:</strong> Tentar vender agora.</li>
+                            <li><strong>Foco:</strong> Agendar para o Closer.</li>
+                        </ul>
+                    </div>
+
+                    <h3>Abertura</h3>
+                    <div class="dialog-box">
+                        <p class="dialog-text">"Meu papel aqui não é te vender nada, é entender se faz sentido a
+                            Northway te ajudar."</p>
+                    </div>
+
+                    <h3>Perguntas-Chave (Obrigatórias)</h3>
+                    <ul>
+                        <li>Hoje, como o marketing da empresa funciona?</li>
+                        <li>O que mais te incomoda nisso hoje?</li>
+                        <li>Existe meta clara para o marketing ou está mais no improviso?</li>
+                        <li>O crescimento da empresa depende mais de marca ou vendas?</li>
+                        <li>Você já investe em marketing hoje?</li>
+                    </ul>
+
+                    <h3>Enquadramento & Transferência</h3>
+                    <div class="dialog-box">
+                        <p class="dialog-text">"Pelo que você me contou, o problema não é esforço, é direção. É
+                            exatamente nesse ponto que a Northway atua."</p>
+                        <p class="dialog-text mt-4">"Vou te conectar com quem aprofunda a estratégia e te mostra, com
+                            clareza, se faz sentido avançar."</p>
+                    </div>
+                </section>
+
+                <!-- 3. Closer -->
+                <section id="closer" class="chapter-card">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-white font-bold">
+                            03</div>
+                        <h2 class="!mt-0 !mb-0">Playbook Closer</h2>
+                    </div>
+
+                    <p>Dar clareza. Direcionar decisão. Fechar com alinhamento.</p>
+
+                    <h3>Abertura</h3>
+                    <div class="dialog-box">
+                        <p class="dialog-text">"Meu papel aqui é te ajudar a tomar uma decisão consciente sobre o
+                            crescimento do seu negócio."</p>
+                    </div>
+
+                    <h3>Estrutura da Call</h3>
+                    <ol class="list-decimal pl-6 text-gray-400 space-y-2 mb-8">
+                        <li>Confirmação do cenário</li>
+                        <li>Reforço das dores</li>
+                        <li>Apresentação da Northway</li>
+                        <li>Apresentação da solução</li>
+                        <li>Investimento</li>
+                        <li>Decisão</li>
+                    </ol>
+
+                    <div class="bg-gray-800 p-4 border-l-4 border-[#fa0102]">
+                        <span class="block text-xs uppercase font-bold text-gray-500 mb-1">Frase de Autoridade</span>
+                        <p class="text-white italic mb-0">"A Northway não cresce clientes por impulso. Cresce por
+                            construção."</p>
+                    </div>
+                </section>
+
+                <!-- 4. Onboarding -->
+                <section id="onboarding" class="chapter-card">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-10 h-10 bg-gray-800 rounded flex items-center justify-center text-white font-bold">
+                            04</div>
+                        <h2 class="!mt-0 !mb-0">Atendimento + Onboarding</h2>
+                    </div>
+
+                    <h3>Primeira Mensagem</h3>
+                    <div class="dialog-box">
+                        <p class="dialog-text">"A partir de agora, a Northway assume a responsabilidade de orientar o
+                            marketing do seu negócio."</p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8 my-8">
+                        <div>
+                            <h4 class="text-white font-bold">Tom de Voz</h4>
+                            <ul>
+                                <li>Consultivo</li>
+                                <li>Calmo</li>
+                                <li>Estratégico</li>
+                                <li>Transparente</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-[#fa0102] font-bold">Nunca Fazer</h4>
+                            <ul>
+                                <li>Prometer resultado mágico</li>
+                                <li>Discutir preço</li>
+                                <li>Improvisar estratégia</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. Regra Final -->
+                <section id="rules" class="chapter-card">
+                    <h2>5. Regra Final</h2>
+
+                    <div class="text-center py-12">
+                        <p class="text-2xl font-bold text-white mb-8">"Se não gera clareza, não é Northway.<br>Se não
+                            tem direção, não executamos."</p>
+
+                        <div class="inline-block border-t border-gray-700 pt-8 mt-8">
+                            <p class="text-gray-400 uppercase tracking-widest text-sm font-bold">Frase Institucional
+                                (Uso Obrigatório)</p>
+                            <p class="text-xl text-[#fa0102] italic mt-4">"A Northway acredita que crescer é uma
+                                responsabilidade.<br>E que todo crescimento precisa de direção."</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <footer class="mt-24 pt-12 border-t border-gray-800 text-center flex flex-col items-center">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-10 mx-auto mb-6 opacity-70">
+                <p class="text-gray-500 text-sm">&copy; 2026 NorthWay Systems. Uso Interno e Confidencial.</p>
+            </footer>
+
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

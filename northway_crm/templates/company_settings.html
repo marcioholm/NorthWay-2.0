@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Configurações</h1>
+
+        <!-- Settings Navigation -->
+        <div class="flex space-x-1 bg-gray-200 p-1 rounded-lg mb-8 w-fit">
+            <a href="{{ url_for('main.company_settings') }}"
+                class="px-4 py-2 rounded-md text-sm font-medium transition-colors {{ 'bg-white text-gray-900 shadow-sm' if request.endpoint == 'main.company_settings' else 'text-gray-500 hover:text-gray-900' }}">
+                Dados da Empresa
+            </a>
+            <a href="{{ url_for('main.settings_templates') }}"
+                class="px-4 py-2 rounded-md text-sm font-medium transition-colors {{ 'bg-white text-gray-900 shadow-sm' if 'settings_templates' in request.endpoint else 'text-gray-500 hover:text-gray-900' }}">
+                Modelos de Contrato
+            </a>
+            <a href="{{ url_for('main.settings_integrations') }}"
+                class="px-4 py-2 rounded-md text-sm font-medium transition-colors {{ 'settings_integrations' in request.endpoint and 'bg-white text-gray-900 shadow-sm' or 'text-gray-500 hover:text-gray-900' }}">
+                Integrações (API)
+            </a>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Dados Cadastrais</h2>
+                <p class="text-sm text-gray-500">Estas informações serão utilizadas automaticamente nos contratos.</p>
+            </div>
+
+            <form action="{{ url_for('main.company_settings') }}" method="POST" enctype="multipart/form-data"
+                class="p-6 space-y-6">
+
+                <div class="border-b border-gray-100 pb-6 mb-6">
+                    <h3 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Identidade Visual</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                        <!-- Logo Upload -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Logotipo da Empresa</label>
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="w-20 h-20 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center p-2">
+                                    {% if company.logo_filename %}
+                                    <img src="{{ url_for('static', filename='uploads/company/' + company.logo_filename) }}"
+                                        alt="Logo" class="max-w-full max-h-full object-contain">
+                                    {% else %}
+                                    <i data-lucide="image" class="w-8 h-8 text-gray-300"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-1">
+                                    <input type="file" name="logo" accept="image/*"
+                                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 mb-1">
+                                    <p class="text-xs text-gray-500">Recomendado: PNG transparente (200x80px).</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Brand Colors -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Cor Primária
+                                    (Destaques)</label>
+                                <div class="flex gap-2 items-center">
+                                    <input type="color" name="primary_color"
+                                        value="{{ company.primary_color or '#fa0102' }}"
+                                        class="h-10 w-20 rounded border border-gray-300 cursor-pointer">
+                                    <input type="text" value="{{ company.primary_color or '#fa0102' }}" readonly
+                                        class="w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Cor Secundária
+                                    (Texto/Base)</label>
+                                <div class="flex gap-2 items-center">
+                                    <input type="color" name="secondary_color"
+                                        value="{{ company.secondary_color or '#111827' }}"
+                                        class="h-10 w-20 rounded border border-gray-300 cursor-pointer">
+                                    <input type="text" value="{{ company.secondary_color or '#111827' }}" readonly
+                                        class="w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Razão Social</label>
+                        <input type="text" name="name" value="{{ company.name }}" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">CNPJ</label>
+                        <input type="text" name="document" value="{{ company.document or '' }}"
+                            placeholder="00.000.000/0001-00"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    </div>
+                </div>
+
+                <div class="space-y-4 pt-2">
+                    <p class="text-sm font-bold text-gray-700 uppercase mb-1">Endereço</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs text-gray-500 font-medium mb-1">Rua</label>
+                            <input type="text" name="address_street" value="{{ company.address_street or '' }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 font-medium mb-1">Número</label>
+                            <input type="text" name="address_number" value="{{ company.address_number or '' }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 font-medium mb-1">Bairro</label>
+                            <input type="text" name="address_neighborhood"
+                                value="{{ company.address_neighborhood or '' }}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 font-medium mb-1">CEP</label>
+                                <input type="text" name="address_zip" value="{{ company.address_zip or '' }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 font-medium mb-1">Cidade</label>
+                                <input type="text" name="address_city" value="{{ company.address_city or '' }}"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 font-medium mb-1">Estado</label>
+                                <input type="text" name="address_state" value="{{ company.address_state or '' }}"
+                                    maxlength="2"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red uppercase">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Representante Legal</label>
+                        <input type="text" name="representative" value="{{ company.representative or '' }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">CPF do Representante</label>
+                        <input type="text" name="representative_cpf" value="{{ company.representative_cpf or '' }}"
+                            placeholder="000.000.000-00"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 flex justify-end">
+                    <button type="submit"
+                        class="bg-[#fa0102] text-white px-6 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm">
+                        Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const logoInput = document.querySelector('input[name="logo"]');
+    const logoPreviewContainer = logoInput.closest('.grid').querySelector('.w-20.h-20');
+
+    logoInput.addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                // Replace content with img
+                logoPreviewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview" class="max-w-full max-h-full object-contain">`;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

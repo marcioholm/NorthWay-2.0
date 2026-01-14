@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-50/50 relative">
+    <div class="p-6 max-w-[1600px] mx-auto space-y-6">
+
+        <!-- Header (Compact) -->
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 text-northway-red"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 tracking-tight">Financeiro</h1>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button
+                    class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-3 h-3"></i> Este Mês
+                </button>
+                <button onclick="window.location.href='{{ url_for('financial.dre_page') }}'"
+                    class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-3 h-3"></i> DRE
+                </button>
+                <button
+                    class="px-3 py-1.5 bg-northway-red text-white rounded-md text-xs font-bold hover:bg-red-700 shadow-sm flex items-center gap-2">
+                    <i data-lucide="download" class="w-3 h-3"></i> Exportar
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Strip (Ultra Compact) -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- MRR -->
+            <div
+                class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between group/tooltip relative">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-semibold text-gray-500 uppercase">MRR</span>
+                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
+                    </div>
+                    <i data-lucide="wallet" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <!-- Tooltip -->
+                <div
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
+                    Receita Recorrente Mensal. Soma do valor de todos os contratos ativos.
+                    <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-900 tracking-tight" id="kpi-mrr">R$ 0,00</h3>
+                    <div class="flex items-center gap-1 mt-1 text-green-600">
+                        <i data-lucide="trending-up" class="w-3 h-3"></i>
+                        <span class="text-[10px] font-bold">+12%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Previsão -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 group/tooltip relative">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-semibold text-gray-500 uppercase">Previsão (30d)</span>
+                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
+                    </div>
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i>
+                </div>
+                <!-- Tooltip -->
+                <div
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
+                    Estimativa de recebimentos para os próximos 30 dias com base nos contratos.
+                    <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-bold text-gray-900 tracking-tight" id="kpi-forecast30">R$ 0,00</h3>
+                <p class="text-[10px] text-gray-400 mt-1">Confirmado: <strong id="kpi-confirmed"
+                        class="text-gray-700">R$ 0</strong></p>
+            </div>
+
+            <!-- Risco -->
+            <div
+                class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-red-500 group/tooltip relative">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-semibold text-gray-500 uppercase">Em Atraso</span>
+                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
+                    </div>
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <!-- Tooltip -->
+                <div
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
+                    Total de parcelas vencidas e ainda não pagas. Requer atenção.
+                    <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-bold text-red-600 tracking-tight" id="kpi-risk">R$ 0,00</h3>
+                <p class="text-[10px] text-gray-400 mt-1">Ação necessária</p>
+            </div>
+
+            <!-- Ticket -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 group/tooltip relative">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-semibold text-gray-500 uppercase">Ticket Médio</span>
+                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
+                    </div>
+                    <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <!-- Tooltip -->
+                <div
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
+                    Valor médio pago por cada cliente (MRR dividido pelo total de clientes ativos).
+                    <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-bold text-gray-900 tracking-tight" id="kpi-ticket">R$ 0,00</h3>
+                <p class="text-[10px] text-gray-400 mt-1"><span id="kpi-clients">0</span> ativos</p>
+            </div>
+
+            <!-- Churn -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 group/tooltip relative">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-semibold text-gray-500 uppercase">Churn Rate</span>
+                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
+                    </div>
+                    <i data-lucide="activity" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <!-- Tooltip -->
+                <div
+                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
+                    Taxa de cancelamento. Percentual de clientes que cancelaram o contrato neste mês.
+                    <div
+                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-bold text-gray-900 tracking-tight"><span id="kpi-churn">0</span>%</h3>
+                <p class="text-[10px] text-gray-400 mt-1">Este mês</p>
+            </div>
+        </div>
+
+        <!-- Middle Section: Chart and Insight -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column: Chart (2/3) -->
+            <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col h-[320px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-sm text-gray-800">Projeção de Receita (Semestral)</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-northway-red"></span>
+                        <span class="text-xs text-gray-500">Previsto</span>
+                    </div>
+                </div>
+                <div class="flex-1 relative w-full">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Column: Insight & Stats (1/3) -->
+            <div class="flex flex-col gap-4 h-[320px]">
+                <!-- Health Stats -->
+                <div
+                    class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col justify-center">
+                    <h3 class="font-bold text-gray-900 mb-4 text-sm">Saúde Financeira</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-600">Taxa de Adimplência</span>
+                                <span class="font-bold text-green-600">98%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-1.5">
+                                <div class="bg-green-500 h-1.5 rounded-full" style="width: 98%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-gray-600">Meta MRR</span>
+                                <span class="font-bold text-gray-900">75%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-1.5">
+                                <div class="bg-northway-red h-1.5 rounded-full" style="width: 75%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compact Insight -->
+                <div
+                    class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-5 flex flex-col justify-center text-white shadow-sm relative overflow-hidden h-32">
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i>
+                            <h4 class="font-bold text-sm">NorthWay AI</h4>
+                        </div>
+                        <p class="text-xs text-gray-300 leading-relaxed line-clamp-2">
+                            A receita subiu <strong>12%</strong>. Foco em retenção para o próximo tri.
+                        </p>
+                    </div>
+                    <i data-lucide="sparkles" class="absolute -right-2 -bottom-2 w-16 h-16 text-white/5"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Analysis Section (Niches) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 mt-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col h-[320px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-sm text-gray-800">Top Nichos (Rentabilidade Mensal)</h3>
+                    <i data-lucide="trending-up" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <div class="flex-1 relative w-full">
+                    <canvas id="nicheChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Placeholder for future analytics or just a summary -->
+            <div
+                class="bg-gradient-to-br from-[#11061e] to-[#2d1b4e] p-6 rounded-xl shadow-sm text-white flex flex-col justify-center">
+                <h3 class="font-bold text-lg mb-2">Insight de Nicho</h3>
+                <p class="text-sm text-gray-300 leading-relaxed">
+                    Identifique quais segmentos trazem maior retorno financeiro para sua operação.
+                    Foque seus esforços de marketing nos nichos listados ao lado para maximizar o LTV.
+                </p>
+                <div class="mt-6 flex items-center gap-3">
+                    <div class="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
+                        <i data-lucide="target" class="w-6 h-6 text-northway-red"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase font-bold">Dica da IA</p>
+                        <p class="text-sm font-medium">Expanda sua atuação no nicho #1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions List (Bottom, Full Width) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 class="font-bold text-sm text-gray-800">Transações Recentes</h3>
+                <div class="flex bg-gray-200/50 p-0.5 rounded-lg">
+                    <button onclick="filterTransactions('all')" id="tab-all"
+                        class="px-3 py-1 text-xs font-medium rounded text-gray-700 bg-white shadow-sm filter-tab">Todas</button>
+                    <button onclick="filterTransactions('pending')" id="tab-pending"
+                        class="px-3 py-1 text-xs font-medium rounded text-gray-500 hover:text-gray-900 filter-tab">Pendentes</button>
+                    <button onclick="filterTransactions('paid')" id="tab-paid"
+                        class="px-3 py-1 text-xs font-medium rounded text-gray-500 hover:text-gray-900 filter-tab">Pagas</button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto" id="tx-container">
+                <table class="w-full text-xs text-left">
+                    <thead class="text-[10px] text-gray-400 uppercase bg-gray-50/50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Descrição</th>
+                            <th class="px-4 py-3 font-medium">Cliente</th>
+                            <th class="px-4 py-3 font-medium">Vencimento</th>
+                            <th class="px-4 py-3 font-medium">Valor</th>
+                            <th class="px-4 py-3 font-medium">Status</th>
+                            <th class="px-4 py-3 font-medium text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-table-body" class="divide-y divide-gray-100">
+                        <!-- Compact Rows injected via JS -->
+                        <tr>
+                            <td class="p-4 text-center text-gray-400" colspan="6">Carregando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center py-8 text-center">
+                    <div class="bg-gray-50 p-3 rounded-full mb-2">
+                        <i data-lucide="inbox" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                    <p class="text-gray-400 text-xs">Nenhuma transação encontrada.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let allTransactions = [];
+    let currentFilter = 'all';
+
+    document.addEventListener('DOMContentLoaded', loadFinancialData);
+
+    async function loadFinancialData() {
+        try {
+            const response = await fetch('/api/financial/stats');
+            const data = await response.json();
+
+            // Update KPIs
+            document.getElementById('kpi-mrr').textContent = formatCurrency(data.kpis.mrr);
+            document.getElementById('kpi-forecast30').textContent = formatCurrency(data.kpis.forecast_30);
+            document.getElementById('kpi-confirmed').textContent = formatCurrency(data.kpis.confirmed);
+            document.getElementById('kpi-risk').textContent = formatCurrency(data.kpis.risk);
+            document.getElementById('kpi-ticket').textContent = formatCurrency(data.kpis.avg_ticket);
+            document.getElementById('kpi-clients').textContent = data.kpis.active_clients;
+            document.getElementById('kpi-churn').textContent = data.kpis.churn_rate;
+
+            // Render Chart
+            renderForecastChart(data.charts.forecast);
+            if (data.charts.niches) renderNicheChart(data.charts.niches);
+
+            // Store Transactions
+            allTransactions = data.transactions;
+            renderTransactions(); // Initial render with 'all'
+
+            if (window.lucide) window.lucide.createIcons();
+
+        } catch (e) {
+            console.error("Failed to load financial data", e);
+        }
+    }
+
+    function filterTransactions(filter) {
+        currentFilter = filter;
+
+        // Update Tab UI
+        document.querySelectorAll('.filter-tab').forEach(btn => {
+            btn.classList.remove('bg-white', 'shadow-sm', 'text-gray-700');
+            btn.classList.add('text-gray-500', 'hover:bg-white/50');
+        });
+        const activeBtn = document.getElementById('tab-' + filter);
+        // Only if button exists (simplified tabs)
+        if (activeBtn) {
+            activeBtn.classList.remove('text-gray-500', 'hover:bg-white/50');
+            activeBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-700');
+        }
+
+        renderTransactions();
+    }
+
+    function renderTransactions() {
+        const tbody = document.getElementById('tx-table-body');
+        const emptyState = document.getElementById('empty-state');
+        const table = document.querySelector('table');
+
+        let filtered = allTransactions;
+
+        if (currentFilter === 'pending') {
+            filtered = allTransactions.filter(t => t.status !== 'paid');
+        } else if (currentFilter === 'paid') {
+            filtered = allTransactions.filter(t => t.status === 'paid');
+        }
+
+        if (filtered.length === 0) {
+            table.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+        } else {
+            table.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            tbody.innerHTML = filtered.map(t => {
+                const isPaid = t.status === 'paid';
+
+                // Enhance status logic
+                let statusHtml = '';
+                if (isPaid) {
+                    statusHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700">Pago</span>';
+                } else if (!isPaid) {
+                    // Simple pending check, real app would check date
+                    statusHtml = '<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-yellow-50 text-yellow-700">Pendente</span>';
+                }
+
+                return `
+                    <tr class="hover:bg-gray-50 transition-colors group border-b border-gray-50 last:border-0">
+                        <td class="px-4 py-3 font-medium text-gray-900 flex items-center gap-2">
+                           <div class="w-6 h-6 rounded bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:shadow-sm text-[10px]">
+                                <i data-lucide="dollar-sign" class="w-3 h-3"></i>
+                           </div>
+                           <span class="truncate max-w-[200px]" title="${t.description}">${t.description}</span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 truncate max-w-[150px]" title="${t.client_name}">${t.client_name}</td>
+                        <td class="px-4 py-3 text-gray-500 font-mono text-[10px]">${t.due_date}</td>
+                        <td class="px-4 py-3 font-bold text-gray-900">${formatCurrency(t.amount)}</td>
+                        <td class="px-4 py-3">${statusHtml}</td>
+                        <td class="px-4 py-3 text-right">
+                            ${!isPaid ? `
+                            <button onclick="confirmPayment(${t.id})" class="text-green-600 hover:text-green-800 hover:bg-green-50 p-1.5 rounded transition-colors" title="Baixar">
+                                <i data-lucide="check" class="w-3 h-3"></i>
+                            </button>
+                            ` : '<span class="text-gray-300"><i data-lucide="check-circle" class="w-3 h-3"></i></span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+
+    // Helper to parse DD/MM/YYYY
+    function parseDate(str) {
+        const [d, m, y] = str.split('/');
+        return new Date(y, m - 1, d);
+    }
+
+    async function confirmPayment(id) {
+        if (!confirm("Confirmar o recebimento desta parcela?")) return;
+
+        try {
+            const res = await fetch(`/api/transactions/${id}/pay`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                loadFinancialData(); // Reload data
+            } else {
+                alert("Erro ao processar pagamento.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        }
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    }
+
+    let forecastChartInstance = null;
+    let nicheChartInstance = null;
+
+    function renderNicheChart(data) {
+        const ctx = document.getElementById('nicheChart').getContext('2d');
+        if (nicheChartInstance) nicheChartInstance.destroy();
+
+        nicheChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'MRR Total',
+                    data: data.data,
+                    backgroundColor: '#111827', // Dark bars
+                    borderRadius: 4,
+                    barThickness: 20
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Horizontal Bar
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const mrr = formatCurrency(context.parsed.x);
+                                const count = data.counts ? data.counts[context.dataIndex] : 0;
+                                return `${mrr} (${count} clientes)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            callback: function (val) { return new Intl.NumberFormat('pt-BR', { notation: "compact", style: "currency", currency: "BRL" }).format(val) },
+                            font: { size: 10 }
+                        }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, weight: 'bold' } }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderForecastChart(chartData) {
+        const ctx = document.getElementById('forecastChart').getContext('2d');
+
+        if (forecastChartInstance) forecastChartInstance.destroy();
+
+        // Create Gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(250, 1, 2, 0.1)'); // NorthWay Red
+        gradient.addColorStop(1, 'rgba(250, 1, 2, 0)');
+
+        forecastChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Receita Projetada',
+                    data: chartData.data,
+                    borderColor: '#fa0102',
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#fa0102',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1f2937',
+                        padding: 10,
+                        cornerRadius: 6,
+                        displayColors: false,
+                        callbacks: {
+                            label: function (context) {
+                                return formatCurrency(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        border: { display: false },
+                        grid: { color: '#f3f4f6', borderDash: [2, 2] },
+                        ticks: {
+                            callback: function (value) {
+                                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: "compact" }).format(value);
+                            },
+                            font: { size: 10, family: "'Inter', sans-serif" },
+                            color: '#9ca3af'
+                        }
+                    },
+                    x: {
+                        border: { display: false },
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 10, family: "'Inter', sans-serif" },
+                            color: '#6b7280'
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

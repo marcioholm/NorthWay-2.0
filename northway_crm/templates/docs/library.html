@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="p-8 max-w-7xl mx-auto h-full overflow-y-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Biblioteca NorthWay</h1>
+        <p class="text-gray-500">Acesse nossos materiais educativos e guias estratégicos.</p>
+    </div>
+
+
+
+    <!-- Section: Private Company Library -->
+    {% if library_docs %}
+    <div class="mb-12">
+        <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <i data-lucide="folder-lock" class="text-purple-600"></i> Minha Biblioteca Privada ({{
+            current_user.company.name }})
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for doc in library_docs %}
+            <div
+                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-purple-200">
+                <div
+                    class="relative aspect-video rounded-2xl bg-purple-50 overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 flex items-center justify-center border border-purple-100">
+                    <div class="text-center relative z-10">
+                        <i data-lucide="file-text" class="w-10 h-10 text-purple-500 mx-auto mb-3"></i>
+                        <span
+                            class="text-[10px] tracking-[0.2em] font-bold uppercase text-gray-500 block">Privado</span>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Interno</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
+                        {{ doc.name }}</h3>
+                    <a href="{{ url_for('docs.view_document', id=doc.id) }}"
+                        class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-purple-700 transition-colors mt-4">
+                        Ler Documento <i data-lucide="arrow-right"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Section 1: Apresentações (Slides) -->
+    <div class="mb-12">
+        <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <i data-lucide="monitor-play" class="text-[#fa0102]"></i> Apresentações Comerciais
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <!-- Card: Apresentação de Diagnóstico -->
+            <div
+                class="group bg-northway-dark rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-800 hover:border-[#fa0102]">
+                <div
+                    class="relative aspect-video rounded-2xl bg-[#0a0a0a] overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 border border-gray-800">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+                        <i data-lucide="bar-chart-2" class="w-10 h-10 text-[#fa0102] mx-auto mb-3"></i>
+                        <h4 class="text-xl font-black font-display tracking-tight uppercase">Diagnóstico<br><span
+                                class="text-[#fa0102]">Óticas 2026</span></h4>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-[#fa0102] text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Novo</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-[#fa0102] transition-colors">
+                        Diagnóstico Estratégico</h3>
+                    <a href="{{ url_for('docs.presentation_consultancy') }}"
+                        class="inline-flex items-center text-sm font-bold text-white group-hover:text-[#fa0102] transition-colors mt-4">
+                        Apresentar <i data-lucide="play-circle"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 1: Apresentação Institucional -->
+            <div
+                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-red-100">
+                <div
+                    class="relative aspect-video rounded-2xl bg-[#0f0f0f] overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500">
+                    <div
+                        class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30">
+                    </div>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}"
+                            class="h-16 w-auto mb-4 opacity-90">
+                        <span class="text-[10px] tracking-[0.3em] font-light uppercase text-gray-400">Marketing com
+                            Direção</span>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-red-50 text-[#fa0102] text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Institucional</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#fa0102] transition-colors">
+                        Apresentação Estratégica</h3>
+                    <a href="{{ url_for('docs.presentation_institutional') }}"
+                        class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-[#fa0102] transition-colors mt-4">
+                        Ver Slides <i data-lucide="arrow-right"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 2: Oferta Principal -->
+            <div
+                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-red-100">
+                <div
+                    class="relative aspect-video rounded-2xl bg-[#1a1a1a] overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 border border-gray-800">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+                        <h4 class="text-2xl font-black font-display tracking-tighter">OFERTA<br><span
+                                class="text-[#fa0102]">PRINCIPAL</span></h4>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-red-50 text-[#fa0102] text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Vendas</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#fa0102] transition-colors">
+                        Estrutura Completa</h3>
+                    <a href="{{ url_for('docs.presentation_offer_main') }}"
+                        class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-[#fa0102] transition-colors mt-4">
+                        Ver Proposta <i data-lucide="arrow-right"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 3: Downsell -->
+            <div
+                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-yellow-500/50">
+                <div
+                    class="relative aspect-video rounded-2xl bg-[#1a1a1a] overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 border border-gray-800">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+                        <h4 class="text-2xl font-black font-display tracking-tighter text-yellow-500">ESSENCIAL<br><span
+                                class="text-white text-sm tracking-widest font-sans font-normal opacity-50">DOWNSELL</span>
+                        </h4>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-yellow-50 text-yellow-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Alternativa</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-yellow-600 transition-colors">Plano
+                        Essencial</h3>
+                    <a href="{{ url_for('docs.presentation_offer_downsell') }}"
+                        class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-yellow-600 transition-colors mt-4">
+                        Ver Proposta <i data-lucide="arrow-right"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Section 2: Manuais & Processos (Docs) -->
+    <div>
+        <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <i data-lucide="book-open" class="text-gray-400"></i> Processos & Treinamento
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <!-- Card 4: Manual de Onboarding -->
+            <div
+                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-gray-300">
+                <div
+                    class="relative aspect-video rounded-2xl bg-gray-50 overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 flex items-center justify-center">
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}"
+                            class="h-10 w-auto mx-auto mb-4 opacity-80 filter grayscale">
+                        <div class="w-full h-2 bg-gray-200 rounded-full w-24 mx-auto mb-2"></div>
+                        <div class="w-full h-1 bg-gray-200 rounded-full w-12 mx-auto"></div>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Operacional</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Manual de Onboarding</h3>
+                    <a href="{{ url_for('docs.user_manual') }}"
+                        class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-[#fa0102] transition-colors mt-4">
+                        Ler Manual <i data-lucide="arrow-right"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 5: Scripts de Venda -->
+            <div
+                class="group bg-northway-dark rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-800 hover:border-[#fa0102]">
+                <div
+                    class="relative aspect-video rounded-2xl bg-[#0a0a0a] overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 flex items-center justify-center border border-gray-800">
+                    <div class="text-center relative z-10">
+                        <i data-lucide="scroll-text" class="w-10 h-10 text-[#fa0102] mx-auto mb-3"></i>
+                        <span
+                            class="text-[10px] tracking-[0.2em] font-bold uppercase text-gray-500 block">Scripts</span>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-red-900/20 text-[#fa0102] text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-red-900/30">Vendas</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Scripts & Técnicas</h3>
+                    <a href="{{ url_for('docs.playbook_comercial') }}"
+                        class="inline-flex items-center text-sm font-bold text-white group-hover:text-[#fa0102] transition-colors mt-4">
+                        Ler Scripts <i data-lucide="arrow-right"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 6: Objeções & Processos -->
+            <div
+                class="group bg-northway-dark rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-800 hover:border-[#fa0102]">
+                <div
+                    class="relative aspect-video rounded-2xl bg-[#0a0a0a] overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 flex items-center justify-center border border-gray-800">
+                    <div class="text-center relative z-10">
+                        <i data-lucide="shield-alert" class="w-10 h-10 text-white mx-auto mb-3"></i>
+                        <span
+                            class="text-[10px] tracking-[0.2em] font-bold uppercase text-gray-500 block">Objeções</span>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-gray-800 text-gray-400 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-gray-700">Processos</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Objeções & SDR</h3>
+                    <a href="{{ url_for('docs.playbook_processos') }}"
+                        class="inline-flex items-center text-sm font-bold text-white group-hover:text-[#fa0102] transition-colors mt-4">
+                        Ler Guia <i data-lucide="arrow-right"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 7: Academia -->
+            <div
+                class="group bg-blue-900/10 rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-800 hover:border-blue-500/50">
+                <div
+                    class="relative aspect-video rounded-2xl bg-[#0a0a0a] overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 flex items-center justify-center border border-gray-800">
+                    <div class="text-center relative z-10">
+                        <i data-lucide="graduation-cap" class="w-10 h-10 text-blue-500 mx-auto mb-3"></i>
+                        <span
+                            class="text-[10px] tracking-[0.2em] font-bold uppercase text-gray-500 block">Academia</span>
+                    </div>
+                </div>
+
+                <div class="px-6 pb-6">
+                    <div class="mb-4"><span
+                            class="bg-blue-900/20 text-blue-400 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider border border-blue-900/30">Treinamento</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Training &
+                        Scripts</h3>
+                    <a href="{{ url_for('docs.playbook_treinamento') }}"
+                        class="inline-flex items-center text-sm font-bold text-white group-hover:text-blue-400 transition-colors mt-4">
+                        Acessar <i data-lucide="arrow-right"
+                            class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Placeholder for future styling -->
+    <!-- <div class="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center p-8 text-gray-400 hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-default">
+            <i data-lucide="plus-circle" class="w-8 h-8 mb-4 opacity-50"></i>
+            <span class="font-medium text-sm">Em breve novos materiais</span>
+        </div> -->
+
+</div>
+</div>
+{% endblock %}

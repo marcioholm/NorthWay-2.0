@@ -1,0 +1,26 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Flask
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite3
+migrations/
+
+# Logs
+*.log
+
+# System
+.DS_Store
+
+# Vercel
+.vercel

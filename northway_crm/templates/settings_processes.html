@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50 overflow-hidden">
+    <!-- Settings Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-800">Configurações</h2>
+            <p class="text-xs text-gray-500">Gerencie sua empresa</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+            <a href="{{ url_for('main.company_settings') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <i data-lucide="building" class="w-4 h-4" aria-hidden="true"></i>
+                Dados da Empresa
+            </a>
+            <a href="{{ url_for('main.settings_team') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i>
+                Equipe
+            </a>
+            <a href="{{ url_for('main.settings_permissions') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <i data-lucide="shield" class="w-4 h-4" aria-hidden="true"></i>
+                Permissões (Cargos)
+            </a>
+            <a href="{{ url_for('main.settings_processes') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-bold text-northway-red bg-red-50 rounded-lg transition-colors">
+                <i data-lucide="list-checks" class="w-4 h-4" aria-hidden="true"></i>
+                Processos & Workflows
+            </a>
+            <a href="{{ url_for('main.settings_templates') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                Modelos de Contrato
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-8">
+        <div class="max-w-5xl mx-auto space-y-6">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Processos Operacionais</h1>
+                    <p class="text-gray-500 text-sm mt-1">Crie templates de checklists para padronizar a entrega de
+                        serviços.</p>
+                </div>
+                <button data-modal-target="newProcessModal"
+                    class="bg-northway-red text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/20 flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+                    Novo Processo
+                </button>
+            </div>
+
+            <!-- Templates List -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for template in templates %}
+                <div
+                    class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow flex flex-col h-full group">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-indigo-50 p-3 rounded-lg text-indigo-600">
+                            <i data-lucide="workflow" class="w-6 h-6" aria-hidden="true"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 leading-tight">{{ template.name }}</h3>
+                            <p class="text-xs text-gray-500 mt-1">{{ template.steps|length }} etapas configuradas</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-6 flex-1 line-clamp-3">{{ template.description or "Sem
+                        descrição." }}</p>
+
+                    <div class="flex items-center gap-3 mt-auto">
+                        <a href="{{ url_for('main.edit_process_template', id=template.id) }}"
+                            class="flex-1 bg-gray-50 text-gray-700 py-2 rounded-lg text-sm font-bold text-center hover:bg-gray-100 transition-colors">
+                            Editar
+                        </a>
+                        <button data-delete-id="{{ template.id }}"
+                            class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Excluir">
+                            <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Empty State -->
+                {% if templates|length == 0 %}
+                <div
+                    class="col-span-full py-12 text-center text-gray-400 bg-white rounded-xl border border-dashed border-gray-300">
+                    <i data-lucide="list-checks" class="w-12 h-12 mx-auto mb-3 opacity-50" aria-hidden="true"></i>
+                    <p>Nenhum processo criado ainda.</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- New Process Modal -->
+<div id="newProcessModal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+        <h3 class="text-xl font-bold text-gray-900 mb-1">Novo Modelo de Processo</h3>
+        <p class="text-sm text-gray-500 mb-6">Defina o nome do fluxo (ex: Gestão de Tráfego).</p>
+
+        <form action="{{ url_for('main.create_process_template') }}" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Processo</label>
+                    <input type="text" name="name" placeholder="Ex: Onboarding de Cliente" required
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red transition-colors">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Descrição Curta</label>
+                    <input type="text" name="description" placeholder="Ex: Checklist para novos clientes"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red transition-colors">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" data-modal-target="newProcessModal"
+                    class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">Cancelar</button>
+                <button type="submit"
+                    class="bg-northway-red text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/20">Criar
+                    Modelo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Handle Delete Template
+        const deleteBtns = document.querySelectorAll('[data-delete-id]');
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id = this.getAttribute('data-delete-id');
+                if (confirm('Tem certeza? Isso não afetará checklists já ativos em clientes.')) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/settings/processes/${id}/delete`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+
+        // Handle Modals
+        const modalBtns = document.querySelectorAll('[data-modal-target]');
+        modalBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const targetId = this.getAttribute('data-modal-target');
+                if (typeof toggleModal === 'function') {
+                    toggleModal(targetId);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-100 overflow-hidden">
+    <!-- Top Bar actions -->
+    <div
+        class="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-8 print:hidden">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('main.client_details', id=contract.client_id) }}"
+                class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-100 transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Visualizar Contrato #{{ contract.id }}</h1>
+                <p class="text-xs text-gray-500">Emitido em {{ contract.created_at.strftime('%d/%m/%Y') }}</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="window.print()"
+                class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-black transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                Imprimir
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Area (Scrollable) -->
+    <div
+        class="flex-1 h-full overflow-y-auto bg-slate-200 relative pt-24 pb-20 flex flex-col items-center justify-start min-h-screen custom-scrollbar">
+
+        <!-- Source Content (Hidden) -->
+        <div id="source-content" class="hidden">
+            {{ contract.generated_content | safe }}
+        </div>
+
+        <!-- Pages Container -->
+        <div id="pages-container" class="flex flex-col gap-8 items-center">
+            <!-- JS will render pages here -->
+            <div
+                class="w-[210mm] h-[297mm] bg-white shadow-2xl relative flex flex-col items-center justify-center text-gray-300 animate-pulse">
+                <i data-lucide="file-text" class="w-16 h-16 mb-4 opacity-20"></i>
+                <p class="font-sans text-sm font-medium">Renderizando...</p>
+            </div>
+        </div>
+
+        <p
+            class="text-slate-400 text-xs font-medium fixed bottom-4 right-8 bg-slate-200/80 px-2 py-1 rounded print:hidden">
+            Visualização de Impressão (A4)
+        </p>
+    </div>
+</div>
+
+<style>
+    /* Document Stylings - MATCHES new_contract.html */
+    .a4-page {
+        width: 210mm;
+        height: 297mm;
+        background: white;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        position: relative;
+        padding-top: 30mm;
+        padding-bottom: 20mm;
+        padding-left: 30mm;
+        padding-right: 20mm;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    /* Mobile Scale */
+    @media (max-width: 768px) {
+        .a4-page {
+            transform: scale(0.6);
+            transform-origin: top center;
+            margin-bottom: -100mm;
+            /* Compensate for empty space after scale */
+        }
+
+        #pages-container {
+            width: 100%;
+            overflow-x: hidden;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .a4-page {
+            transform: scale(0.45);
+            margin-bottom: -150mm;
+        }
+    }
+
+    .a4-content {
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 12pt;
+        line-height: 1.5;
+        color: #000;
+        height: 100%;
+    }
+
+    /* Standard Elements */
+    .a4-content p {
+        margin-bottom: 6pt;
+        text-align: justify;
+        text-indent: 1.25cm;
+    }
+
+    .a4-content h1,
+    .a4-content h2,
+    .a4-content h3,
+    .a4-content strong,
+    .a4-content b {
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 12pt;
+        font-weight: bold;
+        text-align: justify;
+        margin-bottom: 6pt;
+        text-indent: 0;
+    }
+
+    .a4-content h1 {
+        text-transform: uppercase;
+        text-align: center;
+        margin-bottom: 24pt;
+    }
+
+    .a4-content ul {
+        list-style-type: disc;
+        padding-left: 2cm;
+        margin-bottom: 6pt;
+    }
+
+    .a4-content ol {
+        list-style-type: decimal;
+        padding-left: 2cm;
+        margin-bottom: 6pt;
+    }
+
+    @media print {
+
+        /* CRITICAL: Reset all layout containers to prevent "scroll traps" */
+        html,
+        body,
+        div,
+        main,
+        section,
+        aside,
+        nav,
+        header {
+            height: auto !important;
+            width: auto !important;
+            overflow: visible !important;
+            position: static !important;
+            display: block !important;
+        }
+
+        body * {
+            visibility: hidden;
+        }
+
+        #pages-container,
+        #pages-container * {
+            visibility: visible;
+        }
+
+        .no-print,
+        .print\:hidden,
+        button,
+        a[href^="http"],
+        .fixed {
+            display: none !important;
+        }
+
+        #pages-container {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+        }
+
+        /* Page styling for print */
+        .a4-page {
+            box-shadow: none !important;
+            margin: 0 !important;
+            width: 100% !important;
+            /* 
+               Remove fixed height/min-height constraints for print.
+               The JS already chunked the content. Let the printer flow it.
+               Forcing 297mm often conflicts with browser margins => blank page.
+            */
+            height: auto !important;
+            min-height: 0 !important;
+
+            /* Use break-after: page to respect the JS-created specific pages */
+            page-break-after: always;
+            break-after: page;
+
+            /* Reduced padding to ensure safe zone without triggering overflow */
+            padding: 10mm !important;
+
+            overflow: visible !important;
+            display: block !important;
+        }
+
+        /* Ensure images/content don't overflow width */
+        .a4-page img,
+        .a4-page table,
+        .a4-page div {
+            max-width: 100% !important;
+        }
+
+        .a4-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
+            margin-bottom: 0 !important;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const source = document.getElementById('source-content').innerHTML;
+        renderPaginatedContent(source);
+
+        if (window.lucide) window.lucide.createIcons();
+    });
+
+    function createA4Page(pageNum) {
+        const page = document.createElement('div');
+        page.className = 'a4-page';
+        page.id = 'page-' + pageNum;
+
+        const content = document.createElement('div');
+        content.className = 'a4-content ql-editor'; // ql-editor class keeps Quill styles if needed
+        page.appendChild(content);
+
+        return page;
+    }
+
+    function hasOverflow(element) {
+        return element.scrollHeight > element.clientHeight + 1;
+    }
+
+    function renderPaginatedContent(htmlContent) {
+        const container = document.getElementById('pages-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const sourceDiv = document.createElement('div');
+        sourceDiv.innerHTML = htmlContent;
+
+        let nodes = Array.from(sourceDiv.childNodes);
+
+        let pageNum = 1;
+        let currentPage = createA4Page(pageNum);
+        container.appendChild(currentPage);
+        let currentContentArea = currentPage.querySelector('.a4-content');
+
+        nodes.forEach(node => {
+            if (node.nodeType === 3 && node.textContent.trim() === '') return;
+
+            const clone = node.cloneNode(true);
+            currentContentArea.appendChild(clone);
+
+            if (hasOverflow(currentContentArea)) {
+                currentContentArea.removeChild(clone);
+
+                if (node.nodeType === 1 && node.tagName === 'P') {
+                    const words = node.innerText.split(' ');
+                    let currentWordIndex = 0;
+
+                    while (currentWordIndex < words.length) {
+                        const pChunk = document.createElement('p');
+                        // Copy attributes (styles etc)
+                        for (let attr of node.attributes) {
+                            pChunk.setAttribute(attr.name, attr.value);
+                        }
+
+                        // Fix indent on split parts
+                        if (currentWordIndex > 0) pChunk.style.textIndent = '0';
+
+                        currentContentArea.appendChild(pChunk);
+
+                        let chunkWords = [];
+                        let overflowDetected = false;
+
+                        for (let i = currentWordIndex; i < words.length; i++) {
+                            chunkWords.push(words[i]);
+                            pChunk.innerText = chunkWords.join(' ');
+
+                            if (hasOverflow(currentContentArea)) {
+                                chunkWords.pop();
+                                pChunk.innerText = chunkWords.join(' ');
+
+                                if (chunkWords.length === 0) {
+                                    currentContentArea.removeChild(pChunk);
+
+                                    pageNum++;
+                                    currentPage = createA4Page(pageNum);
+                                    container.appendChild(currentPage);
+                                    currentContentArea = currentPage.querySelector('.a4-content');
+
+                                    overflowDetected = true;
+                                    break;
+                                }
+
+                                currentWordIndex = i;
+                                overflowDetected = true;
+                                break;
+                            }
+                        }
+
+                        if (!overflowDetected) {
+                            currentWordIndex = words.length;
+                        } else {
+                            if (chunkWords.length > 0) {
+                                pageNum++;
+                                currentPage = createA4Page(pageNum);
+                                container.appendChild(currentPage);
+                                currentContentArea = currentPage.querySelector('.a4-content');
+                            }
+                        }
+                    }
+                } else {
+                    // Non-splittable block (e.g. Header div, Table, or Image)
+                    // Move entire block to next page
+                    pageNum++;
+                    currentPage = createA4Page(pageNum);
+                    container.appendChild(currentPage);
+                    currentContentArea = currentPage.querySelector('.a4-content');
+                    currentContentArea.appendChild(clone);
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

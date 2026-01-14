@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthWay CRM</title>
+    <!-- Google Fonts: Outfit (Display) & Inter (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            orange: '#fe422e',
+                            dark: '#0f0518',
+                            gray: '#f3f4f6',
+                            light: '#fdfdfd',
+                            paper: '#ffffff',
+                            subtle: '#f8fafc'
+                        }
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                        'glow': '0 0 15px rgba(250, 1, 2, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Smooth Rendering */
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Premium Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+
+<body
+    class="bg-gray-50 text-gray-900 font-sans h-screen flex overflow-hidden selection:bg-northway-red selection:text-white">
+
+    <!-- Impersonation Banner -->
+    {% if session.get('super_admin_id') %}
+    <div
+        class="bg-northway-dark text-white px-4 py-2 flex justify-between items-center z-[100] relative border-b border-red-900 shadow-xl">
+        <div class="flex items-center gap-2 animate-pulse">
+            <i data-lucide="eye" class="w-4 h-4 text-northway-red"></i>
+            <span class="text-xs font-bold uppercase tracking-wider">Acesso Master Ativo</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-xs text-gray-400 hidden md:inline">Você está visualizando como <strong>{{
+                    current_user.name }}</strong></span>
+            <a href="{{ url_for('master.revert_access') }}"
+                class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-1 rounded transition-colors">
+                Sair do Acesso
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dynamic Splash Screen -->
+    <!-- Dynamic Splash Screen -->
+    <div id="splash-screen"
+        class="fixed inset-0 bg-[#fdfdfd] z-[60] flex flex-col items-center justify-center transition-opacity duration-700 hidden">
+        <div class="animate-bounce mb-8">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay Logo"
+                class="w-48 h-auto shadow-2xl rounded-xl">
+        </div>
+        <p id="splash-text" class="text-[#fa0102] text-sm font-bold animate-pulse tracking-widest uppercase">
+            Carregando...</p>
+    </div>
+
+    <script>
+            // Splash Screen Logic (Immediate execution to block if needed)
+            (function () {
+                // Only show on Dashboard or root, and only once per session
+                const path = window.location.pathname;
+                const isDashboard = path === '/' || path.includes('dashboard');
+
+                if (isDashboard && !sessionStorage.getItem('northway_welcome_shown')) {
+                    const splash = document.getElementById('splash-screen');
+                    if (splash) {
+                        splash.classList.remove('hidden');
+
+                        // Dynamic Messages
+                        const messages = [
+                            "Preparando seu painel...",
+                            "Sincronizando clientes...",
+                            "Organizando tarefas...",
+                            "Bem-vindo de volta!",
+                            "Conectando à base..."
+                        ];
+                        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+                        document.getElementById('splash-text').textContent = randomMsg;
+
+                        // Hide after delay
+                        setTimeout(() => {
+                            splash.style.opacity = '0';
+                            setTimeout(() => {
+                                splash.classList.add('hidden');
+                                sessionStorage.setItem('northway_welcome_shown', 'true');
+                            }, 700);
+                        }, 1500);
+                    }
+                }
+            })();
+    </script>
+
+    {% if current_user.is_authenticated and not current_user.is_super_admin %}
+
+    <!-- Mobile Header -->
+    <div
+        class="md:hidden bg-northway-dark text-white p-4 flex justify-between items-center z-50 fixed w-full top-0 left-0 h-16 shadow-md">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleMobileSidebar()" class="text-white focus:outline-none">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-8 w-auto">
+        </div>
+        <!-- Mobile Profile Avatar (Optional shortcut) -->
+        <a href="{{ url_for('main.profile') }}"
+            class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-400">
+            {% if current_user.profile_image %}
+            <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}"
+                class="w-full h-full object-cover">
+            {% else %}
+            <div class="w-full h-full flex items-center justify-center text-gray-800 text-xs font-bold">{{
+                current_user.name[:2].upper() }}</div>
+            {% endif %}
+        </a>
+    </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobile-sidebar-overlay" onclick="toggleMobileSidebar()"
+        class="fixed inset-0 bg-black/50 z-[60] hidden md:hidden transition-opacity duration-300 opacity-0">
+    </div>
+
+    <!-- Sidebar Wrapper for Desktop (Sticky) and Mobile (Fixed) -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-[70] transform -translate-x-full md:relative md:translate-x-0 
+               w-64 bg-northway-dark text-white flex flex-col flex-shrink-0 transition-transform duration-300 ease-in-out group md:h-screen">
+
+        <!-- Sidebar Header (Desktop Only Check) -->
+        <div class="hidden md:flex p-6 items-center justify-center border-b border-white/10 min-h-[5rem]">
+            <img id="sidebar-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay"
+                class="max-h-12 w-auto opacity-90 hover:opacity-100 transition-all duration-300">
+            <!-- Mini Logo -->
+            <div id="sidebar-logo-mini" class="hidden text-2xl font-black text-[#fa0102]">N</div>
+        </div>
+
+        <!-- Mobile Sidebar Header (Close Button) -->
+        <div class="md:hidden p-4 flex justify-between items-center border-b border-white/10">
+            <span class="text-lg font-bold">Menu</span>
+            <button onclick="toggleMobileSidebar()" class="text-gray-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto no-scrollbar">
+            <!-- Navigation Links -->
+            <a href="{{ url_for('main.home') }}"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.home' %}bg-white/10 text-white font-semibold{% endif %}">
+                <i data-lucide="home" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Início</span>
+            </a>
+
+            <a href="{{ url_for('main.dashboard') }}"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.dashboard' %}bg-white/10 text-white font-semibold{% endif %}">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Dashboard</span>
+            </a>
+
+            <a href="{{ url_for('financial.dashboard') }}"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'financial.dashboard' %}bg-white/10 text-white font-semibold{% endif %}">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Financeiro</span>
+            </a>
+
+            <a href="{{ url_for('main.leads') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.leads' else 'text-gray-400' }}">
+                <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Leads</span>
+            </a>
+
+            <a href="{{ url_for('main.pipeline') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.pipeline' else 'text-gray-400' }}">
+                <i data-lucide="trello" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Funil</span>
+            </a>
+
+            <a href="{{ url_for('goals.dashboard') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'goals.dashboard' else 'text-gray-400' }}">
+                <i data-lucide="target" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Metas</span>
+            </a>
+
+            <a href="{{ url_for('main.tasks') }}"
+                class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.tasks' else 'text-gray-400' }}">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="check-square" class="w-5 h-5 flex-shrink-0"></i>
+                    <span class="sidebar-text transition-opacity duration-300">Tarefas</span>
+                </div>
+                {% if pending_tasks_count > 0 %}
+                <span
+                    class="sidebar-badge bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">{{
+                    pending_tasks_count }}</span>
+                {% endif %}
+            </a>
+
+            <a href="{{ url_for('main.clients') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.clients' else 'text-gray-400' }}">
+                <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Clientes</span>
+            </a>
+
+            <a href="{{ url_for('whatsapp.inbox') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'whatsapp.inbox' else 'text-gray-400' }}">
+                <i data-lucide="message-circle" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">WhatsApp</span>
+            </a>
+
+            <!-- Divider -->
+            <div class="px-4 py-2 mt-4">
+                <p
+                    class="sidebar-text text-xs font-semibold text-gray-500 uppercase tracking-wider transition-opacity duration-300 whitespace-nowrap">
+                    Gestão
+                </p>
+                <div class="sidebar-divider hidden w-full h-px bg-gray-800 my-2"></div>
+            </div>
+
+            <a href="{{ url_for('main.company_settings') }}"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.company_settings' %}bg-white/10 text-white font-semibold{% endif %}">
+                <i data-lucide="settings" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Configurações</span>
+            </a>
+
+            <a href="{{ url_for('main.settings_processes') }}"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.settings_processes' %}bg-white/10 text-white font-semibold{% endif %}">
+                <i data-lucide="list-checks" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Processos</span>
+            </a>
+
+            <a href="{{ url_for('docs.library') }}"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if 'docs' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
+                <i data-lucide="library" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Biblioteca</span>
+            </a>
+
+            <!-- Prospecting -->
+            <a href="{{ url_for('prospecting.index') }}"
+                class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if 'prospecting' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
+                <i data-lucide="globe" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="sidebar-text transition-opacity duration-300">Prospecção</span>
+            </a>
+
+            {% if current_user.role == 'admin' %}
+            <div class="border-t border-white/10 my-2 pt-2">
+                <a href="{{ url_for('main.admin_users') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if 'admin' in request.endpoint else 'text-gray-400' }}">
+                    <i data-lucide="shield" class="w-5 h-5 text-red-300 flex-shrink-0"></i>
+                    <span class="sidebar-text transition-opacity duration-300">Admin</span>
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Mobile Log Out Shortcut -->
+            <div class="md:hidden mt-8 border-t border-white/10 pt-4">
+                <a href="{{ url_for('auth.logout') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 text-red-400 hover:text-red-300">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                    <span>Sair</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Use Desktop Toggle only -->
+        <button id="sidebar-toggle" onclick="toggleSidebar()"
+            class="hidden md:flex absolute -right-3 top-12 bg-northway-red text-white w-6 h-6 rounded-full items-center justify-center shadow-lg hover:bg-red-700 transition-colors z-50">
+            <i data-lucide="chevron-left" class="w-4 h-4 transition-transform duration-300"
+                id="sidebar-toggle-icon"></i>
+        </button>
+
+        <script>
+            // Sidebar Logic
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('mobile-sidebar-overlay');
+            const toggleIcon = document.getElementById('sidebar-toggle-icon');
+            const texts = document.querySelectorAll('.sidebar-text');
+            const logoMain = document.getElementById('sidebar-logo');
+            const logoMini = document.getElementById('sidebar-logo-mini');
+            const dividers = document.querySelectorAll('.sidebar-divider');
+
+            function toggleMobileSidebar() {
+                const isClosed = sidebar.classList.contains('-translate-x-full');
+                if (isClosed) {
+                    sidebar.classList.remove('-translate-x-full');
+                    sidebarOverlay.classList.remove('hidden');
+                    // wait a tick to animate opacity
+                    setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebarOverlay.classList.add('opacity-0');
+                    setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+                }
+            }
+
+            function toggleSidebar() {
+                // Desktop Toggle
+                const isCollapsed = sidebar.classList.contains('w-20');
+                if (isCollapsed) {
+                    expandSidebar();
+                    localStorage.setItem('sidebarState', 'expanded');
+                } else {
+                    collapseSidebar();
+                    localStorage.setItem('sidebarState', 'collapsed');
+                }
+            }
+
+            function collapseSidebar() {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                if (toggleIcon) toggleIcon.classList.add('rotate-180');
+
+                texts.forEach(el => el.classList.add('opacity-0', 'hidden'));
+                dividers.forEach(el => el.classList.remove('hidden'));
+                if (logoMain) logoMain.classList.add('hidden');
+                if (logoMini) logoMini.classList.remove('hidden');
+            }
+
+            function expandSidebar() {
+                sidebar.classList.remove('w-20');
+                sidebar.classList.add('w-64');
+                if (toggleIcon) toggleIcon.classList.remove('rotate-180');
+
+                texts.forEach(el => {
+                    el.classList.remove('hidden');
+                    setTimeout(() => el.classList.remove('opacity-0'), 50);
+                });
+                dividers.forEach(el => el.classList.add('hidden'));
+                if (logoMain) logoMain.classList.remove('hidden');
+                if (logoMini) logoMini.classList.add('hidden');
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                // Restore Desktop State
+                if (window.innerWidth >= 768) {
+                    const state = localStorage.getItem('sidebarState');
+                    if (state === 'collapsed') {
+                        sidebar.classList.add('!transition-none');
+                        collapseSidebar();
+                        setTimeout(() => sidebar.classList.remove('!transition-none'), 300);
+                    }
+                }
+            });
+        </script>
+    </aside>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {% if current_user.is_authenticated and not current_user.is_super_admin %}
+        <!-- Top Header -->
+        <header
+            class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 flex-shrink-0 z-40">
+            <!-- Breadcrumbs / Title Placeholder (Optional) -->
+            <div class="flex items-center gap-4">
+                <!-- Can be dynamic based on page later -->
+            </div>
+
+            <!-- Notification Bell -->
+            <div class="relative mr-4">
+                <button id="notification-btn"
+                    class="text-gray-400 hover:text-gray-600 transition-colors relative p-2 rounded-full hover:bg-gray-100">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span id="notification-badge"
+                        class="absolute top-1 right-1 w-2.5 h-2.5 bg-northway-red rounded-full hidden border border-white"></span>
+                </button>
+
+                <!-- Notification Dropdown -->
+                <div id="notification-dropdown"
+                    class="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 hidden z-50 overflow-hidden transform origin-top-right transition-all duration-200 scale-95 opacity-0">
+                    <div class="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <h3 class="font-bold text-gray-800 text-sm">Notificações</h3>
+                        <button onclick="markAllRead()"
+                            class="text-xs text-blue-600 hover:text-blue-800 font-medium">Ler todas</button>
+                    </div>
+                    <div id="notification-list" class="max-h-64 overflow-y-auto">
+                        <div class="p-4 text-center text-gray-500 text-xs">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Menu -->
+            <div class="relative">
+                <button onclick="toggleUserMenu()"
+                    class="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors focus:outline-none">
+                    <div class="text-right hidden md:block">
+                        <p class="text-sm font-medium text-gray-900">{{ current_user.name }}</p>
+                        <p class="text-xs text-gray-500">{{ current_user.role|capitalize }}</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 overflow-hidden ring-2 ring-transparent hover:ring-gray-200 transition-all">
+                        {% if current_user.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}"
+                            alt="Profile" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ current_user.name[:2].upper() }}
+                        {% endif %}
+                    </div>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                </button>
+
+                <!-- Dropdown -->
+                <div id="user-menu-dropdown"
+                    class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 transform origin-top-right transition-all">
+                    <!-- Mobile User Info -->
+                    <div class="px-4 py-3 border-b border-gray-50 md:hidden">
+                        <p class="text-sm font-medium text-gray-900">{{ current_user.name }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ current_user.email }}</p>
+                    </div>
+
+                    <a href="{{ url_for('main.profile') }}"
+                        class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-northway-red transition-colors">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                        Meu Perfil
+                    </a>
+
+                    <div class="border-t border-gray-50 my-1"></div>
+
+                    <a href="{{ url_for('auth.logout') }}"
+                        class="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        Sair
+                    </a>
+                </div>
+            </div>
+        </header>
+        {% endif %}
+
+        <!-- Toast Notifications (Flash Messages) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div id="toast-container" class="fixed bottom-6 right-6 z-[70] flex flex-col gap-3 pointer-events-none">
+            {% for category, message in messages %}
+            <div class="toast-message transform transition-all duration-300 translate-y-8 opacity-0 pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl border-l-4 {{ 'bg-white border-northway-red' if 'success' in category else 'bg-red-50 border-red-800' }} min-w-[300px] max-w-sm"
+                role="alert">
+                <div class="{{ 'text-northway-red' if 'success' in category else 'text-red-800' }}">
+                    {% if 'success' in category %}
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                    {% else %}
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-gray-900">{{ "Sucesso" if 'success' in category else "Atenção" }}
+                    </p>
+                    <p class="text-xs text-gray-600 font-medium">{{ message }}</p>
+                </div>
+                <button onclick="this.parentElement.remove()"
+                    class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        <script>
+            // Toast Animation Logic
+            document.addEventListener('DOMContentLoaded', () => {
+                const toasts = document.querySelectorAll('.toast-message');
+                toasts.forEach((toast, index) => {
+                    // Stagger entrance
+                    setTimeout(() => {
+                        toast.classList.remove('translate-y-8', 'opacity-0');
+                    }, index * 100);
+
+                    // Auto dismiss
+                    setTimeout(() => {
+                        toast.classList.add('translate-y-4', 'opacity-0');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 5000 + (index * 1000));
+                });
+            });
+        </script>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+
+
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Notifications Logic
+        document.addEventListener('DOMContentLoaded', function () {
+            // Request permission on load
+            if ("Notification" in window) {
+                if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission();
+                }
+            }
+
+            // User Menu Toggle
+            window.toggleUserMenu = function () {
+                const menu = document.getElementById('user-menu-dropdown');
+                if (menu) {
+                    menu.classList.toggle('hidden');
+                }
+            }
+
+            // Close User Menu when clicking outside
+            document.addEventListener('click', function (event) {
+                const menu = document.getElementById('user-menu-dropdown');
+                const button = event.target.closest('button[onclick="toggleUserMenu()"]');
+
+                if (!button && menu && !menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                }
+            });
+
+            // Check for notification triggers
+            const messages = document.querySelectorAll('#flash-messages > div');
+            messages.forEach(msg => {
+                const category = msg.getAttribute('data-category');
+                const text = msg.querySelector('span').innerText;
+
+                if (category && category.includes('success_notification')) {
+                    if (Notification.permission === "granted") {
+                        new Notification("NorthWay CRM", {
+                            body: text,
+                            icon: "https://via.placeholder.com/128?text=N"
+                        });
+                    }
+                }
+
+                // Auto dismiss
+                setTimeout(() => {
+                    msg.style.opacity = '0';
+                    setTimeout(() => msg.remove(), 500);
+                }, 5000);
+            });
+
+            // Notification Permission Request
+            if (Notification.permission === 'default') {
+                const banner = document.createElement('div');
+                banner.className = "fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl border border-gray-200 z-50 flex flex-col gap-2 max-w-sm";
+                banner.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="p-2 bg-red-50 rounded-full text-northway-red">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm">Ativar Notificações?</h4>
+                            <p class="text-xs text-gray-500 mt-1">Permita que o CRM te avise sobre tarefas importantes.</p>
+                        </div>
+                    </div>
+                    <button id="enable-notifs" class="mt-2 w-full bg-northway-red text-white py-2 rounded text-xs font-bold hover:bg-red-700 transition-colors">
+                        Ativar Notificações
+                    </button>
+                    <button id="dismiss-notifs" class="w-full text-gray-400 py-1 text-[10px] hover:text-gray-600">
+                        Agora não
+                    </button>
+                `;
+                document.body.appendChild(banner);
+                lucide.createIcons();
+
+                document.getElementById('enable-notifs').addEventListener('click', () => {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification("NorthWay CRM", { body: "Notificações ativadas com sucesso!" });
+                            banner.remove();
+                        }
+                    });
+                });
+
+                document.getElementById('dismiss-notifs').addEventListener('click', () => banner.remove());
+            }
+        });
+    </script>
+
+    <script>
+        // Notification System
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+        const notificationBadge = document.getElementById('notification-badge');
+        const notificationList = document.getElementById('notification-list');
+
+        let isDropdownOpen = false;
+
+        function toggleDropdown() {
+            isDropdownOpen = !isDropdownOpen;
+            if (isDropdownOpen) {
+                notificationDropdown.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    notificationDropdown.classList.remove('scale-95', 'opacity-0');
+                    notificationDropdown.classList.add('scale-100', 'opacity-100');
+                });
+                fetchNotifications(); // Refresh on open
+            } else {
+                notificationDropdown.classList.remove('scale-100', 'opacity-100');
+                notificationDropdown.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => notificationDropdown.classList.add('hidden'), 200);
+            }
+        }
+
+        if (notificationBtn) {
+            notificationBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleDropdown();
+            });
+        }
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (isDropdownOpen && !notificationDropdown.contains(e.target) && !notificationBtn.contains(e.target)) {
+                toggleDropdown();
+            }
+        });
+
+        function fetchNotifications() {
+            fetch('/api/notifications')
+                .then(res => res.json())
+                .then(data => {
+                    // Update Badge
+                    if (data.unread_count > 0) {
+                        notificationBadge.classList.remove('hidden');
+                        notificationBadge.innerText = data.unread_count > 9 ? '9+' : data.unread_count;
+                        notificationBadge.className = "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-northway-red text-white text-[10px] font-bold rounded-full border border-white px-1";
+                    } else {
+                        notificationBadge.classList.add('hidden');
+                    }
+
+                    // Render List
+                    if (data.notifications.length === 0) {
+                        notificationList.innerHTML = '<div class="p-6 text-center text-gray-400 text-xs">Nenhuma notificação recente.</div>';
+                    } else {
+                        notificationList.innerHTML = data.notifications.map(n => `
+                            <div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${n.read ? 'opacity-60' : 'bg-blue-50/30'}" onclick="markRead(${n.id})">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h4 class="text-xs font-bold text-gray-800 ${n.read ? '' : 'text-blue-700'}">${n.title}</h4>
+                                    <span class="text-[10px] text-gray-400">${n.created_at}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 leading-relaxed">${n.message || ''}</p>
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(err => console.error("Error fetching notifications:", err));
+        }
+
+        function markRead(id) {
+            fetch(`/api/notifications/${id}/read`, { method: 'POST' })
+                .then(() => {
+                    fetchNotifications();
+                });
+        }
+
+        function markAllRead() {
+            fetch('/api/notifications/read-all', { method: 'POST' })
+                .then(() => {
+                    fetchNotifications();
+                });
+        }
+
+        // Poll every 60s
+        if (notificationBtn) {
+            setInterval(fetchNotifications, 60000);
+            // Initial fetch
+            fetchNotifications();
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
+```

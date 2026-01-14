@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Estratégico | NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            dark: '#0f0f0f',
+                            gray: '#1a1a1a',
+                            light: '#f9fafb'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem 2rem;
+            position: relative;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .slide-dark {
+            background-color: #0f0f0f;
+            color: white;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .slide-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .highlight {
+            color: #fa0102;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-dark {
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+
+        .step-number {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #fa0102;
+            opacity: 0.1;
+            line-height: 1;
+            position: absolute;
+            top: -1rem;
+            left: -1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+
+    <!-- SLIDE 1: CAPA -->
+    <section class="slide slide-dark text-center">
+        <div class="slide-content">
+            <div class="mb-8">
+                <span
+                    class="bg-northway-red/10 text-northway-red border border-northway-red/20 px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase">Relatório
+                    2026</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tight">
+                O Crescimento das Óticas na <br><span class="highlight">Nova Era do Consumo Local</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-400 font-light max-w-3xl mx-auto mb-12">
+                Dados, comportamento do consumidor e oportunidades reais de crescimento para óticas independentes.
+            </p>
+            <div class="flex justify-center gap-8 text-gray-500">
+                <div class="flex flex-col items-center">
+                    <i data-lucide="eye" class="w-6 h-6 mb-2"></i>
+                    <span class="text-xs uppercase tracking-wider">Visão</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <i data-lucide="store" class="w-6 h-6 mb-2"></i>
+                    <span class="text-xs uppercase tracking-wider">Varejo</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <i data-lucide="trending-up" class="w-6 h-6 mb-2"></i>
+                    <span class="text-xs uppercase tracking-wider">Crescimento</span>
+                </div>
+            </div>
+        </div>
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-gray-700">
+            <i data-lucide="chevron-down" class="w-6 h-6"></i>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: CONTEXTO DO MERCADO -->
+    <section class="slide bg-white">
+        <div class="slide-content grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-4xl font-bold mb-8">O que está mudando no mercado de óticas?</h2>
+                <div class="space-y-6">
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="smartphone" class="text-gray-600"></i></div>
+                        <div>
+                            <h3 class="font-bold">Consumidor Digital</h3>
+                            <p class="text-gray-600 text-sm">A decisão de compra começa na tela do celular, dias antes
+                                de entrar na loja.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="thumbs-up" class="text-gray-600"></i></div>
+                        <div>
+                            <h3 class="font-bold">Percepção de Valor</h3>
+                            <p class="text-gray-600 text-sm">Uma presença online fraca diminui a confiança e a percepção
+                                de autoridade da ótica.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="users" class="text-gray-600"></i></div>
+                        <div>
+                            <h3 class="font-bold">Concorrência Aumentada</h3>
+                            <p class="text-gray-600 text-sm">Você compete não só com a ótica da esquina, mas com grandes
+                                e-commerces.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-8 rounded-2xl flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="w-48 h-48 text-gray-200"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: OBJETIVO DA PESQUISA -->
+    <section class="slide slide-dark bg-[#111]">
+        <div class="slide-content text-center">
+            <h2 class="text-3xl font-bold mb-12">Por que realizamos essa pesquisa?</h2>
+            <div class="grid md:grid-cols-3 gap-6 text-left">
+                <div
+                    class="p-6 card-dark rounded-xl relative overflow-hidden group hover:border-northway-red transition-colors">
+                    <div class="step-number">1</div>
+                    <h3 class="text-lg font-bold mb-2 relative z-10 pt-4">Atração</h3>
+                    <p class="text-gray-400 text-sm relative z-10">Entender como as óticas estão atraindo novos clientes
+                        hoje.</p>
+                </div>
+                <div
+                    class="p-6 card-dark rounded-xl relative overflow-hidden group hover:border-northway-red transition-colors">
+                    <div class="step-number">2</div>
+                    <h3 class="text-lg font-bold mb-2 relative z-10 pt-4">Posicionamento</h3>
+                    <p class="text-gray-400 text-sm relative z-10">Mapear a maturidade digital e o posicionamento da
+                        marca.</p>
+                </div>
+                <div
+                    class="p-6 card-dark rounded-xl relative overflow-hidden group hover:border-northway-red transition-colors">
+                    <div class="step-number">3</div>
+                    <h3 class="text-lg font-bold mb-2 relative z-10 pt-4">Gargalos</h3>
+                    <p class="text-gray-400 text-sm relative z-10">Identificar onde estão as perdas invisíveis de
+                        faturamento.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: PERFIL DOS RESPONDENTES -->
+    <section class="slide bg-white">
+        <div class="slide-content">
+            <div class="flex flex-col md:flex-row gap-12 items-center">
+                <div class="flex-1">
+                    <h2 class="text-4xl font-bold mb-6">Quem participou da pesquisa?</h2>
+                    <p class="text-gray-600 mb-8 text-lg">Ouvimos os principais players do seu segmento para garantir
+                        dados precisos e relevantes.</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-center gap-3 font-semibold text-gray-800">
+                            <i data-lucide="check-circle" class="text-northway-red w-5 h-5"></i> Donos e Gestores de
+                            Óticas
+                        </li>
+                        <li class="flex items-center gap-3 font-semibold text-gray-800">
+                            <i data-lucide="check-circle" class="text-northway-red w-5 h-5"></i> Pequenas e Médias
+                            Empresas
+                        </li>
+                        <li class="flex items-center gap-3 font-semibold text-gray-800">
+                            <i data-lucide="check-circle" class="text-northway-red w-5 h-5"></i> Foco em Varejo Físico
+                            com Apoio Digital
+                        </li>
+                    </ul>
+                </div>
+                <div class="w-full md:w-1/3 bg-gray-100 rounded-2xl p-8 text-center">
+                    <div class="text-6xl font-black text-gray-300 mb-4">100%</div>
+                    <p class="font-bold text-gray-700">Do setor óptico</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: DESCOBERTA 1 -->
+    <section class="slide bg-red-50 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-red-100 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="slide-content relative z-10">
+            <span class="text-northway-red font-bold tracking-widest uppercase text-sm mb-2 block">Principal Descoberta
+                #1</span>
+            <h2 class="text-4xl md:text-5xl font-bold mb-8 text-gray-900">A Dependência da <br> <span
+                    class="text-northway-red">Indicação</span></h2>
+
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <p class="text-lg text-gray-700 mb-6 font-medium">A maioria das óticas relatou que seus clientes vêm
+                        quase exclusivamente de indicações ou movimento de rua.</p>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-northway-red">
+                        <h4 class="font-bold mb-2 flex items-center gap-2 text-red-700"><i data-lucide="alert-triangle"
+                                class="w-4 h-4"></i> O Risco</h4>
+                        <p class="text-gray-600 text-sm">Indicação é ótima, mas não é controlável. Você não consegue
+                            "aumentar o volume" das indicações quando precisa bater meta.</p>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow-sm flex items-center gap-3 opacity-50">
+                        <i data-lucide="bar-chart" class="text-gray-400"></i>
+                        <span class="text-gray-500">Pouca previsibilidade de vendas</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm flex items-center gap-3 opacity-75">
+                        <i data-lucide="trending-flat" class="text-gray-500"></i>
+                        <span class="text-gray-600">Crescimento lento ou instável</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm flex items-center gap-3 border border-red-200">
+                        <i data-lucide="x-circle" class="text-northway-red"></i>
+                        <span class="text-red-700 font-bold">Sem controle de novos clientes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: DESCOBERTA 2 -->
+    <section class="slide bg-white">
+        <div class="slide-content">
+            <span class="text-gray-500 font-bold tracking-widest uppercase text-sm mb-2 block">Principal Descoberta
+                #2</span>
+            <h2 class="text-4xl font-bold mb-12">Presença Digital <span class="text-gray-300">≠</span> <span
+                    class="text-northway-red">Estratégia Digital</span></h2>
+
+            <div class="grid md:grid-cols-3 gap-8 text-center">
+                <div class="p-6">
+                    <div
+                        class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                        <i data-lucide="image" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Postar por Postar</h3>
+                    <p class="text-gray-500 text-sm">Conteúdo sem objetivo claro, apenas para "cumprir tabela".</p>
+                </div>
+                <div class="p-6 border-x border-gray-100">
+                    <div
+                        class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-northway-red">
+                        <i data-lucide="filter-x" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 text-northway-red">Sem Leads</h3>
+                    <p class="text-gray-600 text-sm font-medium">Muitos seguidores, poucas conversas de vendas
+                        iniciadas.</p>
+                </div>
+                <div class="p-6">
+                    <div
+                        class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                        <i data-lucide="help-circle" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Sem Métricas</h3>
+                    <p class="text-gray-500 text-sm">"Não sei quanto o Instagram me traz de retorno real."</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: DESCOBERTA 3 -->
+    <section class="slide bg-gray-50">
+        <div class="slide-content grid md:grid-cols-5 gap-12 items-center">
+            <div class="md:col-span-2">
+                <span class="text-gray-500 font-bold tracking-widest uppercase text-sm mb-2 block">Principal Descoberta
+                    #3</span>
+                <h2 class="text-4xl font-bold mb-6">Falta de Processo Comercial</h2>
+                <p class="text-lg text-gray-600">A venda depende quase 100% do talento do vendedor e da memória dele,
+                    não de um sistema organizado.</p>
+            </div>
+            <div class="md:col-span-3 space-y-4">
+                <div class="bg-white p-5 rounded-lg border-l-4 border-gray-300 shadow-sm">
+                    <p class="font-semibold text-gray-800">"O cliente pede orçamento e some."</p>
+                    <p class="text-xs text-gray-400 mt-1 uppercase tracking-wide">Sintoma: Falta de Follow-up
+                        estruturado</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg border-l-4 border-gray-300 shadow-sm">
+                    <p class="font-semibold text-gray-800">"Cada vendedor atende de um jeito."</p>
+                    <p class="text-xs text-gray-400 mt-1 uppercase tracking-wide">Sintoma: Falta de Script e Padrão</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg border-l-4 border-gray-300 shadow-sm">
+                    <p class="font-semibold text-gray-800">"Não sei quantos orçamentos estão em aberto."</p>
+                    <p class="text-xs text-gray-400 mt-1 uppercase tracking-wide">Sintoma: Sem visão de funil (CRM)</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: O CUSTO DA INÉRCIA (AGRESSIVO) -->
+    <section class="slide slide-dark bg-[#0f0f0f] text-center">
+        <div class="slide-content">
+            <span class="text-northway-red font-bold tracking-widest uppercase text-sm mb-4 block">A conta que ninguém
+                faz</span>
+            <h2 class="text-4xl md:text-6xl font-black mb-12 text-white">Quanto custa <span
+                    class="text-northway-red">ignorar isso?</span></h2>
+
+            <div
+                class="max-w-4xl mx-auto bg-[#1a1a1a] rounded-3xl p-8 md:p-12 border border-gray-800 shadow-2xl relative overflow-hidden">
+                <div
+                    class="absolute top-0 right-0 w-64 h-64 bg-northway-red rounded-full filter blur-[100px] opacity-10">
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-8 items-center relative z-10">
+                    <!-- Stat 1 -->
+                    <div class="text-center">
+                        <p class="text-gray-500 text-sm font-bold uppercase mb-2">Vendas Perdidas</p>
+                        <p class="text-4xl font-black text-white">10<span
+                                class="text-lg text-gray-500 font-normal">/mês</span></p>
+                        <p class="text-xs text-gray-400 mt-2">(Estimativa Conservadora)</p>
+                    </div>
+
+                    <!-- Operator -->
+                    <div class="text-2xl font-bold text-gray-600">x</div>
+
+                    <!-- Stat 2 -->
+                    <div class="text-center">
+                        <p class="text-gray-500 text-sm font-bold uppercase mb-2">Ticket Médio</p>
+                        <p class="text-4xl font-black text-white">R$ 1.000</p>
+                        <p class="text-xs text-gray-400 mt-2">(Grau Completo)</p>
+                    </div>
+                </div>
+
+                <div class="my-8 h-px bg-gray-800 w-full"></div>
+
+                <div class="text-center">
+                    <p class="text-gray-400 text-lg mb-4">Dinheiro deixado na mesa todo ano:</p>
+                    <div
+                        class="inline-block bg-northway-red text-white px-8 py-4 rounded-xl transform hover:scale-105 transition-transform shadow-lg shadow-red-900/50">
+                        <p class="text-5xl md:text-7xl font-black tracking-tighter">R$ 120.000,00</p>
+                    </div>
+                    <p class="text-red-400 font-bold mt-6 text-sm uppercase tracking-widest animate-pulse">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 inline mb-1"></i> Isso sai do seu lucro líquido
+                    </p>
+                </div>
+            </div>
+
+            <p class="mt-12 text-gray-500 text-lg max-w-2xl mx-auto">
+                Esse é o preço de não ter um sistema de vendas. <br>
+                <strong class="text-white">Você não está economizando com marketing. Você está pagando para não
+                    vender.</strong>
+            </p>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: OPORTUNIDADE -->
+    <section class="slide bg-white">
+        <div class="slide-content text-left">
+            <div class="flex items-center gap-4 mb-6">
+                <span class="w-12 h-1 bg-northway-red block"></span>
+                <span class="uppercase tracking-widest font-bold text-gray-400 text-sm">O Cenário Futuro</span>
+            </div>
+            <h2 class="text-4xl font-bold mb-12">A oportunidade para quem se organizar <span
+                    class="bg-yellow-100 px-2">agora</span></h2>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Card 1 -->
+                <div class="group p-6 border rounded-xl hover:shadow-xl transition-all hover:-translate-y-1 bg-white">
+                    <div
+                        class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4 text-northway-red group-hover:bg-northway-red group-hover:text-white transition-colors">
+                        <i data-lucide="layers"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Estruturar</h3>
+                    <p class="text-sm text-gray-500">Unir marketing e vendas em um único fluxo contínuo.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="group p-6 border rounded-xl hover:shadow-xl transition-all hover:-translate-y-1 bg-white">
+                    <div
+                        class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4 text-northway-red group-hover:bg-northway-red group-hover:text-white transition-colors">
+                        <i data-lucide="calendar"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Prever</h3>
+                    <p class="text-sm text-gray-500">Saber quanto vai entrar no caixa antes do mês acabar.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="group p-6 border rounded-xl hover:shadow-xl transition-all hover:-translate-y-1 bg-white">
+                    <div
+                        class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4 text-northway-red group-hover:bg-northway-red group-hover:text-white transition-colors">
+                        <i data-lucide="heart"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Encantar</h3>
+                    <p class="text-sm text-gray-500">Melhorar a experiência do cliente com atendimento ágil.</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="group p-6 border rounded-xl hover:shadow-xl transition-all hover:-translate-y-1 bg-white">
+                    <div
+                        class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4 text-northway-red group-hover:bg-northway-red group-hover:text-white transition-colors">
+                        <i data-lucide="award"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Diferenciar</h3>
+                    <p class="text-sm text-gray-500">Sair da briga por preço e ganhar na autoridade.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: NOSSA ABORDAGEM -->
+    <section class="slide bg-gray-50">
+        <div class="slide-content text-center">
+            <h2 class="text-3xl font-bold mb-12">Como ajudamos óticas a crescer com clareza</h2>
+            <div class="relative flex flex-col md:flex-row justify-center items-center gap-8">
+                <!-- Line -->
+                <div class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10"></div>
+
+                <!-- Step 1 -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 max-w-xs w-full">
+                    <div
+                        class="w-12 h-12 bg-northway-red text-white flex items-center justify-center rounded-full text-xl font-bold mx-auto mb-4 shadow-lg shadow-red-200">
+                        1</div>
+                    <h3 class="font-bold text-xl mb-2">Diagnóstico</h3>
+                    <p class="text-sm text-gray-500">Entendemos profundamente seus números e gargalos atuais.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 max-w-xs w-full">
+                    <div
+                        class="w-12 h-12 bg-northway-red text-white flex items-center justify-center rounded-full text-xl font-bold mx-auto mb-4 shadow-lg shadow-red-200">
+                        2</div>
+                    <h3 class="font-bold text-xl mb-2">Processos</h3>
+                    <p class="text-sm text-gray-500">Organizamos a casa: atendimento, scripts e ferramentas.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 max-w-xs w-full">
+                    <div
+                        class="w-12 h-12 bg-northway-red text-white flex items-center justify-center rounded-full text-xl font-bold mx-auto mb-4 shadow-lg shadow-red-200">
+                        3</div>
+                    <h3 class="font-bold text-xl mb-2">Inteligência</h3>
+                    <p class="text-sm text-gray-500">Usamos dados para tomar decisões de marketing mais inteligentes.
+                    </p>
+                </div>
+            </div>
+            <p class="mt-12 text-gray-500 text-sm italic">Sem falar em produto ainda — foco total em método e visão
+                estratégica.</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 11: CONVITE -->
+    <section class="slide bg-white">
+        <div class="slide-content grid md:grid-cols-2 gap-12 items-center">
+            <div class="order-2 md:order-1">
+                <div class="bg-gray-100 rounded-3xl p-8 transform rotate-2">
+                    <h3 class="font-bold text-xl mb-4 text-gray-800">O que analisamos na sessão?</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-center gap-3 text-gray-600 bg-white p-3 rounded-lg shadow-sm"><i
+                                data-lucide="check" class="text-green-500 text-sm"></i> Seu marketing atual</li>
+                        <li class="flex items-center gap-3 text-gray-600 bg-white p-3 rounded-lg shadow-sm"><i
+                                data-lucide="check" class="text-green-500 text-sm"></i> Seu processo de vendas</li>
+                        <li class="flex items-center gap-3 text-gray-600 bg-white p-3 rounded-lg shadow-sm"><i
+                                data-lucide="check" class="text-green-500 text-sm"></i> Suas oportunidades de ganho
+                            rápido</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="order-1 md:order-2">
+                <span class="text-northway-red font-bold tracking-widest uppercase text-sm mb-2 block">Dê o próximo
+                    passo</span>
+                <h2 class="text-4xl font-bold mb-6">Quer entender como isso se aplica à sua ótica?</h2>
+                <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                    Estamos oferecendo uma <strong class="text-gray-900">reunião estratégica gratuita</strong>. <br><br>
+                    Sem compromisso. <br>
+                    Sem venda agressiva. <br>
+                    Apenas um diagnóstico real do seu momento.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 12: PITCH FINAL / CTA -->
+    <section class="slide slide-dark bg-[#0f0f0f] text-center">
+        <div class="slide-content">
+            <h2 class="text-2xl font-bold uppercase tracking-[0.2em] text-gray-500 mb-8">Próximo Passo</h2>
+
+            <a href="https://wa.me/seunumerodosuporte"
+                class="group relative inline-flex items-center justify-center gap-4 bg-northway-red text-white px-12 py-6 rounded-full text-xl font-bold hover:bg-red-700 transition-all shadow-2xl hover:scale-105 hover:shadow-red-900/50">
+                <span
+                    class="absolute inset-0 w-full h-full rounded-full border border-white opacity-20 animate-ping"></span>
+                Agendar Reunião de Diagnóstico
+                <i data-lucide="arrow-right" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></i>
+            </a>
+
+            <p class="mt-8 text-gray-400 text-lg">Descubra onde sua ótica pode crescer <br> nos próximos meses.</p>
+
+            <div
+                class="mt-16 pt-16 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center text-gray-600 text-sm">
+                <p>&copy; 2026 NorthWay Consultoria. Todos os direitos reservados.</p>
+                <div class="flex gap-6 mt-4 md:mt-0">
+                    <a href="#" class="hover:text-white transition-colors">Contato</a>
+                    <a href="#" class="hover:text-white transition-colors">WhatsApp</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

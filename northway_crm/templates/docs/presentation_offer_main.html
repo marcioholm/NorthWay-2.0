@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>North Estratégico 360º - Apresentação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;family=Montserrat:wght@400;600;700;800;900&amp;display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* 16:9 Aspect Ratio Container Logic */
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            background-color: #050505;
+        }
+
+        .slide {
+            scroll-snap-align: start;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #050505;
+            color: white;
+            padding: 0;
+        }
+
+        /* Subtle Abstract Backgrounds */
+        .bg-pattern-chaos {
+            background-image: radial-gradient(circle at 20% 80%, rgba(255, 0, 0, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 40%);
+        }
+
+        .bg-pattern-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Missing Utilities */
+        .stack-bg {
+            background: radial-gradient(circle at center, #1a0505 0%, #050505 70%);
+        }
+
+        .mask-radial {
+            -webkit-mask-image: radial-gradient(circle, black 30%, transparent 70%);
+            mask-image: radial-gradient(circle, black 30%, transparent 70%);
+        }
+
+        .animate-spin-slow {
+            animation: spin 10s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media print {
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+
+            body {
+                background-color: #050505 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                margin: 0;
+                padding: 0;
+            }
+
+            .slide-container {
+                overflow: visible !important;
+                height: auto !important;
+                display: block !important;
+            }
+
+
+
+            /* Invert white logos */
+        }
+    </style>
+</head>
+
+<body class="bg-black text-white font-sans selection:bg-[#fa0102]">
+
+    <!-- Controls -->
+    <div id="controls" class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference">
+        <a href="{{ url_for('docs.library') }}"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Voltar
+        </a>
+        <button id="printBtn"
+            class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors">
+            Baixar PDF
+        </button>
+    </div>
+
+    <div class="slide-container">
+
+        <!-- Slide 1: Abertura -->
+        <section class="slide bg-pattern-grid">
+            <div
+                class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-red-900/20 via-black to-black opacity-50">
+            </div>
+            <div class="relative z-10 text-center max-w-5xl">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo North"
+                    class="h-16 w-auto mx-auto mb-12 opacity-90">
+                <div class="h-1 w-24 bg-[#fa0102] mx-auto mb-12"></div>
+                <h1 class="text-7xl font-black font-display tracking-tighter mb-8 leading-tight">
+                    North Assessoria<br>de Marketing
+                </h1>
+                <p class="text-2xl text-gray-400 font-light tracking-wide">
+                    Crescimento não é imediatismo. <span class="text-white font-medium">É direção estratégica.</span>
+                </p>
+                <!-- Visual Element: Compass/Direction -->
+                <div class="mt-16 flex justify-center">
+                    <img src="{{ url_for('static', filename='images/north_compass.png') }}" alt="Bússola North"
+                        class="w-24 h-24 object-contain opacity-80 drop-shadow-[0_0_15px_rgba(250,1,2,0.3)]">
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 2: O Problema -->
+        <section class="slide relative">
+            <!-- Background chaos abstract -->
+            <div class="absolute inset-0 overflow-hidden opacity-20">
+                <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-gray-800 rounded-full blur-[100px]"></div>
+                <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-red-900/30 rounded-full blur-[80px]"></div>
+            </div>
+
+            <div class="relative z-10 max-w-6xl grid grid-cols-2 gap-16 items-center px-12">
+                <div>
+                    <div
+                        class="inline-flex items-center gap-2 text-[#fa0102] border border-[#fa0102]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
+                        <i data-lucide="alert-triangle" class="w-3 h-3" aria-hidden="true"></i> O Cenário Atual
+                    </div>
+                    <h2 class="text-5xl font-black font-display leading-tight mb-8">
+                        A maioria das empresas faz marketing.<br>
+                        <span class="text-gray-500">Poucas crescem com estratégia.</span>
+                    </h2>
+                    <p class="text-xl text-gray-400 leading-relaxed border-l-2 border-gray-800 pl-6">
+                        O mercado está cheio de ruído. Postar por postar, gastar sem medir, agir sem planejar.<br>
+                        O resultado? Esforço máximo, retorno mínimo.
+                    </p>
+                </div>
+                <!-- Visual: Chaos/Confusion vs Strategy -->
+                <div class="relative h-64 w-full rounded-2xl overflow-hidden border border-gray-800">
+                    <img src="{{ url_for('static', filename='images/north_meeting.png') }}" alt="Reunião de Marketing"
+                        class="absolute inset-0 w-full h-full object-cover opacity-60 grayscale mix-blend-overlay">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                    <!-- Overlay Chaos Chart -->
+                    <div class="absolute bottom-4 left-4 right-4 grid grid-cols-4 gap-2 h-1/2 items-end opacity-50">
+                        <div class="bg-red-900/40 w-full h-[30%] rounded-t"></div>
+                        <div class="bg-gray-800 w-full h-[70%] rounded-t"></div>
+                        <div class="bg-red-900/40 w-full h-[40%] rounded-t"></div>
+                        <div class="bg-gray-800 w-full h-[60%] rounded-t"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: Visão North -->
+        <section class="slide bg-black">
+            <div class="max-w-4xl text-center px-6">
+                <i data-lucide="mountain-snow" class="w-12 h-12 text-white mx-auto mb-8" aria-hidden="true"></i>
+                <h2 class="text-4xl font-display font-bold mb-12">
+                    "Marketing sem direção é custo.<br>
+                    Marketing com direção é <span class="text-[#fa0102]">investimento.</span>"
+                </h2>
+                <div class="grid grid-cols-3 gap-8 text-left">
+                    <div class="glass-panel p-6 rounded-xl">
+                        <strong class="block text-white mb-2 text-lg">Direção</strong>
+                        <p class="text-sm text-gray-400">Sabemos exatamente para onde estamos indo. Sem achismos.</p>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl border-t-4 border-t-[#fa0102]">
+                        <strong class="block text-white mb-2 text-lg">Construção</strong>
+                        <p class="text-sm text-gray-400">Resultados sólidos não acontecem da noite para o dia.</p>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl">
+                        <strong class="block text-white mb-2 text-lg">Responsabilidade</strong>
+                        <p class="text-sm text-gray-400">Tratamos o seu investimento como se fosse nosso.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: O Que É (Intro 360) -->
+        <section class="slide bg-[#0a0a0a]">
+            <div class="absolute left-0 top-0 bottom-0 w-1/3 bg-[#fa0102] opacity-[0.03]"></div>
+
+            <div class="relative z-10 flex gap-20 max-w-7xl mx-auto px-12 items-center">
+                <div class="w-1/2">
+                    <span class="text-[#fa0102] font-bold tracking-[0.3em] text-sm uppercase block mb-4">A
+                        Solução</span>
+                    <h1 class="text-6xl font-black font-display mb-8">North Estratégico <span
+                            class="text-[#fa0102]">360º</span></h1>
+                    <p class="text-2xl text-white font-medium mb-4">Seu setor de marketing estruturado.</p>
+                    <p class="text-lg text-gray-400 leading-relaxed">
+                        Não entregamos peças soltas. Entregamos uma engrenagem completa que conecta estratégia,
+                        tecnologia, mídia e conteúdo.
+                    </p>
+                </div>
+                <div class="w-1/2 relative">
+                    <!-- Visual: Connected Gears/Circle -->
+                    <div
+                        class="w-96 h-96 rounded-full border border-gray-800 flex items-center justify-center relative bg-black">
+                        <img src="{{ url_for('static', filename='images/north_structure.png') }}" alt="Estrutura 360"
+                            class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen mask-radial">
+                        <div
+                            class="absolute inset-0 rounded-full border border-[#fa0102]/20 animate-spin-slow [animation-duration:20s]">
+                        </div>
+                        <div class="absolute inset-8 rounded-full border border-gray-800"></div>
+                        <i data-lucide="layers" class="w-16 h-16 text-white" aria-hidden="true"></i>
+                        <!-- Orbital Icons -->
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0a0a0a] p-2"><i
+                                data-lucide="map" class="w-6 h-6 text-gray-400" aria-hidden="true"></i></div>
+                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-[#0a0a0a] p-2"><i
+                                data-lucide="bar-chart-2" class="w-6 h-6 text-gray-400" aria-hidden="true"></i></div>
+                        <div class="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0a0a0a] p-2"><i
+                                data-lucide="monitor" class="w-6 h-6 text-gray-400" aria-hidden="true"></i></div>
+                        <div class="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 bg-[#0a0a0a] p-2"><i
+                                data-lucide="share-2" class="w-6 h-6 text-gray-400" aria-hidden="true"></i></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Pilar 1 - Estratégia -->
+        <section class="slide">
+            <div class="max-w-5xl w-full grid grid-cols-2 gap-16 items-center">
+                <div class="order-2">
+                    <div class="text-9xl font-black text-[#1a1a1a] absolute -mt-20 -ml-10 -z-10 select-none">01</div>
+                    <h2 class="text-4xl font-bold font-display mb-6">Estratégia e Direção</h2>
+                    <ul class="space-y-6 text-lg text-gray-300">
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Diagnóstico
+                            de
+                            mercado
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Planejamento
+                            estratégico
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Definição de
+                            Metas e KPIs
+                        </li>
+                    </ul>
+                </div>
+                <div class="order-1 flex justify-center">
+                    <!-- Conceptual Image: Map/Analysis -->
+                    <div
+                        class="bg-gray-900 w-full aspect-square rounded-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden group">
+                        <img src="{{ url_for('static', filename='images/north_compass.png') }}" alt="Estratégia North"
+                            class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-105 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Pilar 2 - Estrutura Digital -->
+        <section class="slide bg-[#080808]">
+            <div class="max-w-5xl w-full grid grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="text-9xl font-black text-[#1a1a1a] absolute -mt-20 -ml-10 -z-10 select-none">02</div>
+                    <h2 class="text-4xl font-bold font-display mb-6">Estrutura Digital</h2>
+                    <ul class="space-y-6 text-lg text-gray-300">
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i>
+                            Criação/Otimização de Site
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Google Meu
+                            Negócio Pro
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Implementação
+                            de
+                            CRM
+                        </li>
+                    </ul>
+                </div>
+                <div class="flex justify-center">
+                    <div
+                        class="bg-gray-900 w-full aspect-video rounded-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden">
+                        <img src="{{ url_for('static', filename='images/north_structure.png') }}"
+                            alt="Estrutura Digital" class="absolute inset-0 w-full h-full object-cover opacity-60">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Pilar 3 - Aquisição -->
+        <section class="slide">
+            <div class="max-w-5xl w-full grid grid-cols-2 gap-16 items-center">
+                <div class="order-2">
+                    <div class="text-9xl font-black text-[#1a1a1a] absolute -mt-20 -ml-10 -z-10 select-none">03</div>
+                    <h2 class="text-4xl font-bold font-display mb-6">Aquisição e Tráfego</h2>
+                    <p class="text-gray-400 mb-6">Não gastamos seu dinheiro. Compramos dados e resultados.</p>
+                    <ul class="space-y-6 text-lg text-gray-300">
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Google Ads
+                            (Intenção)
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Meta Ads
+                            (Atenção)
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Relatórios
+                            Orientados a Dados
+                        </li>
+                    </ul>
+                </div>
+                <div class="order-1 flex justify-center">
+                    <div
+                        class="bg-gray-900 w-full aspect-square rounded-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden">
+                        <img src="{{ url_for('static', filename='images/north_growth.png') }}"
+                            alt="Crescimento e Tráfego" class="absolute inset-0 w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Pilar 4 - Conteúdo -->
+        <section class="slide bg-[#080808]">
+            <div class="max-w-5xl w-full grid grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="text-9xl font-black text-[#1a1a1a] absolute -mt-20 -ml-10 -z-10 select-none">04</div>
+                    <h2 class="text-4xl font-bold font-display mb-6">Conteúdo e Marca</h2>
+                    <ul class="space-y-6 text-lg text-gray-300">
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Gestão de
+                            Redes
+                            Sociais
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Design
+                            Estratégico
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Branding e
+                            Posicionamento
+                        </li>
+                    </ul>
+                </div>
+                <div class="flex justify-center">
+                    <div
+                        class="bg-gray-900 w-full aspect-square rounded-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden">
+                        <img src="{{ url_for('static', filename='images/north_meeting.png') }}" alt="Conteúdo e Design"
+                            class="absolute inset-0 w-full h-full object-cover opacity-70">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 9: Pilar 5 - Expansão -->
+        <section class="slide">
+            <div class="max-w-5xl w-full grid grid-cols-2 gap-16 items-center">
+                <div class="order-2">
+                    <div class="text-9xl font-black text-[#1a1a1a] absolute -mt-20 -ml-10 -z-10 select-none">05</div>
+                    <h2 class="text-4xl font-bold font-display mb-6">Crescimento e Expansão</h2>
+                    <ul class="space-y-6 text-lg text-gray-300">
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Planejamento
+                            de
+                            Sazonalidade
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Suporte a
+                            Eventos
+                        </li>
+                        <li class="flex items-center gap-4">
+                            <i data-lucide="check-circle-2" class="text-[#fa0102]" aria-hidden="true"></i> Ações de
+                            Ativação
+                            de Marca
+                        </li>
+                    </ul>
+                </div>
+                <div class="order-1 flex justify-center">
+                    <div
+                        class="bg-gray-900 w-full aspect-video rounded-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden">
+                        <img src="{{ url_for('static', filename='images/north_growth.png') }}" alt="Expansão Global"
+                            class="absolute inset-0 w-full h-full object-cover opacity-80 hue-rotate-15">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 10: Comparativo -->
+        <section class="slide bg-black">
+            <div class="max-w-6xl w-full mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-16">Eficiência de Investimento</h2>
+
+                <div class="grid grid-cols-2 gap-8">
+                    <!-- Time Interno -->
+                    <div class="p-8 rounded-3xl border border-gray-800 bg-[#0a0a0a] opacity-50">
+                        <h3 class="text-xl text-gray-500 font-bold mb-6 uppercase tracking-wider">Time Interno (Média)
+                        </h3>
+                        <div class="space-y-4 text-gray-600 mb-8 border-b border-gray-800 pb-8">
+                            <div class="flex justify-between"><span>Gestor de Tráfego</span> <span>R$ 4.000</span></div>
+                            <div class="flex justify-between"><span>Social Media</span> <span>R$ 3.500</span></div>
+                            <div class="flex justify-between"><span>Designer</span> <span>R$ 3.500</span></div>
+                            <div class="flex justify-between"><span>Diretor de Marketing</span> <span>R$ 8.000</span>
+                            </div>
+                            <div class="flex justify-between text-xs pt-2"><span>+ Encargos, Softwares,
+                                    Equipamento</span></div>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-sm text-gray-500">Custo Anual Estimado</span>
+                            <span class="text-4xl font-bold text-gray-400">R$ 246.000</span>
+                        </div>
+                    </div>
+
+                    <!-- North -->
+                    <div class="p-8 rounded-3xl border border-[#fa0102] bg-[#0f0f0f] relative overflow-hidden">
+                        <div
+                            class="absolute top-0 right-0 bg-[#fa0102] text-white text-[10px] font-bold px-3 py-1 uppercase">
+                            Mais Inteligente</div>
+                        <h3 class="text-xl text-white font-bold mb-6 uppercase tracking-wider">North Estratégico 360º
+                        </h3>
+                        <div class="space-y-4 text-gray-300 mb-8 border-b border-gray-800 pb-8">
+                            <div class="flex justify-between items-center"><span class="flex items-center gap-2"><i
+                                        data-lucide="check" class="w-4 h-4 text-[#fa0102]" aria-hidden="true"></i> Time
+                                    Completo</span>
+                                <span class="bg-gray-800 text-[10px] px-2 py-1 rounded">Incluso</span>
+                            </div>
+                            <div class="flex justify-between items-center"><span class="flex items-center gap-2"><i
+                                        data-lucide="check" class="w-4 h-4 text-[#fa0102]" aria-hidden="true"></i>
+                                    Ferramentas Pro</span>
+                                <span class="bg-gray-800 text-[10px] px-2 py-1 rounded">Incluso</span>
+                            </div>
+                            <div class="flex justify-between items-center"><span class="flex items-center gap-2"><i
+                                        data-lucide="check" class="w-4 h-4 text-[#fa0102]" aria-hidden="true"></i>
+                                    Estratégia Sênior</span>
+                                <span class="bg-gray-800 text-[10px] px-2 py-1 rounded">Incluso</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-sm text-gray-400">Investimento Anual</span>
+                            <span class="text-5xl font-black text-white">R$ 30.000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 11: Investimento -->
+        <section class="slide stack-bg">
+            <div class="text-center max-w-3xl">
+                <i data-lucide="lock" class="w-8 h-8 text-[#fa0102] mx-auto mb-6" aria-hidden="true"></i>
+                <h2 class="text-sm font-bold uppercase tracking-[0.3em] text-gray-500 mb-8">Proposta Especial</h2>
+
+                <h1 class="text-8xl font-black font-display text-white mb-4">R$ 2.799</h1>
+                <span class="text-xl text-gray-400 block mb-12">/mês (Contrato Anual)</span>
+
+                <div
+                    class="grid grid-cols-2 gap-4 text-left max-w-lg mx-auto bg-[#111] p-6 rounded-2xl border border-gray-800">
+                    <div>
+                        <span class="block text-xs uppercase text-gray-500">Valor à Vista</span>
+                        <span class="text-lg font-bold text-white">R$ 30.000</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-xs uppercase text-gray-500">Economia Real</span>
+                        <span class="text-lg font-bold text-green-500">-88% vs Interno</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 12: Fechamento -->
+        <section class="slide bg-black">
+            <div class="max-w-4xl text-center">
+                <h1 class="text-4xl font-light italic leading-relaxed text-gray-300 mb-12">
+                    "A North acredita que crescer é uma responsabilidade.<br>
+                    E toda responsabilidade exige <span class="text-white font-bold not-italic">direção.</span>"
+                </h1>
+
+                <div class="w-24 h-px bg-gradient-to-r from-transparent via-[#fa0102] to-transparent mx-auto mb-12">
+                </div>
+
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo North"
+                    class="h-12 w-auto mx-auto opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const printBtn = document.getElementById('printBtn');
+            if (printBtn) {
+                printBtn.addEventListener('click', () => window.print());
+            }
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+
+</html>

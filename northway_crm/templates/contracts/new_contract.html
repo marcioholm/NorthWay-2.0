@@ -1,0 +1,885 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-100 overflow-hidden">
+    <!-- Left Sidebar: Configuration (Scrollable) -->
+    <div class="w-[450px] bg-white border-r border-gray-200 flex flex-col h-full shadow-xl z-20">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100 flex items-center gap-4 bg-white sticky top-0 z-10">
+            <a href="{{ url_for('main.client_details', id=client.id) }}"
+                class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-northway-red hover:bg-red-50 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            </a>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900 tracking-tight">Emitir Contrato</h1>
+                <p class="text-xs text-gray-400 font-medium">Cliente: {{ client.name }}</p>
+            </div>
+        </div>
+
+        <!-- Form Content -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            <form id="contractForm" action="{{ url_for('main.create_contract', id=client.id) }}" method="POST">
+
+                <!-- 1. Configuration Group -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-northway-red"></span> Configuração
+                    </h3>
+
+                    <div class="relative">
+                        <label for="templateSelect"
+                            class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red uppercase tracking-wider">Modelo</label>
+                        <select id="templateSelect" name="template_id" required
+                            class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all appearance-none bg-white">
+                            <option value="" disabled selected>Selecione um modelo...</option>
+                            {% for template in templates %}
+                            <option value="{{ template.id }}">{{ template.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <i data-lucide="chevron-down"
+                            class="absolute right-4 top-3.5 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                    </div>
+
+                    <div class="relative">
+                        <label for="attachmentSelect"
+                            class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Anexo
+                            (Opcional)</label>
+                        <select id="attachmentSelect" name="attachment_id"
+                            class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all appearance-none bg-white font-medium text-gray-600">
+                            <option value="">Sem anexo</option>
+                            {% for att in attachments %}
+                            <option value="{{ att.id }}">{{ att.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <i data-lucide="paperclip"
+                            class="absolute right-4 top-3.5 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100 my-6">
+
+                <!-- 2. Financials -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Financeiro
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <div class="relative group">
+                                <label for="valor_total"
+                                    class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Valor
+                                    Total</label>
+                                <input type="text" id="valor_total" name="valor_total" placeholder="0,00"
+                                    class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono font-medium">
+                            </div>
+                        </div>
+
+                        <div class="relative group">
+                            <label for="valor_implantacao"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Implantação</label>
+                            <input type="text" id="valor_implantacao" name="valor_implantacao" placeholder="0,00"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
+                        </div>
+                        <div class="relative group">
+                            <label for="valor_parcela"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Parcela</label>
+                            <input type="text" id="valor_parcela" name="valor_parcela" placeholder="0,00"
+                                value="{{ client.monthly_value }}"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono bg-gray-50/50">
+                        </div>
+
+                        <div class="relative group">
+                            <label for="qtd_parcelas"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Qtd
+                                Parcelas</label>
+                            <input type="number" id="qtd_parcelas" name="qtd_parcelas" value="12"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
+                        </div>
+                        <div class="relative group">
+                            <label for="dia_vencimento"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Dia
+                                Venc.</label>
+                            <input type="number" id="dia_vencimento" name="dia_vencimento" value="5"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
+                        </div>
+
+                        <div class="relative group">
+                            <label for="valor_minimo_trafego"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Min.
+                                Tráfego</label>
+                            <input type="text" id="valor_minimo_trafego" name="valor_minimo_trafego" placeholder="0,00"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono mask-money">
+                        </div>
+                        <div class="relative group">
+                            <label for="periodo_trafego"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Período</label>
+                            <input type="text" id="periodo_trafego" name="periodo_trafego" placeholder="ex: 30 dias"
+                                value="30 dias"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all">
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100 my-6">
+
+                <!-- 3. Dates & Config -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Datas
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="relative group">
+                            <label for="data_inicio"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Início</label>
+                            <input type="text" id="data_inicio" name="data_inicio" placeholder="DD/MM/AAAA"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all mask-date">
+                        </div>
+                        <div class="relative group">
+                            <label for="vigencia_meses"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Vigência
+                                (Meses)</label>
+                            <input type="number" id="vigencia_meses" name="vigencia_meses" value="12"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all">
+                        </div>
+                        <div class="col-span-2 relative group">
+                            <label for="cidade_assinatura"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Cidade
+                                Assinatura</label>
+                            <input type="text" id="cidade_assinatura" name="cidade_assinatura"
+                                placeholder="ex: São Paulo"
+                                value="{{ client.company.address.split('-')[-1].strip() if client.company.address else 'São Paulo' }}"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all">
+                        </div>
+                    </div>
+                    <!-- Hidden fields from original form -->
+                    <input type="hidden" name="data_fim">
+                    <input type="hidden" name="cidade_foro" value="São Paulo - SP">
+                    <input type="hidden" name="data_proposta" value="{{ current_date }}">
+                    <input type="hidden" name="numero_vias" value="2">
+                    <input type="hidden" name="data_assinatura" value="{{ current_date }}">
+                </div>
+
+                <hr class="border-gray-100 my-6">
+
+                <!-- 4. Representatives -->
+                <div class="space-y-4">
+                    <h3 class="text-xs font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Representantes
+                    </h3>
+
+                    <details
+                        class="group bg-gray-50/50 rounded-xl border border-gray-100 p-3 [&_summary::-webkit-details-marker]:hidden">
+                        <summary
+                            class="flex items-center justify-between cursor-pointer outline-none text-xs font-bold text-gray-600 uppercase">
+                            <span>Testemunhas</span>
+                            <span class="transition group-open:rotate-180">
+                                <i data-lucide="chevron-down" class="w-4 h-4" aria-hidden="true"></i>
+                            </span>
+                        </summary>
+                        <div class="mt-4 space-y-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" name="testemunha1_nome" placeholder="Nome Testemunha 1"
+                                    aria-label="Nome da Testemunha 1"
+                                    class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg">
+                                <input type="text" name="testemunha1_cpf" placeholder="CPF"
+                                    aria-label="CPF da Testemunha 1"
+                                    class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg mask-cpf">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" name="testemunha2_nome" placeholder="Nome Testemunha 2"
+                                    aria-label="Nome da Testemunha 2"
+                                    class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg">
+                                <input type="text" name="testemunha2_cpf" placeholder="CPF"
+                                    aria-label="CPF da Testemunha 2"
+                                    class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg mask-cpf">
+                            </div>
+                        </div>
+                    </details>
+
+                    <details
+                        class="group bg-gray-50/50 rounded-xl border border-gray-100 p-3 mt-2 [&_summary::-webkit-details-marker]:hidden">
+                        <summary
+                            class="flex items-center justify-between cursor-pointer outline-none text-xs font-bold text-gray-600 uppercase">
+                            <span>Dados do Cliente (Editar)</span>
+                            <span class="transition group-open:rotate-180">
+                                <i data-lucide="chevron-down" class="w-4 h-4" aria-hidden="true"></i>
+                            </span>
+                        </summary>
+                        <div class="mt-4 space-y-3">
+                            <input type="text" name="contratante_nome" value="{{ client.name }}"
+                                class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg"
+                                placeholder="Nome" aria-label="Nome do Contratante">
+                            <input type="text" name="contratante_documento" value="{{ client.document or '' }}"
+                                class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg"
+                                placeholder="CNPJ/CPF" aria-label="Documento do Contratante">
+                            <input type="text" name="contratante_endereco" value="{{ client.address or '' }}"
+                                class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg"
+                                placeholder="Endereço" aria-label="Endereço do Contratante">
+                            <input type="text" name="contratante_representante"
+                                value="{{ client.representative or '' }}"
+                                class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg"
+                                placeholder="Representante" aria-label="Representante Legal">
+                            <input type="text" name="contratante_cpf" value="{{ client.representative_cpf or '' }}"
+                                class="js-update-preview w-full text-xs px-3 py-2 border border-gray-200 rounded-lg"
+                                placeholder="CPF Rep." aria-label="CPF do Representante">
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Hidden Content Store -->
+                <input type="hidden" name="content" id="finalContent">
+                <input type="hidden" name="action" id="formAction" value="issue">
+                <input type="hidden" name="contract_id" id="contractId" value="{{ contract_id or '' }}">
+
+            </form>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-4 border-t border-gray-200 bg-white sticky bottom-0 z-10 flex gap-3">
+            <div id="saveStatus" class="flex-1 flex items-center justify-center text-xs text-gray-400 italic"></div>
+            <button type="button" id="emitBtn" disabled
+                class="w-full bg-[#fa0102] text-white py-3.5 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2">
+                <i data-lucide="file-check-2" class="w-4 h-4" aria-hidden="true"></i> Emitir Contrato
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Area: Preview (Fixed Background) -->
+    <div
+        class="flex-1 h-full overflow-y-auto bg-slate-200 relative p-8 md:p-12 flex flex-col items-center justify-start min-h-screen">
+
+        <!-- Toolbar (Zoom/Print - Future) -->
+        <div class="fixed top-6 right-8 z-30 flex gap-2">
+            <div class="bg-white/90 backdrop-blur rounded-lg shadow-sm border border-gray-200 p-1 flex gap-1">
+                <button id="printBtn" class="p-2 hover:bg-gray-100 rounded text-gray-600" title="Imprimir">
+                    <i data-lucide="printer" class="w-4 h-4" aria-hidden="true"></i>
+                </button>
+                <button class="p-2 hover:bg-gray-100 rounded text-gray-600" title="Download PDF (Breve)">
+                    <i data-lucide="download" class="w-4 h-4" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pages Container -->
+        <div id="pages-container" class="flex flex-col gap-8 pb-20 items-center">
+            <!-- Pages will be injected here by JS -->
+            <div
+                class="w-[210mm] h-[297mm] bg-white shadow-2xl relative flex flex-col items-center justify-center text-gray-300">
+                <i data-lucide="file-text" class="w-16 h-16 mb-4 opacity-20" aria-hidden="true"></i>
+                <p class="font-sans text-sm font-medium">Carregando...</p>
+            </div>
+        </div>
+
+        <p class="text-slate-400 text-xs font-medium fixed bottom-4 right-8 bg-slate-200/80 px-2 py-1 rounded">
+            Visualização de Impressão (A4)</p>
+    </div>
+</div>
+
+<style>
+    /* Custom Scrollbar for Sidebar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e5e7eb;
+        border-radius: 10px;
+    }
+
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+    }
+
+    /* Document Stylings */
+    .a4-page {
+        width: 210mm;
+        height: 297mm;
+        background: white;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        position: relative;
+        padding-top: 30mm;
+        padding-bottom: 20mm;
+        padding-left: 30mm;
+        padding-right: 20mm;
+        overflow: hidden;
+        /* Strict A4 clipping */
+        flex-shrink: 0;
+    }
+
+    .a4-content {
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 12pt;
+        line-height: 1.5;
+        color: #000;
+        height: 100%;
+        /* Debug border? No */
+    }
+
+    /* Standard Elements */
+    .a4-content p {
+        margin-bottom: 6pt;
+        text-align: justify;
+        text-indent: 1.25cm;
+    }
+
+    /* Quill Alignment Overrides */
+    .a4-content .ql-align-center {
+        text-align: center !important;
+        text-indent: 0 !important;
+    }
+
+    .a4-content .ql-align-right {
+        text-align: right !important;
+        text-indent: 0 !important;
+    }
+
+    .a4-content h1,
+    .a4-content h2,
+    .a4-content h3,
+    .a4-content strong,
+    .a4-content b {
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-size: 12pt;
+        font-weight: bold;
+        text-align: justify;
+        margin-bottom: 6pt;
+        text-indent: 0;
+    }
+
+    .a4-content h1.ql-align-center,
+    .a4-content h2.ql-align-center {
+        text-align: center !important;
+    }
+
+    .a4-content h1 {
+        text-transform: uppercase;
+        text-align: center;
+        margin-bottom: 24pt;
+    }
+
+    .a4-content h2 {
+        text-transform: uppercase;
+        margin-top: 12pt;
+    }
+
+    .a4-content ul {
+        list-style-type: disc;
+        padding-left: 2cm;
+        margin-bottom: 6pt;
+    }
+
+    .a4-content ol {
+        list-style-type: decimal;
+        padding-left: 2cm;
+        margin-bottom: 6pt;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        #pages-container,
+        #pages-container * {
+            visibility: visible;
+        }
+
+        #pages-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: none;
+            gap: 0;
+            display: block;
+        }
+
+        .a4-page {
+            box-shadow: none;
+            margin: 0;
+            page-break-after: always;
+            width: 100%;
+            height: auto;
+            /* Let printer handle height? Or enforce? */
+            min-height: 297mm;
+        }
+    }
+</style>
+
+<script id="draft-data-payload" type="application/json">
+    {{ draft_data | tojson | safe if draft_data else 'null' }}
+</script>
+
+<script>
+    // Initial Draft Data (populated from backend if editing)
+    const draftData = JSON.parse(document.getElementById('draft-data-payload').textContent);
+    let autoSaveTimeout;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Event Listeners for Actions
+        const emitBtn = document.getElementById('emitBtn');
+        if (emitBtn) {
+            emitBtn.addEventListener('click', () => submitForm('issue'));
+        }
+
+        const printBtn = document.getElementById('printBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', () => window.print());
+        }
+
+        // Auto-Update Preview Listeners
+        const updatePreviewInputs = document.querySelectorAll('.js-update-preview');
+        updatePreviewInputs.forEach(input => {
+            input.addEventListener('change', updatePreview);
+            // Also trigger on input for immediate feedback? stick to change for expensive ops
+            // input.addEventListener('input', updatePreview); 
+        });
+
+        // Currency Masking
+        const currencyInputs = document.querySelectorAll('input[name^="valor_"], input[name="monthly_value"]');
+        currencyInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                formatCurrency(e.target);
+                calculateFinancials(); // Recalculate on value change
+                triggerAutoSave();
+            });
+            if (input.value) formatCurrency(input);
+        });
+
+        // Date Inputs for Duration Calculation
+        const dateInputs = document.querySelectorAll('input[name="data_inicio"], input[name="data_fim"]');
+        dateInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                calculateDuration();
+                triggerAutoSave();
+            });
+        });
+
+        // Other Inputs for Autosave
+        const otherInputs = document.querySelectorAll('input[type="text"], input[type="number"], select, textarea');
+        otherInputs.forEach(input => {
+            // Skip inputs handled by specific logic (like currency, date, template/attachment selects which call updatePreview)
+            if (!input.name.startsWith('valor_') && !['data_inicio', 'data_fim', 'template_id', 'attachment_id'].includes(input.name)) {
+                input.addEventListener('input', triggerAutoSave);
+                input.addEventListener('change', triggerAutoSave);
+            }
+        });
+
+        // Vigência (Meses) for End Date Calculation
+        const vigenciaInput = document.querySelector('input[name="vigencia_meses"]');
+        if (vigenciaInput) {
+            vigenciaInput.addEventListener('input', () => {
+                calculateEndDate();
+            });
+        }
+
+        // When Start Date changes, recalc End Date if Vigência is present
+        const startInput = document.querySelector('input[name="data_inicio"]');
+        if (startInput) {
+            startInput.addEventListener('change', () => {
+                if (vigenciaInput && vigenciaInput.value) calculateEndDate();
+                triggerAutoSave();
+            });
+        }
+
+        // Qtd Parcelas ONLY for Financials now
+        const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
+        if (qtdInput) {
+            qtdInput.addEventListener('input', calculateFinancials);
+        }
+
+        // Initialize Draft Data
+        if (draftData) {
+            populateForm(draftData);
+        }
+
+        // Input Masking Logic (Moved from bottom)
+        // Date Mask (DD/MM/YYYY)
+        document.querySelectorAll('.mask-date').forEach(input => {
+            input.addEventListener('input', (e) => {
+                let v = e.target.value.replace(/\D/g, '');
+                if (v.length > 8) v = v.substring(0, 8);
+                if (v.length > 4) v = v.replace(/^(\d{2})(\d{2})(\d)/, '$1/$2/$3');
+                else if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, '$1/$2');
+                e.target.value = v;
+            });
+        });
+
+        // CPF Mask (000.000.000-00)
+        document.querySelectorAll('.mask-cpf').forEach(input => {
+            input.addEventListener('input', (e) => {
+                let v = e.target.value.replace(/\D/g, '');
+                if (v.length > 11) v = v.substring(0, 11);
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = v;
+            });
+        });
+
+        // Initial Trigger
+        updatePreview();
+    });
+
+    function triggerAutoSave() {
+        const statusDiv = document.getElementById('saveStatus');
+        statusDiv.textContent = 'Salvando...';
+
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(async () => {
+            await autoSave();
+        }, 2000); // 2 seconds debounce
+    }
+
+    async function autoSave() {
+        const form = document.getElementById('contractForm');
+        const formData = new FormData(form);
+        const formObj = Object.fromEntries(formData.entries());
+
+        if (!formObj.template_id) {
+            document.getElementById('saveStatus').textContent = ''; // Clear status if no template
+            return; // Don't save if no template selected
+        }
+
+        const statusDiv = document.getElementById('saveStatus');
+
+        try {
+            const response = await fetch('{{ url_for("main.autosave_contract") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: "{{ client.id }}",
+                    contract_id: document.getElementById('contractId').value,
+                    template_id: formObj.template_id,
+                    form_data: formObj,
+                    content: document.getElementById('finalContent').value
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('contractId').value = data.contract_id;
+                statusDiv.innerHTML = '<span class="text-green-500 flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Salvo</span>';
+                if (window.lucide) lucide.createIcons();
+            } else {
+                statusDiv.textContent = 'Erro ao salvar';
+            }
+        } catch (e) {
+            console.error(e);
+            statusDiv.textContent = 'Erro de conexão';
+        }
+    }
+
+    function parseCurrency(value) {
+        if (!value) return 0;
+        return parseFloat(value.replace(/\./g, '').replace(',', '.'));
+    }
+
+    function formatCurrencyValue(value) {
+        return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calculateDuration() {
+        const startStr = document.querySelector('input[name="data_inicio"]').value;
+        const endStr = document.querySelector('input[name="data_fim"]').value;
+        const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
+
+        if (startStr && endStr && startStr.length === 10 && endStr.length === 10) {
+            const startParts = startStr.split('/');
+            const endParts = endStr.split('/');
+
+            const startDate = new Date(startParts[2], startParts[1] - 1, startParts[0]);
+            const endDate = new Date(endParts[2], endParts[1] - 1, endParts[0]);
+
+            if (endDate > startDate) {
+                // Approximate months calculation
+                let months = (endDate.getFullYear() - startDate.getFullYear()) * 12;
+                months -= startDate.getMonth();
+                months += endDate.getMonth();
+
+                // If days match roughly whole month? Usually contracts are 12, 24..
+                // Let's just trust the diff.
+                if (months > 0) {
+                    qtdInput.value = months;
+                    calculateFinancials();
+                    updatePreview();
+                }
+            }
+        }
+    }
+
+
+
+    function calculateEndDate() {
+        const startStr = document.querySelector('input[name="data_inicio"]').value;
+        const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
+        const endInput = document.querySelector('input[name="data_fim"]');
+
+        if (startStr && startStr.length === 10 && qtdInput && qtdInput.value) {
+            const startParts = startStr.split('/');
+            const startDate = new Date(startParts[2], startParts[1] - 1, startParts[0]);
+            const months = parseInt(qtdInput.value);
+
+            if (months > 0) {
+                // Add months
+                startDate.setMonth(startDate.getMonth() + months);
+
+                // Format to DD/MM/YYYY
+                const day = String(startDate.getDate()).padStart(2, '0');
+                const month = String(startDate.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+                const year = startDate.getFullYear();
+
+                endInput.value = `${day}/${month}/${year}`;
+                updatePreview();
+            }
+        }
+    }
+
+    function calculateFinancials() {
+        const totalInput = document.querySelector('input[name="valor_total"]');
+        const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
+        const parcelaInput = document.querySelector('input[name="valor_parcela"]');
+
+        if (totalInput && qtdInput && parcelaInput) {
+            const total = parseCurrency(totalInput.value);
+            const qtd = parseInt(qtdInput.value) || 0;
+
+            if (total > 0 && qtd > 0) {
+                const parcela = total / qtd;
+                parcelaInput.value = formatCurrencyValue(parcela);
+                // Also trigger masking/formatting on the output to ensure consistency
+                // But formatCurrencyValue does standard formatting.
+            }
+        }
+        updatePreview();
+    }
+
+    function formatCurrency(input) {
+        let value = input.value.replace(/\D/g, '');
+        value = (Number(value) / 100).toFixed(2) + '';
+        value = value.replace(".", ",");
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        input.value = value;
+    }
+
+    function populateForm(data) {
+        for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+                const input = document.querySelector(`[name="${key}"]`);
+                if (input) {
+                    input.value = data[key];
+                    // Trigger events manually if needed (like for selects/masks)
+                }
+            }
+        }
+        // Force preview update after population
+        if (data.template_id) updatePreview();
+    }
+
+    function submitForm(action) {
+        document.getElementById('formAction').value = action;
+        const btn = document.getElementById('emitBtn');
+
+        if (action === 'draft') {
+            // Allow submitting draft even if incomplete? 
+            // We set 'novalidate' temporarily or just submit.
+            // But let's check mandatory template_id.
+            const templateId = document.getElementById('templateSelect').value;
+            if (!templateId) {
+                alert("Selecione pelo menos um modelo para salvar o rascunho.");
+                return;
+            }
+        }
+
+        document.getElementById('contractForm').submit();
+    }
+
+    async function updatePreview() {
+        const form = document.getElementById('contractForm');
+        const formData = new FormData(form);
+        const formObj = Object.fromEntries(formData.entries());
+
+        const templateId = formObj.template_id;
+        const pagesContainer = document.getElementById('pages-container'); // Corrected ID
+        const emitBtn = document.getElementById('emitBtn');
+        const finalContentInput = document.getElementById('finalContent');
+
+        if (!templateId) {
+            // Optional: reset to empty state
+            return;
+        }
+
+        emitBtn.disabled = true;
+
+        try {
+            if (window.lucide) window.lucide.createIcons();
+
+            const response = await fetch('{{ url_for("main.preview_contract") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    client_id: "{{ client.id }}",
+                    template_id: templateId,
+                    attachment_id: formObj.attachment_id || null, // Ensure attachment is sent
+                    form_data: formObj
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error(data.error);
+                // Optionally show error in UI
+                emitBtn.disabled = false;
+                return;
+            }
+
+            // Sync hidden input
+            finalContentInput.value = data.content;
+
+            // Render with Pagination
+            renderPaginatedContent(data.content);
+
+            emitBtn.disabled = false;
+
+        } catch (error) {
+            console.error('Error:', error);
+            emitBtn.disabled = false;
+        }
+    }
+
+    function hasOverflow(element) {
+        return element.scrollHeight > element.clientHeight + 1;
+    }
+
+    function renderPaginatedContent(htmlContent) {
+        const container = document.getElementById('pages-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const sourceDiv = document.createElement('div');
+        sourceDiv.innerHTML = htmlContent;
+
+        let nodes = Array.from(sourceDiv.childNodes);
+
+        let pageNum = 1;
+        let currentPage = createA4Page(pageNum);
+        container.appendChild(currentPage);
+        let currentContentArea = currentPage.querySelector('.a4-content');
+
+        nodes.forEach(node => {
+            // Skip empty text nodes between tags
+            if (node.nodeType === 3 && node.textContent.trim() === '') return;
+
+            // Append node
+            const clone = node.cloneNode(true);
+            currentContentArea.appendChild(clone);
+
+            if (hasOverflow(currentContentArea)) {
+                currentContentArea.removeChild(clone);
+
+                // Attempt split if ELEMENT_NODE and P
+                if (node.nodeType === 1 && node.tagName === 'P') {
+                    const words = node.innerText.split(' ');
+                    let currentWordIndex = 0;
+
+                    // Loop until all words are placed
+                    while (currentWordIndex < words.length) {
+                        const pChunk = document.createElement('p');
+                        for (let attr of node.attributes) {
+                            pChunk.setAttribute(attr.name, attr.value);
+                        }
+
+                        // Remove indentation for continuations
+                        if (currentWordIndex > 0) {
+                            pChunk.style.textIndent = '0';
+                        }
+
+                        currentContentArea.appendChild(pChunk);
+
+                        let chunkWords = [];
+                        let overflowDetected = false;
+
+                        // Add words one by one
+                        for (let i = currentWordIndex; i < words.length; i++) {
+                            chunkWords.push(words[i]);
+                            pChunk.innerText = chunkWords.join(' ');
+
+                            if (hasOverflow(currentContentArea)) {
+                                chunkWords.pop(); // Remove overflowing word
+                                pChunk.innerText = chunkWords.join(' ');
+
+                                // If even one word didn't fit and chunk is empty
+                                if (chunkWords.length === 0) {
+                                    currentContentArea.removeChild(pChunk); // Clean up
+
+                                    // Force new page
+                                    pageNum++;
+                                    currentPage = createA4Page(pageNum);
+                                    container.appendChild(currentPage);
+                                    currentContentArea = currentPage.querySelector('.a4-content');
+
+                                    // Retry logic handled by restarting loop with same index (overflowDetected=true but no i increment)
+                                    // However, to simply clean retry, we set overflowDetected=true and rely on the fact that we haven't advanced currentWordIndex for this word
+                                    // We need to 'continue' the while loop to retry.
+                                    overflowDetected = true; // Signals we need new page context
+                                    // Actually, we must manually trigger 'continue' behavior or flag
+                                    break;
+                                }
+
+                                currentWordIndex = i; // Next iteration starts with this word
+                                overflowDetected = true;
+                                break;
+                            }
+                        }
+
+                        if (!overflowDetected) {
+                            // Fitted all remaining words
+                            currentWordIndex = words.length;
+                        } else {
+                            // If we broke due to overflow (and not 0-word retry), create new page for next loop
+                            if (chunkWords.length > 0) {
+                                pageNum++;
+                                currentPage = createA4Page(pageNum);
+                                container.appendChild(currentPage);
+                                currentContentArea = currentPage.querySelector('.a4-content');
+                            }
+                            // If chunkWords was 0, we already created new page inside loop
+                        }
+                    }
+                } else {
+                    // Heavy move (Header, Table, or non-P)
+                    pageNum++;
+                    currentPage = createA4Page(pageNum);
+                    container.appendChild(currentPage);
+                    currentContentArea = currentPage.querySelector('.a4-content');
+                    currentContentArea.appendChild(node.cloneNode(true));
+                }
+            }
+        });
+
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function createA4Page(pageNum) {
+        const page = document.createElement('div');
+        page.className = 'a4-page group';
+        page.innerHTML = `
+            <div class="a4-content"></div>
+            <div class="absolute bottom-4 right-8 text-[10px] text-gray-400 font-sans">Página ${pageNum}</div>
+             <div class="absolute bottom-4 left-8 text-[10px] text-gray-300 font-sans uppercase tracking-widest">NorthWay System</div>
+            <!-- Page Break -->
+            <div class="absolute bottom-0 left-0 w-full h-px bg-transparent print:hidden"></div>
+        `;
+        return page;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50 overflow-hidden flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('main.settings_processes') }}"
+                class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5" aria-hidden="true"></i>
+            </a>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">Editor de Processo</h1>
+                <p class="text-xs text-gray-500">Defina as etapas do checklist</p>
+            </div>
+        </div>
+        <button id="saveBtn"
+            class="bg-northway-red text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/20 flex items-center gap-2">
+            <i data-lucide="save" class="w-4 h-4" aria-hidden="true"></i>
+            Salvar Alterações
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-4xl mx-auto">
+            <form id="processForm" method="POST" class="space-y-6">
+                <!-- Meta Data -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                    <h3 class="font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">Informações Básicas</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Processo</label>
+                            <input type="text" name="name" value="{{ template.name }}" required
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Descrição</label>
+                            <input type="text" name="description" value="{{ template.description or '' }}"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red transition-colors">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JSON Editor (Visual) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                        <h3 class="font-bold text-gray-800">Etapas do Checklist</h3>
+                        <button type="button" id="addSectionBtn"
+                            class="text-sm font-bold text-northway-red hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4" aria-hidden="true"></i>
+                            Adicionar Seção
+                        </button>
+                    </div>
+
+                    <div id="stepsContainer" class="space-y-6" data-initial-steps='{{ template.steps| tojson | safe }}'>
+                        <!-- Sections will be rendered here by JS -->
+                    </div>
+                </div>
+
+                <input type="hidden" name="steps_json" id="stepsJsonInput">
+            </form>
+        </div>
+    </main>
+</div>
+
+<template id="sectionTemplate">
+    <div
+        class="section-block bg-gray-50 rounded-lg p-4 border border-gray-200 relative group transition-all hover:border-gray-300">
+        <button type="button" data-action="remove-section"
+            class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+            <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
+
+        <div class="mb-4 pr-8">
+            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Título da Seção</label>
+            <input type="text"
+                class="section-title w-full bg-transparent border-b border-gray-300 focus:border-northway-red focus:outline-none py-1 font-bold text-gray-800 text-lg placeholder-gray-400"
+                placeholder="Ex: Checklist 1 - Onboarding">
+        </div>
+
+        <div class="items-container space-y-2">
+            <!-- Items -->
+        </div>
+
+        <button type="button" data-action="add-item"
+            class="mt-3 text-xs font-bold text-gray-500 hover:text-gray-800 flex items-center gap-1 transition-colors">
+            <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i>
+            Adicionar Item
+        </button>
+    </div>
+</template>
+
+<template id="itemTemplate">
+    <div class="flex items-center gap-3 group/item">
+        <i data-lucide="check-square" class="w-4 h-4 text-gray-300" aria-hidden="true"></i>
+        <input type="text"
+            class="item-text flex-1 bg-white border border-gray-200 rounded px-3 py-1.5 text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red focus:outline-none"
+            placeholder="Descrição da tarefa...">
+        <button type="button" data-action="remove-item"
+            class="text-gray-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity">
+            <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
+        </button>
+    </div>
+</template>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // DOM Elements
+        const container = document.getElementById('stepsContainer');
+        const addSectionBtn = document.getElementById('addSectionBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const form = document.getElementById('processForm');
+        const jsonInput = document.getElementById('stepsJsonInput');
+
+        // Initial Data from Backend (Parsed safely from DOM)
+        let stepsData = [];
+        try {
+            stepsData = JSON.parse(container.dataset.initialSteps || '[]');
+        } catch (e) {
+            console.error("Error parsing steps:", e);
+        }
+
+        // Initial Render
+        renderSteps();
+
+        // Add Section Handler
+        if (addSectionBtn) {
+            addSectionBtn.addEventListener('click', () => {
+                stepsData.push({ title: "Nova Seção", items: [""] });
+                renderSteps();
+            });
+        }
+
+        // Save Handler
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveProcess);
+        }
+
+        function renderSteps() {
+            container.innerHTML = '';
+
+            stepsData.forEach((section, sIndex) => {
+                // Clone Section Template
+                const sectionNode = document.getElementById('sectionTemplate').content.cloneNode(true);
+                const sectionDiv = sectionNode.querySelector('.section-block');
+
+                // Populate Title
+                const titleInput = sectionDiv.querySelector('.section-title');
+                titleInput.value = section.title;
+                titleInput.addEventListener('input', (e) => {
+                    stepsData[sIndex].title = e.target.value;
+                });
+
+                // Render Items
+                const itemsContainer = sectionDiv.querySelector('.items-container');
+                section.items.forEach((itemText, iIndex) => {
+                    const itemNode = document.getElementById('itemTemplate').content.cloneNode(true);
+                    const itemInput = itemNode.querySelector('.item-text');
+                    itemInput.value = itemText;
+
+                    // Bind Item Input (Optional immediate update, or relies on Save)
+                    itemInput.addEventListener('input', (e) => {
+                        stepsData[sIndex].items[iIndex] = e.target.value;
+                    });
+
+                    // Remove Item Handler
+                    const removeBtn = itemNode.querySelector('[data-action="remove-item"]');
+                    removeBtn.addEventListener('click', () => {
+                        stepsData[sIndex].items.splice(iIndex, 1);
+                        renderSteps(); // Re-render to update state
+                    });
+
+                    itemsContainer.appendChild(itemNode);
+                });
+
+                // Remove Section Handler
+                const removeSectionBtn = sectionDiv.querySelector('[data-action="remove-section"]');
+                removeSectionBtn.addEventListener('click', () => {
+                    stepsData.splice(sIndex, 1);
+                    renderSteps();
+                });
+
+                // Add Item Handler
+                const addItemBtn = sectionDiv.querySelector('[data-action="add-item"]');
+                addItemBtn.addEventListener('click', () => {
+                    stepsData[sIndex].items.push("");
+                    renderSteps();
+                });
+
+                container.appendChild(sectionDiv);
+            });
+
+            // Re-initialize icons for new elements
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function saveProcess(e) {
+            e.preventDefault(); // Prevent default if it was a submit button
+
+            // Read latest values from DOM to be sure (though listeners should have updated state)
+            // Ideally we rely on the bound data `stepsData`.
+            // Let's do a final pass to filter empty items
+
+            const cleanData = stepsData.map(section => ({
+                title: section.title,
+                items: section.items.filter(item => item.trim() !== '')
+            }));
+
+            jsonInput.value = JSON.stringify(cleanData);
+            form.submit();
+        }
+    });
+</script>
+{% endblock %}

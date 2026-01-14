@@ -1,0 +1,9 @@
+flask
+flask-sqlalchemy
+flask-login
+werkzeug
+supabase
+psycopg2-binary
+gunicorn
+requests
+markdown

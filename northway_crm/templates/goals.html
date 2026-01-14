@@ -1,0 +1,759 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-50/50 relative font-inter">
+    <div class="p-8 max-w-[1400px] mx-auto space-y-8">
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Metas e Performance</h1>
+                <p class="text-sm text-gray-500 mt-1">Acompanhe o desempenho comercial em tempo real.</p>
+            </div>
+
+            <div class="flex items-center gap-3 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
+                <!-- Date Filter -->
+                <div class="flex items-center gap-2 px-3 py-1.5">
+                    <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+                    <select id="goalYear"
+                        class="text-sm font-semibold border-none focus:ring-0 text-gray-700 p-0 pr-6 bg-transparent cursor-pointer">
+                        {% for y in range(now.year - 1, now.year + 2) %}
+                        <option value="{{ y }}" {% if y==now.year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="w-px h-4 bg-gray-200"></div>
+                    <select id="goalMonth"
+                        class="text-sm font-semibold border-none focus:ring-0 text-gray-700 p-0 pr-6 bg-transparent cursor-pointer">
+                        {% set months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto',
+                        'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
+                        {% for m in months %}
+                        <option value="{{ loop.index }}" {% if loop.index==now.month %}selected{% endif %}>{{ m }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {% if current_user.role in ['admin', 'manager'] %}
+                <div class="w-px h-6 bg-gray-200"></div>
+                <button onclick="openGoalModal()"
+                    class="px-4 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+                    <i data-lucide="target" class="w-4 h-4"></i> Definir Metas
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Card Meta -->
+            <div
+                class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5 relative overflow-hidden group">
+                <div
+                    class="absolute right-0 top-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-blue-100">
+                </div>
+                <div class="p-4 bg-blue-50 text-blue-600 rounded-xl">
+                    <i data-lucide="flag" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider" id="label-target">Meta Mensal
+                    </p>
+                    <h3 class="text-2xl font-black text-gray-900 mt-1" id="card-target">R$ 0,00</h3>
+                </div>
+            </div>
+
+            <!-- Card Realizado -->
+            <div
+                class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5 relative overflow-hidden group">
+                <div
+                    class="absolute right-0 top-0 w-32 h-32 bg-green-50 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-green-100">
+                </div>
+                <div class="p-4 bg-green-50 text-green-600 rounded-xl">
+                    <i data-lucide="trending-up" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Realizado</p>
+                    <h3 class="text-2xl font-black text-gray-900 mt-1" id="card-actual">R$ 0,00</h3>
+                </div>
+            </div>
+
+            <!-- Card Gap -->
+            <div
+                class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5 relative overflow-hidden group">
+                <div
+                    class="absolute right-0 top-0 w-32 h-32 bg-red-50 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-red-100">
+                </div>
+                <div class="p-4 bg-red-50 text-red-600 rounded-xl">
+                    <i data-lucide="target" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Falta para Meta</p>
+                    <h3 class="text-2xl font-black text-gray-900 mt-1" id="card-gap">R$ 0,00</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toggle View -->
+        <div class="flex justify-center">
+            <div class="bg-gray-100 p-1 rounded-lg inline-flex relative shadow-inner">
+                <div class="absolute transition-all duration-300 bg-white rounded-md shadow-sm h-[calc(100%-8px)] top-1 w-[calc(50%-4px)]"
+                    id="toggle-bg" style="left: 4px;"></div>
+                <button onclick="switchView('monthly')" id="btn-monthly"
+                    class="relative z-10 px-6 py-1.5 text-xs font-bold text-gray-900 transition-colors">
+                    Mensal
+                </button>
+                <button onclick="switchView('annual')" id="btn-annual"
+                    class="relative z-10 px-6 py-1.5 text-xs font-bold text-gray-500 transition-colors">
+                    Anual
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Gauge -->
+            <div
+                class="lg:col-span-1 bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center relative">
+                <h3 class="text-sm font-bold text-gray-900 text-center mb-6">Atingimento da Meta</h3>
+
+                <div class="relative w-full max-w-[280px] aspect-[2/1] mb-6">
+                    <!-- Canvas for Gauge -->
+                    <canvas id="gaugeChart"></canvas>
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center transform translate-y-1/4">
+                        <div class="flex flex-col items-center">
+                            <span id="company-percent-text"
+                                class="text-4xl font-black text-gray-900 tracking-tighter">0%</span>
+                            <span class="text-xs font-semibold text-gray-400 uppercase mt-1">Concluído</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-8 space-y-4">
+                    <div id="status-badge"
+                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500">
+                        Aguardando Dados
+                    </div>
+
+                    <!-- Secondary Goal: New Sales Condition -->
+                    <div
+                        class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2 text-gray-500">
+                            <i data-lucide="plus-circle" class="w-4 h-4 text-blue-500"></i>
+                            <span class="font-medium">Novas Vendas</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-gray-900" id="lbl-new-sales-actual">R$ 0,00</span>
+                            <span class="text-gray-400">/</span>
+                            <span class="text-gray-400" id="lbl-new-sales-target">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-gray-400 max-w-[200px] mx-auto leading-relaxed">
+                        Mantenha o ritmo! <span id="motivation-text">Defina uma meta para começar.</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Ranking Table -->
+            <div
+                class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                    <div>
+                        <h3 class="font-bold text-gray-900">Ranking Individual</h3>
+                        <p class="text-xs text-gray-500 mt-1">Performance baseada em novos contratos assinados.</p>
+                    </div>
+                    <div class="flex -space-x-2 overflow-hidden">
+                        <!-- Top 3 avatars preview -->
+                        <div id="top-avatars" class="flex -space-x-2"></div>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="text-xs text-gray-400 font-semibold bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th class="px-6 py-4">Vendedor</th>
+                                <th class="px-6 py-4 text-right">Meta (Alvo)</th>
+                                <th class="px-6 py-4 text-right">Realizado</th>
+                                <th class="px-6 py-4 w-1/3 text-center">Progresso</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ranking-body" class="divide-y divide-gray-50 text-sm">
+                            <tr>
+                                <td colspan="4" class="p-8 text-center text-gray-400">Carregando dados...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Define Goals -->
+<div id="goalModal"
+    class="fixed inset-0 bg-gray-900/40 z-[100] hidden items-center justify-center backdrop-blur-sm transition-all">
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all scale-100 flex flex-col max-h-[90vh]">
+        <div class="px-6 pt-6 bg-gray-50/50 rounded-t-2xl border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 class="font-bold text-gray-900 text-lg">Definir Metas</h3>
+                <p class="text-xs text-gray-500">Configure os alvos para o período.</p>
+            </div>
+
+            <!-- Mode Toggle Tabs -->
+            <div class="flex bg-gray-200 p-1 rounded-lg">
+                <button onclick="setGoalMode('monthly')" id="tab-mode-monthly"
+                    class="px-4 py-1.5 rounded-md text-xs font-bold transition-all bg-white text-gray-900 shadow-sm">
+                    Mensal
+                </button>
+                <button onclick="setGoalMode('annual')" id="tab-mode-annual"
+                    class="px-4 py-1.5 rounded-md text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+                    Anual
+                </button>
+            </div>
+
+            <button type="button" onclick="toggleModal('goalModal')"
+                class="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-8 overflow-y-auto flex-1 space-y-6">
+            <!-- Company Goal Section -->
+            <div class="relative group">
+                <div
+                    class="absolute -inset-1 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-200">
+                </div>
+                <div class="relative bg-white p-6 rounded-xl border border-blue-100 shadow-sm space-y-4">
+                    <!-- Main Revenue Goal -->
+                    <div>
+                        <label class="block text-xs font-bold text-blue-900 uppercase tracking-wider mb-2"
+                            id="lbl-company-goal-type">Meta Mensal da Empresa</label>
+                        <div class="flex items-center gap-3">
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                                <i data-lucide="trending-up" class="w-6 h-6"></i>
+                            </div>
+                            <div class="relative flex-1">
+                                <span
+                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">R$</span>
+                                <input type="text" id="input-company-target" placeholder="0,00"
+                                    class="pl-12 w-full py-3 rounded-xl border-gray-200 text-xl font-bold text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-gray-300">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2 pl-14" id="hint-company-goal">Este valor é para o mês
+                            selecionado.</p>
+                    </div>
+
+                    <!-- Min New Sales Condition -->
+                    <div class="pt-4 border-t border-gray-100">
+                        <label
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                            <i data-lucide="plus-circle" class="w-3 h-3"></i> Mínimo de Vendas Novas (Opcional)
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex-1">
+                                <span
+                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">R$</span>
+                                <input type="text" id="input-min-new-sales" placeholder="0,00"
+                                    class="pl-10 w-full py-2 rounded-lg border-gray-200 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-gray-300">
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">Garante que a meta não seja batida apenas com
+                            recorrência.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Individual Goals Section -->
+            <div>
+                <div class="flex items-center gap-2 mb-4">
+                    <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
+                    <h4 class="font-bold text-sm text-gray-900 uppercase tracking-wider" id="lbl-user-goal-type">Metas
+                        Individuais (Mensal)</h4>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-1 border border-gray-200">
+                    <div id="user-goals-inputs" class="space-y-1 max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2" id="container-replicate">
+                <input type="checkbox" id="replicate-goals"
+                    class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                <label for="replicate-goals" class="text-xs text-gray-600 font-medium cursor-pointer select-none">
+                    Aplicar para todo o ano de <span id="lbl-year-modal">2026</span>
+                </label>
+            </div>
+            <!-- Spacer if hidden -->
+            <div id="spacer-replicate" class="hidden"></div>
+
+            <div class="flex gap-3 w-full md:w-auto">
+                <button type="button" onclick="toggleModal('goalModal')"
+                    class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors flex-1 md:flex-none">Cancelar</button>
+                <button type="button" onclick="saveGoals()"
+                    class="px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-black shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 flex-1 md:flex-none">
+                    <i data-lucide="save" class="w-4 h-4"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let gaugeChart = null;
+    let currentData = null;
+
+    // State
+    let activeView = 'monthly'; // 'monthly' | 'annual' (Dashboard View)
+    let modalMode = 'monthly'; // 'monthly' | 'annual' (Modal Input Mode)
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboard();
+
+        document.getElementById('goalYear').addEventListener('change', loadDashboard);
+        document.getElementById('goalMonth').addEventListener('change', () => {
+            // Only reload if we are in monthly view. Annual view ignores month.
+            if (activeView === 'monthly') loadDashboard();
+        });
+
+        // Input Masks & Calculations for Modal
+        setupInputListeners();
+
+        if (window.lucide) lucide.createIcons();
+    });
+
+    // --- Currency Helpers ---
+    function parseCurrency(value) {
+        if (!value) return 0;
+        // Allows "1.000,00" or simple "1000"
+        // Remove all non-numeric chars except comma
+        let clean = value.replace(/[^\d,]/g, '');
+        // Replace comma with dot
+        clean = clean.replace(',', '.');
+        return parseFloat(clean) || 0;
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    }
+
+    // Mask as you type (Simple version)
+    function applyMask(input) {
+        let val = input.value.replace(/\D/g, '');
+        val = (parseInt(val) / 100).toFixed(2) + '';
+        val = val.replace('.', ',');
+        val = val.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        input.value = val === 'NaN' ? '' : val;
+    }
+
+    function setupInputListeners() {
+        const companyInput = document.getElementById('input-company-target');
+
+        companyInput.addEventListener('input', (e) => {
+            applyMask(e.target);
+            updateHelperText();
+        });
+
+        document.getElementById('input-min-new-sales').addEventListener('input', (e) => applyMask(e.target));
+    }
+
+    function updateHelperText() {
+        const rawVal = parseCurrency(document.getElementById('input-company-target').value);
+        const hint = document.getElementById('hint-company-goal');
+
+        if (modalMode === 'annual') {
+            const monthlyEq = rawVal / 12;
+            hint.innerHTML = `Equivalente a <strong class="text-blue-600">R$ ${formatCurrency(monthlyEq)}</strong> por mês.`;
+        } else {
+            hint.innerText = 'Este valor é para o mês selecionado.';
+        }
+    }
+
+    // --- Dashboard Logic ---
+    async function loadDashboard() {
+        const year = document.getElementById('goalYear').value;
+        const month = document.getElementById('goalMonth').value;
+
+        try {
+            document.getElementById('status-badge').innerText = 'Carregando...';
+
+            const res = await fetch(`/api/goals/dashboard?year=${year}&month=${month}`);
+            const fullData = await res.json();
+            currentData = fullData;
+
+            renderDashboard(currentData[activeView]);
+
+            // Pre-fill modal with monthly data initially? 
+            // Better to populate on open to be sure.
+
+        } catch (e) {
+            console.error("Error loading dashboard:", e);
+        }
+    }
+
+    function switchView(view) {
+        activeView = view;
+
+        const btnM = document.getElementById('btn-monthly');
+        const btnA = document.getElementById('btn-annual');
+        const bg = document.getElementById('toggle-bg');
+
+        if (view === 'monthly') {
+            bg.style.left = '4px';
+            btnM.classList.replace('text-gray-500', 'text-gray-900');
+            btnA.classList.replace('text-gray-900', 'text-gray-500');
+            document.getElementById('label-target').innerText = 'Meta Mensal';
+        } else {
+            bg.style.left = '50%'; // Or calc(50% - 4px) depending on CSS
+            // Adjust logic for perfect centering if needed
+            btnA.classList.replace('text-gray-500', 'text-gray-900');
+            btnM.classList.replace('text-gray-900', 'text-gray-500');
+            document.getElementById('label-target').innerText = 'Meta Anual';
+        }
+
+        if (currentData) renderDashboard(currentData[view]);
+    }
+
+    function renderDashboard(data) {
+        if (!data) return;
+
+        const target = data.company.target || 0;
+        const actual = data.company.actual || 0;
+        const gap = Math.max(0, target - actual);
+
+        // Cards
+        document.getElementById('card-target').innerText = 'R$ ' + formatCurrency(target);
+        document.getElementById('card-actual').innerText = 'R$ ' + formatCurrency(actual);
+        document.getElementById('card-gap').innerText = 'R$ ' + formatCurrency(gap);
+
+        // New Sales
+        const nsTarget = data.company.new_sales_target || 0;
+        const nsActual = data.company.new_sales_actual || 0;
+        document.getElementById('lbl-new-sales-actual').innerText = 'R$ ' + formatCurrency(nsActual);
+        document.getElementById('lbl-new-sales-target').innerText = 'R$ ' + formatCurrency(nsTarget);
+
+        // Gauge
+        let percent = target > 0 ? Math.round((actual / target) * 100) : (actual > 0 ? 100 : 0);
+        renderGauge(percent);
+        document.getElementById('company-percent-text').innerText = percent + '%';
+
+        // Badge Logic
+        updateMotivation(target, percent);
+
+        // Ranking
+        renderRanking(data.ranking);
+    }
+
+    function updateMotivation(target, percent) {
+        const badge = document.getElementById('status-badge');
+        const motiv = document.getElementById('motivation-text');
+
+        if (target === 0) {
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500';
+            badge.innerText = 'Sem Meta';
+            motiv.innerText = 'Defina uma meta para começar.';
+        } else if (percent >= 100) {
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700';
+            badge.innerText = 'Meta Batida! 🏆';
+            motiv.innerText = 'Excelente desempenho!';
+        } else if (percent >= 70) {
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700';
+            badge.innerText = 'Quase lá 🚀';
+            motiv.innerText = 'Falta pouco para chegar lá.';
+        } else {
+            badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700';
+            badge.innerText = 'Em Andamento';
+            motiv.innerText = 'Mantenha o foco.';
+        }
+    }
+
+    function renderRanking(users) {
+        const tbody = document.getElementById('ranking-body');
+        const topAvatars = document.getElementById('top-avatars');
+
+        tbody.innerHTML = '';
+        topAvatars.innerHTML = '';
+
+        if (!users || users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400">Nenhum dado.</td></tr>';
+            return;
+        }
+
+        // Top 3 Avatars
+        users.slice(0, 3).forEach(u => {
+            const letters = u.name.slice(0, 2).toUpperCase();
+            topAvatars.innerHTML += u.photo
+                ? `<img src="/static/uploads/profiles/${u.photo}" class="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover">`
+                : `<div class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">${letters}</div>`;
+        });
+
+        users.forEach((u, idx) => {
+            const isTop = idx < 3 && u.actual > 0;
+            const letters = u.name.slice(0, 2).toUpperCase();
+
+            // Status pill
+            let status = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-50 text-gray-400">-</span>';
+            if (u.target > 0) {
+                if (u.percent >= 100) status = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">Batida</span>';
+                else if (u.percent >= 50) status = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600">Andamento</span>';
+            }
+
+            tbody.innerHTML += `
+                <tr class="hover:bg-gray-50/80 border-b border-gray-50 last:border-0">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-gray-300 w-4">${idx + 1}º</span>
+                            <div class="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-700 overflow-hidden relative">
+                                ${u.photo ? `<img src="/static/uploads/profiles/${u.photo}" class="w-full h-full object-cover">` : letters}
+                                ${isTop ? '<div class="absolute inset-0 bg-yellow-400/10 ring-1 ring-yellow-400/50 rounded-full"></div>' : ''}
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900 text-sm">${u.name}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-right text-sm text-gray-500 font-medium whitespace-nowrap">
+                        ${u.target > 0 ? 'R$ ' + formatCurrency(u.target) : '-'}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="font-bold text-gray-900 text-sm whitespace-nowrap">R$ ${formatCurrency(u.actual)}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                         <div class="flex flex-col gap-1 w-full max-w-[140px] ml-auto">
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-bold text-gray-500">${u.percent}%</span>
+                                ${status}
+                            </div>
+                            <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                 <div class="h-full rounded-full ${u.percent >= 100 ? 'bg-green-500' : 'bg-blue-500'}" 
+                                      style="width: ${Math.min(u.percent, 100)}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // --- Modal Logic ---
+    function openGoalModal() {
+        // Always reset to Monthly when opening for clarity
+        setGoalMode('monthly');
+
+        // Populate inputs from CURRENT monthly data (cached)
+        // If we are in 'annual' view on dashboard, we should still fetch 'monthly' data or use what we have?
+        // Let's use currentData.monthly for defaults
+        const data = currentData ? currentData.monthly : { company: { target: 0, new_sales_target: 0 }, ranking: [] };
+
+        document.getElementById('input-company-target').value = formatCurrency(data.company.target || 0);
+        document.getElementById('input-min-new-sales').value = formatCurrency(data.company.new_sales_target || 0);
+
+        // Users
+        const container = document.getElementById('user-goals-inputs');
+        container.innerHTML = '';
+
+        if (data.ranking) {
+            data.ranking.forEach(u => {
+                const letters = u.name.slice(0, 2);
+                container.innerHTML += `
+                 <div class="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors">
+                    <div class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-700 overflow-hidden">
+                        ${u.photo ? `<img src="/static/uploads/profiles/${u.photo}" class="w-full h-full object-cover">` : letters}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-gray-900 truncate">${u.name}</p>
+                    </div>
+                    <div class="relative w-32">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">R$</span>
+                        <input type="text" class="user-goal-input w-full pl-8 py-1.5 text-right text-sm font-bold border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-gray-900" 
+                            data-userid="${u.user_id}" 
+                            value="${formatCurrency(u.target || 0)}"
+                            oninput="applyMask(this)">
+                    </div>
+                 </div>
+                `;
+            });
+        }
+
+        toggleModal('goalModal');
+        updateHelperText();
+    }
+
+    function setGoalMode(mode) {
+        const prevMode = modalMode;
+        modalMode = mode;
+
+        const btnM = document.getElementById('tab-mode-monthly');
+        const btnA = document.getElementById('tab-mode-annual');
+
+        if (mode === 'monthly') {
+            btnM.classList.replace('text-gray-500', 'text-gray-900');
+            btnM.classList.add('bg-white', 'shadow-sm');
+            btnA.classList.replace('text-gray-900', 'text-gray-500');
+            btnA.classList.remove('bg-white', 'shadow-sm');
+
+            document.getElementById('lbl-company-goal-type').innerText = 'Meta Mensal da Empresa';
+            document.getElementById('container-replicate').classList.remove('hidden');
+        } else {
+            btnA.classList.replace('text-gray-500', 'text-gray-900');
+            btnA.classList.add('bg-white', 'shadow-sm');
+            btnM.classList.replace('text-gray-900', 'text-gray-500');
+            btnM.classList.remove('bg-white', 'shadow-sm');
+
+            document.getElementById('lbl-company-goal-type').innerText = 'Meta Anual Global';
+            document.getElementById('container-replicate').classList.add('hidden');
+        }
+
+        // Automatic Conversion Logic (UX Enhancement)
+        // If switching Monthly -> Annual: Multiply by 12
+        // If switching Annual -> Monthly: Divide by 12
+        if (prevMode !== mode) {
+            const compInput = document.getElementById('input-company-target');
+            const newValInput = document.getElementById('input-min-new-sales');
+            const userInputs = document.querySelectorAll('.user-goal-input');
+
+            const factor = (mode === 'annual') ? 12 : (1 / 12);
+
+            // Helper to convert an element's value
+            const convert = (el) => {
+                let val = parseCurrency(el.value);
+                val = val * factor;
+                el.value = formatCurrency(val); // formatCurrency handles formatting back to PT-BR
+            };
+
+            convert(compInput);
+            convert(newValInput);
+            userInputs.forEach(convert);
+        }
+
+        updateHelperText();
+    }
+
+    async function saveGoals() {
+        const btnSave = document.querySelector('#goalModal button[onclick="saveGoals()"]');
+        const originalText = btnSave.innerHTML;
+        btnSave.disabled = true;
+        btnSave.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Salvando...';
+
+        try {
+            const year = document.getElementById('goalYear').value;
+            const month = document.getElementById('goalMonth').value;
+
+            const companyTarget = parseCurrency(document.getElementById('input-company-target').value);
+            const minNewSales = parseCurrency(document.getElementById('input-min-new-sales').value);
+            const replicate = document.getElementById('replicate-goals').checked;
+
+            // Collect User Targets
+            const inputs = document.querySelectorAll('.user-goal-input');
+            const userTargets = Array.from(inputs).map(inp => ({
+                user_id: inp.dataset.userid,
+                amount: parseCurrency(inp.value)
+            }));
+
+            const payload = {
+                year: year,
+                month: month,
+                company_target: companyTarget, // Sent as pure float
+                min_new_sales: minNewSales,     // Sent as pure float
+                user_targets: userTargets,      // Amounts as pure floats
+                replicate: replicate,
+                distribute_annual: (modalMode === 'annual')
+            };
+
+            // If backend expects string input "1.000,00" to parse itself, we might have an issue if we send floats.
+            // Checking backend... 
+            // Backend uses `float(str(data.get('...').replace('.', '').replace(',', '.')))` or `parse_float`.
+            // If we send a FLOAT (15000.0), `str(15000.0)` is "15000.0".
+            // replace('.', '') -> "150000". replace(',', '.') -> "150000". 
+            // ERROR! "15000.0" -> remove dot -> "1500000".
+            // Backend expects BR Formatted STRING. 
+            // We must convert back to BR String before sending? Or just send compatible string?
+            // "15000,00" is safe. "15000.00" (US) -> remove dot -> "1500000". Bad.
+
+            // Let's adjust payload to send STRINGS in BR format to satisfy backend parsing
+            // OR key point: The backend `parse_float` checks: `float(str(val).replace('.', '').replace(',', '.'))`
+            // If we send simple string "15000", it becomes 15000.
+            // If we send "15000.00", it becomes 1500000.
+
+            // CORRECT APPROACH: Send the values as formatted strings (BR) which we already have in the inputs!
+            // EXCEPT we just parsed them to floats above.
+            // Let's re-grab raw values OR format the floats.
+
+            // Let's send `formatCurrency(val)` which returns "1.000,00".
+            // `str("1.000,00").replace('.','').replace(',','.')` -> "1000.00" -> float. Perfect.
+
+            const safePayload = {
+                ...payload,
+                company_target: formatCurrency(companyTarget),
+                min_new_sales: formatCurrency(minNewSales),
+                user_targets: userTargets.map(u => ({ ...u, amount: formatCurrency(u.amount) }))
+            };
+
+            const res = await fetch('/api/goals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(safePayload)
+            });
+
+            const json = await res.json();
+
+            if (json.success) {
+                toggleModal('goalModal');
+                loadDashboard();
+                // Optional: show toast
+            } else {
+                alert('Erro ao salvar. Tente novamente.');
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert('Erro de conexão.');
+        } finally {
+            btnSave.disabled = false;
+            btnSave.innerHTML = originalText;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+
+    function renderGauge(percent) {
+        const ctx = document.getElementById('gaugeChart').getContext('2d');
+        if (gaugeChart) gaugeChart.destroy();
+
+        let color1 = '#3b82f6'; // blue-500
+        let color2 = '#60a5fa'; // blue-400
+
+        if (percent >= 100) { color1 = '#10b981'; color2 = '#34d399'; } // emerald
+
+        gaugeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Realizado', 'Faltante'],
+                datasets: [{
+                    data: [Math.min(percent, 100), Math.max(0, 100 - percent)],
+                    backgroundColor: [
+                        // Simple gradient simulation or solid
+                        color1,
+                        '#f3f4f6'
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 20,
+                    cutout: '90%',
+                    circumference: 180,
+                    rotation: 270,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { tooltip: { enabled: false }, legend: { display: false } }
+            }
+        });
+    }
+
+</script>
+{% endblock %}

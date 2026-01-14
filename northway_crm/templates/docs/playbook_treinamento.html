@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treinamento e Scripts - NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Montserrat:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .prose-premium h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: #fa0102;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+        }
+
+        .prose-premium h3 {
+            color: white;
+            font-weight: 700;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .prose-premium p {
+            color: #d1d5db;
+            /* gray-300 */
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .prose-premium ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 2rem;
+        }
+
+        .prose-premium li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #9ca3af;
+            /* gray-400 */
+        }
+
+        .prose-premium li::before {
+            content: "•";
+            color: #fa0102;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .chapter-card {
+            background-color: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 1rem;
+            padding: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .chapter-card:hover {
+            border-color: #fa0102;
+            transition: border-color 0.3s ease;
+        }
+
+        .script-box {
+            background-color: #111827;
+            border: 1px solid #374151;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .script-header {
+            background-color: #1f2937;
+            padding: 0.75rem 1rem;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #9ca3af;
+            border-bottom: 1px solid #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .script-content {
+            padding: 1.25rem;
+            color: #e5e7eb;
+            font-family: monospace;
+            white-space: pre-line;
+        }
+
+        @media print {
+            @page {
+                margin: 2cm;
+                size: A4;
+            }
+
+            body {
+                background-color: white !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .fixed,
+            aside,
+            button,
+            nav,
+            .backdrop-blur-md {
+                display: none !important;
+            }
+
+            main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+
+            .pt-20 {
+                padding-top: 0 !important;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4,
+            strong {
+                color: black !important;
+            }
+
+            p,
+            li,
+            span,
+            ol {
+                color: #333 !important;
+            }
+
+            .text-white,
+            .text-gray-300,
+            .text-gray-400,
+            .text-gray-500 {
+                color: #000 !important;
+            }
+
+            .chapter-card,
+            .bg-\[\#0f0f0f\] {
+                background-color: white !important;
+                border: 1px solid #ddd !important;
+                color: black !important;
+                padding: 1.5rem !important;
+                margin-bottom: 2rem !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+            }
+
+            /* Specific Script Box Print Styles */
+            .script-box {
+                background-color: white !important;
+                border: 1px solid #333 !important;
+                margin-bottom: 1.5rem !important;
+            }
+
+            .script-header {
+                background-color: #f3f4f6 !important;
+                color: black !important;
+                border-bottom: 1px solid #333 !important;
+            }
+
+            .script-content {
+                color: black !important;
+                white-space: pre-wrap !important;
+            }
+
+            /* Prose Overrides */
+            .prose-premium h2 {
+                color: #fa0102 !important;
+                margin-top: 1rem !important;
+                font-size: 1.5rem !important;
+            }
+
+            .prose-premium p,
+            .prose-premium li {
+                color: black !important;
+            }
+
+            .bg-gray-800 {
+                background-color: #f3f4f6 !important;
+                border: 1px solid #ddd !important;
+                color: black !important;
+            }
+
+            /* Footer */
+            footer {
+                margin-top: 2rem !important;
+                padding-top: 1rem !important;
+                border-top: 1px solid #000 !important;
+            }
+
+            footer img {
+                filter: invert(1) !important;
+                opacity: 1 !important;
+                height: 1.5rem !important;
+            }
+
+            footer p {
+                color: #000 !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#0f0f0f] text-gray-300 font-sans selection:bg-[#fa0102] selection:text-white">
+
+    <!-- Fixed Header -->
+    <div class="fixed top-0 left-0 right-0 bg-[#0f0f0f]/90 backdrop-blur-md border-b border-gray-800 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="max-h-12 w-auto">
+                <span class="text-xs text-gray-500 font-medium ml-2 border-l border-gray-700 pl-3">Treinamento e
+                    Scripts</span>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <a href="{{ url_for('docs.library') }}"
+                    class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    Voltar para Biblioteca
+                </a>
+                <button onclick="window.print()"
+                    class="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex max-w-7xl mx-auto pt-20 min-h-screen">
+
+        <!-- Sidebar Navigation (Sticky) -->
+        <aside
+            class="hidden lg:block w-72 fixed left-[calc(50%-3.5rem-36rem)] top-20 bottom-0 overflow-y-auto px-6 py-12 border-r border-gray-800">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6 px-3">Navegação</h3>
+            <nav class="space-y-1">
+                <a href="#whatsapp"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">1.
+                    Scripts WhatsApp</a>
+                <a href="#training"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">2.
+                    Treinamento Interno</a>
+                <a href="#modules-sdr" class="block px-3 py-2 text-xs text-gray-500 hover:text-white pl-6">Módulos: SDR
+                    e Closer</a>
+                <a href="#modules-cs" class="block px-3 py-2 text-xs text-gray-500 hover:text-white pl-6">Módulos:
+                    Pós-Venda</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-72 px-8 py-12 lg:py-16 max-w-4xl mx-auto">
+
+            <!-- Hero -->
+            <div class="mb-16 border-b border-gray-800 pb-12">
+                <div
+                    class="inline-block bg-blue-900/20 text-blue-400 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider mb-6 border border-blue-900/30">
+                    Capacitação
+                </div>
+                <h1 class="text-5xl font-black text-white mb-6 font-display tracking-tight">
+                    Academia NorthWay<br>
+                    <span class="text-gray-500">Scripts & Treinamento</span>
+                </h1>
+                <p class="text-xl text-gray-400 font-light max-w-2xl">
+                    Scripts prontos para WhatsApp e os 10 módulos de treinamento interno. O guia definitivo de cultura e
+                    execução.
+                </p>
+            </div>
+
+            <div class="prose-premium">
+
+                <!-- 1. Scripts WhatsApp -->
+                <section id="whatsapp" class="chapter-card">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-10 h-10 bg-green-600 rounded flex items-center justify-center text-white"><i
+                                data-lucide="message-circle"></i></div>
+                        <h2 class="!mt-0 !mb-0">1. Scripts de WhatsApp</h2>
+                    </div>
+
+                    <p>Copie e cole. Adaptado para cada etapa do funil.</p>
+
+                    <!-- Etapa 1 -->
+                    <div class="mb-8">
+                        <h3 class="text-green-500">1. Primeiro Contato (SDR)</h3>
+
+                        <div class="script-box">
+                            <div class="script-header">
+                                <span>Mensagem 1 - Abertura</span>
+                                <i data-lucide="copy" class="w-4 h-4 cursor-pointer hover:text-white"
+                                    title="Copiar"></i>
+                            </div>
+                            <div class="script-content">Olá, [Nome]! Tudo bem?
+                                Aqui é o [Seu nome] da North Assessoria de Marketing.
+                                Vi que você demonstrou interesse em estruturar melhor o marketing do seu negócio e
+                                crescer de forma organizada. Posso te fazer algumas perguntas rápidas para entender se
+                                conseguimos te ajudar?</div>
+                        </div>
+
+                        <div class="script-box">
+                            <div class="script-header">
+                                <span>Mensagem 2 - Autoridade</span>
+                            </div>
+                            <div class="script-content">Hoje a North atua como o setor de marketing terceirizado de
+                                empresas que querem crescer sem montar um time interno caro. Quero entender se o seu
+                                momento é esse também.</div>
+                        </div>
+
+                        <div class="script-box">
+                            <div class="script-header">
+                                <span>Mensagem 3 - Qualificação</span>
+                            </div>
+                            <div class="script-content">Me conta rapidinho:
+                                1️⃣ Hoje você já investe em marketing?
+                                2️⃣ Seu maior desafio é vender mais, organizar processos ou posicionar a marca?</div>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 2 -->
+                    <div class="mb-8">
+                        <h3 class="text-green-500">2. Agendamento de Diagnóstico</h3>
+                        <div class="script-box">
+                            <div class="script-content">Perfeito. Pelo que você me contou, faz muito sentido
+                                conversarmos com mais profundidade.
+                                Vamos fazer uma reunião de diagnóstico estratégico, sem custo, onde analisamos seu
+                                marketing, metas e gargalos.
+                                Qual dia e horário funcionam melhor para você?</div>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 3 -->
+                    <div class="mb-8">
+                        <h3 class="text-green-500">3. Confirmação</h3>
+                        <div class="script-box">
+                            <div class="script-content">Reunião confirmada!
+                                📅 Data: [ ]
+                                ⏰ Horário: [ ]
+                                📍 Link: [ ]
+                                Nessa conversa vamos entender onde você está, onde quer chegar e se a North é o parceiro
+                                ideal para isso.</div>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 4 -->
+                    <div class="mb-8">
+                        <h3 class="text-green-500">4. Pós-Reunião (Closer)</h3>
+                        <div class="script-box">
+                            <div class="script-content">[Nome], gostei muito do nosso papo.
+                                Com base no que você me mostrou, a North consegue assumir seu marketing como um todo,
+                                trazendo estratégia, execução e acompanhamento de resultados.
+                                Posso te apresentar a proposta ideal para o seu momento?</div>
+                        </div>
+                    </div>
+
+                    <!-- Etapa 5 -->
+                    <div class="mb-8">
+                        <h3 class="text-green-500">5. Follow-Up (Objeção)</h3>
+                        <div class="script-box">
+                            <div class="script-content">Totalmente normal querer analisar com calma.
+                                Só reforço um ponto importante: hoje, o que mais custa caro para empresas não é investir
+                                em marketing, é não ter um processo claro.
+                                Quando você acha que conseguimos dar o próximo passo?</div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- 2. Treinamento Interno -->
+                <section id="training" class="chapter-card">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-10 h-10 bg-[#fa0102] rounded flex items-center justify-center text-white"><i
+                                data-lucide="graduation-cap"></i></div>
+                        <h2 class="!mt-0 !mb-0">2. Treinamento Interno</h2>
+                    </div>
+
+                    <p class="mb-8">Fundamentos e processos obrigatórios para todos os colaboradores.</p>
+
+                    <div class="grid gap-6">
+                        <!-- Module 1 -->
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <div class="text-[#fa0102] font-bold text-xs uppercase tracking-widest mb-2">Módulo 1</div>
+                            <h4 class="text-white text-lg font-bold mb-3">Visão da North (Todos)</h4>
+                            <p class="text-sm mb-0">Posicionamento: marketing como setor, não post. Não prometemos
+                                milagres, prometemos direção.</p>
+                        </div>
+
+                        <!-- Module 2 -->
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <div class="text-[#fa0102] font-bold text-xs uppercase tracking-widest mb-2">Módulo 2</div>
+                            <h4 class="text-white text-lg font-bold mb-3">Funil de Vendas</h4>
+                            <ol class="list-decimal pl-4 text-sm text-gray-400 space-y-1 mb-0">
+                                <li>Lead entra</li>
+                                <li>Qualificação (SDR)</li>
+                                <li>Diagnóstico (Closer)</li>
+                                <li>Proposta</li>
+                                <li>Fechamento</li>
+                                <li>Onboarding</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div id="modules-sdr" class="grid gap-6 mt-6">
+                        <!-- Module 3 -->
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <div class="text-[#fa0102] font-bold text-xs uppercase tracking-widest mb-2">Módulo 3</div>
+                            <h4 class="text-white text-lg font-bold mb-3">SDR (Pré-Venda)</h4>
+                            <p class="text-sm mb-2"><strong>Regra:</strong> SDR não vende, prepara o terreno.</p>
+                            <div class="bg-gray-800 p-2 rounded text-xs">
+                                <strong>Checklist:</strong> Nome, Empresa, Segmento, Faturamento, Dor Principal.
+                            </div>
+                        </div>
+
+                        <!-- Module 4 -->
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <div class="text-[#fa0102] font-bold text-xs uppercase tracking-widest mb-2">Módulo 4</div>
+                            <h4 class="text-white text-lg font-bold mb-3">Closer (Venda)</h4>
+                            <p class="text-sm mb-2">Responsável pelo fechamento e quebra de objeções.</p>
+                            <div class="bg-gray-800 p-2 rounded text-xs">
+                                <strong>Pilares:</strong> Economia vs Time Interno, Processo > Post, Crescimento
+                                Sustentável.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="modules-cs" class="grid gap-6 mt-6">
+                        <!-- Module 5 -->
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <div class="text-[#fa0102] font-bold text-xs uppercase tracking-widest mb-2">Módulo 5</div>
+                            <h4 class="text-white text-lg font-bold mb-3">Atendimento & Pós-Venda</h4>
+                            <p class="text-sm mb-0">Garantir que o cliente veja evolução real. Evitar churn através do
+                                alinhamento constante.</p>
+                        </div>
+
+                        <!-- Module 6 -->
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <div class="text-[#fa0102] font-bold text-xs uppercase tracking-widest mb-2">Módulo 6</div>
+                            <h4 class="text-white text-lg font-bold mb-3">Onboarding</h4>
+                            <p class="text-sm mb-0">Contrato assinado → Kickoff → Acesso às redes → Metas definidas.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6 mt-6">
+                        <!-- Remaining Modules -->
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <h4 class="text-white font-bold mb-2">Módulo 7: Métricas</h4>
+                            <p class="text-xs">Leads, Conversão, Engajamento. Saber o que medir e o que é sucesso.</p>
+                        </div>
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <h4 class="text-white font-bold mb-2">Módulo 8: Comunicação</h4>
+                            <p class="text-xs">Clareza, profissionalismo e tudo documentado no CRM.</p>
+                        </div>
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <h4 class="text-white font-bold mb-2">Módulo 9: Escala</h4>
+                            <p class="text-xs">Melhoria contínua, feedbacks mensais e uso de SOPs.</p>
+                        </div>
+                        <div class="bg-[#0f0f0f] p-6 rounded border border-gray-800">
+                            <h4 class="text-white font-bold mb-2">Módulo 10: Autonomia</h4>
+                            <p class="text-xs">Cada um é dono do seu processo. Erro é não seguir o padrão.</p>
+                        </div>
+                    </div>
+
+                </section>
+
+            </div>
+
+            <footer class="mt-24 pt-12 border-t border-gray-800 text-center flex flex-col items-center">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-10 mx-auto mb-6 opacity-70">
+                <p class="text-gray-500 text-sm">&copy; 2026 NorthWay Systems. Uso Interno e Confidencial.</p>
+            </footer>
+
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

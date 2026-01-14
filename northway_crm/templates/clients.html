@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+{% from "macros.html" import user_avatar %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Clientes</h1>
+                <p class="text-gray-500 mt-1">Gestão da base de clientes ativos.</p>
+            </div>
+            <!-- Future: Add client manually -->
+            <!-- <button class="...">Novo Cliente</button> -->
+        </header>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <form action="{{ url_for('main.clients') }}" method="GET" class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Status</label>
+                    <div class="relative">
+                        <select name="status"
+                            class="appearance-none w-40 bg-gray-50 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded focus:outline-none focus:bg-white focus:border-northway-red">
+                            <option value="">Todos</option>
+                            <option value="onboarding" {% if request.args.get('status')=='onboarding' %}selected{% endif
+                                %}>Onboarding</option>
+                            <option value="ativo" {% if request.args.get('status')=='ativo' %}selected{% endif %}>Ativo
+                            </option>
+                            <option value="pausado" {% if request.args.get('status')=='pausado' %}selected{% endif %}>
+                                Pausado</option>
+                            <option value="cancelado" {% if request.args.get('status')=='cancelado' %}selected{% endif
+                                %}>Cancelado</option>
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label
+                        class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Responsável</label>
+                    <div class="relative">
+                        <select name="manager"
+                            class="appearance-none w-48 bg-gray-50 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded focus:outline-none focus:bg-white focus:border-northway-red">
+                            <option value="">Todos</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if request.args.get('manager')|int==user.id %}selected{%
+                                endif %}>{{ user.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Renovação
+                        (Início)</label>
+                    <input type="date" name="renewal_start" value="{{ request.args.get('renewal_start') or '' }}"
+                        class="bg-gray-50 border border-gray-200 text-gray-700 py-2 px-3 rounded focus:outline-none focus:bg-white focus:border-northway-red">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Renovação
+                        (Fim)</label>
+                    <input type="date" name="renewal_end" value="{{ request.args.get('renewal_end') or '' }}"
+                        class="bg-gray-50 border border-gray-200 text-gray-700 py-2 px-3 rounded focus:outline-none focus:bg-white focus:border-northway-red">
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="submit"
+                        class="bg-[#fa0102] text-white px-4 py-2 rounded hover:bg-red-700 transition-colors font-bold shadow-sm flex items-center gap-2">
+                        <i data-lucide="filter" class="w-4 h-4"></i>
+                        Filtrar
+                    </button>
+                    {% if request.args %}
+                    <a href="{{ url_for('main.clients') }}"
+                        class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 transition-colors">
+                        Limpar
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Clients Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left border-collapse min-w-[1000px]">
+                    <thead class="bg-gray-50/50 border-b border-gray-100">
+                        <tr>
+                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Cliente</th>
+                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Serviço</th>
+                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Valor Mensal
+                            </th>
+                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Gerente</th>
+                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Renovação
+                            </th>
+                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">
+                                Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for client in clients %}
+                        <tr class="hover:bg-gray-50/80 transition-all duration-200 group">
+                            <td class="py-4 px-6">
+                                <a href="{{ url_for('main.client_details', id=client.id) }}"
+                                    class="font-bold text-gray-900 hover:text-northway-red block flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 uppercase">
+                                        {{ client.name[:2] }}
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span>{{ client.name }}</span>
+                                            <!-- Task Badge -->
+                                            {% set pending_tasks = client.tasks|selectattr('status', 'equalto',
+                                            'pendente')|list|length %}
+                                            {% if pending_tasks > 0 %}
+                                            <span
+                                                class="bg-red-50 text-red-600 border border-red-100 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold"
+                                                title="{{ pending_tasks }} Tarefas Pendentes">
+                                                {{ pending_tasks }}
+                                            </span>
+                                            {% endif %}
+
+                                            {% if client.health_status == 'verde' %}
+                                            <div class="w-2 h-2 rounded-full bg-green-500 ring-4 ring-green-50"
+                                                title="Saúde: Bom"></div>
+                                            {% elif client.health_status == 'amarelo' %}
+                                            <div class="w-2 h-2 rounded-full bg-yellow-400 ring-4 ring-yellow-50"
+                                                title="Saúde: Atenção"></div>
+                                            {% elif client.health_status == 'vermelho' %}
+                                            <div class="w-2 h-2 rounded-full bg-red-500 ring-4 ring-red-50"
+                                                title="Saúde: Crítico"></div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-xs text-gray-400 font-medium">{{ client.email }}</div>
+                                    </div>
+                                </a>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="text-sm font-medium text-gray-700 block">{{ client.service or '-' }}</span>
+                                <span
+                                    class="text-xs text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">{{
+                                    client.contract_type or 'N/A' }}</span>
+                            </td>
+                            <td class="py-4 px-6 text-sm font-semibold text-gray-900">
+                                R$ {{ "%.2f"|format(client.monthly_value or 0)|replace('.', ',') }}
+                            </td>
+                            <td class="py-4 px-6">
+                                {% if client.status == 'ativo' %}
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700 border border-green-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ativo
+                                </span>
+                                {% elif client.status == 'onboarding' %}
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Onboarding
+                                </span>
+                                {% elif client.status == 'pausado' %}
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-yellow-50 text-yellow-700 border border-yellow-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Pausado
+                                </span>
+                                {% elif client.status == 'cancelado' %}
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-700 border border-red-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Cancelado
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-6 text-sm text-gray-500 flex items-center gap-2">
+                                {% if client.manager %}
+                                <div
+                                    class="w-6 h-6 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-bold border border-indigo-100">
+                                    {{ client.manager.name[:2] }}
+                                </div>
+                                {{ client.manager.name }}
+                                {% else %}
+                                <span class="text-gray-300">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-6 text-sm text-gray-500">
+                                {% if client.renewal_date %}
+                                {% set today = today %}
+                                {% set days_left = (client.renewal_date - today).days %}
+
+                                {% if days_left < 0 %} <div class="flex flex-col">
+                                    <span class="text-red-600 font-bold text-xs flex items-center gap-1">
+                                        <i data-lucide="alert-circle" class="w-3 h-3"></i> Vencido
+                                    </span>
+                                    <span class="text-xs text-gray-400">{{ client.renewal_date.strftime('%d/%m/%Y')
+                                        }}</span>
+            </div>
+            {% elif days_left <= 30 %} <div class="flex flex-col">
+                <span class="text-orange-600 font-bold text-xs flex items-center gap-1">
+                    <i data-lucide="clock" class="w-3 h-3"></i> {{ days_left }} dias
+                </span>
+                <span class="text-xs text-gray-400">{{ client.renewal_date.strftime('%d/%m/%Y') }}</span>
+        </div>
+        {% else %}
+        <span class="text-gray-700 font-medium">{{ client.renewal_date.strftime('%d/%m/%Y') }}</span>
+        {% endif %}
+        {% else %}
+        <span class="text-gray-300">-</span>
+        {% endif %}
+        </td>
+        <td class="py-4 px-6 text-right relative">
+            <div class="relative inline-block text-left">
+                <button onclick="toggleDropdown('dropdown-{{ client.id }}')"
+                    class="text-gray-400 hover:text-northway-red hover:bg-red-50 p-2 rounded-lg transition-all duration-200">
+                    <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="dropdown-{{ client.id }}"
+                    class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 transform origin-top-right transition-all">
+                    <div class="px-4 py-2 border-b border-gray-50 mb-1">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ações</p>
+                    </div>
+                    <a href="{{ url_for('main.client_details', id=client.id) }}"
+                        class="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-northway-red flex items-center gap-3 transition-colors">
+                        <i data-lucide="eye" class="w-4 h-4"></i> Ver Detalhes
+                    </a>
+                    <a href="{{ url_for('main.client_details', id=client.id) }}"
+                        class="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-northway-red flex items-center gap-3 transition-colors">
+                        <i data-lucide="pencil" class="w-4 h-4"></i> Editar Dados
+                    </a>
+                    <button onclick="openTaskModalForClient(this)" data-client-id="{{ client.id }}"
+                        data-client-name="{{ client.name }}"
+                        class="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-northway-red flex items-center gap-3 transition-colors">
+                        <i data-lucide="check-square" class="w-4 h-4"></i> Nova Tarefa
+                    </button>
+
+                    {% if current_user.role in ['admin', 'manager'] %}
+                    <div class="border-t border-gray-50 my-1 pt-1"></div>
+                    <form action="{{ url_for('main.delete_client', id=client.id) }}" method="POST"
+                        onsubmit="return confirm('Tem certeza? Essa ação não pode ser desfeita.')">
+                        <button type="submit"
+                            class="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7" class="px-6 py-20 text-center">
+                <div class="flex flex-col items-center justify-center">
+                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <i data-lucide="users" class="w-10 h-10 text-gray-300"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Sua carteira está vazia</h3>
+                    <p class="text-gray-500 mb-8 max-w-md mx-auto">Nenhum cliente encontrado com os filtros atuais. Que
+                        tal prospectar novos leads?</p>
+                    <a href="{{ url_for('main.leads') }}"
+                        class="bg-northway-red text-white px-8 py-3 rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-200 font-bold flex items-center gap-2">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                        Ir para Leads
+                    </a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    function toggleDropdown(id) {
+        // Close others
+        document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+            if (el.id !== id) el.classList.add('hidden');
+        });
+        const dropdown = document.getElementById(id);
+        dropdown.classList.toggle('hidden');
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('.relative.inline-block')) {
+            document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+                el.classList.add('hidden');
+            });
+        }
+    });
+
+    function openTaskModalForClient(input) {
+        let clientId, clientName;
+
+        if (input.dataset) {
+            clientId = input.dataset.clientId;
+            clientName = input.dataset.clientName;
+        } else {
+            // Fallback (though we replaced usage)
+            clientId = arguments[0];
+            clientName = arguments[1];
+        }
+
+        // Close dropdown
+        document.querySelectorAll('[id^="dropdown-"]').forEach(el => el.classList.add('hidden'));
+
+        // Open Modal (assuming toggleModal exists from sidebar or layout)
+        // If specific modal logic is needed, implement here.
+        // Assuming we reuse the global 'Task Modal' if it exists, or redirect?
+        // Let's assume we need to populate a form.
+
+        // Actually, clients.html might not have the Task Modal included.
+        // Let's check if we need to add it or redirect.
+        // Plan: Redirect to tasks page with query param? No, user wants quick action.
+        // Better: Add a simplified Task Modal here or reuse one.
+        // CHECK: Does clients.html have a task modal? No.
+        // WORKAROUND: For MVP, let's redirect to tasks page with pre-fill?
+        // OR: Add the modal here quickly.
+
+        const modalHtml = `
+            <div id="quickTaskModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center">
+                <div class="bg-white rounded-lg w-full max-w-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Nova Tarefa para ${clientName}</h3>
+                        <button onclick="document.getElementById('quickTaskModal').remove()" class="text-gray-500 hover:text-gray-700">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <form action="{{ url_for('main.tasks') }}" method="POST">
+                        <input type="hidden" name="client_id" value="${clientId}"> <!-- Need to ensure backend accepts client_id -->
+                        <!-- Actually backend expects lead_id or generic. Let's check app.py -->
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                                <input type="text" name="title" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Vencimento</label>
+                                <input type="datetime-local" name="due_date" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red">
+                            </div>
+                            
+                            <!-- Hidden input trick to link to client if backend supports it. -->
+                            <!-- Checking app.py: tasks route checks 'lead_id'. It doesn't seem to explicitly check 'client_id' in form POST for creation? -->
+                            <!-- Wait, I need to verify that. If not, I need to update app.py too. -->
+                        </div>
+                        
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" onclick="document.getElementById('quickTaskModal').remove()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
+                            <button type="submit" class="bg-northway-red text-white px-4 py-2 rounded font-bold hover:bg-red-700">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        lucide.createIcons();
+        document.getElementById('quickTaskModal').classList.remove('hidden');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
+    <header class="mb-8 flex justify-between items-end">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p class="text-gray-500 mt-1">Visão geral e métricas de desempenho.</p>
+        </div>
+        <div class="text-sm text-gray-400 font-medium">
+            {{ now.strftime('%d de %B, %Y') }}
+        </div>
+    </header>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Total Leads -->
+        <div
+            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+            <div>
+                <p
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
+                    Leads Totais</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_leads }}</p>
+                <p class="text-xs text-gray-400 mt-1">Potenciais clientes</p>
+            </div>
+            <div
+                class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 group-hover:bg-blue-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <i data-lucide="users" class="w-6 h-6"></i>
+            </div>
+        </div>
+
+        <!-- Active Clients -->
+        <div
+            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+            <div>
+                <p
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-green-600 transition-colors">
+                    Clientes Ativos</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ active_clients }}</p>
+                <p class="text-xs text-gray-400 mt-1">Carteira atual</p>
+            </div>
+            <div
+                class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600 group-hover:bg-green-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <i data-lucide="briefcase" class="w-6 h-6"></i>
+            </div>
+        </div>
+
+        <!-- Pending Tasks -->
+        <div
+            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+            <div>
+                <p
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
+                    Tarefas Pendentes</p>
+                <p class="text-3xl font-bold {{ 'text-northway-red' if pending_tasks > 0 else 'text-gray-900' }} mt-2">
+                    {{ pending_tasks }}</p>
+                <p class="text-xs text-gray-400 mt-1">Ações necessárias</p>
+            </div>
+            <div
+                class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-northway-red group-hover:bg-red-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <i data-lucide="check-square" class="w-6 h-6"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Stats -->
+    <h2 class="text-lg font-bold text-gray-900 mb-4 px-1">Performance e Saúde</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Won Deals -->
+        <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
+            <div>
+                <p
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-green-600 transition-colors">
+                    Vendas Ganhas</p>
+                <p class="text-xl font-bold text-gray-900">{{ won_deals }}</p>
+            </div>
+            <div class="p-2 bg-green-50 rounded-full text-green-600 group-hover:scale-110 transition-transform">
+                <i data-lucide="trophy" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Conversion Rate -->
+        <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
+            <div>
+                <p
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-purple-600 transition-colors">
+                    Conversão</p>
+                <p class="text-xl font-bold text-gray-900">
+                    {% if total_leads > 0 %}
+                    {{ (won_deals / total_leads * 100)|round|int }}%
+                    {% else %}
+                    0%
+                    {% endif %}
+                </p>
+            </div>
+            <div class="p-2 bg-purple-50 rounded-full text-purple-600 group-hover:scale-110 transition-transform">
+                <i data-lucide="trending-up" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Health Risk -->
+        <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
+            <div>
+                <p
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-red-600 transition-colors">
+                    Em Risco</p>
+                <p class="text-xl font-bold {{ 'text-red-600' if risky_clients > 0 else 'text-gray-900' }}">{{
+                    risky_clients }}</p>
+            </div>
+            <div class="p-2 bg-red-50 rounded-full text-red-600 group-hover:scale-110 transition-transform">
+                <i data-lucide="activity" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Overdue Tasks -->
+        <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
+            <div>
+                <p
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-red-600 transition-colors">
+                    Atrasadas</p>
+                <p class="text-xl font-bold {{ 'text-red-600' if overdue_tasks > 0 else 'text-gray-900' }}">{{
+                    overdue_tasks }}</p>
+            </div>
+            <div class="p-2 bg-red-50 rounded-full text-red-600 group-hover:scale-110 transition-transform">
+                <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Chart -->
+<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h3 class="text-lg font-bold text-gray-900">Visão Geral de Performance</h3>
+            <p class="text-xs text-gray-500">Novos Leads vs Vendas Ganhas</p>
+        </div>
+        <select id="chartPeriod"
+            class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red">
+            <option value="today">Hoje (Por Hora)</option>
+            <option value="daily">Últimos 30 Dias</option>
+            <option value="weekly">Semanal (12 sem)</option>
+            <option value="monthly" selected>Mensal (12 meses)</option>
+            <option value="bimonthly">Bimestral (2 anos)</option>
+            <option value="quarterly">Trimestral (2 anos)</option>
+            <option value="semiannual">Semestral (3 anos)</option>
+            <option value="annual">Anual (5 anos)</option>
+        </select>
+    </div>
+    <div class="relative h-80 w-full">
+        <canvas id="activityChart"></canvas>
+    </div>
+</div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        let chartInstance = null;
+
+        // Gradient for Leads
+        const gradientLeads = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientLeads.addColorStop(0, 'rgba(250, 1, 2, 0.2)');
+        gradientLeads.addColorStop(1, 'rgba(250, 1, 2, 0)');
+
+        // Gradient for Sales
+        const gradientSales = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientSales.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+        gradientSales.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+        function initChart(data) {
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Novos Leads',
+                            data: data.leads,
+                            borderColor: '#fa0102',
+                            backgroundColor: gradientLeads,
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#fa0102',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: true
+                        },
+                        {
+                            label: 'Vendas Ganhas',
+                            data: data.sales,
+                            borderColor: '#10b981',
+                            backgroundColor: gradientSales,
+                            borderWidth: 3,
+                            tension: 0.4,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#10b981',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#111827',
+                            bodyColor: '#374151',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 10,
+                            boxPadding: 4
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f3f4f6',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                color: '#9ca3af'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                color: '#9ca3af'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        function updateChart(period) {
+            fetch(`/api/dashboard/chart-data?period=${period}`)
+                .then(response => response.json())
+                .then(data => {
+                    initChart(data);
+                })
+                .catch(error => console.error('Error loading chart data:', error));
+        }
+
+        // Event Listener
+        const periodSelect = document.getElementById('chartPeriod');
+        periodSelect.addEventListener('change', (e) => {
+            updateChart(e.target.value);
+        });
+
+        // Initialize
+        updateChart('monthly');
+    });
+</script>
+{% endblock %}

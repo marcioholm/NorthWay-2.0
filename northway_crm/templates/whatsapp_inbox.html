@@ -1,0 +1,820 @@
+{% extends "base.html" %}
+
+<!-- Picmo Emoji Picker -->
+{% block head %}
+<script src="{{ url_for('static', filename='js/picmo.js') }}"></script>
+<style>
+    /* Custom Scrollbar for Emoji Picker if needed */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden bg-gray-100">
+    <!-- Sidebar: Conversations List -->
+    <div class="w-1/3 min-w-[320px] max-w-[400px] border-r border-gray-200 bg-white flex flex-col">
+        <!-- Header -->
+        <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center h-16">
+            <h1 class="text-xl font-bold text-gray-800">WhatsApp</h1>
+            <div class="flex gap-2">
+                <button class="p-2 hover:bg-gray-200 rounded-full text-gray-600">
+                    <i data-lucide="message-square-plus" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="p-3 border-b border-gray-100 space-y-3">
+            <div class="bg-gray-100 rounded-lg flex items-center px-3 py-2">
+                <i data-lucide="search" class="w-4 h-4 text-gray-400 mr-2"></i>
+                <input type="text" placeholder="Pesquisar..."
+                    class="bg-transparent border-none text-sm w-full focus:outline-none text-gray-700">
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex p-1 bg-gray-100 rounded-lg">
+                <button onclick="filterConversations('all')" id="tab-all"
+                    class="flex-1 py-1.5 text-xs font-bold rounded-md shadow-sm bg-white text-gray-900 transition-all">Todos</button>
+                <button onclick="filterConversations('lead')" id="tab-lead"
+                    class="flex-1 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-all">Leads</button>
+                <button onclick="filterConversations('client')" id="tab-client"
+                    class="flex-1 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-all">Clientes</button>
+            </div>
+        </div>
+
+        <!-- Conversation List -->
+        <div class="flex-1 overflow-y-auto" id="conversation-list">
+            <!-- Items loaded via JS -->
+            <div class="flex flex-col items-center justify-center h-40 text-gray-400">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mb-2"></div>
+                <span class="text-xs">Carregando conversas...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main: Chat Area -->
+    <div class="flex-1 flex flex-col bg-[#efeae2] relative" id="chat-area">
+        <!-- Empty State -->
+        <div id="chat-empty-state"
+            class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-[#f0f2f5] z-10">
+            <div class="w-64 h-64 bg-gray-200 rounded-full flex items-center justify-center mb-8 opacity-50">
+                <!-- Placeholder Image or Icon -->
+                <i data-lucide="laptop" class="w-32 h-32 text-gray-400"></i>
+            </div>
+            <h2 class="text-3xl font-light text-gray-700 mb-4">NorthWay Web</h2>
+            <p class="text-sm text-gray-500">Envie e receba mensagens sem precisar manter seu celular conectado.</p>
+            <p class="text-sm text-gray-500 mt-1">Use o <strong>NorthWay CRM</strong> para conectar com seus clientes.
+            </p>
+        </div>
+
+        <!-- Header (Active Chat) -->
+        <div id="chat-header"
+            class="h-16 bg-[#f0f2f5] border-b border-gray-200 flex items-center justify-between px-4 hidden relative z-20">
+            <div class="flex items-center gap-3 cursor-pointer">
+                <!-- Avatar with Sync Button -->
+                <div class="relative group">
+                    <div id="chat-avatar"
+                        class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold overflow-hidden">
+                        <!-- IMG or Initials injected via JS -->
+                        ?
+                    </div>
+                    <!-- Sync Overlay Button -->
+                    <button onclick="syncProfile()" title="Atualizar Foto do WhatsApp"
+                        class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center rounded-full text-white transition-all">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-medium text-gray-900" id="chat-name">Nome do Contato</h3>
+                    <p class="text-xs text-gray-500 truncate w-64" id="chat-details">Detalhes...</p>
+                </div>
+            </div>
+            <div>
+                <button class="p-2 hover:bg-gray-200 rounded-full text-gray-600">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-2 relative z-20 hidden">
+            <!-- Messages -->
+        </div>
+
+        <!-- Input Area -->
+        <div id="chat-input-area"
+            class="bg-[#f0f2f5] p-3 flex items-center gap-2 border-t border-gray-200 hidden relative z-20 transition-all">
+
+            <!-- File Input (Hidden) -->
+            <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
+
+            <!-- Default Toolbar -->
+            <div id="toolbar-default" class="flex-1 flex items-center gap-2">
+                <!-- Emoji Button -->
+                <div class="relative">
+                    <button id="btn-emoji" class="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                        <i data-lucide="smile" class="w-6 h-6"></i>
+                    </button>
+                    <div id="emoji-picker-container" class="hidden absolute bottom-12 left-0 z-50 shadow-xl rounded-lg">
+                    </div>
+                </div>
+
+                <!-- Attachment Menu -->
+                <div class="relative">
+                    <button id="btn-attach" onclick="toggleAttachMenu()"
+                        class="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                        <i data-lucide="paperclip" class="w-6 h-6"></i>
+                    </button>
+                    <div id="attach-menu"
+                        class="hidden absolute bottom-12 left-0 bg-white shadow-xl rounded-lg border border-gray-100 p-2 flex flex-col w-40 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                        <button onclick="triggerFile('image/*,video/*')"
+                            class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded text-left text-sm text-gray-700">
+                            <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos e Vídeos
+                        </button>
+                        <button onclick="triggerFile('*/*')"
+                            class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded text-left text-sm text-gray-700">
+                            <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="flex-1 bg-white rounded-lg border border-white focus-within:border-gray-300 transition-colors overflow-hidden flex items-center px-4 py-2">
+                    <input type="text" id="message-input" placeholder="Mensagem"
+                        class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800"
+                        onkeypress="if(event.key === 'Enter') sendMessage()">
+                </div>
+
+                <!-- dynamic: send or mic -->
+                <button id="btn-mic" onclick="toggleRecording()"
+                    class="p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                    <i data-lucide="mic" class="w-6 h-6"></i>
+                </button>
+                <button id="btn-send" onclick="sendMessage()"
+                    class="hidden p-2 text-gray-500 hover:text-green-600 transition-colors">
+                    <i data-lucide="send" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Recording UI -->
+        <div id="toolbar-recording" class="flex-1 items-center gap-4 hidden px-4">
+            <button onclick="cancelRecording()" class="text-gray-500 hover:text-red-500">
+                <i data-lucide="trash-2" class="w-6 h-6"></i>
+            </button>
+            <div class="flex-1 flex items-center gap-2">
+                <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
+                <span id="recording-time" class="text-gray-600 font-mono text-sm">0:00</span>
+            </div>
+            <button onclick="stopAndSendRecording()" class="text-green-500 hover:text-green-600">
+                <i data-lucide="send" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- File Preview UI -->
+        <div id="toolbar-file"
+            class="flex-1 items-center gap-4 hidden bg-white rounded-lg px-4 py-2 border border-green-200">
+            <span class="text-gray-500"><i data-lucide="file" class="w-5 h-5 inline"></i></span>
+            <span id="file-name" class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
+            <button onclick="cancelFile()" class="text-gray-400 hover:text-red-500">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <button onclick="sendFile()" class="text-green-600 hover:text-green-700 font-bold text-sm">
+                Enviar
+            </button>
+        </div>
+
+    </div>
+</div>
+</div>
+
+<!-- Quick Message Modal -->
+<div id="quickMessageModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 flex flex-col max-h-[80vh]">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <i data-lucide="zap" class="w-5 h-5 text-yellow-500"></i>
+                Mensagens Rápidas
+            </h3>
+            <button onclick="toggleQuickMessageModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <!-- Create Form -->
+            <div class="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
+                <h4 class="text-sm font-bold text-gray-700 mb-2">Nova Mensagem</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <div class="md:col-span-1">
+                        <input type="text" id="qm-title" placeholder="Título (ex: Apresentação)"
+                            class="w-full px-3 py-2 border rounded-md text-sm">
+                    </div>
+                    <div class="md:col-span-1">
+                        <input type="text" id="qm-shortcut" placeholder="Atalho (ex: /intro)"
+                            class="w-full px-3 py-2 border rounded-md text-sm font-mono">
+                    </div>
+                    <div class="md:col-span-1">
+                        <!-- Spacer -->
+                    </div>
+                </div>
+                <textarea id="qm-content" rows="2" placeholder="Conteúdo da mensagem..."
+                    class="w-full px-3 py-2 border rounded-md text-sm mb-3 resize-none"></textarea>
+                <button onclick="createQuickMessage()"
+                    class="bg-northway-dark text-white px-4 py-2 rounded-md text-sm font-bold shadow-sm">
+                    <i data-lucide="plus" class="w-4 h-4 inline mr-1"></i> Criar Modelo
+                </button>
+            </div>
+
+            <!-- List -->
+            <div id="quick-messages-list" class="space-y-3">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let activeChat = null;
+    let quickMessages = [];
+    let allConversations = [];
+    let currentTab = 'all';
+    let emojiPicker = null;
+
+    // --- Emojis & Attachments ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Picmo
+        const container = document.getElementById('emoji-picker-container');
+        if (window.picmo) {
+            emojiPicker = picmo.createPicker({
+                rootElement: container,
+                locale: 'pt'
+            });
+
+            emojiPicker.addEventListener('emoji:select', selection => {
+                const input = document.getElementById('message-input');
+                input.value += selection.emoji;
+                input.dispatchEvent(new Event('input')); // Trigger auto-resize/btn switch
+                input.focus();
+            });
+        }
+
+        // Toggle Emoji
+        document.getElementById('btn-emoji').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const el = document.getElementById('emoji-picker-container');
+            el.classList.toggle('hidden');
+            document.getElementById('attach-menu').classList.add('hidden'); // Close others
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('emoji-picker-container').contains(e.target) &&
+                !document.getElementById('btn-emoji').contains(e.target)) {
+                document.getElementById('emoji-picker-container').classList.add('hidden');
+            }
+            if (!document.getElementById('attach-menu').contains(e.target) &&
+                !document.getElementById('btn-attach').contains(e.target)) {
+                document.getElementById('attach-menu').classList.add('hidden');
+            }
+        });
+    });
+
+    function toggleAttachMenu() {
+        const menu = document.getElementById('attach-menu');
+        menu.classList.toggle('hidden');
+        document.getElementById('emoji-picker-container').classList.add('hidden'); // Close others
+    }
+
+    function triggerFile(acceptType) {
+        const input = document.getElementById('file-input');
+        input.accept = acceptType;
+        input.click();
+        document.getElementById('attach-menu').classList.add('hidden');
+    }
+
+
+
+    // --- Quick Messages Logic ---
+    function toggleQuickMessageModal() {
+        const modal = document.getElementById('quickMessageModal');
+        modal.classList.toggle('hidden');
+        modal.classList.toggle('flex');
+    }
+
+    async function loadQuickMessages() {
+        try {
+            const res = await fetch('/api/whatsapp/quick-messages');
+            const data = await res.json();
+            quickMessages = data.quick_messages;
+            renderQuickMessagesList();
+        } catch (e) { console.error(e); }
+    }
+
+    function renderQuickMessagesList() {
+        const list = document.getElementById('quick-messages-list');
+        list.innerHTML = quickMessages.map(qm => `
+            <div class="flex items-start justify-between bg-white border border-gray-200 p-4 rounded-lg hover:border-northway-red transition-colors group">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-bold text-gray-900">${qm.title}</span>
+                        <span class="bg-gray-100 text-gray-500 font-mono text-xs px-1.5 py-0.5 rounded">${qm.shortcut || ''}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 whitespace-pre-wrap">${qm.content}</p>
+                </div>
+                <button onclick="deleteQuickMessage('${qm.id}')" class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `).join('');
+        if (window.lucide) lucide.createIcons();
+    }
+
+    async function createQuickMessage() {
+        const title = document.getElementById('qm-title').value;
+        const shortcut = document.getElementById('qm-shortcut').value;
+        const content = document.getElementById('qm-content').value;
+
+        if (!title || !content) return alert('Preencha título e conteúdo');
+
+        try {
+            await fetch('/api/whatsapp/quick-messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, shortcut, content })
+            });
+
+            // Clear and reload
+            document.getElementById('qm-title').value = '';
+            document.getElementById('qm-shortcut').value = '';
+            document.getElementById('qm-content').value = '';
+            loadQuickMessages();
+
+        } catch (e) { alert('Erro ao criar'); }
+    }
+
+    async function deleteQuickMessage(id) {
+        if (!confirm('Excluir modelo?')) return;
+        await fetch(`/api/whatsapp/quick-messages/${id}`, { method: 'DELETE' });
+        loadQuickMessages();
+    }
+
+    // Slash command logic
+    const msgInput = document.getElementById('message-input');
+    if (msgInput) {
+        msgInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            // Simple check for now. Ideally show a popup list.
+            if (val.startsWith('/')) {
+                const match = quickMessages.find(q => q.shortcut === val);
+                if (match) {
+                    e.target.value = match.content;
+                }
+            }
+        });
+    }
+
+    // --- Main Logc ---
+
+    async function loadConversations() {
+        const list = document.getElementById('conversation-list');
+        try {
+            const res = await fetch('/api/whatsapp/conversations');
+            if (res.status === 401 || res.status === 403 || res.redirected) {
+                // Session expired
+                window.location.href = '/login';
+                return;
+            }
+            if (!res.ok) throw new Error('Falha na requisição');
+
+            const data = await res.json();
+
+            if (data.conversations.length === 0) {
+                list.innerHTML = `<div class="p-4 text-center text-gray-400 text-sm">Nenhuma conversa encontrada.</div>`;
+                return;
+            }
+
+            allConversations = data.conversations;
+            filterConversations(currentTab); // Render based on current tab
+
+        } catch (e) {
+            console.error(e);
+            alert("Erro CRÍTICO no carregamento (Mostre ao suporte): " + e.message + "\nStack: " + e.stack);
+            list.innerHTML = `<div class="p-4 text-center text-red-400 text-sm">Erro: ${e.message}</div>`;
+        }
+    }
+
+    function filterConversations(tab) {
+        currentTab = tab;
+        const list = document.getElementById('conversation-list');
+
+        // Update Buttons
+        ['all', 'lead', 'client'].forEach(t => {
+            const btn = document.getElementById(`tab-${t}`);
+            if (t === tab) {
+                btn.classList.add('bg-white', 'text-gray-900', 'shadow-sm', 'font-bold');
+                btn.classList.remove('text-gray-500', 'font-medium');
+            } else {
+                btn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm', 'font-bold');
+                btn.classList.add('text-gray-500', 'font-medium');
+            }
+        });
+
+        // Filter Data
+        const filtered = allConversations.filter(c => {
+            if (tab === 'all') return true;
+            return c.type === tab;
+        });
+
+        if (filtered.length === 0) {
+            list.innerHTML = `<div class="p-8 text-center text-gray-400 text-sm">Nenhum ${tab === 'lead' ? 'lead' : tab === 'client' ? 'cliente' : 'contato'} encontrado.</div>`;
+            return;
+        }
+
+        renderList(filtered);
+    }
+
+    function renderList(conversations) {
+        const list = document.getElementById('conversation-list');
+        list.innerHTML = conversations.map(c => {
+            // Safeguard Date
+            let dateDisplay = '';
+            try {
+                const d = new Date(c.last_message_at);
+                if (isNaN(d.getTime())) {
+                    dateDisplay = '-';
+                } else {
+                    dateDisplay = d.toLocaleDateString() === new Date().toLocaleDateString()
+                        ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : d.toLocaleDateString();
+                }
+            } catch (e) { dateDisplay = '?'; }
+
+            // Safe quote escaping for onclick
+            const safeName = (c.name || '').replace(/'/g, "\\'");
+            const safePhone = (c.phone || '').replace(/'/g, "\\'");
+
+            // Active State Check
+            const isActive = activeChat && activeChat.id == c.id && activeChat.type === c.type;
+
+            return `
+                <div onclick="openChat('${c.type}', '${c.id}', '${safeName}', '${safePhone}', '${c.profile_pic_url || ''}')" 
+                     class="flex items-center gap-3 p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${isActive ? 'bg-gray-100' : ''}">
+                    <!-- Avatar -->
+                    <div class="relative">
+                        ${c.profile_pic_url ?
+                    `<img src="${c.profile_pic_url}" class="w-12 h-12 rounded-full object-cover">` :
+                    `<div class="w-12 h-12 rounded-full ${c.type === 'client' ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-500'} flex items-center justify-center font-bold text-lg">
+                                ${(c.name || '?').charAt(0).toUpperCase()}
+                            </div>`
+                }
+                        ${c.unread_count > 0 ? `
+                        <div class="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold border-2 border-white">
+                            ${c.unread_count}
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-baseline mb-1">
+                            <h4 class="text-sm font-medium text-gray-900 truncate">${c.name || 'Sem nome'}</h4>
+                            <span class="text-[10px] text-gray-400 flex-shrink-0 ml-2">
+                                ${dateDisplay}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 truncate flex items-center gap-1">
+                            ${c.last_message_dir === 'out' ? '<i data-lucide="check-check" class="w-3 h-3 ' + (c.last_message_status === 'read' ? 'text-blue-500' : 'text-gray-400') + '"></i>' : ''}
+                            ${c.last_message_content || ''}
+                        </p>
+                    </div>
+                </div>
+            `}).join('');
+
+        if (window.lucide) lucide.createIcons();
+    }
+
+    async function openChat(type, id, name, phone, avatarUrl) {
+        console.log("openChat called:", type, id, name, avatarUrl);
+        activeChat = { type, id };
+
+        // Update Header
+        document.getElementById('chat-empty-state').classList.add('hidden');
+        document.getElementById('chat-header').classList.remove('hidden');
+        document.getElementById('chat-header').classList.add('flex');
+        document.getElementById('chat-messages').classList.remove('hidden');
+        document.getElementById('chat-input-area').classList.remove('hidden');
+        document.getElementById('chat-input-area').classList.add('flex');
+
+        document.getElementById('chat-name').textContent = name;
+        document.getElementById('chat-details').textContent = `${type === 'lead' ? 'Lead' : 'Cliente'} • ${phone}`;
+
+        // Update Header Avatar - Ensure structure allows button overlay
+        // We actually want the button to remain Outside or be re-injected. 
+        // Simplest: The header HTML has the button in a sibling/wrapper. 
+        // Let's just update the inner IMG or Text of the #chat-avatar div but keep the wrapper?
+        // Wait, current structure in line 138 is: wrapper > #chat-avatar > ?
+        // My replacement above (line 138) made #chat-avatar be the inner div. The wrapper is outside.
+        // So I should only update #chat-avatar innerHTML.
+
+        const avatarEl = document.getElementById('chat-avatar');
+        // Check if we have a valid URL
+        const hasAvatar = avatarUrl && avatarUrl !== 'null' && avatarUrl !== 'undefined' && avatarUrl !== '';
+
+        if (hasAvatar) {
+            avatarEl.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover">`;
+        } else {
+            avatarEl.innerHTML = name.charAt(0).toUpperCase();
+            // Automate Sync if missing
+            syncProfile(true);
+        }
+
+        // Load Messages
+        await loadMessages(type, id);
+
+        // Reload list to update active state/unread (optional, lazy way)
+        loadConversations();
+    }
+
+    async function loadMessages(type, id) {
+        const container = document.getElementById('chat-messages');
+        container.innerHTML = `<div class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>`;
+
+        try {
+            const res = await fetch(`/api/whatsapp/${type}/${id}/messages`);
+            const data = await res.json();
+
+            if (data.messages.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Nenhuma mensagem.</div>`;
+            } else {
+                let lastDate = null;
+                const html = data.messages.map(msg => {
+                    const msgDate = new Date(msg.timestamp);
+                    const dateStr = msgDate.toLocaleDateString('pt-BR');
+                    let dateHeader = '';
+
+                    if (dateStr !== lastDate) {
+                        lastDate = dateStr;
+                        dateHeader = `
+                            <div class="flex justify-center my-4">
+                                <span class="bg-gray-200 text-gray-600 text-[10px] px-2 py-1 rounded shadow-sm font-medium">
+                                    ${dateStr}
+                                </span>
+                            </div>`;
+                    }
+
+                    return `
+                    ${dateHeader}
+                    <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-2 group">
+                        <div class="max-w-[60%] rounded-lg px-3 py-1.5 text-sm shadow-sm relative leading-relaxed ${msg.direction === 'out'
+                            ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-none'
+                            : 'bg-white text-gray-900 rounded-tl-none'
+                        }">
+                            <p>${msg.content}</p>
+                            <div class="flex justify-end items-center gap-1 -mt-0.5 opacity-60">
+                                <span class="text-[10px]">${msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                ${msg.direction === 'out' ?
+                            (msg.status === 'read' ? '<i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>' :
+                                msg.status === 'delivered' ? '<i data-lucide="check-check" class="w-3 h-3 text-gray-500"></i>' :
+                                    '<i data-lucide="check" class="w-3 h-3 text-gray-500"></i>')
+                            : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+                container.innerHTML = html;
+                container.scrollTop = container.scrollHeight;
+                if (window.lucide) lucide.createIcons();
+            }
+        } catch (e) {
+            container.innerHTML = `<div class="text-center py-10 text-red-400">Erro ao carregar mensagens.</div>`;
+        }
+    }
+
+    // --- Media Logic ---
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingTimer = null;
+    let selectedFile = null;
+
+    // UI Toggles
+    const inputArea = document.getElementById('message-input');
+    const btnMic = document.getElementById('btn-mic');
+    const btnSend = document.getElementById('btn-send');
+
+    // Auto-switch Mic/Send icon
+    inputArea.addEventListener('input', (e) => {
+        if (e.target.value.trim()) {
+            btnMic.classList.add('hidden');
+            btnSend.classList.remove('hidden');
+        } else {
+            btnMic.classList.remove('hidden');
+            btnSend.classList.add('hidden');
+        }
+    });
+
+    // Recording
+    async function toggleRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            return alert('Seu navegador não suporta gravação de áudio.');
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            mediaRecorder.start();
+
+            // UI Switch
+            document.getElementById('toolbar-default').classList.add('hidden');
+            document.getElementById('toolbar-recording').classList.remove('hidden');
+            document.getElementById('toolbar-recording').classList.add('flex');
+
+            // Timer
+            let seconds = 0;
+            const timerEl = document.getElementById('recording-time');
+            timerEl.textContent = "0:00";
+            recordingTimer = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+
+        } catch (err) {
+            console.error(err);
+            alert('Permissão de microfone negada.');
+        }
+    }
+
+    function cancelRecording() {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        }
+        clearInterval(recordingTimer);
+        resetToolbar();
+    }
+
+    function stopAndSendRecording() {
+        if (!mediaRecorder) return;
+
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // Z - API often likes ogg or mp3, but webm is standard browser. We'll send blob.
+            await uploadMedia(audioBlob, 'audio.webm', 'audio');
+            resetToolbar();
+        };
+
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        clearInterval(recordingTimer);
+    }
+
+    // Files
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+
+            // UI Switch
+            document.getElementById('toolbar-default').classList.add('hidden');
+            document.getElementById('toolbar-file').classList.remove('hidden');
+            document.getElementById('toolbar-file').classList.add('flex');
+            document.getElementById('file-name').textContent = selectedFile.name;
+        }
+    }
+
+    function cancelFile() {
+        selectedFile = null;
+        document.getElementById('file-input').value = ''; // Reset
+        resetToolbar();
+    }
+
+    async function sendFile() {
+        if (!selectedFile) return;
+        await uploadMedia(selectedFile, selectedFile.name, 'file');
+        cancelFile();
+    }
+
+    function resetToolbar() {
+        document.getElementById('toolbar-default').classList.remove('hidden');
+        document.getElementById('toolbar-recording').classList.add('hidden');
+        document.getElementById('toolbar-recording').classList.remove('flex');
+        document.getElementById('toolbar-file').classList.add('hidden');
+        document.getElementById('toolbar-file').classList.remove('flex');
+    }
+
+    // Generic Upload
+    async function uploadMedia(file, filename, type) {
+        if (!activeChat) return;
+
+        const loaderId = 'loader-' + Date.now();
+        // Optimistic UI (Simplified)
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file, filename);
+            if (activeChat.type === 'lead') formData.append('lead_id', activeChat.id);
+            else formData.append('client_id', activeChat.id);
+            formData.append('type', type); // 'audio' or 'file'
+
+            await fetch('/api/whatsapp/send-media', {
+                method: 'POST',
+                body: formData
+            });
+
+            loadMessages(activeChat.type, activeChat.id);
+            loadConversations();
+        } catch (e) {
+            alert('Erro ao enviar mídia.');
+        }
+    }
+
+    async function sendMessage() {
+        if (!activeChat) return;
+        const input = document.getElementById('message-input');
+        const content = input.value.trim();
+        if (!content) return;
+
+        input.value = '';
+        input.focus();
+
+        // Reset mic icon
+        btnMic.classList.remove('hidden');
+        btnSend.classList.add('hidden');
+
+        try {
+            const body = { content };
+            if (activeChat.type === 'lead') body.lead_id = activeChat.id;
+            else body.client_id = activeChat.id;
+
+            await fetch('/api/whatsapp/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            loadMessages(activeChat.type, activeChat.id);
+            loadConversations();
+        } catch (e) {
+            alert('Erro ao enviar');
+        }
+    }
+
+    async function syncProfile(silent = false) {
+        if (!activeChat) return;
+
+        // Find button inside avatar (if exists) or just the placeholder
+        const btnBox = document.querySelector('#chat-avatar button');
+        const icon = btnBox ? btnBox.querySelector('i') : null;
+        if (icon) icon.classList.add('animate-spin');
+
+        try {
+            const res = await fetch('/api/whatsapp/sync-profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: activeChat.type, id: activeChat.id })
+            });
+
+            const data = await res.json();
+
+            if (data.success && data.url) {
+                // Update active chat avatar
+                const avatarEl = document.getElementById('chat-avatar');
+                // Keep the button inside
+                avatarEl.innerHTML = `
+                    <div class="w-full h-full relative group">
+                         <img src="${data.url}" class="w-full h-full object-cover rounded-full">
+                         <!-- Sync Overlay Button -->
+                         <button onclick="syncProfile()" title="Atualizar Foto do WhatsApp"
+                            class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center rounded-full text-white transition-all z-10">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                if (window.lucide) lucide.createIcons();
+
+                // Update in list (lazy reload)
+                loadConversations();
+                if (!silent) alert("Foto atualizada com sucesso!");
+            } else {
+                if (!silent) alert("Não foi possível atualizar a foto. " + (data.message || ""));
+            }
+        } catch (e) {
+            console.error(e);
+            if (!silent) alert("Erro ao sincronizar perfil.");
+        } finally {
+            if (icon) icon.classList.remove('animate-spin');
+        }
+    }
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadConversations();
+        loadQuickMessages();
+    });
+</script>
+{% endblock %}

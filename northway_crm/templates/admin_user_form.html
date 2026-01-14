@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-50 p-8">
+    <div class="max-w-2xl mx-auto">
+        <header class="mb-8">
+            <a href="{{ url_for('main.admin_users') }}"
+                class="text-gray-500 hover:text-gray-900 flex items-center gap-1 mb-4 text-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Voltar para lista
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900">
+                {{ 'Editar Usuário' if user else 'Novo Usuário' }}
+            </h1>
+        </header>
+
+        <form method="POST" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 space-y-6">
+
+            <div class="grid grid-cols-2 gap-6">
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                    <input type="text" name="name" required value="{{ user.name if user else '' }}"
+                        class="w-full rounded-lg border-gray-300 focus:border-northway-red focus:ring-northway-red sm:text-sm p-2.5 border">
+                </div>
+
+                <div class="col-span-2 sm:col-span-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" name="email" required value="{{ user.email if user else '' }}" {{ 'readonly' if
+                        user else '' }}
+                        class="w-full rounded-lg border-gray-300 focus:border-northway-red focus:ring-northway-red sm:text-sm p-2.5 border {{ 'bg-gray-100' if user else '' }}">
+                </div>
+
+                <div class="col-span-2 sm:col-span-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Senha {{ '(Deixe em branco para manter)'
+                        if user else '' }}</label>
+                    <input type="password" name="password" {{ 'required' if not user else '' }}
+                        class="w-full rounded-lg border-gray-300 focus:border-northway-red focus:ring-northway-red sm:text-sm p-2.5 border">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Função / Cargo</label>
+                    <select name="role"
+                        class="w-full rounded-lg border-gray-300 focus:border-northway-red focus:ring-northway-red sm:text-sm p-2.5 border">
+                        <option value="vendedor" {{ 'selected' if user and user.role=='vendedor' else '' }}>Vendedor
+                        </option>
+                        <option value="gestor" {{ 'selected' if user and user.role=='gestor' else '' }}>Gestor</option>
+                        <option value="admin" {{ 'selected' if user and user.role=='admin' else '' }}>Administrador
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-6">
+                <h3 class="font-medium text-gray-900 mb-4">Acesso aos Funis</h3>
+                <div class="space-y-3">
+                    {% for p in pipelines %}
+                    <label
+                        class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" name="pipelines" value="{{ p.id }}"
+                            class="rounded border-gray-300 text-northway-red focus:ring-northway-red h-5 w-5"
+                            {{ 'checked' if user and p in user.allowed_pipelines else '' }}>
+                        <span class="text-gray-700">{{ p.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-3">
+                <a href="{{ url_for('main.admin_users') }}"
+                    class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium">Cancelar</a>
+                <button type="submit"
+                    class="bg-northway-red hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                    Salvar Usuário
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

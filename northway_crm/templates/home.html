@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
+    <header class="mb-4">
+        <div class="flex items-end justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900" id="welcome-message">Olá, {{ current_user.name }}</h1>
+                <p class="text-gray-500 mt-1 flex items-center gap-2">
+                    {% if current_user.status_message %}
+                    <span class="text-sm italic">"{{ current_user.status_message }}"</span>
+                    {% else %}
+                    Vamos acompanhar seus clientes hoje?
+                    {% endif %}
+                </p>
+            </div>
+            <div class="text-sm text-gray-400 font-medium">
+                {{ now.strftime('%d de %B, %Y') }}
+            </div>
+        </div>
+        <script>
+            const hour = new Date().getHours();
+            let greeting = "Olá";
+            if (hour >= 5 && hour < 12) greeting = "Bom dia";
+            else if (hour >= 12 && hour < 18) greeting = "Boa tarde";
+            else greeting = "Boa noite";
+            const userName = "{{ current_user.name | replace('\"', '\\\"') }}";
+            document.getElementById('welcome-message').textContent = `${greeting}, ${userName} 👋`;
+        </script>
+    </header>
+
+    <!-- TODAY VIEW / RESUMO DIÁRIO -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Coluna Principal (2/3) -->
+        <div class="lg:col-span-2 space-y-4">
+
+            <!-- Cards de Ação Rápida (Grid Interno) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <!-- Card Tarefas de Hoje -->
+                <div
+                    class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-300">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-gray-800 flex items-center gap-2">
+                            <span class="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                                <i data-lucide="check-square" class="w-4 h-4"></i>
+                            </span>
+                            Prioridades do Dia
+                        </h2>
+                        {% set overdue_count = today_tasks | selectattr("due_date") | selectattr("due_date", "lt", now)
+                        | list | length %}
+                        {% if overdue_count > 0 %}
+                        <span
+                            class="text-xs font-bold text-northway-red bg-red-50 px-2 py-1 rounded-full animate-pulse">
+                            {{ overdue_count }} Atrasadas!
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-3 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                        {% if today_tasks %}
+                        {% for task in today_tasks %}
+                        <div
+                            class="group flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors border-l-[3px] {{ 'border-northway-red bg-red-50/30' if task.due_date and task.due_date < now else 'border-transparent' }}">
+                            <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST" class="mt-0.5">
+                                <button aria-label="Concluir tarefa"
+                                    class="w-4 h-4 border-2 border-gray-300 rounded hover:border-northway-red transition-colors"></button>
+                            </form>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <p
+                                        class="text-sm font-medium text-gray-800 truncate {{ 'text-northway-red' if task.due_date and task.due_date < now else '' }}">
+                                        {{ task.title }}
+                                    </p>
+                                    {% if task.due_date %}
+                                    <span
+                                        class="text-[10px] font-mono {{ 'text-red-600 font-bold' if task.due_date < now else 'text-gray-400' }}">
+                                        {{ task.due_date.strftime('%H:%M') }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    {% if task.lead %}
+                                    <a href="{{ url_for('main.lead_details', id=task.lead.id) }}"
+                                        class="text-xs text-blue-500 hover:underline truncate">
+                                        {{ task.lead.name }}
+                                    </a>
+                                    {% elif task.client %}
+                                    <a href="{{ url_for('main.client_details', id=task.client.id) }}"
+                                        class="text-xs text-green-600 hover:underline truncate">
+                                        {{ task.client.name }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-xs text-gray-400">Geral</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="text-center py-6 text-gray-400">
+                            <i data-lucide="sun" class="w-8 h-8 mx-auto mb-2 opacity-50 text-yellow-400"></i>
+                            <p class="text-xs">Tudo limpo por hoje!</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Card Leads Sem Interação (Atenção) -->
+                <div
+                    class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all duration-300">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-gray-800 flex items-center gap-2">
+                            <span class="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
+                                <i data-lucide="message-square-warning" class="w-4 h-4"></i>
+                            </span>
+                            Requer Atenção
+                        </h2>
+                        <span class="text-xs text-gray-400 font-normal">Sem contato hoje</span>
+                    </div>
+
+                    <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
+                        {% if attention_leads %}
+                        {% for lead in attention_leads %}
+                        <div
+                            class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-50">
+                            <div class="min-w-0">
+                                <a href="{{ url_for('main.lead_details', id=lead.id) }}"
+                                    class="text-sm font-bold text-gray-800 hover:text-northway-red truncate block">
+                                    {{ lead.name }}
+                                </a>
+                                <p class="text-xs text-gray-500 truncate mt-0.5">
+                                    Status: <span class="font-medium text-purple-600">{{ lead.pipeline_stage.name if
+                                        lead.pipeline_stage else 'Novo' }}</span>
+                                </p>
+                            </div>
+                            <a href="{{ url_for('main.lead_details', id=lead.id) }}"
+                                class="p-2 text-gray-400 hover:text-northway-red hover:bg-red-50 rounded-full transition-all">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="text-center py-6 text-gray-400">
+                            <i data-lucide="thumbs-up" class="w-8 h-8 mx-auto mb-2 opacity-50 text-green-500"></i>
+                            <p class="text-xs">Todos os leads atendidos!</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Coluna Lateral (1/3) - Indicadores Rápidos -->
+        <div class="lg:col-span-1 space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 h-full relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <i data-lucide="zap" class="w-24 h-24 text-yellow-400 transform rotate-12"></i>
+                </div>
+
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Resumo do Dia</h3>
+
+                <div class="space-y-6 relative z-10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <i data-lucide="user-plus" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900">{{ today_stats.leads_new }}</p>
+                                <p class="text-xs text-gray-500 font-medium">Novos Leads</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+                                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900">{{ today_stats.tasks_done }}</p>
+                                <p class="text-xs text-gray-500 font-medium">Tarefas Feitas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-50">
+                        <a href="{{ url_for('main.tasks') }}"
+                            class="block w-full text-center py-2 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 transition-colors shadow-lg shadow-gray-200">
+                            Ver Agenda Completa
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Widget -->
+    <!-- Onboarding Widget Or Manifesto -->
+    {% if onboarding %}
+    {% if not onboarding.completed %}
+    <div id="onboarding-widget"
+        class="bg-gradient-to-r from-northway-dark to-gray-900 rounded-xl p-6 mb-8 text-white relative overflow-hidden shadow-lg border border-gray-800">
+        <!-- Background Pattern -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-16 -mt-16 pointer-events-none">
+        </div>
+
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        Bem-vindo ao NorthWay! 🚀
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-1">Complete estes passos para configurar seu CRM.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for step in onboarding.steps %}
+                <div
+                    class="{{ 'bg-green-500/10 border-green-500/30' if step.done else 'bg-white/5 border-white/10' }} border rounded-lg p-4 flex items-center gap-4 transition-all hover:bg-white/10 relative overflow-hidden group">
+                    <div
+                        class="{{ 'bg-green-500 text-black' if step.done else 'bg-gray-800 text-gray-400 border border-gray-700' }} w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors">
+                        {% if step.done %}
+                        <i data-lucide="check" class="w-5 h-5"></i>
+                        {% else %}
+                        <span class="font-bold text-sm">{{ loop.index }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <h3
+                            class="{{ 'text-gray-400 line-through' if step.done else 'text-white font-medium group-hover:text-northway-red transition-colors' }} text-sm">
+                            {{ step.title }}</h3>
+                        {% if not step.done %}
+                        {% if step.link %}
+                        <a href="{{ step.link }}"
+                            class="text-xs text-gray-400 hover:text-white mt-1 flex items-center gap-1">Começar <i
+                                data-lucide="arrow-right" class="w-3 h-3"></i></a>
+                        {% elif step.action %}
+                        <button data-action="{{ step.action | replace('\"', ' &quot;') }}" onclick="runAction(this)"
+                            class="text-xs text-gray-400 hover:text-white mt-1 flex items-center gap-1">Começar <i
+                                data-lucide="arrow-right" class="w-3 h-3"></i></button>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% if step.done %}
+                    <div class="absolute inset-0 bg-green-500/5 pointer-events-none"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 flex items-center justify-between">
+                <div class="w-full max-w-md">
+                    {% if onboarding.progress > 0 %}
+                    <div class="flex justify-between text-xs text-gray-500 mb-2 font-medium">
+                        <span>Seu progresso</span>
+                        <span>{{ onboarding.progress }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                        <div id="onboarding-progress-bar"
+                            class="bg-gradient-to-r from-northway-red to-red-600 h-1.5 rounded-full transition-all duration-1000"
+                            data-width="{{ onboarding.progress }}"></div>
+                        <script>
+                            document.addEventListener("DOMContentLoaded", function () {
+                                const bar = document.getElementById('onboarding-progress-bar');
+                                if (bar) bar.style.width = bar.dataset.width + '%';
+                            });
+                        </script>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <button onclick="dismissOnboarding()"
+                    class="text-xs text-gray-500 hover:text-white underline transition-colors">
+                    Pular etapas e finalizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function dismissOnboarding() {
+            if (confirm('Deseja pular as etapas de introdução?')) {
+                fetch("{{ url_for('main.dismiss_onboarding') }}", { method: 'POST' })
+                    .then(() => {
+                        window.location.reload();
+                    });
+            }
+        }
+
+        function runAction(el) {
+            const action = el.getAttribute('data-action');
+            if (action) {
+                try {
+                    new Function(action)();
+                } catch (e) {
+                    console.error("Error executing action:", e);
+                }
+            }
+        }
+    </script>
+    {% else %}
+    <!-- Manifesto Banner -->
+    <div id="manifesto-banner"
+        class="bg-gradient-to-r from-northway-dark to-gray-900 rounded-xl p-8 mb-8 text-white relative overflow-hidden shadow-lg border border-gray-800 flex items-center justify-center min-h-[160px]">
+        <!-- Subtle Background Elements -->
+        <div
+            class="absolute top-0 right-0 w-64 h-64 bg-northway-red opacity-5 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none animate-pulse">
+        </div>
+        <div
+            class="absolute bottom-0 left-0 w-48 h-48 bg-blue-900 opacity-10 blur-3xl rounded-full -ml-8 -mb-8 pointer-events-none">
+        </div>
+
+        <div class="relative z-10 text-center max-w-3xl px-4">
+            <p id="manifesto-text"
+                class="text-lg md:text-xl font-light tracking-wide text-gray-100 italic transition-opacity duration-1000 opacity-0">
+                <!-- Text injected by JS -->
+            </p>
+            <div class="w-12 h-0.5 bg-northway-red mx-auto mt-4 opacity-50"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const phrases = [
+                "A NorthWay nasce da convicção de que todo negócio carrega um chamado.",
+                "Talentos bem direcionados constroem empresas e sustentam famílias.",
+                "Enxergamos o marketing não como vaidade, mas como direção.",
+                "Não prometemos fórmulas mágicas. Prometemos método e clareza.",
+                "Crescer sem direção é desperdiçar esforço, recursos e talento.",
+                "Nossa missão: crescer certo, não apenas vender mais.",
+                "Marketing sem direção é esforço perdido.",
+                "NorthWay: Direção estratégica para quem quer ir além."
+            ];
+
+            let currentIndex = 0;
+            const textElement = document.getElementById('manifesto-text');
+
+            function updateText() {
+                // Fade out
+                textElement.style.opacity = '0';
+
+                setTimeout(() => {
+                    // Change text
+                    textElement.textContent = `"${phrases[currentIndex]}"`;
+                    // Fade in
+                    textElement.style.opacity = '1';
+
+                    currentIndex = (currentIndex + 1) % phrases.length;
+                }, 1000); // Wait for fade out
+            }
+
+            // Initial call
+            textElement.textContent = `"${phrases[0]}"`;
+            setTimeout(() => textElement.style.opacity = '1', 100);
+            currentIndex = 1;
+
+            // Loop
+            setInterval(updateText, 6000);
+        });
+    </script>
+    {% endif %}
+    {% endif %}
+
+</div>
+{% endblock %}

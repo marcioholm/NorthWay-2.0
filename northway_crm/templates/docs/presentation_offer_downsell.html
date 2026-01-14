@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>North Direção - Apresentação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            background-color: #080808;
+        }
+
+        .slide {
+            scroll-snap-align: start;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #080808;
+            color: white;
+            padding: 0;
+            border-bottom: 1px solid #111;
+        }
+
+        .highlight-gold {
+            color: #EAB308;
+            /* Yellow-500 */
+        }
+
+        @media print {
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+
+            body {
+                background-color: #080808 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                margin: 0;
+                padding: 0;
+            }
+
+            .slide-container {
+                overflow: visible !important;
+                height: auto !important;
+                display: block !important;
+            }
+
+            .slide {
+                width: 100vw !important;
+                height: 100vh !important;
+                page-break-after: always !important;
+                break-inside: avoid !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: #080808 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-bottom: none !important;
+            }
+
+            /* UI Elements to Hide */
+            #controls {
+                display: none !important;
+            }
+
+            /* Colors */
+            .text-white {
+                color: white !important;
+            }
+
+            .text-gray-400,
+            .text-gray-300,
+            .text-gray-500 {
+                color: #9ca3af !important;
+            }
+
+            .bg-\[\#080808\],
+            .bg-black {
+                background-color: #080808 !important;
+            }
+
+            .border-gray-800 {
+                border-color: #333 !important;
+            }
+
+            /* Downsell specifics */
+            .highlight-gold {
+                color: #EAB308 !important;
+            }
+
+            img {
+                filter: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-black text-white font-sans selection:bg-yellow-600">
+
+    <!-- Controls -->
+    <div id="controls" class="fixed top-6 right-6 z-50 flex gap-4">
+        <a href="{{ url_for('docs.library') }}"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Voltar
+        </a>
+        <button id="printBtn"
+            class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-yellow-900/40">
+            Baixar PDF
+        </button>
+    </div>
+
+    <div class="slide-container">
+
+        <!-- Slide 1: Abertura Direção -->
+        <section class="slide">
+            <div class="text-center max-w-5xl relative z-10">
+                <div class="w-32 h-32 rounded-full mx-auto mb-8 relative flex items-center justify-center">
+                    <div class="absolute inset-0 bg-yellow-600/20 rounded-full animate-pulse"></div>
+                    <img src="{{ url_for('static', filename='images/north_compass.png') }}" alt="Bússola North"
+                        class="w-24 h-24 object-contain relative z-10 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]">
+                </div>
+                <h1 class="text-6xl font-black font-display tracking-tight mb-6">
+                    North <span class="highlight-gold">Direção</span>
+                </h1>
+                <p class="text-2xl text-gray-400 font-light max-w-2xl mx-auto">
+                    Clareza estratégica para crescer com consciência.
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 2: Para Quem -->
+        <section class="slide bg-[#0a0a0a]">
+            <div class="max-w-4xl px-8 text-center">
+                <h2 class="text-4xl font-bold mb-12 leading-snug">
+                    "Nem toda empresa precisa de tudo.<br>
+                    Mas toda empresa precisa de <span class="highlight-gold">direção.</span>"
+                </h2>
+                <div class="grid grid-cols-2 gap-8 text-left">
+                    <div class="bg-[#111] p-8 rounded-2xl border border-gray-800">
+                        <i data-lucide="sprout" class="text-green-500 w-8 h-8 mb-4" aria-hidden="true"></i>
+                        <h3 class="font-bold text-white mb-2">Fase de Validação</h3>
+                        <p class="text-sm text-gray-400">Para quem precisa validar canais antes de escalar estrutura
+                            complexa.</p>
+                    </div>
+                    <div class="bg-[#111] p-8 rounded-2xl border border-gray-800">
+                        <i data-lucide="focus" class="text-yellow-500 w-8 h-8 mb-4" aria-hidden="true"></i>
+                        <h3 class="font-bold text-white mb-2">Foco no Essencial</h3>
+                        <p class="text-sm text-gray-400">Para quem quer resolver as vendas sem se perder em vaidade.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: O Que É -->
+        <section class="slide">
+            <div class="max-w-5xl w-full grid grid-cols-2 gap-16 items-center">
+                <div>
+                    <span class="text-yellow-600 font-bold uppercase tracking-widest text-xs mb-4 block">O
+                        Conceito</span>
+                    <h2 class="text-4xl font-bold font-display mb-6">Assessoria Estratégica & Orientação</h2>
+                    <p class="text-lg text-gray-400 leading-relaxed">
+                        A North Direção é uma entrada estruturada no marketing. Removemos o excesso operacional para
+                        focar puramente no que traz cliente:
+                        <strong class="text-white">Estratégia e Tráfego.</strong>
+                    </p>
+                </div>
+                <div class="flex justify-center">
+                    <div
+                        class="w-full aspect-square max-w-sm bg-gray-900 rounded-full flex items-center justify-center border border-gray-800 relative overflow-hidden">
+                        <img src="{{ url_for('static', filename='images/north_compass.png') }}" alt="Textura Bússola"
+                            class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay">
+                        <div class="absolute inset-4 border border-dashed border-gray-700 rounded-full"></div>
+                        <i data-lucide="navigation" class="w-24 h-24 text-yellow-600 relative z-10"
+                            aria-hidden="true"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: O Que Está Incluso -->
+        <section class="slide bg-[#0a0a0a]">
+            <div class="max-w-4xl w-full">
+                <h2 class="text-3xl font-bold mb-12 text-center">O Que Está Incluso</h2>
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="p-6 bg-[#151515] border-t-2 border-yellow-600 rounded-lg">
+                        <strong class="block text-white mb-2">1. Diagnóstico</strong>
+                        <p class="text-xs text-gray-500">Entendimento profundo do seu momento.</p>
+                    </div>
+                    <div class="p-6 bg-[#151515] border-t-2 border-yellow-600 rounded-lg">
+                        <strong class="block text-white mb-2">2. Planejamento</strong>
+                        <p class="text-xs text-gray-500">Definição clara de onde vamos atacar.</p>
+                    </div>
+                    <div class="p-6 bg-[#151515] border-t-2 border-yellow-600 rounded-lg">
+                        <strong class="block text-white mb-2">3. Metas e KPIs</strong>
+                        <p class="text-xs text-gray-500">Números que importam, não vaidade.</p>
+                    </div>
+                    <div class="p-6 bg-[#151515] border-t-2 border-yellow-600 rounded-lg">
+                        <strong class="block text-white mb-2">4. Conteúdo Guia</strong>
+                        <p class="text-xs text-gray-500">Direção estratégica para suas redes.</p>
+                    </div>
+                    <div class="p-6 bg-[#151515] border-t-2 border-yellow-600 rounded-lg">
+                        <strong class="block text-white mb-2">5. Tráfego Pago</strong>
+                        <p class="text-xs text-gray-500">Gestão profissional de Meta Ads.</p>
+                    </div>
+                    <div class="p-6 bg-[#151515] border-t-2 border-yellow-600 rounded-lg">
+                        <strong class="block text-white mb-2">6. Reunião Mensal</strong>
+                        <p class="text-xs text-gray-500">Acompanhamento e ajuste de rota.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: O Que Não Está Incluso (Limites) -->
+        <section class="slide">
+            <div class="max-w-3xl w-full text-center border border-gray-800 p-12 rounded-3xl bg-[#090909]">
+                <i data-lucide="shield-off" class="w-12 h-12 text-red-900 mx-auto mb-6" aria-hidden="true"></i>
+                <h2 class="text-2xl font-bold mb-8 text-gray-300">Transparência Radical: O que <span
+                        class="text-red-500">NÃO</span> fazemos neste plano</h2>
+                <ul class="text-left space-y-4 max-w-md mx-auto text-gray-400">
+                    <li class="flex items-center gap-3"><i data-lucide="x" class="text-red-900" aria-hidden="true"></i>
+                        Execução
+                        operacional pesada (Design diário)</li>
+                    <li class="flex items-center gap-3"><i data-lucide="x" class="text-red-900" aria-hidden="true"></i>
+                        Gestão de
+                        Comunidade (Responder Direct)</li>
+                    <li class="flex items-center gap-3"><i data-lucide="x" class="text-red-900" aria-hidden="true"></i>
+                        Desenvolvimento de
+                        Sites complexos</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Slide 6: Comparativo -->
+        <section class="slide bg-[#0a0a0a]">
+            <div class="max-w-5xl w-full grid grid-cols-2 gap-12 items-center">
+                <div class="opacity-50 grayscale blur-[1px]">
+                    <h3 class="text-xl font-bold mb-4 text-center">Estrategista Interno</h3>
+                    <div class="bg-gray-900 p-8 rounded-2xl text-center">
+                        <span class="text-3xl font-bold text-gray-500 line-through decoration-red-900">R$ 6.000+</span>
+                        <span class="block text-xs mt-2 text-gray-600">Salário + Encargos</span>
+                    </div>
+                </div>
+
+                <div class="scale-110 shadow-2xl z-10">
+                    <h3 class="text-xl font-bold mb-4 text-center text-yellow-500">North Direção</h3>
+                    <div
+                        class="bg-[#111] p-8 rounded-2xl text-center border border-yellow-600 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-yellow-600"></div>
+                        <span class="text-5xl font-black text-white">R$ 1.799</span>
+                        <span class="block text-xs mt-2 text-yellow-600 font-bold uppercase tracking-widest">Acesso a
+                            Metodologia Completa</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Investimento -->
+        <section class="slide">
+            <div class="text-center">
+                <span class="text-sm font-bold uppercase tracking-[0.3em] text-gray-500 mb-6 block">Investimento
+                    Inteligente</span>
+                <h1 class="text-7xl font-black text-white mb-2">12x R$ 1.799</h1>
+                <span class="text-gray-500 mb-12 block">ou R$ 18.000 à vista</span>
+
+                <div class="flex justify-center gap-4">
+                    <div
+                        class="bg-green-900/10 text-green-500 px-4 py-2 rounded border border-green-900/30 text-sm font-bold flex gap-2 items-center">
+                        <i data-lucide="check" class="w-4 h-4" aria-hidden="true"></i> Decisão Consciente
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Encerramento -->
+        <section class="slide bg-black">
+            <div class="max-w-4xl text-center">
+                <h1 class="text-3xl leading-relaxed text-gray-300 mb-12">
+                    "Crescer sem direção é um risco.<br>
+                    Crescer com estratégia é uma <span class="text-yellow-500 font-bold">escolha.</span>"
+                </h1>
+
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logotipo North"
+                    class="h-10 w-auto mx-auto opacity-40 grayscale">
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const printBtn = document.getElementById('printBtn');
+            if (printBtn) {
+                printBtn.addEventListener('click', () => window.print());
+            }
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+
+</html>

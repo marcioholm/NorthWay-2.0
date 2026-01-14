@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playbook Comercial - NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Montserrat:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .prose-premium h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            color: #fa0102;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            letter-spacing: -0.02em;
+        }
+
+        .prose-premium p {
+            color: #d1d5db;
+            /* gray-300 */
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .prose-premium ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 2rem;
+        }
+
+        .prose-premium li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #9ca3af;
+            /* gray-400 */
+        }
+
+        .prose-premium li::before {
+            content: "•";
+            color: #fa0102;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .chapter-card {
+            background-color: #1a1a1a;
+            border: 1px solid #2d2d2d;
+            border-radius: 1rem;
+            padding: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .chapter-card:hover {
+            border-color: #fa0102;
+            transition: border-color 0.3s ease;
+        }
+
+        @media print {
+            @page {
+                margin: 2cm;
+                size: A4;
+            }
+
+            body {
+                background-color: white !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Hide UI elements */
+            .fixed,
+            aside,
+            button,
+            nav,
+            .backdrop-blur-md {
+                display: none !important;
+            }
+
+            /* Reset Main Container */
+            main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+
+            .pt-20 {
+                padding-top: 0 !important;
+            }
+
+            /* Reset Colors */
+            h1,
+            h2,
+            h3,
+            h4,
+            strong {
+                color: black !important;
+            }
+
+            p,
+            li,
+            span {
+                color: #333 !important;
+            }
+
+            .text-white,
+            .text-gray-300,
+            .text-gray-400,
+            .text-gray-500 {
+                color: #000 !important;
+            }
+
+            /* Card/Section Resets */
+            .chapter-card,
+            .bg-\[\#0f0f0f\] {
+                background-color: white !important;
+                border: 1px solid #ddd !important;
+                color: black !important;
+                padding: 1.5rem !important;
+                margin-bottom: 2rem !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+            }
+
+            /* Specific Prose Overrides */
+            .prose-premium h2 {
+                color: #fa0102 !important;
+                /* Keep branding */
+                margin-top: 1rem !important;
+                font-size: 1.5rem !important;
+            }
+
+            .prose-premium p,
+            .prose-premium li {
+                color: black !important;
+            }
+
+            /* Remove dark borders */
+            .border-gray-800,
+            .border-gray-700 {
+                border-color: #ddd !important;
+            }
+
+            /* Ensure footer is visible but simple */
+            footer {
+                margin-top: 2rem !important;
+                padding-top: 1rem !important;
+                border-top: 1px solid #000 !important;
+            }
+
+            footer img {
+                filter: invert(1) !important;
+                /* Make white logo black */
+                opacity: 1 !important;
+                height: 1.5rem !important;
+            }
+
+            footer p {
+                color: #000 !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#0f0f0f] text-gray-300 font-sans selection:bg-[#fa0102] selection:text-white">
+
+    <!-- Fixed Header -->
+    <div class="fixed top-0 left-0 right-0 bg-[#0f0f0f]/90 backdrop-blur-md border-b border-gray-800 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="max-h-12 w-auto">
+                <span class="text-xs text-gray-500 font-medium ml-2 border-l border-gray-700 pl-3">Playbook
+                    Comercial</span>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <a href="{{ url_for('docs.library') }}"
+                    class="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    Voltar para Biblioteca
+                </a>
+                <button onclick="window.print()"
+                    class="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex max-w-7xl mx-auto pt-20 min-h-screen">
+
+        <!-- Sidebar Navigation (Sticky) -->
+        <aside
+            class="hidden lg:block w-72 fixed left-[calc(50%-3.5rem-36rem)] top-20 bottom-0 overflow-y-auto px-6 py-12 border-r border-gray-800">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6 px-3">Navegação</h3>
+            <nav class="space-y-1">
+                <a href="#vision"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">1.
+                    Visão Geral</a>
+                <a href="#offer-main"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">2.
+                    Oferta Principal</a>
+                <a href="#offer-downsell"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">3.
+                    Downsell</a>
+                <a href="#script"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">4.
+                    Script de Apresentação</a>
+                <a href="#techniques"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">5.
+                    Técnicas de Venda</a>
+                <a href="#closing"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">6.
+                    Script de Fechamento</a>
+                <a href="#rules"
+                    class="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">7.
+                    Regras de Conduta</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-72 px-8 py-12 lg:py-16 max-w-4xl mx-auto">
+
+            <!-- Hero -->
+            <div class="mb-16 border-b border-gray-800 pb-12">
+                <div
+                    class="inline-block bg-red-900/20 text-[#fa0102] px-3 py-1 rounded text-xs font-bold uppercase tracking-wider mb-6 border border-red-900/30">
+                    Uso Interno | Confidencial
+                </div>
+                <h1 class="text-5xl font-black text-white mb-6 font-display tracking-tight">
+                    Playbook Comercial<br>
+                    <span class="text-gray-500">Oferta & Downsell</span>
+                </h1>
+                <p class="text-xl text-gray-400 font-light max-w-2xl">
+                    Guia estratégico para padronização do discurso de vendas da NorthWay.
+                    <strong class="text-white">Não vendemos marketing. Vendemos direção.</strong>
+                </p>
+            </div>
+
+            <div class="prose-premium">
+
+                <!-- 1. Visão Geral -->
+                <section id="vision" class="chapter-card">
+                    <h2>1. Visão Geral</h2>
+                    <p class="text-white text-lg italic mb-6">"A Northway existe para orientar empresas que querem
+                        crescer com clareza, organização e responsabilidade."</p>
+
+                    <p>Este playbook contém os <strong>Scripts de Venda</strong> e rituais comerciais.</p>
+                </section>
+
+                <!-- Script -->
+                <section id="script" class="chapter-card">
+                    <h2>2. Script de Apresentação</h2>
+                    <p class="mb-6">Roteiro para conduzir a reunião de apresentação da proposta.</p>
+
+                    <div class="space-y-6">
+                        <div class="border-l-2 border-gray-700 pl-4">
+                            <strong class="text-white block mb-1">Slide 1: Abertura</strong>
+                            <p class="text-sm italic">"A Northway existe para dar direção ao crescimento das empresas.
+                                Marketing sem direção é esforço perdido."</p>
+                        </div>
+                        <div class="border-l-2 border-gray-700 pl-4">
+                            <strong class="text-white block mb-1">Slide 2: O Problema</strong>
+                            <p class="text-sm italic">"Empresas não falham por falta de esforço. Falham por falta de
+                                direção. Postar mais ou gastar mais não resolve se não houver estratégia."</p>
+                        </div>
+                        <div class="border-l-2 border-gray-700 pl-4">
+                            <strong class="text-white block mb-1">Slide 3: Nossa Convicção</strong>
+                            <p class="text-sm italic">"Para nós, o marketing não é vaidade. É uma ferramenta a serviço
+                                de crescimento sustentável e responsável."</p>
+                        </div>
+                        <div class="border-l-2 border-gray-700 pl-4">
+                            <strong class="text-white block mb-1">Slide 4: Nossa Solução</strong>
+                            <p class="text-sm italic">"Assumimos o papel de organizar e orientar o marketing do seu
+                                negócio. Trazemos Estrutura, Direção, Execução e Resultado."</p>
+                        </div>
+                        <div class="border-l-2 border-gray-700 pl-4">
+                            <strong class="text-white block mb-1">Slide 9: Fechamento</strong>
+                            <p class="text-sm italic">"Crescer é uma decisão. A Northway não é para quem busca
+                                imediatismo, é para quem quer construir algo sólido."</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Técnicas -->
+                <section id="techniques" class="chapter-card">
+                    <h2>3. Técnicas de Venda (Postura)</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-[#0f0f0f] p-4 rounded">
+                            <strong class="text-white block mb-1">Autoridade</strong>
+                            <span class="text-xs">Posicionamento consultivo, não pedinte.</span>
+                        </div>
+                        <div class="bg-[#0f0f0f] p-4 rounded">
+                            <strong class="text-white block mb-1">Ancoragem</strong>
+                            <span class="text-xs">Compare o valor com o custo de um time interno.</span>
+                        </div>
+                        <div class="bg-[#0f0f0f] p-4 rounded">
+                            <strong class="text-white block mb-1">Escassez Ética</strong>
+                            <span class="text-xs">"Não atendemos qualquer perfil, precisamos de alinhamento."</span>
+                        </div>
+                        <div class="bg-[#0f0f0f] p-4 rounded">
+                            <strong class="text-[#fa0102] block mb-1">O que NUNCA fazer</strong>
+                            <span class="text-xs text-red-200">Prometer faturamento, usar urgência falsa, falar mal de
+                                concorrente.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Fechamento -->
+                <section id="closing" class="chapter-card">
+                    <h2>4. Script de Fechamento</h2>
+
+                    <div class="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
+                        <p class="text-lg font-medium text-white mb-4">"Faz sentido para você estruturar o crescimento
+                            do seu negócio com clareza, ao invés de continuar testando sem direção?"</p>
+
+                        <p class="text-sm text-gray-500 uppercase font-bold mt-6 mb-2">Se a resposta for SIM:</p>
+                        <p class="text-white italic">"Qual plano faz mais sentido para o momento da sua empresa: o
+                            completo ou o essencial?"</p>
+
+                        <div class="mt-4 bg-black/30 p-2 rounded text-center text-xs text-gray-400 font-mono">
+                            [SILÊNCIO ABSOLUTO. DEIXE O CLIENTE FALAR PRIMEIRO]
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Regras -->
+                <section id="rules" class="chapter-card">
+                    <h2>5. Manifesto Comercial</h2>
+                    <p>Regras inegociáveis para todo colaborador NorthWay:</p>
+
+                    <ul class="space-y-2">
+                        <li class="text-white">Não vender o que não acredita.</li>
+                        <li class="text-white">Não prometer o que não controla.</li>
+                        <li class="text-white">Não manter cliente desalinhado apenas por dinheiro.</li>
+                        <li class="text-white">Direção vem antes da execução.</li>
+                        <li class="text-white">Transparência radical, sempre.</li>
+                    </ul>
+
+                    <div class="mt-12 text-center pt-8 border-t border-gray-800">
+                        <p class="text-xl font-display font-bold text-white mb-2">"A Northway acredita que crescer é uma
+                            responsabilidade."</p>
+                        <p class="text-gray-500">E que todo crescimento precisa de direção.</p>
+                    </div>
+                </section>
+
+            </div>
+
+            <footer class="mt-24 pt-12 border-t border-gray-800 text-center flex flex-col items-center">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-10 mx-auto mb-6 opacity-70">
+                <p class="text-gray-500 text-sm">&copy; 2026 NorthWay Systems. Uso Interno e Confidencial.</p>
+            </footer>
+
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

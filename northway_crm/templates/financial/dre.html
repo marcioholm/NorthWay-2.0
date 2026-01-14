@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-50/50 relative">
+    <div class="p-6 max-w-[1200px] mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('financial.dashboard') }}" class="p-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5 text-gray-500"></i>
+                </a>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 tracking-tight">Demonstrativo de Resultados (DRE)</h1>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <!-- Date Filter -->
+                 <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-md p-1 px-2 shadow-sm">
+                    <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+                    <select id="dreYear" class="text-xs font-medium border-none focus:ring-0 text-gray-700 p-0 pr-6">
+                        {% for y in range(now.year - 2, now.year + 2) %}
+                        <option value="{{ y }}" {% if y == now.year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="w-px h-4 bg-gray-200"></div>
+                     <select id="dreMonth" class="text-xs font-medium border-none focus:ring-0 text-gray-700 p-0 pr-6">
+                        {% set months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
+                        {% for m in months %}
+                        <option value="{{ loop.index }}" {% if loop.index == now.month %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button onclick="toggleModal('addExpenseModal')"
+                    class="px-3 py-1.5 bg-northway-red text-white rounded-md text-xs font-bold hover:bg-red-700 shadow-sm flex items-center gap-2">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Título a Pagar
+                </button>
+            </div>
+        </div>
+
+        <!-- DRE Report Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6">
+                <!-- Report Table -->
+                <div class="space-y-1 text-sm">
+                    
+                    <!-- Gross Revenue -->
+                    <div class="flex justify-between items-center py-3 border-b border-gray-100">
+                        <span class="font-bold text-gray-900 text-lg">Receita Bruta</span>
+                        <span class="font-bold text-gray-900 text-lg" id="val-revenue">R$ 0,00</span>
+                    </div>
+
+                    <!-- Deductions -->
+                    <div class="flex justify-between items-center py-2 pl-4 text-red-600">
+                        <span class="text-gray-600">(-) Impostos e Deduções</span>
+                        <span id="val-taxes">R$ 0,00</span>
+                    </div>
+
+                    <!-- Net Revenue -->
+                     <div class="flex justify-between items-center py-3 border-y border-gray-100 bg-gray-50/50 px-4 -mx-4 mt-2">
+                        <span class="font-bold text-gray-800">(=) Receita Líquida</span>
+                        <span class="font-bold text-gray-800" id="val-net-revenue">R$ 0,00</span>
+                    </div>
+
+                    <!-- Variable Costs -->
+                    <div class="flex justify-between items-center py-2 pl-4 text-red-600">
+                         <span class="text-gray-600">(-) Custos Variáveis (CMV/CSP/Comissões)</span>
+                         <span id="val-variable">R$ 0,00</span>
+                    </div>
+
+                    <!-- Contribution Margin -->
+                    <div class="flex justify-between items-center py-3 border-y border-gray-100 bg-gray-50/50 px-4 -mx-4 mt-2">
+                         <span class="font-bold text-blue-800">(=) Margem de Contribuição</span>
+                         <span class="font-bold text-blue-800" id="val-margin">R$ 0,00</span>
+                    </div>
+
+                     <!-- Fixed Expenses Group -->
+                     <div class="py-2">
+                        <div class="flex justify-between items-center py-1 pl-4 mb-2">
+                            <span class="text-gray-900 font-semibold">(-) Despesas Operacionais Fixas</span>
+                            <span class="font-semibold text-red-600" id="val-fixed-total">R$ 0,00</span>
+                        </div>
+                        
+                        <!-- Dynamic Breakdown List -->
+                        <div id="expense-breakdown" class="space-y-1 pl-8 text-xs text-gray-500">
+                             <!-- Injected via JS -->
+                             <div class="flex justify-between"><span>Carregando...</span></div>
+                        </div>
+                     </div>
+
+                    <!-- EBITDA -->
+                     <div class="flex justify-between items-center py-4 border-t-2 border-gray-200 mt-4">
+                        <div class="flex flex-col">
+                             <span class="font-black text-gray-900 text-xl">(=) EBITDA</span>
+                             <span class="text-[10px] text-gray-400 font-medium">Lucro Operacional antes de Juros/Amortização</span>
+                        </div>
+                        <span class="font-black text-gray-900 text-xl" id="val-ebitda">R$ 0,00</span>
+                    </div>
+
+                     <!-- Final Result -->
+                     <div class="bg-gray-900 text-white p-4 rounded-lg flex justify-between items-center mt-6 shadow-lg">
+                         <span class="font-bold uppercase tracking-widest text-xs">Resultado Líquido do Exercício</span>
+                         <span class="font-bold text-2xl" id="val-net-result">R$ 0,00</span>
+                     </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Add Expense -->
+<div id="addExpenseModal" class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 animate-in fade-in zoom-in duration-200">
+        <form action="#" onsubmit="submitExpense(event)" class="flex flex-col h-full">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-bold text-gray-900">Novo Lançamento Financeiro</h3>
+                <button type="button" onclick="toggleModal('addExpenseModal')" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <!-- Description -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Descrição</label>
+                    <input type="text" name="description" required placeholder="Ex: Aluguel Escritório"
+                        class="w-full rounded-lg border-gray-300 text-sm focus:ring-northway-red focus:border-northway-red">
+                </div>
+
+                <!-- Values Row -->
+                <div class="grid grid-cols-2 gap-4">
+                     <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Valor (R$)</label>
+                        <input type="text" name="amount" required placeholder="0,00"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-northway-red focus:border-northway-red">
+                    </div>
+                     <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Categoria</label>
+                        <select name="category_id" id="categorySelect" required
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-northway-red focus:border-northway-red">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dates Row -->
+                <div class="grid grid-cols-2 gap-4">
+                     <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Vencimento</label>
+                        <input type="date" name="due_date" required
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-northway-red focus:border-northway-red">
+                    </div>
+                     <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Data Pagamento</label>
+                        <input type="date" name="paid_date"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-northway-red focus:border-northway-red">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+                <button type="button" onclick="toggleModal('addExpenseModal')" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+                <button type="submit" class="px-4 py-2 bg-northway-red text-white text-sm font-bold rounded-lg hover:bg-red-700 shadow-md">Salvar Lançamento</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDRE();
+        loadCategories();
+        
+        // Filter Changes
+        document.getElementById('dreYear').addEventListener('change', loadDRE);
+        document.getElementById('dreMonth').addEventListener('change', loadDRE);
+    });
+
+    function formatMoney(val) {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    }
+
+    async function loadDRE() {
+        const year = document.getElementById('dreYear').value;
+        const month = document.getElementById('dreMonth').value;
+        
+        // Show loading state implicitly or explicit UI
+        
+        try {
+            const res = await fetch(`/api/financial/dre?year=${year}&month=${month}`);
+            const data = await res.json();
+            
+            // Map Values
+            document.getElementById('val-revenue').innerText = formatMoney(data.gross_revenue);
+            document.getElementById('val-taxes').innerText = formatMoney(data.taxes * -1); // Show as negative for visual logic? Or just abs
+            document.getElementById('val-net-revenue').innerText = formatMoney(data.net_revenue);
+            document.getElementById('val-variable').innerText = formatMoney(data.variable_costs * -1);
+            document.getElementById('val-margin').innerText = formatMoney(data.gross_profit);
+            document.getElementById('val-fixed-total').innerText = formatMoney(data.fixed_expenses * -1);
+            document.getElementById('val-ebitda').innerText = formatMoney(data.ebitda);
+            document.getElementById('val-net-result').innerText = formatMoney(data.net_result);
+            
+            // Render Breakdown
+            const breakdownEl = document.getElementById('expense-breakdown');
+            breakdownEl.innerHTML = '';
+            
+            // Sort breakdown by value desc
+            const sortedBreakdown = Object.entries(data.breakdown).sort((a,b) => b[1] - a[1]);
+            
+            if(sortedBreakdown.length === 0) {
+                 breakdownEl.innerHTML = '<div class="italic text-gray-300">Nenhuma despesa lançada no período.</div>';
+            } else {
+                sortedBreakdown.forEach(([name, val]) => {
+                    // Only show normal expenses here usually, but our API returns all breakdown.
+                    // Let's list everything that is NOT tax or variable if possible?
+                    // For now list all for transparency, but maybe gray out small ones.
+                    
+                    const row = document.createElement('div');
+                    row.className = 'flex justify-between items-center hover:bg-gray-50 p-1 rounded';
+                    row.innerHTML = `<span>${name}</span> <span>${formatMoney(val)}</span>`;
+                    breakdownEl.appendChild(row);
+                });
+            }
+            
+            
+        } catch(e) {
+            console.error(e);
+            alert('Erro ao carregar DRE');
+        }
+    }
+    
+    async function loadCategories() {
+        try {
+            const res = await fetch('/api/financial/categories');
+            const cats = await res.json();
+            const sel = document.getElementById('categorySelect');
+            sel.innerHTML = '<option value="">Selecione...</option>' + 
+                cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        } catch(e) { console.error(e); }
+    }
+    
+    async function submitExpense(e) {
+        e.preventDefault();
+         const form = e.target;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        try {
+             const res = await fetch('/api/expenses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            
+            if(json.success) {
+                // Success
+                toggleModal('addExpenseModal');
+                form.reset();
+                loadDRE(); // Reload report
+                
+                // Toast
+                // Simplified toast here or use existing system if exposed
+                 alert('Lançamento salvo com sucesso!');
+            } else {
+                alert('Erro: ' + (json.error || 'Desconhecido'));
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Erro de conexão");
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-50 p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Gerenciar Usuários</h1>
+                <p class="text-gray-500 mt-1">Administração de acesso e permissões</p>
+            </div>
+            <a href="{{ url_for('main.admin_new_user') }}"
+                class="bg-northway-red hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+                Novo Usuário
+            </a>
+        </header>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <table class="w-full text-left text-sm text-gray-600">
+                <thead class="bg-gray-50 text-gray-900 border-b border-gray-200 font-medium">
+                    <tr>
+                        <th class="px-6 py-4">Nome</th>
+                        <th class="px-6 py-4">Email</th>
+                        <th class="px-6 py-4">Função</th>
+                        <th class="px-6 py-4">Funis Permitidos</th>
+                        <th class="px-6 py-4 text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for user in users %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ user.name }}</td>
+                        <td class="px-6 py-4">{{ user.email }}</td>
+                        <td class="px-6 py-4">
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {{ 'bg-purple-100 text-purple-800' if user.role == 'admin' else 'bg-blue-100 text-blue-800' }}">
+                                {{ user.role|upper }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-wrap gap-1">
+                                {% for p in user.allowed_pipelines %}
+                                <span
+                                    class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs border border-gray-200">
+                                    {{ p.name }}
+                                </span>
+                                {% else %}
+                                <span class="text-red-500 text-xs">Sem acesso</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{{ url_for('main.admin_edit_user', id=user.id) }}"
+                                class="text-indigo-600 hover:text-indigo-900 hover:underline">
+                                Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

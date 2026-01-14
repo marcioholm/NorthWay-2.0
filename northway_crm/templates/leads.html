@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% from "macros.html" import user_avatar %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Leads</h1>
+            <p class="text-gray-500 mt-1">Gerencie seus potenciais clientes</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Actions Dropdown -->
+            <div class="relative">
+                <button onclick="togglePageDropdown('actionsDropdown')"
+                    class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 font-medium shadow-sm">
+                    <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                    Ações
+                </button>
+                <div id="actionsDropdown"
+                    class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-30">
+                    <a href="{{ url_for('main.download_lead_template') }}"
+                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black">
+                        <i data-lucide="file-down" class="w-4 h-4"></i>
+                        Baixar Modelo
+                    </a>
+                    <button onclick="toggleModal('importLeadModal'); togglePageDropdown('actionsDropdown')"
+                        class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black">
+                        <i data-lucide="upload" class="w-4 h-4"></i>
+                        Importar CSV
+                    </button>
+                    <div class="border-t border-gray-100 my-1"></div>
+                    <a href="{{ url_for('main.export_leads') }}"
+                        class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        Exportar CSV
+                    </a>
+                </div>
+            </div>
+
+            <button onclick="toggleModal('createLeadModal')"
+                class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 shadow-sm font-medium">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Novo Lead
+            </button>
+        </div>
+    </div>
+
+    <!-- Leads Table (Premium Design) -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col">
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[1000px] divide-y divide-gray-100">
+                <thead>
+                    <tr class="bg-gray-50/50">
+                        <th scope="col"
+                            class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Nome / Empresa
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Contato
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Responsável
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Status
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Origem
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Data
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            Ações
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 bg-white">
+                    {% for lead in leads %}
+                    <tr class="group hover:bg-slate-50/80 transition-all duration-200 cursor-pointer clickable-row"
+                        data-href="{{ url_for('main.lead_details', id=lead.id) }}">
+                        <!-- Name & Avatar -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div
+                                    class="flex-shrink-0 h-11 w-11 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:shadow-lg transition-all transform group-hover:scale-105">
+                                    {{ lead.name[:2].upper() }}
+                                </div>
+                                <div class="ml-4">
+                                    <div
+                                        class="text-sm font-bold text-gray-900 group-hover:text-northway-red transition-colors">
+                                        {{ lead.name }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Contact -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex flex-col gap-0.5">
+                                {% if lead.email %}
+                                <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                                    <i data-lucide="mail" class="w-3 h-3 text-gray-400"></i>
+                                    {{ lead.email }}
+                                </div>
+                                {% endif %}
+                                {% if lead.phone %}
+                                <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                                    <i data-lucide="phone" class="w-3 h-3 text-gray-400"></i>
+                                    {{ lead.phone }}
+                                </div>
+                                {% else %}
+                                <span class="text-xs text-gray-300 italic">Sem contato</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Assignee -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="transform scale-90 origin-left">
+                                {{ user_avatar(lead.assigned_user) }}
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% set status_colors = {
+                            'new': 'bg-blue-50 text-blue-700 border-blue-100',
+                            'contacted': 'bg-yellow-50 text-yellow-700 border-yellow-100',
+                            'qualified': 'bg-purple-50 text-purple-700 border-purple-100',
+                            'proposal': 'bg-orange-50 text-orange-700 border-orange-100',
+                            'won': 'bg-green-50 text-green-700 border-green-100',
+                            'lost': 'bg-red-50 text-red-700 border-red-100'
+                            } %}
+                            <span
+                                class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border {{ status_colors.get(lead.status, 'bg-gray-50 text-gray-600 border-gray-100') }}">
+                                {{ lead.status|upper }}
+                            </span>
+                        </td>
+
+                        <!-- Source -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                                <span class="text-xs font-medium text-gray-600">{{ lead.source or 'N/A' }}</span>
+                            </div>
+                        </td>
+
+                        <!-- Date -->
+                        <td class="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-500">
+                            {{ lead.created_at.strftime('%d/%m/%Y') }}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium stop-propagation">
+                            <a href="{{ url_for('main.lead_details', id=lead.id) }}"
+                                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-50 text-gray-400 hover:text-northway-red hover:bg-red-50 border border-gray-200 transition-all shadow-sm">
+                                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-24 text-center">
+                            <div class="flex flex-col items-center justify-center">
+                                <div
+                                    class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                                    <i data-lucide="users" class="w-10 h-10 text-gray-300"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">Sua lista está vazia</h3>
+                                <p class="text-gray-500 mb-8 max-w-sm mx-auto">Comece adicionando novos leads para
+                                    preencher
+                                    seu pipeline de vendas.</p>
+                                <button onclick="toggleModal('createLeadModal')"
+                                    class="bg-northway-red text-white px-8 py-3 rounded-xl hover:bg-red-700 transition-all font-bold shadow-lg shadow-red-200 flex items-center gap-2 transform hover:-translate-y-0.5">
+                                    <i data-lucide="plus" class="w-5 h-5"></i>
+                                    Criar Primeiro Lead
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Lead Modal -->
+<div id="createLeadModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Novo Lead</h3>
+            <button onclick="toggleModal('createLeadModal')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('main.leads') }}" method="POST" class="p-6 space-y-6">
+
+            <!-- Row 1: Name | Phone -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo *</label>
+                    <input type="text" name="name" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red"
+                        placeholder="Nome do cliente ou empresa">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp *</label>
+                    <input type="text" name="phone" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red"
+                        placeholder="(00) 00000-0000">
+                </div>
+            </div>
+
+            <!-- Row 2: Source | Assigned To -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Origem *</label>
+                    <select name="source" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                        <option value="">Selecione...</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Google">Google</option>
+                        <option value="Indicação">Indicação</option>
+                        <option value="Tráfego Pago">Tráfego Pago</option>
+                        <option value="Site">Site</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+                    {% if current_user.role in ['admin', 'gestor'] %}
+                    <select name="assigned_to_id"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                        <option value="{{ current_user.id }}">Eu mesmo ({{ current_user.name }})</option>
+                        {% for user in users if user.id != current_user.id %}
+                        <option value="{{ user.id }}">{{ user.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <input type="text" value="{{ current_user.name }}" disabled
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
+                    <input type="hidden" name="assigned_to_id" value="{{ current_user.id }}">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Row 3: Email | Interest -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" name="email"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red"
+                        placeholder="email@exemplo.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Interesse</label>
+                    <input type="text" name="interest"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red"
+                        placeholder="Ex: Consultoria, Produto X">
+                </div>
+            </div>
+
+            <!-- Row 4: Notes -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Observações Rápidas</label>
+                <textarea name="notes" rows="2"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none"
+                    placeholder="Informações adicionais..."></textarea>
+            </div>
+
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="toggleModal('createLeadModal')"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Salvar Lead
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Import Lead Modal -->
+<div id="importLeadModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Importar Leads</h3>
+            <button onclick="toggleModal('importLeadModal')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('main.import_leads') }}" method="POST" enctype="multipart/form-data" class="p-6">
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo CSV</label>
+                <div class="flex items-center justify-center w-full">
+                    <label
+                        class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <span class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i data-lucide="upload-cloud" class="w-8 h-8 text-gray-400 mb-2"></i>
+                            <span class="text-sm text-gray-500"><span class="font-bold">Clique para enviar</span></span>
+                            <span class="text-xs text-gray-400">CSV (Max. 5MB)</span>
+                        </span>
+                        <input id="dropzone-file" name="file" type="file" class="hidden" accept=".csv" required />
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 text-center">
+                    Use o <a href="{{ url_for('main.download_lead_template') }}"
+                        class="text-northway-red hover:underline font-bold">modelo padrão</a> para evitar erros.
+                </p>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="toggleModal('importLeadModal')"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Importar Agora
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function togglePageDropdown(id) {
+        const el = document.getElementById(id);
+        if (el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+        } else {
+            el.classList.add('hidden');
+        }
+    }
+
+    // Close dropdowns on click outside
+    window.addEventListener('click', function (event) {
+        if (!event.target.matches('.more-btn') && !event.target.closest('.relative')) {
+            const dropdowns = document.querySelectorAll('[id$="Dropdown"]');
+            dropdowns.forEach(d => d.classList.add('hidden'));
+        }
+    });
+
+    // Handle Table Row Clicks (Premium UX)
+    document.addEventListener('DOMContentLoaded', function () {
+        // Row Click
+        const rows = document.querySelectorAll('.clickable-row');
+        rows.forEach(row => {
+            row.addEventListener('click', function () {
+                const href = this.getAttribute('data-href');
+                if (href) window.location.href = href;
+            });
+        });
+
+        // Prevention on Actions
+        const stops = document.querySelectorAll('.stop-propagation');
+        stops.forEach(el => {
+            el.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        });
+    });
+</script>
+{% endblock %}

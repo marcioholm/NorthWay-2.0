@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico: O Estado Atual das Óticas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .slide:nth-child(odd) {
+            background-color: #f8fafc;
+        }
+
+        .slide:nth-child(even) {
+            background-color: #ffffff;
+        }
+
+        .highlight {
+            color: #dc2626;
+            font-weight: 800;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .scroll-down {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0) translateX(-50%);
+            }
+
+            40% {
+                transform: translateY(-10px) translateX(-50%);
+            }
+
+            60% {
+                transform: translateY(-5px) translateX(-50%);
+            }
+        }
+
+        /* Premium Shadows */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+
+    <!-- Slide 1: Capa -->
+    <div class="slide bg-gradient-to-br from-slate-900 to-slate-800 text-white text-center">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight">O Cenário das <span
+                    class="text-red-500">Óticas</span> em 2026</h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-12 font-light">Um diagnóstico baseado em dados reais de seus
+                concorrentes e parceiros.</p>
+            <div
+                class="inline-flex items-center gap-2 bg-red-600 px-6 py-3 rounded-full font-bold text-sm tracking-widest uppercase">
+                <i data-lucide="bar-chart-2"></i> Análise de Mercado
+            </div>
+        </div>
+        <div class="scroll-down text-white">
+            <i data-lucide="chevron-down"></i>
+        </div>
+    </div>
+
+    <!-- Slide 2: Perfil Operacional -->
+    <div class="slide">
+        <div class="max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-4xl font-bold mb-6">Como o mercado opera?</h2>
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4 p-6 card">
+                        <div class="bg-red-100 p-3 rounded-full text-red-600"><i data-lucide="glasses"
+                                class="w-8 h-8"></i></div>
+                        <div>
+                            <h3 class="text-xl font-bold">100% Focados em Grau</h3>
+                            <p class="text-gray-600">Todas as óticas entrevistadas indicaram que "Óculos de Grau" é a
+                                principal fonte de faturamento.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 p-6 card">
+                        <div class="bg-blue-100 p-3 rounded-full text-blue-600"><i data-lucide="flask-conical"
+                                class="w-8 h-8"></i></div>
+                        <div>
+                            <h3 class="text-xl font-bold">90% Terceirizam</h3>
+                            <p class="text-gray-600">Apenas 1 em cada 10 óticas possui laboratório próprio. A
+                                dependência de terceiros é o padrão.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                <h3 class="text-center font-bold mb-4 text-gray-500 uppercase text-sm">Ticket Médio (Óculos de Grau)
+                </h3>
+                <div class="chart-container">
+                    <canvas id="ticketChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: O Gargalo do Marketing -->
+    <div class="slide bg-slate-900 text-white">
+        <div class="max-w-6xl mx-auto w-full">
+            <h2 class="text-4xl font-bold mb-12 text-center">Onde o dinheiro está sendo deixado na mesa?</h2>
+
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="bg-white/5 p-8 rounded-2xl border border-white/10">
+                    <h3 class="text-center font-bold mb-6 text-red-500 uppercase tracking-widest">Uso do Instagram</h3>
+                    <div class="chart-container">
+                        <canvas id="instagramChart"></canvas>
+                    </div>
+                    <p class="text-center mt-6 text-gray-300 italic">"É mais institucional (divulgação, contato)"</p>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="bg-red-600/20 p-8 rounded-xl border-l-4 border-red-500">
+                        <h3 class="text-2xl font-bold mb-2">O Erro "Vitrine"</h3>
+                        <p class="text-lg text-gray-300">
+                            <span class="text-4xl font-black text-white">77%</span> das óticas usam as redes sociais
+                            apenas como cartão de visita, ignorando o potencial de venda ativa e captação de leads
+                            qualificados.
+                        </p>
+                    </div>
+                    <div class="p-6">
+                        <h4 class="font-bold text-xl mb-4 text-gray-200">Principais Dores Relatadas:</h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-center gap-3 text-red-400 font-medium">
+                                <i data-lucide="x-circle"></i> "Cliente pesquisa preços e some"
+                            </li>
+                            <li class="flex items-center gap-3 text-red-400 font-medium">
+                                <i data-lucide="x-circle"></i> "Pouco fluxo na loja"
+                            </li>
+                            <li class="flex items-center gap-3 text-red-400 font-medium">
+                                <i data-lucide="x-circle"></i> "Guerra de preços"
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: O Potencial (The Money Slide) -->
+    <div class="slide">
+        <div class="max-w-4xl mx-auto w-full text-center">
+            <h2 class="text-3xl md:text-5xl font-bold mb-4">O Preço da Inércia</h2>
+            <p class="text-xl text-gray-500 mb-12">Quanto sua ótica deixa de ganhar por mês por não vender apenas <span
+                    class="text-black font-bold">10 óculos a mais</span>?</p>
+
+            <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-gray-200">
+                    <p class="text-sm text-gray-400 uppercase font-bold mb-2">Média (Menor)</p>
+                    <p class="text-4xl font-black text-gray-700">R$ 5.000</p>
+                    <p class="text-xs text-gray-400 mt-2">Mensal</p>
+                </div>
+                <!-- Highlight Card -->
+                <div class="bg-white p-10 rounded-2xl shadow-2xl border-t-4 border-red-600 transform md:-translate-y-4">
+                    <div
+                        class="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+                        Média Real do Mercado</div>
+                    <p class="text-sm text-gray-400 uppercase font-bold mb-2">Potencial Médio</p>
+                    <p class="text-6xl font-black text-slate-900">R$ 10.000</p>
+                    <p class="text-sm text-green-600 font-bold mt-2">+ R$ 120.000 / ano</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-gray-200">
+                    <p class="text-sm text-gray-400 uppercase font-bold mb-2">Topo (Alta Performance)</p>
+                    <p class="text-4xl font-black text-gray-700">R$ 15.000</p>
+                    <p class="text-xs text-gray-400 mt-2">Mensal</p>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 p-6 rounded-xl border border-blue-100 inline-block text-left max-w-2xl">
+                <div class="flex gap-4">
+                    <i data-lucide="trending-up" class="w-12 h-12 text-blue-600 flex-shrink-0"></i>
+                    <div>
+                        <h4 class="font-bold text-lg text-blue-900">A Oportunidade</h4>
+                        <p class="text-blue-800/80">A maioria das óticas relatou que seus clientes vêm de "Indicação" ou
+                            "Passantes". Isso é marketing passivo. Implementar um <strong>Funil de Vendas Ativo</strong>
+                            é a chave para capturar esses R$ 120.000 anuais extras.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Call to Action -->
+    <div class="slide bg-white text-center">
+        <div class="max-w-3xl mx-auto">
+            <div
+                class="w-24 h-24 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+                <i data-lucide="calendar-check" class="w-12 h-12"></i>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black mb-6">Transforme Dados em Lucro</h2>
+            <p class="text-xl text-gray-600 mb-10 leading-relaxed">
+                Você viu os números. O mercado está terceirizado, com ticket médio estável, mas falhando na captação
+                ativa. <br>
+                Não seja a ótica que "o cliente pesquisa e some".
+            </p>
+
+            <div class="bg-slate-50 p-8 rounded-2xl border border-gray-200 mb-10">
+                <h3 class="font-bold text-2xl mb-2">Consultoria Estratégica Gratuita (30 min)</h3>
+                <p class="text-gray-500">Vamos desenhar o plano para adicionar esses R$ 10k/mês ao seu caixa.</p>
+            </div>
+
+            <a href="#"
+                class="inline-flex items-center gap-3 bg-red-600 text-white px-10 py-5 rounded-xl font-black text-xl hover:bg-red-700 transition-all shadow-xl shadow-red-200 hover:-translate-y-1">
+                Agendar Minha Sessão
+                <i data-lucide="arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Init Icons
+        lucide.createIcons();
+
+        // Data from Survey
+        // Ticket Médio Breakdown
+        // R$ 501 - R$ 1.000: 8
+        // R$ 1.001 - R$ 2.000: 1
+        const ctxTicket = document.getElementById('ticketChart').getContext('2d');
+        new Chart(ctxTicket, {
+            type: 'bar',
+            data: {
+                labels: ['Até R$ 500', 'R$ 501 - R$ 1.000', 'R$ 1.001 - R$ 2.000'],
+                datasets: [{
+                    label: 'Óticas',
+                    data: [0, 8, 1], // Aproximado baseado nos dados
+                    backgroundColor: ['#e2e8f0', '#dc2626', '#1e293b'],
+                    borderRadius: 8,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+            }
+        });
+
+        // Instagram Strategy
+        // Institucional vs Vendas Ativas
+        // Institucional: 7, Vendas: 2
+        const ctxInsta = document.getElementById('instagramChart').getContext('2d');
+        new Chart(ctxInsta, {
+            type: 'doughnut',
+            data: {
+                labels: ['Institucional / Vitrine', 'Ferramenta de Vendas Ativa'],
+                datasets: [{
+                    data: [77, 23], // %
+                    backgroundColor: ['#ef4444', '#22c55e'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: 'white' } }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

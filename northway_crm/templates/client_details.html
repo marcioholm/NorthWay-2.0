@@ -1,0 +1,1240 @@
+{% extends "base.html" %}
+{% from "macros.html" import user_avatar %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('main.clients') }}"
+                    class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-500 hover:text-northway-red hover:bg-red-50 transition-colors shadow-sm">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-3xl font-bold text-gray-900">{{ client.name }}</h1>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium
+                            {% if client.status == 'ativo' %} bg-green-100 text-green-800
+                            {% elif client.status == 'onboarding' %} bg-blue-100 text-blue-800
+                            {% elif client.status == 'cancelado' %} bg-red-100 text-red-800
+                            {% else %} bg-gray-100 text-gray-800
+                            {% endif %}">
+                            {{ client.status|upper }}
+                        </span>
+
+                        <!-- Health Status -->
+                        {% if client.health_status == 'verde' %}
+                        <span title="Saúde: Bom" class="w-3 h-3 rounded-full bg-green-500 ring-2 ring-green-100"></span>
+                        {% elif client.health_status == 'amarelo' %}
+                        <span title="Saúde: Atenção"
+                            class="w-3 h-3 rounded-full bg-yellow-500 ring-2 ring-yellow-100"></span>
+                        {% elif client.health_status == 'vermelho' %}
+                        <span title="Saúde: Crítico" class="w-3 h-3 rounded-full bg-red-500 ring-2 ring-red-100"></span>
+                        {% endif %}
+                    </div>
+                    <p class="text-gray-500 mt-1">Clientes > {{ client.name }}</p>
+                </div>
+            </div>
+
+            {% if current_user.role in ['admin', 'manager'] %}
+            <!-- Renewal Alert -->
+            {% if client.renewal_date %}
+            {% set days_left = (client.renewal_date - today).days %}
+            {% if days_left <= 30 %} <div
+                class="mb-6 p-4 rounded-lg flex items-center justify-between shadow-sm border {{ 'bg-red-50 border-red-200' if days_left < 0 else 'bg-orange-50 border-orange-200' }}">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="p-2 rounded-full {{ 'bg-red-100 text-red-600' if days_left < 0 else 'bg-orange-100 text-orange-600' }}">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold {{ 'text-red-900' if days_left < 0 else 'text-orange-900' }}">
+                            {% if days_left < 0 %} Renovação Vencida! {% else %} Renovação Próxima {% endif %} </h3>
+                                <p class="{{ 'text-red-700' if days_left < 0 else 'text-orange-700' }}">
+                                    O contrato vence em <strong>{{ client.renewal_date.strftime('%d/%m/%Y') }}</strong>.
+                                    {% if days_left < 0 %} (Atrasado há {{ days_left|abs }} dias) {% else %} (Faltam {{
+                                        days_left }} dias) {% endif %} </p>
+                    </div>
+                </div>
+                <button onclick="toggleModal('taskModal')"
+                    class="px-4 py-2 rounded-lg font-bold shadow-sm transition-colors {{ 'bg-red-600 text-white hover:bg-red-700' if days_left < 0 else 'bg-orange-500 text-white hover:bg-orange-600' }}">
+                    Agendar Contato
+                </button>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <a href="{{ url_for('main.new_contract', id=client.id) }}"
+            class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+            <i data-lucide="file-signature" class="w-4 h-4"></i>
+            <span>Emitir Contrato</span>
+        </a>
+        <div id="topEditActions">
+            <button onclick="startEditMode()" id="topEditBtn"
+                class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                <i data-lucide="pencil" class="w-4 h-4"></i>
+                <span>Editar Dados</span>
+            </button>
+            <div id="saveCancelBtns" class="hidden flex items-center gap-2">
+                <button onclick="cancelEditMode()"
+                    class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    <span>Cancelar</span>
+                </button>
+                <button onclick="saveClientForm()"
+                    class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    <span>Salvar Alterações</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <form action="{{ url_for('main.update_client', id=client.id) }}" method="POST" id="clientForm">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Info Column -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Registration Data Card -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <!-- Tabs -->
+                    <div class="px-6 pt-4 border-b border-gray-100 flex gap-6 bg-white">
+                        <button type="button" onclick="switchClientTab('details')" id="tab-client-details"
+                            class="pb-3 px-1 text-sm font-bold text-northway-red border-b-2 border-northway-red transition-all">
+                            <i data-lucide="building-2" class="w-4 h-4 inline mr-1"></i> Dados Cadastrais
+                        </button>
+                        <button type="button" onclick="switchClientTab('whatsapp')" id="tab-client-whatsapp"
+                            class="pb-3 px-1 text-sm font-bold text-gray-400 hover:text-gray-700 border-b-2 border-transparent transition-all flex items-center gap-2">
+                            <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
+                        </button>
+                    </div>
+
+                    <!-- Details Content -->
+                    <div id="content-client-details" class="p-8">
+                        <h3 class="hidden text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            Dados Cadastrais
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CNPJ
+                                    /
+                                    CPF</label>
+                                <input type="text" name="document" value="{{ client.document or '' }}" disabled
+                                    class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email
+                                    de
+                                    Contato</label>
+                                <input type="email" name="email_contact" value="{{ client.email_contact or '' }}"
+                                    disabled
+                                    class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                            <div>
+                                <label
+                                    class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Representante
+                                    Legal</label>
+                                <input type="text" name="representative" value="{{ client.representative or '' }}"
+                                    disabled
+                                    class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CPF
+                                    do
+                                    Rep.</label>
+                                <input type="text" name="representative_cpf"
+                                    value="{{ client.representative_cpf or '' }}" disabled
+                                    class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                            </div>
+                        </div>
+
+                        <!-- Address Split -->
+                        <div class="space-y-4 pt-4 border-t border-gray-100">
+                            <p class="text-xs font-bold text-gray-400 uppercase">Endereço</p>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Rua</label>
+                                    <input type="text" name="address_street" value="{{ client.address_street or '' }}"
+                                        disabled
+                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Número</label>
+                                    <input type="text" name="address_number" value="{{ client.address_number or '' }}"
+                                        disabled
+                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Bairro</label>
+                                    <input type="text" name="address_neighborhood"
+                                        value="{{ client.address_neighborhood or '' }}" disabled
+                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-[10px] text-gray-400 font-medium mb-0.5">Complemento</label>
+                                    <input type="text" placeholder="" disabled
+                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">CEP</label>
+                                    <input type="text" name="address_zip" value="{{ client.address_zip or '' }}"
+                                        disabled
+                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Cidade</label>
+                                    <input type="text" name="address_city" value="{{ client.address_city or '' }}"
+                                        disabled
+                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Estado</label>
+                                    <input type="text" name="address_state" value="{{ client.address_state or '' }}"
+                                        disabled
+                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600"
+                                        maxlength="2">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- End Details Content -->
+
+                <!-- WhatsApp Content -->
+                <div id="content-client-whatsapp" class="hidden h-[500px] flex flex-col p-6">
+                    <!-- Helper to know this client has a lead attached? Or direct link? -->
+                    <!-- Ideally clients should have a phone. We use client.phone -->
+
+                    <!-- Chat Area -->
+                    <div id="client-chat-messages"
+                        class="flex-1 overflow-y-auto space-y-4 p-4 bg-[#e5ddd5] rounded-t-lg border border-gray-200 border-b-0 bg-opacity-30">
+                        <div class="flex justify-center">
+                            <span class="bg-gray-200 text-gray-500 text-xs px-2 py-1 rounded-full">Carregando
+                                histórico...</span>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="flex gap-2 items-end">
+                        <div
+                            class="flex-1 bg-white rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-500">
+                            <textarea id="clientWhatsappInput" rows="2"
+                                class="w-full p-3 focus:outline-none resize-none text-sm"
+                                placeholder="Digite sua mensagem via WhatsApp..."></textarea>
+                        </div>
+                        <button onclick="sendClientWhatsAppMessage()" id="btnSendClientWhatsapp"
+                            class="bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg transition-colors shadow-sm flex-shrink-0">
+                            <i data-lucide="send" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                        <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas.
+                    </p>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="briefcase" class="w-5 h-5 text-northway-red"></i>
+                    Detalhes do Contrato
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Serviço
+                            Contratado</label>
+                        <input type="text" name="service" value="{{ client.service }}" disabled
+                            class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Nicho
+                            de
+                            Atuação</label>
+                        <input type="text" name="niche" value="{{ client.niche or '' }}" disabled
+                            placeholder="Ex: Escritório de Advocacia"
+                            class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tipo
+                            de Contrato</label>
+                        <select name="contract_type" disabled
+                            class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:appearance-none disabled:bg-none">
+                            <option value="mensal" {% if client.contract_type=='mensal' %}selected{% endif %}>
+                                Mensal</option>
+                            <option value="trimestral" {% if client.contract_type=='trimestral' %}selected{% endif %}>
+                                Trimestral</option>
+                            <option value="semestral" {% if client.contract_type=='semestral' %}selected{% endif %}>
+                                Semestral</option>
+                            <option value="anual" {% if client.contract_type=='anual' %}selected{% endif %}>
+                                Anual</option>
+                            <option value="pontual" {% if client.contract_type=='pontual' %}selected{% endif %}>
+                                Pontual</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Valor
+                            Mensal</label>
+                        <div class="flex items-center">
+                            <span class="text-gray-500 mr-1">R$</span>
+                            <input type="number" step="0.01" name="monthly_value" value="{{ client.monthly_value }}"
+                                disabled
+                                class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Status</label>
+                        <select name="status" disabled
+                            class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:appearance-none disabled:bg-none">
+                            <option value="onboarding" {% if client.status=='onboarding' %}selected{% endif %}>
+                                Onboarding</option>
+                            <option value="ativo" {% if client.status=='ativo' %}selected{% endif %}>Ativo
+                            </option>
+                            <option value="pausado" {% if client.status=='pausado' %}selected{% endif %}>Pausado
+                            </option>
+                            <option value="cancelado" {% if client.status=='cancelado' %}selected{% endif %}>
+                                Cancelado</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Saúde
+                            do Cliente <span
+                                class="text-[9px] text-gray-400 font-normal ml-1">(Automático)</span></label>
+                        <div
+                            class="py-1 text-gray-900 font-medium flex items-center gap-2 border-b border-gray-300 border-dashed">
+                            {% if client.health_status == 'verde' %}
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span>Bom (< 3 dias)</span>
+                                    {% elif client.health_status == 'amarelo' %}
+                                    <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                    <span>Atenção (4-7 dias)</span>
+                                    {% else %}
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                    <span>Crítico (> 7 dias)</span>
+                                    {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issued Contracts List -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="scroll-text" class="w-5 h-5 text-gray-400"></i>
+                    Contratos Emitidos
+                </h3>
+                <div class="space-y-3">
+                    {% if client.contracts %}
+                    {% for contract in client.contracts|sort(attribute='created_at', reverse=True) %}
+                    <div
+                        class="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-white border border-transparent hover:border-gray-200 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-white p-2 rounded shadow-sm">
+                                <i data-lucide="{{ 'file-edit' if contract.status == 'draft' else ('ban' if contract.status == 'terminated' else 'file-check') }}"
+                                    class="w-5 h-5 {{ 'text-yellow-500' if contract.status == 'draft' else ('text-red-500' if contract.status == 'terminated' else 'text-green-600') }}"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ contract.template.name }}</p>
+                                <p class="text-xs text-gray-500">{{ contract.created_at.strftime('%d/%m/%Y') }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="px-2 py-1 {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else ('bg-blue-100 text-blue-700' if contract.status == 'issued' else ('bg-red-100 text-red-700' if contract.status == 'terminated' else 'bg-green-100 text-green-700')) }} rounded text-xs font-medium uppercase">
+                                {{ 'Rascunho' if contract.status == 'draft' else ('Emitido' if contract.status
+                                ==
+                                'issued' else ('Rescindido' if contract.status == 'terminated' else 'Assinado'))
+                                }}
+                                <!-- UPDATED BADGE -->
+                            </span>
+
+                            {% if contract.status == 'draft' %}
+                            <a href="{{ url_for('main.resume_contract', id=contract.id) }}"
+                                class="p-2 text-gray-400 hover:text-northway-red transition-colors"
+                                title="Retomar Edição">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </a>
+                            {% else %}
+                            <div class="flex items-center">
+                                {% if contract.status == 'issued' %}
+                                <button type="button" onclick="signContract('{{ contract.id }}')"
+                                    class="p-2 text-green-600 hover:text-green-800 transition-colors"
+                                    title="Confirmar Assinatura (Gerar Financeiro)">
+                                    <i data-lucide="pen-tool" class="w-4 h-4"></i>
+                                </button>
+                                {% endif %}
+
+                                <!-- TERMINATION BUTTON ADDED -->
+                                {% if contract.status == 'signed' %}
+                                <button type="button" data-id="{{ contract.id }}"
+                                    data-name="{{ contract.template.name }}"
+                                    onclick="openTerminationModal(this.dataset.id, this.dataset.name)"
+                                    class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    title="Rescindir Contrato">
+                                    <i data-lucide="ban" class="w-4 h-4"></i>
+                                </button>
+                                {% endif %}
+
+                                <a href="{{ url_for('main.view_contract', id=contract.id) }}" target="_blank"
+                                    class="p-2 text-gray-400 hover:text-northway-red transition-colors"
+                                    title="Visualizar">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{{ url_for('main.view_contract', id=contract.id) }}?print=true" target="_blank"
+                                    class="p-2 text-gray-400 hover:text-northway-red transition-colors"
+                                    title="Baixar PDF">
+                                    <i data-lucide="file-down" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-sm text-gray-400 italic">Nenhum contrato emitido.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Notes Card -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5 text-gray-400"></i>
+                    Observações
+                </h3>
+                <textarea name="notes" rows="4" disabled
+                    class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red disabled:bg-gray-50 disabled:border-gray-100 disabled:resize-none">{{ client.notes or '' }}</textarea>
+            </div>
+
+            <!-- Tasks Section -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <i data-lucide="check-square" class="w-5 h-5 text-gray-400"></i>
+                        Tarefas
+                    </h3>
+                    <button type="button" onclick="toggleModal('taskModal')"
+                        class="text-[#fa0102] hover:bg-red-50 p-2 rounded-full transition-colors">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-2">
+                    {% for task in client.tasks|sort(attribute='status', reverse=True) %}
+                    <div
+                        class="flex items-start gap-3 p-3 rounded-lg border {{ 'border-green-100 bg-green-50' if task.status == 'concluida' else 'border-gray-100 bg-gray-50' }} group hover:border-gray-200 transition-colors">
+                        <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST">
+                            <button type="submit"
+                                class="mt-0.5 {{ 'text-green-500' if task.status == 'concluida' else 'text-gray-300 hover:text-green-500' }} transition-colors">
+                                <i data-lucide="{{ 'check-circle' if task.status == 'concluida' else 'circle' }}"
+                                    class="w-5 h-5"></i>
+                            </button>
+                        </form>
+                        <div class="flex-1 min-w-0">
+                            <div
+                                class="text-sm font-medium {{ 'text-gray-500 line-through' if task.status == 'concluida' else 'text-gray-900' }} truncate">
+                                {{ task.title }}</div>
+                            <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                {% if task.due_date %}
+                                <span
+                                    class="flex items-center gap-1 {{ 'text-red-500 font-bold' if task.due_date < now and task.status != 'concluida' else '' }}">
+                                    <i data-lucide="calendar" class="w-3 h-3"></i>
+                                    {{ task.due_date.strftime('%d/%m %H:%M') }}
+                                </span>
+                                {% endif %}
+                                {% if task.responsible %}
+                                <div class="flex items-center gap-1 ml-2">
+                                    {{ user_avatar(task.responsible, size='sm', show_name=True) }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-400 italic">Nenhuma tarefa encontrada.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Processes / Checklists Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
+                    Processos & Serviços
+                </h3>
+                <button type="button" onclick="toggleModal('addProcessModal')"
+                    class="text-northway-red hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Adicionar Processo
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
+                <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
+                    <!-- Header / Summary -->
+                    <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                        onclick="toggleProcess('{{ checklist.id }}')">
+                        <div class="flex items-center gap-3">
+                            <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
+                                <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
+                                <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
+                                    <path class="text-gray-200"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none" stroke="currentColor" stroke-width="4" />
+                                    <path class="text-northway-red progress-ring" stroke-dasharray="0, 100"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none" stroke="currentColor" stroke-width="4"
+                                        id="ring-{{ checklist.id }}" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
+                                <p class="text-xs text-gray-500">Iniciado em {{
+                                    checklist.created_at.strftime('%d/%m/%Y') }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"
+                                id="arrow-{{ checklist.id }}"></i>
+                        </div>
+                    </div>
+
+                    <!-- Expanded Content -->
+                    <div id="process-content-{{ checklist.id }}"
+                        class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
+                        {% for step in checklist.progress %}
+                        {% set step_index = loop.index0 %}
+                        <div class="step-group">
+                            <h5
+                                class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
+                                {{ step.title }}</h5>
+                            <div class="space-y-2 pl-2">
+                                {% for item in step['items'] %}
+                                <label
+                                    class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                    <input type="checkbox"
+                                        onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
+                                        {% if item.done %}checked{% endif %}
+                                        class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
+                                    <span
+                                        class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
+                                        item.text }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <div class="pt-4 border-t border-gray-100 flex justify-end">
+                            <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
+                                class="text-xs text-red-500 hover:text-red-700 underline">Excluir
+                                Processo</button>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
+                    cliente.
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="pt-6 border-t border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Histórico</h3>
+                <button type="button" onclick="toggleModal('interactionModal')"
+                    class="text-[#fa0102] hover:bg-red-50 p-2 rounded-full transition-colors">
+                    <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div
+                class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                {% for interaction in client.interactions|sort(attribute='created_at', reverse=True) %}
+                <div
+                    class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <!-- Icon -->
+                    <div
+                        class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                        {% if interaction.type == 'reuniao' %}
+                        <i data-lucide="users" class="w-4 h-4 text-blue-500"></i>
+                        {% elif interaction.type == 'ajuste' %}
+                        <i data-lucide="settings" class="w-4 h-4 text-orange-500"></i>
+                        {% elif interaction.type == 'feedback' %}
+                        <i data-lucide="message-circle" class="w-4 h-4 text-green-500"></i>
+                        {% elif interaction.type == 'tarefa_criada' %}
+                        <i data-lucide="plus-square" class="w-4 h-4 text-purple-500"></i>
+                        {% elif interaction.type == 'tarefa_concluida' %}
+                        <i data-lucide="check-square" class="w-4 h-4 text-green-600"></i>
+                        {% else %}
+                        <i data-lucide="sticky-note" class="w-4 h-4 text-gray-500"></i>
+                        {% endif %}
+                    </div>
+
+                    <!-- Content -->
+                    <div
+                        class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-gray-900 text-sm">
+                                {% if interaction.user %}
+                                {{ interaction.user.name }}
+                                {% else %}
+                                Sistema
+                                {% endif %}
+                            </span>
+                            <time class="font-mono text-xs text-gray-500">{{
+                                interaction.created_at.strftime('%d/%m %H:%M') }}</time>
+                        </div>
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{
+                            interaction.type }}</div>
+                        <p class="text-gray-600 text-sm leading-relaxed">{{ interaction.content }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-gray-400 text-sm py-4 ml-10">
+                    Nenhuma interação registrada.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+</div>
+
+<!-- Sidebar Info Column -->
+<div class="space-y-6">
+
+    <!-- Management Card -->
+    <div class="bg-[#11061e] rounded-lg shadow-sm p-6 text-white">
+        <h3 class="text-lg font-bold mb-4">Gestão</h3>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Gerente
+                    de Conta</label>
+                {% if client.account_manager %}
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden ring-2 ring-gray-600">
+                        {% if client.account_manager.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/profiles/' + client.account_manager.profile_image) }}"
+                            alt="{{ client.account_manager.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ client.account_manager.name[:2].upper() }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="font-medium text-white">{{ client.account_manager.name }}</p>
+                        <p class="text-xs text-gray-400">{{ client.account_manager.status_message or
+                            'Gerente' }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">Não atribuído</p>
+                {% endif %}
+
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Data
+                    de Início</label>
+                <input type="date" name="start_date" value="{{ client.start_date }}" disabled
+                    class="w-full bg-transparent border-b border-gray-700 py-1 text-white font-medium focus:outline-none focus:border-northway-red disabled:border-transparent">
+            </div>
+
+            <div>
+                <label
+                    class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 text-yellow-500">Próxima
+                    Renovação</label>
+                <input type="date" name="renewal_date" value="{{ client.renewal_date or '' }}" disabled
+                    class="w-full bg-transparent border-b border-gray-700 py-1 text-white font-medium focus:outline-none focus:border-northway-red disabled:border-transparent">
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Contato</h3>
+        <div class="space-y-3">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                </div>
+                <div class="text-sm truncate" title="{{ client.email }}">{{ client.email }}</div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                    <i data-lucide="phone" class="w-4 h-4"></i>
+                </div>
+                <div class="text-sm">{{ client.phone or '-' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Actions (Hidden by default) -->
+    <div id="editActions" class="hidden">
+        <button type="submit"
+            class="w-full bg-[#fa0102] text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg">
+            Salvar Alterações
+        </button>
+        <button type="button" onclick="toggleEditMode()"
+            class="w-full mt-2 bg-transparent text-gray-500 py-2 rounded-lg font-medium hover:text-gray-700">
+            Cancelar
+        </button>
+    </div>
+
+</div>
+</div>
+</form>
+</div>
+
+<!-- Termination Modal -->
+<div id="termination-modal"
+    class="fixed inset-0 bg-gray-900/50 hidden items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md border border-red-100">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i>
+                Rescindir Contrato
+            </h3>
+            <button onclick="closeTerminationModal()" class="text-gray-400 hover:text-gray-600"><i data-lucide="x"
+                    class="w-5 h-5"></i></button>
+        </div>
+
+        <form onsubmit="submitTermination(event)">
+            <input type="hidden" id="term-contract-id">
+            <p class="text-sm text-gray-600 mb-4">Você está prestes a rescindir o contrato <strong
+                    id="term-contract-title"></strong>. As cobranças futuras pendentes serão canceladas.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo da Rescisão</label>
+                    <textarea id="term-reason" rows="2"
+                        class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                        placeholder="Ex: Cliente insatisfeito, corte de custos..." required></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Multa Rescisória
+                            (R$)</label>
+                        <input type="text" id="term-penalty" oninput="formatCurrency(this)"
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent font-bold"
+                            placeholder="R$ 0,00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Vencimento da Multa</label>
+                        <input type="date" id="term-due-date"
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm font-medium text-gray-700">
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-1">Se houver valor, será gerada uma cobrança pendente.</p>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button type="button" onclick="closeTerminationModal()"
+                    class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">Cancelar</button>
+                <button type="submit"
+                    class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200">Confirmar
+                    Rescisão</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+<!-- Add Process Modal -->
+<div id="addProcessModal" class="hidden fixed inset-0 bg-gray-900/50 z-50 items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-gray-900">Iniciar Novo Processo</h3>
+            <button onclick="toggleModal('addProcessModal')" class="text-gray-400 hover:text-gray-600"><i
+                    data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <form action="{{ url_for('main.add_client_process', client_id=client.id) }}" method="POST">
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Selecione o
+                    Modelo</label>
+                <select name="template_id" required
+                    class="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    <option value="">Escolha um fluxo...</option>
+                    {% for tpl in process_templates %}
+                    <option value="{{ tpl.id }}">{{ tpl.name }}</option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-2">Você pode criar novos modelos em Configurações.</p>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-northway-red text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-500/20">
+                Iniciar Processo
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function startEditMode() {
+        const form = document.getElementById('clientForm');
+        const inputs = form.querySelectorAll('input, select, textarea');
+
+        // Buttons
+        const topEditBtn = document.getElementById('topEditBtn');
+        const saveCancelBtns = document.getElementById('saveCancelBtns');
+
+        // Enable inputs
+        inputs.forEach(input => {
+            input.disabled = false;
+            input.classList.remove('disabled:border-none');
+            input.classList.add('border-gray-300');
+        });
+
+        // Toggle Buttons
+        topEditBtn.classList.add('hidden');
+        saveCancelBtns.classList.remove('hidden');
+    }
+
+    function cancelEditMode() {
+        // Simple reload to discard changes or just disable? 
+        // Reload is safer to revert data.
+        if (confirm("Deseja cancelar a edição? As alterações não salvas serão perdidas.")) {
+            location.reload();
+        }
+    }
+
+    function saveClientForm() {
+        document.getElementById('clientForm').submit();
+    }
+
+    // Termination Functions
+    function openTerminationModal(id, title) {
+        document.getElementById('term-contract-id').value = id;
+        document.getElementById('term-contract-title').textContent = title;
+        document.getElementById('term-due-date').valueAsDate = new Date(); // Default to today
+        document.getElementById('termination-modal').classList.remove('hidden');
+        document.getElementById('termination-modal').classList.add('flex');
+    }
+
+    function closeTerminationModal() {
+        document.getElementById('termination-modal').classList.add('hidden');
+        document.getElementById('termination-modal').classList.remove('flex');
+    }
+
+    function formatCurrency(input) {
+        let value = input.value.replace(/\D/g, '');
+        value = (value / 100).toFixed(2) + '';
+        value = value.replace(".", ",");
+        value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        input.value = "R$ " + value;
+    }
+
+    async function submitTermination(e) {
+        e.preventDefault();
+        if (!confirm("Tem certeza que deseja rescindir este contrato? Esta ação não pode ser desfeita.")) return;
+
+        const id = document.getElementById('term-contract-id').value;
+        const reason = document.getElementById('term-reason').value;
+        // Parse currency string: "R$ 1.234,56" -> 1234.56
+        const penaltyStr = document.getElementById('term-penalty').value;
+        const penalty = penaltyStr ? parseFloat(penaltyStr.replace(/[^\d,]/g, '').replace(',', '.')) : 0;
+        const dueDate = document.getElementById('term-due-date').value;
+
+        try {
+            const res = await fetch(`/contracts/${id}/terminate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason, penalty, due_date: dueDate })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert("Erro: " + (data.message || "Erro desconhecido"));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        }
+    }
+
+    // Process Checklist Logic
+    function toggleProcess(id) {
+        const content = document.getElementById(`process-content-${id}`);
+        const arrow = document.getElementById(`arrow-${id}`);
+
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            arrow.classList.add('rotate-180');
+            // Re-calculate progress visual on open
+            updateProgressVisual(id);
+        } else {
+            content.classList.add('hidden');
+            arrow.classList.remove('rotate-180');
+        }
+    }
+
+    async function toggleChecklistItem(checklistId, itemIndex, stepIndex, checkbox) {
+        const textSpan = checkbox.nextElementSibling;
+
+        // Optimistic UI
+        if (checkbox.checked) {
+            textSpan.classList.add('line-through', 'text-gray-400');
+        } else {
+            textSpan.classList.remove('line-through', 'text-gray-400');
+        }
+
+        try {
+            const res = await fetch(`/api/checklists/${checklistId}/toggle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    step_index: stepIndex,
+                    item_index: itemIndex,
+                    done: checkbox.checked
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Update specific ring
+                const ring = document.getElementById(`ring-${checklistId}`);
+                ring.setAttribute('stroke-dasharray', `${data.percent}, 100`);
+            } else {
+                throw new Error(data.error || "Erro no servidor ao salvar.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao salvar progresso: " + e.message);
+            checkbox.checked = !checkbox.checked; // Revert
+        }
+    }
+
+    // Initial load progress bars
+    document.addEventListener("DOMContentLoaded", () => {
+        // Loop through all checklists and set initial progress if needed
+        // But actually the backend sends the full object, I just need to compute percentages initialy if I want
+        // Simpler: Just rely on toggle updates or pre-calculate in Jinja loop if possible. 
+        // For now, let's just calc on load.
+        document.querySelectorAll('.process-card').forEach(card => {
+            const checkboxes = card.querySelectorAll('input[type="checkbox"]');
+            const total = checkboxes.length;
+            const checked = Array.from(checkboxes).filter(c => c.checked).length;
+            const percent = total === 0 ? 0 : (checked / total * 100);
+            const ring = card.querySelector('.progress-ring');
+            if (ring) ring.setAttribute('stroke-dasharray', `${percent}, 100`);
+        });
+    });
+
+    function deleteChecklist(id) {
+        if (confirm("Tem certeza que deseja remover este processo? Todo o histórico será perdido.")) {
+            fetch(`/api/checklists/${id}/delete`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) window.location.reload();
+                });
+        }
+    }
+</script>
+
+<!-- New Interaction Modal and Task Modal -->
+{% include "macros_modals.html" ignore missing %}
+<!-- Fallback if macros not split, keeping original modals inline if needed. 
+     Since I cannot check macros_modals, I will paste the original modals back to be safe. 
+-->
+
+<!-- New Interaction Modal (Original) -->
+<div id="interactionModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Nova Interação</h3>
+            <button onclick="toggleModal('interactionModal')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('main.add_client_interaction', id=client.id) }}" method="POST" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                <select name="type"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                    <option value="nota">Nota</option>
+                    <option value="reuniao">Reunião</option>
+                    <option value="ajuste">Ajuste / Suporte</option>
+                    <option value="feedback">Feedback</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Conteúdo</label>
+                <textarea name="content" rows="4" placeholder="Descreva o que houve..." required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red"></textarea>
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="toggleModal('interactionModal')"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-[#fa0102] text-white rounded-lg hover:bg-red-700 transition-colors font-bold shadow-md">
+                    Registrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Task Modal (Original) -->
+<div id="taskModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Nova Tarefa</h3>
+            <button onclick="toggleModal('taskModal')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('main.add_client_task', id=client.id) }}" method="POST" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                <input type="text" name="title" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data/Hora</label>
+                    <input type="datetime-local" name="due_date"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+                    <select name="responsible_id"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if current_user.id==user.id %}selected{% endif %}>{{ user.name
+                            }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="is_recurring" id="is_recurring" value="1"
+                    class="w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red">
+                <label for="is_recurring" class="text-sm text-gray-700 flex items-center gap-1">
+                    <i data-lucide="repeat" class="w-4 h-4 text-gray-500"></i>
+                    Repetir mensalmente
+                </label>
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="toggleModal('taskModal')"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-[#fa0102] text-white rounded-lg hover:bg-red-700 transition-colors font-bold shadow-md">
+                    Criar Tarefa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        } else {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    async function signContract(id) {
+        if (!confirm("Confirmar que o contrato foi assinado? Isso irá gerar as parcelas financeiras automaticamente.")) return;
+
+        try {
+            const res = await fetch(`/contracts/${id}/sign`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert("Erro: " + (data.error || "Desconhecido"));
+            }
+        } catch (e) {
+            alert("Erro de conexão ao servidor.");
+            console.error(e);
+        }
+    }
+
+    // --- WhatsApp Logic (Client) ---
+    const pageClientId = parseInt("{{ client.id }}");
+
+    function switchClientTab(tabName) {
+        try {
+            console.log("Switching tab to:", tabName);
+            const detailsTab = document.getElementById('tab-client-details');
+            const whatsappTab = document.getElementById('tab-client-whatsapp');
+            const contentDetails = document.getElementById('content-client-details');
+            const contentWhatsapp = document.getElementById('content-client-whatsapp');
+
+            if (!detailsTab || !whatsappTab || !contentDetails || !contentWhatsapp) {
+                console.error("Missing elements:", { detailsTab, whatsappTab, contentDetails, contentWhatsapp });
+                return;
+            }
+
+            if (tabName === 'details') {
+                // Style Tabs
+                detailsTab.classList.add('text-northway-red', 'border-northway-red');
+                detailsTab.classList.remove('text-gray-500', 'border-transparent');
+                whatsappTab.classList.remove('text-green-600', 'border-green-600');
+                whatsappTab.classList.add('text-gray-500', 'border-transparent');
+
+                // Toggle Content
+                contentDetails.classList.remove('hidden');
+                contentWhatsapp.classList.add('hidden');
+            } else if (tabName === 'whatsapp') {
+                // Style Tabs
+                detailsTab.classList.remove('text-northway-red', 'border-northway-red');
+                detailsTab.classList.add('text-gray-500', 'border-transparent');
+                whatsappTab.classList.add('text-green-600', 'border-green-600');
+                whatsappTab.classList.remove('text-gray-500', 'border-transparent');
+
+                // Toggle Content
+                contentDetails.classList.add('hidden');
+                contentWhatsapp.classList.remove('hidden');
+                contentWhatsapp.classList.add('flex'); // Ensure flex is added back if needed
+
+                // Load Messages
+                loadClientWhatsAppMessages();
+            }
+        } catch (e) {
+            alert("Erro ao trocar de aba: " + e.message);
+            console.error(e);
+        }
+    }
+
+    async function loadClientWhatsAppMessages(silent = false) {
+        const container = document.getElementById('client-chat-messages');
+        if (!silent) {
+            container.innerHTML = `<div class="flex justify-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div></div>`;
+        }
+
+        try {
+            const response = await fetch(`/api/whatsapp/client/${pageClientId}/messages`);
+            const data = await response.json();
+
+            if (data.error) throw new Error(data.error);
+
+            if (data.messages.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400 py-10">
+                        <i data-lucide="message-square" class="w-10 h-10 mb-2 opacity-50"></i>
+                        <p class="text-sm">Nenhuma mensagem ainda.</p>
+                        <p class="text-xs">Inicie a conversa abaixo.</p>
+                    </div>
+                 `;
+            } else {
+                let lastDate = null;
+                const messagesHtml = data.messages.map(msg => {
+                    const msgDate = new Date(msg.timestamp);
+                    const dateStr = msgDate.toLocaleDateString('pt-BR');
+                    let dateHeader = '';
+
+                    if (dateStr !== lastDate) {
+                        lastDate = dateStr;
+                        dateHeader = `
+                            <div class="flex justify-center my-4">
+                                <span class="bg-gray-200 text-gray-600 text-[10px] px-2 py-1 rounded shadow-sm font-medium">
+                                    ${dateStr}
+                                </span>
+                            </div>`;
+                    }
+
+                    return `
+                    ${dateHeader}
+                    <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-1 group">
+                        <div class="max-w-[75%] rounded-lg px-3 py-1.5 text-sm shadow-sm relative leading-relaxed ${msg.direction === 'out'
+                            ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-none'
+                            : 'bg-white text-gray-900 rounded-tl-none'
+                        }">
+                            <p>${msg.content}</p>
+                            <div class="flex justify-end items-center gap-1 -mt-0.5">
+                                <span class="text-[10px] text-gray-500">${msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                ${msg.direction === 'out' ?
+                            (msg.status === 'read' ? '<i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>' :
+                                msg.status === 'delivered' ? '<i data-lucide="check-check" class="w-3 h-3 text-gray-400"></i>' :
+                                    '<i data-lucide="check" class="w-3 h-3 text-gray-400"></i>')
+                            : ''}
+                            </div>
+                            
+                        </div>
+                    </div>
+                `}).join('');
+                container.innerHTML = messagesHtml;
+                container.scrollTop = container.scrollHeight;
+            }
+            if (window.lucide) lucide.createIcons();
+        } catch (e) {
+            container.innerHTML = `<p class="text-center text-red-500 text-xs">Erro ao carregar: ${e.message}</p>`;
+        }
+    }
+
+    async function sendClientWhatsAppMessage() {
+        const input = document.getElementById('clientWhatsappInput');
+        const content = input.value.trim();
+        const btn = document.getElementById('btnSendClientWhatsapp');
+
+        if (!content) return;
+
+        input.disabled = true;
+        btn.disabled = true;
+        btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>`;
+
+        try {
+            const response = await fetch('/api/whatsapp/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ client_id: pageClientId, content: content })
+            });
+            const data = await response.json();
+
+            if (data.error) throw new Error(data.error);
+
+            input.value = '';
+            loadClientWhatsAppMessages();
+
+        } catch (e) {
+            alert('Erro ao enviar: ' + e.message);
+        } finally {
+            input.disabled = false;
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i>`;
+            input.focus();
+        }
+    }
+</script>
+{% endblock %}

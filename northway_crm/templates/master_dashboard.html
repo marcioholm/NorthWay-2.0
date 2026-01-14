@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-900 text-white">
+    <!-- Master Header -->
+    <div class="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-black/40">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-northway-red flex items-center justify-center font-black text-white">N</div>
+            <h1 class="text-lg font-bold tracking-tight">Painel Master</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-400">Logado como: <strong class="text-white">{{ current_user.name
+                    }}</strong></span>
+            <a href="{{ url_for('auth.logout') }}" class="text-sm text-red-400 hover:text-red-300">Sair</a>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-10">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">Empresas Cadastradas</h2>
+
+            <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-2xl">
+                <table class="w-full text-left">
+                    <thead class="bg-black/20 text-gray-400 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="px-6 py-4">ID</th>
+                            <th class="px-6 py-4">Empresa</th>
+                            <th class="px-6 py-4">Admin Principal</th>
+                            <th class="px-6 py-4 text-center">Usuários</th>
+                            <th class="px-6 py-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for stat in stats %}
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 font-mono text-gray-500">#{{ stat.company.id }}</td>
+                            <td class="px-6 py-4 font-bold text-white text-lg">
+                                {{ stat.company.name }}
+                                <div class="text-xs font-normal text-gray-500 mt-0.5">Criada em: {{
+                                    stat.company.created_at.strftime('%d/%m/%Y') }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-300">
+                                {{ stat.admin_name }}
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="bg-gray-700 text-white text-xs font-bold px-2 py-1 rounded-full">{{
+                                    stat.user_count }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                {% if stat.target_user_id %}
+                                <a href="{{ url_for('master.impersonate', user_id=stat.target_user_id) }}"
+                                    class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-blue-900/20">
+                                    <i data-lucide="log-in" class="w-4 h-4"></i> Acessar
+                                </a>
+                                {% else %}
+                                <span class="text-gray-500 italic text-sm">Sem Admin</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

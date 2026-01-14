@@ -1,0 +1,463 @@
+{% extends "base.html" %}
+{% from "macros.html" import user_avatar %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Tarefas</h1>
+            <p class="text-gray-500 mt-1">Sua lista de afazeres</p>
+        </div>
+        <button data-modal-target="createTaskModal"
+            class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 shadow-sm font-medium">
+            <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
+            Nova Tarefa
+        </button>
+    </div>
+
+    <!-- Progress Card -->
+    <div
+        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8 group hover:border-northway-red/30 transition-colors">
+        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Progresso Geral</h3>
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-2xl font-bold text-gray-900">{{ completed_tasks }} de {{ total_tasks }}</span>
+            <span class="text-sm font-medium text-northway-red">{{ progress_percent }}%</span>
+        </div>
+        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+            <div id="generalProgressBar"
+                class="bg-northway-red h-2.5 rounded-full transition-all duration-1000 ease-out"
+                data-width="{{ progress_percent }}"></div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6 w-fit">
+        <button data-tab-target="leads" id="tab-leads"
+            class="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white shadow text-gray-900">
+            Funil de Vendas
+        </button>
+        <button data-tab-target="clients" id="tab-clients"
+            class="px-4 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+            Carteira de Clientes
+        </button>
+        {% if general_tasks %}
+        <button data-tab-target="general" id="tab-general"
+            class="px-4 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+            Geral
+        </button>
+        {% endif %}
+        <button data-tab-target="completed" id="tab-completed"
+            class="px-4 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4" aria-hidden="true"></i>
+            Concluídas
+        </button>
+    </div>
+
+    <!-- Lead Tasks List -->
+    <div id="content-leads" class="space-y-3 tab-content">
+        {% if not lead_tasks %}
+        <div
+            class="bg-white rounded-lg border border-dashed border-gray-300 p-8 text-center flex flex-col items-center justify-center">
+            <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                <i data-lucide="check-square" class="w-6 h-6 text-gray-400" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-sm font-bold text-gray-900">Nenhuma tarefa de lead</h3>
+            <p class="text-xs text-gray-500 mb-4">Crie tarefas para organizar suas negociações.</p>
+            <button data-modal-target="createTaskModal"
+                class="text-xs font-bold text-northway-red hover:text-red-700 flex items-center gap-1">
+                <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i>
+                Criar Tarefa
+            </button>
+        </div>
+        {% endif %}
+        {% for task in lead_tasks %}
+        <div
+            class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between group hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4">
+                <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST">
+                    <button type="submit"
+                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 text-transparent hover:border-green-500 hover:text-green-500 flex items-center justify-center transition-all bg-white">
+                        <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <div>
+                    <div class="font-medium text-gray-900">{{ task.title }}</div>
+                    <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                        {% if task.due_date %}
+                        <div
+                            class="flex items-center gap-1 {{ 'text-red-600 font-medium' if task.due_date < now else '' }}">
+                            <i data-lucide="clock" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                            {{ task.due_date.strftime('%d/%m %H:%M') }}
+                        </div>
+                        {% endif %}
+
+                        {% if task.lead %}
+                        <a href="{{ url_for('main.lead_details', id=task.lead.id) }}"
+                            class="flex items-center gap-1 hover:text-northway-red transition-colors">
+                            <i data-lucide="user" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                            {{ task.lead.name }}
+                        </a>
+                        {% endif %}
+
+                        <div class="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
+                            {{ user_avatar(task.responsible, size='sm', show_name=False) }}
+                            <span class="text-xs text-gray-500">{{ task.responsible.name if task.responsible else ''
+                                }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <!-- Delete Button inside Form -->
+                <form action="{{ url_for('main.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
+                    <button type="submit"
+                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir">
+                        <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check-square" class="w-8 h-8 text-gray-300" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Tudo limpo no Funil!</h3>
+            <p class="text-gray-500">Nenhuma tarefa pendente para seus leads.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Client Tasks List (Hidden by default) -->
+    <div id="content-clients" class="space-y-3 hidden tab-content">
+        {% for task in client_tasks %}
+        <div
+            class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between group hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4">
+                <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST">
+                    <button type="submit"
+                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 text-transparent hover:border-green-500 hover:text-green-500 flex items-center justify-center transition-all bg-white">
+                        <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <div>
+                    <div class="font-medium text-gray-900 flex items-center gap-2">
+                        {{ task.title }}
+                        {% if task.is_recurring %}
+                        <i data-lucide="repeat" class="w-3.5 h-3.5 text-blue-500" title="Recorrente Mensal"
+                            aria-hidden="true"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                        {% if task.due_date %}
+                        <div
+                            class="flex items-center gap-1 {{ 'text-red-600 font-medium' if task.due_date < now else '' }}">
+                            <i data-lucide="clock" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                            {{ task.due_date.strftime('%d/%m %H:%M') }}
+                        </div>
+                        {% endif %}
+
+                        {% if task.client %}
+                        <a href="{{ url_for('main.client_details', id=task.client.id) }}"
+                            class="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors">
+                            <i data-lucide="briefcase" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                            {{ task.client.name }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <!-- Delete Button inside Form -->
+                <form action="{{ url_for('main.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
+                    <button type="submit"
+                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir">
+                        <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="briefcase" class="w-8 h-8 text-gray-300" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Clientes em dia!</h3>
+            <p class="text-gray-500">Nenhuma tarefa pendente para seus clientes.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- General Tasks List (Hidden by default) -->
+    {% if general_tasks %}
+    <div id="content-general" class="space-y-3 hidden tab-content">
+        {% for task in general_tasks %}
+        <div
+            class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between group hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4">
+                <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST">
+                    <button type="submit"
+                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 text-transparent hover:border-green-500 hover:text-green-500 flex items-center justify-center transition-all bg-white">
+                        <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                    </button>
+                </form>
+                <div>
+                    <div class="font-medium text-gray-900">{{ task.title }}</div>
+                    <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                        {% if task.due_date %}
+                        <div
+                            class="flex items-center gap-1 {{ 'text-red-600 font-medium' if task.due_date < now else '' }}">
+                            <i data-lucide="clock" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                            {{ task.due_date.strftime('%d/%m %H:%M') }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <!-- Delete Button inside Form -->
+                <form action="{{ url_for('main.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
+                    <button type="submit"
+                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir">
+                        <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- COMPLETED TASKS List (New) -->
+    <div id="content-completed" class="space-y-3 hidden tab-content">
+        {% if not completed_tasks_list %}
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check-circle-2" class="w-8 h-8 text-gray-300" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Histórico Limpo</h3>
+            <p class="text-gray-500">Nenhuma tarefa concluída encontrada.</p>
+        </div>
+        {% endif %}
+
+        {% for task in completed_tasks_list %}
+        <div
+            class="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between opacity-75 hover:opacity-100 transition-opacity">
+            <div class="flex items-center gap-4">
+                <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST">
+                    <button type="submit" title="Reabrir Tarefa"
+                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 bg-green-500 border-green-500 text-white flex items-center justify-center transition-all hover:bg-white hover:text-green-500">
+                        <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <div class="line-through text-gray-500">
+                    <div class="font-medium">{{ task.title }}</div>
+                    <div class="flex items-center gap-3 mt-1 text-xs">
+                        {% if task.completed_at %}
+                        <div
+                            class="flex items-center gap-1 text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">
+                            <i data-lucide="check-circle" class="w-3 h-3" aria-hidden="true"></i>
+                            Concluída em {{ task.completed_at.strftime('%d/%m às %H:%M') }}
+                        </div>
+                        {% elif task.due_date %}
+                        <!-- Fallback for old tasks without completed_at -->
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="clock" class="w-3 h-3" aria-hidden="true"></i>
+                            {{ task.due_date.strftime('%d/%m %H:%M') }}
+                        </div>
+                        {% endif %}
+
+                        {% if task.lead %}
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="user" class="w-3 h-3" aria-hidden="true"></i> {{ task.lead.name }}
+                        </span>
+                        {% elif task.client %}
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="briefcase" class="w-3 h-3" aria-hidden="true"></i> {{ task.client.name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-xs text-gray-400">
+                Concluída
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Create Task Modal -->
+<div id="createTaskModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Nova Tarefa</h3>
+            <button data-close-modal="createTaskModal" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('main.tasks') }}" method="POST" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+                <input type="text" name="title" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Vincular a Lead (Opcional)</label>
+                <select name="lead_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                    <option value="">Sem vínculo</option>
+                    {% for lead in leads %}
+                    <option value="{{ lead.id }}">{{ lead.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data e Hora</label>
+                    <input type="datetime-local" name="due_date"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                </div>
+                <div class="flex items-center pt-6">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="is_recurring" id="is_recurring_task" value="1"
+                            class="w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red">
+                        <label for="is_recurring_task" class="text-sm text-gray-700 flex items-center gap-1">
+                            <i data-lucide="repeat" class="w-4 h-4 text-gray-500" aria-hidden="true"></i>
+                            Repetir mensalmente
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 flex gap-3">
+                <button type="button" data-close-modal="createTaskModal"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Salvar Tarefa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Progress Bar Optimization
+        const progressBar = document.getElementById('generalProgressBar');
+        if (progressBar && progressBar.dataset.width) {
+            setTimeout(() => {
+                progressBar.style.width = progressBar.dataset.width + '%';
+            }, 100);
+        }
+
+        // --- Tabs Logic ---
+        const tabs = document.querySelectorAll('[data-tab-target]');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        function activateTab(tabName) {
+            // Hide all contents
+            tabContents.forEach(content => content.classList.add('hidden'));
+
+            // Reset all buttons
+            tabs.forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow', 'text-gray-900');
+                btn.classList.add('text-gray-500');
+            });
+
+            // Show target content
+            const targetContent = document.getElementById('content-' + tabName);
+            if (targetContent) targetContent.classList.remove('hidden');
+
+            // Activate target button
+            const targetBtn = document.querySelector(`[data-tab-target="${tabName}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('bg-white', 'shadow', 'text-gray-900');
+                targetBtn.classList.remove('text-gray-500');
+            }
+
+            localStorage.setItem('activeTaskTab', tabName);
+        }
+
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                activateTab(btn.dataset.tabTarget);
+            });
+        });
+
+        // Initialize Tab
+        const savedTab = localStorage.getItem('activeTaskTab');
+        if (savedTab && document.getElementById('content-' + savedTab)) {
+            activateTab(savedTab);
+        }
+
+        // --- Modal Logic ---
+        const modalTriggers = document.querySelectorAll('[data-modal-target]');
+        const modalClosers = document.querySelectorAll('[data-close-modal]');
+
+        // Using simple class toggling here. 
+        // Checks if global toggleModal exists in base.html and uses it, otherwise falls back to local logic.
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            if (typeof toggleModal === 'function') {
+                // Try to use global defined in Base
+                toggleModal(modalId);
+            } else {
+                // Fallback local implementation
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            if (typeof toggleModal === 'function') {
+                toggleModal(modalId);
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        modalTriggers.forEach(btn => {
+            btn.addEventListener('click', () => openModal(btn.dataset.modalTarget));
+        });
+
+        modalClosers.forEach(btn => {
+            btn.addEventListener('click', () => closeModal(btn.dataset.closeModal));
+        });
+
+        // --- Delete Confirmation ---
+        const deleteForms = document.querySelectorAll('.delete-task-form');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', (e) => {
+                if (!confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Icons
+        if (window.lucide) lucide.createIcons();
+    });
+</script>
+{% endblock %}
