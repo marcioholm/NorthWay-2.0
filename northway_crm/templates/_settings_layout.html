@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50 overflow-hidden">
+    <!-- Unified Settings Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-800">Configurações</h2>
+            <p class="text-xs text-gray-500">Gerencie sua empresa</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+
+            <!-- Company Data -->
+            <a href="{{ url_for('main.company_settings') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if request.endpoint == 'main.company_settings' else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="building" class="w-4 h-4" aria-hidden="true"></i>
+                Dados da Empresa
+            </a>
+
+            <!-- Team -->
+            <a href="{{ url_for('main.settings_team') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_team' in request.endpoint or 'admin_users' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i>
+                Equipe
+            </a>
+
+            <!-- Permissions -->
+            <a href="{{ url_for('main.settings_permissions') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_permissions' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="shield" class="w-4 h-4" aria-hidden="true"></i>
+                Permissões (Cargos)
+            </a>
+
+            <!-- Processes -->
+            <a href="{{ url_for('main.settings_processes') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_processes' in request.endpoint or 'process_template' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="list-checks" class="w-4 h-4" aria-hidden="true"></i>
+                Processos & Workflows
+            </a>
+
+            <!-- Contract Templates -->
+            <a href="{{ url_for('main.settings_templates') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_templates' in request.endpoint or 'settings_template' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="file-text" class="w-4 h-4" aria-hidden="true"></i>
+                Modelos de Contrato
+            </a>
+
+            <!-- Integrations -->
+            <a href="{{ url_for('main.settings_integrations') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_integrations' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="plug" class="w-4 h-4" aria-hidden="true"></i>
+                Integrações
+            </a>
+
+        </nav>
+    </aside>
+
+    <!-- Mobile Settings Nav (Visible only on small screens) -->
+    <div
+        class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 z-40 flex justify-around overflow-x-auto">
+        <a href="{{ url_for('main.company_settings') }}"
+            class="p-2 {{ 'text-northway-red' if request.endpoint == 'main.company_settings' else 'text-gray-500' }}">
+            <i data-lucide="building" class="w-5 h-5"></i>
+        </a>
+        <a href="{{ url_for('main.settings_team') }}"
+            class="p-2 {{ 'text-northway-red' if 'settings_team' in request.endpoint else 'text-gray-500' }}">
+            <i data-lucide="users" class="w-5 h-5"></i>
+        </a>
+        <a href="{{ url_for('main.settings_permissions') }}"
+            class="p-2 {{ 'text-northway-red' if 'settings_permissions' in request.endpoint else 'text-gray-500' }}">
+            <i data-lucide="shield" class="w-5 h-5"></i>
+        </a>
+        <a href="{{ url_for('main.settings_processes') }}"
+            class="p-2 {{ 'text-northway-red' if 'settings_processes' in request.endpoint else 'text-gray-500' }}">
+            <i data-lucide="list-checks" class="w-5 h-5"></i>
+        </a>
+        <a href="{{ url_for('main.settings_templates') }}"
+            class="p-2 {{ 'text-northway-red' if 'settings_template' in request.endpoint else 'text-gray-500' }}">
+            <i data-lucide="file-text" class="w-5 h-5"></i>
+        </a>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 pb-20 md:pb-8">
+        {% block settings_content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}

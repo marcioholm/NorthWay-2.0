@@ -97,7 +97,7 @@
             <span class="text-xs text-gray-400 hidden md:inline">Você está visualizando como <strong>{{
                     current_user.name }}</strong></span>
             <a href="{{ url_for('master.revert_access') }}"
-                class="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-1 rounded transition-colors">
+                class="bg-northway-red hover:bg-red-700 text-white text-xs font-bold px-3 py-1 rounded transition-colors">
                 Sair do Acesso
             </a>
         </div>
@@ -261,7 +261,7 @@
                     </div>
                     {% if pending_tasks_count > 0 %}
                     <span
-                        class="sidebar-badge bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">{{
+                        class="sidebar-badge bg-northway-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">{{
                         pending_tasks_count }}</span>
                     {% endif %}
                 </a>
@@ -336,7 +336,7 @@
                     {% if current_user.is_super_admin %}
                     <a href="{{ url_for('master.company_users', company_id=current_user.company_id) }}"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if 'master' in request.endpoint else 'text-gray-400' }}">
-                        <i data-lucide="shield-alert" class="w-5 h-5 text-red-500 flex-shrink-0"></i>
+                        <i data-lucide="shield-alert" class="w-5 h-5 text-northway-red flex-shrink-0"></i>
                         <span class="sidebar-text transition-opacity duration-300">Super Admin</span>
                     </a>
                     {% else %}
@@ -352,7 +352,7 @@
                 <!-- Mobile Log Out Shortcut -->
                 <div class="md:hidden mt-8 border-t border-white/10 pt-4">
                     <a href="{{ url_for('auth.logout') }}"
-                        class="flex items-center gap-3 px-3 py-2.5 text-red-400 hover:text-red-300">
+                        class="flex items-center gap-3 px-3 py-2.5 text-red-500 hover:text-northway-red">
                         <i data-lucide="log-out" class="w-5 h-5"></i>
                         <span>Sair</span>
                     </a>
@@ -771,6 +771,37 @@
         }
     </script>
     {% block scripts %}{% endblock %}
+    <script>
+        // Global Loading State Helper
+        window.showLoadingState = function (form, btnSelector = null) {
+            const btn = btnSelector ? form.querySelector(btnSelector) : form.querySelector('button[type="submit"]');
+            if (btn) {
+                const originalText = btn.innerText;
+                const width = btn.offsetWidth;
+                btn.style.width = width + 'px'; // Prevent resizing
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+                btn.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="inline-block">Processando...</span>
+                `;
+
+                // Optional: create a hidden input if the button had a name/value (form submission quirks)
+                if (btn.name) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = btn.name;
+                    hidden.value = btn.value;
+                    form.appendChild(hidden);
+                }
+            }
+        };
+
+        // ... existing scripts ...
+    </script>
 </body>
 
 </html>

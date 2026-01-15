@@ -201,7 +201,8 @@
             </button>
         </div>
 
-        <form action="{{ url_for('main.leads') }}" method="POST" class="p-6 space-y-6">
+        <form action="{{ url_for('main.leads') }}" method="POST" class="p-6 space-y-6"
+            onsubmit="showLoadingState(this)">
 
             <!-- Row 1: Name | Phone -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -302,7 +303,8 @@
             </button>
         </div>
 
-        <form action="{{ url_for('main.import_leads') }}" method="POST" enctype="multipart/form-data" class="p-6">
+        <form action="{{ url_for('main.import_leads') }}" method="POST" enctype="multipart/form-data" class="p-6"
+            onsubmit="showLoadingState(this)">
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo CSV</label>
                 <div class="flex items-center justify-center w-full">

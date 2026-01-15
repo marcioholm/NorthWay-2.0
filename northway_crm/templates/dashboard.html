@@ -106,12 +106,12 @@
             class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
             <div>
                 <p
-                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-red-600 transition-colors">
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-northway-red transition-colors">
                     Em Risco</p>
-                <p class="text-xl font-bold {{ 'text-red-600' if risky_clients > 0 else 'text-gray-900' }}">{{
+                <p class="text-xl font-bold {{ 'text-northway-red' if risky_clients > 0 else 'text-gray-900' }}">{{
                     risky_clients }}</p>
             </div>
-            <div class="p-2 bg-red-50 rounded-full text-red-600 group-hover:scale-110 transition-transform">
+            <div class="p-2 bg-red-50 rounded-full text-northway-red group-hover:scale-110 transition-transform">
                 <i data-lucide="activity" class="w-5 h-5"></i>
             </div>
         </div>
@@ -121,12 +121,12 @@
             class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
             <div>
                 <p
-                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-red-600 transition-colors">
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-northway-red transition-colors">
                     Atrasadas</p>
-                <p class="text-xl font-bold {{ 'text-red-600' if overdue_tasks > 0 else 'text-gray-900' }}">{{
+                <p class="text-xl font-bold {{ 'text-northway-red' if overdue_tasks > 0 else 'text-gray-900' }}">{{
                     overdue_tasks }}</p>
             </div>
-            <div class="p-2 bg-red-50 rounded-full text-red-600 group-hover:scale-110 transition-transform">
+            <div class="p-2 bg-red-50 rounded-full text-northway-red group-hover:scale-110 transition-transform">
                 <i data-lucide="alert-octagon" class="w-5 h-5"></i>
             </div>
         </div>

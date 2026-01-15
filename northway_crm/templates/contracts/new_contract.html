@@ -685,6 +685,10 @@
         document.getElementById('formAction').value = action;
         const btn = document.getElementById('emitBtn');
 
+        if (action === 'issue') {
+            showLoadingState(document.getElementById('contractForm'), '#emitBtn');
+        }
+
         if (action === 'draft') {
             // Allow submitting draft even if incomplete? 
             // We set 'novalidate' temporarily or just submit.

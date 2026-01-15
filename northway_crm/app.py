@@ -155,7 +155,15 @@ def create_app():
         Yellow: 4-7 days
         Red: > 7 days or No interaction
         """
-        last_interaction = Interaction.query.filter_by(client_id=client.id, company_id=client.company_id).order_by(Interaction.created_at.desc()).first()
+        # Optimize: use eager loaded relationship sorted in Python
+        # last_interaction = Interaction.query.filter_by(client_id=client.id, company_id=client.company_id).order_by(Interaction.created_at.desc()).first()
+        last_interaction = None
+        if client.interactions:
+            # Sort descending in memory (Relationship is lazy=True but we joinedload it in caller)
+            # Or if it's already loaded, we just sort.
+            interactions_list = sorted(client.interactions, key=lambda x: x.created_at, reverse=True)
+            if interactions_list:
+                last_interaction = interactions_list[0]
         
         status = 'vermelho' # Default critical
         
@@ -169,8 +177,8 @@ def create_app():
             else:
                 status = 'vermelho'
         
-        if status and status != client.health_status: # Changed from client.status to client.health_status to match function purpose
-            client.health_status = status # Changed from client.status to client.health_status to match function purpose
+        if status and status != client.health_status:
+            client.health_status = status
             
             # NOTIFICATION: Status Changed
             # Notify account manager
@@ -182,7 +190,7 @@ def create_app():
                      title='Status do Cliente Alterado',
                      message=f"Status do cliente {client.name} alterado para {status} por {current_user.name}."
                  )
-            db.session.commit()
+            # Commit removed from here to allow bulk commit in caller
 
     @main.route('/dashboard')
     @login_required
@@ -397,7 +405,7 @@ def create_app():
         if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
             query = query.filter_by(assigned_to_id=current_user.id)
             
-        leads = query.order_by(Lead.created_at.desc()).all()
+        leads = query.options(db.joinedload(Lead.assigned_user)).order_by(Lead.created_at.desc()).all()
         users = User.query.filter_by(company_id=current_user.company_id).all()
         return render_template('leads.html', leads=leads, users=users)
 
@@ -429,7 +437,7 @@ def create_app():
         if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
             leads_query = leads_query.filter_by(assigned_to_id=current_user.id)
             
-        leads = leads_query.all()
+        leads = leads_query.options(db.joinedload(Lead.assigned_user)).all()
         
         return render_template('pipeline.html', 
                              stages=stages, 
@@ -1012,11 +1020,17 @@ def create_app():
             end_date = datetime.strptime(renewal_end, '%Y-%m-%d').date()
             query = query.filter(Client.renewal_date <= end_date)
             
-        clients = query.order_by(Client.created_at.desc()).all()
+        # Eager load for performance
+        clients = query.options(
+            db.joinedload(Client.account_manager),
+            db.joinedload(Client.interactions)
+        ).order_by(Client.created_at.desc()).all()
         
         # Auto-update health
         for client in clients:
             update_client_health(client)
+        
+        db.session.commit() # Commit all changes at once
             
         users = User.query.filter_by(company_id=current_user.company_id).all()
         
