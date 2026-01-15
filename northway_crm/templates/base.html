@@ -212,36 +212,47 @@
                     <span class="sidebar-text transition-opacity duration-300">Início</span>
                 </a>
 
+                {% if current_user.has_permission('dashboard_view') %}
                 <a href="{{ url_for('main.dashboard') }}"
                     class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.dashboard' %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Dashboard</span>
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('financial_view') %}
                 <a href="{{ url_for('financial.dashboard') }}"
                     class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'financial.dashboard' %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="bar-chart-3" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Financeiro</span>
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('leads_view') %}
                 <a href="{{ url_for('main.leads') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.leads' else 'text-gray-400' }}">
                     <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Leads</span>
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('pipeline_view') %}
                 <a href="{{ url_for('main.pipeline') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.pipeline' else 'text-gray-400' }}">
                     <i data-lucide="trello" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Funil</span>
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('goals_view') %}
                 <a href="{{ url_for('goals.dashboard') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'goals.dashboard' else 'text-gray-400' }}">
                     <i data-lucide="target" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Metas</span>
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('tasks_view') %}
                 <a href="{{ url_for('main.tasks') }}"
                     class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.tasks' else 'text-gray-400' }}">
                     <div class="flex items-center gap-3">
@@ -254,20 +265,28 @@
                         pending_tasks_count }}</span>
                     {% endif %}
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('clients_view') %}
                 <a href="{{ url_for('main.clients') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.clients' else 'text-gray-400' }}">
                     <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Clientes</span>
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('whatsapp_view') %}
                 <a href="{{ url_for('whatsapp.inbox') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'whatsapp.inbox' else 'text-gray-400' }}">
                     <i data-lucide="message-circle" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">WhatsApp</span>
                 </a>
+                {% endif %}
 
                 <!-- Divider -->
+                {% if current_user.has_permission('company_settings_view') or
+                current_user.has_permission('processes_view') or current_user.has_permission('library_view') or
+                current_user.has_permission('prospecting_view') %}
                 <div class="px-4 py-2 mt-4">
                     <p
                         class="sidebar-text text-xs font-semibold text-gray-500 uppercase tracking-wider transition-opacity duration-300 whitespace-nowrap">
@@ -275,33 +294,43 @@
                     </p>
                     <div class="sidebar-divider hidden w-full h-px bg-gray-800 my-2"></div>
                 </div>
+                {% endif %}
 
+                {% if current_user.has_permission('company_settings_view') %}
                 <a href="{{ url_for('main.company_settings') }}"
                     class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.company_settings' %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="settings" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Configurações</span>
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('processes_view') %}
                 <a href="{{ url_for('main.settings_processes') }}"
                     class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.settings_processes' %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="list-checks" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Processos</span>
                 </a>
+                {% endif %}
 
+                {% if current_user.has_permission('library_view') %}
                 <a href="{{ url_for('docs.library') }}"
                     class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if 'docs' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="library" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Biblioteca</span>
                 </a>
+                {% endif %}
 
                 <!-- Prospecting -->
+                <!-- Prospecting -->
+                {% if current_user.has_permission('prospecting_view') %}
                 <a href="{{ url_for('prospecting.index') }}"
                     class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if 'prospecting' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="globe" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Prospecção</span>
                 </a>
+                {% endif %}
 
-                {% if current_user.role == 'admin' %}
+                {% if current_user.has_permission('admin_view') %}
                 <div class="border-t border-white/10 my-2 pt-2">
                     <a href="{{ url_for('main.admin_users') }}"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if 'admin' in request.endpoint else 'text-gray-400' }}">

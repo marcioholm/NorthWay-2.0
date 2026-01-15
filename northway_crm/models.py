@@ -112,6 +112,45 @@ class User(UserMixin, db.Model):
     leads = db.relationship('Lead', backref='assigned_user', lazy=True)
     allowed_pipelines = db.relationship('Pipeline', secondary=user_pipeline_association, backref=db.backref('allowed_users', lazy='dynamic'))
 
+    def has_permission(self, permission):
+        """
+        Checks if the user has a specific permission.
+        Prioritizes:
+        1. Super Admin (Always True)
+        2. Role-based permissions (if role_id is set)
+        3. Legacy Role Fallback (if role_id is missing or permissions empty)
+        """
+        # 1. Super Admin
+        if self.is_super_admin:
+            return True
+
+        # 2. Role-based Permissions
+        if self.user_role and self.user_role.permissions:
+            # permissions is a JSON list of strings
+            return permission in self.user_role.permissions
+
+        # 3. Legacy Fallback
+        # Define default permissions for legacy roles
+        legacy_permissions = {
+            ROLE_ADMIN: [
+                'dashboard_view', 'financial_view', 'leads_view', 'pipeline_view', 
+                'goals_view', 'tasks_view', 'clients_view', 'whatsapp_view', 
+                'company_settings_view', 'processes_view', 'library_view', 'prospecting_view', 'admin_view'
+            ],
+            ROLE_MANAGER: [
+                'dashboard_view', 'financial_view', 'leads_view', 'pipeline_view', 
+                'goals_view', 'tasks_view', 'clients_view', 'whatsapp_view', 
+                'processes_view', 'library_view', 'prospecting_view'
+            ],
+            ROLE_SALES: [
+                'dashboard_view', 'leads_view', 'pipeline_view', 'tasks_view', 
+                'clients_view', 'whatsapp_view', 'prospecting_view', 'goals_view'
+            ]
+        }
+
+        user_role_key = self.role or ROLE_SALES # Default to sales if None
+        return permission in legacy_permissions.get(user_role_key, [])
+
 class PipelineStage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
