@@ -8,7 +8,7 @@ master = Blueprint('master', __name__)
 @login_required
 def check_master_access():
     # Allow 'revert' route even if current_user is not super_admin (because they are impersonating)
-    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration']:
+    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self']:
         return
 
     # For all other master routes, MUST be super_admin
@@ -272,27 +272,9 @@ def run_library_migration():
         return f"Error: {str(e)}"
 
 # --- Super Admin Restoration Helper ---
-@master.route('/master/super-helper')
-@login_required
-def super_helper():
-    """
-    Emergency route to promote the current user to Super Admin if they match a specific email.
-    This bypasses the @master.before_request check because it's a specific route? 
-    Wait, @master.before_request applies to ALL routes in this blueprint.
-    We need to exempt this route in check_master_access OR put it in a different blueprint.
-    
-    For simplicity, let's modify check_master_access to allow this route.
-    """
-    if current_user.email in ['marciogholmm@gmail.com', 'admin@northway.com.br']: # Hardcode safety
-        try:
-            current_user.is_super_admin = True
-            current_user.role = 'ADMIN' # Ensure they have admin role too
-            db.session.commit()
-            return f"SUCCESS: User {current_user.email} is now a SUPER ADMIN. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
-        except Exception as e:
-            return f"Error promoting user: {str(e)}"
-    
-    return "Unauthorized to use this helper."
+# --- Super Admin Restoration Helper (REMOVED) ---
+# Route removed for security compliance. 
+# Use CLI or DB direct access for promotions.
 
 # --- Library Books Management ---
 from models import LibraryBook, library_book_company_association
@@ -367,3 +349,15 @@ def books_edit(id):
         
     companies = Company.query.all()
     return render_template('master_book_form.html', companies=companies, book=book)
+@master.route('/master/revoke-self')
+@login_required
+def revoke_self():
+    """
+    Temporary route to allow the user to demote themselves.
+    """
+    if current_user.email == 'marciogholmm@gmail.com':
+        current_user.is_super_admin = False
+        current_user.role = 'admin' # Ensure lowercase 'admin' as per our new standard
+        db.session.commit()
+        return "Sucesso: Acesso Super Admin removido. Você agora é um Admin da Empresa. <a href='/'>Voltar</a>"
+    return "Acesso negado."
