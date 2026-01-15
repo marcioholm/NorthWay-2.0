@@ -8,7 +8,7 @@ master = Blueprint('master', __name__)
 @login_required
 def check_master_access():
     # Allow 'revert' route even if current_user is not super_admin (because they are impersonating)
-    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self', 'master.system_reset', 'master.migrate_saas']:
+    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 'master.refresh_roles']:
         return
 
     # For all other master routes, MUST be super_admin
