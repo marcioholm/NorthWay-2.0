@@ -107,24 +107,66 @@ def company_users(company_id):
     users = User.query.filter_by(company_id=company_id).all()
     return render_template('master_company_users.html', company=company, users=users)
 
+@master.route('/master/company/<int:company_id>/user/new', methods=['GET', 'POST'])
+@login_required
+def company_user_new(company_id):
+    company = Company.query.get_or_404(company_id)
+    
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form['role'] # 'admin' or 'user'
+        
+        # Check email availability
+        if User.query.filter_by(email=email).first():
+            flash("Email já cadastrado no sistema.", "error")
+            return redirect(url_for('master.company_user_new', company_id=company_id))
+
+        try:
+            from werkzeug.security import generate_password_hash
+            new_user = User(
+                name=name,
+                email=email,
+                password_hash=generate_password_hash(password),
+                company_id=company_id,
+                role=role
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            
+            flash(f"Usuário {name} criado com sucesso!", "success")
+            return redirect(url_for('master.company_users', company_id=company_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao criar usuário: {e}", "error")
+            
+    return render_template('master_user_form.html', user=None, company=company)
+
 @master.route('/master/user/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit_user(user_id):
     user = User.query.get_or_404(user_id)
     
     if request.method == 'POST':
         user.name = request.form['name']
         user.email = request.form['email']
+        user.role = request.form['role']
         
         new_password = request.form.get('password')
         if new_password:
             from werkzeug.security import generate_password_hash
             user.password_hash = generate_password_hash(new_password)
             
-        db.session.commit()
-        flash(f"Usuário {user.name} atualizado com sucesso!", "success")
-        return redirect(url_for('master.company_users', company_id=user.company_id))
+        try:
+            db.session.commit()
+            flash(f"Usuário {user.name} atualizado com sucesso!", "success")
+            return redirect(url_for('master.company_users', company_id=user.company_id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao atualizar: {e}", "error")
         
-    return render_template('master_edit_user.html', user=user)
+    return render_template('master_user_form.html', user=user, company=user.company)
 
 @master.route('/master/companies')
 @login_required

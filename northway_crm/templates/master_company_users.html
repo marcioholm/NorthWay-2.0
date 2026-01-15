@@ -21,7 +21,13 @@
     <!-- Content -->
     <div class="flex-1 overflow-y-auto p-10">
         <div class="max-w-6xl mx-auto">
-            <h2 class="text-2xl font-bold mb-6">Lista de Usuários</h2>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold">Lista de Usuários</h2>
+                <a href="{{ url_for('master.company_user_new', company_id=company.id) }}"
+                    class="bg-northway-red hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Novo Usuário
+                </a>
+            </div>
 
             <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-2xl">
                 <table class="w-full text-left">
