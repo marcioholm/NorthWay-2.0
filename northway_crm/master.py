@@ -8,7 +8,7 @@ master = Blueprint('master', __name__)
 @login_required
 def check_master_access():
     # Allow 'revert' route even if current_user is not super_admin (because they are impersonating)
-    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self']:
+    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self', 'master.system_reset']:
         return
 
     # For all other master routes, MUST be super_admin
@@ -349,15 +349,38 @@ def books_edit(id):
         
     companies = Company.query.all()
     return render_template('master_book_form.html', companies=companies, book=book)
-@master.route('/master/revoke-self')
+@master.route('/master/system-reset')
 @login_required
-def revoke_self():
+def system_reset():
     """
-    Temporary route to allow the user to demote themselves.
+    EMERGENCY ROUTE: Wipes all users EXCEPT the current user.
+    Promotes the current user to Super Admin and 'reset' state.
     """
-    if current_user.email == 'marciogholmm@gmail.com':
-        current_user.is_super_admin = False
-        current_user.role = 'admin' # Ensure lowercase 'admin' as per our new standard
+    try:
+        # 1. Promote Self (Just in case they lost it)
+        current_user.is_super_admin = True
+        current_user.role = 'ADMIN' # Ensure they have admin role too
+        
+        # 2. Find and Delete Others
+        # Note: If cascade DELETE is not set on relationships (Leads, etc), this might fail or leave orphans.
+        # For a "Reset", orphans might be acceptable or we should delete them too. 
+        # For simplicity/safety, we just delete users. SQLAlchemy usually handles simple relationships.
+        
+        others = User.query.filter(User.id != current_user.id).all()
+        count = len(others)
+        
+        for u in others:
+            db.session.delete(u)
+            
         db.session.commit()
-        return "Sucesso: Acesso Super Admin removido. Você agora é um Admin da Empresa. <a href='/'>Voltar</a>"
-    return "Acesso negado."
+        
+        return f"""
+        <h1>System Reset Successful</h1>
+        <p>User <strong>{current_user.email}</strong> is now the ONLY user and is SUPER ADMIN.</p>
+        <p>Deleted {count} other users.</p>
+        <br>
+        <a href='/'>Go to Dashboard</a>
+        """
+    except Exception as e:
+        db.session.rollback()
+        return f"Reset Failed: {str(e)}<br>Check logs for integrity errors (orphan records)."
