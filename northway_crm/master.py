@@ -582,26 +582,39 @@ def refresh_roles():
         count = 0
         
         for company in companies:
-            # 1. Find or Create Admin Role for this Company
-            admin_role = Role.query.filter_by(name='admin', company_id=company.id).first()
-            if not admin_role:
-                admin_role = Role(name='admin', permissions=admin_permissions, company_id=company.id)
-                db.session.add(admin_role)
+            # 1. Broadly Update ALL Admin-like Roles for this Company
+            # Users might be assigned to 'admin' or 'Administrador' depending on when they registered
+            admin_roles = Role.query.filter(
+                Role.company_id == company.id,
+                Role.name.in_(['admin', 'Administrador'])
+            ).all()
+
+            if not admin_roles:
+                # If no admin role exists, create the standard one ('Administrador' to match auth.py)
+                new_admin = Role(name='Administrador', permissions=admin_permissions, company_id=company.id)
+                db.session.add(new_admin)
             else:
-                admin_role.permissions = admin_permissions
-                
+                for role in admin_roles:
+                    role.permissions = admin_permissions
+                    
             # 2. Find or Create User Role for this Company
-            user_role = Role.query.filter_by(name='user', company_id=company.id).first()
-            if not user_role:
-                user_role = Role(name='user', permissions=sales_permissions, company_id=company.id)
-                db.session.add(user_role)
+            # Sales roles might be 'user', 'vendedor', 'Vendedor'
+            user_roles = Role.query.filter(
+                Role.company_id == company.id,
+                Role.name.in_(['user', 'vendedor', 'Vendedor'])
+            ).all()
+            
+            if not user_roles:
+                new_sales = Role(name='Vendedor', permissions=sales_permissions, company_id=company.id)
+                db.session.add(new_sales)
             else:
-                user_role.permissions = sales_permissions
+                for role in user_roles:
+                    role.permissions = sales_permissions
             
             count += 1
             
         db.session.commit()
-        return f"Permissions Refreshed for {count} companies! <br><br> <a href='/master/dashboard'>Go Back</a>"
+        return f"Permissions Refreshed for {count} companies! (Covered 'admin', 'Administrador', 'user', 'Vendedor') <br><br> <a href='/master/dashboard'>Go Back</a>"
         
     except Exception as e:
         db.session.rollback()
