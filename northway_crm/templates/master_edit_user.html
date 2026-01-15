@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-900 text-white">
+    <!-- Master Header -->
+    <div class="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-black/40">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('master.company_users', company_id=user.company_id) }}"
+                class="text-gray-400 hover:text-white transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div class="w-8 h-8 rounded bg-northway-red flex items-center justify-center font-black text-white">N</div>
+            <h1 class="text-lg font-bold tracking-tight">Editar Usuário</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-400">Logado como: <strong class="text-white">{{ current_user.name
+                    }}</strong></span>
+            <a href="{{ url_for('auth.logout') }}" class="text-sm text-red-400 hover:text-red-300">Sair</a>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-10 flex items-center justify-center">
+        <div class="w-full max-w-lg">
+            <div class="bg-gray-800 rounded-xl border border-gray-700 shadow-2xl p-8">
+                <h2 class="text-2xl font-bold mb-6 text-center">Editar Credenciais</h2>
+
+                <form method="POST" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Nome</label>
+                        <input type="text" name="name" value="{{ user.name }}" required
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-northway-red">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Email</label>
+                        <input type="email" name="email" value="{{ user.email }}" required
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-northway-red">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Nova Senha (Opcional)</label>
+                        <input type="password" name="password" placeholder="Deixe em branco para manter a atual"
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-northway-red">
+                        <p class="text-xs text-yellow-500 mt-2">⚠️ Digite apenas se desejar ALTERAR a senha deste
+                            usuário.</p>
+                    </div>
+
+                    <div class="pt-4 flex gap-4">
+                        <a href="{{ url_for('master.company_users', company_id=user.company_id) }}"
+                            class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg text-center transition-colors">
+                            Cancelar
+                        </a>
+                        <button type="submit"
+                            class="flex-1 bg-northway-red hover:bg-red-600 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-red-900/20">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

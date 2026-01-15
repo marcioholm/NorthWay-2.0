@@ -66,3 +66,28 @@ def revert_access():
         return redirect(url_for('master.dashboard'))
     
     return redirect(url_for('auth.login'))
+
+@master.route('/master/company/<int:company_id>/users')
+def company_users(company_id):
+    company = Company.query.get_or_404(company_id)
+    users = User.query.filter_by(company_id=company_id).all()
+    return render_template('master_company_users.html', company=company, users=users)
+
+@master.route('/master/user/<int:user_id>/edit', methods=['GET', 'POST'])
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        user.name = request.form['name']
+        user.email = request.form['email']
+        
+        new_password = request.form.get('password')
+        if new_password:
+            from werkzeug.security import generate_password_hash
+            user.password_hash = generate_password_hash(new_password)
+            
+        db.session.commit()
+        flash(f"Usuário {user.name} atualizado com sucesso!", "success")
+        return redirect(url_for('master.company_users', company_id=user.company_id))
+        
+    return render_template('master_edit_user.html', user=user)

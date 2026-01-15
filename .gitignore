@@ -5,3 +5,13 @@ Chrome Apps.localized/
 instance/
 .env
 venv/
+.vercel
+
+# Environment & Secrets
+.env*
+
+# Nested Artifacts
+NorthWay/
+
+# Vercel
+.warning

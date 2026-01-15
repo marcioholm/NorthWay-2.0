@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-900 text-white">
+    <!-- Master Header -->
+    <div class="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-black/40">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('master.dashboard') }}" class="text-gray-400 hover:text-white transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div class="w-8 h-8 rounded bg-northway-red flex items-center justify-center font-black text-white">N</div>
+            <h1 class="text-lg font-bold tracking-tight">Usuários: {{ company.name }}</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-400">Logado como: <strong class="text-white">{{ current_user.name
+                    }}</strong></span>
+            <a href="{{ url_for('auth.logout') }}" class="text-sm text-red-400 hover:text-red-300">Sair</a>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto p-10">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">Lista de Usuários</h2>
+
+            <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-2xl">
+                <table class="w-full text-left">
+                    <thead class="bg-black/20 text-gray-400 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="px-6 py-4">ID</th>
+                            <th class="px-6 py-4">Nome</th>
+                            <th class="px-6 py-4">Email</th>
+                            <th class="px-6 py-4">Cargo (Role)</th>
+                            <th class="px-6 py-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for user in users %}
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 font-mono text-gray-500">#{{ user.id }}</td>
+                            <td class="px-6 py-4 font-bold text-white text-lg">
+                                {{ user.name }}
+                                {% if user.is_super_admin %}<span
+                                    class="ml-2 text-xs bg-red-600 text-white px-2 py-0.5 rounded">MASTER</span>{% endif
+                                %}
+                            </td>
+                            <td class="px-6 py-4 text-gray-300">{{ user.email }}</td>
+                            <td class="px-6 py-4 text-gray-400 uppercase text-xs font-bold">{{ user.role }}</td>
+                            <td class="px-6 py-4 text-right flex gap-2 justify-end">
+                                <a href="{{ url_for('master.edit_user', user_id=user.id) }}"
+                                    class="inline-flex items-center gap-2 bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors shadow-lg">
+                                    <i data-lucide="edit-2" class="w-3 h-3"></i> Editar
+                                </a>
+                                <a href="{{ url_for('master.impersonate', user_id=user.id) }}"
+                                    class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors shadow-lg shadow-blue-900/20">
+                                    <i data-lucide="log-in" class="w-3 h-3"></i> Acessar
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not users %}
+                <div class="p-8 text-center text-gray-500">
+                    Nenhum usuário encontrado nesta empresa.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
