@@ -19,6 +19,7 @@ from routes.docs import docs_bp
 from routes.goals import goals_bp
 from routes.prospecting import prospecting_bp
 from routes.prospecting import prospecting_bp
+from routes.admin import admin_bp
 
 main = Blueprint('main', __name__)
 
@@ -2897,11 +2898,12 @@ def create_app():
         db.session.commit()
         return jsonify({'success': True})
     
-    app.register_blueprint(main)
+    app.register_blueprint(master_blueprint)
     app.register_blueprint(financial_bp)
     app.register_blueprint(docs_bp)
     app.register_blueprint(goals_bp)
     app.register_blueprint(prospecting_bp)
+    app.register_blueprint(admin_bp)
     
     from routes.whatsapp import whatsapp_bp
     app.register_blueprint(whatsapp_bp)

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="p-8 max-w-2xl mx-auto">
+    <div class="mb-8">
+        <a href="{{ url_for('admin.users') }}"
+            class="text-gray-500 hover:text-white mb-4 inline-block transition-colors">
+            <i data-lucide="arrow-left" class="w-5 h-5 inline mr-1"></i> Voltar para Usuários
+        </a>
+        <h1 class="text-3xl font-bold text-white">
+            {% if user %}Editar Usuário{% else %}Novo Usuário{% endif %}
+        </h1>
+    </div>
+
+    <div class="bg-gray-800/50 backdrop-blur-xl rounded-3xl p-8 border border-gray-700">
+        <form method="POST">
+            <div class="space-y-6">
+                <!-- Name -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Nome
+                        Completo</label>
+                    <input type="text" name="name" value="{{ user.name if user else '' }}" required
+                        class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all placeholder-gray-600">
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Email</label>
+                    <input type="email" name="email" value="{{ user.email if user else '' }}" required
+                        class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all placeholder-gray-600">
+                </div>
+
+                <!-- Role -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Cargo /
+                        Permissão</label>
+                    <select name="role"
+                        class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-red-500 outline-none">
+                        <option value="vendedor" {% if user and user.role=='vendedor' %}selected{% endif %}>Vendedor
+                            (Padrão)</option>
+                        <option value="gestor" {% if user and user.role=='gestor' %}selected{% endif %}>Gestor</option>
+                        <option value="admin" {% if user and user.role=='admin' %}selected{% endif %}>Admin (Acesso
+                            Total à Empresa)</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-2">Admins podem gerenciar outros usuários desta empresa.</p>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
+                        {% if user %}Nova Senha (deixe em branco para manter){% else %}Senha{% endif %}
+                    </label>
+                    <input type="password" name="password" {% if not user %}required{% endif %}
+                        class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all placeholder-gray-600">
+                </div>
+
+                <div class="pt-6 border-t border-gray-700">
+                    <button type="submit"
+                        class="w-full bg-[#fa0102] text-white px-6 py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/30 flex justify-center items-center">
+                        <i data-lucide="save" class="w-5 h-5 mr-2"></i> Salvar Usuário
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
