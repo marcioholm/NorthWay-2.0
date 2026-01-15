@@ -8,7 +8,7 @@ master = Blueprint('master', __name__)
 @login_required
 def check_master_access():
     # Allow 'revert' route even if current_user is not super_admin (because they are impersonating)
-    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self', 'master.system_reset']:
+    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self', 'master.system_reset', 'master.migrate_saas']:
         return
 
     # For all other master routes, MUST be super_admin
@@ -384,3 +384,31 @@ def system_reset():
     except Exception as e:
         db.session.rollback()
         return f"Reset Failed: {str(e)}<br>Check logs for integrity errors (orphan records)."
+@master.route('/master/migrate-saas')
+@login_required
+def migrate_saas():
+    """
+    Helper to apply schema changes for SaaS fields (plan, status, limits).
+    """
+    try:
+        from sqlalchemy import text
+        # List of commands to run safely
+        commands = [
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'pro';",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS max_users INTEGER DEFAULT 5;",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS max_leads INTEGER DEFAULT 1000;",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS max_storage_gb FLOAT DEFAULT 1.0;",
+            "ALTER TABLE company ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();"
+        ]
+        
+        results = []
+        for cmd in commands:
+            db.session.execute(text(cmd))
+            results.append(f"Executed: {cmd}")
+            
+        db.session.commit()
+        return "<br>".join(results) + "<br><br>Migration Successful! <a href='/'>Go Home</a>"
+    except Exception as e:
+        db.session.rollback()
+        return f"Migration Failed: {str(e)}"

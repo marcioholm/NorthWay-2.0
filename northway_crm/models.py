@@ -94,6 +94,16 @@ class Company(db.Model):
     logo_filename = db.Column(db.String(150), nullable=True)
     primary_color = db.Column(db.String(7), default='#fa0102') # Default Northway Red
     secondary_color = db.Column(db.String(7), default='#111827') # Default Dark Gray
+    
+    # SaaS Management Fields
+    status = db.Column(db.String(20), default='active') # active, suspended, cancelled
+    plan = db.Column(db.String(50), default='pro') # free, starter, pro, enterprise
+    max_users = db.Column(db.Integer, default=5)
+    max_leads = db.Column(db.Integer, default=1000)
+    max_storage_gb = db.Column(db.Float, default=1.0)
+    
+    # Timestamps
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @property
     def address(self):
