@@ -17,9 +17,58 @@
 
     <!-- Content -->
     <div class="flex-1 overflow-y-auto p-10">
-        <div class="max-w-6xl mx-auto">
-            <h2 class="text-2xl font-bold mb-6">Empresas Cadastradas</h2>
+        <div class="max-w-7xl mx-auto space-y-8">
 
+            <!-- Global KPI Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- Companies -->
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Empresas</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-3xl font-bold text-white">{{ kpis.active_companies }}</span>
+                        <span class="text-sm text-gray-500 mb-1">/ {{ kpis.companies }}</span>
+                    </div>
+                </div>
+
+                <!-- Users -->
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Usuários</p>
+                    <span class="text-3xl font-bold text-blue-400">{{ kpis.users }}</span>
+                </div>
+
+                <!-- Leads -->
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Leads Totais</p>
+                    <span class="text-3xl font-bold text-yellow-400">{{ kpis.leads }}</span>
+                </div>
+
+                <!-- Contracts -->
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Contratos</p>
+                    <span class="text-3xl font-bold text-green-400">{{ kpis.contracts }}</span>
+                </div>
+
+                <!-- MRR -->
+                <div
+                    class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg col-span-1 md:col-span-2 lg:col-span-1">
+                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">MRR Estimado</p>
+                    <span class="text-3xl font-bold text-emerald-400">R$ {{ "%.2f"|format(kpis.mrr) }}</span>
+                </div>
+
+                <!-- Churn -->
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Churn Rate</p>
+                    <span class="text-3xl font-bold text-red-500">{{ kpis.churn }}%</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold">Empresas Recentes</h2>
+                <a href="{{ url_for('master.companies') }}"
+                    class="text-sm text-blue-400 hover:text-blue-300 font-semibold">Ver Todas &rarr;</a>
+            </div>
+
+            <!-- Companies Table (Existing logic, just style tweaks) -->
             <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-2xl">
                 <table class="w-full text-left">
                     <thead class="bg-black/20 text-gray-400 text-xs uppercase font-bold">

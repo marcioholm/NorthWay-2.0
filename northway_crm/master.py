@@ -16,11 +16,35 @@ def check_master_access():
         abort(403)
 
 @master.route('/master/dashboard')
+@login_required
 def dashboard():
     companies = Company.query.all()
+    
+    # Global Metrics Aggregation
+    total_companies = len(companies)
+    active_companies = sum(1 for c in companies if getattr(c, 'status', 'active') == 'active')
+    
+    # Calculate Users & Leads (Scanning all companies)
+    total_users = User.query.count()
+    from models import Lead
+    total_leads = Lead.query.count()
+    
+    # Mock MRR Calculation (Plan based)
+    # Pro = 297, Enterprise = 997, Free = 0
+    mrr = 0
+    plan_prices = {'free': 0, 'starter': 149, 'pro': 297, 'enterprise': 997}
+    
+    # Churn mock (companies with status='cancelled')
+    cancelled_companies = sum(1 for c in companies if getattr(c, 'status', 'active') == 'cancelled')
+    churn_rate = (cancelled_companies / total_companies * 100) if total_companies > 0 else 0
+    
     stats = []
     
     for comp in companies:
+        # Calculate MRR per company
+        plan_name = getattr(comp, 'plan', 'pro').lower()
+        mrr += plan_prices.get(plan_name, 0)
+        
         # Find an admin to login as
         admin_user = User.query.filter_by(company_id=comp.id, role=ROLE_ADMIN).first()
         # Fallback to any user if no admin (rare)
@@ -36,7 +60,17 @@ def dashboard():
             'admin_name': admin_user.name if admin_user else "---"
         })
         
-    return render_template('master_dashboard.html', stats=stats)
+    global_kpis = {
+        'companies': total_companies,
+        'active_companies': active_companies,
+        'users': total_users,
+        'leads': total_leads,
+        'contracts': 0, # Placeholder until Contract model is imported/queried
+        'mrr': mrr,
+        'churn': round(churn_rate, 1)
+    }
+        
+    return render_template('master_dashboard.html', stats=stats, kpis=global_kpis)
 
 @master.route('/master/impersonate/<int:user_id>')
 def impersonate(user_id):
@@ -92,11 +126,77 @@ def edit_user(user_id):
         
     return render_template('master_edit_user.html', user=user)
 
-@master.route('/master/library')
-def library():
-    # List global/system templates
-    templates = ContractTemplate.query.filter_by(is_global=True).all()
-    return render_template('master_library.html', templates=templates)
+@master.route('/master/companies')
+@login_required
+def companies():
+    companies_list = Company.query.order_by(Company.created_at.desc()).all()
+    
+    # Enrich with user counts
+    for c in companies_list:
+        c.user_count = User.query.filter_by(company_id=c.id).count()
+        c.admin = User.query.filter_by(company_id=c.id, role=ROLE_ADMIN).first()
+        
+    return render_template('master_companies.html', companies=companies_list)
+
+@master.route('/master/company/new', methods=['GET', 'POST'])
+@login_required
+def company_new():
+    if request.method == 'POST':
+        name = request.form['name']
+        plan = request.form['plan']
+        
+        # Validation
+        if not name:
+            flash("Nome da empresa é obrigatório.", "error")
+            return redirect(url_for('master.company_new'))
+            
+        try:
+            new_comp = Company(name=name, plan=plan, status='active')
+            
+            # Set limits based on plan
+            if plan == 'enterprise':
+                new_comp.max_users = 100
+                new_comp.max_leads = 50000
+            elif plan == 'pro':
+                new_comp.max_users = 10
+                new_comp.max_leads = 5000
+            else: # starter
+                new_comp.max_users = 2
+                new_comp.max_leads = 500
+                
+            db.session.add(new_comp)
+            db.session.commit()
+            flash(f"Empresa '{name}' criada com sucesso!", "success")
+            return redirect(url_for('master.companies'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao criar empresa: {e}", "error")
+            
+    return render_template('master_company_form.html', company=None)
+
+@master.route('/master/company/<int:company_id>/edit', methods=['GET', 'POST'])
+@login_required
+def company_edit(company_id):
+    company = Company.query.get_or_404(company_id)
+    
+    if request.method == 'POST':
+        company.name = request.form['name']
+        company.plan = request.form['plan']
+        company.status = request.form['status']
+        company.max_users = int(request.form['max_users'])
+        company.max_leads = int(request.form['max_leads'])
+        company.document = request.form.get('document')
+        
+        try:
+            db.session.commit()
+            flash(f"Empresa '{company.name}' atualizada.", "success")
+            return redirect(url_for('master.companies'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao atualizar: {e}", "error")
+            
+    return render_template('master_company_form.html', company=company)
+
 
 @master.route('/master/library/new', methods=['GET', 'POST'])
 def library_new():

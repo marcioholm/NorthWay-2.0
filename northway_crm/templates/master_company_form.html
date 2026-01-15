@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-900 text-white">
+    <!-- Header -->
+    <div class="h-16 border-b border-gray-800 flex items-center gap-4 px-8 bg-black/40">
+        <a href="{{ url_for('master.companies') }}" class="text-gray-400 hover:text-white transition-colors">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <h1 class="text-xl font-bold tracking-tight">
+            {{ 'Editar Empresa' if company else 'Nova Empresa' }}
+        </h1>
+    </div>
+
+    <!-- Form Content -->
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-2xl mx-auto">
+            <form method="POST" class="space-y-6">
+
+                <!-- Identification -->
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg space-y-4">
+                    <h2 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Dados da Empresa</h2>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Nome da Empresa</label>
+                        <input type="text" name="name" value="{{ company.name if company else '' }}" required
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-northway-red focus:border-transparent outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">CNPJ / Documento</label>
+                        <input type="text" name="document" value="{{ company.document if company else '' }}"
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-northway-red focus:border-transparent outline-none">
+                    </div>
+                </div>
+
+                <!-- SaaS Plan & Status -->
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg space-y-4">
+                    <h2 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Plano e Status</h2>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Plano</label>
+                            <select name="plan"
+                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                                <option value="starter" {% if company and company.plan=='starter' %}selected{% endif %}>
+                                    Starter</option>
+                                <option value="pro" {% if company and company.plan=='pro' %}selected{% endif %}>Pro
+                                </option>
+                                <option value="enterprise" {% if company and company.plan=='enterprise' %}selected{%
+                                    endif %}>Enterprise</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Status</label>
+                            <select name="status"
+                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                                <option value="active" {% if company and company.status=='active' %}selected{% endif %}>
+                                    Ativa</option>
+                                <option value="suspended" {% if company and company.status=='suspended' %}selected{%
+                                    endif %} class="text-yellow-500">Suspensa</option>
+                                <option value="cancelled" {% if company and company.status=='cancelled' %}selected{%
+                                    endif %} class="text-red-500">Cancelada</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Limits Override (Only if editing) -->
+                {% if company %}
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg space-y-4">
+                    <h2 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Limites Personalizados</h2>
+                    <p class="text-xs text-yellow-500 mb-2">Atenção: Ao mudar o plano acima, os limites não são
+                        alterados automaticamente aqui para evitar conflitos. Ajuste se necessário.</p>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Máx. Usuários</label>
+                            <input type="number" name="max_users" value="{{ company.max_users }}" required
+                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Máx. Leads</label>
+                            <input type="number" name="max_leads" value="{{ company.max_leads }}" required
+                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-800">
+                    <a href="{{ url_for('master.companies') }}"
+                        class="px-6 py-2.5 text-gray-400 hover:text-white transition-colors text-sm font-medium">Cancelar</a>
+                    <button type="submit"
+                        class="bg-northway-red hover:bg-red-700 text-white px-8 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-lg">
+                        Salvar Empresa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
