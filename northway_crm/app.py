@@ -2898,7 +2898,7 @@ def create_app():
         db.session.commit()
         return jsonify({'success': True})
     
-    app.register_blueprint(master_blueprint)
+    # app.register_blueprint(master_blueprint) # Removed duplicate (Already registered at top)
     app.register_blueprint(financial_bp)
     app.register_blueprint(docs_bp)
     app.register_blueprint(goals_bp)
