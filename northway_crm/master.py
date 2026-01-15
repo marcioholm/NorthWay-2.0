@@ -160,6 +160,117 @@ def library_edit(id):
     companies = Company.query.all()
     return render_template('master_library_form.html', companies=companies, template=tmpl)
 
+# --- Temporary Migration Route ---
+@master.route('/master/migrate-library-now')
+@login_required
+def run_library_migration():
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    try:
+        from migrate_library import migrate_library
+        # Call the logic directly (adapting migrate_library to be callable without creating new app context if inside request)
+        # However, migrate_library creates its own app context. Let's just inline the logic or call a helper that uses current context.
+        
+        # Better: Inline the logic here to use current db session
+        from models import LibraryBook, Company
+        
+        # 1. Ensure Table Exists
+        db.create_all()
+        
+        # 2. Define Initial Books
+        initial_books = [
+            {
+                'title': 'Diagnóstico Estratégico',
+                'description': 'Análise completa para Óticas 2026.',
+                'category': 'Vendas',
+                'route_name': 'docs.presentation_consultancy',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Apresentação Institucional',
+                'description': 'Marketing com Direção - Quem somos e o que fazemos.',
+                'category': 'Institucional',
+                'route_name': 'docs.presentation_institutional',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Oferta Principal',
+                'description': 'Estrutura Completa da Proposta Comercial.',
+                'category': 'Vendas',
+                'route_name': 'docs.presentation_offer_main',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Plano Essencial (Downsell)',
+                'description': 'Alternativa de proposta para recuperação.',
+                'category': 'Vendas',
+                'route_name': 'docs.presentation_offer_downsell',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Manual de Onboarding',
+                'description': 'Guia operacional para início de jornada.',
+                'category': 'Processos',
+                'route_name': 'docs.user_manual',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Scripts & Técnicas',
+                'description': 'Roteiros de vendas e técnicas de fechamento.',
+                'category': 'Vendas',
+                'route_name': 'docs.playbook_comercial',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Objeções & SDR',
+                'description': 'Matriz de objeções e guia para pré-vendas.',
+                'category': 'Processos',
+                'route_name': 'docs.playbook_processos',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Academia de Treinamento',
+                'description': 'Training & Scripts area.',
+                'category': 'Treinamento',
+                'route_name': 'docs.playbook_treinamento',
+                'cover_image': None,
+                'active': True
+            }
+        ]
+        
+        all_companies = Company.query.all()
+        count = 0
+        
+        for data in initial_books:
+            existing = LibraryBook.query.filter_by(route_name=data['route_name']).first()
+            if not existing:
+                book = LibraryBook(
+                    title=data['title'],
+                    description=data['description'],
+                    category=data['category'],
+                    route_name=data['route_name'],
+                    cover_image=data.get('cover_image'),
+                    active=data['active']
+                )
+                for comp in all_companies:
+                    book.allowed_companies.append(comp)
+                db.session.add(book)
+                count += 1
+                
+        db.session.commit()
+        return f"Migration Successful! Added {count} new books. <a href='{url_for('master.books')}'>Go to Library</a>"
+        
+    except Exception as e:
+        return f"Error: {str(e)}"
+
 # --- Library Books Management ---
 from models import LibraryBook, library_book_company_association
 
