@@ -2694,14 +2694,25 @@ def create_app():
     @main.route('/settings/processes')
     @login_required
     def settings_processes():
-        # RBAC: Only Admin/Manager or Manage Settings
-        can_manage = current_user.user_role.name in ['Administrador', 'Gestor'] or 'manage_settings' in (current_user.user_role.permissions or [])
-        if not can_manage:
-             flash('Acesso negado.', 'error')
-             return redirect(url_for('main.dashboard'))
-             
-        templates = ProcessTemplate.query.filter_by(company_id=current_user.company_id).all()
-        return render_template('settings_processes.html', templates=templates)
+        try:
+            # RBAC Check with Safety
+            if not current_user.user_role:
+                 # Fallback for users without RBAC Role linked
+                 if current_user.role == 'admin':
+                     can_manage = True
+                 else:
+                     can_manage = False
+            else:
+                can_manage = current_user.user_role.name in ['Administrador', 'Gestor', 'admin'] or 'manage_settings' in (current_user.user_role.permissions or [])
+                
+            if not can_manage:
+                 flash('Acesso negado.', 'error')
+                 return redirect(url_for('main.dashboard'))
+                 
+            templates = ProcessTemplate.query.filter_by(company_id=current_user.company_id).all()
+            return render_template('settings_processes.html', templates=templates)
+        except Exception as e:
+            return f"<h1>Error Loading Processes</h1><p>{str(e)}</p>"
 
     @main.route('/settings/processes/new', methods=['POST'])
     @login_required
