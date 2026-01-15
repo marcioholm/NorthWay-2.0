@@ -405,7 +405,10 @@ def create_app():
     @main.route('/pipeline/<int:pipeline_id>')
     @login_required
     def pipeline(pipeline_id=None):
-        allowed = current_user.allowed_pipelines
+        if current_user.role == ROLE_ADMIN:
+            allowed = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+        else:
+            allowed = current_user.allowed_pipelines
         if not allowed:
             flash('Você não tem acesso a nenhum funil.', 'error')
             return redirect(url_for('main.dashboard'))
@@ -1204,17 +1207,11 @@ def create_app():
         db.session.commit()
         
         flash('Tarefa adicionada!', 'success')
-        return redirect(url_for('main.client_details', id=client.id))
-
     # --- ADMIN ROUTES ---
     @main.route('/admin/users')
     @login_required
     def admin_users():
-        if current_user.role != ROLE_ADMIN:
-             return "Acesso negado", 403
-        
-        users = User.query.filter_by(company_id=current_user.company_id).all()
-        return render_template('admin_users.html', users=users)
+        return redirect(url_for('main.settings_team'))
 
     @main.route('/admin/users/new', methods=['GET', 'POST'])
     @login_required
@@ -1265,7 +1262,7 @@ def create_app():
                 db.session.add(user)
                 db.session.commit()
                 flash('Usuário criado com sucesso!', 'success')
-                return redirect(url_for('main.admin_users'))
+                return redirect(url_for('main.settings_team'))
         
         return render_template('admin_user_form.html', pipelines=pipelines, roles=roles, user=None)
 
@@ -1307,7 +1304,7 @@ def create_app():
             
             db.session.commit()
             flash('Usuário atualizado!', 'success')
-            return redirect(url_for('main.admin_users'))
+            return redirect(url_for('main.settings_team'))
 
         return render_template('admin_user_form.html', pipelines=pipelines, roles=roles, user=user)
 
@@ -1636,6 +1633,11 @@ def create_app():
             
             '{{CONTRATANTE_CPF_REPRESENTANTE}}': form_data.get('contratante_cpf') or client.representative_cpf or '',
             '{{CONTRATANTE_ENDERECO_REPRESENTANTE}}': form_data.get('contratante_endereco_representante') or '',
+
+            # --- English Aliases (Standard) ---
+            '{{COMPANY_NAME}}': client.company.name,
+            '{{CLIENT_NAME}}': form_data.get('contratante_nome') or client.name,
+            '{{VALUE}}': form_data.get('valor_total', '0,00'),
 
             # --- CONTRATADA (EMPRESA DO USUÁRIO) ---
             '{{CONTRATADA_NOME_EMPRESARIAL}}': client.company.name,
@@ -2551,10 +2553,12 @@ def create_app():
     @main.route('/settings/team')
     @login_required
     def settings_team():
-        # Placeholder / Redirect to Admin Users for now or dedicated page
-        # If admin users is existing, we use that.
-        # Checking existing routes... access admin_users if admin
-        return redirect(url_for('main.admin_users'))
+        # Check permissions similar to admin_users
+        if current_user.role != ROLE_ADMIN:
+             return "Acesso negado", 403
+        
+        users = User.query.filter_by(company_id=current_user.company_id).all()
+        return render_template('settings_team.html', users=users)
 
     # Lead Import/Export Routes
 
