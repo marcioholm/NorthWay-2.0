@@ -208,6 +208,26 @@ def company_new():
                 
             db.session.add(new_comp)
             db.session.commit()
+
+            # --- Initialize Default Data (Roles & Pipeline) ---
+            from models import Role, Pipeline, PipelineStage
+            
+            # 1. Default Roles
+            admin_role = Role(name='Administrador', company_id=new_comp.id, permissions=['admin_view', 'dashboard_view', 'pipeline_view', 'leads_view', 'company_settings_view', 'processes_view', 'library_view', 'prospecting_view'])
+            db.session.add(admin_role)
+            
+            # 2. Default Pipeline
+            default_pipeline = Pipeline(name='Vendas B2B', company_id=new_comp.id)
+            db.session.add(default_pipeline)
+            db.session.commit() # Commit to get ID
+            
+            # 3. Default Stages
+            stages = ['Novo', 'Qualificação', 'Proposta', 'Negociação', 'Fechado']
+            for i, s_name in enumerate(stages):
+                stage = PipelineStage(name=s_name, order=i, pipeline_id=default_pipeline.id, company_id=new_comp.id)
+                db.session.add(stage)
+            
+            db.session.commit()
             flash(f"Empresa '{name}' criada com sucesso!", "success")
             return redirect(url_for('master.companies'))
         except Exception as e:
@@ -619,3 +639,32 @@ def refresh_roles():
     except Exception as e:
         db.session.rollback()
         return f"Error refreshing roles: {str(e)}"
+
+@master.route('/master/fix-pipelines')
+@login_required
+def fix_missing_pipelines():
+    """
+    Backfill: Creates a default pipeline for any company that has NONE.
+    """
+    if not getattr(current_user, 'is_super_admin', False):
+         abort(403)
+
+    from models import Pipeline, PipelineStage
+    companies = Company.query.all()
+    count = 0
+    
+    for comp in companies:
+        if not comp.pipelines: # If list is empty
+            p = Pipeline(name='Vendas B2B', company_id=comp.id)
+            db.session.add(p)
+            db.session.commit()
+            
+            stages = ['Novo', 'Qualificação', 'Proposta', 'Negociação', 'Fechado']
+            for i, s_name in enumerate(stages):
+                 s = PipelineStage(name=s_name, order=i, pipeline_id=p.id, company_id=comp.id)
+                 db.session.add(s)
+            
+            count += 1
+            
+    db.session.commit()
+    return f"Fixed pipelines for {count} companies."
