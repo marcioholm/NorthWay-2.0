@@ -2904,8 +2904,8 @@ def create_app():
     app.register_blueprint(goals_bp)
     app.register_blueprint(prospecting_bp)
     
-    from routes.admin import admin_bp
-    app.register_blueprint(admin_bp)
+    # from routes.admin import admin_bp
+    # app.register_blueprint(admin_bp)
     
     from routes.whatsapp import whatsapp_bp
     app.register_blueprint(whatsapp_bp)
