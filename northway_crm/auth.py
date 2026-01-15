@@ -107,26 +107,47 @@ def register():
         db.session.flush() # Get ID
         
         # 3. Create Default Role (Admin)
+        # Updated Permissions to match new standard
+        admin_perms = [
+            'dashboard_view', 'financial_view', 'leads_view', 'pipeline_view', 
+            'goals_view', 'tasks_view', 'clients_view', 'whatsapp_view', 
+            'company_settings_view', 'processes_view', 'library_view', 
+            'prospecting_view', 'admin_view'
+        ]
+        
         admin_role = Role(
             name='Administrador',
             company_id=company.id,
             is_default=True,
-            permissions=['manage_team', 'manage_settings', 'view_all_deals', 'manage_pipelines', 'manage_financial']
+            permissions=admin_perms
         )
         db.session.add(admin_role)
         db.session.flush()
         
-        # 4. Create User
-        user = User(
-            name=name,
-            email=email,
-            password_hash=generate_password_hash(password), # Keep legacy hash for fallback/hybrid
-            supabase_uid=supabase_uid, 
-            company_id=company.id,
-            role_id=admin_role.id,
-            role='admin' # Legacy field support
-        )
-        db.session.add(user)
+        # 4. Create or Update User
+        # Check if user was auto-created by Supabase Trigger (orphaned without company)
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+             # Update existing orphaned user
+             user.name = name
+             user.password_hash = generate_password_hash(password)
+             user.supabase_uid = supabase_uid
+             user.company_id = company.id
+             user.role_id = admin_role.id
+             user.role = 'admin'
+        else:
+             # Create new user
+            user = User(
+                name=name,
+                email=email,
+                password_hash=generate_password_hash(password), # Keep legacy hash for fallback/hybrid
+                supabase_uid=supabase_uid, 
+                company_id=company.id,
+                role_id=admin_role.id,
+                role='admin' # Legacy field support
+            )
+            db.session.add(user)
         
         # 5. Bootstrap Defaults
         
