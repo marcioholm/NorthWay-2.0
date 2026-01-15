@@ -164,11 +164,12 @@ class User(UserMixin, db.Model):
             ],
             ROLE_SALES: [
                 'dashboard_view', 'leads_view', 'pipeline_view', 'tasks_view', 
-                'clients_view', 'whatsapp_view', 'prospecting_view', 'goals_view'
+                'clients_view', 'whatsapp_view', 'prospecting_view', 'goals_view', 'library_view'
             ]
         }
 
-        user_role_key = self.role or ROLE_SALES # Default to sales if None
+        # Normalize role to lowercase to match keys (admin, gestor, vendedor)
+        user_role_key = self.role.lower() if self.role else ROLE_SALES
         return permission in legacy_permissions.get(user_role_key, [])
 
 class PipelineStage(db.Model):
