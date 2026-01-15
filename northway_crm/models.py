@@ -22,6 +22,12 @@ user_pipeline_association = db.Table('user_pipeline_association',
     db.Column('pipeline_id', db.Integer, db.ForeignKey('pipeline.id'))
 )
 
+# Many-to-Many relationship between ContractTemplate and Company (Access Control)
+template_company_association = db.Table('template_company_association',
+    db.Column('template_id', db.Integer, db.ForeignKey('contract_template.id')),
+    db.Column('company_id', db.Integer, db.ForeignKey('company.id'))
+)
+
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -238,7 +244,11 @@ class ContractTemplate(db.Model):
     content = db.Column(db.Text, nullable=False) # HTML/Text with {{variables}}
     active = db.Column(db.Boolean, default=True)
     is_global = db.Column(db.Boolean, default=False)
+    is_global = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Access Control Relationship
+    allowed_companies = db.relationship('Company', secondary=template_company_association, backref=db.backref('accessible_templates', lazy='dynamic'))
 
 class Contract(db.Model):
     id = db.Column(db.Integer, primary_key=True)

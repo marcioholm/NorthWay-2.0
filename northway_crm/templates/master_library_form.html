@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-50 p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8">
+            <a href="{{ url_for('master.library') }}"
+                class="text-gray-500 hover:text-gray-900 flex items-center gap-1 mb-4 text-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar à Biblioteca
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900">
+                {{ 'Editar Modelo Global' if template else 'Novo Modelo Global' }}
+            </h1>
+        </header>
+
+        <form method="POST" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-6 md:p-8 space-y-6">
+                <!-- Basic Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Modelo</label>
+                        <input type="text" name="name" required value="{{ template.name if template else '' }}"
+                            class="w-full rounded-lg border-gray-300 focus:border-northway-red focus:ring-northway-red sm:text-sm p-2.5 border">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Documento</label>
+                        <select name="type"
+                            class="w-full rounded-lg border-gray-300 focus:border-northway-red focus:ring-northway-red sm:text-sm p-2.5 border">
+                            <option value="contract" {{ 'selected' if template and template.type=='contract' else '' }}>
+                                Contrato Principal</option>
+                            <option value="attachment" {{ 'selected' if template and template.type=='attachment' else ''
+                                }}>Anexo / Adendo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Editor (Simplified Text Area for MVP, Markdown Supported) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Conteúdo (Markdown/HTML com
+                        Variáveis)</label>
+                    <div class="relative">
+                        <textarea name="content" rows="15" required
+                            class="font-mono text-sm w-full rounded-lg border-gray-300 focus:border-northway-red focus:ring-northway-red p-4 border bg-gray-50">{{ template.content if template else '' }}</textarea>
+                        <div class="absolute top-2 right-2 flex gap-2">
+                            <button type="button"
+                                class="text-xs bg-white border border-gray-200 px-2 py-1 rounded hover:bg-gray-50 text-gray-600">Ver
+                                Variáveis</button>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">Use {{ '{{' }}NOME_VARIAVEL{{ '}}' }} para campos dinâmicos.
+                    </p>
+                </div>
+
+                <!-- Access Control -->
+                <div class="border-t border-gray-100 pt-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Controle de Acesso (Equipes/Empresas)</h3>
+                    <p class="text-sm text-gray-500 mb-4">Selecione quais empresas terão acesso de leitura a este
+                        modelo.</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {% for company in companies %}
+                        <label
+                            class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors {{ 'bg-red-50 border-red-200' if template and company in template.allowed_companies else '' }}">
+                            <input type="checkbox" name="companies" value="{{ company.id }}"
+                                class="rounded border-gray-300 text-northway-red focus:ring-northway-red h-4 w-4 mr-3"
+                                {{ 'checked' if template and company in template.allowed_companies else '' }}>
+                            <span class="text-sm font-medium text-gray-900">{{ company.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200">
+                <a href="{{ url_for('master.library') }}"
+                    class="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg font-medium text-sm transition-colors">Cancelar</a>
+                <button type="submit"
+                    class="bg-northway-red hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
+                    Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,76 +1,80 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Configurações</h1>
+<div class="flex-1 h-screen overflow-y-auto bg-gray-50 p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Configurações</h1>
 
         <!-- Settings Navigation -->
-        <div class="flex space-x-1 bg-gray-200 p-1 rounded-lg mb-8 w-fit">
+        <div class="flex overflow-x-auto pb-2 md:pb-0 space-x-1 bg-gray-200 p-1 rounded-lg mb-8 w-full md:w-fit">
             <a href="{{ url_for('main.company_settings') }}"
-                class="px-4 py-2 rounded-md text-sm font-medium transition-colors {{ 'bg-white text-gray-900 shadow-sm' if request.endpoint == 'main.company_settings' else 'text-gray-500 hover:text-gray-900' }}">
+                class="whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors {{ 'bg-white text-gray-900 shadow-sm' if request.endpoint == 'main.company_settings' else 'text-gray-500 hover:text-gray-900' }}">
                 Dados da Empresa
             </a>
             <a href="{{ url_for('main.settings_templates') }}"
-                class="px-4 py-2 rounded-md text-sm font-medium transition-colors {{ 'bg-white text-gray-900 shadow-sm' if 'settings_templates' in request.endpoint else 'text-gray-500 hover:text-gray-900' }}">
+                class="whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition-colors {{ 'bg-white text-gray-900 shadow-sm' if 'settings_templates' in request.endpoint else 'text-gray-500 hover:text-gray-900' }}">
                 Modelos de Contrato
             </a>
         </div>
 
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h2 class="text-xl font-bold text-gray-900">Modelos Disponíveis</h2>
             <a href="{{ url_for('main.settings_template_new') }}"
-                class="bg-[#fa0102] text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2">
+                class="w-full md:w-auto bg-[#fa0102] text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm flex items-center justify-center gap-2">
                 <i data-lucide="plus" class="w-4 h-4"></i> Novo Modelo
             </a>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            {% if templates %}
-            <table class="w-full text-left text-sm text-gray-600">
-                <thead class="bg-gray-50 text-gray-900 font-bold uppercase text-xs">
-                    <tr>
-                        <th class="px-6 py-4">Nome</th>
-                        <th class="px-6 py-4">Tipo</th>
-                        <th class="px-6 py-4 text-right">Ações</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    {% for tmpl in templates %}
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ tmpl.name }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded text-xs font-bold uppercase {{ 'bg-blue-100 text-blue-700' if
-                            tmpl.type == 'contract' else 'bg-purple-100 text-purple-700' if tmpl.type == 'attachment'
-                            else 'bg-green-100 text-green-700' }}">
-                                {{ 'Contrato' if tmpl.type == 'contract' else 'Anexo' if tmpl.type == 'attachment' else
-                                'Biblioteca' }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-right flex justify-end gap-2">
-                            <a href="{{ url_for('main.settings_template_edit', id=tmpl.id) }}"
-                                class="text-gray-400 hover:text-northway-red transition-colors p-1" title="Editar">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </a>
-                            <form action="{{ url_for('main.settings_template_delete', id=tmpl.id) }}" method="POST"
-                                onsubmit="return confirm('Tem certeza que deseja excluir este modelo?');">
-                                <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors p-1"
-                                    title="Excluir">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="p-12 text-center text-gray-400">
-                <i data-lucide="file-text" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
-                <p>Nenhum modelo cadastrado.</p>
+        {% if templates %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {% for tmpl in templates %}
+            <div
+                class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6 hover:shadow-md transition-shadow relative group">
+                <!-- Badges -->
+                <div class="flex justify-between items-start mb-4">
+                    <span
+                        class="px-2 py-1 rounded text-xs font-bold uppercase {{ 'bg-blue-100 text-blue-700' if tmpl.type == 'contract' else 'bg-purple-100 text-purple-700' }}">
+                        {{ 'Contrato' if tmpl.type == 'contract' else 'Anexo' }}
+                    </span>
+                    {% if tmpl.is_global %}
+                    <span
+                        class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold flex items-center gap-1">
+                        <i data-lucide="globe" class="w-3 h-3"></i> Global
+                    </span>
+                    {% endif %}
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 mb-2 truncate" title="{{ tmpl.name }}">{{ tmpl.name }}</h3>
+                <p class="text-xs text-gray-400 mb-4">Atualizado em {{ tmpl.created_at.strftime('%d/%m/%Y') }}</p>
+
+                <!-- Actions -->
+                <div class="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-2">
+                    <a href="{{ url_for('main.settings_template_edit', id=tmpl.id) }}"
+                        class="text-gray-500 hover:text-northway-red p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                        title="Editar">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </a>
+
+                    {% if not tmpl.is_global or (tmpl.is_global and tmpl.company_id == current_user.company_id) %}
+                    <form action="{{ url_for('main.settings_template_delete', id=tmpl.id) }}" method="POST"
+                        onsubmit="return confirm('Tem certeza que deseja excluir este modelo?');" class="inline">
+                        <button type="submit"
+                            class="text-gray-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                            title="Excluir">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center text-gray-400">
+            <i data-lucide="file-text" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
+            <p>Nenhum modelo cadastrado.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
