@@ -554,3 +554,51 @@ def migrate_saas():
     except Exception as e:
         db.session.rollback()
         return f"Migration Failed: {str(e)}"
+
+@master.route('/master/refresh-roles')
+@login_required
+def refresh_roles():
+    """
+    Updates the Role-Based Access Control (RBAC) permissions in the database.
+    Ensures 'admin' role has ALL necessary view permissions.
+    """
+    try:
+        from models import Role
+        
+        # Define the complete list of permissions for Company Admins
+        admin_permissions = [
+            'dashboard_view', 'financial_view', 'leads_view', 'pipeline_view', 
+            'goals_view', 'tasks_view', 'clients_view', 'whatsapp_view', 
+            'company_settings_view', 'processes_view', 'library_view', 
+            'prospecting_view', 'admin_view'
+        ]
+        
+        # Find or Create Admin Role
+        admin_role = Role.query.filter_by(name='admin').first()
+        if not admin_role:
+            admin_role = Role(name='admin', permissions=admin_permissions)
+            db.session.add(admin_role)
+            msg = "Role 'admin' created with full permissions."
+        else:
+            admin_role.permissions = admin_permissions
+            msg = "Role 'admin' updated with full permissions."
+            
+        # Ensure 'user' role exists too (Sales)
+        user_role = Role.query.filter_by(name='user').first()
+        sales_permissions = [
+            'dashboard_view', 'leads_view', 'pipeline_view', 'tasks_view', 
+            'clients_view', 'whatsapp_view', 'prospecting_view', 'goals_view', 'library_view'
+        ]
+        
+        if not user_role:
+            user_role = Role(name='user', permissions=sales_permissions)
+            db.session.add(user_role)
+        else:
+            user_role.permissions = sales_permissions
+            
+        db.session.commit()
+        return f"{msg} <br><br>Permissions Refreshed! <a href='/master/dashboard'>Go Back</a>"
+        
+    except Exception as e:
+        db.session.rollback()
+        return f"Error refreshing roles: {str(e)}"
