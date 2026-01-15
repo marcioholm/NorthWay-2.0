@@ -1222,23 +1222,36 @@ def create_app():
              return "Acesso negado", 403
 
         pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+        roles = Role.query.filter_by(company_id=current_user.company_id).all()
 
         if request.method == 'POST':
             name = request.form.get('name')
             email = request.form.get('email')
             password = request.form.get('password')
-            role = request.form.get('role')
+            role_id = request.form.get('role_id') # Changed from 'role' to 'role_id'
             allowed_pipeline_ids = request.form.getlist('pipelines') # List of IDs
             
             existing = User.query.filter_by(email=email).first()
             if existing:
                 flash('Email já cadastrado', 'error')
             else:
+                # Find the Role Object
+                selected_role = Role.query.get(role_id) if role_id else None
+                legacy_role_name = selected_role.name if selected_role else ROLE_SALES # Fallback
+                
+                # Mapping simple names for legacy column if needed (e.g. 'Vendedor' -> 'vendedor')
+                # But typically we just store 'Vendedor' now. Or we can normalize.
+                # Let's trust the Role.name is what we want, or lowercase it if your legacy code expects lowercase.
+                # Looking at models.py, constants are 'vendedor', 'gestor', 'admin'. 
+                # Ideally Role names in DB matches these or we Map them.
+                # For now, let's just save the name.
+                
                 user = User(
                     name=name,
                     email=email,
                     password_hash=generate_password_hash(password),
-                    role=role,
+                    role=legacy_role_name, # Legacy Field
+                    role_id=selected_role.id if selected_role else None, # New Field
                     company_id=current_user.company_id
                 )
                 
@@ -1253,7 +1266,7 @@ def create_app():
                 flash('Usuário criado com sucesso!', 'success')
                 return redirect(url_for('main.admin_users'))
         
-        return render_template('admin_user_form.html', pipelines=pipelines, user=None)
+        return render_template('admin_user_form.html', pipelines=pipelines, roles=roles, user=None)
 
     @main.route('/admin/users/<int:id>/edit', methods=['GET', 'POST'])
     @login_required
@@ -1266,10 +1279,17 @@ def create_app():
              return "Unauthorized", 403
              
         pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+        roles = Role.query.filter_by(company_id=current_user.company_id).all()
 
         if request.method == 'POST':
             user.name = request.form.get('name')
-            user.role = request.form.get('role')
+            
+            role_id = request.form.get('role_id')
+            selected_role = Role.query.get(role_id) if role_id else None
+            
+            if selected_role:
+                user.role_id = selected_role.id
+                user.role = selected_role.name # Legacy sync
             
             # Update password if provided
             password = request.form.get('password')
@@ -1288,7 +1308,7 @@ def create_app():
             flash('Usuário atualizado!', 'success')
             return redirect(url_for('main.admin_users'))
 
-        return render_template('admin_user_form.html', pipelines=pipelines, user=user)
+        return render_template('admin_user_form.html', pipelines=pipelines, roles=roles, user=user)
 
     @main.route('/init_db')
     def init_db():

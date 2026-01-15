@@ -39,13 +39,15 @@
 
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Função / Cargo</label>
-                    <select name="role"
+                    <select name="role_id" required
                         class="w-full rounded-lg border-gray-300 focus:border-northway-red focus:ring-northway-red sm:text-sm p-2.5 border">
-                        <option value="vendedor" {{ 'selected' if user and user.role=='vendedor' else '' }}>Vendedor
+                        <option value="" disabled {{ 'selected' if not user else '' }}>Selecione uma função</option>
+                        {% for r in roles %}
+                        <option value="{{ r.id }}" {{ 'selected' if (user and user.role_id==r.id) or (user and not
+                            user.role_id and user.role==r.name) else '' }}>
+                            {{ r.name }}
                         </option>
-                        <option value="gestor" {{ 'selected' if user and user.role=='gestor' else '' }}>Gestor</option>
-                        <option value="admin" {{ 'selected' if user and user.role=='admin' else '' }}>Administrador
-                        </option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
