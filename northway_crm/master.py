@@ -560,7 +560,7 @@ def migrate_saas():
 def refresh_roles():
     """
     Updates the Role-Based Access Control (RBAC) permissions in the database.
-    Ensures 'admin' role has ALL necessary view permissions.
+    Ensures 'admin' role has ALL necessary view permissions FOR EVERY COMPANY.
     """
     try:
         from models import Role
@@ -573,31 +573,35 @@ def refresh_roles():
             'prospecting_view', 'admin_view'
         ]
         
-        # Find or Create Admin Role
-        admin_role = Role.query.filter_by(name='admin').first()
-        if not admin_role:
-            admin_role = Role(name='admin', permissions=admin_permissions)
-            db.session.add(admin_role)
-            msg = "Role 'admin' created with full permissions."
-        else:
-            admin_role.permissions = admin_permissions
-            msg = "Role 'admin' updated with full permissions."
-            
-        # Ensure 'user' role exists too (Sales)
-        user_role = Role.query.filter_by(name='user').first()
         sales_permissions = [
             'dashboard_view', 'leads_view', 'pipeline_view', 'tasks_view', 
             'clients_view', 'whatsapp_view', 'prospecting_view', 'goals_view', 'library_view'
         ]
+
+        companies = Company.query.all()
+        count = 0
         
-        if not user_role:
-            user_role = Role(name='user', permissions=sales_permissions)
-            db.session.add(user_role)
-        else:
-            user_role.permissions = sales_permissions
+        for company in companies:
+            # 1. Find or Create Admin Role for this Company
+            admin_role = Role.query.filter_by(name='admin', company_id=company.id).first()
+            if not admin_role:
+                admin_role = Role(name='admin', permissions=admin_permissions, company_id=company.id)
+                db.session.add(admin_role)
+            else:
+                admin_role.permissions = admin_permissions
+                
+            # 2. Find or Create User Role for this Company
+            user_role = Role.query.filter_by(name='user', company_id=company.id).first()
+            if not user_role:
+                user_role = Role(name='user', permissions=sales_permissions, company_id=company.id)
+                db.session.add(user_role)
+            else:
+                user_role.permissions = sales_permissions
+            
+            count += 1
             
         db.session.commit()
-        return f"{msg} <br><br>Permissions Refreshed! <a href='/master/dashboard'>Go Back</a>"
+        return f"Permissions Refreshed for {count} companies! <br><br> <a href='/master/dashboard'>Go Back</a>"
         
     except Exception as e:
         db.session.rollback()
