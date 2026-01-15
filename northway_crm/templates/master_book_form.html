@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-4 md:p-8">
+
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="{{ url_for('master.dashboard') }}" class="hover:text-northway-red">Master</a>
+        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        <a href="{{ url_for('master.books') }}" class="hover:text-northway-red">Biblioteca</a>
+        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        <span class="text-gray-900 font-medium">{{ 'Novo Material' if not book else 'Editar Material' }}</span>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="p-6 md:p-8 border-b border-gray-100 bg-gray-50">
+            <h1 class="text-2xl font-bold text-gray-900">{{ 'Adicionar Material à Biblioteca' if not book else 'Editar
+                Material' }}</h1>
+            <p class="text-gray-500 mt-1">Configure os detalhes e as permissões de acesso.</p>
+        </div>
+
+        <form method="POST" class="p-6 md:p-8 space-y-8">
+
+            <!-- Book Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="col-span-2">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Título do Material</label>
+                    <input type="text" name="title" required value="{{ book.title if book else '' }}"
+                        class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-northway-red focus:bg-white focus:ring-0 transition-all font-medium"
+                        placeholder="Ex: Playbook Comercial 2026">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Categoria</label>
+                    <select name="category"
+                        class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-northway-red focus:bg-white focus:ring-0 transition-all">
+                        <option value="Apresentação" {{ 'selected' if book and book.category=='Apresentação' }}>
+                            Apresentação</option>
+                        <option value="Processos" {{ 'selected' if book and book.category=='Processos' }}>Processos
+                        </option>
+                        <option value="Treinamento" {{ 'selected' if book and book.category=='Treinamento' }}>
+                            Treinamento</option>
+                        <option value="Vendas" {{ 'selected' if book and book.category=='Vendas' }}>Vendas</option>
+                        <option value="Institucional" {{ 'selected' if book and book.category=='Institucional' }}>
+                            Institucional</option>
+                        <option value="Outros" {{ 'selected' if book and book.category=='Outros' }}>Outros</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Rota / Link (Opcional)</label>
+                    <input type="text" name="route_name" value="{{ book.route_name if book else '' }}"
+                        class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-northway-red focus:bg-white focus:ring-0 transition-all text-sm"
+                        placeholder="Ex: docs.playbook_comercial">
+                    <p class="text-xs text-gray-400 mt-1">Preencha se o material for uma página estática existente.</p>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Descrição Curta</label>
+                    <textarea name="description" rows="2"
+                        class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-northway-red focus:bg-white focus:ring-0 transition-all">{{ book.description if book else '' }}</textarea>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">URL da Imagem de Capa (Opcional)</label>
+                    <input type="text" name="cover_image" value="{{ book.cover_image if book else '' }}"
+                        class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-northway-red focus:bg-white focus:ring-0 transition-all"
+                        placeholder="https://...">
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Conteúdo HTML (Apenas para novos
+                        docs)</label>
+                    <textarea name="content" rows="6"
+                        class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-northway-red focus:bg-white focus:ring-0 transition-all font-mono text-sm">{{ book.content if book else '' }}</textarea>
+                    <p class="text-xs text-gray-400 mt-1">Deixe em branco se estiver usando uma "Rota / Link".</p>
+                </div>
+            </div>
+
+            <hr class="border-gray-100">
+
+            <!-- Access Control -->
+            <div>
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="lock" class="text-northway-red w-5 h-5"></i> Controle de Acesso
+                </h3>
+                <p class="text-sm text-gray-500 mb-6">Selecione quais empresas podem visualizar este material.</p>
+
+                <div
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    {% for company in companies %}
+                    <label
+                        class="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-northway-red cursor-pointer transition-colors shadow-sm">
+                        <input type="checkbox" name="companies" value="{{ company.id }}"
+                            class="w-5 h-5 text-northway-red rounded border-gray-300 focus:ring-northway-red" {% if book
+                            and company in book.allowed_companies %}checked{% endif %}>
+                        <span class="ml-3 text-sm font-medium text-gray-700 select-none">{{ company.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-end gap-4 pt-6 mt-6 border-t border-gray-100">
+                <a href="{{ url_for('master.books') }}"
+                    class="text-gray-500 font-bold hover:text-gray-800 transition-colors">Cancelar</a>
+                <button type="submit"
+                    class="bg-northway-red hover:bg-[#d00102] text-white px-8 py-3 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all font-bold">
+                    Salvar Material
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

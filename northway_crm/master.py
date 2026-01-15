@@ -159,3 +159,77 @@ def library_edit(id):
         
     companies = Company.query.all()
     return render_template('master_library_form.html', companies=companies, template=tmpl)
+
+# --- Library Books Management ---
+from models import LibraryBook, library_book_company_association
+
+@master.route('/master/books')
+def books():
+    # List all library books
+    books = LibraryBook.query.order_by(LibraryBook.created_at.desc()).all()
+    return render_template('master_books.html', books=books)
+
+@master.route('/master/books/new', methods=['GET', 'POST'])
+def books_new():
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        category = request.form['category']
+        cover_image = request.form.get('cover_image')
+        route_name = request.form.get('route_name')
+        content = request.form.get('content')
+        
+        book = LibraryBook(
+            title=title,
+            description=description,
+            category=category,
+            cover_image=cover_image,
+            route_name=route_name,
+            content=content,
+            active=True
+        )
+        
+        # Access Permission
+        allowed_company_ids = request.form.getlist('companies')
+        for cid in allowed_company_ids:
+            comp = Company.query.get(int(cid))
+            if comp:
+                book.allowed_companies.append(comp)
+        
+        db.session.add(book)
+        db.session.commit()
+        flash("Novo material adicionado à biblioteca!", "success")
+        return redirect(url_for('master.books'))
+        
+    companies = Company.query.all()
+    return render_template('master_book_form.html', companies=companies, book=None)
+
+@master.route('/master/books/<int:id>/edit', methods=['GET', 'POST'])
+def books_edit(id):
+    book = LibraryBook.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        book.title = request.form['title']
+        book.description = request.form['description']
+        book.category = request.form['category']
+        book.cover_image = request.form.get('cover_image')
+        book.route_name = request.form.get('route_name')
+        book.content = request.form.get('content')
+        
+        # Update permissions
+        allowed_company_ids = request.form.getlist('companies')
+        
+        # Clear existing
+        book.allowed_companies = []
+        
+        for cid in allowed_company_ids:
+            comp = Company.query.get(int(cid))
+            if comp:
+                book.allowed_companies.append(comp)
+                
+        db.session.commit()
+        flash("Material atualizado!", "success")
+        return redirect(url_for('master.books'))
+        
+    companies = Company.query.all()
+    return render_template('master_book_form.html', companies=companies, book=book)

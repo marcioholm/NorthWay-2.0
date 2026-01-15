@@ -28,6 +28,26 @@ template_company_association = db.Table('template_company_association',
     db.Column('company_id', db.Integer, db.ForeignKey('company.id'))
 )
 
+# Many-to-Many relationship between LibraryBook and Company (Access Control)
+library_book_company_association = db.Table('library_book_company_association',
+    db.Column('book_id', db.Integer, db.ForeignKey('library_book.id')),
+    db.Column('company_id', db.Integer, db.ForeignKey('company.id'))
+)
+
+class LibraryBook(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.String(500), nullable=True)
+    category = db.Column(db.String(50), default='Outros') # Apresentacao, Processos, Treinamento
+    cover_image = db.Column(db.String(200), nullable=True) # URL or Filename
+    route_name = db.Column(db.String(100), nullable=True) # For legacy static routes (e.g., 'docs.user_manual')
+    content = db.Column(db.Text, nullable=True) # HTML content for new books
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Access Control Relationship
+    allowed_companies = db.relationship('Company', secondary=library_book_company_association, backref=db.backref('accessible_books', lazy='dynamic'))
+
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)

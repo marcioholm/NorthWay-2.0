@@ -49,17 +49,21 @@ def presentation_consultancy():
 @docs_bp.route('/library')
 @login_required
 def library():
-    from models import ContractTemplate
+    from models import ContractTemplate, LibraryBook
     from flask_login import current_user
     
-    # Fetch company-specific library documents
-    library_docs = ContractTemplate.query.filter_by(
+    # 1. Fetch Company-specific Templates (Legacy "Private Library")
+    template_docs = ContractTemplate.query.filter_by(
         company_id=current_user.company_id, 
         active=True, 
         type='library_doc'
     ).order_by(ContractTemplate.created_at.desc()).all()
+
+    # 2. Fetch System Library Books (Granular Access)
+    # Join with association table implicitly via relationship
+    system_books = current_user.company.accessible_books.filter_by(active=True).all()
     
-    return render_template('docs/library.html', library_docs=library_docs)
+    return render_template('docs/library.html', template_docs=template_docs, system_books=system_books)
 
 @docs_bp.route('/view/<int:id>')
 @login_required
