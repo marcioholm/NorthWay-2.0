@@ -19,7 +19,7 @@ from routes.docs import docs_bp
 from routes.goals import goals_bp
 from routes.prospecting import prospecting_bp
 from routes.prospecting import prospecting_bp
-from routes.admin import admin_bp
+# from routes.admin import admin_bp (Moved to bottom registration)
 
 main = Blueprint('main', __name__)
 
@@ -2903,6 +2903,8 @@ def create_app():
     app.register_blueprint(docs_bp)
     app.register_blueprint(goals_bp)
     app.register_blueprint(prospecting_bp)
+    
+    from routes.admin import admin_bp
     app.register_blueprint(admin_bp)
     
     from routes.whatsapp import whatsapp_bp

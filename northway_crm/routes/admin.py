@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
-from models import db, User, Role, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
+# Defer model imports to avoid circular dependency with app initialization
+# from models import db, User, Role, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
 from werkzeug.security import generate_password_hash
 
 admin_bp = Blueprint('admin', __name__)
@@ -20,6 +21,7 @@ def check_admin_access():
 
 @admin_bp.route('/admin/users')
 def users():
+    from models import User, Role # Lazy Import
     """
     List users ONLY for the current user's company.
     """
@@ -31,6 +33,7 @@ def users():
 
 @admin_bp.route('/admin/users/new', methods=['GET', 'POST'])
 def new_user():
+    from models import db, User # Lazy Import
     if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email')
@@ -58,6 +61,7 @@ def new_user():
 
 @admin_bp.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
 def edit_user(user_id):
+    from models import db, User # Lazy Import
     # CRITICAL: Verify user belongs to SAME company
     user = User.query.get_or_404(user_id)
     
