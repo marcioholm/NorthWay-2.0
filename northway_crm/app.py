@@ -2910,6 +2910,8 @@ def create_app():
     from routes.whatsapp import whatsapp_bp
     app.register_blueprint(whatsapp_bp)
     
+    app.register_blueprint(main)
+    
     return app
 
 app = create_app()
