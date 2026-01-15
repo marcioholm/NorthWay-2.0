@@ -1348,6 +1348,46 @@ def create_app():
                 return "Database initialized with default data!"
             return "Database already initialized."
 
+    @main.route('/init_roles')
+    def init_roles():
+        """Helper to seed roles for existing companies"""
+        companies = Company.query.all()
+        created_count = 0
+        updated_users = 0
+        
+        for company in companies:
+            # Check/Create Roles
+            roles_map = {}
+            default_roles = ['Administrador', 'Gestor', 'Vendedor']
+            
+            for role_name in default_roles:
+                role = Role.query.filter_by(company_id=company.id, name=role_name).first()
+                if not role:
+                    role = Role(name=role_name, company_id=company.id, permissions=[])
+                    db.session.add(role)
+                    created_count += 1
+                roles_map[role_name] = role
+            
+            db.session.commit()
+            
+            # Backfill Users
+            users = User.query.filter_by(company_id=company.id).all()
+            for user in users:
+                if not user.role_id:
+                    # Map legacy strings to new Role objects
+                    target_role = None
+                    if user.role == 'admin': target_role = roles_map.get('Administrador')
+                    elif user.role == 'gestor': target_role = roles_map.get('Gestor')
+                    elif user.role == 'vendedor': target_role = roles_map.get('Vendedor')
+                    
+                    if target_role:
+                        user.role_id = target_role.id
+                        updated_users += 1
+                        
+            db.session.commit()
+            
+        return f"Roles Initialized: {created_count} roles created, {updated_users} users updated."
+
     @main.route('/api/notifications')
     @login_required
     def get_notifications():
