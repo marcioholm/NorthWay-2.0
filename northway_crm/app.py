@@ -19,6 +19,7 @@ from routes.docs import docs_bp
 from routes.goals import goals_bp
 from routes.prospecting import prospecting_bp
 from routes.prospecting import prospecting_bp
+from routes.integrations import integrations_bp
 # from routes.admin import admin_bp (Moved to bottom registration)
 
 main = Blueprint('main', __name__)
@@ -103,6 +104,7 @@ def create_app():
     # Register Blueprints
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(master_blueprint)
+    app.register_blueprint(integrations_bp)
     
     # Main Blueprint (defined here for simplicity in MVP)
     from flask import Blueprint
@@ -2429,28 +2431,61 @@ def create_app():
             val_parcela = float(val_parcela_str.replace('.', '').replace(',', '.'))
             start_date = datetime.strptime(data_inicio_str, '%d/%m/%Y').date()
             
-            for i in range(qtd_parcelas):
-                target_month_date = add_months_helper(start_date, i)
-                try:
-                    due_date = date(target_month_date.year, target_month_date.month, dia_vencimento)
-                except ValueError:
-                    due_date = date(target_month_date.year, target_month_date.month, 28)
+            new_transactions = []
+            
+            # Check if transactions already exist to avoid duplicates if re-signed (safety check)
+            existing_count = Transaction.query.filter_by(contract_id=contract.id).count()
+            if existing_count == 0:
+                for i in range(qtd_parcelas):
+                    target_month_date = add_months_helper(start_date, i)
+                    try:
+                        due_date = date(target_month_date.year, target_month_date.month, dia_vencimento)
+                    except ValueError:
+                        due_date = date(target_month_date.year, target_month_date.month, 28)
+                    
+                    t = Transaction(
+                        contract_id=contract.id,
+                        description=f"Parcela {i+1}/{qtd_parcelas} - {contract.template.name}",
+                        amount=val_parcela,
+                        due_date=due_date,
+                        status='pending'
+                    )
+                    db.session.add(t)
+                    new_transactions.append(t)
+            
+            # --- ASAAS INTEGRATION ---
+            from models import Integration
+            from services.asaas_service import AsaasService
+            
+            integration = Integration.query.filter_by(company_id=contract.company_id, service='asaas', is_active=True).first()
+            if integration:
+                # 1. Ensure Customer Exists
+                customer_id = AsaasService.create_customer(contract.company_id, contract.client)
                 
-                t = Transaction(
-                    contract_id=contract.id,
-                    description=f"Parcela {i+1}/{qtd_parcelas}",
-                    amount=val_parcela,
-                    due_date=due_date,
-                    status='pending'
-                )
-                db.session.add(t)
+                # 2. Create Charges (only for new/pending transactions)
+                # If we just created them, they are in new_transactions
+                # If they existed, we might want to process them if they don't have asaas_id?
+                # For MVP, assume we process the ones we just made or all pending without ID.
                 
+                txs_to_process = new_transactions if new_transactions else Transaction.query.filter_by(contract_id=contract.id, status='pending', asaas_id=None).all()
+                
+                for tx in txs_to_process:
+                    AsaasService.create_payment(contract.company_id, customer_id, tx)
+                    # Note: create_payment updates tx.asaas_id and tx.asaas_invoice_url handles
+            
             contract.status = 'signed'
+            # contract.signed_at = datetime.now() # if field exists
+            
             db.session.commit()
-            return jsonify({'success': True})
+            
+            if integration:
+                return jsonify({'success': True, 'message': 'Contrato assinado e cobranças geradas no Asaas!'})
+            else:
+                return jsonify({'success': True, 'message': 'Contrato assinado (Integração Asaas inativa).'})
             
         except Exception as e:
             print(f"Error signing contract: {e}")
+            db.session.rollback()
             return jsonify({'error': str(e)}), 500
 
     from routes.financial import financial_bp

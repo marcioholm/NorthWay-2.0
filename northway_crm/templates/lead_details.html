@@ -109,245 +109,340 @@
                     </div>
 
                     <!-- Input Area -->
-                    <div class="bg-white p-3 border border-gray-200 rounded-b-lg flex gap-2 items-end">
-                        <div
-                            class="flex-1 bg-gray-50 rounded-lg border border-gray-200 focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500/20 transition-all">
-                            <textarea id="pageWhatsappInput" rows="2"
-                                class="w-full p-3 bg-transparent border-none focus:outline-none resize-none text-sm"
-                                placeholder="Digite sua mensagem via WhatsApp..."></textarea>
+                    <!-- Input Area (Standardized) -->
+                    <div
+                        class="bg-gray-50 p-3 border border-gray-200 border-t-0 rounded-b-lg flex flex-col gap-2 relative">
+                        <!-- Hidden File Input -->
+                        <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
+
+                        <!-- Attachment Menu (Absolute) -->
+                        <div id="attach-menu"
+                            class="hidden absolute bottom-20 left-4 bg-white shadow-xl rounded-lg flex flex-col w-40 overflow-hidden z-20 border border-gray-100">
+                            <button onclick="triggerFile('image/*')"
+                                class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700 border-b border-gray-50">
+                                <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos
+                            </button>
+                            <button onclick="triggerFile('*/*')"
+                                class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700">
+                                <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
+                            </button>
                         </div>
-                        <button onclick="sendPageWhatsAppMessage()" id="btnSendPageWhatsapp"
-                            class="bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg transition-colors shadow-sm flex-shrink-0 h-[46px] w-[46px] flex items-center justify-center">
-                            <i data-lucide="send" class="w-5 h-5"></i>
+
+                        <div class="flex items-end gap-2">
+                            <!-- Default Toolbar -->
+                            <div id="toolbar-default" class="flex-1 flex items-center gap-2">
+                                <button id="btn-attach" onclick="toggleAttachMenu()"
+                                    class="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-200">
+                                    <i data-lucide="plus" class="w-6 h-6"></i>
+                                </button>
+
+                                <!-- Rich Text Toolbar (Mini) -->
+                                <div class="hidden md:flex items-center gap-0.5 border-r border-gray-300 pr-2 mr-1">
+                                    <button onclick="insertFormat('*')"
+                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                        <i data-lucide="bold" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="insertFormat('_')"
+                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                        <i data-lucide="italic" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="insertFormat('- ')"
+                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                        <i data-lucide="list" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+
+                                <div
+                                    class="flex-1 bg-white rounded-lg border border-gray-300 focus-within:border-northway-red focus-within:ring-1 focus-within:ring-northway-red/20 transition-all overflow-hidden flex items-center px-4 py-2">
+                                    <input type="text" id="message-input" placeholder="Mensagem"
+                                        class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800 placeholder-gray-400"
+                                        autocomplete="off">
+                                </div>
+
+                                <!-- Mic / Send Toggle -->
+                                <button id="btn-mic" onclick="toggleRecording()"
+                                    class="p-3 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors shadow-sm">
+                                    <i data-lucide="mic" class="w-5 h-5"></i>
+                                </button>
+                                <button id="btn-send" onclick="sendMessage()"
+                                    class="hidden p-3 bg-northway-red text-white rounded-full hover:bg-red-700 transition-colors shadow-sm">
+                                    <i data-lucide="send" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+
+                            <!-- Recording UI -->
+                            <div id="toolbar-recording"
+                                class="flex-1 items-center gap-4 hidden px-4 py-2 bg-white rounded-lg border border-red-100">
+                                <button onclick="cancelRecording()" class="text-gray-500 hover:text-red-500 p-2">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
+                                <div class="flex-1 flex items-center gap-3 justify-center">
+                                    <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
+                                    <span id="recording-time"
+                                        class="text-gray-700 font-mono text-sm font-bold">0:00</span>
+                                </div>
+                                <button onclick="stopAndSendRecording()"
+                                    class="text-green-500 hover:text-green-600 p-2">
+                                    <i data-lucide="send" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+
+                            <!-- File Preview UI -->
+                            <div id="toolbar-file"
+                                class="flex-1 items-center gap-4 hidden bg-white rounded-lg px-4 py-2 border border-green-200">
+                                <span class="text-gray-500"><i data-lucide="file" class="w-5 h-5 inline"></i></span>
+                                <span id="file-name"
+                                    class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
+                                <button onclick="cancelFile()" class="text-gray-400 hover:text-red-500 p-2">
+                                    <i data-lucide="x" class="w-5 h-5"></i>
+                                </button>
+                                <button onclick="sendFile()"
+                                    class="text-green-600 hover:text-green-700 font-bold text-sm px-3">
+                                    Enviar
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1 flex items-center gap-1 justify-center">
+                            <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas de ponta a
+                            ponta.
+                        </p>
+                    </div>
+
+                    <!-- Sidebar Info -->
+                    <div class="space-y-6">
+                        <!-- Info Card -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3
+                                class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
+                                Informações</h3>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">Origem</label>
+                                    <div class="text-sm font-medium text-gray-900">{{ lead.source or 'Não informado' }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">Interesse</label>
+                                    <div class="text-sm font-medium text-gray-900">{{ lead.interest or '-' }}</div>
+                                </div>
+                                {% if lead.notes %}
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">Observações Iniciais</label>
+                                    <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-100">{{
+                                        lead.notes }}</div>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">Criado em</label>
+                                    <div class="text-sm font-medium text-gray-900">{{
+                                        lead.created_at.strftime('%d/%m/%Y')
+                                        }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">Responsável</label>
+                                    <div class="flex items-center gap-2">
+                                        <div
+                                            class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+                                            {{ lead.assigned_user.name[:2].upper() }}
+                                        </div>
+                                        <span class="text-sm text-gray-900">{{ lead.assigned_user.name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BANT Qualification Card -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3
+                                class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                                <span class="bg-northway-red text-white text-[10px] px-1.5 py-0.5 rounded">BANT</span>
+                                Qualificação
+                            </h3>
+
+                            <form action="{{ url_for('main.update_bant', id=lead.id) }}" method="POST"
+                                class="space-y-4">
+                                <!-- Budget -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Budget</label>
+                                    <input type="text" name="bant_budget" value="{{ lead.bant_budget or '' }}"
+                                        placeholder="R$..."
+                                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red transition-colors">
+                                </div>
+
+                                <!-- Authority -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Authority</label>
+                                    <select name="bant_authority"
+                                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red bg-white transition-colors">
+                                        <option value="" {{ 'selected' if not lead.bant_authority }}>Selecione...
+                                        </option>
+                                        <option value="Decisor" {{ 'selected' if lead.bant_authority=='Decisor' }}>
+                                            Decisor
+                                        </option>
+                                        <option value="Influenciador" {{ 'selected' if
+                                            lead.bant_authority=='Influenciador' }}>
+                                            Influenciador</option>
+                                        <option value="Usuário" {{ 'selected' if lead.bant_authority=='Usuário' }}>
+                                            Usuário
+                                        </option>
+                                        <option value="Sem poder" {{ 'selected' if lead.bant_authority=='Sem poder' }}>
+                                            Sem
+                                            poder
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Timeline -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Timeline</label>
+                                    <select name="bant_timeline"
+                                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red bg-white transition-colors">
+                                        <option value="" {{ 'selected' if not lead.bant_timeline }}>Selecione...
+                                        </option>
+                                        <option value="Imediato" {{ 'selected' if lead.bant_timeline=='Imediato' }}>
+                                            Imediato
+                                        </option>
+                                        <option value="Curto Prazo" {{ 'selected' if lead.bant_timeline=='Curto Prazo'
+                                            }}>
+                                            Curto
+                                            Prazo</option>
+                                        <option value="Médio Prazo" {{ 'selected' if lead.bant_timeline=='Médio Prazo'
+                                            }}>
+                                            Médio
+                                            Prazo</option>
+                                        <option value="Longo Prazo" {{ 'selected' if lead.bant_timeline=='Longo Prazo'
+                                            }}>
+                                            Longo
+                                            Prazo</option>
+                                    </select>
+                                </div>
+
+                                <!-- Need -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Need</label>
+                                    <textarea name="bant_need" rows="3" placeholder="Necessidade..."
+                                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red resize-none transition-colors">{{ lead.bant_need or '' }}</textarea>
+                                </div>
+
+                                <button type="submit"
+                                    class="w-full bg-gray-50 text-gray-700 font-bold py-2 rounded hover:bg-northway-red hover:text-white transition-colors text-sm border border-gray-200 hover:border-northway-red">
+                                    Salvar Qualificação
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Related Tasks -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
+                                <div>
+                                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Tarefas
+                                        Pendentes
+                                    </h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <div class="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                            <div id="task-progress-bar" class="bg-green-500 h-1.5 rounded-full"
+                                                data-width="{{ lead.task_progress.percent }}"></div>
+                                            <script>
+                                                document.addEventListener("DOMContentLoaded", function () {
+                                                    const bar = document.getElementById('task-progress-bar');
+                                                    if (bar) bar.style.width = bar.dataset.width + '%';
+                                                });
+                                            </script>
+                                        </div>
+                                        <span class="text-[10px] text-gray-500 font-medium">{{
+                                            lead.task_progress.completed
+                                            }}/{{ lead.task_progress.total }}</span>
+                                    </div>
+                                </div>
+                                <button onclick="toggleModal('createTaskModal')"
+                                    class="text-northway-red hover:text-red-700 text-xs font-bold flex items-center gap-1">
+                                    <i data-lucide="plus" class="w-3 h-3"></i> Nova
+                                </button>
+                            </div>
+                            <ul class="divide-y divide-gray-100">
+                                {% for task in lead.tasks %}
+                                <li class="py-3 flex items-center gap-3 group">
+                                    <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST">
+                                        <button type="submit"
+                                            class="w-4 h-4 border-2 border-gray-300 rounded hover:border-northway-red transition-colors flex items-center justify-center">
+                                            {% if task.status == 'concluida' %}
+                                            <span class="block w-2.5 h-2.5 bg-northway-red rounded-sm"></span>
+                                            {% endif %}
+                                        </button>
+                                    </form>
+
+                                    <span
+                                        class="text-sm flex-1 {{ 'line-through text-gray-400' if task.status == 'concluida' else 'text-gray-700' }}">
+                                        {{ task.title }}
+                                    </span>
+
+                                    <span class="text-xs text-gray-400">
+                                        {{ task.due_date.strftime('%d/%m') if task.due_date else '' }}
+                                    </span>
+
+                                    {% if current_user.role == 'admin' %}
+                                    <form action="{{ url_for('main.delete_task', id=task.id) }}" method="POST"
+                                        onsubmit="return confirm('Excluir tarefa?');">
+                                        <button type="submit"
+                                            class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </li>
+                                {% else %}
+                                <li class="text-xs text-gray-400 italic py-2">Nenhuma tarefa.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Task Modal -->
+        <div id="createTaskModal"
+            class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+                <div class="flex justify-between items-center p-6 border-b border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-900">Nova Tarefa</h3>
+                    <button onclick="toggleModal('createTaskModal')" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <form action="{{ url_for('main.tasks') }}" method="POST" class="p-6 space-y-4">
+                    <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                    <input type="hidden" name="next" value="{{ url_for('main.lead_details', id=lead.id) }}">
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                        <input type="text" name="title" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data e Hora de Vencimento</label>
+                        <input type="datetime-local" name="due_date"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    </div>
+
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" onclick="toggleModal('createTaskModal')"
+                            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                            class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                            Salvar Tarefa
                         </button>
                     </div>
-                    <p class="text-xs text-gray-400 mt-2 flex items-center gap-1 justify-center">
-                        <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas de ponta a
-                        ponta.
-                    </p>
-                </div>
-
-                <!-- Sidebar Info -->
-                <div class="space-y-6">
-                    <!-- Info Card -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3
-                            class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
-                            Informações</h3>
-
-                        <div class="space-y-4">
-                            <div>
-                                <label class="text-xs text-gray-500 block mb-1">Origem</label>
-                                <div class="text-sm font-medium text-gray-900">{{ lead.source or 'Não informado' }}
-                                </div>
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-500 block mb-1">Interesse</label>
-                                <div class="text-sm font-medium text-gray-900">{{ lead.interest or '-' }}</div>
-                            </div>
-                            {% if lead.notes %}
-                            <div>
-                                <label class="text-xs text-gray-500 block mb-1">Observações Iniciais</label>
-                                <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-100">{{
-                                    lead.notes }}</div>
-                            </div>
-                            {% endif %}
-                            <div>
-                                <label class="text-xs text-gray-500 block mb-1">Criado em</label>
-                                <div class="text-sm font-medium text-gray-900">{{ lead.created_at.strftime('%d/%m/%Y')
-                                    }}
-                                </div>
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-500 block mb-1">Responsável</label>
-                                <div class="flex items-center gap-2">
-                                    <div
-                                        class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
-                                        {{ lead.assigned_user.name[:2].upper() }}
-                                    </div>
-                                    <span class="text-sm text-gray-900">{{ lead.assigned_user.name }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- BANT Qualification Card -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3
-                            class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
-                            <span class="bg-northway-red text-white text-[10px] px-1.5 py-0.5 rounded">BANT</span>
-                            Qualificação
-                        </h3>
-
-                        <form action="{{ url_for('main.update_bant', id=lead.id) }}" method="POST" class="space-y-4">
-                            <!-- Budget -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Budget</label>
-                                <input type="text" name="bant_budget" value="{{ lead.bant_budget or '' }}"
-                                    placeholder="R$..."
-                                    class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red transition-colors">
-                            </div>
-
-                            <!-- Authority -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Authority</label>
-                                <select name="bant_authority"
-                                    class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red bg-white transition-colors">
-                                    <option value="" {{ 'selected' if not lead.bant_authority }}>Selecione...</option>
-                                    <option value="Decisor" {{ 'selected' if lead.bant_authority=='Decisor' }}>Decisor
-                                    </option>
-                                    <option value="Influenciador" {{ 'selected' if lead.bant_authority=='Influenciador'
-                                        }}>
-                                        Influenciador</option>
-                                    <option value="Usuário" {{ 'selected' if lead.bant_authority=='Usuário' }}>Usuário
-                                    </option>
-                                    <option value="Sem poder" {{ 'selected' if lead.bant_authority=='Sem poder' }}>Sem
-                                        poder
-                                    </option>
-                                </select>
-                            </div>
-
-                            <!-- Timeline -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Timeline</label>
-                                <select name="bant_timeline"
-                                    class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red bg-white transition-colors">
-                                    <option value="" {{ 'selected' if not lead.bant_timeline }}>Selecione...</option>
-                                    <option value="Imediato" {{ 'selected' if lead.bant_timeline=='Imediato' }}>Imediato
-                                    </option>
-                                    <option value="Curto Prazo" {{ 'selected' if lead.bant_timeline=='Curto Prazo' }}>
-                                        Curto
-                                        Prazo</option>
-                                    <option value="Médio Prazo" {{ 'selected' if lead.bant_timeline=='Médio Prazo' }}>
-                                        Médio
-                                        Prazo</option>
-                                    <option value="Longo Prazo" {{ 'selected' if lead.bant_timeline=='Longo Prazo' }}>
-                                        Longo
-                                        Prazo</option>
-                                </select>
-                            </div>
-
-                            <!-- Need -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Need</label>
-                                <textarea name="bant_need" rows="3" placeholder="Necessidade..."
-                                    class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red resize-none transition-colors">{{ lead.bant_need or '' }}</textarea>
-                            </div>
-
-                            <button type="submit"
-                                class="w-full bg-gray-50 text-gray-700 font-bold py-2 rounded hover:bg-northway-red hover:text-white transition-colors text-sm border border-gray-200 hover:border-northway-red">
-                                Salvar Qualificação
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Related Tasks -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
-                            <div>
-                                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Tarefas Pendentes
-                                </h3>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <div class="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                        <div id="task-progress-bar" class="bg-green-500 h-1.5 rounded-full"
-                                            data-width="{{ lead.task_progress.percent }}"></div>
-                                        <script>
-                                            document.addEventListener("DOMContentLoaded", function () {
-                                                const bar = document.getElementById('task-progress-bar');
-                                                if (bar) bar.style.width = bar.dataset.width + '%';
-                                            });
-                                        </script>
-                                    </div>
-                                    <span class="text-[10px] text-gray-500 font-medium">{{ lead.task_progress.completed
-                                        }}/{{ lead.task_progress.total }}</span>
-                                </div>
-                            </div>
-                            <button onclick="toggleModal('createTaskModal')"
-                                class="text-northway-red hover:text-red-700 text-xs font-bold flex items-center gap-1">
-                                <i data-lucide="plus" class="w-3 h-3"></i> Nova
-                            </button>
-                        </div>
-                        <ul class="divide-y divide-gray-100">
-                            {% for task in lead.tasks %}
-                            <li class="py-3 flex items-center gap-3 group">
-                                <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST">
-                                    <button type="submit"
-                                        class="w-4 h-4 border-2 border-gray-300 rounded hover:border-northway-red transition-colors flex items-center justify-center">
-                                        {% if task.status == 'concluida' %}
-                                        <span class="block w-2.5 h-2.5 bg-northway-red rounded-sm"></span>
-                                        {% endif %}
-                                    </button>
-                                </form>
-
-                                <span
-                                    class="text-sm flex-1 {{ 'line-through text-gray-400' if task.status == 'concluida' else 'text-gray-700' }}">
-                                    {{ task.title }}
-                                </span>
-
-                                <span class="text-xs text-gray-400">
-                                    {{ task.due_date.strftime('%d/%m') if task.due_date else '' }}
-                                </span>
-
-                                {% if current_user.role == 'admin' %}
-                                <form action="{{ url_for('main.delete_task', id=task.id) }}" method="POST"
-                                    onsubmit="return confirm('Excluir tarefa?');">
-                                    <button type="submit"
-                                        class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </li>
-                            {% else %}
-                            <li class="text-xs text-gray-400 italic py-2">Nenhuma tarefa.</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>
-
-    <!-- Create Task Modal -->
-    <div id="createTaskModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div class="flex justify-between items-center p-6 border-b border-gray-100">
-                <h3 class="text-lg font-bold text-gray-900">Nova Tarefa</h3>
-                <button onclick="toggleModal('createTaskModal')" class="text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <form action="{{ url_for('main.tasks') }}" method="POST" class="p-6 space-y-4">
-                <input type="hidden" name="lead_id" value="{{ lead.id }}">
-                <input type="hidden" name="next" value="{{ url_for('main.lead_details', id=lead.id) }}">
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                    <input type="text" name="title" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Data e Hora de Vencimento</label>
-                    <input type="datetime-local" name="due_date"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
-                </div>
-
-                <div class="pt-4 flex gap-3">
-                    <button type="button" onclick="toggleModal('createTaskModal')"
-                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                        Cancelar
-                    </button>
-                    <button type="submit"
-                        class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
-                        Salvar Tarefa
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 </div>
 
 <!-- Convert Lead Modal -->
@@ -419,6 +514,7 @@
 
     // --- Tab Logic ---
     const pageLeadId = parseInt("{{ lead.id }}");
+    let pagePollingInterval = null;
 
     function switchPageTab(tabName) {
         const detailsTab = document.getElementById('tab-page-details');
@@ -446,12 +542,18 @@
             contentWhatsapp.classList.remove('hidden');
 
             loadPageWhatsAppMessages();
+
+            // Start Polling
+            if (pagePollingInterval) clearInterval(pagePollingInterval);
+            pagePollingInterval = setInterval(() => loadPageWhatsAppMessages(true), 5000);
+        } else {
+            if (pagePollingInterval) clearInterval(pagePollingInterval);
         }
     }
 
-    async function loadPageWhatsAppMessages() {
+    async function loadPageWhatsAppMessages(silent = false) {
         const container = document.getElementById('page-chat-messages');
-        container.innerHTML = `<div class="flex justify-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div></div>`;
+        if (!silent) container.innerHTML = `<div class="flex justify-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-northway-red"></div></div>`;
 
         try {
             const response = await fetch(`/api/whatsapp/lead/${pageLeadId}/messages`);
@@ -488,7 +590,7 @@
                     ${dateHeader}
                     <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-2 group px-2">
                         <div class="max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm relative leading-relaxed ${msg.direction === 'out'
-                            ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-none shadow-md'
+                            ? 'bg-northway-red text-white rounded-tr-none shadow-md'
                             : 'bg-white text-gray-900 rounded-tl-none shadow-md'
                         }">
                             <p class="mb-1">${msg.content}</p>
@@ -516,17 +618,195 @@
         }
     }
 
-    async function sendPageWhatsAppMessage() {
-        const input = document.getElementById('pageWhatsappInput');
-        const content = input.value.trim();
-        const btn = document.getElementById('btnSendPageWhatsapp');
+    // --- MEDIA & PORTED LOGIC ---
+    const activeChat = { type: 'lead', id: pageLeadId };
 
+    function loadMessages(type, id) {
+        // Wrapper for existing loader
+        return loadPageWhatsAppMessages(true);
+    }
+
+    // Media Vars
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingTimer = null;
+    let selectedFile = null;
+
+    // UI Toggles
+    const inputArea = document.getElementById('message-input');
+    const btnMic = document.getElementById('btn-mic');
+    const btnSend = document.getElementById('btn-send');
+
+    // Auto-switch Mic/Send icon
+    if (inputArea) {
+        inputArea.addEventListener('input', (e) => {
+            if (e.target.value.trim()) {
+                btnMic.classList.add('hidden');
+                btnSend.classList.remove('hidden');
+            } else {
+                btnMic.classList.remove('hidden');
+                btnSend.classList.add('hidden');
+            }
+        });
+
+        // Handle Enter
+        inputArea.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+
+    // Toggle Attach Menu
+    function toggleAttachMenu() {
+        const menu = document.getElementById('attach-menu');
+        menu.classList.toggle('hidden');
+    }
+
+    // Recording Logic
+    async function toggleRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            return alert('Seu navegador não suporta gravação de áudio.');
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            mediaRecorder.start();
+
+            // UI Switch
+            document.getElementById('toolbar-default').classList.add('hidden');
+            document.getElementById('toolbar-default').classList.remove('flex'); // Important for flex layout
+            document.getElementById('toolbar-recording').classList.remove('hidden');
+            document.getElementById('toolbar-recording').classList.add('flex');
+
+            // Timer
+            let seconds = 0;
+            const timerEl = document.getElementById('recording-time');
+            timerEl.textContent = "0:00";
+            if (recordingTimer) clearInterval(recordingTimer);
+            recordingTimer = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+
+        } catch (err) {
+            console.error(err);
+            alert('Permissão de microfone negada ou erro ao iniciar.');
+        }
+    }
+
+    function cancelRecording() {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        }
+        clearInterval(recordingTimer);
+        resetToolbar();
+    }
+
+    function stopAndSendRecording() {
+        if (!mediaRecorder) return;
+
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            await uploadMedia(audioBlob, 'audio.webm', 'audio');
+            resetToolbar();
+        };
+
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        clearInterval(recordingTimer);
+    }
+
+    // File Logic
+    function triggerFile(accept) {
+        const input = document.getElementById('file-input');
+        input.accept = accept;
+        input.click();
+        document.getElementById('attach-menu').classList.add('hidden');
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+
+            // UI Switch
+            document.getElementById('toolbar-default').classList.add('hidden');
+            document.getElementById('toolbar-default').classList.remove('flex');
+            document.getElementById('toolbar-file').classList.remove('hidden');
+            document.getElementById('toolbar-file').classList.add('flex');
+            document.getElementById('file-name').textContent = selectedFile.name;
+        }
+    }
+
+    function cancelFile() {
+        selectedFile = null;
+        document.getElementById('file-input').value = '';
+        resetToolbar();
+    }
+
+    async function sendFile() {
+        if (!selectedFile) return;
+        await uploadMedia(selectedFile, selectedFile.name, 'file');
+        cancelFile();
+    }
+
+    function resetToolbar() {
+        document.getElementById('toolbar-default').classList.remove('hidden');
+        document.getElementById('toolbar-default').classList.add('flex');
+
+        document.getElementById('toolbar-recording').classList.add('hidden');
+        document.getElementById('toolbar-recording').classList.remove('flex');
+
+        document.getElementById('toolbar-file').classList.add('hidden');
+        document.getElementById('toolbar-file').classList.remove('flex');
+    }
+
+    async function uploadMedia(file, filename, type) {
+        // Optimistic Loading? Maybe later.
+        const btn = document.getElementById('btn-attach'); // just a visual anchor
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>`;
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file, filename);
+            formData.append('lead_id', pageLeadId); // Explicitly use pageLeadId
+            formData.append('type', type);
+
+            const res = await fetch('/api/whatsapp/send-media', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            loadPageWhatsAppMessages();
+        } catch (e) {
+            alert('Erro ao enviar mídia: ' + e.message);
+        } finally {
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('message-input');
+        const content = input.value.trim();
         if (!content) return;
 
-        // Disable UI
-        input.disabled = true;
-        btn.disabled = true;
-        btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>`;
+        input.value = '';
+        input.focus();
+
+        // Reset toggle
+        btnMic.classList.remove('hidden');
+        btnSend.classList.add('hidden');
 
         try {
             const response = await fetch('/api/whatsapp/send', {
@@ -535,21 +815,47 @@
                 body: JSON.stringify({ lead_id: pageLeadId, content: content })
             });
             const data = await response.json();
-
             if (data.error) throw new Error(data.error);
 
-            // Append message directly (Classic optimist UI)
-            input.value = '';
             loadPageWhatsAppMessages();
-
         } catch (e) {
-            alert('Erro ao enviar: ' + e.message);
-        } finally {
-            input.disabled = false;
-            btn.disabled = false;
-            btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i>`;
-            input.focus();
+            alert('Erro: ' + e.message);
         }
     }
+
+    // Rich Text Helper (Standardized)
+    function insertFormat(char) {
+        const input = document.getElementById('message-input');
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const txt = input.value;
+
+        if (start === end) {
+            input.value = txt.substring(0, start) + char + txt.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = start + char.length;
+        } else {
+            const wrapped = char + txt.substring(start, end) + char;
+            input.value = txt.substring(0, start) + wrapped + txt.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = end + (char.length * 2);
+        }
+
+        // Trigger input event to update mic/send
+        input.dispatchEvent(new Event('input'));
+    }
+
+    // Add enter key support (Shift+Enter for newline)
+    document.addEventListener("DOMContentLoaded", function () {
+        const input = document.getElementById('pageWhatsappInput');
+        if (input) {
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendPageWhatsAppMessage();
+                }
+            });
+        }
+    });
 </script>
 {% endblock %}

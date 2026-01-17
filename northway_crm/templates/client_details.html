@@ -224,21 +224,104 @@
                     </div>
 
                     <!-- Input Area -->
-                    <div class="flex gap-2 items-end">
-                        <div
-                            class="flex-1 bg-white rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-500">
-                            <textarea id="clientWhatsappInput" rows="2"
-                                class="w-full p-3 focus:outline-none resize-none text-sm"
-                                placeholder="Digite sua mensagem via WhatsApp..."></textarea>
+                    <!-- Input Area (Standardized) -->
+                    <div
+                        class="bg-gray-50 p-3 border border-gray-200 border-t-0 rounded-b-lg flex flex-col gap-2 relative">
+                        <!-- Hidden File Input -->
+                        <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
+
+                        <!-- Attachment Menu (Absolute) -->
+                        <div id="attach-menu"
+                            class="hidden absolute bottom-20 left-4 bg-white shadow-xl rounded-lg flex flex-col w-40 overflow-hidden z-20 border border-gray-100">
+                            <button onclick="triggerFile('image/*')"
+                                class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700 border-b border-gray-50">
+                                <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos
+                            </button>
+                            <button onclick="triggerFile('*/*')"
+                                class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700">
+                                <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
+                            </button>
                         </div>
-                        <button onclick="sendClientWhatsAppMessage()" id="btnSendClientWhatsapp"
-                            class="bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg transition-colors shadow-sm flex-shrink-0">
-                            <i data-lucide="send" class="w-5 h-5"></i>
-                        </button>
+
+                        <div class="flex items-end gap-2">
+                            <!-- Default Toolbar -->
+                            <div id="toolbar-default" class="flex-1 flex items-center gap-2">
+                                <button id="btn-attach" onclick="toggleAttachMenu()"
+                                    class="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-200">
+                                    <i data-lucide="plus" class="w-6 h-6"></i>
+                                </button>
+
+                                <!-- Rich Text Toolbar (Mini) -->
+                                <div class="hidden md:flex items-center gap-0.5 border-r border-gray-300 pr-2 mr-1">
+                                    <button onclick="insertFormat('*')"
+                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                        <i data-lucide="bold" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="insertFormat('_')"
+                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                        <i data-lucide="italic" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="insertFormat('- ')"
+                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                        <i data-lucide="list" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+
+                                <div
+                                    class="flex-1 bg-white rounded-lg border border-gray-300 focus-within:border-northway-red focus-within:ring-1 focus-within:ring-northway-red/20 transition-all overflow-hidden flex items-center px-4 py-2">
+                                    <input type="text" id="message-input" placeholder="Mensagem"
+                                        class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800 placeholder-gray-400"
+                                        autocomplete="off">
+                                </div>
+
+                                <!-- Mic / Send Toggle -->
+                                <button id="btn-mic" onclick="toggleRecording()"
+                                    class="p-3 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors shadow-sm">
+                                    <i data-lucide="mic" class="w-5 h-5"></i>
+                                </button>
+                                <button id="btn-send" onclick="sendMessage()"
+                                    class="hidden p-3 bg-northway-red text-white rounded-full hover:bg-red-700 transition-colors shadow-sm">
+                                    <i data-lucide="send" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+
+                            <!-- Recording UI -->
+                            <div id="toolbar-recording"
+                                class="flex-1 items-center gap-4 hidden px-4 py-2 bg-white rounded-lg border border-red-100">
+                                <button onclick="cancelRecording()" class="text-gray-500 hover:text-red-500 p-2">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
+                                <div class="flex-1 flex items-center gap-3 justify-center">
+                                    <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
+                                    <span id="recording-time"
+                                        class="text-gray-700 font-mono text-sm font-bold">0:00</span>
+                                </div>
+                                <button onclick="stopAndSendRecording()"
+                                    class="text-green-500 hover:text-green-600 p-2">
+                                    <i data-lucide="send" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+
+                            <!-- File Preview UI -->
+                            <div id="toolbar-file"
+                                class="flex-1 items-center gap-4 hidden bg-white rounded-lg px-4 py-2 border border-green-200">
+                                <span class="text-gray-500"><i data-lucide="file" class="w-5 h-5 inline"></i></span>
+                                <span id="file-name"
+                                    class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
+                                <button onclick="cancelFile()" class="text-gray-400 hover:text-red-500 p-2">
+                                    <i data-lucide="x" class="w-5 h-5"></i>
+                                </button>
+                                <button onclick="sendFile()"
+                                    class="text-green-600 hover:text-green-700 font-bold text-sm px-3">
+                                    Enviar
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1 flex items-center gap-1 justify-center">
+                            <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas de ponta a
+                            ponta.
+                        </p>
                     </div>
-                    <p class="text-xs text-gray-400 mt-2 flex items-center gap-1">
-                        <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas.
-                    </p>
                 </div>
             </div>
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -1178,7 +1261,7 @@
                     ${dateHeader}
                     <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-1 group">
                         <div class="max-w-[75%] rounded-lg px-3 py-1.5 text-sm shadow-sm relative leading-relaxed ${msg.direction === 'out'
-                            ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-none'
+                            ? 'bg-northway-red text-white rounded-tr-none shadow-md'
                             : 'bg-white text-gray-900 rounded-tl-none'
                         }">
                             <p>${msg.content}</p>
@@ -1203,16 +1286,195 @@
         }
     }
 
-    async function sendClientWhatsAppMessage() {
-        const input = document.getElementById('clientWhatsappInput');
-        const content = input.value.trim();
-        const btn = document.getElementById('btnSendClientWhatsapp');
+    // --- MEDIA & PORTED LOGIC (Client) ---
+    const activeChat = { type: 'client', id: pageClientId };
 
+    function loadMessages(type, id) {
+        // Wrapper for existing loader
+        return loadClientWhatsAppMessages(true);
+    }
+
+    // Media Vars
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingTimer = null;
+    let selectedFile = null;
+
+    // UI Toggles
+    const inputArea = document.getElementById('message-input');
+    const btnMic = document.getElementById('btn-mic');
+    const btnSend = document.getElementById('btn-send');
+
+    // Auto-switch Mic/Send icon
+    if (inputArea) {
+        inputArea.addEventListener('input', (e) => {
+            if (e.target.value.trim()) {
+                btnMic.classList.add('hidden');
+                btnSend.classList.remove('hidden');
+            } else {
+                btnMic.classList.remove('hidden');
+                btnSend.classList.add('hidden');
+            }
+        });
+
+        // Handle Enter
+        inputArea.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+
+    // Toggle Attach Menu
+    function toggleAttachMenu() {
+        const menu = document.getElementById('attach-menu');
+        menu.classList.toggle('hidden');
+    }
+
+    // Recording Logic
+    async function toggleRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            return alert('Seu navegador não suporta gravação de áudio.');
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            mediaRecorder.start();
+
+            // UI Switch
+            document.getElementById('toolbar-default').classList.add('hidden');
+            document.getElementById('toolbar-default').classList.remove('flex'); // Important for flex layout
+            document.getElementById('toolbar-recording').classList.remove('hidden');
+            document.getElementById('toolbar-recording').classList.add('flex');
+
+            // Timer
+            let seconds = 0;
+            const timerEl = document.getElementById('recording-time');
+            timerEl.textContent = "0:00";
+            if (recordingTimer) clearInterval(recordingTimer);
+            recordingTimer = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+
+        } catch (err) {
+            console.error(err);
+            alert('Permissão de microfone negada ou erro ao iniciar.');
+        }
+    }
+
+    function cancelRecording() {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        }
+        clearInterval(recordingTimer);
+        resetToolbar();
+    }
+
+    function stopAndSendRecording() {
+        if (!mediaRecorder) return;
+
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            await uploadMedia(audioBlob, 'audio.webm', 'audio');
+            resetToolbar();
+        };
+
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        clearInterval(recordingTimer);
+    }
+
+    // File Logic
+    function triggerFile(accept) {
+        const input = document.getElementById('file-input');
+        input.accept = accept;
+        input.click();
+        document.getElementById('attach-menu').classList.add('hidden');
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+
+            // UI Switch
+            document.getElementById('toolbar-default').classList.add('hidden');
+            document.getElementById('toolbar-default').classList.remove('flex');
+            document.getElementById('toolbar-file').classList.remove('hidden');
+            document.getElementById('toolbar-file').classList.add('flex');
+            document.getElementById('file-name').textContent = selectedFile.name;
+        }
+    }
+
+    function cancelFile() {
+        selectedFile = null;
+        document.getElementById('file-input').value = '';
+        resetToolbar();
+    }
+
+    async function sendFile() {
+        if (!selectedFile) return;
+        await uploadMedia(selectedFile, selectedFile.name, 'file');
+        cancelFile();
+    }
+
+    function resetToolbar() {
+        document.getElementById('toolbar-default').classList.remove('hidden');
+        document.getElementById('toolbar-default').classList.add('flex');
+
+        document.getElementById('toolbar-recording').classList.add('hidden');
+        document.getElementById('toolbar-recording').classList.remove('flex');
+
+        document.getElementById('toolbar-file').classList.add('hidden');
+        document.getElementById('toolbar-file').classList.remove('flex');
+    }
+
+    async function uploadMedia(file, filename, type) {
+        // Optimistic Loading? Maybe later.
+        const btn = document.getElementById('btn-attach'); // just a visual anchor
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>`;
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file, filename);
+            formData.append('client_id', pageClientId); // Explicitly use pageClientId
+            formData.append('type', type);
+
+            const res = await fetch('/api/whatsapp/send-media', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            loadClientWhatsAppMessages();
+        } catch (e) {
+            alert('Erro ao enviar mídia: ' + e.message);
+        } finally {
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('message-input');
+        const content = input.value.trim();
         if (!content) return;
 
-        input.disabled = true;
-        btn.disabled = true;
-        btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>`;
+        input.value = '';
+        input.focus();
+
+        // Reset toggle
+        btnMic.classList.remove('hidden');
+        btnSend.classList.add('hidden');
 
         try {
             const response = await fetch('/api/whatsapp/send', {
@@ -1221,20 +1483,34 @@
                 body: JSON.stringify({ client_id: pageClientId, content: content })
             });
             const data = await response.json();
-
             if (data.error) throw new Error(data.error);
 
-            input.value = '';
             loadClientWhatsAppMessages();
-
         } catch (e) {
-            alert('Erro ao enviar: ' + e.message);
-        } finally {
-            input.disabled = false;
-            btn.disabled = false;
-            btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i>`;
-            input.focus();
+            alert('Erro: ' + e.message);
         }
+    }
+
+    // Rich Text Helper (Standardized)
+    function insertFormat(char) {
+        const input = document.getElementById('message-input');
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const txt = input.value;
+
+        if (start === end) {
+            input.value = txt.substring(0, start) + char + txt.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = start + char.length;
+        } else {
+            const wrapped = char + txt.substring(start, end) + char;
+            input.value = txt.substring(0, start) + wrapped + txt.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = end + (char.length * 2);
+        }
+
+        // Trigger input event to update mic/send
+        input.dispatchEvent(new Event('input'));
     }
 </script>
 {% endblock %}

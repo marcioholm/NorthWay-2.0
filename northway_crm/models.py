@@ -412,7 +412,7 @@ class Task(db.Model):
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=False)
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy (Null for migration)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy
     description = db.Column(db.String(200), nullable=False) # e.g. "Mensalidade 1/12"
     amount = db.Column(db.Float, nullable=False)
     due_date = db.Column(db.Date, nullable=False)
@@ -420,7 +420,21 @@ class Transaction(db.Model):
     paid_date = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # ASAAS Integration Fields
+    asaas_id = db.Column(db.String(50), nullable=True)
+    asaas_invoice_url = db.Column(db.String(500), nullable=True)
+    installment_number = db.Column(db.Integer, nullable=True)
+    total_installments = db.Column(db.Integer, nullable=True)
+    
     contract = db.relationship('Contract', backref=db.backref('transactions', cascade='all, delete-orphan'))
+
+class FinancialEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    payment_id = db.Column(db.Integer, db.ForeignKey('transaction.id'), nullable=True) # Optional link
+    event_type = db.Column(db.String(50), nullable=False) # PAYMENT_RECEIVED, PAYMENT_OVERDUE
+    payload = db.Column(db.JSON, nullable=True) # Full webhook payload
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class FinancialCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
