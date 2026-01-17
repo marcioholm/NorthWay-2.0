@@ -68,30 +68,47 @@
 
         <!-- Header (Active Chat) -->
         <div id="chat-header"
-            class="h-16 bg-[#f0f2f5] border-b border-gray-200 flex items-center justify-between px-4 hidden relative z-20">
+            class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 hidden relative z-20 shadow-sm">
             <div class="flex items-center gap-3 cursor-pointer">
-                <!-- Avatar with Sync Button -->
+                <!-- Back Button (Mobile) -->
+                <button class="md:hidden text-gray-500 mr-1" onclick="closeChat()">
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+
+                <!-- Avatar -->
                 <div class="relative group">
                     <div id="chat-avatar"
-                        class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold overflow-hidden">
-                        <!-- IMG or Initials injected via JS -->
+                        class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold overflow-hidden ring-2 ring-transparent group-hover:ring-northway-red transition-all">
                         ?
                     </div>
-                    <!-- Sync Overlay Button -->
-                    <button onclick="syncProfile()" title="Atualizar Foto do WhatsApp"
-                        class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center rounded-full text-white transition-all">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    </button>
                 </div>
 
                 <div class="flex-1 min-w-0">
-                    <h3 class="font-medium text-gray-900" id="chat-name">Nome do Contato</h3>
-                    <p class="text-xs text-gray-500 truncate w-64" id="chat-details">Detalhes...</p>
+                    <h3 class="font-bold text-gray-900 leading-tight" id="chat-name">Nome do Contato</h3>
+                    <p class="text-xs text-green-600 font-medium flex items-center gap-1" id="chat-status">
+                        <span class="w-2 h-2 bg-green-500 rounded-full"></span> Online
+                    </p>
                 </div>
             </div>
-            <div>
-                <button class="p-2 hover:bg-gray-200 rounded-full text-gray-600">
+
+            <!-- Actions -->
+            <div class="flex items-center gap-1 text-gray-500">
+                <button class="p-2 hover:bg-gray-100 rounded-full hover:text-northway-red transition-colors"
+                    title="Chamada de Vídeo">
+                    <i data-lucide="video" class="w-5 h-5"></i>
+                </button>
+                <button class="p-2 hover:bg-gray-100 rounded-full hover:text-northway-red transition-colors"
+                    title="Chamada de Voz">
+                    <i data-lucide="phone" class="w-5 h-5"></i>
+                </button>
+                <div class="h-6 w-px bg-gray-200 mx-1"></div>
+                <button class="p-2 hover:bg-gray-100 rounded-full hover:text-gray-700 transition-colors"
+                    title="Pesquisar na conversa">
                     <i data-lucide="search" class="w-5 h-5"></i>
+                </button>
+                <button class="p-2 hover:bg-gray-100 rounded-full hover:text-gray-700 transition-colors"
+                    title="Mais opções">
+                    <i data-lucide="more-vertical" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -242,6 +259,7 @@
     let allConversations = [];
     let currentTab = 'all';
     let emojiPicker = null;
+    let pollingInterval = null;
 
     // --- Emojis & Attachments ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -471,7 +489,7 @@
                             </div>`
                 }
                         ${c.unread_count > 0 ? `
-                        <div class="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold border-2 border-white">
+                        <div class="absolute -top-1 -right-1 bg-northway-red text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold border-2 border-white shadow-sm">
                             ${c.unread_count}
                         </div>
                         ` : ''}
@@ -534,13 +552,22 @@
         // Load Messages
         await loadMessages(type, id);
 
+        // Start Polling (every 5s)
+        if (pollingInterval) clearInterval(pollingInterval);
+        pollingInterval = setInterval(() => {
+            // specific message poll or just reload all data? 
+            // Ideally we just APPEND new messages, but for MVP we re-fetch active chat messages silently
+            // Be careful not to reset scroll if user is scrolling.
+            loadMessages(type, id, true);
+        }, 5000);
+
         // Reload list to update active state/unread (optional, lazy way)
         loadConversations();
     }
 
-    async function loadMessages(type, id) {
+    async function loadMessages(type, id, silent = false) {
         const container = document.getElementById('chat-messages');
-        container.innerHTML = `<div class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>`;
+        if (!silent) container.innerHTML = `<div class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-northway-red"></div></div>`;
 
         try {
             const res = await fetch(`/api/whatsapp/${type}/${id}/messages`);
@@ -567,18 +594,18 @@
 
                     return `
                     ${dateHeader}
-                    <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-2 group">
-                        <div class="max-w-[60%] rounded-lg px-3 py-1.5 text-sm shadow-sm relative leading-relaxed ${msg.direction === 'out'
-                            ? 'bg-[#d9fdd3] text-gray-900 rounded-tr-none'
-                            : 'bg-white text-gray-900 rounded-tl-none'
+                    <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-2 group px-4">
+                        <div class="max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-sm relative leading-relaxed ${msg.direction === 'out'
+                            ? 'bg-northway-red text-white rounded-tr-none'
+                            : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
                         }">
                             <p>${msg.content}</p>
-                            <div class="flex justify-end items-center gap-1 -mt-0.5 opacity-60">
-                                <span class="text-[10px]">${msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <div class="flex justify-end items-center gap-1 mt-1 opacity-70">
+                                <span class="text-[10px] font-medium">${msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 ${msg.direction === 'out' ?
-                            (msg.status === 'read' ? '<i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>' :
-                                msg.status === 'delivered' ? '<i data-lucide="check-check" class="w-3 h-3 text-gray-500"></i>' :
-                                    '<i data-lucide="check" class="w-3 h-3 text-gray-500"></i>')
+                            (msg.status === 'read' ? '<i data-lucide="check-check" class="w-3 h-3 text-blue-200"></i>' :
+                                msg.status === 'delivered' ? '<i data-lucide="check-check" class="w-3 h-3 text-white/70"></i>' :
+                                    '<i data-lucide="check" class="w-3 h-3 text-white/70"></i>')
                             : ''}
                             </div>
                         </div>
