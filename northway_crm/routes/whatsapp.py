@@ -237,3 +237,56 @@ def sync_profile():
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@whatsapp_bp.route('/api/whatsapp/<string:type>/<int:id>/details', methods=['GET'])
+@login_required
+def get_details(type, id):
+    obj = None
+    if type == 'lead':
+        obj = Lead.query.get_or_404(id)
+        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        
+        # Tags Logic
+        tags = []
+        if obj.status: tags.append({'text': obj.status, 'color': 'red' if obj.status == 'new' else 'gray'})
+        if obj.source: tags.append({'text': obj.source, 'color': 'blue'})
+        
+        deal_value = obj.bant_budget or 'R$ 0,00'
+        
+    elif type == 'client':
+        obj = Client.query.get_or_404(id)
+        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        
+        tags = []
+        if obj.status: tags.append({'text': obj.status, 'color': 'green' if obj.status == 'ativo' else 'red'})
+        if obj.service: tags.append({'text': obj.service, 'color': 'purple'})
+        
+        deal_value = f"R$ {obj.monthly_value:,.2f}" if obj.monthly_value else 'R$ 0,00'
+    else:
+        return jsonify({'error': 'Invalid type'}), 400
+        
+    return jsonify({
+        'name': obj.name,
+        'tags': tags,
+        'deal_value': deal_value,
+        'notes': obj.notes or ''
+    })
+
+@whatsapp_bp.route('/api/whatsapp/<string:type>/<int:id>/notes', methods=['POST'])
+@login_required
+def update_notes(type, id):
+    content = request.json.get('notes')
+    if content is None: return jsonify({'error': 'Missing content'}), 400
+    
+    if type == 'lead':
+        obj = Lead.query.get_or_404(id)
+    elif type == 'client':
+        obj = Client.query.get_or_404(id)
+    else:
+        return jsonify({'error': 'Invalid type'}), 400
+        
+    if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+    
+    obj.notes = content
+    db.session.commit()
+    return jsonify({'success': True})

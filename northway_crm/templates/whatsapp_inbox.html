@@ -154,12 +154,33 @@
                         </button>
                     </div>
                 </div>
+                <!-- Rich Text Toolbar -->
+                <div class="hidden md:flex items-center gap-1 border-r border-gray-200 pr-2 mr-2">
+                    <button onclick="insertFormat('*')"
+                        class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Negrito">
+                        <i data-lucide="bold" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="insertFormat('_')"
+                        class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Itálico">
+                        <i data-lucide="italic" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="insertFormat('- ')"
+                        class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded" title="Lista">
+                        <i data-lucide="list" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
                 <div
                     class="flex-1 bg-white rounded-lg border border-white focus-within:border-gray-300 transition-colors overflow-hidden flex items-center px-4 py-2">
-                    <input type="text" id="message-input" placeholder="Mensagem"
+                    <input type="text" id="message-input" placeholder="Mensagem (Shift+Enter para quebra)"
                         class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800"
-                        onkeypress="if(event.key === 'Enter') sendMessage()">
+                        onkeypress="handleInputKey(event)">
                 </div>
+
+                <button onclick="toggleQuickMessageModal()"
+                    class="p-2 text-gray-500 hover:text-blue-600 transition-colors" title="Respostas Rápidas">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </button>
 
                 <!-- dynamic: send or mic -->
                 <button id="btn-mic" onclick="toggleRecording()"
@@ -200,6 +221,40 @@
             </button>
         </div>
 
+    </div>
+
+    <!-- Right Sidebar: Context -->
+    <div id="chat-sidebar" class="w-[300px] border-l border-gray-200 bg-white hidden lg:flex flex-col overflow-y-auto">
+        <!-- Header -->
+        <div class="p-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-800 text-lg mb-1">Contexto</h3>
+        </div>
+
+        <!-- Tags -->
+        <div class="p-5 border-b border-gray-100">
+            <h4 class="text-xs font-bold text-gray-400 uppercase mb-3 tracking-wider">Tags</h4>
+            <div id="sidebar-tags" class="flex flex-wrap gap-2">
+                <!-- Injected via JS -->
+                <span class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full">Sem tags</span>
+            </div>
+        </div>
+
+        <!-- Deal Value -->
+        <div class="p-5 border-b border-gray-100">
+            <h4 class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Valor do Negócio</h4>
+            <div class="text-2xl font-bold text-northway-red" id="sidebar-deal-value">R$ 0,00</div>
+        </div>
+
+        <!-- CRM Notes -->
+        <div class="p-5 flex-1 flex flex-col">
+            <h4 class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider flex justify-between">
+                Notas CRM
+                <span id="notes-status" class="text-[10px] text-green-500 hidden">Salvo</span>
+            </h4>
+            <textarea id="sidebar-notes"
+                class="w-full flex-1 bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-gray-700 focus:outline-none focus:border-yellow-400 resize-none transition-colors min-h-[200px]"
+                placeholder="Escreva notas sobre este contato..." oninput="debouncedSaveNotes()"></textarea>
+        </div>
     </div>
 </div>
 </div>
@@ -552,6 +607,9 @@
         // Load Messages
         await loadMessages(type, id);
 
+        // Load Context Details
+        loadContactDetails(type, id);
+
         // Start Polling (every 5s)
         if (pollingInterval) clearInterval(pollingInterval);
         pollingInterval = setInterval(() => {
@@ -788,6 +846,103 @@
             loadConversations();
         } catch (e) {
             alert('Erro ao enviar');
+        }
+    }
+
+    async function loadContactDetails(type, id) {
+        // Reset/Skeleton
+        document.getElementById('sidebar-tags').innerHTML = '<span class="animate-pulse bg-gray-200 h-5 w-16 rounded"></span>';
+        document.getElementById('sidebar-deal-value').innerHTML = '<span class="animate-pulse bg-gray-200 h-8 w-24 rounded block"></span>';
+        document.getElementById('sidebar-notes').value = 'Carregando...';
+
+        try {
+            const res = await fetch(`/api/whatsapp/${type}/${id}/details`);
+            const data = await res.json();
+
+            // Tags
+            if (data.tags && data.tags.length > 0) {
+                const colorMap = {
+                    'red': 'bg-red-100 text-red-700',
+                    'blue': 'bg-blue-100 text-blue-700',
+                    'green': 'bg-green-100 text-green-700',
+                    'purple': 'bg-purple-100 text-purple-700',
+                    'gray': 'bg-gray-100 text-gray-700'
+                };
+                document.getElementById('sidebar-tags').innerHTML = data.tags.map(t =>
+                    `<span class="${colorMap[t.color] || colorMap['gray']} text-xs font-bold px-2 py-1 rounded-full border border-current opacity-80">${t.text}</span>`
+                ).join('');
+            } else {
+                document.getElementById('sidebar-tags').innerHTML = '<span class="bg-gray-50 text-gray-400 text-xs px-2 py-1 rounded">Sem tags</span>';
+            }
+
+            // Value
+            document.getElementById('sidebar-deal-value').textContent = data.deal_value;
+
+            // Notes
+            document.getElementById('sidebar-notes').value = data.notes;
+
+        } catch (e) { console.error('Details error', e); }
+    }
+
+    // Notes Auto-save
+    let notesTimeout = null;
+    function debouncedSaveNotes() {
+        const status = document.getElementById('notes-status');
+        status.classList.add('hidden');
+        status.textContent = 'Salvando...';
+        status.classList.remove('hidden', 'text-green-500');
+        status.classList.add('text-gray-400');
+
+        clearTimeout(notesTimeout);
+        notesTimeout = setTimeout(saveNotes, 1000);
+    }
+
+    async function saveNotes() {
+        if (!activeChat) return;
+        const val = document.getElementById('sidebar-notes').value;
+        const status = document.getElementById('notes-status');
+
+        try {
+            await fetch(`/api/whatsapp/${activeChat.type}/${activeChat.id}/notes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: val })
+            });
+            status.textContent = 'Salvo';
+            status.classList.remove('text-gray-400');
+            status.classList.add('text-green-500');
+            setTimeout(() => status.classList.add('hidden'), 2000);
+        } catch (e) {
+            status.textContent = 'Erro ao salvar';
+            status.classList.add('text-red-500');
+        }
+    }
+
+    // Rich Text Helpers
+    function insertFormat(char) {
+        const input = document.getElementById('message-input');
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const txt = input.value;
+
+        if (start === end) {
+            // No selection, just insert
+            input.value = txt.substring(0, start) + char + txt.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = start + char.length;
+        } else {
+            // Wrap selection
+            const wrapped = char + txt.substring(start, end) + char;
+            input.value = txt.substring(0, start) + wrapped + txt.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = end + (char.length * 2);
+        }
+    }
+
+    function handleInputKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
         }
     }
 
