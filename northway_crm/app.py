@@ -2138,6 +2138,74 @@ def create_app():
 
         return redirect(url_for('main.client_details', id=client.id))
 
+
+    @main.route('/contracts/<int:id>/cancel', methods=['POST'])
+    @login_required
+    def cancel_contract(id):
+        contract = Contract.query.get_or_404(id)
+        if contract.company_id != current_user.company_id:
+            abort(403)
+            
+        # Optional: Termination Fee
+        charge_fee = request.form.get('charge_fee') == 'on'
+        fee_amount_str = request.form.get('fee_amount')
+        fee_due_date_str = request.form.get('fee_due_date')
+        
+        # 1. Cancel Pending Transactions (Local + Asaas)
+        # Only cancel 'pending' or 'overdue' that are FUTURE? 
+        # Usually when cancelling, we cancel ALL unpaid future installments. 
+        # Overdue might be debts that still need to be paid? 
+        # For simplicity and safety: Cancel PENDING. Keep OVERDUE (user should manually deal with debt).
+        
+        pending_txs = Transaction.query.filter_by(contract_id=contract.id, status='pending').all()
+        
+        asaas_cancelled_count = 0
+        from services.asaas_service import AsaasService
+        
+        for tx in pending_txs:
+            tx.status = 'cancelled'
+            if tx.asaas_id:
+                success = AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
+                if success: asaas_cancelled_count += 1
+        
+        # 2. Update Contract
+        contract.status = 'cancelled'
+        
+        # 3. Create Termination Fee (if requested)
+        if charge_fee and fee_amount_str:
+            try:
+                # Parse Float
+                amount = float(fee_amount_str.replace('R$', '').replace('.', '').replace(',', '.').strip())
+                due_date = datetime.strptime(fee_due_date_str, '%Y-%m-%d').date()
+                
+                fee_tx = Transaction(
+                    contract_id=contract.id,
+                    company_id=contract.company_id,
+                    description=f"Multa Rescisória - Contrato #{contract.id}",
+                    amount=amount,
+                    due_date=due_date,
+                    status='pending'
+                )
+                db.session.add(fee_tx)
+                db.session.flush() # Get ID
+                
+                # Create in ASAAS
+                # We need to find the customer ID. Either store it or fetch it.
+                # If we don't have it easily linked to Client, we re-create/fetch.
+                # Assuming contract.client is valid.
+                customer_id = AsaasService.create_customer(contract.company_id, contract.client)
+                AsaasService.create_payment(contract.company_id, customer_id, fee_tx)
+                
+                flash('Contrato cancelado e Multa Rescisória gerada no ASAAS!', 'success')
+            except Exception as e:
+                flash(f'Contrato cancelado, mas erro ao gerar multa: {e}', 'warning')
+        else:
+            flash(f'Contrato cancelado. {asaas_cancelled_count} cobranças removidas do ASAAS.', 'success')
+            
+        db.session.commit()
+        
+        return redirect(url_for('main.view_contract', id=contract.id))
+
     @main.route('/settings/integrations', methods=['GET', 'POST'])
     @login_required
     def settings_integrations():

@@ -107,3 +107,25 @@ class AsaasService:
         else:
             raise Exception(f"Failed to create payment: {response.text}")
 
+    @staticmethod
+    def cancel_payment(company_id, payment_id):
+        """
+        Cancels/Deletes a payment in ASAAS.
+        """
+        api_key, env = AsaasService.get_api_key(company_id)
+        if not api_key:
+            return False # Just ignore if no integration
+            
+        url = f"{AsaasService.get_base_url(env)}/payments/{payment_id}"
+        
+        response = requests.delete(url, headers=AsaasService.get_headers(api_key))
+        
+        # 200 OK or 204 No Content are success. 
+        # 404 means already deleted (also success for us).
+        if response.status_code in [200, 204, 404]:
+            return True
+        else:
+            # Maybe it's paid or cannot be deleted? 
+            # In that case we might try to 'restore' then delete, or just log error.
+            print(f"Failed to cancel payment {payment_id}: {response.text}")
+            return False
