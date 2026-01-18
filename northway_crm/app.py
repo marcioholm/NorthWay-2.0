@@ -55,6 +55,20 @@ def create_app():
     if database_url and database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     
+    # Verify Connection (Prevent Crash if URL is wrong)
+    if database_url:
+        try:
+            from sqlalchemy import create_engine
+            # minimal timeout to fail fast
+            test_engine = create_engine(database_url, connect_args={'connect_timeout': 3})
+            with test_engine.connect() as conn:
+                pass
+            print("✅ Postgres Connection Successful")
+        except Exception as e:
+            print(f"❌ Postgres Connection Failed: {e}")
+            print("Falling back to SQLite...")
+            database_url = None
+
     if not database_url:
         # Vercel Workaround: Copy SQLite to /tmp to allow locking/journaling
         try:
