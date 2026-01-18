@@ -55,7 +55,23 @@ def create_app():
     if database_url and database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///crm.db'
+    if not database_url:
+        # Vercel Workaround: Copy SQLite to /tmp to allow locking/journaling
+        try:
+            import shutil
+            src_db = os.path.join(app.root_path, 'crm.db')
+            tmp_db = '/tmp/crm.db'
+            if os.path.exists(src_db):
+                shutil.copy2(src_db, tmp_db)
+                database_url = f'sqlite:///{tmp_db}'
+                print(f"Vercel: Copied DB to {tmp_db}")
+            else:
+                database_url = 'sqlite:///crm.db'
+        except Exception as e:
+            print(f"Vercel DB Copy Failed: {e}")
+            database_url = 'sqlite:///crm.db'
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # API Key provided by user (Should be in env vars in production)
     app.config['GOOGLE_MAPS_API_KEY'] = os.environ.get('GOOGLE_MAPS_API_KEY', 'AIzaSyCjgXOawchWfTjqoeWtHg65VtGmVu7xwT8')
