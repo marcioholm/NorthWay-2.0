@@ -761,13 +761,12 @@
             </div>
 
             <div
-                class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:h-full before:w-0.5 before:bg-gray-200">
                 {% for interaction in client.interactions|sort(attribute='created_at', reverse=True) %}
-                <div
-                    class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                <div class="relative flex gap-6 group is-active">
                     <!-- Icon -->
                     <div
-                        class="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                        class="absolute left-0 mt-1 flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-gray-50 shadow-sm shrink-0 z-10 transition-transform group-hover:scale-110">
                         {% if interaction.type == 'reuniao' %}
                         <i data-lucide="users" class="w-4 h-4 text-blue-500"></i>
                         {% elif interaction.type == 'ajuste' %}
@@ -785,21 +784,24 @@
 
                     <!-- Content -->
                     <div
-                        class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="font-bold text-gray-900 text-sm">
+                        class="ml-12 flex-1 bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-gray-900 text-sm flex items-center gap-2">
                                 {% if interaction.user %}
                                 {{ interaction.user.name }}
                                 {% else %}
-                                Sistema
+                                <span
+                                    class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] uppercase">Sistema</span>
                                 {% endif %}
                             </span>
-                            <time class="font-mono text-xs text-gray-500">{{
-                                interaction.created_at.strftime('%d/%m %H:%M') }}</time>
+                            <time class="font-mono text-xs text-gray-400">{{ interaction.created_at.strftime('%d/%m/%Y
+                                %H:%M') }}</time>
                         </div>
-                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{
-                            interaction.type }}</div>
-                        <p class="text-gray-600 text-sm leading-relaxed">{{ interaction.content }}</p>
+                        <div
+                            class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 border-b border-gray-50 pb-1">
+                            {{ interaction.type|replace('_', ' ') }}</div>
+                        <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{{ interaction.content }}
+                        </p>
                     </div>
                 </div>
                 {% else %}
@@ -816,17 +818,21 @@
 <div class="space-y-6">
 
     <!-- Management Card -->
-    <div class="bg-[#11061e] rounded-lg shadow-sm p-6 text-white">
-        <h3 class="text-lg font-bold mb-4">Gestão</h3>
+    <!-- Management Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gestão da Conta</h3>
+            <i data-lucide="briefcase" class="w-4 h-4 text-gray-400"></i>
+        </div>
 
-        <div class="space-y-4">
+        <div class="p-6 space-y-6">
             <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Gerente
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Gerente
                     de Conta</label>
                 {% if client.account_manager %}
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                     <div
-                        class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden ring-2 ring-gray-600">
+                        class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xs font-bold text-gray-600 overflow-hidden ring-1 ring-gray-200 shadow-sm">
                         {% if client.account_manager.profile_image %}
                         <img src="{{ url_for('static', filename='uploads/profiles/' + client.account_manager.profile_image) }}"
                             alt="{{ client.account_manager.name }}" class="w-full h-full object-cover">
@@ -835,30 +841,31 @@
                         {% endif %}
                     </div>
                     <div>
-                        <p class="font-medium text-white">{{ client.account_manager.name }}</p>
-                        <p class="text-xs text-gray-400">{{ client.account_manager.status_message or
+                        <p class="font-bold text-gray-900 text-sm">{{ client.account_manager.name }}</p>
+                        <p class="text-xs text-gray-500">{{ client.account_manager.status_message or
                             'Gerente' }}</p>
                     </div>
                 </div>
                 {% else %}
-                <p class="text-gray-500 text-sm">Não atribuído</p>
+                <p class="text-gray-500 text-sm italic">Não atribuído</p>
                 {% endif %}
-
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Data
-                    de Início</label>
-                <input type="date" name="start_date" value="{{ client.start_date }}" disabled
-                    class="w-full bg-transparent border-b border-gray-700 py-1 text-white font-medium focus:outline-none focus:border-northway-red disabled:border-transparent">
-            </div>
-
-            <div>
-                <label
-                    class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 text-yellow-500">Próxima
-                    Renovação</label>
-                <input type="date" name="renewal_date" value="{{ client.renewal_date or '' }}" disabled
-                    class="w-full bg-transparent border-b border-gray-700 py-1 text-white font-medium focus:outline-none focus:border-northway-red disabled:border-transparent">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Início</label>
+                    <div
+                        class="text-sm font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+                        {{ client.start_date.strftime('%d/%m/%Y') if client.start_date else '-' }}
+                    </div>
+                </div>
+                <div>
+                    <label
+                        class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 text-[#fa0102]">Renovação</label>
+                    <div class="text-sm font-medium text-gray-900 bg-red-50 px-3 py-2 rounded-lg border border-red-100">
+                        {{ client.renewal_date.strftime('%d/%m/%Y') if client.renewal_date else '-' }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
