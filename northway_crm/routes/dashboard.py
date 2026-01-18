@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Lead, Client, Task, Interaction, User, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
+from models import db, Lead, Client, Task, Interaction, User, Integration, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
 from datetime import datetime, date, timedelta
 from utils import update_client_health, api_response
 
@@ -40,8 +40,7 @@ def home():
         step_leads = Lead.query.filter_by(company_id=company_id).count() > 0
         step_clients = Client.query.filter_by(company_id=company_id).count() > 0
         
-        from models import Integration
-        step_integrations = Integration.query.filter_by(company_id=company_id, is_active=True).first() is not None
+        step_integrations = Integration.query.filter(Integration.company_id == company_id, Integration.is_active.is_(True)).count() > 0
         
         steps = [
             {'title': 'Adicionar primeiro lead', 'done': step_leads, 'link': url_for('leads.leads')},
