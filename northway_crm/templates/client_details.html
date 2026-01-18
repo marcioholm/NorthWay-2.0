@@ -100,19 +100,22 @@
                 <!-- Registration Data Card -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                     <!-- Tabs -->
-                    <div class="px-6 pt-4 border-b border-gray-100 flex gap-6 bg-white">
-                        <button type="button" onclick="switchClientTab('details')" id="tab-client-details"
-                            class="pb-3 px-1 text-sm font-bold text-northway-red border-b-2 border-northway-red transition-all">
-                            <i data-lucide="building-2" class="w-4 h-4 inline mr-1"></i> Dados Cadastrais
-                        </button>
-                        <button type="button" onclick="switchClientTab('whatsapp')" id="tab-client-whatsapp"
-                            class="pb-3 px-1 text-sm font-bold text-gray-400 hover:text-gray-700 border-b-2 border-transparent transition-all flex items-center gap-2">
-                            <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
-                        </button>
-                        <button type="button" onclick="switchClientTab('financial')" id="tab-client-financial"
-                            class="pb-3 px-1 text-sm font-bold text-gray-400 hover:text-gray-700 border-b-2 border-transparent transition-all flex items-center gap-2">
-                            <i data-lucide="wallet" class="w-4 h-4"></i> Financeiro
-                        </button>
+                    <!-- Modern Tabs -->
+                    <div class="px-6 pt-6 pb-2 border-b border-gray-100 bg-white">
+                        <div class="inline-flex bg-gray-100/80 p-1 rounded-xl gap-1">
+                            <button type="button" onclick="switchClientTab('details')" id="tab-client-details"
+                                class="px-4 py-2 text-sm font-bold text-gray-700 bg-white shadow-sm rounded-lg transition-all flex items-center gap-2">
+                                <i data-lucide="building-2" class="w-4 h-4"></i> Dados Cadastrais
+                            </button>
+                            <button type="button" onclick="switchClientTab('whatsapp')" id="tab-client-whatsapp"
+                                class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 rounded-lg transition-all flex items-center gap-2">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
+                            </button>
+                            <button type="button" onclick="switchClientTab('financial')" id="tab-client-financial"
+                                class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 rounded-lg transition-all flex items-center gap-2">
+                                <i data-lucide="wallet" class="w-4 h-4"></i> Financeiro
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Details Content -->
@@ -1381,45 +1384,45 @@
 
     function switchClientTab(tabName) {
         try {
-            console.log("Switching tab to:", tabName);
-            const detailsTab = document.getElementById('tab-client-details');
-            const whatsappTab = document.getElementById('tab-client-whatsapp');
-            const contentDetails = document.getElementById('content-client-details');
-            const contentWhatsapp = document.getElementById('content-client-whatsapp');
+            const tabs = ['details', 'whatsapp', 'financial'];
 
-            if (!detailsTab || !whatsappTab || !contentDetails || !contentWhatsapp) {
-                console.error("Missing elements:", { detailsTab, whatsappTab, contentDetails, contentWhatsapp });
-                return;
+            // Hide all contents
+            tabs.forEach(t => {
+                const content = document.getElementById(`content-client-${t}`);
+                if (content) {
+                    content.classList.add('hidden');
+                    if (t === 'whatsapp') content.classList.remove('flex'); // Specific fix for whatsapp flex container
+                }
+            });
+
+            // Show selected content
+            const selectedContent = document.getElementById(`content-client-${tabName}`);
+            if (selectedContent) {
+                selectedContent.classList.remove('hidden');
+                if (tabName === 'whatsapp') selectedContent.classList.add('flex');
             }
 
-            if (tabName === 'details') {
-                // Style Tabs
-                detailsTab.classList.add('text-northway-red', 'border-northway-red');
-                detailsTab.classList.remove('text-gray-500', 'border-transparent');
-                whatsappTab.classList.remove('text-green-600', 'border-green-600');
-                whatsappTab.classList.add('text-gray-500', 'border-transparent');
+            // Update Tab Styles
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-client-${t}`);
+                if (btn) {
+                    if (t === tabName) {
+                        // Active Pill
+                        btn.className = "px-4 py-2 text-sm font-bold text-gray-900 bg-white shadow-sm rounded-lg transition-all flex items-center gap-2 transform scale-105 ring-1 ring-black/5";
+                    } else {
+                        // Inactive
+                        btn.className = "px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 rounded-lg transition-all flex items-center gap-2 hover:bg-white/60";
+                    }
+                }
+            });
 
-                // Toggle Content
-                contentDetails.classList.remove('hidden');
-                contentWhatsapp.classList.add('hidden');
-            } else if (tabName === 'whatsapp') {
-                // Style Tabs
-                detailsTab.classList.remove('text-northway-red', 'border-northway-red');
-                detailsTab.classList.add('text-gray-500', 'border-transparent');
-                whatsappTab.classList.add('text-green-600', 'border-green-600');
-                whatsappTab.classList.remove('text-gray-500', 'border-transparent');
-
-                // Toggle Content
-                contentDetails.classList.add('hidden');
-                contentWhatsapp.classList.remove('hidden');
-                contentWhatsapp.classList.add('flex'); // Ensure flex is added back if needed
-
-                // Load Messages
+            // Load logic
+            if (tabName === 'whatsapp') {
                 loadClientWhatsAppMessages();
             }
+
         } catch (e) {
-            alert("Erro ao trocar de aba: " + e.message);
-            console.error(e);
+            console.error("Error switching tab:", e);
         }
     }
 
