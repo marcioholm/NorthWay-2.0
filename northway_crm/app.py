@@ -55,19 +55,7 @@ def create_app():
     if database_url and database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     
-    # Verify Connection (Prevent Crash if URL is wrong)
-    if database_url:
-        try:
-            from sqlalchemy import create_engine
-            # minimal timeout to fail fast
-            test_engine = create_engine(database_url, connect_args={'connect_timeout': 3})
-            with test_engine.connect() as conn:
-                pass
-            print("✅ Postgres Connection Successful")
-        except Exception as e:
-            print(f"❌ Postgres Connection Failed: {e}")
-            print("Falling back to SQLite...")
-            database_url = None
+    # removed explicit startup verification to prevent blocking boot
 
     if not database_url:
         # Vercel Workaround: Copy SQLite to /tmp to allow locking/journaling
@@ -112,10 +100,10 @@ def create_app():
         app.config['UPLOAD_FOLDER'] = '/tmp/uploads/profiles'
         app.config['COMPANY_UPLOAD_FOLDER'] = '/tmp/uploads/company'
         try:
-           os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-           os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
         except:
-           pass
+            pass
 
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB limit
 
@@ -133,7 +121,11 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        try:
+            return User.query.get(int(user_id))
+        except Exception as e:
+            print(f"DB Connection Failed during load_user: {e}")
+            return None
 
     # Register Blueprints
     app.register_blueprint(auth_blueprint)
