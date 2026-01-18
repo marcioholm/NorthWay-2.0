@@ -1,4 +1,5 @@
 import requests
+import re
 from models import db, Integration, Client, Transaction, FinancialEvent
 from datetime import datetime
 
@@ -50,7 +51,6 @@ class AsaasService:
         raw_doc = client.document
         clean_doc = None
         if raw_doc:
-            import re
             clean_doc = re.sub(r'\D', '', raw_doc)
 
         # 1. Search by CPF/CNPJ (Priority)
