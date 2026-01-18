@@ -69,7 +69,7 @@ def pipeline(pipeline_id=None):
         # Create default stages
         stages = ["Qualificação", "Apresentação", "Proposta", "Negociação", "Fechado"]
         for i, s_name in enumerate(stages):
-            stage = PipelineStage(name=s_name, pipeline_id=default_p.id, company_id=current_user.company_id, order_index=i)
+            stage = PipelineStage(name=s_name, pipeline_id=default_p.id, company_id=current_user.company_id, order=i)
             db.session.add(stage)
         
         db.session.commit()
@@ -83,7 +83,7 @@ def pipeline(pipeline_id=None):
     if current_pipeline.company_id != current_user.company_id:
         abort(403)
         
-    stages = PipelineStage.query.filter_by(pipeline_id=pipeline_id).order_by(PipelineStage.order_index).all()
+    stages = PipelineStage.query.filter_by(pipeline_id=pipeline_id).order_by(PipelineStage.order).all()
     leads_list = Lead.query.filter_by(pipeline_id=pipeline_id, company_id=current_user.company_id)\
                         .options(db.joinedload(Lead.assigned_user))\
                         .all()
@@ -101,7 +101,7 @@ def move_lead(id, direction):
     if lead.company_id != current_user.company_id:
         abort(403)
         
-    stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order_index).all()
+    stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).all()
     current_idx = next((i for i, s in enumerate(stages) if s.id == lead.pipeline_stage_id), 0)
     
     if direction == 'next' and current_idx < len(stages) - 1:
@@ -270,14 +270,14 @@ def create_stage():
         return redirect(url_for('leads.pipeline', pipeline_id=pipeline_id))
         
     # Get last order index
-    last_stage = PipelineStage.query.filter_by(pipeline_id=pipeline_id).order_by(PipelineStage.order_index.desc()).first()
-    new_index = (last_stage.order_index + 1) if last_stage else 0
+    last_stage = PipelineStage.query.filter_by(pipeline_id=pipeline_id).order_by(PipelineStage.order.desc()).first()
+    new_index = (last_stage.order + 1) if last_stage else 0
     
     stage = PipelineStage(
         name=name,
         pipeline_id=pipeline_id,
         company_id=current_user.company_id,
-        order_index=new_index
+        order=new_index
     )
     db.session.add(stage)
     db.session.commit()
@@ -327,7 +327,7 @@ def create_pipeline():
     # Add default stages
     stages = ["Qualificação", "Apresentação", "Proposta", "Negociação", "Fechado"]
     for i, s_name in enumerate(stages):
-        stage = PipelineStage(name=s_name, pipeline_id=pipeline.id, company_id=current_user.company_id, order_index=i)
+        stage = PipelineStage(name=s_name, pipeline_id=pipeline.id, company_id=current_user.company_id, order=i)
         db.session.add(stage)
         
     db.session.commit()
