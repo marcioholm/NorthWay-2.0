@@ -31,7 +31,7 @@
                 <form id="templateForm" method="POST" class="space-y-6">
                     <!-- Config Box -->
                     <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-3 gap-4 mb-4">
                             <div class="col-span-2">
                                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nome
                                     do Modelo</label>
@@ -51,6 +51,24 @@
                                     <option value="library_doc" {{ 'selected' if template and
                                         template.type=='library_doc' }}>Material de Biblioteca</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label
+                                    class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Descrição</label>
+                                <input type="text" name="description"
+                                    value="{{ template.description if template else '' }}"
+                                    class="w-full bg-white px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red"
+                                    placeholder="Breve descrição do modelo">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" name="is_library" id="is_library" {{ 'checked' if template and
+                                    template.is_library }}
+                                    class="w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red">
+                                <label for="is_library"
+                                    class="text-sm text-gray-700 font-medium cursor-pointer">Disponibilizar na
+                                    Biblioteca de Materiais</label>
                             </div>
                         </div>
                     </div>

@@ -311,10 +311,12 @@ class ContractTemplate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     name = db.Column(db.String(200), nullable=False)
-    type = db.Column(db.String(20), default='contract') # contract, attachment
+    description = db.Column(db.String(500), nullable=True)
+    type = db.Column(db.String(20), default='contract') # contract, attachment, library_doc
     content = db.Column(db.Text, nullable=False) # HTML/Text with {{variables}}
     active = db.Column(db.Boolean, default=True)
     is_global = db.Column(db.Boolean, default=False)
+    is_library = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Access Control Relationship

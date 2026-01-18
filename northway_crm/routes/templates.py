@@ -27,9 +27,7 @@ def settings_templates():
                                              .filter(template_company_association.c.company_id == current_user.company_id).all()
     
     return render_template('settings_templates.html', 
-                           company_templates=company_templates,
-                           global_templates=global_templates,
-                           library_templates=library_templates)
+                           templates=company_templates + global_templates + library_templates)
 
 @templates_bp.route('/settings/templates/new', methods=['GET', 'POST'])
 @login_required
@@ -61,7 +59,7 @@ def new_template():
         flash('Template criado com sucesso!', 'success')
         return redirect(url_for('templates.settings_templates'))
         
-    return render_template('contracts/template_form.html', template=None)
+    return render_template('settings_template_edit.html', template=None)
 
 @templates_bp.route('/settings/templates/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -85,7 +83,7 @@ def edit_template(id):
         flash('Template atualizado!', 'success')
         return redirect(url_for('templates.settings_templates'))
         
-    return render_template('contracts/template_form.html', template=template)
+    return render_template('settings_template_edit.html', template=template)
 
 @templates_bp.route('/settings/templates/<int:id>/delete', methods=['POST'])
 @login_required
