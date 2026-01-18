@@ -114,15 +114,23 @@
                     <div class="px-6 pt-6 pb-2 border-b border-gray-100 bg-white">
                         <div class="inline-flex bg-gray-100/50 p-1.5 rounded-2xl gap-1">
                             <button type="button" onclick="switchClientTab('details')" id="tab-client-details"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-700 bg-white shadow-sm rounded-xl transition-all flex items-center gap-2 border border-gray-100/50">
+                                class="px-5 py-2.5 text-xs font-bold text-gray-700 bg-white shadow-sm rounded-xl transition-all flex items-center gap-2 border border-gray-100/50 transform scale-105 shadow-md">
                                 <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Dados Cadastrais
                             </button>
+                            <button type="button" onclick="switchClientTab('contracts')" id="tab-client-contracts"
+                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Contratos
+                            </button>
+                            <button type="button" onclick="switchClientTab('tasks')" id="tab-client-tasks"
+                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Tarefas
+                            </button>
                             <button type="button" onclick="switchClientTab('whatsapp')" id="tab-client-whatsapp"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2">
+                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
                                 <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
                             </button>
                             <button type="button" onclick="switchClientTab('financial')" id="tab-client-financial"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2">
+                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
                                 <i data-lucide="wallet" class="w-3.5 h-3.5"></i> Financeiro
                             </button>
                         </div>
@@ -230,8 +238,173 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Notes Section (Restored) -->
+                        <div class="pt-6 mt-4 border-t border-gray-100">
+                            <label
+                                class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                <i data-lucide="sticky-note" class="w-3 h-3"></i> Notas Internas
+                            </label>
+                            <textarea name="notes" rows="4" placeholder="Digite notas sobre o cliente..."
+                                class="w-full bg-yellow-50/50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400/20 focus:border-yellow-400 resize-none transition-all"
+                                onblur="this.form.submit()">{{ client.notes or '' }}</textarea>
+                        </div>
                     </div>
                 </div> <!-- End Details Content -->
+
+                <!-- Contracts Content (New Tab) -->
+                <div id="content-client-contracts" class="hidden p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            Contratos Emitidos
+                        </h3>
+                        <a href="{{ url_for('main.new_contract', id=client.id) }}"
+                            class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Novo Contrato
+                        </a>
+                    </div>
+
+                    <div class="space-y-3">
+                        {% if client.contracts %}
+                        {% for contract in client.contracts|sort(attribute='created_at', reverse=True) %}
+                        <div
+                            class="group flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-red-100/30 hover:bg-red-50/10 transition-all bg-white shadow-sm relative">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 {{ 'bg-yellow-50 text-yellow-600' if contract.status == 'draft' else ('bg-green-50 text-green-600' if contract.status == 'signed' else ('bg-red-50 text-red-600' if contract.status == 'terminated' else 'bg-blue-50 text-blue-600')) }}">
+                                    <i data-lucide="{{ 'file-edit' if contract.status == 'draft' else ('ban' if contract.status == 'terminated' else 'file-text') }}"
+                                        class="w-6 h-6"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-[10px] font-mono text-gray-400 mb-0.5">{{ contract.code or '#' ~
+                                        contract.id }}</p>
+                                    <a href="{{ url_for('main.view_contract', id=contract.id) }}"
+                                        class="text-base font-bold text-gray-900 leading-tight hover:text-northway-red hover:underline transition-colors block">
+                                        {{ contract.template.name if contract.template else 'Contrato Avulso' }}
+                                    </a>
+                                    <p class="text-xs text-gray-500 mt-1">Criado em {{
+                                        contract.created_at.strftime('%d/%m/%Y') }}</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <span
+                                    class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else ('bg-green-100 text-green-700' if contract.status == 'signed' else ('bg-red-100 text-red-700' if contract.status == 'terminated' else 'bg-blue-100 text-blue-700')) }}">
+                                    {{ 'Rascunho' if contract.status == 'draft' else ('Emitido' if contract.status ==
+                                    'issued' else ('Assinado' if contract.status == 'signed' else ('Rescindido' if
+                                    contract.status == 'terminated' else contract.status))) }}
+                                </span>
+
+                                <div class="flex items-center gap-2">
+                                    {% if contract.status == 'draft' %}
+                                    <a href="{{ url_for('main.resume_contract', id=contract.id) }}"
+                                        class="text-xs font-bold text-gray-500 hover:text-northway-red flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200 hover:border-red-100">
+                                        <i data-lucide="pencil" class="w-3 h-3"></i> Continuar
+                                    </a>
+                                    {% endif %}
+
+                                    {% if contract.status == 'issued' %}
+                                    <button onclick="signContract('{{ contract.id }}')"
+                                        class="text-xs font-bold text-white bg-green-600 hover:bg-green-700 flex items-center gap-1 px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer">
+                                        <i data-lucide="pen-tool" class="w-3 h-3"></i> Assinar
+                                    </button>
+                                    <a href="{{ url_for('main.view_contract', id=contract.id) }}" target="_blank"
+                                        class="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">
+                                        <i data-lucide="eye" class="w-3 h-3"></i> Ver
+                                    </a>
+                                    {% endif %}
+
+                                    {% if contract.status == 'signed' %}
+                                    <a href="{{ url_for('main.view_contract', id=contract.id) }}" target="_blank"
+                                        class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+                                        <i data-lucide="check-circle" class="w-3 h-3"></i> Ver Assinado
+                                    </a>
+                                    <button
+                                        onclick="openTerminationModal('{{ contract.id }}', '{{ contract.template.name }}')"
+                                        class="text-xs text-red-400 hover:text-red-600 underline ml-2">Rescindir</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div
+                            class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                            <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                <i data-lucide="file-x" class="w-8 h-8 opacity-40"></i>
+                            </div>
+                            <p class="text-sm italic font-medium">Nenhum contrato emitido.</p>
+                            <p class="text-xs mt-1">Crie um novo contrato para começar.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Tasks Content (New Tab) -->
+                <div id="content-client-tasks" class="hidden p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            Tarefas & Agendamentos
+                        </h3>
+                        <button type="button" onclick="toggleModal('taskModal')"
+                            class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Agendar Tarefa
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        {% for task in client.tasks|sort(attribute='status', reverse=True) %}
+                        <div
+                            class="flex items-center gap-4 p-4 rounded-xl border {{ 'bg-gray-50 border-gray-100 opacity-60' if task.status == 'concluida' else 'bg-white border-gray-100 hover:border-red-100/30 shadow-sm' }} transition-all">
+                            <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST" class="shrink-0">
+                                <button type="submit"
+                                    class="{{ 'text-green-500' if task.status == 'concluida' else 'text-gray-300 hover:text-red-500' }} transition-colors p-1">
+                                    <i data-lucide="{{ 'check-circle' if task.status == 'concluida' else 'circle' }}"
+                                        class="w-6 h-6"></i>
+                                </button>
+                            </form>
+                            <div class="flex-1 min-w-0">
+                                <p
+                                    class="text-sm font-bold {{ 'text-gray-500 line-through' if task.status == 'concluida' else 'text-gray-900' }}">
+                                    {{ task.title }}</p>
+                                <div class="flex items-center gap-3 mt-1">
+                                    <p class="text-xs text-gray-500 flex items-center gap-1">
+                                        <i data-lucide="calendar" class="w-3 h-3"></i>
+                                        {{ task.due_date.strftime('%d/%m/%Y às %H:%M') if task.due_date else 'Sem data'
+                                        }}
+                                    </p>
+                                    {% if task.assigned_to %}
+                                    <p class="text-xs text-gray-400 flex items-center gap-1">
+                                        <i data-lucide="user" class="w-3 h-3"></i>
+                                        {{ task.assigned_to.name }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                {% if task.priority == 'urgente' %}
+                                <span
+                                    class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Urgente</span>
+                                {% endif %}
+                                {% if task.is_recurring %}
+                                <span
+                                    class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase flex items-center gap-1"><i
+                                        data-lucide="repeat" class="w-3 h-3"></i> Mensal</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div
+                            class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                            <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                <i data-lucide="check-square" class="w-8 h-8 opacity-40"></i>
+                            </div>
+                            <p class="text-sm italic font-medium">Nenhuma tarefa pendente.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+
 
                 <!-- Financial Content -->
                 <div id="content-client-financial" class="hidden p-8">
@@ -461,370 +634,242 @@
                     </div>
                 </div>
             </div>
-            <!-- Core Tracking Grid & Processes -->
-            <div class="flex flex-col gap-6">
-                <!-- Core Tracking Grid -->
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <!-- Left Column: Contracts -->
-                    <div class="space-y-6">
-                        <!-- Issued Contracts List -->
-                        <div
-                            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full ring-1 ring-black/[0.02]">
-                            <div
-                                class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="file-text" class="w-4 h-4 text-gray-400"></i>
-                                    <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest">Contratos
-                                        Emitidos</h3>
-                                </div>
-                                <a href="{{ url_for('main.new_contract', id=client.id) }}"
-                                    class="text-northway-red hover:text-red-700 text-[10px] font-bold uppercase tracking-wider">Novo</a>
-                            </div>
-                            <div class="p-4 space-y-3 overflow-y-auto max-h-[400px]">
-                                {% if client.contracts %}
-                                {% for contract in client.contracts|sort(attribute='created_at', reverse=True) %}
-                                <div
-                                    class="group flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-red-100/30 hover:bg-red-50/10 transition-all bg-white relative">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 {{ 'bg-yellow-50 text-yellow-600' if contract.status == 'draft' else ('bg-green-50 text-green-600' if contract.status == 'signed' else ('bg-red-50 text-red-600' if contract.status == 'terminated' else 'bg-blue-50 text-blue-600')) }}">
-                                            <i data-lucide="{{ 'file-edit' if contract.status == 'draft' else ('ban' if contract.status == 'terminated' else 'file-text') }}"
-                                                class="w-5 h-5"></i>
-                                        </div>
-                                        <div class="min-w-0">
-                                            <p class="text-[10px] font-mono text-gray-400 mb-0.5">{{ contract.code or
-                                                '#' ~
-                                                contract.id }}</p>
-                                            <p
-                                                class="text-sm font-bold text-gray-900 leading-tight truncate max-w-[150px]">
-                                                {{ contract.template.name if contract.template else 'Contrato Avulso' }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col items-end gap-1">
-                                        <span
-                                            class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else ('bg-green-100 text-green-700' if contract.status == 'signed' else ('bg-red-100 text-red-700' if contract.status == 'terminated' else 'bg-blue-100 text-blue-700')) }}">
-                                            {{ 'Rascunho' if contract.status == 'draft' else ('Emitido' if
-                                            contract.status
-                                            == 'issued' else ('Assinado' if contract.status == 'signed' else
-                                            ('Rescindido'
-                                            if contract.status == 'terminated' else contract.status))) }}
-                                        </span>
-                                        <span class="text-[9px] text-gray-400">{{
-                                            contract.created_at.strftime('%d/%m/%y')
-                                            }}</span>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                                {% else %}
-                                <div class="flex flex-col items-center justify-center py-8 text-gray-400 text-center">
-                                    <i data-lucide="file-x" class="w-8 h-8 mb-2 opacity-20"></i>
-                                    <p class="text-xs italic">Nenhum contrato</p>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+            <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
 
-                    <!-- Right Column: Notes & Tasks -->
-                    <div class="space-y-6">
-                        <!-- Tasks Card -->
-                        <div
-                            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[280px] ring-1 ring-black/[0.02]">
-                            <div
-                                class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="check-square" class="w-4 h-4 text-gray-400"></i>
-                                    <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest">Tarefas &
-                                        Agendamentos</h3>
-                                </div>
-                                <button type="button" onclick="toggleModal('taskModal')"
-                                    class="text-northway-red hover:text-red-700 text-[10px] font-bold uppercase tracking-wider">Agendar</button>
-                            </div>
-                            <div class="p-4 overflow-y-auto flex-1 space-y-2">
-                                {% for task in client.tasks|sort(attribute='status', reverse=True) %}
-                                <div
-                                    class="flex items-center gap-3 p-2.5 rounded-lg border {{ 'bg-gray-50 border-gray-100 opacity-60' if task.status == 'concluida' else 'bg-white border-gray-100 hover:border-red-100/30' }} transition-all">
-                                    <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST"
-                                        class="shrink-0">
-                                        <button type="submit"
-                                            class="{{ 'text-green-500' if task.status == 'concluida' else 'text-gray-300 hover:text-red-500' }}">
-                                            <i data-lucide="{{ 'check-circle' if task.status == 'concluida' else 'circle' }}"
-                                                class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                    <div class="flex-1 min-w-0">
-                                        <p
-                                            class="text-xs font-semibold {{ 'text-gray-500 line-through' if task.status == 'concluida' else 'text-gray-900' }} truncate">
-                                            {{ task.title }}</p>
-                                        <p class="text-[9px] text-gray-400">{{ task.due_date.strftime('%d/%m/%y') if
-                                            task.due_date else 'Sem data' }}</p>
-                                    </div>
-                                </div>
-                                {% else %}
-                                <p class="text-xs text-gray-400 italic text-center py-4">Sem tarefas pendentes</p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <!-- Rapid Notes Card -->
-                        <div
-                            class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[280px] ring-1 ring-black/[0.02]">
-                            <div
-                                class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="sticky-note" class="w-4 h-4 text-gray-400"></i>
-                                    <h3 class="text-xs font-bold text-gray-800 uppercase tracking-widest">Notas &
-                                        Observações</h3>
-                                </div>
-                            </div>
-                            <div class="p-1 flex-1">
-                                <textarea name="notes" placeholder="Digite notas rápidas do cliente aqui..."
-                                    class="w-full h-full bg-yellow-50/30 border-0 p-4 text-sm text-gray-700 placeholder-gray-400 focus:ring-0 resize-none rounded-b-xl"
-                                    onblur="this.form.submit()">{{ client.notes or '' }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Processes / Checklists Section -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
-                            Processos & Serviços
-                        </h3>
-                        <button type="button" onclick="toggleModal('addProcessModal')"
-                            class="text-northway-red hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2">
-                            <i data-lucide="plus" class="w-4 h-4"></i>
-                            Adicionar Processo
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
-                        <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
-                            <!-- Header / Summary -->
-                            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
-                                onclick="toggleProcess('{{ checklist.id }}')">
-                                <div class="flex items-center gap-3">
-                                    <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
-                                        <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
-                                        <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
-                                            <path class="text-gray-200"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                fill="none" stroke="currentColor" stroke-width="4" />
-                                            <path class="text-northway-red progress-ring" stroke-dasharray="0, 100"
-                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                fill="none" stroke="currentColor" stroke-width="4"
-                                                id="ring-{{ checklist.id }}" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
-                                        <p class="text-xs text-gray-500">Iniciado em {{
-                                            checklist.created_at.strftime('%d/%m/%Y') }}</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"
-                                        id="arrow-{{ checklist.id }}"></i>
-                                </div>
-                            </div>
-
-                            <!-- Expanded Content -->
-                            <div id="process-content-{{ checklist.id }}"
-                                class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
-                                {% for step in checklist.progress %}
-                                {% set step_index = loop.index0 %}
-                                <div class="step-group">
-                                    <h5
-                                        class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
-                                        {{ step.title }}</h5>
-                                    <div class="space-y-2 pl-2">
-                                        {% for item in step['items'] %}
-                                        <label
-                                            class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                                            <input type="checkbox"
-                                                onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
-                                                {% if item.done %}checked{% endif %}
-                                                class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
-                                            <span
-                                                class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
-                                                item.text }}</span>
-                                        </label>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                {% endfor %}
-
-                                <div class="pt-4 border-t border-gray-100 flex justify-end">
-                                    <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
-                                        class="text-xs text-red-500 hover:text-red-700 underline">Excluir
-                                        Processo</button>
-                                </div>
-                            </div>
-                        </div>
-                        {% else %}
-                        <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
-                            cliente.
-                        </p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-
-            </div> <!-- Close lg:col-span-2 -->
-        </div> <!-- Close flex flex-col gap-6 (Tracking/Processes) -->
-
-        <!-- Sidebar Info Column -->
-        <div class="space-y-6">
-
-            <!-- Management Card -->
-            <!-- Management Card -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gestão da Conta</h3>
-                    <i data-lucide="briefcase" class="w-4 h-4 text-gray-400"></i>
-                </div>
-
-                <div class="p-6 space-y-6">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Gerente
-                            de Conta</label>
-                        {% if client.account_manager %}
-                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div
-                                class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xs font-bold text-gray-600 overflow-hidden ring-1 ring-gray-200 shadow-sm">
-                                {% if client.account_manager.profile_image %}
-                                <img src="{{ url_for('static', filename='uploads/profiles/' + client.account_manager.profile_image) }}"
-                                    alt="{{ client.account_manager.name }}" class="w-full h-full object-cover">
-                                {% else %}
-                                {{ client.account_manager.name[:2].upper() }}
-                                {% endif %}
-                            </div>
-                            <div>
-                                <p class="font-bold text-gray-900 text-sm">{{ client.account_manager.name }}</p>
-                                <p class="text-xs text-gray-500">{{ client.account_manager.status_message or
-                                    'Gerente' }}</p>
-                            </div>
-                        </div>
-                        {% else %}
-                        <p class="text-gray-500 text-sm italic">Não atribuído</p>
-                        {% endif %}
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Início</label>
-                            <div
-                                class="text-sm font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
-                                {{ client.start_date.strftime('%d/%m/%Y') if client.start_date else '-' }}
-                            </div>
-                        </div>
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 text-[#fa0102]">Renovação</label>
-                            <div
-                                class="text-sm font-medium text-gray-900 bg-red-50 px-3 py-2 rounded-lg border border-red-100">
-                                {{ client.renewal_date.strftime('%d/%m/%Y') if client.renewal_date else '-' }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-
-            <!-- Compact Timeline (Feed) -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Feed de Atividades</h3>
-                    <button type="button" onclick="toggleModal('interactionModal')"
-                        class="text-gray-400 hover:text-northway-red transition-colors">
+            <!-- Processes / Checklists Section -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
+                        Processos & Serviços
+                    </h3>
+                    <button type="button" onclick="toggleModal('addProcessModal')"
+                        class="text-northway-red hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2">
                         <i data-lucide="plus" class="w-4 h-4"></i>
+                        Adicionar Processo
                     </button>
                 </div>
-                <div class="p-2 space-y-1 max-h-[600px] overflow-y-auto bg-gray-50/30">
-                    {% for interaction in client.interactions|sort(attribute='created_at', reverse=True) %}
-                    <div
-                        class="flex gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-all group">
-                        <div class="shrink-0 mt-0.5">
-                            <div
-                                class="w-7 h-7 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
-                                {% if interaction.type == 'reuniao' %}<i data-lucide="users" class="w-3.5 h-3.5"></i>
-                                {% elif interaction.type == 'ajuste' %}<i data-lucide="settings"
-                                    class="w-3.5 h-3.5"></i>
-                                {% elif interaction.type == 'feedback' %}<i data-lucide="message-circle"
-                                    class="w-3.5 h-3.5"></i>
-                                {% elif 'tarefa' in interaction.type %}<i data-lucide="check-square"
-                                    class="w-3.5 h-3.5"></i>
-                                {% else %}<i data-lucide="bookmark" class="w-3.5 h-3.5"></i>{% endif %}
+
+                <div class="space-y-4">
+                    {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
+                    <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
+                        <!-- Header / Summary -->
+                        <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                            onclick="toggleProcess('{{ checklist.id }}')">
+                            <div class="flex items-center gap-3">
+                                <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
+                                    <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
+                                    <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
+                                        <path class="text-gray-200"
+                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            fill="none" stroke="currentColor" stroke-width="4" />
+                                        <path class="text-northway-red progress-ring" stroke-dasharray="0, 100"
+                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                            fill="none" stroke="currentColor" stroke-width="4"
+                                            id="ring-{{ checklist.id }}" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
+                                    <p class="text-xs text-gray-500">Iniciado em {{
+                                        checklist.created_at.strftime('%d/%m/%Y') }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"
+                                    id="arrow-{{ checklist.id }}"></i>
                             </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between mb-1">
-                                <p class="text-[10px] font-bold text-gray-400 uppercase truncate">
-                                    {{ interaction.user.name.split(' ')[0] if interaction.user else 'SISTEMA' }}
-                                </p>
-                                <span class="text-[9px] text-gray-400 font-mono">{{
-                                    interaction.created_at.strftime('%d/%m') }}</span>
+
+                        <!-- Expanded Content -->
+                        <div id="process-content-{{ checklist.id }}"
+                            class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
+                            {% for step in checklist.progress %}
+                            {% set step_index = loop.index0 %}
+                            <div class="step-group">
+                                <h5
+                                    class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
+                                    {{ step.title }}</h5>
+                                <div class="space-y-2 pl-2">
+                                    {% for item in step['items'] %}
+                                    <label
+                                        class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                        <input type="checkbox"
+                                            onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
+                                            {% if item.done %}checked{% endif %}
+                                            class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
+                                        <span
+                                            class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
+                                            item.text }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
                             </div>
-                            <p
-                                class="text-xs text-gray-600 leading-snug line-clamp-3 group-hover:line-clamp-none transition-all">
-                                {{ interaction.content }}</p>
+                            {% endfor %}
+
+                            <div class="pt-4 border-t border-gray-100 flex justify-end">
+                                <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
+                                    class="text-xs text-red-500 hover:text-red-700 underline">Excluir
+                                    Processo</button>
+                            </div>
                         </div>
                     </div>
                     {% else %}
-                    <p class="text-[10px] text-gray-400 italic text-center py-8">Nenhum histórico disponível</p>
+                    <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
+                        cliente.
+                    </p>
                     {% endfor %}
                 </div>
             </div>
 
-            <!-- Contact Info -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <i data-lucide="contact-2" class="w-5 h-5 text-gray-400"></i>
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Informações de Contato
-                    </h3>
-                </div>
-                <div class="space-y-4">
-                    <div class="flex flex-col">
-                        <span class="text-[9px] font-bold text-gray-400 uppercase mb-1">E-mail Principal</span>
-                        <div class="flex items-center gap-2 group">
-                            <div class="p-1.5 bg-gray-50 rounded group-hover:bg-red-50 transition-colors">
-                                <i data-lucide="mail" class="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500"></i>
-                            </div>
-                            <span class="text-xs font-semibold text-gray-700 truncate">{{ client.email }}</span>
-                        </div>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-[9px] font-bold text-gray-400 uppercase mb-1">Telefone</span>
-                        <div class="flex items-center gap-2 group">
-                            <div class="p-1.5 bg-gray-50 rounded group-hover:bg-green-50 transition-colors">
-                                <i data-lucide="phone" class="w-3.5 h-3.5 text-gray-400 group-hover:text-green-500"></i>
-                            </div>
-                            <span class="text-xs font-semibold text-gray-700">{{ client.phone or 'Não informado'
-                                }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Save Actions (Hidden by default) -->
-            <div id="editActions" class="hidden">
-                <button type="submit"
-                    class="w-full bg-[#fa0102] text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg">
-                    Salvar Alterações
-                </button>
-                <button type="button" onclick="toggleEditMode()"
-                    class="w-full mt-2 bg-transparent text-gray-500 py-2 rounded-lg font-medium hover:text-gray-700">
-                    Cancelar
-                </button>
-            </div>
+        </div> <!-- Close lg:col-span-2 -->
+</div> <!-- Close flex flex-col gap-6 (Tracking/Processes) -->
 
+<!-- Sidebar Info Column -->
+<div class="space-y-6">
+
+    <!-- Management Card -->
+    <!-- Management Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gestão da Conta</h3>
+            <i data-lucide="briefcase" class="w-4 h-4 text-gray-400"></i>
         </div>
+
+        <div class="p-6 space-y-6">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Gerente
+                    de Conta</label>
+                {% if client.account_manager %}
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <div
+                        class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xs font-bold text-gray-600 overflow-hidden ring-1 ring-gray-200 shadow-sm">
+                        {% if client.account_manager.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/profiles/' + client.account_manager.profile_image) }}"
+                            alt="{{ client.account_manager.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                        {{ client.account_manager.name[:2].upper() }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-900 text-sm">{{ client.account_manager.name }}</p>
+                        <p class="text-xs text-gray-500">{{ client.account_manager.status_message or
+                            'Gerente' }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm italic">Não atribuído</p>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Início</label>
+                    <div
+                        class="text-sm font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+                        {{ client.start_date.strftime('%d/%m/%Y') if client.start_date else '-' }}
+                    </div>
+                </div>
+                <div>
+                    <label
+                        class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 text-[#fa0102]">Renovação</label>
+                    <div class="text-sm font-medium text-gray-900 bg-red-50 px-3 py-2 rounded-lg border border-red-100">
+                        {{ client.renewal_date.strftime('%d/%m/%Y') if client.renewal_date else '-' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Compact Timeline (Feed) -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Feed de Atividades</h3>
+            <button type="button" onclick="toggleModal('interactionModal')"
+                class="text-gray-400 hover:text-northway-red transition-colors">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <div class="p-2 space-y-1 max-h-[600px] overflow-y-auto bg-gray-50/30">
+            {% for interaction in client.interactions|sort(attribute='created_at', reverse=True) %}
+            <div
+                class="flex gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:border-gray-200 transition-all group">
+                <div class="shrink-0 mt-0.5">
+                    <div
+                        class="w-7 h-7 rounded-full flex items-center justify-center bg-gray-50 text-gray-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors">
+                        {% if interaction.type == 'reuniao' %}<i data-lucide="users" class="w-3.5 h-3.5"></i>
+                        {% elif interaction.type == 'ajuste' %}<i data-lucide="settings" class="w-3.5 h-3.5"></i>
+                        {% elif interaction.type == 'feedback' %}<i data-lucide="message-circle"
+                            class="w-3.5 h-3.5"></i>
+                        {% elif 'tarefa' in interaction.type %}<i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+                        {% else %}<i data-lucide="bookmark" class="w-3.5 h-3.5"></i>{% endif %}
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase truncate">
+                            {{ interaction.user.name.split(' ')[0] if interaction.user else 'SISTEMA' }}
+                        </p>
+                        <span class="text-[9px] text-gray-400 font-mono">{{
+                            interaction.created_at.strftime('%d/%m') }}</span>
+                    </div>
+                    <p
+                        class="text-xs text-gray-600 leading-snug line-clamp-3 group-hover:line-clamp-none transition-all">
+                        {{ interaction.content }}</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-[10px] text-gray-400 italic text-center py-8">Nenhum histórico disponível</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <i data-lucide="contact-2" class="w-5 h-5 text-gray-400"></i>
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Informações de Contato
+            </h3>
+        </div>
+        <div class="space-y-4">
+            <div class="flex flex-col">
+                <span class="text-[9px] font-bold text-gray-400 uppercase mb-1">E-mail Principal</span>
+                <div class="flex items-center gap-2 group">
+                    <div class="p-1.5 bg-gray-50 rounded group-hover:bg-red-50 transition-colors">
+                        <i data-lucide="mail" class="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500"></i>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-700 truncate">{{ client.email }}</span>
+                </div>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-[9px] font-bold text-gray-400 uppercase mb-1">Telefone</span>
+                <div class="flex items-center gap-2 group">
+                    <div class="p-1.5 bg-gray-50 rounded group-hover:bg-green-50 transition-colors">
+                        <i data-lucide="phone" class="w-3.5 h-3.5 text-gray-400 group-hover:text-green-500"></i>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-700">{{ client.phone or 'Não informado'
+                        }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Actions (Hidden by default) -->
+    <div id="editActions" class="hidden">
+        <button type="submit"
+            class="w-full bg-[#fa0102] text-white py-3 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-lg">
+            Salvar Alterações
+        </button>
+        <button type="button" onclick="toggleEditMode()"
+            class="w-full mt-2 bg-transparent text-gray-500 py-2 rounded-lg font-medium hover:text-gray-700">
+            Cancelar
+        </button>
+    </div>
+
+</div>
 </div>
 </form>
 </div>
@@ -1314,7 +1359,7 @@
 
     function switchClientTab(tabName) {
         try {
-            const tabs = ['details', 'whatsapp', 'financial'];
+            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks'];
 
             // Hide all contents
             tabs.forEach(t => {
