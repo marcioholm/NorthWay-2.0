@@ -47,8 +47,6 @@
                             </span>
                             Prioridades do Dia
                         </h2>
-                        {% set overdue_count = today_tasks | selectattr("due_date") | selectattr("due_date", "lt", now)
-                        | list | length %}
                         {% if overdue_count > 0 %}
                         <span
                             class="text-xs font-bold text-northway-red bg-red-50 px-2 py-1 rounded-full animate-pulse">

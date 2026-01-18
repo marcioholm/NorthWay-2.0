@@ -31,10 +31,12 @@ def home():
     attention_leads = get_attention_leads(company_id, user_id)
     
     # 3. Today Stats
+    # 3. Today Stats
+    start_of_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    
     today_stats = {
-        'leads_new': Lead.query.filter_by(company_id=company_id).filter(Lead.created_at >= date.today()).count(),
-        'tasks_done': Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, status='completa')\
-                                   .filter(Task.completed_at >= date.today()).count()
+        'leads_new': Lead.query.filter(Lead.company_id == company_id, Lead.created_at >= start_of_day).count(),
+        'tasks_done': Task.query.filter(Task.company_id == company_id, Task.assigned_to_id == user_id, Task.status == 'completa', Task.completed_at >= start_of_day).count()
     }
     
     # 4. Onboarding (Defensive Coding)
@@ -60,15 +62,20 @@ def home():
         print(f"Error in Onboarding Logic: {e}")
         onboarding = None
     
+    # Calculate Overdue Count safely in Python
+    now = datetime.now()
+    overdue_count = len([t for t in today_tasks if t.due_date and t.due_date < now])
+
     return render_template('home.html', 
                            lead_count=lead_count, 
                            client_count=client_count,
                            recent_leads=recent_leads,
                            today_tasks=today_tasks,
+                           overdue_count=overdue_count, # Passed explicitly
                            attention_leads=attention_leads,
                            today_stats=today_stats,
                            onboarding=onboarding,
-                           now=datetime.now())
+                           now=now)
 
 @dashboard_bp.route('/dashboard')
 @login_required
@@ -105,17 +112,23 @@ def dashboard():
                            now=datetime.now())
 
 def get_today_tasks(company_id, user_id):
-    return Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, status='pendente')\
-               .filter(Task.due_date <= datetime.now()).all()
+    # Tasks due today or before (overdue), ensuring standard DateTime comparison
+    now = datetime.now()
+    return Task.query.filter(
+        Task.company_id == company_id, 
+        Task.assigned_to_id == user_id, 
+        Task.status == 'pendente',
+        Task.due_date <= now
+    ).all()
 
 def get_attention_leads(company_id, user_id):
     # Leads with no interaction in over 3 days
     three_days_ago = datetime.now() - timedelta(days=3)
-    return Lead.query.filter_by(company_id=company_id, assigned_to_id=user_id)\
-               .filter(Lead.status != 'won')\
+    query = Lead.query.filter(Lead.company_id == company_id, Lead.assigned_to_id == user_id, Lead.status != 'won')\
                .outerjoin(Interaction, (Interaction.lead_id == Lead.id) & (Interaction.company_id == company_id))\
                .group_by(Lead.id)\
-               .having(db.or_(db.func.max(Interaction.created_at) < three_days_ago, db.func.max(Interaction.created_at) == None)).all()
+               .having(db.or_(db.func.max(Interaction.created_at) < three_days_ago, db.func.max(Interaction.created_at) == None))
+    return query.all()
 
 def get_today_stats(company_id, user_id):
     # This is a placeholder for real time-series data

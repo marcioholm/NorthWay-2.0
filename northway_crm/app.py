@@ -78,9 +78,15 @@ def create_app():
     # --- CONTEXT PROCESSORS ---
     @app.context_processor
     def inject_globals():
-        if current_user.is_authenticated:
-            pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
-            return dict(pending_tasks_count=pending_count, now=datetime.now())
+        try:
+            if current_user.is_authenticated:
+                # Defensive check for table existence/schema issues
+                pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
+                return dict(pending_tasks_count=pending_count, now=datetime.now())
+        except Exception as e:
+            # Log error but don't crash the page
+            print(f"Error in inject_globals: {e}")
+            return dict(pending_tasks_count=0, now=datetime.now())
         return dict(pending_tasks_count=0, now=datetime.now())
 
     # --- ERROR HANDLERS ---

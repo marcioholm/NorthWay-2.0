@@ -1,32 +1,41 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-{% block content %}
-<div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6 lg:px-8">
-    <div class="text-center max-w-2xl">
-        <p class="text-base font-semibold text-northway-red">500</p>
-        <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Erro Interno do Servidor</h1>
-        <p class="mt-6 text-base leading-7 text-gray-600">Algo deu errado do nosso lado. Tente recarregar a página.</p>
+<head>
+    <meta charset="UTF-8">
+    <title>NorthWay - Erro Interno (500)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-        {% if traceback %}
-        <div class="mt-8 text-left bg-gray-900 rounded-lg p-4 overflow-x-auto shadow-lg border border-gray-700">
-            <h3 class="text-red-400 text-sm font-bold mb-2">Detalhes do Erro (Debug):</h3>
-            <pre class="text-xs text-gray-300 font-mono whitespace-pre-wrap">{{ error }}</pre>
-            <details class="mt-2">
-                <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-300">Ver Traceback Completo
-                </summary>
-                <pre class="text-xs text-green-400 font-mono mt-2 whitespace-pre-wrap">{{ traceback }}</pre>
-            </details>
+<body class="bg-gray-100 flex items-center justify-center h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full">
+        <h1 class="text-4xl font-bold text-red-600 mb-4">500 - Erro Interno</h1>
+        <p class="text-gray-600 mb-6">O servidor encontrou um erro inesperado.</p>
+
+        {% if error %}
+        <div class="bg-red-50 border border-red-200 p-4 rounded mb-4">
+            <h3 class="font-bold text-red-800 text-sm uppercase">Detalhes do Erro:</h3>
+            <pre class="whitespace-pre-wrap text-xs text-red-700 font-mono mt-2">{{ error }}</pre>
         </div>
         {% endif %}
 
-        <div class="mt-10 flex items-center justify-center gap-x-6">
-            <a href="{{ url_for('dashboard.home') }}"
-                class="rounded-md bg-northway-red px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-northway-red">
-                Voltar para o Início
-            </a>
-            <a href="#" onclick="location.reload()" class="text-sm font-semibold text-gray-900">Recarregar Página <span
-                    aria-hidden="true">&circlearrowright;</span></a>
+        {% if traceback %}
+        <details class="mb-6">
+            <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-800 hover:underline">Ver Traceback
+                Técnico</summary>
+            <div class="bg-gray-900 text-green-400 p-4 rounded mt-2 text-xs font-mono overflow-auto max-h-96">
+                {{ traceback }}
+            </div>
+        </details>
+        {% endif %}
+
+        <div class="flex gap-4">
+            <a href="/" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Voltar ao
+                Início</a>
+            <button onclick="location.reload()"
+                class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition">Tentar
+                Novamente</button>
         </div>
     </div>
-</div>
-{% endblock %}
+    </div>
+    {% endblock %}
