@@ -4,7 +4,7 @@ from datetime import datetime
 
 class AsaasService:
     BASE_URL_SANDBOX = "https://sandbox.asaas.com/api/v3"
-    BASE_URL_PROD = "https://api.asaas.com/api/v3"
+    BASE_URL_PROD = "https://api.asaas.com/v3"
 
     @staticmethod
     def get_base_url(env='sandbox'):
