@@ -31,7 +31,7 @@ def home():
     today_stats = {
         'leads_new': Lead.query.filter_by(company_id=company_id).filter(Lead.created_at >= date.today()).count(),
         'tasks_done': Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, status='completa')\
-                                   .filter(Task.updated_at >= date.today()).count()
+                                   .filter(Task.completed_at >= date.today()).count()
     }
     
     # 4. Onboarding
