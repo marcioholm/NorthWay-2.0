@@ -1057,6 +1057,9 @@ def create_app():
         total_pending = sum(t.amount for t in client_txs if t.status == 'pending')
         total_overdue = sum(t.amount for t in client_txs if t.status == 'overdue')
         
+        # Calculate MRR (Monthly Recurring Revenue) from active contracts
+        mrr = sum(c.monthly_value for c in client.contracts if c.status == 'signed' and c.monthly_value)
+        
         return render_template('client_details.html', 
                              client=client, 
                              users=users, 
@@ -1065,6 +1068,7 @@ def create_app():
                              total_paid=total_paid,
                              total_pending=total_pending,
                              total_overdue=total_overdue,
+                             mrr=mrr,
                              now=datetime.utcnow(), 
                              today=date.today())
 

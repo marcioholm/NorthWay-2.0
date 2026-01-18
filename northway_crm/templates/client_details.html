@@ -123,93 +123,100 @@
                         <h3 class="hidden text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                             Dados Cadastrais
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CNPJ
-                                    /
-                                    CPF</label>
-                                <input type="text" name="document" value="{{ client.document or '' }}" disabled
-                                    class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email
-                                    de
-                                    Contato</label>
-                                <input type="email" name="email_contact" value="{{ client.email_contact or '' }}"
-                                    disabled
-                                    class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                            <div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
+                            <div class="relative">
                                 <label
-                                    class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Representante
-                                    Legal</label>
-                                <input type="text" name="representative" value="{{ client.representative or '' }}"
-                                    disabled
-                                    class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    <i data-lucide="hash" class="w-3 h-3"></i> CNPJ / CPF
+                                </label>
+                                <div
+                                    class="bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all hover:border-[#fa0102]/20">
+                                    {{ client.document or 'Não informado' }}
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">CPF
-                                    do
-                                    Rep.</label>
-                                <input type="text" name="representative_cpf"
-                                    value="{{ client.representative_cpf or '' }}" disabled
-                                    class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-gray-900 font-medium focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                            <div class="relative">
+                                <label
+                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    <i data-lucide="mail" class="w-3 h-3"></i> Email de Contato
+                                </label>
+                                <div
+                                    class="bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all hover:border-[#fa0102]/20">
+                                    {{ client.email_contact or 'Não informado' }}
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <label
+                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    <i data-lucide="user" class="w-3 h-3"></i> Representante Legal
+                                </label>
+                                <div
+                                    class="bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all hover:border-[#fa0102]/20">
+                                    {{ client.representative or 'Não informado' }}
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <label
+                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    <i data-lucide="credit-card" class="w-3 h-3"></i> CPF do Rep.
+                                </label>
+                                <div
+                                    class="bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all hover:border-[#fa0102]/20">
+                                    {{ client.representative_cpf or 'Não informado' }}
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Address Split -->
-                        <div class="space-y-4 pt-4 border-t border-gray-100">
-                            <p class="text-xs font-bold text-gray-400 uppercase">Endereço</p>
+                        <!-- Address Section -->
+                        <div class="space-y-4 pt-6 mt-4 border-t border-gray-100">
+                            <label
+                                class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                <i data-lucide="map-pin" class="w-3 h-3"></i> Endereço
+                            </label>
+
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div class="md:col-span-3 overflow-hidden">
+                                    <div
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm">
+                                        <span
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Logradouro</span>
+                                        <span class="font-medium text-gray-900">{{ client.address_street or 'Rua não
+                                            informada' }}, {{ client.address_number or 'S/N' }}</span>
+                                    </div>
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm">
+                                        <span
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">CEP</span>
+                                        <span class="font-medium text-gray-900">{{ client.address_zip or '-' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="md:col-span-2">
-                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Rua</label>
-                                    <input type="text" name="address_street" value="{{ client.address_street or '' }}"
-                                        disabled
-                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                <div class="overflow-hidden">
+                                    <div
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm">
+                                        <span
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Bairro</span>
+                                        <span class="font-medium text-gray-900">{{ client.address_neighborhood or '-'
+                                            }}</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Número</label>
-                                    <input type="text" name="address_number" value="{{ client.address_number or '' }}"
-                                        disabled
-                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
+                                <div class="overflow-hidden">
+                                    <div
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm">
+                                        <span
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Cidade</span>
+                                        <span class="font-medium text-gray-900">{{ client.address_city or '-' }}</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Bairro</label>
-                                    <input type="text" name="address_neighborhood"
-                                        value="{{ client.address_neighborhood or '' }}" disabled
-                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-[10px] text-gray-400 font-medium mb-0.5">Complemento</label>
-                                    <input type="text" placeholder="" disabled
-                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">CEP</label>
-                                    <input type="text" name="address_zip" value="{{ client.address_zip or '' }}"
-                                        disabled
-                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Cidade</label>
-                                    <input type="text" name="address_city" value="{{ client.address_city or '' }}"
-                                        disabled
-                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] text-gray-400 font-medium mb-0.5">Estado</label>
-                                    <input type="text" name="address_state" value="{{ client.address_state or '' }}"
-                                        disabled
-                                        class="w-full bg-transparent border-b border-dashed border-gray-300 py-1 text-sm text-gray-900 focus:outline-none focus:border-northway-red disabled:border-none disabled:text-gray-600"
-                                        maxlength="2">
+                                <div class="overflow-hidden">
+                                    <div
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm text-center">
+                                        <span class="text-[10px] block text-gray-400 font-bold uppercase mb-1">UF</span>
+                                        <span class="font-bold text-gray-900">{{ client.address_state or '-' }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -229,34 +236,51 @@
                         </button>
                     </div>
 
-                    <!-- LTV Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <!-- Financial Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                         <div
-                            class="bg-gray-50 rounded-lg p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-colors">
+                            class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
                             <div
-                                class="absolute top-0 right-0 w-16 h-16 bg-green-100 rounded-bl-full -mr-8 -mt-8 opacity-50 group-hover:bg-green-200 transition-colors">
+                                class="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-blue-200 transition-colors">
                             </div>
-                            <p class="text-xs font-bold text-gray-400 uppercase relative z-10">Total Pago (LTV)</p>
-                            <p class="text-2xl font-bold text-green-600 relative z-10">R$ {{
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">
+                                Faturamento Mensal (MRR)</p>
+                            <p class="text-xl font-extrabold text-[#fa0102] relative z-10">R$ {{
+                                "%.2f"|format(mrr)|replace('.', ',') }}</p>
+                            <p class="text-[9px] text-gray-400 relative z-10 mt-1">Soma de contratos assinados</p>
+                        </div>
+                        <div
+                            class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
+                            <div
+                                class="absolute top-0 right-0 w-16 h-16 bg-green-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-green-200 transition-colors">
+                            </div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">Total
+                                Pago (LTV)</p>
+                            <p class="text-xl font-extrabold text-green-600 relative z-10">R$ {{
                                 "%.2f"|format(total_paid)|replace('.', ',') }}</p>
+                            <p class="text-[9px] text-gray-400 relative z-10 mt-1">Histórico acumulado</p>
                         </div>
                         <div
-                            class="bg-gray-50 rounded-lg p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-colors">
+                            class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
                             <div
-                                class="absolute top-0 right-0 w-16 h-16 bg-gray-200 rounded-bl-full -mr-8 -mt-8 opacity-50">
+                                class="absolute top-0 right-0 w-16 h-16 bg-gray-200 rounded-bl-full -mr-8 -mt-8 opacity-40">
                             </div>
-                            <p class="text-xs font-bold text-gray-400 uppercase relative z-10">A Receber</p>
-                            <p class="text-2xl font-bold text-gray-700 relative z-10">R$ {{
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">A
+                                Receber</p>
+                            <p class="text-xl font-extrabold text-gray-700 relative z-10">R$ {{
                                 "%.2f"|format(total_pending)|replace('.', ',') }}</p>
+                            <p class="text-[9px] text-gray-400 relative z-10 mt-1">Cobranças pendentes</p>
                         </div>
                         <div
-                            class="bg-gray-50 rounded-lg p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-colors">
+                            class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
                             <div
-                                class="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-8 -mt-8 opacity-50 group-hover:bg-red-200 transition-colors">
+                                class="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-red-200 transition-colors">
                             </div>
-                            <p class="text-xs font-bold text-gray-400 uppercase relative z-10">Vencido</p>
-                            <p class="text-2xl font-bold text-red-600 relative z-10">R$ {{
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">
+                                Vencido</p>
+                            <p class="text-xl font-extrabold text-red-600 relative z-10">R$ {{
                                 "%.2f"|format(total_overdue)|replace('.', ',') }}</p>
+                            <p class="text-[9px] text-gray-400 relative z-10 mt-1">Cobranças atrasadas</p>
                         </div>
                     </div>
 
