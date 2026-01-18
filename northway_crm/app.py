@@ -37,7 +37,11 @@ def create_notification(user_id, company_id, type, title, message):
         db.session.commit()
     except Exception as e:
         print(f"Error creating notification: {e}")
-        db.session.rollback()
+        try:
+            db.session.rollback()
+        except:
+            pass
+
 
 def create_app():
     app = Flask(__name__)
@@ -1046,11 +1050,15 @@ def create_app():
             return "Unauthorized", 403
             
         # Auto-update health
+        # Auto-update health
         try:
             update_client_health(client)
         except Exception as e:
             print(f"Error updating client health: {e}")
-            # db.session.rollback() # Not needed if query only
+            try:
+                db.session.rollback()
+            except:
+                pass
             
         users = User.query.filter_by(company_id=current_user.company_id).all()
         process_templates = ProcessTemplate.query.filter_by(company_id=current_user.company_id).all()
