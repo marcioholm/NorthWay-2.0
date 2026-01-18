@@ -973,44 +973,57 @@
 </script>
 </div>
 
-<form onsubmit="submitTermination(event)">
-    <input type="hidden" id="term-contract-id">
-    <p class="text-sm text-gray-600 mb-4">Você está prestes a rescindir o contrato <strong
-            id="term-contract-title"></strong>. As cobranças futuras pendentes serão canceladas.</p>
-
-    <div class="space-y-4">
-        <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo da Rescisão</label>
-            <textarea id="term-reason" rows="2"
-                class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
-                placeholder="Ex: Cliente insatisfeito, corte de custos..." required></textarea>
+<!-- Termination Modal -->
+<div id="termination-modal"
+    class="hidden fixed inset-0 bg-gray-900/50 z-50 items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-gray-900">Rescindir Contrato</h3>
+            <button type="button" onclick="closeTerminationModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Multa Rescisória
-                    (R$)</label>
-                <input type="text" id="term-penalty" oninput="formatCurrency(this)"
-                    class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent font-bold"
-                    placeholder="R$ 0,00">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Vencimento da Multa</label>
-                <input type="date" id="term-due-date"
-                    class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm font-medium text-gray-700">
-            </div>
-        </div>
-        <p class="text-[10px] text-gray-400 mt-1">Se houver valor, será gerada uma cobrança pendente.</p>
-    </div>
+        <form onsubmit="submitTermination(event)">
+            <input type="hidden" id="term-contract-id">
+            <p class="text-sm text-gray-600 mb-4">Você está prestes a rescindir o contrato <strong
+                    id="term-contract-title"></strong>. As cobranças futuras pendentes serão canceladas.</p>
 
-    <div class="flex gap-3 mt-8">
-        <button type="button" onclick="closeTerminationModal()"
-            class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">Cancelar</button>
-        <button type="submit"
-            class="flex-1 py-2.5 bg-northway-red text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200">Confirmar
-            Rescisão</button>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo da Rescisão</label>
+                    <textarea id="term-reason" rows="2"
+                        class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                        placeholder="Ex: Cliente insatisfeito, corte de custos..." required></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Multa Rescisória
+                            (R$)</label>
+                        <input type="text" id="term-penalty" oninput="formatCurrency(this)"
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent font-bold"
+                            placeholder="R$ 0,00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Vencimento da Multa</label>
+                        <input type="date" id="term-due-date"
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm font-medium text-gray-700">
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-1">Se houver valor, será gerada uma cobrança pendente.</p>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button type="button" onclick="closeTerminationModal()"
+                    class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">Cancelar</button>
+                <button type="submit"
+                    class="flex-1 py-2.5 bg-northway-red text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200">Confirmar
+                    Rescisão</button>
+            </div>
+        </form>
     </div>
-</form>
+</div>
 </div>
 </div>
 </div>

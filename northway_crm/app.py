@@ -1716,71 +1716,6 @@ def create_app():
             '{{TESTEMUNHA2_CPF}}': form_data.get('testemunha2_cpf', ''),
         }
         return replacements
-    @main.route('/contracts/<int:id>/terminate', methods=['POST'])
-    @login_required
-    def terminate_contract(id):
-        contract = Contract.query.get_or_404(id)
-        if contract.company_id != current_user.company_id:
-            abort(403)
-            
-        data = request.get_json()
-        reason = data.get('reason')
-        penalty = float(data.get('penalty', 0.0))
-        
-        if not reason:
-            return jsonify({'success': False, 'message': 'Motivo obrigatório'}), 400
-            
-        try:
-            # 1. Update Contract
-            contract.status = 'terminated'
-            contract.termination_reason = reason
-            contract.termination_date = date.today()
-            contract.penalty_amount = penalty
-            
-            # 2. Cancel Future Pending Transactions
-            future_txs = Transaction.query.filter(
-                Transaction.contract_id == contract.id,
-                Transaction.status == 'pending'
-                # Transaction.due_date >= date.today() # Optional: cancel all pending regardless of date? Yes, if terminated.
-            ).all()
-            
-            for tx in future_txs:
-                tx.status = 'cancelled'
-                
-            # 3. Create Penalty Transaction if applicable
-            if penalty > 0:
-                # Parse due date or default to today
-                penalty_due_date_str = data.get('due_date')
-                if penalty_due_date_str:
-                    penalty_due_date = datetime.strptime(penalty_due_date_str, '%Y-%m-%d').date()
-                else:
-                    penalty_due_date = date.today()
-
-                multa_tx = Transaction(
-                    contract_id=contract.id,
-                    description=f"Multa Rescisória - {contract.template.name}",
-                    amount=penalty,
-                    due_date=penalty_due_date, 
-                    status='pending'
-                )
-                db.session.add(multa_tx)
-                
-            db.session.commit()
-            
-            # Create Notification
-            create_notification(
-                user_id=current_user.id,
-                company_id=current_user.company_id,
-                type='contract_terminated',
-                title='Contrato Rescindido',
-                message=f"O contrato {contract.template.name} foi rescindido por {current_user.name}."
-            )
-            
-            return jsonify({'success': True})
-            
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'success': False, 'error': str(e)}), 500
         client_full_address = format_addr(client)
         company_full_address = format_addr(client.company)
 
@@ -2164,107 +2099,110 @@ def create_app():
         if contract.company_id != current_user.company_id:
             abort(403)
             
+    @main.route('/contracts/<int:id>/terminate', methods=['POST'])
+    @login_required
+    def terminate_contract(id):
+        contract = Contract.query.get_or_404(id)
+        if contract.company_id != current_user.company_id:
+            abort(403)
+            
         # Log Start
         print(f"DEBUG: Canceling Contract #{id}")
         debug_log = [f"Início Cancelamento Contrato #{id}"]
-            
-        # Optional: Termination Fee
-        charge_fee = request.form.get('charge_fee') == 'on'
-        fee_amount_str = request.form.get('fee_amount')
-        fee_due_date_str = request.form.get('fee_due_date')
         
-        debug_log.append(f"Opções Multa: Kobrar={charge_fee}, Valor={fee_amount_str}, Data={fee_due_date_str}")
-        
-        # 1. Cancel Pending Transactions (Local + Asaas)
-        pending_txs = Transaction.query.filter_by(contract_id=contract.id, status='pending').all()
-        debug_log.append(f"Transações Pendentes Encontradas: {len(pending_txs)}")
-        
-        asaas_cancelled_count = 0
-        from services.asaas_service import AsaasService
-        
-        for tx in pending_txs:
-            old_status = tx.status
-            tx.status = 'cancelled'
-            
-            if tx.asaas_id:
-                try:
-                    success = AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
-                    if success: 
-                        asaas_cancelled_count += 1
-                        debug_log.append(f"TX #{tx.id} (Asaas {tx.asaas_id}): Cancelado com Sucesso.")
-                    else:
-                        debug_log.append(f"TX #{tx.id} (Asaas {tx.asaas_id}): Falha no cancelamento API.")
-                except Exception as e:
-                    debug_log.append(f"TX #{tx.id} - ERRO API: {str(e)}")
-            else:
-                debug_log.append(f"TX #{tx.id}: Sem Asaas ID. Apenas cancelado localmente.")
-        
-        # 2. Update Contract
-        contract.status = 'cancelled'
-        
-        # 3. Create Termination Fee (if requested)
-        fee_success = False
-        fee_error = None
-        
-        if charge_fee and fee_amount_str:
-            try:
-                # Parse Float
-                amount = float(fee_amount_str.replace('R$', '').replace('.', '').replace(',', '.').strip())
-                due_date = datetime.strptime(fee_due_date_str, '%Y-%m-%d').date()
-                
-                debug_log.append(f"Gerando Multa: {amount} para {due_date}")
-                
-                fee_tx = Transaction(
-                    contract_id=contract.id,
-                    company_id=contract.company_id,
-                    description=f"Multa Rescisória - Contrato #{contract.id}",
-                    amount=amount,
-                    due_date=due_date,
-                    status='pending'
-                )
-                db.session.add(fee_tx)
-                db.session.flush() # Get ID
-                
-                # Create in ASAAS
-                debug_log.append("Criando Cobrança Multa Asaas...")
-                # Ensure customer exists
-                customer_id = AsaasService.create_customer(contract.company_id, contract.client)
-                payment_data = AsaasService.create_payment(contract.company_id, customer_id, fee_tx)
-                
-                debug_log.append(f"Multa Gerada Asaas: ID {payment_data.get('id')}")
-                fee_success = True
-                
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                fee_error = str(e)
-                debug_log.append(f"ERRO AO GERAR MULTA: {fee_error}")
-        
-        db.session.commit()
-        
-        # FINAL LOGGING TO DB
         try:
-            create_notification(
-                user_id=current_user.id,
-                company_id=current_user.company_id,
-                type='system_error' if fee_error else 'system_info',
-                title=f'Log Cancelamento #{contract.id}',
-                message="\n".join(debug_log)
-            )
-        except:
-            pass
-
-        if fee_error:
-            flash(f'Contrato cancelado, mas houve erro ao gerar a multa. Verifique notificações.', 'warning')
-        elif charge_fee and fee_success:
-             flash('Contrato cancelado e Multa Rescisória gerada no ASAAS!', 'success')
-        else:
-            if asaas_cancelled_count > 0:
-                flash(f'Contrato cancelado. {asaas_cancelled_count} cobranças removidas do ASAAS.', 'success')
-            else:
-                flash(f'Contrato cancelado localmente. Nenhuma cobrança Asaas foi removida (Talvez não tivessem ID Asaas?).', 'warning')
+            data = request.json
+            reason = data.get('reason')
+            penalty = data.get('penalty', 0)
+            due_date_str = data.get('due_date')
             
-        return redirect(url_for('main.view_contract', id=contract.id))
+            contract.cancellation_reason = reason
+            contract.cancellation_date = datetime.now()
+            
+            debug_log.append(f"Motivo: {reason}, Multa: {penalty}, Data: {due_date_str}")
+            
+            # 1. Cancel Pending/Overdue Transactions (Local + Asaas)
+            # Fetch both pending and overdue to ensure we stop all future/unpaid obligations
+            targets = Transaction.query.filter(
+                Transaction.contract_id == contract.id, 
+                Transaction.status.in_(['pending', 'overdue'])
+            ).all()
+            
+            debug_log.append(f"Transações para cancelar encontradas: {len(targets)}")
+            
+            from services.asaas_service import AsaasService
+            
+            asaas_cancelled_count = 0
+            for tx in targets:
+                tx.status = 'cancelled'
+                if tx.asaas_id:
+                    try:
+                        success = AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
+                        if success: 
+                            asaas_cancelled_count += 1
+                            debug_log.append(f"TX #{tx.id} (Asaas {tx.asaas_id}): Cancelado.")
+                        else:
+                            debug_log.append(f"TX #{tx.id}: Falha cancelamento API.")
+                    except Exception as e:
+                        debug_log.append(f"TX #{tx.id}: Erro API: {e}")
+            
+            # 2. Update Contract Status
+            contract.status = 'cancelled'
+            
+            # CRITICAL: Commit cancellations NOW before risking Fee generation errors
+            db.session.commit()
+            debug_log.append("Cancelamentos salvos no banco com sucesso.")
+            
+            # 3. Create Termination Fee (if requested)
+            if penalty and penalty > 0:
+                try:
+                     due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date() if due_date_str else date.today()
+                     
+                     fee_tx = Transaction(
+                        contract_id=contract.id,
+                        company_id=contract.company_id,
+                        client_id=contract.client_id, # Link client directly
+                        description=f"Multa Rescisória - Contrato #{contract.id}",
+                        amount=penalty,
+                        due_date=due_date,
+                        status='pending'
+                    )
+                     db.session.add(fee_tx)
+                     db.session.commit() # Commit local fee first to get ID
+                     
+                     # Integration
+                     debug_log.append(f"Gerando Boleto Multa: {penalty}")
+                     customer_id = AsaasService.create_customer(contract.company_id, contract.client)
+                     AsaasService.create_payment(contract.company_id, customer_id, fee_tx)
+                     
+                     # Final commit for Asaas ID updates
+                     db.session.commit()
+                     debug_log.append("Multa gerada no Asaas com sucesso.")
+                     
+                except Exception as e:
+                    debug_log.append(f"ERRO AO GERAR MULTA: {str(e)}")
+                    # Not re-raising to avoid 500 response, just logging.
+                    # Cancellation is already done.
+            
+            # Notify Log
+            try:
+                create_notification(
+                    user_id=current_user.id,
+                    company_id=current_user.company_id,
+                    type='system_info',
+                    title=f'Cancelamento #{contract.id}',
+                    message="\n".join(debug_log)
+                )
+            except: pass
+            
+            return jsonify({'message': 'Contrato cancelado com sucesso.'})
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error terminating contract: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'message': f'Erro ao cancelar: {str(e)}'}), 500
 
     @main.route('/settings/integrations', methods=['GET', 'POST'])
     @login_required
@@ -2556,14 +2494,22 @@ def create_app():
             dia_vencimento = int(data.get('dia_vencimento', '5'))
             data_inicio_str = data.get('data_inicio')
             
+            # Implantation Data
+            val_implantacao_str = data.get('valor_implantacao', '0')
+            forma_implantacao = data.get('forma_implantacao', 'junto_primeira') # junto_primeira, separado_unico, separado_parcelado
+            
             val_parcela = float(val_parcela_str.replace('.', '').replace(',', '.'))
+            val_implantacao = float(val_implantacao_str.replace('.', '').replace(',', '.')) if val_implantacao_str else 0.0
+            
             start_date = datetime.strptime(data_inicio_str, '%d/%m/%Y').date()
             
             new_transactions = []
             
             # Check if transactions already exist to avoid duplicates if re-signed (safety check)
             existing_count = Transaction.query.filter_by(contract_id=contract.id).count()
+            
             if existing_count == 0:
+                # 1. GENERATE REGULAR INSTALLMENTS
                 for i in range(qtd_parcelas):
                     target_month_date = add_months_helper(start_date, i)
                     try:
@@ -2571,15 +2517,68 @@ def create_app():
                     except ValueError:
                         due_date = date(target_month_date.year, target_month_date.month, 28)
                     
+                    description = f"Parcela {i+1}/{qtd_parcelas} - {contract.template.name}"
+                    amount = val_parcela
+                    
+                    # Logic A: Merge Implantation into First Installment
+                    if i == 0 and val_implantacao > 0 and forma_implantacao == 'junto_primeira':
+                        amount += val_implantacao
+                        description += " + Taxa de Implantação"
+
                     t = Transaction(
                         contract_id=contract.id,
-                        description=f"Parcela {i+1}/{qtd_parcelas} - {contract.template.name}",
-                        amount=val_parcela,
+                        description=description,
+                        amount=amount,
                         due_date=due_date,
                         status='pending'
                     )
                     db.session.add(t)
                     new_transactions.append(t)
+                
+                # 2. GENERATE SEPARATE IMPLANTATION TRANSACTIONS (If applicable)
+                if val_implantacao > 0 and forma_implantacao in ['separado_unico', 'separado_parcelado']:
+                    
+                    # Determine Count and Due Date
+                    impl_qtd = 1
+                    impl_date = start_date # Default to start date (or specific date if provided?)
+                    
+                    # Usually "separado" implies an upfront payment or specific date
+                    # Let's check if form provided 'data_vencimento_implantacao'
+                    impl_due_date_str = data.get('data_vencimento_implantacao')
+                    if impl_due_date_str:
+                         try:
+                             impl_date = datetime.strptime(impl_due_date_str, '%d/%m/%Y').date()
+                         except:
+                             impl_date = start_date
+
+                    if forma_implantacao == 'separado_parcelado':
+                        impl_qtd_str = data.get('qtd_parcelas_implantacao', '1')
+                        impl_qtd = int(impl_qtd_str) if impl_qtd_str else 1
+                        
+                    impl_installment_val = val_implantacao / impl_qtd
+                    
+                    for k in range(impl_qtd):
+                        # Separate due dates? Usually monthly if parcelled.
+                        # If single, just one date.
+                        # If parcelled, starting from custom date.
+                        target_impl_date = add_months_helper(impl_date, k)
+                        
+                        desc_extra = f"Taxa de Implantação"
+                        if impl_qtd > 1:
+                            desc_extra += f" {k+1}/{impl_qtd}"
+                        
+                        # Use client_id directly now (new feature support)
+                        t_impl = Transaction(
+                            contract_id=contract.id,
+                            client_id=contract.client_id, # Linking explicitly
+                            description=desc_extra,
+                            amount=impl_installment_val,
+                            due_date=target_impl_date,
+                            status='pending'
+                        )
+                        db.session.add(t_impl)
+                        new_transactions.append(t_impl)
+
             
             # --- ASAAS INTEGRATION ---
             from models import Integration
@@ -2591,18 +2590,14 @@ def create_app():
                 customer_id = AsaasService.create_customer(contract.company_id, contract.client)
                 
                 # 2. Create Charges (only for new/pending transactions)
-                # If we just created them, they are in new_transactions
-                # If they existed, we might want to process them if they don't have asaas_id?
-                # For MVP, assume we process the ones we just made or all pending without ID.
-                
                 txs_to_process = new_transactions if new_transactions else Transaction.query.filter_by(contract_id=contract.id, status='pending', asaas_id=None).all()
                 
                 for tx in txs_to_process:
-                    AsaasService.create_payment(contract.company_id, customer_id, tx)
-                    # Note: create_payment updates tx.asaas_id and tx.asaas_invoice_url handles
+                    create_data = AsaasService.create_payment(contract.company_id, customer_id, tx)
+                    # Helper handles updates
             
             contract.status = 'signed'
-            # contract.signed_at = datetime.now() # if field exists
+            # contract.signed_at = datetime.now() 
             
             db.session.commit()
             
@@ -2613,6 +2608,8 @@ def create_app():
             
         except Exception as e:
             print(f"Error signing contract: {e}")
+            import traceback
+            traceback.print_exc()
             db.session.rollback()
             return jsonify({'error': str(e)}), 500
 

@@ -152,7 +152,8 @@ def stats():
 
     # --- RECENT TRANSACTIONS ---
     recent_txs = Transaction.query.join(Contract).filter(
-        Contract.company_id == company_id
+        Contract.company_id == company_id,
+        Transaction.status != 'cancelled' # Hide cancelled
     ).order_by(
         Transaction.status == 'paid', # Pending first
         Transaction.due_date.asc()

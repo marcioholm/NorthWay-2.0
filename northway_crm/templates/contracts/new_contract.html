@@ -64,26 +64,22 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Financeiro
                     </h3>
 
+                    <!-- Contract Value & Installments -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
                             <div class="relative group">
                                 <label for="valor_total"
                                     class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Valor
-                                    Total</label>
+                                    Total (Contrato)</label>
                                 <input type="text" id="valor_total" name="valor_total" placeholder="0,00"
                                     class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono font-medium">
                             </div>
                         </div>
 
                         <div class="relative group">
-                            <label for="valor_implantacao"
-                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Implantação</label>
-                            <input type="text" id="valor_implantacao" name="valor_implantacao" placeholder="0,00"
-                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
-                        </div>
-                        <div class="relative group">
                             <label for="valor_parcela"
-                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Parcela</label>
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Parcela
+                                Mensal</label>
                             <input type="text" id="valor_parcela" name="valor_parcela" placeholder="0,00"
                                 value="{{ client.monthly_value }}"
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono bg-gray-50/50">
@@ -92,18 +88,70 @@
                         <div class="relative group">
                             <label for="qtd_parcelas"
                                 class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Qtd
-                                Parcelas</label>
+                                Meses</label>
                             <input type="number" id="qtd_parcelas" name="qtd_parcelas" value="12"
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
                         </div>
+
                         <div class="relative group">
                             <label for="dia_vencimento"
                                 class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Dia
-                                Venc.</label>
+                                Vencimento</label>
                             <input type="number" id="dia_vencimento" name="dia_vencimento" value="5"
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
                         </div>
 
+                        <!-- Implantation Section -->
+                        <div class="col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2 space-y-4">
+                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Taxa de
+                                Implantação</h4>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="relative group">
+                                    <label for="valor_implantacao"
+                                        class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Valor</label>
+                                    <input type="text" id="valor_implantacao" name="valor_implantacao"
+                                        placeholder="0,00"
+                                        class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
+                                </div>
+
+                                <div class="relative group">
+                                    <label for="forma_implantacao"
+                                        class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Como
+                                        Cobrar?</label>
+                                    <select id="forma_implantacao" name="forma_implantacao"
+                                        onchange="toggleImplantationOptions()"
+                                        class="w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all bg-white appearance-none">
+                                        <option value="junto_primeira">Junto (1ª Parcela)</option>
+                                        <option value="separado_unico">Separado (À Vista)</option>
+                                        <option value="separado_parcelado">Separado (Parcelado)</option>
+                                    </select>
+                                    <i data-lucide="chevron-down"
+                                        class="absolute right-4 top-3.5 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                                </div>
+                            </div>
+
+                            <div id="implantacao_extra_fields" class="hidden grid grid-cols-2 gap-4 animate-fadeIn">
+                                <div class="relative group">
+                                    <label for="implantacao_parcelas"
+                                        class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Qtd
+                                        Parcelas (Taxa)</label>
+                                    <input type="number" id="implantacao_parcelas" name="qtd_parcelas_implantacao"
+                                        value="1"
+                                        class="w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
+                                </div>
+                                <div class="relative group">
+                                    <label for="implantacao_vencimento"
+                                        class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Vencimento
+                                        (Taxa)</label>
+                                    <input type="text" id="implantacao_vencimento" name="data_vencimento_implantacao"
+                                        placeholder="DD/MM/AAAA"
+                                        class="w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono mask-date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Traffic Config -->
                         <div class="relative group">
                             <label for="valor_minimo_trafego"
                                 class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Min.
@@ -582,6 +630,23 @@
 
     function formatCurrencyValue(value) {
         return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+
+    function toggleImplantationOptions() {
+        const select = document.getElementById('forma_implantacao');
+        const extraFields = document.getElementById('implantacao_extra_fields');
+        const parcelsInput = document.getElementById('implantacao_parcelas');
+
+        if (select.value === 'separado_parcelado') {
+            extraFields.classList.remove('hidden');
+            parcelsInput.parentElement.classList.remove('hidden'); // Show parcels
+        } else if (select.value === 'separado_unico') {
+            extraFields.classList.remove('hidden');
+            parcelsInput.parentElement.classList.add('hidden'); // Hide parcels (always 1)
+        } else {
+            extraFields.classList.add('hidden');
+        }
     }
 
     function calculateDuration() {
