@@ -430,7 +430,13 @@ def cancel_transaction_route(id):
         return jsonify({'success': False, 'error': 'Transação não encontrada.'}), 404
     
     # Security Check: Belongs to user's company
-    if tx.company_id != current_user.company_id:
+    tx_company_id = tx.company_id
+    if not tx_company_id and tx.contract:
+        tx_company_id = tx.contract.company_id
+    elif not tx_company_id and tx.client:
+        tx_company_id = tx.client.company_id
+        
+    if tx_company_id != current_user.company_id:
         return jsonify({'success': False, 'error': 'Acesso negado. Transação pertence a outra empresa.'}), 403
         
     try:
