@@ -541,16 +541,17 @@
                                     <span class="text-[10px] text-gray-400">{{ contract.created_at.strftime('%d/%m/%y')
                                         }}</span>
                                 </div>
-                                <p class="text-sm font-bold text-gray-900 leading-tight">{{
-                                    contract.template.name|default('Contrato') }}</p>
+                                <p class="text-sm font-bold text-gray-900 leading-tight">{{ contract.template.name if
+                                    contract.template else 'Contrato Sem Modelo' }}</p>
                             </div>
                         </div>
 
                         <div class="flex flex-col items-end gap-1">
                             <span
                                 class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else ('bg-green-100 text-green-700' if contract.status == 'signed' else ('bg-red-100 text-red-700' if contract.status == 'terminated' else 'bg-blue-100 text-blue-700')) }}">
-                                {{ {'draft': 'Rascunho', 'issued': 'Emitido', 'signed': 'Assinado', 'terminated':
-                                'Rescindido'}[contract.status] }}
+                                {{ 'Rascunho' if contract.status == 'draft' else ('Emitido' if contract.status ==
+                                'issued' else ('Assinado' if contract.status == 'signed' else ('Rescindido' if
+                                contract.status == 'terminated' else contract.status))) }}
                             </span>
 
                             <!-- Actions (Hover Only) -->
