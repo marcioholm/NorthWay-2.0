@@ -1975,125 +1975,136 @@ def create_app():
         if client.company_id != current_user.company_id:
             abort(403)
             
-        action = request.form.get('action', 'issue')
-        template_id = request.form.get('template_id')
-        contract_id = request.form.get('contract_id')
-        template = ContractTemplate.query.get_or_404(template_id)
-        form_data = request.form.to_dict()
-        # Prepare final content server-side to ensure Markdown conversion
-        # Use Helper
-        replacements = get_contract_replacements(client, form_data)
-        
-        # --- SYNC CLIENT DATA (Bug Fix) ---
-        # Update client record with fresh data from the contract form
-        user_wants_sync = True # Could be a checkbox, but default to True for consistency
-        if user_wants_sync:
-            if form_data.get('contratante_nome'):
-                client.name = form_data.get('contratante_nome')
-            
-            if form_data.get('contratante_documento'):
-                client.document = form_data.get('contratante_documento')
-            
-            if form_data.get('contratante_representante'):
-                client.representative = form_data.get('contratante_representante')
-                
-            if form_data.get('contratante_cpf'):
-                client.representative_cpf = form_data.get('contratante_cpf')
-
-            # Email & Address Sync
-            if form_data.get('contratante_email'):
-                 client.email_contact = form_data.get('contratante_email')
-                 
-            # Address Mapping (Contract Form -> Client Model)
-            # Assuming contract form sends 'contratante_endereco' as a single string? NO.
-            # We need to check what the contract form sends.
-            # In new_contract.html, checking inputs...
-            # The form has: contratante_endereco (single line fallback)
-            # BUT it also has "Details" section: contratante_endereco (which is just one field).
-            # WAIT. The user screenshot shows "Rua", "Bairro", etc. empty in Client Details.
-            # Does the Contract Form HAVE separate address inputs?
-            # Looking at new_contract.html: 
-            # It has 'contratante_endereco' (single input).
-            # It DOES NOT seems to have separate address inputs for the CLIENT EDIT section in the contract form.
-            # It has 'contratante_endereco' placeholder="Endereço".
-            
-            # HOWEVER, the Client Model has separate fields.
-            # If the contract form only provides a single "Endereço" string, we can at least save that to 'address_street' as a fallback or 'address_neighborhood' etc?
-            # Or better, we should probably ENHANCE the contract form to have split address fields if we want to sync properly.
-            # OR we try to parse it? Parsing is risky.
-            
-            # Let's check get_contract_replacements:
-            # '{{CONTRATANTE_ENDERECO}}': form_data.get('contratante_endereco') or format_addr(client),
-            
-            # If the user enters "Rua X, 123" in the single 'contratante_endereco' field, we can't easily split it into street, number, neighborhood, city, state.
-            # UNLESS we add those fields to the New Contract form too.
-            
-            # BUT: checking new_contract.html again...
-            # "Details" section:
-            # <input type="text" name="contratante_endereco" ... placeholder="Endereço">
-            
-            # So currently, the contract form ONLY has a single address field.
-            # If the user fills this, we should save it to `address_street` as a best effort?
-            # Or maybe `address_street` is not the right place if it contains the full address.
-            # But the Client Details UI clearly separates them.
-            
-            # CRITICAL DECISION:
-            # Users hate re-typing.
-            # We should probably update `address_street` with the full value if it's the only one we have, 
-            # OR - even better - we ask the user (in my mind) or just do it.
-            # Given the screenshot shows all empty, putting SOMETHING is better than nothing.
-            # I will map 'contratante_endereco' to 'address_street' for now.
-            if form_data.get('contratante_endereco'):
-                 client.address_street = form_data.get('contratante_endereco')
-
-            # Financials
-            val_parcela = form_data.get('valor_parcela')
-            if val_parcela:
-                try:
-                    # 1.250,50 -> 1250.50
-                    cleaned = val_parcela.replace('R$', '').replace('.', '').replace(',', '.').strip()
-                    client.monthly_value = float(cleaned)
-                except ValueError:
-                    pass
-        # ----------------------------------
-        
-        
-        # 1. Process Main Content
-        generated_content = template.content
-        for key, value in replacements.items():
-            generated_content = generated_content.replace(key, str(value))
-        
         try:
-            generated_content = markdown.markdown(generated_content)
-        except Exception as e:
-            print(f"Markdown Error: {e}")
+            action = request.form.get('action', 'issue')
+            template_id = request.form.get('template_id')
+            contract_id = request.form.get('contract_id')
+            template = ContractTemplate.query.get_or_404(template_id)
+            form_data = request.form.to_dict()
+            # Prepare final content server-side to ensure Markdown conversion
+            # Use Helper
+            replacements = get_contract_replacements(client, form_data)
+            
+            # --- SYNC CLIENT DATA (Bug Fix) ---
+            # Update client record with fresh data from the contract form
+            user_wants_sync = True # Could be a checkbox, but default to True for consistency
+            if user_wants_sync:
+                if form_data.get('contratante_nome'):
+                    client.name = form_data.get('contratante_nome')
+                
+                if form_data.get('contratante_documento'):
+                    client.document = form_data.get('contratante_documento')
+                
+                if form_data.get('contratante_representante'):
+                    client.representative = form_data.get('contratante_representante')
+                    
+                if form_data.get('contratante_cpf'):
+                    client.representative_cpf = form_data.get('contratante_cpf')
 
-        # Inject Branded Header
-        if current_user.company.logo_filename:
-             logo_url = url_for('static', filename='uploads/company/' + current_user.company.logo_filename, _external=True)
-             primary_color = current_user.company.primary_color or '#fa0102'
-             secondary_color = current_user.company.secondary_color or '#111827'
-             header_html = f"""
-                 <div style="text-align:center; margin-bottom: 40px; border-bottom: 2px solid {primary_color}; padding-bottom: 20px;">
-                     <h2 style="color: {secondary_color}; margin: 0; text-transform: uppercase;">{current_user.company.name}</h2>
-                     <p style="color: #666; font-size: 12px; margin: 5px 0;">CNPJ: {current_user.company.document}</p>
-                     <img src="{logo_url}" style="max-height: 60px; margin-top: 10px;">
-                 </div>
-             """
-             generated_content = header_html + generated_content
+                # Email & Address Sync
+                if form_data.get('contratante_email'):
+                     client.email_contact = form_data.get('contratante_email')
+                     
+                # Address Mapping (Contract Form -> Client Model)
+                # Assuming contract form sends 'contratante_endereco' as a single string? NO.
+                # We need to check what the contract form sends.
+                # In new_contract.html, checking inputs...
+                # The form has: contratante_endereco (single line fallback)
+                # BUT it also has "Details" section: contratante_endereco (which is just one field).
+                # WAIT. The user screenshot shows "Rua", "Bairro", etc. empty in Client Details.
+                # Does the Contract Form HAVE separate address inputs?
+                # Looking at new_contract.html: 
+                # It has 'contratante_endereco' (single input).
+                # It DOES NOT seems to have separate address inputs for the CLIENT EDIT section in the contract form.
+                # It has 'contratante_endereco' placeholder="Endereço".
+                
+                # HOWEVER, the Client Model has separate fields.
+                # If the contract form only provides a single "Endereço" string, we can at least save that to 'address_street' as a fallback or 'address_neighborhood' etc?
+                # Or better, we should probably ENHANCE the contract form to have split address fields if we want to sync properly.
+                # OR we try to parse it? Parsing is risky.
+                
+                # Let's check get_contract_replacements:
+                # '{{CONTRATANTE_ENDERECO}}': form_data.get('contratante_endereco') or format_addr(client),
+                
+                # If the user enters "Rua X, 123" in the single 'contratante_endereco' field, we can't easily split it into street, number, neighborhood, city, state.
+                # UNLESS we add those fields to the New Contract form too.
+                
+                # BUT: checking new_contract.html again...
+                # "Details" section:
+                # <input type="text" name="contratante_endereco" ... placeholder="Endereço">
+                
+                # So currently, the contract form ONLY has a single address field.
+                # If the user fills this, we should save it to `address_street` as a best effort?
+                # Or maybe `address_street` is not the right place if it contains the full address.
+                # But the Client Details UI clearly separates them.
+                
+                # CRITICAL DECISION:
+                # Users hate re-typing.
+                # We should probably update `address_street` with the full value if it's the only one we have, 
+                # OR - even better - we ask the user (in my mind) or just do it.
+                # Given the screenshot shows all empty, putting SOMETHING is better than nothing.
+                # I will map 'contratante_endereco' to 'address_street' for now.
+                if form_data.get('contratante_endereco'):
+                     client.address_street = form_data.get('contratante_endereco')
 
-        status = 'issued' if action == 'issue' else 'draft'
-        
-        if contract_id:
-            contract = Contract.query.get(contract_id)
-            if contract and contract.company_id == current_user.company_id:
-                contract.template_id = template.id
-                contract.generated_content = generated_content
-                contract.form_data = json.dumps(form_data)
-                contract.status = status
-            else:
-                # Fallback to create if ID invalid
-                 contract = Contract(
+                # Financials
+                val_parcela = form_data.get('valor_parcela')
+                if val_parcela:
+                    try:
+                        # 1.250,50 -> 1250.50
+                        cleaned = val_parcela.replace('R$', '').replace('.', '').replace(',', '.').strip()
+                        client.monthly_value = float(cleaned)
+                    except ValueError:
+                        pass
+            # ----------------------------------
+            
+            
+            # 1. Process Main Content
+            generated_content = template.content
+            for key, value in replacements.items():
+                generated_content = generated_content.replace(key, str(value))
+            
+            try:
+                generated_content = markdown.markdown(generated_content)
+            except Exception as e:
+                print(f"Markdown Error: {e}")
+
+            # Inject Branded Header
+            if current_user.company.logo_filename:
+                 logo_url = url_for('static', filename='uploads/company/' + current_user.company.logo_filename, _external=True)
+                 primary_color = current_user.company.primary_color or '#fa0102'
+                 secondary_color = current_user.company.secondary_color or '#111827'
+                 header_html = f"""
+                     <div style="text-align:center; margin-bottom: 40px; border-bottom: 2px solid {primary_color}; padding-bottom: 20px;">
+                         <h2 style="color: {secondary_color}; margin: 0; text-transform: uppercase;">{current_user.company.name}</h2>
+                         <p style="color: #666; font-size: 12px; margin: 5px 0;">CNPJ: {current_user.company.document}</p>
+                         <img src="{logo_url}" style="max-height: 60px; margin-top: 10px;">
+                     </div>
+                 """
+                 generated_content = header_html + generated_content
+
+            status = 'issued' if action == 'issue' else 'draft'
+            
+            if contract_id:
+                contract = Contract.query.get(contract_id)
+                if contract and contract.company_id == current_user.company_id:
+                    contract.template_id = template.id
+                    contract.generated_content = generated_content
+                    contract.form_data = json.dumps(form_data)
+                    contract.status = status
+                else:
+                    # Fallback to create if ID invalid
+                     contract = Contract(
+                        client_id=client.id,
+                        company_id=client.company.id,
+                        template_id=template.id,
+                        generated_content=generated_content,
+                        form_data=json.dumps(form_data),
+                        status=status
+                    )
+                     db.session.add(contract)
+            else: 
+                contract = Contract(
                     client_id=client.id,
                     company_id=client.company.id,
                     template_id=template.id,
@@ -2101,42 +2112,37 @@ def create_app():
                     form_data=json.dumps(form_data),
                     status=status
                 )
-                 db.session.add(contract)
-        else: 
-            contract = Contract(
-                client_id=client.id,
-                company_id=client.company.id,
-                template_id=template.id,
-                generated_content=generated_content,
-                form_data=json.dumps(form_data),
-                status=status
-            )
-            db.session.add(contract)
-            
-        db.session.commit()
-        
-        if status == 'issued':
-            create_notification(current_user.id, client.company_id, 'client_status_changed', f"Contrato emitido para {client.name}", f"Contrato #{contract.id} gerado.")
-            
-            # Auto-Create Urgent Task
-            task = Task(
-                title="Enviar contrato para assinatura",
-                description=f"Contrato #{contract.id} emitido. Enviar para assinatura do cliente.",
-                due_date=datetime.now(),
-                priority='urgente',
-                status='pendente',
-                company_id=current_user.company_id,
-                client_id=client.id,
-                assigned_to_id=current_user.id
-            )
-            db.session.add(task)
+                db.session.add(contract)
+                
             db.session.commit()
             
-            flash('Contrato emitido e tarefa de assinatura criada!', 'success')
-        else:
-            flash('Rascunho salvo com sucesso!', 'info')
+            if status == 'issued':
+                create_notification(current_user.id, client.company_id, 'client_status_changed', f"Contrato emitido para {client.name}", f"Contrato #{contract.id} gerado.")
+                
+                # Auto-Create Urgent Task
+                task = Task(
+                    title="Enviar contrato para assinatura",
+                    description=f"Contrato #{contract.id} emitido. Enviar para assinatura do cliente.",
+                    due_date=datetime.now(),
+                    priority='urgente',
+                    status='pendente',
+                    company_id=current_user.company_id,
+                    client_id=client.id,
+                    assigned_to_id=current_user.id
+                )
+                db.session.add(task)
+                db.session.commit()
+                
+                flash('Contrato emitido e tarefa de assinatura criada!', 'success')
+            else:
+                flash('Rascunho salvo com sucesso!', 'info')
 
-        return redirect(url_for('main.client_details', id=client.id))
+            return redirect(url_for('main.client_details', id=client.id))
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            flash(f"Erro ao emitir contrato: {str(e)}", 'error')
+            return redirect(url_for('main.client_details', id=client.id))
 
 
     @main.route('/contracts/<int:id>/cancel', methods=['POST'])
@@ -2146,27 +2152,34 @@ def create_app():
         if contract.company_id != current_user.company_id:
             abort(403)
             
+        print(f"DEBUG: Canceling Contract #{id}")
+            
         # Optional: Termination Fee
         charge_fee = request.form.get('charge_fee') == 'on'
         fee_amount_str = request.form.get('fee_amount')
         fee_due_date_str = request.form.get('fee_due_date')
         
-        # 1. Cancel Pending Transactions (Local + Asaas)
-        # Only cancel 'pending' or 'overdue' that are FUTURE? 
-        # Usually when cancelling, we cancel ALL unpaid future installments. 
-        # Overdue might be debts that still need to be paid? 
-        # For simplicity and safety: Cancel PENDING. Keep OVERDUE (user should manually deal with debt).
+        print(f"DEBUG: Fee Options - Charge: {charge_fee}, Amount: {fee_amount_str}, Date: {fee_due_date_str}")
         
+        # 1. Cancel Pending Transactions (Local + Asaas)
         pending_txs = Transaction.query.filter_by(contract_id=contract.id, status='pending').all()
+        print(f"DEBUG: Found {len(pending_txs)} pending transactions.")
         
         asaas_cancelled_count = 0
         from services.asaas_service import AsaasService
         
         for tx in pending_txs:
+            print(f"DEBUG: Processing TX {tx.id}. Asaas ID: {tx.asaas_id} Status: {tx.status}")
             tx.status = 'cancelled'
             if tx.asaas_id:
                 success = AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
-                if success: asaas_cancelled_count += 1
+                if success: 
+                    asaas_cancelled_count += 1
+                    print(f"DEBUG: TX {tx.id} cancelled in Asaas.")
+                else:
+                    print(f"DEBUG: Failed to cancel TX {tx.id} in Asaas.")
+            else:
+                print(f"DEBUG: TX {tx.id} has no Asaas ID. Skipping API call.")
         
         # 2. Update Contract
         contract.status = 'cancelled'
@@ -2177,6 +2190,8 @@ def create_app():
                 # Parse Float
                 amount = float(fee_amount_str.replace('R$', '').replace('.', '').replace(',', '.').strip())
                 due_date = datetime.strptime(fee_due_date_str, '%Y-%m-%d').date()
+                
+                print(f"DEBUG: Generating Fee Transaction: {amount} due {due_date}")
                 
                 fee_tx = Transaction(
                     contract_id=contract.id,
@@ -2190,15 +2205,17 @@ def create_app():
                 db.session.flush() # Get ID
                 
                 # Create in ASAAS
-                # We need to find the customer ID. Either store it or fetch it.
-                # If we don't have it easily linked to Client, we re-create/fetch.
-                # Assuming contract.client is valid.
+                print("DEBUG: Creating Fee Customer/Payment in Asaas...")
                 customer_id = AsaasService.create_customer(contract.company_id, contract.client)
                 AsaasService.create_payment(contract.company_id, customer_id, fee_tx)
+                print("DEBUG: Fee created successfully.")
                 
                 flash('Contrato cancelado e Multa Rescisória gerada no ASAAS!', 'success')
             except Exception as e:
-                flash(f'Contrato cancelado, mas erro ao gerar multa: {e}', 'warning')
+                print(f"DEBUG: Error generating fee: {e}")
+                import traceback
+                traceback.print_exc()
+                flash(f'Contrato cancelado, mas houve erro ao gerar a multa: {e}', 'warning')
         else:
             flash(f'Contrato cancelado. {asaas_cancelled_count} cobranças removidas do ASAAS.', 'success')
             
