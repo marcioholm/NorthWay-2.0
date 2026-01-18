@@ -138,9 +138,12 @@ def create_app():
 
     @app.context_processor
     def inject_counts():
-        if current_user.is_authenticated:
-            pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
-            return dict(pending_tasks_count=pending_count)
+        try:
+            if current_user.is_authenticated:
+                pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
+                return dict(pending_tasks_count=pending_count)
+        except Exception as e:
+            print(f"Error in context processor: {e}")
         return dict(pending_tasks_count=0)
 
     @main.route('/')
@@ -3196,16 +3199,7 @@ def create_app():
 
     return app
 
-
-    except Exception as e:
-        print(f'CRITICAL ERROR updating client: {e}')
-        import traceback
-        traceback.print_exc()
-        db.session.rollback()
-        flash(f'Erro ao salvar dados: {str(e)}', 'error')
-        return redirect(url_for('main.client_details', id=id))
-
 app = create_app()
 
 if __name__ == '__main__':
-app.run(debug=False, port=5001)
+    app.run(debug=False, port=5001)
