@@ -146,6 +146,26 @@ def create_app():
             print(f"Error in context processor: {e}")
         return dict(pending_tasks_count=0)
 
+    @app.errorhandler(500)
+    def internal_error(error):
+        import traceback
+        err_msg = str(error)
+        tb = traceback.format_exc()
+        print(f"--- SERVER ERROR ---\n{err_msg}\n{tb}\n-------------------")
+        return f"<h1>Internal Server Error</h1><p>{err_msg}</p><pre>{tb}</pre>", 500
+
+    # Log masked DATABASE_URL for debugging
+    if database_url:
+        try:
+            parts = database_url.split('@')
+            if len(parts) > 1:
+                masked_url = parts[0].split(':')[0] + ":****@" + parts[1]
+                print(f"DEBUG: Using DATABASE_URL={masked_url}")
+            else:
+                print(f"DEBUG: Using DATABASE_URL={database_url}")
+        except:
+             pass
+
     @main.route('/')
     def index():
         if current_user.is_authenticated:
