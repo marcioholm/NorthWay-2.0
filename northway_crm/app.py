@@ -1183,12 +1183,20 @@ def create_app():
 
         except Exception as e:
             print(f'CRITICAL ERROR updating client: {e}')
-            import traceback
-            traceback.print_exc()
-            db.session.rollback()
-            flash(f'Erro ao salvar dados (Vercel/DB): {str(e)}', 'error')
-            return redirect(url_for('main.client_details', id=id))
-
+            try:
+                db.session.rollback()
+            except:
+                print("Rollback failed")
+            
+            try:
+                err_msg = str(e)
+                if "attempt to write a readonly database" in err_msg or "readonly" in err_msg:
+                    err_msg = "ERRO: Banco de Dados Somente Leitura. Configure DATABASE_URL no Vercel."
+                
+                flash(f'Erro ao salvar: {err_msg}', 'error')
+                return redirect(url_for('main.client_details', id=id))
+            except:
+                return jsonify({'error': str(e), 'help': 'Configure DATABASE_URL'}), 500
     @main.route('/clients/<int:id>/interactions', methods=['POST'])
     @login_required
     def add_client_interaction(id):
