@@ -2038,14 +2038,11 @@ def create_app():
                 # Or maybe `address_street` is not the right place if it contains the full address.
                 # But the Client Details UI clearly separates them.
                 
-                # CRITICAL DECISION:
-                # Users hate re-typing.
-                # We should probably update `address_street` with the full value if it's the only one we have, 
-                # OR - even better - we ask the user (in my mind) or just do it.
-                # Given the screenshot shows all empty, putting SOMETHING is better than nothing.
-                # I will map 'contratante_endereco' to 'address_street' for now.
-                if form_data.get('contratante_endereco'):
-                     client.address_street = form_data.get('contratante_endereco')
+                # CRITICAL FIX: Do NOT overwrite separate address fields with the full combined string.
+                # This causes recursion (MyStreet -> MyStreet, 123, Neighborhood -> MyStreet, 123, Neighborhood, 123, Neighborhood...)
+                # and crashes the DB with StringTruncation error.
+                # if form_data.get('contratante_endereco'):
+                #      client.address_street = form_data.get('contratante_endereco')
 
                 # Financials
                 val_parcela = form_data.get('valor_parcela')
