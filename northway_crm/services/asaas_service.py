@@ -46,20 +46,44 @@ class AsaasService:
 
         url = f"{AsaasService.get_base_url(env)}/customers"
         
-        # Check if client already has an asaas_id (stored in some meta field? or we search by email/cpf)
-        # For MVP, we search by email/cpf first to avoid dupes
-        search_params = {"cpfCnpj": client.document}
-        try:
-            res_search = requests.get(url, headers=AsaasService.get_headers(api_key), params=search_params)
-            if res_search.status_code == 200 and res_search.json().get('data'):
-                return res_search.json()['data'][0]['id']
-        except Exception as e:
-            print(f"Error searching customer: {e}")
+        # Clean Document (Remove non-digits)
+        raw_doc = client.document
+        clean_doc = None
+        if raw_doc:
+            import re
+            clean_doc = re.sub(r'\D', '', raw_doc)
+
+        # 1. Search by CPF/CNPJ (Priority)
+        if clean_doc:
+            search_params = {"cpfCnpj": clean_doc}
+            try:
+                res_search = requests.get(url, headers=AsaasService.get_headers(api_key), params=search_params)
+                if res_search.status_code == 200:
+                    data = res_search.json().get('data', [])
+                    if data:
+                        return data[0]['id']
+            except Exception as e:
+                print(f"Error searching customer by Doc: {e}")
+
+        # 2. Search by Email (Secondary check to avoid duplication if Doc missing)
+        email = client.email or client.email_contact
+        if email:
+            search_params = {"email": email}
+            try:
+                res_search = requests.get(url, headers=AsaasService.get_headers(api_key), params=search_params)
+                if res_search.status_code == 200:
+                    data = res_search.json().get('data', [])
+                    # If found by email, but we have a doc, we might want to update the doc?
+                    # For now just return the ID found.
+                    if data:
+                        return data[0]['id']
+            except Exception as e:
+                print(f"Error searching customer by Email: {e}")
 
         payload = {
             "name": client.name,
-            "email": client.email or client.email_contact,
-            "cpfCnpj": client.document,
+            "email": email,
+            "cpfCnpj": clean_doc, # Send cleaned doc
             "mobilePhone": client.phone,
             "externalReference": str(client.id)
         }
@@ -67,6 +91,16 @@ class AsaasService:
         response = requests.post(url, headers=AsaasService.get_headers(api_key), json=payload)
         if response.status_code == 200:
             return response.json()['id']
+        elif response.status_code == 400:
+             # Handle "Customer with this CPF/CNPJ already exists" error or similar if search failed but creation blocked
+             err_json = response.json()
+             if 'errors' in err_json:
+                 for err in err_json['errors']:
+                     if err.get('code') == 'CUSTOMER_ALREADY_EXISTS':
+                         # Fallback: Try to search again? Or simpler, just fail for now as search should have caught it.
+                         # But wait, sometimes search is eventually consistent?
+                         pass
+             raise Exception(f"Failed to create customer (Asaas Error): {response.text}")
         else:
             raise Exception(f"Failed to create customer: {response.text}")
 
