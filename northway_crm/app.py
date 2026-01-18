@@ -1061,8 +1061,10 @@ def create_app():
         total_pending = sum(t.amount or 0 for t in client_txs if t.status == 'pending')
         total_overdue = sum(t.amount or 0 for t in client_txs if t.status == 'overdue')
         
-        # Calculate MRR (Monthly Recurring Revenue) from active contracts
-        mrr = sum(c.monthly_value or 0 for c in client.contracts if c.status == 'signed')
+        # Calculate MRR (Monthly Recurring Revenue)
+        # Fix: Contract does not have monthly_value column, use client.monthly_value or parse form_data if needed.
+        # For now, using client.monthly_value as single source of truth.
+        mrr = client.monthly_value or 0
         
         return render_template('client_details.html', 
                              client=client, 
