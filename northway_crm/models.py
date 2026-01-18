@@ -411,7 +411,8 @@ class Task(db.Model):
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=False)
+    contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=True) # Now nullable for manual charges
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Direct link for easier querying/manual charges
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy
     description = db.Column(db.String(200), nullable=False) # e.g. "Mensalidade 1/12"
     amount = db.Column(db.Float, nullable=False)

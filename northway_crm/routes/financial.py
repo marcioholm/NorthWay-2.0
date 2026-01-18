@@ -353,3 +353,57 @@ def expenses_api():
 def get_categories():
     cats = FinancialCategory.query.filter_by(company_id=current_user.company_id).all()
     return jsonify([{ 'id': c.id, 'name': c.name, 'type': c.type } for c in cats])
+
+@financial_bp.route('/clients/<int:id>/charges/new', methods=['POST'])
+@login_required
+def create_manual_charge(id):
+    from models import Client
+    from services.asaas_service import AsaasService
+    
+    # Check Client
+    client = Client.query.get_or_404(id)
+    if client.company_id != current_user.company_id:
+        abort(403)
+        
+    # Get Data
+    description = request.form.get('description')
+    amount_str = request.form.get('amount')
+    due_date_str = request.form.get('due_date')
+    
+    if not description or not amount_str or not due_date_str:
+        return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
+        
+    try:
+        amount = float(amount_str.replace('R$', '').replace('.', '').replace(',', '.').strip())
+        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        
+        # Create Transaction (Local)
+        tx = Transaction(
+            contract_id=None, # Manual Charge
+            client_id=client.id,
+            company_id=client.company_id,
+            description=description,
+            amount=amount,
+            due_date=due_date,
+            status='pending'
+        )
+        db.session.add(tx)
+        db.session.flush()
+        
+        # Create in Asaas
+        # Ensure customer exists
+        customer_id = AsaasService.create_customer(client.company_id, client)
+        payment_data = AsaasService.create_payment(client.company_id, customer_id, tx)
+        
+        tx.asaas_id = payment_data.get('id')
+        tx.asaas_invoice_url = payment_data.get('invoiceUrl')
+        
+        db.session.commit()
+         
+        return jsonify({'success': True, 'message': 'Cobrança gerada com sucesso!'})
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
