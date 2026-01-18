@@ -1053,12 +1053,12 @@ def create_app():
         
         # Financial Stats for UI
         client_txs = Transaction.query.filter_by(client_id=client.id).order_by(Transaction.due_date.desc()).all()
-        total_paid = sum(t.amount for t in client_txs if t.status == 'paid')
-        total_pending = sum(t.amount for t in client_txs if t.status == 'pending')
-        total_overdue = sum(t.amount for t in client_txs if t.status == 'overdue')
+        total_paid = sum(t.amount or 0 for t in client_txs if t.status == 'paid')
+        total_pending = sum(t.amount or 0 for t in client_txs if t.status == 'pending')
+        total_overdue = sum(t.amount or 0 for t in client_txs if t.status == 'overdue')
         
         # Calculate MRR (Monthly Recurring Revenue) from active contracts
-        mrr = sum(c.monthly_value for c in client.contracts if c.status == 'signed' and c.monthly_value)
+        mrr = sum(c.monthly_value or 0 for c in client.contracts if c.status == 'signed')
         
         return render_template('client_details.html', 
                              client=client, 
