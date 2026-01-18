@@ -324,4 +324,105 @@ def create_pipeline():
         
     db.session.commit()
     flash('Pipeline criado com sucesso.', 'success')
+    flash('Pipeline criado com sucesso.', 'success')
     return redirect(url_for('leads.pipeline', pipeline_id=pipeline.id))
+
+@leads_bp.route('/leads/template/download')
+@login_required
+def download_lead_template():
+    import csv 
+    import io
+    from flask import Response
+    
+    header = ['Nome', 'Email', 'Telefone', 'Origem', 'Interesse', 'Observações']
+    si = io.StringIO()
+    cw = csv.writer(si, delimiter=';')
+    cw.writerow(header)
+    cw.writerow(['Exemplo Empresa', 'contato@empresa.com', '(11) 99999-9999', 'Google', 'Consultoria', 'Cliente interessado em...'])
+    
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=modelo_importacao_leads.csv"}
+    )
+
+@leads_bp.route('/leads/export')
+@login_required
+def export_leads():
+    import csv 
+    import io
+    from flask import Response
+    
+    leads = Lead.query.filter_by(company_id=current_user.company_id).all()
+    
+    header = ['ID', 'Nome', 'Email', 'Telefone', 'Status', 'Origem', 'Data Criação']
+    si = io.StringIO()
+    cw = csv.writer(si, delimiter=';')
+    cw.writerow(header)
+    
+    for l in leads:
+        cw.writerow([l.id, l.name, l.email or '', l.phone or '', l.status, l.source or '', l.created_at.strftime('%d/%m/%Y')])
+        
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-disposition": f"attachment; filename=leads_export_{datetime.now().strftime('%Y%m%d')}.csv"}
+    )
+
+@leads_bp.route('/leads/import', methods=['POST'])
+@login_required
+def import_leads():
+    import csv
+    import io
+    
+    if 'file' not in request.files:
+        flash('Nenhum arquivo enviado.', 'error')
+        return redirect(url_for('leads.leads'))
+        
+    file = request.files['file']
+    if file.filename == '':
+        flash('Nenhum arquivo selecionado.', 'error')
+        return redirect(url_for('leads.leads'))
+        
+    if file:
+        try:
+            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            csv_input = csv.reader(stream, delimiter=';')
+            header = next(csv_input, None) # Skip header
+            
+            count = 0
+            for row in csv_input:
+                if len(row) < 1: continue
+                # Simple mapping based on template order: Name, Email, Phone, Source, Interest, Notes
+                name = row[0]
+                if not name: continue
+                
+                email = row[1] if len(row) > 1 else None
+                phone = row[2] if len(row) > 2 else None
+                source = row[3] if len(row) > 3 else 'Importado'
+                interest = row[4] if len(row) > 4 else None
+                notes = row[5] if len(row) > 5 else None
+                
+                lead = Lead(
+                    name=name,
+                    email=email,
+                    phone=phone,
+                    source=source,
+                    bant_need=interest,
+                    notes=notes,
+                    company_id=current_user.company_id,
+                    status='new',
+                    assigned_to_id=current_user.id
+                )
+                db.session.add(lead)
+                count += 1
+            
+            db.session.commit()
+            flash(f'{count} leads importados com sucesso!', 'success')
+            
+        except Exception as e:
+            flash(f'Erro ao processar arquivo: {str(e)}', 'error')
+            
+    return redirect(url_for('leads.leads'))

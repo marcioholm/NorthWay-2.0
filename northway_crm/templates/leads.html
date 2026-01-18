@@ -18,7 +18,7 @@
                 </button>
                 <div id="actionsDropdown"
                     class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-30">
-                    <a href="{{ url_for('main.download_lead_template') }}"
+                    <a href="{{ url_for('leads.download_lead_template') }}"
                         class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black">
                         <i data-lucide="file-down" class="w-4 h-4"></i>
                         Baixar Modelo
@@ -29,7 +29,7 @@
                         Importar CSV
                     </button>
                     <div class="border-t border-gray-100 my-1"></div>
-                    <a href="{{ url_for('main.export_leads') }}"
+                    <a href="{{ url_for('leads.export_leads') }}"
                         class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black">
                         <i data-lucide="download" class="w-4 h-4"></i>
                         Exportar CSV
@@ -304,7 +304,7 @@
             </button>
         </div>
 
-        <form action="{{ url_for('main.import_leads') }}" method="POST" enctype="multipart/form-data" class="p-6"
+        <form action="{{ url_for('leads.import_leads') }}" method="POST" enctype="multipart/form-data" class="p-6"
             onsubmit="showLoadingState(this)">
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo CSV</label>
@@ -320,7 +320,7 @@
                     </label>
                 </div>
                 <p class="text-xs text-gray-500 mt-2 text-center">
-                    Use o <a href="{{ url_for('main.download_lead_template') }}"
+                    Use o <a href="{{ url_for('leads.download_lead_template') }}"
                         class="text-northway-red hover:underline font-bold">modelo padrão</a> para evitar erros.
                 </p>
             </div>

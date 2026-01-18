@@ -18,14 +18,14 @@
             </a>
 
             <!-- Team -->
-            <a href="{{ url_for('main.settings_team') }}"
+            <a href="{{ url_for('admin.users') }}"
                 class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_team' in request.endpoint or 'admin_users' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                 <i data-lucide="users" class="w-4 h-4" aria-hidden="true"></i>
                 Equipe
             </a>
 
             <!-- Permissions -->
-            <a href="{{ url_for('main.settings_permissions') }}"
+            <a href="{{ url_for('roles.settings_permissions') }}"
                 class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_permissions' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                 <i data-lucide="shield" class="w-4 h-4" aria-hidden="true"></i>
                 Permissões (Cargos)
@@ -62,11 +62,11 @@
             class="p-2 {{ 'text-northway-red' if request.endpoint == 'admin.company_settings' else 'text-gray-500' }}">
             <i data-lucide="building" class="w-5 h-5"></i>
         </a>
-        <a href="{{ url_for('main.settings_team') }}"
+        <a href="{{ url_for('admin.users') }}"
             class="p-2 {{ 'text-northway-red' if 'settings_team' in request.endpoint else 'text-gray-500' }}">
             <i data-lucide="users" class="w-5 h-5"></i>
         </a>
-        <a href="{{ url_for('main.settings_permissions') }}"
+        <a href="{{ url_for('roles.settings_permissions') }}"
             class="p-2 {{ 'text-northway-red' if 'settings_permissions' in request.endpoint else 'text-gray-500' }}">
             <i data-lucide="shield" class="w-5 h-5"></i>
         </a>
