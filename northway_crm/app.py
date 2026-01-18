@@ -1172,86 +1172,86 @@ def create_app():
                  return "Unauthorized", 403
              
             # Basic fields
-        if 'service' in request.form: client.service = request.form.get('service')
-        if 'contract_type' in request.form: client.contract_type = request.form.get('contract_type')
-        if 'niche' in request.form: client.niche = request.form.get('niche')
+            if 'service' in request.form: client.service = request.form.get('service')
+            if 'contract_type' in request.form: client.contract_type = request.form.get('contract_type')
+            if 'niche' in request.form: client.niche = request.form.get('niche')
 
-        # Registration Data (New Fields) - Only update if present (enabled in frontend)
-        if 'document' in request.form: client.document = request.form.get('document')
-        if 'email_contact' in request.form: client.email_contact = request.form.get('email_contact')
-        if 'representative' in request.form: client.representative = request.form.get('representative')
-        if 'representative_cpf' in request.form: client.representative_cpf = request.form.get('representative_cpf')
-    
-        if 'address_street' in request.form: client.address_street = request.form.get('address_street')
-        if 'address_number' in request.form: client.address_number = request.form.get('address_number')
-        if 'address_neighborhood' in request.form: client.address_neighborhood = request.form.get('address_neighborhood')
-        if 'address_city' in request.form: client.address_city = request.form.get('address_city')
-        if 'address_state' in request.form: client.address_state = request.form.get('address_state')
-        if 'address_zip' in request.form: client.address_zip = request.form.get('address_zip')
-    
-        new_status = request.form.get('status')
-        if new_status and new_status != client.status:
-            client.status = new_status
+            # Registration Data (New Fields) - Only update if present (enabled in frontend)
+            if 'document' in request.form: client.document = request.form.get('document')
+            if 'email_contact' in request.form: client.email_contact = request.form.get('email_contact')
+            if 'representative' in request.form: client.representative = request.form.get('representative')
+            if 'representative_cpf' in request.form: client.representative_cpf = request.form.get('representative_cpf')
         
-            # NOTIFICATION: Lifecycle Status Changed
-            if client.account_manager_id and client.account_manager_id != current_user.id:
-                 create_notification(
-                     user_id=client.account_manager_id,
-                     company_id=current_user.company_id,
-                     type='client_status_changed',
-                     title='Status do Cliente Alterado',
-                     message=f"Status do cliente {client.name} alterado para {new_status} por {current_user.name}."
-                 )
-    
-        # client.health_status = request.form.get('health_status') # Automated now
-        if 'notes' in request.form: client.notes = request.form.get('notes')
-    
-        # Manager
-        manager_id = request.form.get('account_manager_id')
-        if manager_id:
-            client.account_manager_id = int(manager_id)
+            if 'address_street' in request.form: client.address_street = request.form.get('address_street')
+            if 'address_number' in request.form: client.address_number = request.form.get('address_number')
+            if 'address_neighborhood' in request.form: client.address_neighborhood = request.form.get('address_neighborhood')
+            if 'address_city' in request.form: client.address_city = request.form.get('address_city')
+            if 'address_state' in request.form: client.address_state = request.form.get('address_state')
+            if 'address_zip' in request.form: client.address_zip = request.form.get('address_zip')
         
-        # Values
-        if 'monthly_value' in request.form:
-            monthly_value = request.form.get('monthly_value')
-            try:
-                client.monthly_value = float(monthly_value) if monthly_value else 0.0
-            except ValueError:
-                pass # Keep old or ignore error for now
-        
-        # Dates
-        if 'start_date' in request.form:
-            start_date = request.form.get('start_date')
-            if start_date:
-                client.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        
-        if 'renewal_date' in request.form:
-            renewal_date = request.form.get('renewal_date')
-            if renewal_date:
-                client.renewal_date = datetime.strptime(renewal_date, '%Y-%m-%d').date()
-            else:
-                renewal_date = None
-
-        db.session.commit()
-        flash('Dados do cliente atualizados!', 'success')
-        return redirect(url_for('main.client_details', id=client.id))
-
-    except Exception as e:
-        print(f'CRITICAL ERROR updating client: {e}')
-        try:
-            db.session.rollback()
-        except:
-            print("Rollback failed")
-        
-        try:
-            err_msg = str(e)
-            if "attempt to write a readonly database" in err_msg or "readonly" in err_msg:
-                err_msg = "ERRO: Banco de Dados Somente Leitura. Configure DATABASE_URL no Vercel."
+            new_status = request.form.get('status')
+            if new_status and new_status != client.status:
+                client.status = new_status
             
-            flash(f'Erro ao salvar: {err_msg}', 'error')
-            return redirect(url_for('main.client_details', id=id))
-        except:
-            return jsonify({'error': str(e), 'help': 'Configure DATABASE_URL'}), 500
+                # NOTIFICATION: Lifecycle Status Changed
+                if client.account_manager_id and client.account_manager_id != current_user.id:
+                     create_notification(
+                         user_id=client.account_manager_id,
+                         company_id=current_user.company_id,
+                         type='client_status_changed',
+                         title='Status do Cliente Alterado',
+                         message=f"Status do cliente {client.name} alterado para {new_status} por {current_user.name}."
+                     )
+        
+            # client.health_status = request.form.get('health_status') # Automated now
+            if 'notes' in request.form: client.notes = request.form.get('notes')
+        
+            # Manager
+            manager_id = request.form.get('account_manager_id')
+            if manager_id:
+                client.account_manager_id = int(manager_id)
+            
+            # Values
+            if 'monthly_value' in request.form:
+                monthly_value = request.form.get('monthly_value')
+                try:
+                    client.monthly_value = float(monthly_value) if monthly_value else 0.0
+                except ValueError:
+                    pass # Keep old or ignore error for now
+            
+            # Dates
+            if 'start_date' in request.form:
+                start_date = request.form.get('start_date')
+                if start_date:
+                    client.start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            
+            if 'renewal_date' in request.form:
+                client.renewal_date = request.form.get('renewal_date')
+                if client.renewal_date:
+                    client.renewal_date = datetime.strptime(client.renewal_date, '%Y-%m-%d').date()
+                else:
+                    client.renewal_date = None
+
+            db.session.commit()
+            flash('Dados do cliente atualizados!', 'success')
+            return redirect(url_for('main.client_details', id=client.id))
+
+        except Exception as e:
+            print(f'CRITICAL ERROR updating client: {e}')
+            try:
+                db.session.rollback()
+            except:
+                print("Rollback failed")
+            
+            try:
+                err_msg = str(e)
+                if "attempt to write a readonly database" in err_msg or "readonly" in err_msg:
+                    err_msg = "ERRO: Banco de Dados Somente Leitura. Configure DATABASE_URL no Vercel."
+                
+                flash(f'Erro ao salvar: {err_msg}', 'error')
+                return redirect(url_for('main.client_details', id=id))
+            except:
+                return jsonify({'error': str(e), 'help': 'Configure DATABASE_URL'}), 500
 
     @main.route('/ping')
     def ping():
