@@ -1046,7 +1046,11 @@ def create_app():
             return "Unauthorized", 403
             
         # Auto-update health
-        update_client_health(client)
+        try:
+            update_client_health(client)
+        except Exception as e:
+            print(f"Error updating client health: {e}")
+            # db.session.rollback() # Not needed if query only
             
         users = User.query.filter_by(company_id=current_user.company_id).all()
         process_templates = ProcessTemplate.query.filter_by(company_id=current_user.company_id).all()
