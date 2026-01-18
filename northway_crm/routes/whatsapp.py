@@ -64,11 +64,12 @@ def test_connection():
     try:
         res = requests.get(url, headers=headers, timeout=10)
         data = res.json()
-        if 'error' in data: return f"Erro Z-API: {data['error']}"
+        if 'error' in data: 
+            return f"Erro Z-API: {data['error']} (URL: {url.replace(config['token'], '***')})"
         if data.get('connected'): return "Conectado! ✅"
         return "Desconectado (ou QR Code necessário)."
     except Exception as e:
-        return f"Erro de conexão: {e}"
+        return f"Erro de conexão: {e} (URL: {url.replace(config['token'], '***')})"
 
 # --- VIEWS ---
 @whatsapp_bp.route('/whatsapp')

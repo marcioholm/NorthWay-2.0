@@ -2287,13 +2287,19 @@ def create_app():
         if current_user.role != ROLE_ADMIN:
             abort(403)
         
-        from models import Integration
-        integration = Integration.query.filter_by(company_id=current_user.company_id, service=service).first()
-        
-        if integration:
-            db.session.delete(integration)
-            db.session.commit()
-            flash(f'Integração {service} removida.', 'success')
+        try:
+            from models import Integration
+            integration = Integration.query.filter_by(company_id=current_user.company_id, service=service).first()
+            
+            if integration:
+                db.session.delete(integration)
+                db.session.commit()
+                flash(f'Integração {service} removida com sucesso.', 'success')
+            else:
+                flash(f'Integração {service} não encontrada.', 'warning')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao remover integração: {str(e)}', 'error')
         
         return redirect(url_for('main.settings_integrations'))
 

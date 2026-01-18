@@ -26,8 +26,16 @@ def dashboard():
     
     # Calculate Users & Leads (Scanning all companies)
     total_users = User.query.count()
-    from models import Lead
-    total_leads = Lead.query.count()
+    from models import Lead, Contract
+    try:
+        total_leads = Lead.query.count()
+    except Exception:
+        total_leads = 0
+        
+    try:
+        total_contracts = Contract.query.count()
+    except Exception:
+        total_contracts = 0
     
     # Mock MRR Calculation (Plan based)
     # Pro = 297, Enterprise = 997, Free = 0
@@ -42,7 +50,8 @@ def dashboard():
     
     for comp in companies:
         # Calculate MRR per company
-        plan_name = getattr(comp, 'plan', 'pro').lower()
+        # Safe fallback for plan and status
+        plan_name = (getattr(comp, 'plan', 'pro') or 'pro').lower()
         mrr += plan_prices.get(plan_name, 0)
         
         # Find an admin to login as
@@ -65,7 +74,7 @@ def dashboard():
         'active_companies': active_companies,
         'users': total_users,
         'leads': total_leads,
-        'contracts': 0, # Placeholder until Contract model is imported/queried
+        'contracts': total_contracts,
         'mrr': mrr,
         'churn': round(churn_rate, 1)
     }
@@ -556,20 +565,32 @@ def migrate_saas():
         from sqlalchemy import text
         # List of commands to run safely
         commands = [
-            "ALTER TABLE company ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';",
-            "ALTER TABLE company ADD COLUMN IF NOT EXISTS plan VARCHAR(50) DEFAULT 'pro';",
-            "ALTER TABLE company ADD COLUMN IF NOT EXISTS max_users INTEGER DEFAULT 5;",
-            "ALTER TABLE company ADD COLUMN IF NOT EXISTS max_leads INTEGER DEFAULT 1000;",
-            "ALTER TABLE company ADD COLUMN IF NOT EXISTS max_storage_gb FLOAT DEFAULT 1.0;",
-            "ALTER TABLE company ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();"
+            "ALTER TABLE company ADD COLUMN status VARCHAR(20) DEFAULT 'active';",
+            "ALTER TABLE company ADD COLUMN plan VARCHAR(50) DEFAULT 'pro';",
+            "ALTER TABLE company ADD COLUMN max_users INTEGER DEFAULT 5;",
+            "ALTER TABLE company ADD COLUMN max_leads INTEGER DEFAULT 1000;",
+            "ALTER TABLE company ADD COLUMN max_storage_gb FLOAT DEFAULT 1.0;",
+            "ALTER TABLE company ADD COLUMN updated_at TIMESTAMP;"
         ]
         
         results = []
+        is_postgres = db.engine.url.drivername.startswith('postgresql')
+        
         for cmd in commands:
-            db.session.execute(text(cmd))
-            results.append(f"Executed: {cmd}")
-            
-        db.session.commit()
+            try:
+                # If Postgres, we can use IF NOT EXISTS if we want, or just catch the error
+                sql = cmd
+                if is_postgres:
+                    sql = cmd.replace("ADD COLUMN", "ADD COLUMN IF NOT EXISTS")
+                    if "updated_at" in cmd:
+                        sql = sql.replace("TIMESTAMP", "TIMESTAMP DEFAULT NOW()")
+                
+                db.session.execute(text(sql))
+                db.session.commit()
+                results.append(f"Success: {sql}")
+            except Exception as e:
+                db.session.rollback()
+                results.append(f"Skipped/Failed: {cmd} - Error: {str(e)[:50]}...")
         return "<br>".join(results) + "<br><br>Migration Successful! <a href='/'>Go Home</a>"
     except Exception as e:
         db.session.rollback()
