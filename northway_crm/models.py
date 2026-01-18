@@ -210,6 +210,7 @@ class Lead(db.Model):
     
     interactions = db.relationship('Interaction', backref='lead', lazy=True)
     tasks = db.relationship('Task', backref='lead', lazy=True)
+    pipeline_stage = db.relationship('PipelineStage', backref='stage_leads')
     # Link back to client if converted
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
 
