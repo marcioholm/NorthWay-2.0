@@ -6,37 +6,50 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import app, db
 from sqlalchemy import text
 
+def check_and_add_column(table, column, type_def):
+    print(f"Checking table '{table}' for column '{column}'...")
+    # Safe check using PRAGMA
+    try:
+        res = db.session.execute(text(f"PRAGMA table_info('{table}')")).fetchall()
+        existing = [r[1] for r in res]
+        if column not in existing:
+            print(f"Adding {column} to {table}...")
+            db.session.execute(text(f'ALTER TABLE "{table}" ADD COLUMN {column} {type_def}'))
+            db.session.commit()
+            return True
+        else:
+            print(f"Column {column} already exists.")
+    except Exception as e:
+        print(f"Error checking/adding {column}: {e}")
+        db.session.rollback()
+    return False
+
 def patch():
     with app.app_context():
-        print("Checking table 'transaction'...")
-        res = db.session.execute(text("PRAGMA table_info('transaction')")).fetchall()
-        print("Columns found:", [r[1] for r in res])
-        
-        has_client_id = any(r[1] == 'client_id' for r in res)
-        if not has_client_id:
-            print("Adding client_id...")
-            try:
-                db.session.execute(text('ALTER TABLE "transaction" ADD COLUMN client_id INTEGER'))
-                db.session.commit()
-            except Exception as e: print(e)
-            
-        columns_to_add = [
+        # Transaction Fixes
+        tx_cols = [
+            ('client_id', 'INTEGER'),
             ('asaas_id', 'TEXT'),
             ('asaas_invoice_url', 'TEXT'),
             ('installment_number', 'INTEGER'),
             ('total_installments', 'INTEGER'),
             ('cancellation_reason', 'TEXT')
         ]
-        
-        for col_name, col_type in columns_to_add:
-            if col_name not in [r[1] for r in res]:
-                print(f"Adding {col_name}...")
-                try:
-                    db.session.execute(text(f'ALTER TABLE "transaction" ADD COLUMN {col_name} {col_type}'))
-                    db.session.commit()
-                except Exception as e:
-                    print(f"Error adding {col_name}: {e}")
-
+        for col, dtype in tx_cols:
+            check_and_add_column('transaction', col, dtype)
+            
+        # Contract Fixes
+        added_code = check_and_add_column('contract', 'code', 'TEXT')
+        if added_code:
+            print("Backfilling Contract Codes...")
+            try:
+                # Attempt Key Format: CTR-YYYY-ID
+                # SQLite Specific syntax
+                db.session.execute(text("UPDATE contract SET code = 'CTR-' || strftime('%Y', created_at) || '-' || id WHERE code IS NULL"))
+                db.session.commit()
+                print("Backfill complete.")
+            except Exception as e:
+                print(f"Backfill failed (might need manual fix): {e}")
 
 if __name__ == "__main__":
     patch()

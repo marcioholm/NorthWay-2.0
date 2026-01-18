@@ -2024,25 +2024,36 @@ def create_app():
                     contract.generated_content = generated_content
                     contract.form_data = json.dumps(form_data)
                     contract.status = status
+                    
+                    # Generate Code if missing (e.g. promoting legacy draft)
+                    if not contract.code:
+                        import uuid
+                        contract.code = f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}"
                 else:
                     # Fallback to create if ID invalid
+                     import uuid
+                     gen_code = f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}"
                      contract = Contract(
                         client_id=client.id,
                         company_id=client.company.id,
                         template_id=template.id,
                         generated_content=generated_content,
                         form_data=json.dumps(form_data),
-                        status=status
+                        status=status,
+                        code=gen_code
                     )
                      db.session.add(contract)
             else: 
+                import uuid
+                gen_code = f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}"
                 contract = Contract(
                     client_id=client.id,
                     company_id=client.company.id,
                     template_id=template.id,
                     generated_content=generated_content,
                     form_data=json.dumps(form_data),
-                    status=status
+                    status=status,
+                    code=gen_code
                 )
                 db.session.add(contract)
                 

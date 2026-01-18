@@ -326,6 +326,8 @@ class Contract(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     template_id = db.Column(db.Integer, db.ForeignKey('contract_template.id'), nullable=False)
     
+    code = db.Column(db.String(50), nullable=True) # Unique Identification Code (e.g. CTR-2024-001)
+    
     generated_content = db.Column(db.Text, nullable=True) # Nullable for drafts
     form_data = db.Column(db.Text, nullable=True) # JSON store for draft inputs
     status = db.Column(db.String(20), default='draft') # draft, issued, signed

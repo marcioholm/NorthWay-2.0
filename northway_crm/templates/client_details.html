@@ -521,7 +521,16 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-900">{{ contract.template.name }}</p>
-                                <p class="text-xs text-gray-500">{{ contract.created_at.strftime('%d/%m/%Y') }}
+                                <p class="text-xs text-gray-500 flex items-center gap-1">
+                                    {% if contract.code %}
+                                    <span class="font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{{
+                                        contract.code }}</span>
+                                    {% else %}
+                                    <span class="font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">#{{
+                                        contract.id }}</span>
+                                    {% endif %}
+                                    <span>•</span>
+                                    {{ contract.created_at.strftime('%d/%m/%Y') }}
                                 </p>
                             </div>
                         </div>

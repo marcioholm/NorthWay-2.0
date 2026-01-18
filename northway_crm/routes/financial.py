@@ -162,12 +162,20 @@ def stats():
     
     tx_list = []
     for t in recent_txs:
+        # Resolve Client Name safely
+        client_name = "Cliente"
+        if t.contract:
+            client_name = t.contract.client.name
+        elif t.client:
+            client_name = t.client.name
+            
         tx_list.append({
             'id': t.id,
             'description': t.description,
-            'client_name': t.contract.client.name,
+            'client_name': client_name,
             'amount': t.amount,
             'due_date': t.due_date.strftime('%d/%m/%Y'),
+            'created_at': t.created_at.strftime('%d/%m/%Y %H:%M') if t.created_at else '',
             'status': t.status
         })
 

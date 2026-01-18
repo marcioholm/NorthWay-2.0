@@ -11,7 +11,11 @@
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
             <div>
-                <h1 class="text-xl font-bold text-gray-900">Visualizar Contrato #{{ contract.id }}</h1>
+                <h1 class="text-xl font-bold text-gray-900">
+                    Visualizar Contrato
+                    <span class="font-mono text-gray-600 ml-2 bg-gray-100 px-2 py-0.5 rounded text-lg">{{ contract.code
+                        if contract.code else ('#' ~ contract.id) }}</span>
+                </h1>
                 <p class="text-xs text-gray-500">Emitido em {{ contract.created_at.strftime('%d/%m/%Y') }}</p>
             </div>
         </div>

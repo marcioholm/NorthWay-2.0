@@ -265,6 +265,7 @@
                             <th class="px-4 py-3 font-medium">Descrição</th>
                             <th class="px-4 py-3 font-medium">Cliente</th>
                             <th class="px-4 py-3 font-medium">Vencimento</th>
+                            <th class="px-4 py-3 font-medium">Gerada Em</th>
                             <th class="px-4 py-3 font-medium">Valor</th>
                             <th class="px-4 py-3 font-medium">Status</th>
                             <th class="px-4 py-3 font-medium text-right">Ações</th>
@@ -386,6 +387,7 @@
                         </td>
                         <td class="px-4 py-3 text-gray-500 truncate max-w-[150px]" title="${t.client_name}">${t.client_name}</td>
                         <td class="px-4 py-3 text-gray-500 font-mono text-[10px]">${t.due_date}</td>
+                        <td class="px-4 py-3 text-gray-500 text-[10px]">${t.created_at}</td>
                         <td class="px-4 py-3 font-bold text-gray-900">${formatCurrency(t.amount)}</td>
                         <td class="px-4 py-3">${statusHtml}</td>
                         <td class="px-4 py-3 text-right">
