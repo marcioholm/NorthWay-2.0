@@ -974,52 +974,65 @@
 </div>
 
 <!-- Termination Modal -->
+<!-- Termination Modal -->
 <div id="termination-modal"
-    class="hidden fixed inset-0 bg-gray-900/50 z-50 items-center justify-center backdrop-blur-sm">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-gray-900">Rescindir Contrato</h3>
-            <button type="button" onclick="closeTerminationModal()" class="text-gray-400 hover:text-gray-600">
+    class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative">
+        <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+            <div class="flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i>
+                <h3 class="text-lg font-bold text-gray-900">Rescindir Contrato</h3>
+            </div>
+            <button type="button" onclick="closeTerminationModal()"
+                class="text-gray-400 hover:text-gray-600 transition-colors">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
 
-        <form onsubmit="submitTermination(event)">
+        <form onsubmit="submitTermination(event)" class="space-y-4">
             <input type="hidden" id="term-contract-id">
-            <p class="text-sm text-gray-600 mb-4">Você está prestes a rescindir o contrato <strong
-                    id="term-contract-title"></strong>. As cobranças futuras pendentes serão canceladas.</p>
 
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo da Rescisão</label>
-                    <textarea id="term-reason" rows="2"
-                        class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
-                        placeholder="Ex: Cliente insatisfeito, corte de custos..." required></textarea>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Multa Rescisória
-                            (R$)</label>
-                        <input type="text" id="term-penalty" oninput="formatCurrency(this)"
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent font-bold"
-                            placeholder="R$ 0,00">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Vencimento da Multa</label>
-                        <input type="date" id="term-due-date"
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm font-medium text-gray-700">
-                    </div>
-                </div>
-                <p class="text-[10px] text-gray-400 mt-1">Se houver valor, será gerada uma cobrança pendente.</p>
+            <div class="bg-red-50 p-3 rounded-lg border border-red-100 mb-4">
+                <p class="text-sm text-red-800">
+                    Você está prestes a rescindir o contrato de <strong id="term-contract-title"></strong>.
+                    <br>
+                    <span class="text-xs opacity-75">Cobranças futuras e agendamentos serão cancelados.</span>
+                </p>
             </div>
 
-            <div class="flex gap-3 mt-8">
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo da Rescisão <span
+                        class="text-red-500">*</span></label>
+                <textarea id="term-reason" rows="3"
+                    class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    placeholder="Descreva o motivo do cancelamento..." required></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Multa (Opcional)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-gray-500 text-sm">R$</span>
+                        <input type="text" id="term-penalty" oninput="formatCurrency(this)"
+                            class="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent font-bold text-gray-900"
+                            placeholder="0,00">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Vencimento</label>
+                    <input type="date" id="term-due-date"
+                        class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm font-medium text-gray-700">
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
                 <button type="button" onclick="closeTerminationModal()"
-                    class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200">Cancelar</button>
+                    class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Cancelar</button>
                 <button type="submit"
-                    class="flex-1 py-2.5 bg-northway-red text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200">Confirmar
-                    Rescisão</button>
+                    class="flex-1 py-2.5 bg-northway-red text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-200 transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="ban" class="w-4 h-4"></i>
+                    Confirmar Rescisão
+                </button>
             </div>
         </form>
     </div>
