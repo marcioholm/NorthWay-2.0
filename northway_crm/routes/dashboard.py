@@ -34,24 +34,29 @@ def home():
                                    .filter(Task.completed_at >= date.today()).count()
     }
     
-    # 4. Onboarding
-    # Simple logic: if less than 5 leads/clients or no integrations
-    step_leads = Lead.query.filter_by(company_id=company_id).count() > 0
-    step_clients = Client.query.filter_by(company_id=company_id).count() > 0
-    from models import Integration
-    step_integrations = Integration.query.filter_by(company_id=company_id, is_active=True).count() > 0
-    
-    steps = [
-        {'title': 'Adicionar primeiro lead', 'done': step_leads, 'link': url_for('leads.leads')},
-        {'title': 'Converter primeiro cliente', 'done': step_clients, 'link': url_for('leads.leads')},
-        {'title': 'Configurar Integrações', 'done': step_integrations, 'link': url_for('admin.settings_integrations')},
-    ]
-    
-    onboarding = {
-        'completed': all([s['done'] for s in steps]),
-        'steps': steps,
-        'progress': int(sum([1 for s in steps if s['done']]) / len(steps) * 100)
-    }
+    # 4. Onboarding (Defensive Coding)
+    try:
+        # Simple logic: if less than 5 leads/clients or no integrations
+        step_leads = Lead.query.filter_by(company_id=company_id).count() > 0
+        step_clients = Client.query.filter_by(company_id=company_id).count() > 0
+        
+        from models import Integration
+        step_integrations = Integration.query.filter_by(company_id=company_id, is_active=True).first() is not None
+        
+        steps = [
+            {'title': 'Adicionar primeiro lead', 'done': step_leads, 'link': url_for('leads.leads')},
+            {'title': 'Converter primeiro cliente', 'done': step_clients, 'link': url_for('leads.leads')},
+            {'title': 'Configurar Integrações', 'done': step_integrations, 'link': url_for('admin.settings_integrations')},
+        ]
+        
+        onboarding = {
+            'completed': all([s['done'] for s in steps]),
+            'steps': steps,
+            'progress': int(sum([1 for s in steps if s['done']]) / len(steps) * 100)
+        }
+    except Exception as e:
+        print(f"Error in Onboarding Logic: {e}")
+        onboarding = None
     
     return render_template('home.html', 
                            lead_count=lead_count, 
