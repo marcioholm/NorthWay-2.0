@@ -2164,46 +2164,55 @@ def create_app():
         if contract.company_id != current_user.company_id:
             abort(403)
             
+        # Log Start
         print(f"DEBUG: Canceling Contract #{id}")
+        debug_log = [f"Início Cancelamento Contrato #{id}"]
             
         # Optional: Termination Fee
         charge_fee = request.form.get('charge_fee') == 'on'
         fee_amount_str = request.form.get('fee_amount')
         fee_due_date_str = request.form.get('fee_due_date')
         
-        print(f"DEBUG: Fee Options - Charge: {charge_fee}, Amount: {fee_amount_str}, Date: {fee_due_date_str}")
+        debug_log.append(f"Opções Multa: Kobrar={charge_fee}, Valor={fee_amount_str}, Data={fee_due_date_str}")
         
         # 1. Cancel Pending Transactions (Local + Asaas)
         pending_txs = Transaction.query.filter_by(contract_id=contract.id, status='pending').all()
-        print(f"DEBUG: Found {len(pending_txs)} pending transactions.")
+        debug_log.append(f"Transações Pendentes Encontradas: {len(pending_txs)}")
         
         asaas_cancelled_count = 0
         from services.asaas_service import AsaasService
         
         for tx in pending_txs:
-            print(f"DEBUG: Processing TX {tx.id}. Asaas ID: {tx.asaas_id} Status: {tx.status}")
+            old_status = tx.status
             tx.status = 'cancelled'
+            
             if tx.asaas_id:
-                success = AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
-                if success: 
-                    asaas_cancelled_count += 1
-                    print(f"DEBUG: TX {tx.id} cancelled in Asaas.")
-                else:
-                    print(f"DEBUG: Failed to cancel TX {tx.id} in Asaas.")
+                try:
+                    success = AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
+                    if success: 
+                        asaas_cancelled_count += 1
+                        debug_log.append(f"TX #{tx.id} (Asaas {tx.asaas_id}): Cancelado com Sucesso.")
+                    else:
+                        debug_log.append(f"TX #{tx.id} (Asaas {tx.asaas_id}): Falha no cancelamento API.")
+                except Exception as e:
+                    debug_log.append(f"TX #{tx.id} - ERRO API: {str(e)}")
             else:
-                print(f"DEBUG: TX {tx.id} has no Asaas ID. Skipping API call.")
+                debug_log.append(f"TX #{tx.id}: Sem Asaas ID. Apenas cancelado localmente.")
         
         # 2. Update Contract
         contract.status = 'cancelled'
         
         # 3. Create Termination Fee (if requested)
+        fee_success = False
+        fee_error = None
+        
         if charge_fee and fee_amount_str:
             try:
                 # Parse Float
                 amount = float(fee_amount_str.replace('R$', '').replace('.', '').replace(',', '.').strip())
                 due_date = datetime.strptime(fee_due_date_str, '%Y-%m-%d').date()
                 
-                print(f"DEBUG: Generating Fee Transaction: {amount} due {due_date}")
+                debug_log.append(f"Gerando Multa: {amount} para {due_date}")
                 
                 fee_tx = Transaction(
                     contract_id=contract.id,
@@ -2217,22 +2226,44 @@ def create_app():
                 db.session.flush() # Get ID
                 
                 # Create in ASAAS
-                print("DEBUG: Creating Fee Customer/Payment in Asaas...")
+                debug_log.append("Criando Cobrança Multa Asaas...")
+                # Ensure customer exists
                 customer_id = AsaasService.create_customer(contract.company_id, contract.client)
-                AsaasService.create_payment(contract.company_id, customer_id, fee_tx)
-                print("DEBUG: Fee created successfully.")
+                payment_data = AsaasService.create_payment(contract.company_id, customer_id, fee_tx)
                 
-                flash('Contrato cancelado e Multa Rescisória gerada no ASAAS!', 'success')
+                debug_log.append(f"Multa Gerada Asaas: ID {payment_data.get('id')}")
+                fee_success = True
+                
             except Exception as e:
-                print(f"DEBUG: Error generating fee: {e}")
                 import traceback
                 traceback.print_exc()
-                flash(f'Contrato cancelado, mas houve erro ao gerar a multa: {e}', 'warning')
-        else:
-            flash(f'Contrato cancelado. {asaas_cancelled_count} cobranças removidas do ASAAS.', 'success')
-            
+                fee_error = str(e)
+                debug_log.append(f"ERRO AO GERAR MULTA: {fee_error}")
+        
         db.session.commit()
         
+        # FINAL LOGGING TO DB
+        try:
+            create_notification(
+                user_id=current_user.id,
+                company_id=current_user.company_id,
+                type='system_error' if fee_error else 'system_info',
+                title=f'Log Cancelamento #{contract.id}',
+                message="\n".join(debug_log)
+            )
+        except:
+            pass
+
+        if fee_error:
+            flash(f'Contrato cancelado, mas houve erro ao gerar a multa. Verifique notificações.', 'warning')
+        elif charge_fee and fee_success:
+             flash('Contrato cancelado e Multa Rescisória gerada no ASAAS!', 'success')
+        else:
+            if asaas_cancelled_count > 0:
+                flash(f'Contrato cancelado. {asaas_cancelled_count} cobranças removidas do ASAAS.', 'success')
+            else:
+                flash(f'Contrato cancelado localmente. Nenhuma cobrança Asaas foi removida (Talvez não tivessem ID Asaas?).', 'warning')
+            
         return redirect(url_for('main.view_contract', id=contract.id))
 
     @main.route('/settings/integrations', methods=['GET', 'POST'])
