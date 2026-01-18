@@ -1230,29 +1230,33 @@ def create_app():
             if renewal_date:
                 client.renewal_date = datetime.strptime(renewal_date, '%Y-%m-%d').date()
             else:
-                client.renewal_date = None
+                renewal_date = None
 
-            db.session.commit()
-            flash('Dados do cliente atualizados!', 'success')
-            return redirect(url_for('main.client_details', id=client.id))
+        db.session.commit()
+        flash('Dados do cliente atualizados!', 'success')
+        return redirect(url_for('main.client_details', id=client.id))
 
-
-        except Exception as e:
-            print(f'CRITICAL ERROR updating client: {e}')
-            try:
-                db.session.rollback()
-            except:
-                print("Rollback failed")
+    except Exception as e:
+        print(f'CRITICAL ERROR updating client: {e}')
+        try:
+            db.session.rollback()
+        except:
+            print("Rollback failed")
+        
+        try:
+            err_msg = str(e)
+            if "attempt to write a readonly database" in err_msg or "readonly" in err_msg:
+                err_msg = "ERRO: Banco de Dados Somente Leitura. Configure DATABASE_URL no Vercel."
             
-            try:
-                err_msg = str(e)
-                if "attempt to write a readonly database" in err_msg or "readonly" in err_msg:
-                    err_msg = "ERRO: Banco de Dados Somente Leitura. Configure DATABASE_URL no Vercel."
-                
-                flash(f'Erro ao salvar: {err_msg}', 'error')
-                return redirect(url_for('main.client_details', id=id))
-            except:
-                return jsonify({'error': str(e), 'help': 'Configure DATABASE_URL'}), 500
+            flash(f'Erro ao salvar: {err_msg}', 'error')
+            return redirect(url_for('main.client_details', id=id))
+        except:
+            return jsonify({'error': str(e), 'help': 'Configure DATABASE_URL'}), 500
+
+    @main.route('/ping')
+    def ping():
+        return "pong", 200
+
     @main.route('/clients/<int:id>/interactions', methods=['POST'])
     @login_required
     def add_client_interaction(id):
