@@ -6,7 +6,7 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-4">
-                <a href="{{ url_for('main.leads') }}"
+                <a href="{{ url_for('leads.leads') }}"
                     class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-500 hover:text-northway-red hover:bg-red-50 transition-colors shadow-sm">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                 </a>
@@ -59,7 +59,7 @@
                             <i data-lucide="message-square" class="w-4 h-4"></i>
                             Nova Nota
                         </h3>
-                        <form action="{{ url_for('main.lead_details', id=lead.id) }}" method="POST">
+                        <form action="{{ url_for('leads.add_lead_interaction', id=lead.id) }}" method="POST">
                             <textarea name="content" rows="3"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none text-sm"
                                 placeholder="Escreva uma observação sobre este lead..."></textarea>
@@ -263,7 +263,7 @@
                         Qualificação
                     </h3>
 
-                    <form action="{{ url_for('main.update_bant', id=lead.id) }}" method="POST" class="space-y-4">
+                    <form action="{{ url_for('leads.update_bant', id=lead.id) }}" method="POST" class="space-y-4">
                         <!-- Budget -->
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">Budget</label>
@@ -361,7 +361,7 @@
                     <ul class="divide-y divide-gray-100">
                         {% for task in lead.tasks %}
                         <li class="py-3 flex items-center gap-3 group">
-                            <form action="{{ url_for('main.toggle_task', id=task.id) }}" method="POST">
+                            <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST">
                                 <button type="submit"
                                     class="w-4 h-4 border-2 border-gray-300 rounded hover:border-northway-red transition-colors flex items-center justify-center">
                                     {% if task.status == 'concluida' %}
@@ -380,7 +380,7 @@
                             </span>
 
                             {% if current_user.role == 'admin' %}
-                            <form action="{{ url_for('main.delete_task', id=task.id) }}" method="POST"
+                            <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST"
                                 onsubmit="return confirm('Excluir tarefa?');">
                                 <button type="submit"
                                     class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -408,9 +408,9 @@
                 </button>
             </div>
 
-            <form action="{{ url_for('main.tasks') }}" method="POST" class="p-6 space-y-4">
+            <form action="{{ url_for('tasks.tasks') }}" method="POST" class="p-6 space-y-4">
                 <input type="hidden" name="lead_id" value="{{ lead.id }}">
-                <input type="hidden" name="next" value="{{ url_for('main.lead_details', id=lead.id) }}">
+                <input type="hidden" name="next" value="{{ url_for('leads.lead_details', id=lead.id) }}">
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
@@ -450,7 +450,7 @@
             </button>
         </div>
 
-        <form action="{{ url_for('main.convert_lead', id=lead.id) }}" method="POST" class="p-6 space-y-4">
+        <form action="{{ url_for('leads.convert_lead', id=lead.id) }}" method="POST" class="p-6 space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Serviço Contratado</label>
                 <input type="text" name="service" placeholder="Ex: Consultoria mensal, Projeto Website"

@@ -71,6 +71,16 @@ def test_connection():
     except Exception as e:
         return f"Erro de conexão: {e} (URL: {url.replace(config['token'], '***')})"
 
+@whatsapp_bp.route('/api/whatsapp/setup-webhook', methods=['POST'])
+@login_required
+def setup_webhook():
+    webhook_url = f"{request.url_root.rstrip('/')}/api/webhooks/zapi/{current_user.company_id}"
+    try:
+        WhatsAppService.configure_webhook(current_user.company_id, webhook_url)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # --- VIEWS ---
 @whatsapp_bp.route('/whatsapp')
 @login_required

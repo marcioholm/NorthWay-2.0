@@ -37,7 +37,7 @@
                         {{ integrations_map.get('google_maps').api_key[:8] }}*************************
                     </p>
                 </div>
-                <form action="{{ url_for('main.delete_integration', service='google_maps') }}" method="POST"
+                <form action="{{ url_for('admin.delete_integration', service='google_maps') }}" method="POST"
                     onsubmit="return confirm('Tem certeza? A busca de empresas vai parar de funcionar.')">
                     <button type="submit"
                         class="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-2 hover:bg-red-50 px-3 py-2 rounded transition-colors">
@@ -45,11 +45,20 @@
                     </button>
                 </form>
             </div>
+
+            <div class="mt-4 flex gap-3">
+                <button onclick="testGoogleMaps('{{ integrations_map.get('google_maps').api_key }}')"
+                    class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-green-600"></i> Testar Conexão
+                </button>
+                <div id="gmaps-result" class="hidden text-sm flex items-center gap-2"></div>
+            </div>
+
             <p class="text-xs text-gray-400 mt-2">Para alterar a chave, remova a atual e adicione uma nova.</p>
 
             {% else %}
             <!-- Setup Form -->
-            <form action="{{ url_for('main.settings_integrations') }}" method="POST">
+            <form action="{{ url_for('admin.settings_integrations') }}" method="POST">
                 <input type="hidden" name="service" value="google_maps">
                 <div class="space-y-4">
                     <div>
@@ -141,13 +150,60 @@
                     </button>
                 </form>
 
-                <form action="{{ url_for('main.delete_integration', service='z_api') }}" method="POST"
+                <form action="{{ url_for('admin.delete_integration', service='z_api') }}" method="POST"
                     onsubmit="return confirm('Isso irá interromper o funcionamento do WhatsApp. Tem certeza?')">
                     <button type="submit"
                         class="text-red-600 hover:text-red-700 text-sm font-medium px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
                         Desconectar
                     </button>
                 </form>
+            </div>
+
+            <!-- Health & Automation -->
+            <div class="mt-6 border-t border-gray-100 pt-6">
+                <h4 class="text-xs font-bold text-gray-900 uppercase mb-3 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4"></i> Status da Integração
+                </h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Last Sync -->
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <span class="text-xs text-gray-500 block mb-1">Última Sincronização</span>
+                        {% if zapi.last_sync_at %}
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span class="text-sm font-mono font-bold text-gray-800">{{
+                                zapi.last_sync_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                        {% else %}
+                        <span class="text-sm text-gray-400 italic">Nunca sincronizado</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Webhook Automation -->
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
+                        onclick="setupZapiWebhook()">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-bold text-blue-800 block mb-1">Configuração Automática</span>
+                                <p class="text-[10px] text-blue-600 leading-tight">Configura as URLs de webhook na Z-API
+                                    automaticamente.</p>
+                            </div>
+                            <i data-lucide="wand" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {% if zapi.last_error %}
+                <div
+                    class="mt-3 bg-red-50 text-red-800 p-3 rounded-lg text-xs border border-red-100 flex gap-2 items-start">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <strong class="block mb-0.5">Erro Recente:</strong>
+                        {{ zapi.last_error }}
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             {% else %}
@@ -247,7 +303,7 @@
                         Testar
                     </button>
                     <!-- Reuse delete route or add specific disconnect if needed, for MVP using main delete -->
-                    <form action="{{ url_for('main.delete_integration', service='asaas') }}" method="POST"
+                    <form action="{{ url_for('admin.delete_integration', service='asaas') }}" method="POST"
                         onsubmit="return confirm('As cobranças automáticas pararão. Tem certeza?')">
                         <button type="submit"
                             class="text-red-600 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1 rounded hover:bg-red-50 transition-colors">
@@ -273,6 +329,53 @@
                 </div>
                 <p class="text-xs text-gray-500 mt-1">Configure na área de Integrações do ASAAS para receber status de
                     pagamentos.</p>
+            </div>
+
+            <!-- Health & Automation -->
+            <div class="mt-6 border-t border-gray-100 pt-6">
+                <h4 class="text-xs font-bold text-gray-900 uppercase mb-3 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4"></i> Status da Integração
+                </h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Last Sync -->
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <span class="text-xs text-gray-500 block mb-1">Última Sincronização</span>
+                        {% if asaas.last_sync_at %}
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span class="text-sm font-mono font-bold text-gray-800">{{
+                                asaas.last_sync_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                        {% else %}
+                        <span class="text-sm text-gray-400 italic">Nunca sincronizado</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Webhook Automation -->
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
+                        onclick="setupAsaasWebhook()">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-bold text-blue-800 block mb-1">Auto-Configurar Webhook</span>
+                                <p class="text-[10px] text-blue-600 leading-tight">Define a URL do webhook no painel do
+                                    Asaas via API.</p>
+                            </div>
+                            <i data-lucide="wand" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {% if asaas.last_error %}
+                <div
+                    class="mt-3 bg-red-50 text-red-800 p-3 rounded-lg text-xs border border-red-100 flex gap-2 items-start">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <strong class="block mb-0.5">Erro Recente:</strong>
+                        {{ asaas.last_error }}
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             {% else %}
@@ -381,6 +484,66 @@
             } else {
                 alert("Erro de rede: " + e);
             }
+        }
+    }
+
+    async function testGoogleMaps(key) {
+        const div = document.getElementById('gmaps-result');
+        div.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin text-gray-500"></i> Testando...';
+        div.classList.remove('hidden', 'text-green-600', 'text-red-600');
+        if (window.lucide) lucide.createIcons();
+
+        try {
+            const res = await fetch('/api/integrations/google-maps/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: key })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                div.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> OK! API Válida';
+                div.classList.add('text-green-600');
+            } else {
+                div.innerHTML = `<i data-lucide="x" class="w-4 h-4"></i> Falha: ${data.error}`;
+                div.classList.add('text-red-600');
+            }
+        } catch (e) {
+            div.innerHTML = `<i data-lucide="wifi-off" class="w-4 h-4"></i> Erro de rede`;
+            div.classList.add('text-red-600');
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+
+    async function setupAsaasWebhook() {
+        if (!confirm("Deseja configurar automaticamente o Webhook no Asaas para receber notificações de pagamento?")) return;
+
+        try {
+            const res = await fetch('/api/integrations/asaas/setup-webhook', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                alert("Webhook configurado com sucesso! ✅");
+            } else {
+                alert("Erro ao configurar webhook: " + data.error);
+            }
+        } catch (e) {
+            alert("Erro de conexão: " + e);
+        }
+    }
+
+    async function setupZapiWebhook() {
+        if (!confirm("Deseja configurar automaticamente as URLs de webhook na Z-API?")) return;
+
+        try {
+            const res = await fetch('/api/whatsapp/setup-webhook', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                alert("Webhooks da Z-API configurados com sucesso! ✅");
+            } else {
+                alert("Erro ao configurar: " + data.error);
+            }
+        } catch (e) {
+            alert("Erro de conexão: " + e);
         }
     }
 </script>

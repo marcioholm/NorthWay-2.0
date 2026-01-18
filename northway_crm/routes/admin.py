@@ -82,3 +82,82 @@ def edit_user(user_id):
         return redirect(url_for('admin.users'))
         
     return render_template('admin/user_form.html', user=user)
+
+@admin_bp.route('/settings/company', methods=['GET', 'POST'])
+def company_settings():
+    from models import db, Company
+    company = Company.query.get(current_user.company_id)
+    if not company:
+        abort(404)
+    
+    if request.method == 'POST':
+        company.name = request.form.get('name')
+        company.document = request.form.get('document')
+        company.address_street = request.form.get('address_street')
+        company.address_number = request.form.get('address_number')
+        company.address_neighborhood = request.form.get('address_neighborhood')
+        company.address_city = request.form.get('address_city')
+        company.address_state = request.form.get('address_state')
+        company.address_zip = request.form.get('address_zip')
+        company.representative = request.form.get('representative')
+        company.representative_cpf = request.form.get('representative_cpf')
+        
+        # Branding
+        company.primary_color = request.form.get('primary_color', '#fa0102')
+        company.secondary_color = request.form.get('secondary_color', '#111827')
+        
+        # Logo handled via separate logic or app context if needed
+        # For now, keep it simple as app.py had logic involving app.config
+    
+        db.session.commit()
+        flash('Configurações da empresa atualizadas!', 'success')
+        return redirect(url_for('admin.company_settings'))
+    
+    return render_template('company_settings.html', company=company)
+
+@admin_bp.route('/settings/integrations', methods=['GET', 'POST'])
+def settings_integrations():
+    from models import db, Integration
+    import json
+    
+    if request.method == 'POST':
+        service = request.form.get('service')
+        api_key = request.form.get('api_key')
+        if service and api_key:
+            intg = Integration.query.filter_by(company_id=current_user.company_id, service=service).first()
+            if not intg:
+                intg = Integration(company_id=current_user.company_id, service=service)
+                db.session.add(intg)
+            intg.api_key = api_key
+            intg.is_active = True
+            db.session.commit()
+            flash('Integração salva!', 'success')
+        return redirect(url_for('admin.settings_integrations'))
+
+    integrations = Integration.query.filter_by(company_id=current_user.company_id).all()
+    integrations_map = {i.service: i for i in integrations}
+    
+    zapi_config = {}
+    if 'z_api' in integrations_map:
+        try: zapi_config = json.loads(integrations_map['z_api'].config_json or '{}')
+        except: pass
+        
+    return render_template('settings_integrations.html', company=current_user.company, integrations_map=integrations_map, zapi_config=zapi_config)
+
+@admin_bp.route('/profile', methods=['GET', 'POST'])
+def profile():
+    from models import db
+    if request.method == 'POST':
+        current_user.name = request.form.get('name')
+        current_user.phone = request.form.get('phone')
+        current_user.status_message = request.form.get('status_message')
+        
+        password = request.form.get('password')
+        if password:
+            current_user.password_hash = generate_password_hash(password)
+            
+        db.session.commit()
+        flash('Perfil atualizado!', 'success')
+        return redirect(url_for('admin.profile'))
+        
+    return render_template('profile.html', user=current_user)

@@ -6,7 +6,7 @@
     <div
         class="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-8 print:hidden">
         <div class="flex items-center gap-4">
-            <a href="{{ url_for('main.client_details', id=contract.client_id) }}"
+            <a href="{{ url_for('clients.client_details', id=contract.client_id) }}"
                 class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-100 transition-colors">
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
@@ -53,7 +53,7 @@
             <strong class="text-gray-900">Cobranças pendentes no ASAAS serão removidas.</strong>
         </p>
 
-        <form action="{{ url_for('main.cancel_contract', id=contract.id) }}" method="POST">
+        <form action="{{ url_for('contracts.terminate_contract', id=contract.id) }}" method="POST">
             <div class="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
                 <label class="flex items-center gap-2 cursor-pointer mb-2">
                     <input type="checkbox" name="charge_fee" id="chargeFeeCheck"

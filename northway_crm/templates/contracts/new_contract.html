@@ -6,7 +6,7 @@
     <div class="w-[450px] bg-white border-r border-gray-200 flex flex-col h-full shadow-xl z-20">
         <!-- Header -->
         <div class="p-6 border-b border-gray-100 flex items-center gap-4 bg-white sticky top-0 z-10">
-            <a href="{{ url_for('main.client_details', id=client.id) }}"
+            <a href="{{ url_for('clients.client_details', id=client.id) }}"
                 class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-northway-red hover:bg-red-50 transition-colors">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
             </a>
@@ -18,7 +18,7 @@
 
         <!-- Form Content -->
         <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-            <form id="contractForm" action="{{ url_for('main.create_contract', id=client.id) }}" method="POST">
+            <form id="contractForm" action="{{ url_for('contracts.create_contract', id=client.id) }}" method="POST">
 
                 <!-- 1. Configuration Group -->
                 <div class="space-y-4">
@@ -788,7 +788,7 @@
         try {
             if (window.lucide) window.lucide.createIcons();
 
-            const response = await fetch('{{ url_for("main.preview_contract") }}', {
+            const response = await fetch('{{ url_for("contracts.preview_contract") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

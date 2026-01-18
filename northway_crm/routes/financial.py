@@ -43,9 +43,9 @@ def stats():
     forecast_90 = 0
     
     # Fetch all pending future transactions
-    # Performance Note: Index on (company_id, status, due_date) would be ideal.
-    upcoming_transactions = Transaction.query.join(Contract).filter(
-        Contract.company_id == company_id,
+    # Simplified: Direct filter on Transaction using company_id
+    upcoming_transactions = Transaction.query.filter(
+        Transaction.company_id == company_id,
         Transaction.status == 'pending',
         Transaction.due_date >= today
     ).all()
@@ -61,15 +61,15 @@ def stats():
             
     # Confirmed Revenue (Paid this month)
     first_day_month = today.replace(day=1)
-    paid_this_month = db.session.query(func.sum(Transaction.amount)).join(Contract).filter(
-        Contract.company_id == company_id,
+    paid_this_month = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.company_id == company_id,
         Transaction.status == 'paid',
         Transaction.paid_date >= first_day_month
     ).scalar() or 0
     
     # Risk Revenue (Overdue)
-    overdue = db.session.query(func.sum(Transaction.amount)).join(Contract).filter(
-        Contract.company_id == company_id,
+    overdue = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.company_id == company_id,
         Transaction.status == 'pending',
         Transaction.due_date < today
     ).scalar() or 0
@@ -152,8 +152,8 @@ def stats():
     niche_quantities = [niche_counts[label] for label in niche_labels]
 
     # --- RECENT TRANSACTIONS ---
-    recent_txs = Transaction.query.join(Contract).filter(
-        Contract.company_id == company_id,
+    recent_txs = Transaction.query.filter(
+        Transaction.company_id == company_id,
         Transaction.status != 'cancelled' # Hide cancelled
     ).order_by(
         Transaction.status == 'paid', # Pending first
@@ -227,8 +227,8 @@ def get_dre_data():
     # Ideally we should have 'competence_date', but due_date is close enough for simple CRM.
     
     # Fetch Revenue Transactions
-    revenue_txs = Transaction.query.join(Contract).filter(
-        Contract.company_id == company_id,
+    revenue_txs = Transaction.query.filter(
+        Transaction.company_id == company_id,
         extract('year', Transaction.due_date) == year,
         extract('month', Transaction.due_date) == month
         # We include all, or just paid? DRE Competency = All Billed. DRE Cash = All Paid.

@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, jsonify, current_app
+from flask import Blueprint, render_template, request, current_app
 from flask_login import login_required, current_user
+from utils import api_response
 import requests
 import os
 import json
@@ -17,7 +18,7 @@ def index():
 def search_places():
     query = request.args.get('query')
     if not query:
-        return jsonify({'error': 'Query parameter is required'}), 400
+        return api_response(success=False, error='Query parameter is required', status=400)
         
     # Get API Key: Priority DB -> Env -> Config
     from models import Integration
@@ -28,7 +29,7 @@ def search_places():
         api_key = integration.api_key
         
     if not api_key:
-        return jsonify({'error': 'API Key not configured for this company'}), 500
+        return api_response(success=False, error='API Key not configured for this company', status=500)
 
     # Google Places Text Search
     url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
@@ -39,12 +40,12 @@ def search_places():
     }
     
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=10)
         data = response.json()
         print(f"DEBUG GOOGLE MAPS: {json.dumps(data, indent=2)}") # Debugging
         
         if data.get('status') not in ['OK', 'ZERO_RESULTS']:
-            return jsonify({'error': f"Google API Error: {data.get('status')}", 'details': data.get('error_message')}), 400
+            return api_response(success=False, error=f"Google API Error: {data.get('status')}", data={'details': data.get('error_message')}, status=400)
             
         # Clean data for frontend (minimize data transfer)
         results = []
@@ -59,10 +60,10 @@ def search_places():
                 'types': place.get('types', [])
             })
             
-        return jsonify({'results': results})
+        return api_response(data={'results': results})
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return api_response(success=False, error=str(e), status=500)
 
 @prospecting_bp.route('/api/prospecting/import', methods=['POST'])
 @login_required
@@ -71,7 +72,7 @@ def import_lead():
     place_id = data.get('place_id')
     
     if not place_id:
-        return jsonify({'error': 'place_id is required'}), 400
+        return api_response(success=False, error='place_id is required', status=400)
 
     # Get API Key: Priority DB -> Env -> Config
     from models import Integration
@@ -82,7 +83,7 @@ def import_lead():
         api_key = integration.api_key
         
     if not api_key:
-        return jsonify({'error': 'API Key not configured for this company'}), 500
+        return api_response(success=False, error='API Key not configured for this company', status=500)
 
     # Google Place Details API
     # We fetch specific fields to save costs and get contact info
@@ -96,11 +97,11 @@ def import_lead():
     }
     
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=10)
         details_data = response.json()
         
         if details_data.get('status') != 'OK':
-             return jsonify({'error': f"Google API Error: {details_data.get('status')}"}), 400
+             return api_response(success=False, error=f"Google API Error: {details_data.get('status')}", status=400)
              
         result = details_data.get('result', {})
         
@@ -134,8 +135,8 @@ def import_lead():
         db.session.add(new_lead)
         db.session.commit()
         
-        return jsonify({'success': True, 'lead_id': new_lead.id, 'lead_name': new_lead.name})
+        return api_response(data={'lead_id': new_lead.id, 'lead_name': new_lead.name})
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return api_response(success=False, error=str(e), status=500)

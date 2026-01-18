@@ -4,7 +4,7 @@
 <div class="flex-1 h-screen overflow-y-auto bg-gray-50 p-8">
     <div class="max-w-2xl mx-auto">
         <header class="mb-8">
-            <a href="{{ url_for('main.admin_users') }}"
+            <a href="{{ url_for('admin.users') }}"
                 class="text-gray-500 hover:text-gray-900 flex items-center gap-1 mb-4 text-sm">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 Voltar para lista
@@ -68,7 +68,7 @@
             </div>
 
             <div class="pt-4 flex justify-end gap-3">
-                <a href="{{ url_for('main.admin_users') }}"
+                <a href="{{ url_for('admin.users') }}"
                     class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-medium">Cancelar</a>
                 <button type="submit"
                     class="bg-northway-red hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">

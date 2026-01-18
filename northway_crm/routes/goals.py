@@ -27,9 +27,9 @@ def get_dashboard_data():
     
     # --- 2. Fetch ALL Transactions for the Year (Revenue) ---
     # We use Transaction.due_date as the reference for "Competence" (Faturamento prev/real)
-    # Filter out cancelled
-    year_transactions = Transaction.query.join(Contract).filter(
-        Contract.company_id == company_id,
+    # Filter out cancelled. Use direct filter on Transaction.company_id to include manual charges.
+    year_transactions = Transaction.query.filter(
+        Transaction.company_id == company_id,
         extract('year', Transaction.due_date) == year,
         Transaction.status != 'cancelled'
     ).all()
@@ -84,8 +84,12 @@ def get_dashboard_data():
     for t in year_transactions:
         val = t.amount
         
-        # Determine owners (Account Manager of the Client linked to the Contract)
-        u_id = t.contract.client.account_manager_id
+        # Determine owners
+        u_id = None
+        if t.contract:
+            u_id = t.contract.client.account_manager_id
+        elif t.client:
+            u_id = t.client.account_manager_id
         
         # Annual Aggregate
         annual_data['company_actual'] += val

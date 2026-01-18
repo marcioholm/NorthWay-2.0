@@ -314,7 +314,6 @@ class ContractTemplate(db.Model):
     content = db.Column(db.Text, nullable=False) # HTML/Text with {{variables}}
     active = db.Column(db.Boolean, default=True)
     is_global = db.Column(db.Boolean, default=False)
-    is_global = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Access Control Relationship
@@ -344,6 +343,8 @@ class Integration(db.Model):
     api_key = db.Column(db.String(255), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     config_json = db.Column(db.Text, nullable=True) # Extra config (instance_id, phone, etc)
+    last_error = db.Column(db.Text, nullable=True)
+    last_sync_at = db.Column(db.DateTime, nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class WhatsAppMessage(db.Model):

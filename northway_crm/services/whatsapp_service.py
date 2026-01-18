@@ -1,5 +1,6 @@
 from models import db, Integration, WhatsAppMessage, Lead, Client
 from flask import current_app
+from utils import update_integration_health, retry_request
 import requests
 import json
 import re
@@ -139,7 +140,12 @@ class WhatsAppService:
 
         try:
             url = f"{base_url}/{endpoint}"
-            res = requests.post(url, json=payload, headers=headers, timeout=15)
+            
+            @retry_request()
+            def perform_send():
+                return requests.post(url, json=payload, headers=headers, timeout=15)
+            
+            res = perform_send()
             data = res.json()
             
             # Save to DB
@@ -155,10 +161,12 @@ class WhatsAppService:
             db.session.add(msg)
             db.session.commit()
             
+            update_integration_health(company_id, 'z_api')
             return msg
             
         except Exception as e:
             current_app.logger.error(f"Z-API Send Error: {e}")
+            update_integration_health(company_id, 'z_api', error=e)
             raise e
     @staticmethod
     def fetch_profile_picture(company_id, phone):
@@ -173,21 +181,28 @@ class WhatsAppService:
         headers = {'Client-Token': config['client_token']} if config.get('client_token') else {}
         
         try:
+            @retry_request()
+            def perform_fetch(p):
+                return requests.get(url, params={'phone': p}, headers=headers, timeout=10)
+            
             # 1. Try standard phone
-            res = requests.get(url, params={'phone': clean_phone}, headers=headers, timeout=10)
+            res = perform_fetch(clean_phone)
             data = res.json()
             
             link = data.get('link')
-            if link and link != "null": return link
+            if link and link != "null": 
+                update_integration_health(company_id, 'z_api')
+                return link
                 
-            # 2. Retry with suffix if item-not-found
             if data.get('errorMessage') == 'item-not-found':
                 clean_phone_full = f"{clean_phone}@c.us" # Try c.us
-                res = requests.get(url, params={'phone': clean_phone_full}, headers=headers, timeout=10)
+                res = perform_fetch(clean_phone_full)
                 data = res.json()
                 
                 link = data.get('link')
-                if link and link != "null": return link
+                if link and link != "null": 
+                    update_integration_health(company_id, 'z_api')
+                    return link
 
             # 3. Retry without 9th digit (Common Brazil Issue)
             # If length is 13 (55 + 2 DDD + 9 + 8 digits)
@@ -196,18 +211,25 @@ class WhatsAppService:
                 clean_no_9 = clean_phone[:4] + clean_phone[5:]
                 clean_no_9_full = f"{clean_no_9}@c.us"
                 
-                res = requests.get(url, params={'phone': clean_no_9_full}, headers=headers, timeout=10)
+                res = perform_fetch(clean_no_9_full)
                 data = res.json()
                 
                 link = data.get('link')
-                if link and link != "null": return link
+                if link and link != "null": 
+                    update_integration_health(company_id, 'z_api')
+                    return link
 
-            if 'eurl' in data and data['eurl']: return data['eurl']
-            if 'imgUrl' in data and data['imgUrl']: return data['imgUrl']
+            if 'eurl' in data and data['eurl']: 
+                update_integration_health(company_id, 'z_api')
+                return data['eurl']
+            if 'imgUrl' in data and data['imgUrl']: 
+                update_integration_health(company_id, 'z_api')
+                return data['imgUrl']
                  
             return None
         except Exception as e:
             current_app.logger.error(f"Error fetching profile pic: {e}")
+            update_integration_health(company_id, 'z_api', error=e)
             return None
     @staticmethod
     def get_inbox_conversations(company_id, limit=500):
@@ -307,17 +329,68 @@ class WhatsAppService:
             current_app.logger.warning(f"Inbound from unknown: {phone}")
             return {'status': 'unknown_contact', 'phone': phone}
             
-        # 3. Save Message
-        msg = WhatsAppMessage(
-            company_id=company_id,
-            lead_id=contact.id if c_type == 'lead' else None,
-            client_id=contact.id if c_type == 'client' else None,
-            direction='in',
-            content=body,
-            status='delivered',
-            external_id=data.get('messageId')
-        )
-        db.session.add(msg)
-        db.session.commit()
+        try:
+            # 3. Save Message
+            msg = WhatsAppMessage(
+                company_id=company_id,
+                lead_id=contact.id if c_type == 'lead' else None,
+                client_id=contact.id if c_type == 'client' else None,
+                direction='in',
+                content=body,
+                status='delivered',
+                external_id=data.get('messageId')
+            )
+            db.session.add(msg)
+            db.session.commit()
+            
+            update_integration_health(company_id, 'z_api')
+            return {'success': True, 'msg_id': msg.id}
+        except Exception as e:
+            db.session.rollback()
+            update_integration_health(company_id, 'z_api', error=e)
+            raise e
+
+    @staticmethod
+    def configure_webhook(company_id, webhook_url):
+        """
+        Configures the Z-API webhooks programmatically.
+        Updates all relevant webhook endpoints.
+        """
+        config = WhatsAppService.get_config(company_id)
+        if not config:
+            raise Exception("WhatsApp não configurado.")
+
+        base_url = f"{config['api_url']}/instances/{config['instance_id']}/token/{config['token']}"
+        headers = {'Client-Token': config['client_token']} if config.get('client_token') else {}
         
-        return {'success': True, 'msg_id': msg.id}
+        # Endpoints to update
+        endpoints = [
+            "update-webhook-received",
+            "update-webhook-disconnected",
+            "update-webhook-connected",
+            "update-webhook-message-status"
+        ]
+        
+        results = []
+        for endp in endpoints:
+            try:
+                url = f"{base_url}/{endp}"
+                payload = {"value": webhook_url}
+                
+                @retry_request()
+                def perform_put():
+                    return requests.put(url, json=payload, headers=headers, timeout=10)
+                
+                res = perform_put()
+                # Z-API usually returns 200 or 201 for these
+                results.append(res.status_code in [200, 201])
+            except Exception as e:
+                import requests # Ensure requests is available if called in weird context
+                from flask import current_app
+                current_app.logger.error(f"Error updating Z-API webhook {endp}: {e}")
+                results.append(False)
+                
+        if all(results):
+            return True
+        else:
+            raise Exception("Falha ao configurar alguns webhooks na Z-API. Verifique sua conexão.")

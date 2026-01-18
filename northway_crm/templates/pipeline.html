@@ -19,7 +19,7 @@
                         class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
                         <div class="p-2 space-y-1">
                             {% for p in pipelines %}
-                            <a href="{{ url_for('main.pipeline', pipeline_id=p.id) }}"
+                            <a href="{{ url_for('leads.pipeline', pipeline_id=p.id) }}"
                                 class="block px-3 py-2 rounded-md hover:bg-gray-50 text-gray-700 {{ 'bg-red-50 text-northway-red font-medium' if p.id == active_pipeline.id else '' }}">
                                 {{ p.name }}
                             </a>
@@ -65,7 +65,7 @@
 
                     {% if current_user.role == 'admin' %}
                     <!-- Delete Button -->
-                    <form action="{{ url_for('main.delete_stage', id=stage.id) }}" method="POST"
+                    <form action="{{ url_for('leads.delete_stage', id=stage.id) }}" method="POST"
                         onsubmit="return confirm('Excluir esta etapa? (Somente se estiver vazia)')" class="inline-flex">
                         <button type="submit"
                             class="text-gray-400 hover:text-red-500 opacity-0 group-hover/header:opacity-100 transition-opacity">
@@ -76,7 +76,7 @@
                 </div>
 
                 <!-- Rename Form (Hidden by default) -->
-                <form id="edit-form-{{ stage.id }}" action="{{ url_for('main.update_stage', id=stage.id) }}"
+                <form id="edit-form-{{ stage.id }}" action="{{ url_for('leads.update_stage', id=stage.id) }}"
                     method="POST"
                     class="hidden absolute bg-white shadow-lg p-2 rounded-lg border border-gray-200 z-10 top-2 left-2 right-2">
                     <input type="text" name="name" value="{{ stage.name }}"
@@ -126,7 +126,7 @@
                         <!-- Move actions -->
                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             <!-- Move Back -->
-                            <form action="{{ url_for('main.move_lead', id=lead.id, direction='prev') }}" method="POST"
+                            <form action="{{ url_for('leads.move_lead', id=lead.id, direction='prev') }}" method="POST"
                                 class="inline">
                                 <button type="submit"
                                     class="w-6 h-6 rounded hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-northway-red transition-colors"
@@ -136,7 +136,7 @@
                             </form>
 
                             <!-- Move Next -->
-                            <form action="{{ url_for('main.move_lead', id=lead.id, direction='next') }}" method="POST"
+                            <form action="{{ url_for('leads.move_lead', id=lead.id, direction='next') }}" method="POST"
                                 class="inline">
                                 <button type="submit"
                                     class="w-6 h-6 rounded hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-northway-red transition-colors"
@@ -186,7 +186,7 @@
             </button>
         </div>
 
-        <form action="{{ url_for('main.create_pipeline') }}" method="POST" class="p-6 space-y-4">
+        <form action="{{ url_for('leads.create_pipeline') }}" method="POST" class="p-6 space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Funil *</label>
                 <input type="text" name="name" required placeholder="Ex: Pós-Venda, Marketing, Parcerias"
@@ -578,7 +578,7 @@
             </button>
         </div>
 
-        <form action="{{ url_for('main.create_stage', id=active_pipeline.id) }}" method="POST" class="p-6 space-y-4">
+        <form action="{{ url_for('leads.create_stage', id=active_pipeline.id) }}" method="POST" class="p-6 space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Etapa *</label>
                 <input type="text" name="name" required placeholder="Ex: Triagem, Follow-up"

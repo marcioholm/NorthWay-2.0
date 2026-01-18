@@ -166,7 +166,7 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-8 w-auto">
             </div>
             <!-- Mobile Profile Avatar (Optional shortcut) -->
-            <a href="{{ url_for('main.profile') }}"
+            <a href="{{ url_for('admin.profile') }}"
                 class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-400">
                 {% if current_user.profile_image %}
                 <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}"
@@ -206,15 +206,15 @@
 
             <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto no-scrollbar">
                 <!-- Navigation Links -->
-                <a href="{{ url_for('main.home') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.home' %}bg-white/10 text-white font-semibold{% endif %}">
+                <a href="{{ url_for('dashboard.home') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'dashboard.home' %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="home" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Início</span>
                 </a>
 
                 {% if current_user.has_permission('dashboard_view') %}
-                <a href="{{ url_for('main.dashboard') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.dashboard' %}bg-white/10 text-white font-semibold{% endif %}">
+                <a href="{{ url_for('dashboard.dashboard') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'dashboard.dashboard' %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Dashboard</span>
                 </a>
@@ -229,16 +229,16 @@
                 {% endif %}
 
                 {% if current_user.has_permission('leads_view') %}
-                <a href="{{ url_for('main.leads') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.leads' else 'text-gray-400' }}">
+                <a href="{{ url_for('leads.leads') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'leads.leads' else 'text-gray-400' }}">
                     <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Leads</span>
                 </a>
                 {% endif %}
 
                 {% if current_user.has_permission('pipeline_view') %}
-                <a href="{{ url_for('main.pipeline') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.pipeline' else 'text-gray-400' }}">
+                <a href="{{ url_for('leads.pipeline') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'leads.pipeline' else 'text-gray-400' }}">
                     <i data-lucide="trello" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Funil</span>
                 </a>
@@ -253,8 +253,8 @@
                 {% endif %}
 
                 {% if current_user.has_permission('tasks_view') %}
-                <a href="{{ url_for('main.tasks') }}"
-                    class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.tasks' else 'text-gray-400' }}">
+                <a href="{{ url_for('tasks.tasks') }}"
+                    class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'tasks.tasks' else 'text-gray-400' }}">
                     <div class="flex items-center gap-3">
                         <i data-lucide="check-square" class="w-5 h-5 flex-shrink-0"></i>
                         <span class="sidebar-text transition-opacity duration-300">Tarefas</span>
@@ -268,8 +268,8 @@
                 {% endif %}
 
                 {% if current_user.has_permission('clients_view') %}
-                <a href="{{ url_for('main.clients') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'main.clients' else 'text-gray-400' }}">
+                <a href="{{ url_for('clients.clients') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'clients.clients' else 'text-gray-400' }}">
                     <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Clientes</span>
                 </a>
@@ -297,16 +297,16 @@
                 {% endif %}
 
                 {% if current_user.has_permission('company_settings_view') %}
-                <a href="{{ url_for('main.company_settings') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.company_settings' %}bg-white/10 text-white font-semibold{% endif %}">
+                <a href="{{ url_for('admin.company_settings') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'admin.company_settings' %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="settings" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Configurações</span>
                 </a>
                 {% endif %}
 
                 {% if current_user.has_permission('processes_view') %}
-                <a href="{{ url_for('main.settings_processes') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'main.settings_processes' %}bg-white/10 text-white font-semibold{% endif %}">
+                <a href="{{ url_for('templates.settings_processes') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'templates.settings_processes' %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="list-checks" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Processos</span>
                 </a>
@@ -505,7 +505,7 @@
                             <p class="text-xs text-gray-500 truncate">{{ current_user.email }}</p>
                         </div>
 
-                        <a href="{{ url_for('main.profile') }}"
+                        <a href="{{ url_for('admin.profile') }}"
                             class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-northway-red transition-colors">
                             <i data-lucide="user" class="w-4 h-4"></i>
                             Meu Perfil

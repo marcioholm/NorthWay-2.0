@@ -35,7 +35,7 @@
                 descrição." }}</p>
 
             <div class="flex items-center gap-3 mt-auto">
-                <a href="{{ url_for('main.edit_process_template', id=template.id) }}"
+                <a href="{{ url_for('templates.edit_process_template', id=template.id) }}"
                     class="flex-1 bg-gray-50 text-gray-700 py-2 rounded-lg text-sm font-bold text-center hover:bg-gray-100 transition-colors">
                     Editar
                 </a>
@@ -71,7 +71,7 @@
         <h3 class="text-xl font-bold text-gray-900 mb-1">Novo Modelo de Processo</h3>
         <p class="text-sm text-gray-500 mb-6">Defina o nome do fluxo (ex: Gestão de Tráfego).</p>
 
-        <form action="{{ url_for('main.create_process_template') }}" method="POST">
+        <form action="{{ url_for('templates.create_process_template') }}" method="POST">
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Processo</label>

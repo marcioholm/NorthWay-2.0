@@ -1,8 +1,10 @@
-from flask import Blueprint, request, jsonify, current_app, url_for
+from flask import Blueprint, request, current_app, url_for
 from flask_login import login_required, current_user
 from models import db, Integration, FinancialEvent, Transaction, Contract
 from services.asaas_service import AsaasService
+from utils import api_response, retry_request
 import json
+import requests
 
 integrations_bp = Blueprint('integrations_bp', __name__)
 
@@ -14,7 +16,7 @@ def save_asaas_config():
     environment = data.get('environment', 'sandbox')
     
     if not api_key:
-        return jsonify({'error': 'API Key is required'}), 400
+        return api_response(success=False, error='API Key is required', status=400)
 
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='asaas').first()
     
@@ -33,7 +35,7 @@ def save_asaas_config():
     
     db.session.commit()
     
-    return jsonify({'success': True})
+    return api_response(success=True)
 
 @integrations_bp.route('/api/integrations/asaas/test', methods=['POST'])
 @login_required
@@ -56,23 +58,62 @@ def test_asaas_connection():
                     environment = conf.get('environment', environment)
                 except: pass
         else:
-            return jsonify({'error': 'API Key missing'}), 400
+            return api_response(success=False, error='API Key missing', status=400)
 
     # Test by listing customers (limit 1)
     base_url = AsaasService.get_base_url(environment)
     headers = AsaasService.get_headers(api_key)
     
     try:
-        import requests
-        res = requests.get(f"{base_url}/customers?limit=1", headers=headers, timeout=10)
+        @retry_request(retries=2)
+        def perform_test():
+            return requests.get(f"{base_url}/customers?limit=1", headers=headers, timeout=10)
+        
+        res = perform_test()
         if res.status_code == 200:
-            return jsonify({'success': True, 'message': 'Conexão estabelecida com sucesso!'})
+            return api_response(success=True, data={'message': 'Conexão estabelecida com sucesso!'})
         elif res.status_code == 401:
-             return jsonify({'error': 'Chave API inválida.'}), 401
+             return api_response(success=False, error='Chave API inválida.', status=401)
         else:
-             return jsonify({'error': f"Erro ASAAS: {res.text}"}), 400
+             return api_response(success=False, error=f"Erro ASAAS: {res.text}", status=400)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return api_response(success=False, error=str(e), status=500)
+
+@integrations_bp.route('/api/integrations/asaas/setup-webhook', methods=['POST'])
+@login_required
+def setup_asaas_webhook():
+    webhook_url = f"{request.url_root.rstrip('/')}/api/webhooks/asaas/{current_user.company_id}"
+    try:
+        AsaasService.configure_webhook(current_user.company_id, webhook_url)
+        return api_response(success=True)
+    except Exception as e:
+        return api_response(success=False, error=str(e), status=500)
+
+@integrations_bp.route('/api/integrations/google-maps/test', methods=['POST'])
+@login_required
+def test_google_maps():
+    api_key = request.json.get('api_key')
+    if not api_key:
+        return api_response(success=False, error='API Key is required', status=400)
+    
+    # Test by doing a simple search (e.g., "Northway")
+    url = "https://places.googleapis.com/v1/places:searchText"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": api_key,
+        "X-Goog-FieldMask": "places.id"
+    }
+    payload = {"textQuery": "Google"}
+    
+    try:
+        res = requests.post(url, headers=headers, json=payload, timeout=10)
+        if res.status_code == 200:
+            return api_response(success=True)
+        else:
+            err = res.json().get('error', {}).get('message', res.text)
+            return api_response(success=False, error=f"Google Error: {err}")
+    except Exception as e:
+        return api_response(success=False, error=str(e))
 
 # WEBHOOK
 @integrations_bp.route('/api/webhooks/asaas/<int:company_id>', methods=['POST'])
@@ -83,7 +124,7 @@ def asaas_webhook(company_id):
     payment_data = payload.get('payment')
     
     if not event or not payment_data:
-        return jsonify({'error': 'Invalid payload'}), 400
+        return api_response(success=False, error='Invalid payload', status=400)
 
     # Log Event
     # Check if transaction exists via externalReference or asaas_id
@@ -95,31 +136,36 @@ def asaas_webhook(company_id):
     if not transaction and payment_data.get('id'):
          transaction = Transaction.query.filter_by(asaas_id=payment_data['id']).first()
 
-    # Create Event Log
-    log = FinancialEvent(
-        company_id=company_id,
-        payment_id=transaction.id if transaction else None,
-        event_type=event,
-        payload=payload
-    )
-    db.session.add(log) # Add log regardless of matching transaction
-    
-    if transaction:
-        # Verify company mismatch? (Should not happen if URL is correct but good to check)
-        if transaction.company_id != company_id:
-            current_app.logger.warning(f"Webhook Company Mismatch: URL {company_id} vs Trans {transaction.company_id}")
+    try:
+        # Create Event Log
+        log = FinancialEvent(
+            company_id=company_id,
+            payment_id=transaction.id if transaction else None,
+            event_type=event,
+            payload=payload
+        )
+        db.session.add(log) # Add log regardless of matching transaction
         
-        # Update Status
-        if event == 'PAYMENT_RECEIVED' or event == 'PAYMENT_CONFIRMED':
-            transaction.status = 'paid'
-            transaction.paid_date = db.func.current_date()
-        elif event == 'PAYMENT_OVERDUE':
-            transaction.status = 'overdue'
-        elif event in ['PAYMENT_REFUNDED', 'PAYMENT_REVERSED']:
-            transaction.status = 'cancelled' # or refunded
+        if transaction:
+            # Verify company mismatch? (Should not happen if URL is correct but good to check)
+            if transaction.company_id != company_id:
+                current_app.logger.warning(f"Webhook Company Mismatch: URL {company_id} vs Trans {transaction.company_id}")
             
-        # Potentially update Contract status if all paid? (Out of scope for now)
+            # Update Status
+            if event == 'PAYMENT_RECEIVED' or event == 'PAYMENT_CONFIRMED':
+                transaction.status = 'paid'
+                transaction.paid_date = db.func.current_date()
+            elif event == 'PAYMENT_OVERDUE':
+                transaction.status = 'overdue'
+            elif event in ['PAYMENT_REFUNDED', 'PAYMENT_REVERSED']:
+                transaction.status = 'cancelled' # or refunded
+                
+            # Potentially update Contract status if all paid? (Out of scope for now)
+        
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Asaas Webhook Error: {e}")
+        return api_response(success=False, error=str(e), status=500)
     
-    db.session.commit()
-    
-    return jsonify({'received': True})
+    return api_response(data={'received': True})

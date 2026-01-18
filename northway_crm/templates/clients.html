@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import user_avatar %}
+{% from "macros.html" import user_avatar, render_pagination %}
 
 {% block content %}
 <div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
@@ -15,7 +15,7 @@
 
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-            <form action="{{ url_for('main.clients') }}" method="GET" class="flex flex-wrap gap-4 items-end">
+            <form action="{{ url_for('clients.clients') }}" method="GET" class="flex flex-wrap gap-4 items-end">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Status</label>
                     <div class="relative">
@@ -78,7 +78,7 @@
                         Filtrar
                     </button>
                     {% if request.args %}
-                    <a href="{{ url_for('main.clients') }}"
+                    <a href="{{ url_for('clients.clients') }}"
                         class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 transition-colors">
                         Limpar
                     </a>
@@ -109,7 +109,7 @@
                         {% for client in clients %}
                         <tr class="hover:bg-gray-50/80 transition-all duration-200 group">
                             <td class="py-4 px-6">
-                                <a href="{{ url_for('main.client_details', id=client.id) }}"
+                                <a href="{{ url_for('clients.client_details', id=client.id) }}"
                                     class="font-bold text-gray-900 hover:text-northway-red block flex items-center gap-3">
                                     <div
                                         class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 uppercase">
@@ -225,11 +225,11 @@
                     <div class="px-4 py-2 border-b border-gray-50 mb-1">
                         <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ações</p>
                     </div>
-                    <a href="{{ url_for('main.client_details', id=client.id) }}"
+                    <a href="{{ url_for('clients.client_details', id=client.id) }}"
                         class="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-northway-red flex items-center gap-3 transition-colors">
                         <i data-lucide="eye" class="w-4 h-4"></i> Ver Detalhes
                     </a>
-                    <a href="{{ url_for('main.client_details', id=client.id) }}"
+                    <a href="{{ url_for('clients.client_details', id=client.id) }}"
                         class="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-northway-red flex items-center gap-3 transition-colors">
                         <i data-lucide="pencil" class="w-4 h-4"></i> Editar Dados
                     </a>
@@ -263,7 +263,7 @@
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Sua carteira está vazia</h3>
                     <p class="text-gray-500 mb-8 max-w-md mx-auto">Nenhum cliente encontrado com os filtros atuais. Que
                         tal prospectar novos leads?</p>
-                    <a href="{{ url_for('main.leads') }}"
+                    <a href="{{ url_for('leads.leads') }}"
                         class="bg-northway-red text-white px-8 py-3 rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-200 font-bold flex items-center gap-2">
                         <i data-lucide="user-plus" class="w-5 h-5"></i>
                         Ir para Leads
@@ -275,6 +275,7 @@
         </tbody>
         </table>
     </div>
+    {{ render_pagination(pagination, 'clients.clients') }}
 </div>
 </div>
 {% endblock %}
@@ -337,7 +338,7 @@
                             <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
-                    <form action="{{ url_for('main.tasks') }}" method="POST">
+                    <form action="{{ url_for('tasks.tasks') }}" method="POST">
                         <input type="hidden" name="client_id" value="${clientId}"> <!-- Need to ensure backend accepts client_id -->
                         <!-- Actually backend expects lead_id or generic. Let's check app.py -->
                         
