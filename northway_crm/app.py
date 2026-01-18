@@ -2510,22 +2510,22 @@ def create_app():
     @main.route('/contracts/<int:id>/sign', methods=['POST'])
     @login_required
     def sign_contract(id):
-        def add_months_helper(sourcedate, months):
-            month = sourcedate.month - 1 + months
-            year = sourcedate.year + month // 12
-            month = month % 12 + 1
-            day = min(sourcedate.day, [31,
-                29 if year % 4 == 0 and not year % 100 == 0 or year % 400 == 0 else 28,
-                31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month-1])
-            return date(year, month, day)
-
-        contract = Contract.query.get_or_404(id)
-        
         try:
-             if contract.company_id != current_user.company_id:
-                  return jsonify({'error': 'Unauthorized: Company Mismatch'}), 403
-            
+            def add_months_helper(sourcedate, months):
+                month = sourcedate.month - 1 + months
+                year = sourcedate.year + month // 12
+                month = month % 12 + 1
+                day = min(sourcedate.day, [31,
+                    29 if year % 4 == 0 and not year % 100 == 0 or year % 400 == 0 else 28,
+                    31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month-1])
+                return date(year, month, day)
 
+            contract = Contract.query.get_or_404(id)
+            
+            if contract.company_id != current_user.company_id:
+                return jsonify({'error': 'Unauthorized: Company Mismatch'}), 403
+                
+            # Parse Form Data to get financial terms
             data = json.loads(contract.form_data)
             val_parcela_str = data.get('valor_parcela', '0')
             qtd_parcelas = int(data.get('qtd_parcelas', '12'))
@@ -2565,6 +2565,8 @@ def create_app():
 
                     t = Transaction(
                         contract_id=contract.id,
+                        client_id=contract.client_id, # Link client directly
+                        company_id=contract.company_id,
                         description=description,
                         amount=amount,
                         due_date=due_date,
@@ -2609,6 +2611,7 @@ def create_app():
                         t_impl = Transaction(
                             contract_id=contract.id,
                             client_id=contract.client_id, # Linking explicitly
+                            company_id=contract.company_id,
                             description=desc_extra,
                             amount=impl_installment_val,
                             due_date=target_impl_date,
@@ -2649,7 +2652,11 @@ def create_app():
             import traceback
             traceback.print_exc()
             db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+            # Check for Read-only database error
+            err_msg = str(e)
+            if "attempt to write a readonly database" in err_msg:
+                err_msg = "Erro Crítico: Banco de Dados em modo Leitura (Vercel SQLite). Configure o DATABASE_URL."
+            return jsonify({'error': err_msg}), 500
 
     from routes.financial import financial_bp
     from routes.docs import docs_bp
