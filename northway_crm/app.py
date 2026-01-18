@@ -2520,11 +2520,12 @@ def create_app():
             return date(year, month, day)
 
         contract = Contract.query.get_or_404(id)
-        if contract.company_id != current_user.company_id:
-            abort(403)
-            
-        # Parse Form Data to get financial terms
+        
         try:
+             if contract.company_id != current_user.company_id:
+                  return jsonify({'error': 'Unauthorized: Company Mismatch'}), 403
+            
+
             data = json.loads(contract.form_data)
             val_parcela_str = data.get('valor_parcela', '0')
             qtd_parcelas = int(data.get('qtd_parcelas', '12'))

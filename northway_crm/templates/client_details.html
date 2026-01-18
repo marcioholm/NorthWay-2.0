@@ -1355,14 +1355,23 @@
 
         try {
             const res = await fetch(`/contracts/${id}/sign`, { method: 'POST' });
-            const data = await res.json();
+            let data;
+            try {
+                data = await res.json();
+            } catch (err) {
+                const text = await res.text();
+                console.error("Failed to parse JSON response:", text);
+                alert("Erro no servidor (Resposta inválida). Detalhes no console.");
+                return;
+            }
+
             if (data.success) {
                 window.location.reload();
             } else {
                 alert("Erro: " + (data.error || "Desconhecido"));
             }
         } catch (e) {
-            alert("Erro de conexão ao servidor.");
+            alert("Erro de conexão ou execução. Verifique o console.");
             console.error(e);
         }
     }
