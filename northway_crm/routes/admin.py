@@ -161,3 +161,8 @@ def profile():
         return redirect(url_for('admin.profile'))
         
     return render_template('profile.html', user=current_user)
+
+@admin_bp.route('/settings')
+@login_required
+def settings_index():
+    return redirect(url_for('admin.profile'))
