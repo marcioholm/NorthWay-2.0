@@ -414,22 +414,28 @@ def create_manual_charge(id):
 @login_required
 def cancel_transaction_route(id):
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
-        abort(403)
+        return jsonify({'success': False, 'error': 'Acesso negado. Apenas Admin/Gerente podem cancelar.'}), 403
     
-    # Get Transaction
-    tx = Transaction.query.get_or_404(id)
+    # Get Transaction safely
+    tx = Transaction.query.get(id)
+    if not tx:
+        return jsonify({'success': False, 'error': 'Transação não encontrada.'}), 404
     
     # Security Check: Belongs to user's company
     if tx.company_id != current_user.company_id:
-        abort(403)
+        return jsonify({'success': False, 'error': 'Acesso negado. Transação pertence a outra empresa.'}), 403
         
     try:
         # Cancel in Asaas if linked
         if tx.asaas_id:
-            success = AsaasService.cancel_payment(current_user.company_id, tx.asaas_id)
-            if not success:
-               # If strictly required, error out.
-               return jsonify({'success': False, 'error': 'Falha ao cancelar no Asaas (transação inexistente ou não cancelável).'}), 400
+            try:
+                success = AsaasService.cancel_payment(current_user.company_id, tx.asaas_id)
+                if not success:
+                    # In some cases, we might want to allow local cancellation even if Asaas fails?
+                    # For now, we enforce sync.
+                    return jsonify({'success': False, 'error': 'Falha ao cancelar no Asaas. Verifique se a cobrança já foi paga ou removida.'}), 400
+            except Exception as asaas_error:
+                 return jsonify({'success': False, 'error': f'Erro de comunicação com Asaas: {str(asaas_error)}'}), 500
 
         # Update Local Status
         tx.status = 'cancelled'
