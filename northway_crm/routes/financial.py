@@ -21,6 +21,9 @@ def add_months(sourcedate, months):
 @financial_bp.route('/financial')
 @login_required
 def dashboard():
+    if not current_user.company_id:
+        abort(403)
+
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
     return render_template('financial/dashboard.html')
@@ -28,6 +31,9 @@ def dashboard():
 @financial_bp.route('/api/financial/stats')
 @login_required
 def stats():
+    if not current_user.company_id:
+        abort(403)
+
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
     
@@ -205,6 +211,9 @@ def stats():
 @financial_bp.route('/financial/dre')
 @login_required
 def dre_page():
+    if not current_user.company_id:
+        abort(403)
+
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
     return render_template('financial/dre.html', now=datetime.now()) # Pass now for date filters
@@ -212,6 +221,9 @@ def dre_page():
 @financial_bp.route('/api/financial/dre')
 @login_required
 def get_dre_data():
+    if not current_user.company_id:
+        abort(403)
+
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
         
@@ -328,6 +340,9 @@ def get_dre_data():
 @financial_bp.route('/api/expenses', methods=['GET', 'POST'])
 @login_required
 def expenses_api():
+    if not current_user.company_id:
+        abort(403)
+
     company_id = current_user.company_id
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
@@ -361,12 +376,18 @@ def expenses_api():
 @financial_bp.route('/api/financial/categories')
 @login_required
 def get_categories():
-    cats = FinancialCategory.query.filter_by(company_id=current_user.company_id).all()
+    if not current_user.company_id:
+        abort(403)
+        
+    cats = FinancialCategory.query.filter(FinancialCategory.company_id == current_user.company_id).all()
     return jsonify([{ 'id': c.id, 'name': c.name, 'type': c.type } for c in cats])
 
 @financial_bp.route('/clients/<int:id>/charges/new', methods=['POST'])
 @login_required
 def create_manual_charge(id):
+    if not current_user.company_id:
+        abort(403)
+
     from models import Client
     from services.asaas_service import AsaasService
     

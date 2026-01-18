@@ -11,6 +11,9 @@ integrations_bp = Blueprint('integrations_bp', __name__)
 @integrations_bp.route('/api/integrations/asaas/save', methods=['POST'])
 @login_required
 def save_asaas_config():
+    if not current_user.company_id:
+        return api_response(success=False, error='Usuário sem empresa vinculada', status=403)
+
     data = request.json
     api_key = data.get('api_key')
     environment = data.get('environment', 'sandbox')
@@ -18,7 +21,8 @@ def save_asaas_config():
     if not api_key:
         return api_response(success=False, error='API Key is required', status=400)
 
-    integration = Integration.query.filter_by(company_id=current_user.company_id, service='asaas').first()
+    # Use strict filter
+    integration = Integration.query.filter(Integration.company_id == current_user.company_id, Integration.service == 'asaas').first()
     
     if not integration:
         integration = Integration(
@@ -40,6 +44,9 @@ def save_asaas_config():
 @integrations_bp.route('/api/integrations/asaas/test', methods=['POST'])
 @login_required
 def test_asaas_connection():
+    if not current_user.company_id:
+        return api_response(success=False, error='Usuário sem empresa vinculada', status=403)
+
     # Use the saved key or the one provided in request (for testing before save)
     # But for security, usually we use the saved one or temporary one.
     # Let's use the one in request if provided, else saved.
@@ -49,7 +56,7 @@ def test_asaas_connection():
     
     if not api_key:
         # Try to fetch from DB
-        existing = Integration.query.filter_by(company_id=current_user.company_id, service='asaas').first()
+        existing = Integration.query.filter(Integration.company_id == current_user.company_id, Integration.service == 'asaas').first()
         if existing and existing.api_key:
             api_key = existing.api_key
             if existing.config_json:
@@ -73,15 +80,18 @@ def test_asaas_connection():
         if res.status_code == 200:
             return api_response(success=True, data={'message': 'Conexão estabelecida com sucesso!'})
         elif res.status_code == 401:
-             return api_response(success=False, error='Chave API inválida.', status=401)
+            return api_response(success=False, error='Chave API inválida.', status=401)
         else:
-             return api_response(success=False, error=f"Erro ASAAS: {res.text}", status=400)
+            return api_response(success=False, error=f"Erro ASAAS: {res.text}", status=400)
     except Exception as e:
         return api_response(success=False, error=str(e), status=500)
 
 @integrations_bp.route('/api/integrations/asaas/setup-webhook', methods=['POST'])
 @login_required
 def setup_asaas_webhook():
+    if not current_user.company_id:
+         return api_response(success=False, error='Usuário sem empresa vinculada', status=403)
+
     webhook_url = f"{request.url_root.rstrip('/')}/api/webhooks/asaas/{current_user.company_id}"
     try:
         AsaasService.configure_webhook(current_user.company_id, webhook_url)
@@ -92,6 +102,9 @@ def setup_asaas_webhook():
 @integrations_bp.route('/api/integrations/google-maps/test', methods=['POST'])
 @login_required
 def test_google_maps():
+    if not current_user.company_id:
+         return api_response(success=False, error='Usuário sem empresa vinculada', status=403)
+
     api_key = request.json.get('api_key')
     if not api_key:
         return api_response(success=False, error='API Key is required', status=400)

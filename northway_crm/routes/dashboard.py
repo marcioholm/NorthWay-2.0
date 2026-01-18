@@ -15,13 +15,16 @@ def index():
 @dashboard_bp.route('/home')
 @login_required
 def home():
+    if not current_user.company_id:
+        abort(403)
+        
     company_id = current_user.company_id
     user_id = current_user.id
     
     # 1. Summary stats
-    lead_count = Lead.query.filter_by(company_id=company_id).count()
-    client_count = Client.query.filter_by(company_id=company_id).count()
-    recent_leads = Lead.query.filter_by(company_id=company_id).order_by(Lead.created_at.desc()).limit(5).all()
+    lead_count = Lead.query.filter(Lead.company_id == company_id).count()
+    client_count = Client.query.filter(Client.company_id == company_id).count()
+    recent_leads = Lead.query.filter(Lead.company_id == company_id).order_by(Lead.created_at.desc()).limit(5).all()
     
     # 2. Daily items (Tasks and Attention Leads)
     today_tasks = get_today_tasks(company_id, user_id)
@@ -70,13 +73,16 @@ def home():
 @dashboard_bp.route('/dashboard')
 @login_required
 def dashboard():
+    if not current_user.company_id:
+        abort(403)
+
     company_id = current_user.company_id
     user_id = current_user.id
     
     # 1. KPIs
-    total_leads = Lead.query.filter_by(company_id=company_id).count()
-    active_clients = Client.query.filter_by(company_id=company_id, status='ativo').count()
-    won_deals = Lead.query.filter_by(company_id=company_id, status='won').count()
+    total_leads = Lead.query.filter(Lead.company_id == company_id).count()
+    active_clients = Client.query.filter(Client.company_id == company_id, Client.status == 'ativo').count()
+    won_deals = Lead.query.filter(Lead.company_id == company_id, Lead.status == 'won').count()
     
     # Calculate MRR
     mrr_query = db.session.query(db.func.sum(Client.monthly_value)).filter_by(company_id=company_id, status='ativo').scalar()
@@ -123,9 +129,14 @@ def get_today_stats(company_id, user_id):
 @dashboard_bp.route('/api/dashboard/chart-data')
 @login_required
 def get_chart_data():
+    if not current_user.company_id:
+        abort(403)
+
     period = request.args.get('period', 'monthly')
     now = datetime.now()
     company_id = current_user.company_id
+    
+    # ... (date logic) ...
 
     if period == 'today':
         start_date = datetime(now.year, now.month, now.day)

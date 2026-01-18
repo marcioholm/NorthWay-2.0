@@ -12,6 +12,9 @@ contracts_bp = Blueprint('contracts', __name__)
 @contracts_bp.route('/clients/<int:id>/contracts/new')
 @login_required
 def new_contract(id):
+    if not current_user.company_id:
+        abort(403)
+
     client = Client.query.get_or_404(id)
     if client.company_id != current_user.company_id:
         return "Unauthorized", 403
@@ -44,6 +47,9 @@ def new_contract(id):
 @contracts_bp.route('/api/contracts/preview', methods=['POST'])
 @login_required
 def preview_contract():
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
     data = request.json
     client_id = data.get('client_id')
     template_id = data.get('template_id')
@@ -102,6 +108,9 @@ def preview_contract():
 @contracts_bp.route('/clients/<int:id>/contracts', methods=['POST'])
 @login_required
 def create_contract(id):
+    if not current_user.company_id:
+        abort(403)
+
     client = Client.query.get_or_404(id)
     if client.company_id != current_user.company_id:
         abort(403)
@@ -199,6 +208,9 @@ def create_contract(id):
 @contracts_bp.route('/contracts/<int:id>/terminate', methods=['POST'])
 @login_required
 def terminate_contract(id):
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
     contract = Contract.query.get_or_404(id)
     if contract.company_id != current_user.company_id:
         abort(403)
@@ -251,6 +263,9 @@ def terminate_contract(id):
 @contracts_bp.route('/contracts/<int:id>/sign', methods=['POST'])
 @login_required
 def sign_contract(id):
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
     try:
         def add_months_helper(sourcedate, months):
             month = sourcedate.month - 1 + months
@@ -292,6 +307,9 @@ def sign_contract(id):
 @contracts_bp.route('/contracts/<int:id>')
 @login_required
 def view_contract(id):
+    if not current_user.company_id:
+        abort(403)
+
     contract = Contract.query.get_or_404(id)
     if contract.company_id != current_user.company_id:
         abort(403)

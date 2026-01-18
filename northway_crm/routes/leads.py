@@ -9,9 +9,13 @@ leads_bp = Blueprint('leads', __name__)
 @leads_bp.route('/leads')
 @login_required
 def leads():
+    if not current_user.company_id:
+        abort(403)
+
     page = request.args.get('page', 1, type=int)
     per_page = 20
-    query = Lead.query.filter_by(company_id=current_user.company_id)
+    # Strict filter
+    query = Lead.query.filter(Lead.company_id == current_user.company_id)
     
     # Filters
     status = request.args.get('status')
@@ -33,7 +37,8 @@ def leads():
     leads_list = pagination.items
     
     from models import User # Lazy import
-    users = User.query.filter_by(company_id=current_user.company_id).all()
+    # Strict filter
+    users = User.query.filter(User.company_id == current_user.company_id).all()
     
     return render_template('leads.html', leads=leads_list, pagination=pagination, users=users)
 
@@ -49,8 +54,11 @@ def lead_details(id):
 @leads_bp.route('/pipeline/<int:pipeline_id>')
 @login_required
 def pipeline(pipeline_id=None):
+    if not current_user.company_id:
+        abort(403)
+
     # Get current company's pipelines
-    pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+    pipelines = Pipeline.query.filter(Pipeline.company_id == current_user.company_id).all()
     
     if not pipelines:
         # Create a default pipeline if none exists
@@ -350,11 +358,14 @@ def download_lead_template():
 @leads_bp.route('/leads/export')
 @login_required
 def export_leads():
+    if not current_user.company_id:
+        abort(403)
+
     import csv 
     import io
     from flask import Response
     
-    leads = Lead.query.filter_by(company_id=current_user.company_id).all()
+    leads = Lead.query.filter(Lead.company_id == current_user.company_id).all()
     
     header = ['ID', 'Nome', 'Email', 'Telefone', 'Status', 'Origem', 'Data Criação']
     si = io.StringIO()

@@ -8,11 +8,14 @@ templates_bp = Blueprint('templates', __name__)
 @templates_bp.route('/settings/templates')
 @login_required
 def settings_templates():
+    if not current_user.company_id:
+        abort(403)
+
     if current_user.role != ROLE_ADMIN:
         abort(403)
     
     # Get company templates
-    company_templates = ContractTemplate.query.filter_by(company_id=current_user.company_id).all()
+    company_templates = ContractTemplate.query.filter(ContractTemplate.company_id == current_user.company_id).all()
     
     # Get global templates
     global_templates = ContractTemplate.query.filter_by(is_global=True).all()
@@ -31,6 +34,9 @@ def settings_templates():
 @templates_bp.route('/settings/templates/new', methods=['GET', 'POST'])
 @login_required
 def new_template():
+    if not current_user.company_id:
+        abort(403)
+
     if current_user.role != ROLE_ADMIN:
         abort(403)
         
@@ -103,13 +109,19 @@ def settings_processes():
          if not can_manage:
               flash('Acesso negado.', 'error')
               return redirect(url_for('dashboard.home'))
-              
-    templates = ProcessTemplate.query.filter_by(company_id=current_user.company_id).all()
+    
+    if not current_user.company_id:
+         abort(403)
+
+    templates = ProcessTemplate.query.filter(ProcessTemplate.company_id == current_user.company_id).all()
     return render_template('settings_processes.html', templates=templates)
 
 @templates_bp.route('/settings/processes/new', methods=['POST'])
 @login_required
 def create_process_template():
+    if not current_user.company_id:
+        abort(403)
+
     from models import db, ProcessTemplate
     name = request.form.get('name')
     description = request.form.get('description')

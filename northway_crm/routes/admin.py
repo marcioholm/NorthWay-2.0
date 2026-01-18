@@ -120,11 +120,15 @@ def settings_integrations():
     from models import db, Integration
     import json
     
+    if not current_user.company_id:
+        abort(403)
+
     if request.method == 'POST':
         service = request.form.get('service')
         api_key = request.form.get('api_key')
         if service and api_key:
-            intg = Integration.query.filter_by(company_id=current_user.company_id, service=service).first()
+            # Strict filter
+            intg = Integration.query.filter(Integration.company_id == current_user.company_id, Integration.service == service).first()
             if not intg:
                 intg = Integration(company_id=current_user.company_id, service=service)
                 db.session.add(intg)
@@ -134,7 +138,8 @@ def settings_integrations():
             flash('Integração salva!', 'success')
         return redirect(url_for('admin.settings_integrations'))
 
-    integrations = Integration.query.filter_by(company_id=current_user.company_id).all()
+    # Strict filter
+    integrations = Integration.query.filter(Integration.company_id == current_user.company_id).all()
     integrations_map = {i.service: i for i in integrations}
     
     zapi_config = {}

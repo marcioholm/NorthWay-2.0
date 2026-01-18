@@ -37,7 +37,8 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 text-gray-400 text-xs font-medium">
-                        <a href="{{ url_for('dashboard.dashboard') }}" class="hover:text-gray-600 transition-colors">CRM</a>
+                        <a href="{{ url_for('dashboard.dashboard') }}"
+                            class="hover:text-gray-600 transition-colors">CRM</a>
                         <i data-lucide="chevron-right" class="w-3 h-3"></i>
                         <a href="{{ url_for('clients.clients') }}"
                             class="hover:text-gray-600 transition-colors">Clientes</a>
@@ -296,7 +297,8 @@
                                         {{ contract.template.name if contract.template else 'Contrato Avulso' }}
                                     </a>
                                     <p class="text-xs text-gray-500 mt-1">Criado em {{
-                                        contract.created_at.strftime('%d/%m/%Y') }}</p>
+                                        contract.created_at.strftime('%d/%m/%Y') if contract.created_at else 'N/A' }}
+                                    </p>
                                 </div>
                             </div>
                             <div class="flex flex-col items-end gap-2">
@@ -368,7 +370,8 @@
                         {% for task in client.tasks|sort(attribute='status', reverse=True) %}
                         <div
                             class="flex items-center gap-4 p-4 rounded-xl border {{ 'bg-gray-50 border-gray-100 opacity-60' if task.status == 'concluida' else 'bg-white border-gray-100 hover:border-red-100/30 shadow-sm' }} transition-all">
-                            <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST" class="shrink-0">
+                            <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST"
+                                class="shrink-0">
                                 <button type="submit"
                                     class="{{ 'text-green-500' if task.status == 'concluida' else 'text-gray-300 hover:text-red-500' }} transition-colors p-1">
                                     <i data-lucide="{{ 'check-circle' if task.status == 'concluida' else 'circle' }}"
@@ -495,7 +498,8 @@
                                 <div>
                                     <p class="font-bold text-gray-900 text-sm">{{ tx.description }}</p>
                                     <div class="flex gap-3 text-xs text-gray-500">
-                                        <span>Vencimento: {{ tx.due_date.strftime('%d/%m/%Y') }}</span>
+                                        <span>Vencimento: {{ tx.due_date.strftime('%d/%m/%Y') if tx.due_date else 'N/A'
+                                            }}</span>
                                         {% if tx.created_at %}
                                         <span class="text-gray-400">• Gerada: {{ tx.created_at.strftime('%d/%m')
                                             }}</span>
@@ -503,240 +507,441 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="font-bold text-gray-900 text-sm">R$ {{ "%.2f"|format(tx.amount)|replace('.',
-                                    ',') }}</p>
-                                <span
-                                    class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full 
-                                    {{ 'bg-green-100 text-green-700' if tx.status == 'paid' else 
-                                       ('bg-red-100 text-red-700' if tx.status == 'overdue' else 
-                                       ('bg-gray-100 text-gray-600' if tx.status == 'cancelled' else 'bg-yellow-100 text-yellow-700')) }}">
-                                    {{ 'PAGO' if tx.status == 'paid' else
-                                    ('VENCIDO' if tx.status == 'overdue' else
-                                    ('CANCELADO' if tx.status == 'cancelled' else 'PENDENTE')) }}
-                                </span>
-                            </div>
-                            <div class="ml-4">
-                                {% if tx.asaas_invoice_url %}
-                                <a href="{{ tx.asaas_invoice_url }}" target="_blank"
-                                    class="text-gray-400 hover:text-northway-red" title="Ver Boleto">
-                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+
+                            <span
+                                class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else ('bg-green-100 text-green-700' if contract.status == 'signed' else ('bg-red-100 text-red-700' if contract.status == 'terminated' else 'bg-blue-100 text-blue-700')) }}">
+                                {{ 'Rascunho' if contract.status == 'draft' else ('Emitido' if contract.status ==
+                                'issued' else ('Assinado' if contract.status == 'signed' else ('Rescindido' if
+                                contract.status == 'terminated' else contract.status))) }}
+                            </span>
+
+                            <div class="flex items-center gap-2">
+                                {% if contract.status == 'draft' %}
+                                <a href="{{ url_for('contracts.resume_contract', id=contract.id) }}"
+                                    class="text-xs font-bold text-gray-500 hover:text-northway-red flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200 hover:border-red-100">
+                                    <i data-lucide="pencil" class="w-3 h-3"></i> Continuar
                                 </a>
+                                {% endif %}
+
+                                {% if contract.status == 'issued' %}
+                                <button type="button" onclick="signContract('{{ contract.id }}')"
+                                    class="text-xs font-bold text-white bg-green-600 hover:bg-green-700 flex items-center gap-1 px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer">
+                                    <i data-lucide="pen-tool" class="w-3 h-3"></i> Assinar
+                                </button>
+                                <a href="{{ url_for('contracts.view_contract', id=contract.id) }}" target="_blank"
+                                    class="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i data-lucide="eye" class="w-3 h-3"></i> Ver
+                                </a>
+                                {% endif %}
+
+                                {% if contract.status == 'signed' %}
+                                <a href="{{ url_for('contracts.view_contract', id=contract.id) }}" target="_blank"
+                                    class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+                                    <i data-lucide="check-circle" class="w-3 h-3"></i> Ver Assinado
+                                </a>
+                                <button type="button"
+                                    onclick="openTerminationModal('{{ contract.id }}', '{{ contract.template.name }}')"
+                                    class="text-xs text-red-400 hover:text-red-600 underline ml-2">Rescindir</button>
                                 {% endif %}
                             </div>
                         </div>
-                        {% endfor %}
-                        {% else %}
-                        <p class="text-gray-400 text-sm italic">Nenhuma cobrança registrada.</p>
-                        {% endif %}
                     </div>
-                </div>
-
-                <!-- WhatsApp Content -->
-                <div id="content-client-whatsapp" class="hidden h-[500px] flex flex-col p-6">
-                    <!-- Helper to know this client has a lead attached? Or direct link? -->
-                    <!-- Ideally clients should have a phone. We use client.phone -->
-
-                    <!-- Chat Area -->
-                    <div id="client-chat-messages"
-                        class="flex-1 overflow-y-auto space-y-4 p-4 bg-[#e5ddd5] rounded-t-lg border border-gray-200 border-b-0 bg-opacity-30">
-                        <div class="flex justify-center">
-                            <span class="bg-gray-200 text-gray-500 text-xs px-2 py-1 rounded-full">Carregando
-                                histórico...</span>
-                        </div>
-                    </div>
-
-                    <!-- Input Area -->
-                    <!-- Input Area (Standardized) -->
+                    {% endfor %}
+                    {% else %}
                     <div
-                        class="bg-gray-50 p-3 border border-gray-200 border-t-0 rounded-b-lg flex flex-col gap-2 relative">
-                        <!-- Hidden File Input -->
-                        <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
-
-                        <!-- Attachment Menu (Absolute) -->
-                        <div id="attach-menu"
-                            class="hidden absolute bottom-20 left-4 bg-white shadow-xl rounded-lg flex flex-col w-40 overflow-hidden z-20 border border-gray-100">
-                            <button onclick="triggerFile('image/*')"
-                                class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700 border-b border-gray-50">
-                                <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos
-                            </button>
-                            <button onclick="triggerFile('*/*')"
-                                class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700">
-                                <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
-                            </button>
+                        class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                        <div class="bg-gray-100 p-3 rounded-full mb-3">
+                            <i data-lucide="file-x" class="w-8 h-8 opacity-40"></i>
                         </div>
-
-                        <div class="flex items-end gap-2">
-                            <!-- Default Toolbar -->
-                            <div id="toolbar-default" class="flex-1 flex items-center gap-2">
-                                <button type="button" id="btn-attach" onclick="toggleAttachMenu()"
-                                    class="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-200">
-                                    <i data-lucide="plus" class="w-6 h-6"></i>
-                                </button>
-
-                                <!-- Rich Text Toolbar (Mini) -->
-                                <div class="hidden md:flex items-center gap-0.5 border-r border-gray-300 pr-2 mr-1">
-                                    <button onclick="insertFormat('*')"
-                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                        <i data-lucide="bold" class="w-4 h-4"></i>
-                                    </button>
-                                    <button onclick="insertFormat('_')"
-                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                        <i data-lucide="italic" class="w-4 h-4"></i>
-                                    </button>
-                                    <button onclick="insertFormat('- ')"
-                                        class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                        <i data-lucide="list" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-
-                                <div
-                                    class="flex-1 bg-white rounded-lg border border-gray-300 focus-within:border-northway-red focus-within:ring-1 focus-within:ring-northway-red/20 transition-all overflow-hidden flex items-center px-4 py-2">
-                                    <input type="text" id="message-input" placeholder="Mensagem"
-                                        class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800 placeholder-gray-400"
-                                        autocomplete="off">
-                                </div>
-
-                                <!-- Mic / Send Toggle -->
-                                <button type="button" id="btn-mic" onclick="toggleRecording()"
-                                    class="p-3 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors shadow-sm">
-                                    <i data-lucide="mic" class="w-5 h-5"></i>
-                                </button>
-                                <button type="button" id="btn-send" onclick="sendMessage()"
-                                    class="hidden p-3 bg-northway-red text-white rounded-full hover:bg-red-700 transition-colors shadow-sm">
-                                    <i data-lucide="send" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-
-                            <!-- Recording UI -->
-                            <div id="toolbar-recording"
-                                class="flex-1 items-center gap-4 hidden px-4 py-2 bg-white rounded-lg border border-red-100">
-                                <button onclick="cancelRecording()" class="text-gray-500 hover:text-red-500 p-2">
-                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
-                                </button>
-                                <div class="flex-1 flex items-center gap-3 justify-center">
-                                    <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
-                                    <span id="recording-time"
-                                        class="text-gray-700 font-mono text-sm font-bold">0:00</span>
-                                </div>
-                                <button onclick="stopAndSendRecording()"
-                                    class="text-green-500 hover:text-green-600 p-2">
-                                    <i data-lucide="send" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-
-                            <!-- File Preview UI -->
-                            <div id="toolbar-file"
-                                class="flex-1 items-center gap-4 hidden bg-white rounded-lg px-4 py-2 border border-green-200">
-                                <span class="text-gray-500"><i data-lucide="file" class="w-5 h-5 inline"></i></span>
-                                <span id="file-name"
-                                    class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
-                                <button onclick="cancelFile()" class="text-gray-400 hover:text-red-500 p-2">
-                                    <i data-lucide="x" class="w-5 h-5"></i>
-                                </button>
-                                <button onclick="sendFile()"
-                                    class="text-green-600 hover:text-green-700 font-bold text-sm px-3">
-                                    Enviar
-                                </button>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-400 mt-1 flex items-center gap-1 justify-center">
-                            <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas de ponta a
-                            ponta.
-                        </p>
+                        <p class="text-sm italic font-medium">Nenhum contrato emitido.</p>
+                        <p class="text-xs mt-1">Crie um novo contrato para começar.</p>
                     </div>
+                    {% endif %}
                 </div>
             </div>
-            <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
 
-            <!-- Processes / Checklists Section -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center justify-between mb-4">
+            <!-- Tasks Content (New Tab) -->
+            <div id="content-client-tasks" class="hidden p-8">
+                <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
-                        Processos & Serviços
+                        Tarefas & Agendamentos
                     </h3>
-                    <button type="button" onclick="toggleModal('addProcessModal')"
-                        class="text-northway-red hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        Adicionar Processo
+                    <button type="button" onclick="toggleModal('taskModal')"
+                        class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Agendar Tarefa
                     </button>
                 </div>
 
-                <div class="space-y-4">
-                    {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
-                    <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
-                        <!-- Header / Summary -->
-                        <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
-                            onclick="toggleProcess('{{ checklist.id }}')">
-                            <div class="flex items-center gap-3">
-                                <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
-                                    <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
-                                    <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
-                                        <path class="text-gray-200"
-                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            fill="none" stroke="currentColor" stroke-width="4" />
-                                        <path class="text-northway-red progress-ring" stroke-dasharray="0, 100"
-                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                            fill="none" stroke="currentColor" stroke-width="4"
-                                            id="ring-{{ checklist.id }}" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
-                                    <p class="text-xs text-gray-500">Iniciado em {{
-                                        checklist.created_at.strftime('%d/%m/%Y') }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"
-                                    id="arrow-{{ checklist.id }}"></i>
+                <div class="space-y-2">
+                    {% for task in client.tasks|sort(attribute='status', reverse=True) %}
+                    <div
+                        class="flex items-center gap-4 p-4 rounded-xl border {{ 'bg-gray-50 border-gray-100 opacity-60' if task.status == 'concluida' else 'bg-white border-gray-100 hover:border-red-100/30 shadow-sm' }} transition-all">
+                        <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST" class="shrink-0">
+                            <button type="submit"
+                                class="{{ 'text-green-500' if task.status == 'concluida' else 'text-gray-300 hover:text-red-500' }} transition-colors p-1">
+                                <i data-lucide="{{ 'check-circle' if task.status == 'concluida' else 'circle' }}"
+                                    class="w-6 h-6"></i>
+                            </button>
+                        </form>
+                        <div class="flex-1 min-w-0">
+                            <p
+                                class="text-sm font-bold {{ 'text-gray-500 line-through' if task.status == 'concluida' else 'text-gray-900' }}">
+                                {{ task.title }}</p>
+                            <div class="flex items-center gap-3 mt-1">
+                                <p class="text-xs text-gray-500 flex items-center gap-1">
+                                    <i data-lucide="calendar" class="w-3 h-3"></i>
+                                    {{ task.due_date.strftime('%d/%m/%Y às %H:%M') if task.due_date else 'Sem data'
+                                    }}
+                                </p>
+                                {% if task.assigned_to %}
+                                <p class="text-xs text-gray-400 flex items-center gap-1">
+                                    <i data-lucide="user" class="w-3 h-3"></i>
+                                    {{ task.assigned_to.name }}
+                                </p>
+                                {% endif %}
                             </div>
                         </div>
-
-                        <!-- Expanded Content -->
-                        <div id="process-content-{{ checklist.id }}"
-                            class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
-                            {% for step in checklist.progress %}
-                            {% set step_index = loop.index0 %}
-                            <div class="step-group">
-                                <h5
-                                    class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
-                                    {{ step.title }}</h5>
-                                <div class="space-y-2 pl-2">
-                                    {% for item in step['items'] %}
-                                    <label
-                                        class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                                        <input type="checkbox"
-                                            onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
-                                            {% if item.done %}checked{% endif %}
-                                            class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
-                                        <span
-                                            class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
-                                            item.text }}</span>
-                                    </label>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            {% endfor %}
-
-                            <div class="pt-4 border-t border-gray-100 flex justify-end">
-                                <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
-                                    class="text-xs text-red-500 hover:text-red-700 underline">Excluir
-                                    Processo</button>
-                            </div>
+                        <div class="flex items-center gap-2">
+                            {% if task.priority == 'urgente' %}
+                            <span
+                                class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Urgente</span>
+                            {% endif %}
+                            {% if task.is_recurring %}
+                            <span
+                                class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase flex items-center gap-1"><i
+                                    data-lucide="repeat" class="w-3 h-3"></i> Mensal</span>
+                            {% endif %}
                         </div>
                     </div>
                     {% else %}
-                    <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
-                        cliente.
-                    </p>
+                    <div
+                        class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                        <div class="bg-gray-100 p-3 rounded-full mb-3">
+                            <i data-lucide="check-square" class="w-8 h-8 opacity-40"></i>
+                        </div>
+                        <p class="text-sm italic font-medium">Nenhuma tarefa pendente.</p>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
 
 
-        </div> <!-- Close lg:col-span-2 -->
+
+            <!-- Financial Content -->
+            <div id="content-client-financial" class="hidden p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        Extrato Financeiro
+                    </h3>
+                    <button type="button" onclick="toggleModal('manualChargeModal')"
+                        class="bg-[#fa0102] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        Nova Cobrança
+                    </button>
+                </div>
+
+                <!-- Financial Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div
+                        class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
+                        <div
+                            class="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-blue-200 transition-colors">
+                        </div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">
+                            Faturamento Mensal (MRR)</p>
+                        <p class="text-xl font-extrabold text-[#fa0102] relative z-10">R$ {{
+                            "%.2f"|format(mrr)|replace('.', ',') }}</p>
+                        <p class="text-[9px] text-gray-400 relative z-10 mt-1">Soma de contratos assinados</p>
+                    </div>
+                    <div
+                        class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
+                        <div
+                            class="absolute top-0 right-0 w-16 h-16 bg-green-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-green-200 transition-colors">
+                        </div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">Total
+                            Pago (LTV)</p>
+                        <p class="text-xl font-extrabold text-green-600 relative z-10">R$ {{
+                            "%.2f"|format(total_paid)|replace('.', ',') }}</p>
+                        <p class="text-[9px] text-gray-400 relative z-10 mt-1">Histórico acumulado</p>
+                    </div>
+                    <div
+                        class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
+                        <div
+                            class="absolute top-0 right-0 w-16 h-16 bg-gray-200 rounded-bl-full -mr-8 -mt-8 opacity-40">
+                        </div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">A
+                            Receber</p>
+                        <p class="text-xl font-extrabold text-gray-700 relative z-10">R$ {{
+                            "%.2f"|format(total_pending)|replace('.', ',') }}</p>
+                        <p class="text-[9px] text-gray-400 relative z-10 mt-1">Cobranças pendentes</p>
+                    </div>
+                    <div
+                        class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
+                        <div
+                            class="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-red-200 transition-colors">
+                        </div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">
+                            Vencido</p>
+                        <p class="text-xl font-extrabold text-red-600 relative z-10">R$ {{
+                            "%.2f"|format(total_overdue)|replace('.', ',') }}</p>
+                        <p class="text-[9px] text-gray-400 relative z-10 mt-1">Cobranças atrasadas</p>
+                    </div>
+                </div>
+
+                <!-- Transaction List -->
+                <h4 class="text-sm font-bold text-gray-700 mb-4 uppercase">Histórico de Cobranças</h4>
+                <div class="space-y-3">
+                    {% if client_txs %}
+                    {% for tx in client_txs %}
+                    <div
+                        class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-gray-50 p-2 rounded text-gray-500">
+                                <i data-lucide="{{ 'check-circle' if tx.status=='paid' else 'clock' }}"
+                                    class="w-5 h-5 {{ 'text-green-500' if tx.status=='paid' else 'text-yellow-500' }}"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-900 text-sm">{{ tx.description }}</p>
+                                <div class="flex gap-3 text-xs text-gray-500">
+                                    <span>Vencimento: {{ tx.due_date.strftime('%d/%m/%Y') }}</span>
+                                    {% if tx.created_at %}
+                                    <span class="text-gray-400">• Gerada: {{ tx.created_at.strftime('%d/%m')
+                                        }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-900 text-sm">R$ {{ "%.2f"|format(tx.amount)|replace('.',
+                                ',') }}</p>
+                            <span
+                                class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full 
+                                    {{ 'bg-green-100 text-green-700' if tx.status == 'paid' else 
+                                       ('bg-red-100 text-red-700' if tx.status == 'overdue' else 
+                                       ('bg-gray-100 text-gray-600' if tx.status == 'cancelled' else 'bg-yellow-100 text-yellow-700')) }}">
+                                {{ 'PAGO' if tx.status == 'paid' else
+                                ('VENCIDO' if tx.status == 'overdue' else
+                                ('CANCELADO' if tx.status == 'cancelled' else 'PENDENTE')) }}
+                            </span>
+                        </div>
+                        <div class="ml-4">
+                            {% if tx.asaas_invoice_url %}
+                            <a href="{{ tx.asaas_invoice_url }}" target="_blank"
+                                class="text-gray-400 hover:text-northway-red" title="Ver Boleto">
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-gray-400 text-sm italic">Nenhuma cobrança registrada.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- WhatsApp Content -->
+            <div id="content-client-whatsapp" class="hidden h-[500px] flex flex-col p-6">
+                <!-- Helper to know this client has a lead attached? Or direct link? -->
+                <!-- Ideally clients should have a phone. We use client.phone -->
+
+                <!-- Chat Area -->
+                <div id="client-chat-messages"
+                    class="flex-1 overflow-y-auto space-y-4 p-4 bg-[#e5ddd5] rounded-t-lg border border-gray-200 border-b-0 bg-opacity-30">
+                    <div class="flex justify-center">
+                        <span class="bg-gray-200 text-gray-500 text-xs px-2 py-1 rounded-full">Carregando
+                            histórico...</span>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <!-- Input Area (Standardized) -->
+                <div class="bg-gray-50 p-3 border border-gray-200 border-t-0 rounded-b-lg flex flex-col gap-2 relative">
+                    <!-- Hidden File Input -->
+                    <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
+
+                    <!-- Attachment Menu (Absolute) -->
+                    <div id="attach-menu"
+                        class="hidden absolute bottom-20 left-4 bg-white shadow-xl rounded-lg flex flex-col w-40 overflow-hidden z-20 border border-gray-100">
+                        <button onclick="triggerFile('image/*')"
+                            class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700 border-b border-gray-50">
+                            <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos
+                        </button>
+                        <button onclick="triggerFile('*/*')"
+                            class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700">
+                            <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
+                        </button>
+                    </div>
+
+                    <div class="flex items-end gap-2">
+                        <!-- Default Toolbar -->
+                        <div id="toolbar-default" class="flex-1 flex items-center gap-2">
+                            <button type="button" id="btn-attach" onclick="toggleAttachMenu()"
+                                class="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-200">
+                                <i data-lucide="plus" class="w-6 h-6"></i>
+                            </button>
+
+                            <!-- Rich Text Toolbar (Mini) -->
+                            <div class="hidden md:flex items-center gap-0.5 border-r border-gray-300 pr-2 mr-1">
+                                <button onclick="insertFormat('*')"
+                                    class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                    <i data-lucide="bold" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="insertFormat('_')"
+                                    class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                    <i data-lucide="italic" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="insertFormat('- ')"
+                                    class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                    <i data-lucide="list" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <div
+                                class="flex-1 bg-white rounded-lg border border-gray-300 focus-within:border-northway-red focus-within:ring-1 focus-within:ring-northway-red/20 transition-all overflow-hidden flex items-center px-4 py-2">
+                                <input type="text" id="message-input" placeholder="Mensagem"
+                                    class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800 placeholder-gray-400"
+                                    autocomplete="off">
+                            </div>
+
+                            <!-- Mic / Send Toggle -->
+                            <button type="button" id="btn-mic" onclick="toggleRecording()"
+                                class="p-3 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors shadow-sm">
+                                <i data-lucide="mic" class="w-5 h-5"></i>
+                            </button>
+                            <button type="button" id="btn-send" onclick="sendMessage()"
+                                class="hidden p-3 bg-northway-red text-white rounded-full hover:bg-red-700 transition-colors shadow-sm">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <!-- Recording UI -->
+                        <div id="toolbar-recording"
+                            class="flex-1 items-center gap-4 hidden px-4 py-2 bg-white rounded-lg border border-red-100">
+                            <button onclick="cancelRecording()" class="text-gray-500 hover:text-red-500 p-2">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                            <div class="flex-1 flex items-center gap-3 justify-center">
+                                <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
+                                <span id="recording-time" class="text-gray-700 font-mono text-sm font-bold">0:00</span>
+                            </div>
+                            <button onclick="stopAndSendRecording()" class="text-green-500 hover:text-green-600 p-2">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <!-- File Preview UI -->
+                        <div id="toolbar-file"
+                            class="flex-1 items-center gap-4 hidden bg-white rounded-lg px-4 py-2 border border-green-200">
+                            <span class="text-gray-500"><i data-lucide="file" class="w-5 h-5 inline"></i></span>
+                            <span id="file-name"
+                                class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
+                            <button onclick="cancelFile()" class="text-gray-400 hover:text-red-500 p-2">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="sendFile()"
+                                class="text-green-600 hover:text-green-700 font-bold text-sm px-3">
+                                Enviar
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1 flex items-center gap-1 justify-center">
+                        <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas de ponta a
+                        ponta.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
+
+        <!-- Processes / Checklists Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
+                    Processos & Serviços
+                </h3>
+                <button type="button" onclick="toggleModal('addProcessModal')"
+                    class="text-northway-red hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Adicionar Processo
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
+                <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
+                    <!-- Header / Summary -->
+                    <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                        onclick="toggleProcess('{{ checklist.id }}')">
+                        <div class="flex items-center gap-3">
+                            <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
+                                <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
+                                <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
+                                    <path class="text-gray-200"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none" stroke="currentColor" stroke-width="4" />
+                                    <path class="text-northway-red progress-ring" stroke-dasharray="0, 100"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none" stroke="currentColor" stroke-width="4"
+                                        id="ring-{{ checklist.id }}" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
+                                <p class="text-xs text-gray-500">Iniciado em {{
+                                    checklist.created_at.strftime('%d/%m/%Y') }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"
+                                id="arrow-{{ checklist.id }}"></i>
+                        </div>
+                    </div>
+
+                    <!-- Expanded Content -->
+                    <div id="process-content-{{ checklist.id }}"
+                        class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
+                        {% for step in checklist.progress %}
+                        {% set step_index = loop.index0 %}
+                        <div class="step-group">
+                            <h5
+                                class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
+                                {{ step.title }}</h5>
+                            <div class="space-y-2 pl-2">
+                                {% for item in step['items'] %}
+                                <label
+                                    class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                    <input type="checkbox"
+                                        onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
+                                        {% if item.done %}checked{% endif %}
+                                        class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
+                                    <span
+                                        class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
+                                        item.text }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <div class="pt-4 border-t border-gray-100 flex justify-end">
+                            <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
+                                class="text-xs text-red-500 hover:text-red-700 underline">Excluir
+                                Processo</button>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
+                    cliente.
+                </p>
+                {% endfor %}
+            </div>
+        </div>
+
+
+</div> <!-- Close lg:col-span-2 -->
 </div> <!-- Close flex flex-col gap-6 (Tracking/Processes) -->
 
 <!-- Sidebar Info Column -->
@@ -1246,7 +1451,8 @@
             </button>
         </div>
 
-        <form action="{{ url_for('clients.add_client_interaction', id=client.id) }}" method="POST" class="p-6 space-y-4">
+        <form action="{{ url_for('clients.add_client_interaction', id=client.id) }}" method="POST"
+            class="p-6 space-y-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                 <select name="type"
