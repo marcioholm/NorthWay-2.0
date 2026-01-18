@@ -2141,7 +2141,22 @@ def create_app():
         except Exception as e:
             import traceback
             traceback.print_exc()
-            flash(f"Erro ao emitir contrato: {str(e)}", 'error')
+            error_msg = str(e)
+            flash(f"Erro ao emitir contrato: {error_msg}", 'error')
+            
+            # Log to DB for debugging
+            try:
+                db.session.rollback() # Rollback the failed contract transaction first
+                create_notification(
+                    user_id=current_user.id,
+                    company_id=current_user.company_id,
+                    type='system_error',
+                    title='Erro ao Emitir Contrato (Debug)',
+                    message=f"Erro técnico: {error_msg}"
+                )
+            except:
+                pass # Fail silently if logging fails
+                
             return redirect(url_for('main.client_details', id=client.id))
 
 
