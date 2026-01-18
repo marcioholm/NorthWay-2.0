@@ -147,40 +147,36 @@
                                     class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                                     <i data-lucide="hash" class="w-3 h-3"></i> CNPJ / CPF
                                 </label>
-                                <div
-                                    class="bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all hover:border-[#fa0102]/20">
-                                    {{ client.document or 'Não informado' }}
-                                </div>
+                                <input type="text" name="document" value="{{ client.document or '' }}"
+                                    placeholder="Não informado" disabled
+                                    class="w-full bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all focus:border-[#fa0102] focus:ring-1 focus:ring-[#fa0102] disabled:opacity-100 disabled:cursor-not-allowed">
                             </div>
                             <div class="relative">
                                 <label
                                     class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                                     <i data-lucide="mail" class="w-3 h-3"></i> Email de Contato
                                 </label>
-                                <div
-                                    class="bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all hover:border-[#fa0102]/20">
-                                    {{ client.email_contact or 'Não informado' }}
-                                </div>
+                                <input type="email" name="email_contact" value="{{ client.email_contact or '' }}"
+                                    placeholder="Não informado" disabled
+                                    class="w-full bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all focus:border-[#fa0102] focus:ring-1 focus:ring-[#fa0102] disabled:opacity-100 disabled:cursor-not-allowed">
                             </div>
                             <div class="relative">
                                 <label
                                     class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                                     <i data-lucide="user" class="w-3 h-3"></i> Representante Legal
                                 </label>
-                                <div
-                                    class="bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all hover:border-[#fa0102]/20">
-                                    {{ client.representative or 'Não informado' }}
-                                </div>
+                                <input type="text" name="representative" value="{{ client.representative or '' }}"
+                                    placeholder="Não informado" disabled
+                                    class="w-full bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all focus:border-[#fa0102] focus:ring-1 focus:ring-[#fa0102] disabled:opacity-100 disabled:cursor-not-allowed">
                             </div>
                             <div class="relative">
                                 <label
                                     class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                                     <i data-lucide="credit-card" class="w-3 h-3"></i> CPF do Rep.
                                 </label>
-                                <div
-                                    class="bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all hover:border-[#fa0102]/20">
-                                    {{ client.representative_cpf or 'Não informado' }}
-                                </div>
+                                <input type="text" name="representative_cpf"
+                                    value="{{ client.representative_cpf or '' }}" placeholder="Não informado" disabled
+                                    class="w-full bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all focus:border-[#fa0102] focus:ring-1 focus:ring-[#fa0102] disabled:opacity-100 disabled:cursor-not-allowed">
                             </div>
                         </div>
 
@@ -194,19 +190,30 @@
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div class="md:col-span-3 overflow-hidden">
                                     <div
-                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm">
-                                        <span
-                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Logradouro</span>
-                                        <span class="font-medium text-gray-900">{{ client.address_street or 'Rua não
-                                            informada' }}, {{ client.address_number or 'S/N' }}</span>
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
+                                        <label
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Logradouro
+                                            e Número</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" name="address_street"
+                                                value="{{ client.address_street or '' }}"
+                                                placeholder="Rua não informada" disabled
+                                                class="flex-1 bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed">
+                                            <span class="text-gray-400 font-light">,</span>
+                                            <input type="text" name="address_number"
+                                                value="{{ client.address_number or '' }}" placeholder="S/N" disabled
+                                                class="w-20 bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed text-right block">
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="overflow-hidden">
                                     <div
-                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm">
-                                        <span
-                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">CEP</span>
-                                        <span class="font-medium text-gray-900">{{ client.address_zip or '-' }}</span>
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
+                                        <label
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">CEP</label>
+                                        <input type="text" name="address_zip" value="{{ client.address_zip or '' }}"
+                                            placeholder="-" disabled
+                                            class="w-full bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed">
                                     </div>
                                 </div>
                             </div>
@@ -214,26 +221,32 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="overflow-hidden">
                                     <div
-                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm">
-                                        <span
-                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Bairro</span>
-                                        <span class="font-medium text-gray-900">{{ client.address_neighborhood or '-'
-                                            }}</span>
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
+                                        <label
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Bairro</label>
+                                        <input type="text" name="address_neighborhood"
+                                            value="{{ client.address_neighborhood or '' }}" placeholder="-" disabled
+                                            class="w-full bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed">
                                     </div>
                                 </div>
                                 <div class="overflow-hidden">
                                     <div
-                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm">
-                                        <span
-                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Cidade</span>
-                                        <span class="font-medium text-gray-900">{{ client.address_city or '-' }}</span>
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
+                                        <label
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Cidade</label>
+                                        <input type="text" name="address_city" value="{{ client.address_city or '' }}"
+                                            placeholder="-" disabled
+                                            class="w-full bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed">
                                     </div>
                                 </div>
                                 <div class="overflow-hidden">
                                     <div
-                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100 text-gray-700 text-sm text-center">
-                                        <span class="text-[10px] block text-gray-400 font-bold uppercase mb-1">UF</span>
-                                        <span class="font-bold text-gray-900">{{ client.address_state or '-' }}</span>
+                                        class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
+                                        <label
+                                            class="text-[10px] block text-gray-400 font-bold uppercase mb-1">UF</label>
+                                        <input type="text" name="address_state" value="{{ client.address_state or '' }}"
+                                            placeholder="-" disabled
+                                            class="w-full bg-transparent border-none p-0 text-sm text-gray-900 font-bold placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed text-center uppercase">
                                     </div>
                                 </div>
                             </div>
