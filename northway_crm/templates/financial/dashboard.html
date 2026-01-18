@@ -393,6 +393,9 @@
                             <button onclick="confirmPayment(${t.id})" class="text-green-600 hover:text-green-800 hover:bg-green-50 p-1.5 rounded transition-colors" title="Baixar">
                                 <i data-lucide="check" class="w-3 h-3"></i>
                             </button>
+                            <button onclick="cancelTransaction(${t.id})" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition-colors ml-1" title="Cancelar Coobrança">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                            </button>
                             ` : '<span class="text-gray-300"><i data-lucide="check-circle" class="w-3 h-3"></i></span>'}
                         </td>
                     </tr>
@@ -425,6 +428,35 @@
             alert("Erro de conexão.");
         }
     }
+
+    async function cancelTransaction(id) {
+        const reason = prompt("Por favor, justifique o cancelamento:");
+        if (reason === null) return;
+        if (!reason.trim()) {
+            alert("A justificativa é obrigatória.");
+            return;
+        }
+
+        if (!confirm("Tem certeza que deseja cancelar esta cobrança? Se ela estiver no Asaas, também será cancelada lá.")) return;
+
+        try {
+            const res = await fetch(`/api/transactions/${id}/cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: reason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadFinancialData();
+            } else {
+                alert("Erro ao cancelar: " + (data.error || "Erro desconhecido"));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        }
+    }
+
 
     function formatCurrency(value) {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);

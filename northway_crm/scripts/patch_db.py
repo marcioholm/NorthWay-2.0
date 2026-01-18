@@ -24,7 +24,8 @@ def patch():
             ('asaas_id', 'TEXT'),
             ('asaas_invoice_url', 'TEXT'),
             ('installment_number', 'INTEGER'),
-            ('total_installments', 'INTEGER')
+            ('total_installments', 'INTEGER'),
+            ('cancellation_reason', 'TEXT')
         ]
         
         for col_name, col_type in columns_to_add:

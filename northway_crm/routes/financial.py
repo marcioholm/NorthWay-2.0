@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, jsonify, abort, request
 from flask_login import login_required, current_user
 from models import db, Contract, Transaction, FinancialCategory, Expense, ROLE_ADMIN, ROLE_MANAGER
+from services.asaas_service import AsaasService
 from datetime import date, datetime
 import json
 from sqlalchemy import func, desc, extract
@@ -408,3 +409,41 @@ def create_manual_charge(id):
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+@financial_bp.route('/api/transactions/<int:id>/cancel', methods=['POST'])
+@login_required
+def cancel_transaction_route(id):
+    if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
+        abort(403)
+    
+    # Get Transaction
+    tx = Transaction.query.get_or_404(id)
+    
+    # Security Check: Belongs to user's company
+    if tx.company_id != current_user.company_id:
+        abort(403)
+        
+    try:
+        # Cancel in Asaas if linked
+        if tx.asaas_id:
+            success = AsaasService.cancel_payment(current_user.company_id, tx.asaas_id)
+            if not success:
+               # If strictly required, error out.
+               return jsonify({'success': False, 'error': 'Falha ao cancelar no Asaas (transação inexistente ou não cancelável).'}), 400
+
+        # Update Local Status
+        tx.status = 'cancelled'
+        
+        # Save Reason
+        if request.is_json:
+            reason = request.json.get('reason')
+            if reason:
+                tx.cancellation_reason = reason
+                
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+

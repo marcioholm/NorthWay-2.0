@@ -426,6 +426,7 @@ class Transaction(db.Model):
     asaas_invoice_url = db.Column(db.String(500), nullable=True)
     installment_number = db.Column(db.Integer, nullable=True)
     total_installments = db.Column(db.Integer, nullable=True)
+    cancellation_reason = db.Column(db.Text, nullable=True)
     
     contract = db.relationship('Contract', backref=db.backref('transactions', cascade='all, delete-orphan'))
 
