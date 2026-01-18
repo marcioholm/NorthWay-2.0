@@ -112,6 +112,9 @@ def create_app():
     app.register_blueprint(templates_bp)
     app.register_blueprint(checklists_bp)
     app.register_blueprint(notifications_bp)
+    
+    from routes.roles import roles_bp
+    app.register_blueprint(roles_bp)
 
     return app
 

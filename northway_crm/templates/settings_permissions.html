@@ -21,7 +21,7 @@
         {% for role in roles %}
         <div
             class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:shadow-md">
-            <form action="{{ url_for('main.update_role', id=role.id) }}" method="POST">
+            <form action="{{ url_for('roles.update_role', id=role.id) }}" method="POST">
                 <!-- Role Header -->
                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <div class="flex items-center gap-4">
@@ -95,7 +95,7 @@
         <h3 class="text-xl font-bold text-gray-900 mb-1">Novo Cargo</h3>
         <p class="text-sm text-gray-500 mb-6">Crie um novo perfil de acesso para sua equipe.</p>
 
-        <form action="{{ url_for('main.create_role') }}" method="POST">
+        <form action="{{ url_for('roles.create_role') }}" method="POST">
             <div class="mb-6">
                 <label class="block text-sm font-bold text-gray-700 mb-2">Nome do Cargo</label>
                 <input type="text" name="name" placeholder="Ex: SDR Senior" required
