@@ -75,7 +75,7 @@
                                     {% if task.due_date %}
                                     <span
                                         class="text-[10px] font-mono {{ 'text-red-600 font-bold' if task.due_date < now else 'text-gray-400' }}">
-                                        {{ task.due_date.strftime('%H:%M') }}
+                                        {{ task.due_date.strftime('%d/%m') if task.due_date else '--/--' }}
                                     </span>
                                     {% endif %}
                                 </div>
