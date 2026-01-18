@@ -1051,10 +1051,20 @@ def create_app():
         users = User.query.filter_by(company_id=current_user.company_id).all()
         process_templates = ProcessTemplate.query.filter_by(company_id=current_user.company_id).all()
         
+        # Financial Stats for UI
+        client_txs = Transaction.query.filter_by(client_id=client.id).order_by(Transaction.due_date.desc()).all()
+        total_paid = sum(t.amount for t in client_txs if t.status == 'paid')
+        total_pending = sum(t.amount for t in client_txs if t.status == 'pending')
+        total_overdue = sum(t.amount for t in client_txs if t.status == 'overdue')
+        
         return render_template('client_details.html', 
                              client=client, 
                              users=users, 
                              process_templates=process_templates,
+                             client_txs=client_txs,
+                             total_paid=total_paid,
+                             total_pending=total_pending,
+                             total_overdue=total_overdue,
                              now=datetime.utcnow(), 
                              today=date.today())
 

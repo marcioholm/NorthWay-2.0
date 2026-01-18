@@ -431,6 +431,7 @@ class Transaction(db.Model):
     cancellation_reason = db.Column(db.Text, nullable=True)
     
     contract = db.relationship('Contract', backref=db.backref('transactions', cascade='all, delete-orphan'))
+    client = db.relationship('Client', backref=db.backref('transactions', lazy=True))
 
 class FinancialEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
