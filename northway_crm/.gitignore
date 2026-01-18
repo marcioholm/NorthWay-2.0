@@ -24,3 +24,8 @@ migrations/
 
 # Vercel
 .vercel
+
+# Temporary/Diagnostic
+*.bak
+diagnose_tenancy.py
+apply_migration.py
