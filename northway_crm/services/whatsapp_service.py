@@ -52,42 +52,49 @@ class WhatsAppService:
 
     @staticmethod
     def find_contact(phone, company_id):
-        """Finds a Lead or Client by phone number (trying various formats)."""
-        if not phone: return None, None # type, obj
+        """Finds a Lead or Client by phone number (trying various aggressive matching formats)."""
+        if not phone: return None, None
         
-        # Possible formats stored in DB vs Invoice
-        # Incoming often has 55...
-        # DB might have (XX) ... or 55...
+        # 1. Clean digits
+        clean = re.sub(r'\D', '', phone)
+        if not clean: return None, None
         
-        # Strategy: normalize incoming to clean digits
-        clean_incoming = re.sub(r'\D', '', phone)
-        # Remove 55 if exists for searching local numbers
-        local_incoming = clean_incoming[2:] if clean_incoming.startswith('55') else clean_incoming
+        # 2. Extract variants
+        # Variant A: Full (e.g. 554299896358)
+        # Variant B: Local (e.g. 4299896358) - remove '55' if exists
+        local = clean[2:] if clean.startswith('55') and len(clean) > 10 else clean
         
-        # Try finding Lead
-        # We search matching the exact number or the number without country code
-        # Ideally DB phones should be normalized, but we handle legacy dirty data
+        # Variant C: 9th digit adjustment
+        # If it has the extra 9 (length 11 local or 13 full), generates a version without it
+        # If it DOESN'T have it, generates a version with it (assuming 55 + 2 DDD + 8 digits)
+        variants = {clean, local}
         
-        # Search Client FIRST (Priority)
-        client = Client.query.filter(
-            (Client.phone == clean_incoming) | 
-            (Client.phone == local_incoming) |
-            (Client.phone == f"+{clean_incoming}") |
-            (Client.phone == f"+{local_incoming}")
-        ).filter_by(company_id=company_id).first()
+        if len(local) == 11 and local[2] == '9': # 42 9 9989 6358
+            no_9 = local[:2] + local[3:]
+            variants.add(no_9)
+            variants.add('55' + no_9)
+        elif len(local) == 10: # 42 9989 6358 (common legacy or Z-API format)
+            with_9 = local[:2] + '9' + local[2:]
+            variants.add(with_9)
+            variants.add('55' + with_9)
+            
+        # 3. Search Loop
+        # We use a broad filter then filter in-memory or more complex query
+        from models import Lead, Client
         
-        if client: return 'client', client
-
-        # Search Lead
-        lead = Lead.query.filter(
-            (Lead.phone == clean_incoming) | 
-            (Lead.phone == local_incoming) |
-            (Lead.phone == f"+{clean_incoming}") |
-            (Lead.phone == f"+{local_incoming}")
-        ).filter_by(company_id=company_id).first()
-        
-        if lead: return 'lead', lead
-        
+        for v in variants:
+            # Search Lead
+            lead = Lead.query.filter_by(company_id=company_id).filter(
+                (Lead.phone.ilike(f"%{v}"))
+            ).first()
+            if lead: return 'lead', lead
+            
+            # Search Client
+            client = Client.query.filter_by(company_id=company_id).filter(
+                (Client.phone.ilike(f"%{v}"))
+            ).first()
+            if client: return 'client', client
+            
         return None, None
 
     @staticmethod
