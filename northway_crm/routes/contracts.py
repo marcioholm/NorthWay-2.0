@@ -44,13 +44,13 @@ def new_contract(id):
     
     return render_template('contracts/new_contract.html', client=client, templates=templates, attachments=attachments)
 
-@contracts_bp.route('/contracts/<int:id>/resume')
+@contracts_bp.route('/contracts/<int:contract_id>/resume')
 @login_required
-def resume_contract(id):
+def load_draft(contract_id):
     if not current_user.company_id:
         abort(403)
 
-    contract = Contract.query.get_or_404(id)
+    contract = Contract.query.get_or_404(contract_id)
     if contract.company_id != current_user.company_id:
         abort(403)
         
