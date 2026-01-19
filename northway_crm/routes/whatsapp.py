@@ -108,14 +108,16 @@ def get_conversations():
 @whatsapp_bp.route('/api/whatsapp/lead/<int:id>/messages', methods=['GET'], endpoint='get_lead_messages_legacy')
 @whatsapp_bp.route('/api/whatsapp/client/<int:id>/messages', methods=['GET'], endpoint='get_client_messages_legacy')
 @login_required
-def get_history(contact_id, type='lead', id=None):
-    # Determine type from URL if legacy routes used
+def get_history(type='lead', contact_id=None, id=None):
+    # Use contact_id from path, or id from legacy routes
+    contact_id = contact_id or id
+    
+    if not contact_id:
+        return jsonify({'error': 'Missing contact ID'}), 400
     if 'lead' in request.endpoint: 
         type = 'lead'
-        contact_id = str(id)
     if 'client' in request.endpoint: 
         type = 'client'
-        contact_id = str(id)
     
     # Check Auth & Get Messages
     filters = {'company_id': current_user.company_id}
