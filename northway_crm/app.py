@@ -23,6 +23,7 @@ from routes.tasks import tasks_bp
 from routes.templates import templates_bp
 from routes.checklists import checklists_bp
 from routes.notifications import notifications_bp
+from services.supabase_service import init_supabase
 
 def create_app():
     app = Flask(__name__)
@@ -66,6 +67,11 @@ def create_app():
         app.config['COMPANY_UPLOAD_FOLDER'] = '/tmp/uploads/company'
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
+
+    # Supabase Setup
+    app.config['SUPABASE_URL'] = os.environ.get('SUPABASE_URL', 'https://bnumpvhsfujpprovajkt.supabase.co')
+    app.config['SUPABASE_KEY'] = os.environ.get('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudW1wdmhzZnVqcHByb3Zhamt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNjA5OTgsImV4cCI6MjA4MzkzNjk5OH0.pVcON2srZ2FXQ36Q-72WAHB-gVdrP_5Se-_K8XQ15Gs')
+    app.supabase = init_supabase(app)
 
     # --- INITIALIZE EXTENSIONS ---
     db.init_app(app)

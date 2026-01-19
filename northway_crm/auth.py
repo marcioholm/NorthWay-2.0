@@ -58,7 +58,7 @@ def login():
             login_user(user)
             if getattr(user, 'is_super_admin', False):
                 return redirect(url_for('master.dashboard'))
-            return redirect(url_for('main.home'))
+            return redirect(url_for('dashboard.home'))
         else:
             flash('Email ou senha incorretos.', 'error')
             
@@ -185,7 +185,7 @@ def register():
         # 6. Auto Login
         login_user(user)
         flash(f'Bem-vindo à {company_name}! Sua conta foi criada.', 'success')
-        return redirect(url_for('main.home'))
+        return redirect(url_for('dashboard.home'))
         
     return render_template('register.html')
 
