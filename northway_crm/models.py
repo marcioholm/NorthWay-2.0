@@ -360,6 +360,8 @@ class WhatsAppMessage(db.Model):
     content = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), default='sent') # sent, delivered, read, failed
     external_id = db.Column(db.String(100), nullable=True) # Z-API Message ID
+    phone = db.Column(db.String(50), nullable=True) # For unknown contacts
+    sender_name = db.Column(db.String(100), nullable=True) # From WhatsApp profile
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class QuickMessage(db.Model):

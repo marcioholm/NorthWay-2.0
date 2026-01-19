@@ -104,31 +104,38 @@ def get_conversations():
         current_app.logger.error(f"Inbox Error: {e}")
         return jsonify({'error': str(e)}), 500
 
-@whatsapp_bp.route('/api/whatsapp/<string:type>/<int:id>/messages', methods=['GET'])
+@whatsapp_bp.route('/api/whatsapp/<string:type>/<string:contact_id>/messages', methods=['GET'])
 @whatsapp_bp.route('/api/whatsapp/lead/<int:id>/messages', methods=['GET'], endpoint='get_lead_messages_legacy')
 @whatsapp_bp.route('/api/whatsapp/client/<int:id>/messages', methods=['GET'], endpoint='get_client_messages_legacy')
 @login_required
-def get_history(id, type='lead'):
+def get_history(contact_id, type='lead', id=None):
     # Determine type from URL if legacy routes used
-    if 'lead' in request.endpoint: type = 'lead'
-    if 'client' in request.endpoint: type = 'client'
+    if 'lead' in request.endpoint: 
+        type = 'lead'
+        contact_id = str(id)
+    if 'client' in request.endpoint: 
+        type = 'client'
+        contact_id = str(id)
     
-    # Check Auth
+    # Check Auth & Get Messages
+    filters = {'company_id': current_user.company_id}
+    
     if type == 'lead':
-        obj = Lead.query.get_or_404(id)
+        obj = Lead.query.get_or_404(int(contact_id))
+        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        filters['lead_id'] = obj.id
     elif type == 'client':
-        obj = Client.query.get_or_404(id)
+        obj = Client.query.get_or_404(int(contact_id))
+        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        filters['client_id'] = obj.id
+    elif type == 'atendimento':
+        # Unknown contact, lookup by phone
+        filters['phone'] = contact_id
+        filters['lead_id'] = None
+        filters['client_id'] = None
     else:
         return jsonify({'error': 'Invalid type'}), 400
         
-    if obj.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
-        
-    # Get Messages
-    filters = {'company_id': current_user.company_id}
-    if type == 'lead': filters['lead_id'] = id
-    else: filters['client_id'] = id
-    
     msgs = WhatsAppMessage.query.filter_by(**filters).order_by(WhatsAppMessage.created_at.asc()).all()
     
     return jsonify({
@@ -254,12 +261,12 @@ def sync_profile():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@whatsapp_bp.route('/api/whatsapp/<string:type>/<int:id>/details', methods=['GET'])
+@whatsapp_bp.route('/api/whatsapp/<string:type>/<string:id>/details', methods=['GET'])
 @login_required
 def get_details(type, id):
     obj = None
     if type == 'lead':
-        obj = Lead.query.get_or_404(id)
+        obj = Lead.query.get_or_404(int(id))
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
         
         # Tags Logic
@@ -268,9 +275,11 @@ def get_details(type, id):
         if obj.source: tags.append({'text': obj.source, 'color': 'blue'})
         
         deal_value = obj.bant_budget or 'R$ 0,00'
+        notes = obj.notes or ''
+        name = obj.name
         
     elif type == 'client':
-        obj = Client.query.get_or_404(id)
+        obj = Client.query.get_or_404(int(id))
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
         
         tags = []
@@ -278,15 +287,50 @@ def get_details(type, id):
         if obj.service: tags.append({'text': obj.service, 'color': 'purple'})
         
         deal_value = f"R$ {obj.monthly_value:,.2f}" if obj.monthly_value else 'R$ 0,00'
+        notes = obj.notes or ''
+        name = obj.name
+    elif type == 'atendimento':
+        # Unknown contact
+        tags = [{'text': 'Desconhecido', 'color': 'gray'}]
+        deal_value = 'R$ 0,00'
+        notes = 'Este contato ainda não foi adicionado ao CRM.'
+        name = id # Phone
     else:
         return jsonify({'error': 'Invalid type'}), 400
         
     return jsonify({
-        'name': obj.name,
+        'name': name,
         'tags': tags,
         'deal_value': deal_value,
-        'notes': obj.notes or ''
+        'notes': notes,
+        'is_unknown': type == 'atendimento'
     })
+
+@whatsapp_bp.route('/api/whatsapp/atendimento/convert', methods=['POST'])
+@login_required
+def convert_unknown_to_lead():
+    data = request.json
+    phone = data.get('phone')
+    name = data.get('name')
+    if not phone or not name: return jsonify({'error': 'Missing phone or name'}), 400
+    
+    # Create Lead
+    lead = Lead(
+        company_id=current_user.company_id,
+        name=name,
+        phone=phone,
+        status='new',
+        source='whatsapp'
+    )
+    db.session.add(lead)
+    db.session.flush() # Get ID
+    
+    # Associate orphan messages
+    WhatsAppMessage.query.filter_by(company_id=current_user.company_id, phone=phone, lead_id=None, client_id=None)\
+        .update({WhatsAppMessage.lead_id: lead.id})
+    
+    db.session.commit()
+    return jsonify({'success': True, 'lead_id': lead.id})
 
 @whatsapp_bp.route('/api/whatsapp/<string:type>/<int:id>/notes', methods=['POST'])
 @login_required

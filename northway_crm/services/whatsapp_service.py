@@ -300,7 +300,14 @@ class WhatsAppService:
                 c_type = 'client'
                 c_id = m.client_id
             else:
-                continue # Orphan message
+                # Orphan message (Unknown contact)
+                if not m.phone: continue
+                key = f"unknown_{m.phone}"
+                c_type = 'atendimento'
+                c_id = m.phone # Use phone as ID for unknown
+                name = m.sender_name or m.phone
+                phone = m.phone
+                obj = None
                 
             if key not in conversations:
                 # First time seeing this contact (since we ordered by desc, this IS the latest msg)
@@ -393,16 +400,17 @@ class WhatsAppService:
         if contact and sender_image:
             contact.profile_pic_url = sender_image
         
-        if not contact:
-            current_app.logger.warning(f"Inbound from unknown: {phone}")
-            return {'status': 'unknown_contact', 'phone': phone}
-            
+        # 3b. Handle Unknown
+        sender_name = data.get('senderName') or data.get('instanceName')
+        
+        # 4. Save Message
         try:
-            # 4. Save Message
             msg = WhatsAppMessage(
                 company_id=company_id,
-                lead_id=contact.id if c_type == 'lead' else None,
-                client_id=contact.id if c_type == 'client' else None,
+                lead_id=contact.id if contact and c_type == 'lead' else None,
+                client_id=contact.id if contact and c_type == 'client' else None,
+                phone=phone,
+                sender_name=sender_name,
                 direction='out' if from_me else 'in',
                 content=body,
                 status='sent' if from_me else 'delivered',
@@ -412,7 +420,7 @@ class WhatsAppService:
             db.session.commit()
             
             update_integration_health(company_id, 'z_api')
-            return {'success': True, 'msg_id': msg.id}
+            return {'success': True, 'msg_id': msg.id, 'contact_found': bool(contact)}
         except Exception as e:
             db.session.rollback()
             update_integration_health(company_id, 'z_api', error=e)

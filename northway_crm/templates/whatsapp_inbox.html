@@ -38,6 +38,8 @@
                     class="flex-1 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-all">Leads</button>
                 <button onclick="filterConversations('client')" id="tab-client"
                     class="flex-1 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-all">Clientes</button>
+                <button onclick="filterConversations('atendimento')" id="tab-atendimento"
+                    class="flex-1 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-all">Novos</button>
             </div>
         </div>
 
@@ -85,9 +87,13 @@
 
                 <div class="flex-1 min-w-0">
                     <h3 class="font-bold text-gray-900 leading-tight" id="chat-name">Nome do Contato</h3>
-                    <p class="text-xs text-green-600 font-medium flex items-center gap-1" id="chat-status">
-                        <span class="w-2 h-2 bg-green-500 rounded-full"></span> Online
-                    </p>
+                    <div class="flex items-center gap-2">
+                        <p class="text-[10px] text-gray-500 font-medium" id="chat-details">Lead • 00 0000-0000</p>
+                        <span class="h-1 w-1 bg-gray-300 rounded-full"></span>
+                        <p class="text-[10px] text-green-600 font-medium flex items-center gap-1" id="chat-status">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -254,6 +260,15 @@
             <textarea id="sidebar-notes"
                 class="w-full flex-1 bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-gray-700 focus:outline-none focus:border-yellow-400 resize-none transition-colors min-h-[200px]"
                 placeholder="Escreva notas sobre este contato..." oninput="debouncedSaveNotes()"></textarea>
+        </div>
+
+        <!-- Add to Lead (Unknown only) -->
+        <div id="sidebar-add-unknown" class="p-5 border-t border-gray-100 hidden">
+            <button onclick="convertUnknownToLead()"
+                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                Adicionar como Lead
+            </button>
         </div>
     </div>
 </div>
@@ -484,8 +499,9 @@
         const list = document.getElementById('conversation-list');
 
         // Update Buttons
-        ['all', 'lead', 'client'].forEach(t => {
+        ['all', 'lead', 'client', 'atendimento'].forEach(t => {
             const btn = document.getElementById(`tab-${t}`);
+            if (!btn) return;
             if (t === tab) {
                 btn.classList.add('bg-white', 'text-gray-900', 'shadow-sm', 'font-bold');
                 btn.classList.remove('text-gray-500', 'font-medium');
@@ -570,69 +586,93 @@
     }
 
     async function openChat(type, id, name, phone, avatarUrl) {
-        console.log("openChat called:", type, id, name, avatarUrl);
-        activeChat = { type, id };
+        console.log("openChat called:", { type, id, name, phone, avatarUrl });
+        try {
+            activeChat = { type, id };
 
-        // Update Header
-        document.getElementById('chat-empty-state').classList.add('hidden');
-        document.getElementById('chat-header').classList.remove('hidden');
-        document.getElementById('chat-header').classList.add('flex');
-        document.getElementById('chat-messages').classList.remove('hidden');
-        document.getElementById('chat-input-area').classList.remove('hidden');
-        document.getElementById('chat-input-area').classList.add('flex');
+            // 1. Update UI Visibility
+            const elements = {
+                'chat-empty-state': 'add',
+                'chat-header': 'remove',
+                'chat-messages': 'remove',
+                'chat-input-area': 'remove'
+            };
 
-        document.getElementById('chat-name').textContent = name;
-        document.getElementById('chat-details').textContent = `${type === 'lead' ? 'Lead' : 'Cliente'} • ${phone}`;
+            for (const [eid, action] of Object.entries(elements)) {
+                const el = document.getElementById(eid);
+                if (el) {
+                    el.classList[action]('hidden');
+                    if (eid !== 'chat-empty-state' && action === 'remove') el.classList.add('flex');
+                }
+            }
 
-        // Update Header Avatar - Ensure structure allows button overlay
-        // We actually want the button to remain Outside or be re-injected. 
-        // Simplest: The header HTML has the button in a sibling/wrapper. 
-        // Let's just update the inner IMG or Text of the #chat-avatar div but keep the wrapper?
-        // Wait, current structure in line 138 is: wrapper > #chat-avatar > ?
-        // My replacement above (line 138) made #chat-avatar be the inner div. The wrapper is outside.
-        // So I should only update #chat-avatar innerHTML.
+            // 2. Update Basic Info
+            if (document.getElementById('chat-name')) document.getElementById('chat-name').textContent = name;
+            const detailsEl = document.getElementById('chat-details');
+            if (detailsEl) detailsEl.textContent = `${type === 'lead' ? 'Lead' : 'Cliente'} • ${phone}`;
 
-        const avatarEl = document.getElementById('chat-avatar');
-        // Check if we have a valid URL
-        const hasAvatar = avatarUrl && avatarUrl !== 'null' && avatarUrl !== 'undefined' && avatarUrl !== '';
+            // 3. Update Avatar
+            const avatarEl = document.getElementById('chat-avatar');
+            if (avatarEl) {
+                const hasAvatar = avatarUrl && avatarUrl !== 'null' && avatarUrl !== 'undefined' && avatarUrl !== '';
+                if (hasAvatar) {
+                    avatarEl.innerHTML = `
+                        <div class="w-full h-full relative group">
+                             <img src="${avatarUrl}" class="w-full h-full object-cover">
+                             <button onclick="event.stopPropagation(); syncProfile()" title="Atualizar Foto"
+                                class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center rounded-full text-white transition-all z-10">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    avatarEl.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center relative group">
+                            ${(name || '?').charAt(0).toUpperCase()}
+                            <button onclick="event.stopPropagation(); syncProfile()" title="Sincronizar Foto"
+                                class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center rounded-full text-white transition-all z-10">
+                                <i data-lucide="refresh-cw" class="w-4 h-4 text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                    syncProfile(true);
+                }
+                if (window.lucide) lucide.createIcons();
+            }
 
-        if (hasAvatar) {
-            avatarEl.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover">`;
-        } else {
-            avatarEl.innerHTML = name.charAt(0).toUpperCase();
-            // Automate Sync if missing
-            syncProfile(true);
+            // 4. Load Data
+            loadMessages(type, id);
+            loadContactDetails(type, id);
+
+            // 5. Polling
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(() => loadMessages(type, id, true), 5000);
+
+            // 6. Refresh List Active State
+            loadConversations();
+
+        } catch (err) {
+            console.error("FATAL in openChat:", err);
+            // alert("Erro ao abrir chat: " + err.message);
         }
-
-        // Load Messages
-        await loadMessages(type, id);
-
-        // Load Context Details
-        loadContactDetails(type, id);
-
-        // Start Polling (every 5s)
-        if (pollingInterval) clearInterval(pollingInterval);
-        pollingInterval = setInterval(() => {
-            // specific message poll or just reload all data? 
-            // Ideally we just APPEND new messages, but for MVP we re-fetch active chat messages silently
-            // Be careful not to reset scroll if user is scrolling.
-            loadMessages(type, id, true);
-        }, 5000);
-
-        // Reload list to update active state/unread (optional, lazy way)
-        loadConversations();
     }
 
     async function loadMessages(type, id, silent = false) {
+        console.log("loadMessages called:", { type, id, silent });
         const container = document.getElementById('chat-messages');
+        if (!container) return;
+
         if (!silent) container.innerHTML = `<div class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-northway-red"></div></div>`;
 
         try {
             const res = await fetch(`/api/whatsapp/${type}/${id}/messages`);
-            const data = await res.json();
+            if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
-            if (data.messages.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Nenhuma mensagem.</div>`;
+            const data = await res.json();
+            console.log("Messages Data:", data);
+
+            if (!data.messages || data.messages.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Nenhuma mensagem encontrada nesta conversa.</div>`;
             } else {
                 let lastDate = null;
                 const html = data.messages.map(msg => {
@@ -657,7 +697,7 @@
                             ? 'bg-northway-red text-white rounded-tr-none'
                             : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
                         }">
-                            <p>${msg.content}</p>
+                            <p class="whitespace-pre-wrap">${msg.content}</p>
                             <div class="flex justify-end items-center gap-1 mt-1 opacity-70">
                                 <span class="text-[10px] font-medium">${msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 ${msg.direction === 'out' ?
@@ -670,11 +710,12 @@
                     </div>`;
                 }).join('');
                 container.innerHTML = html;
-                container.scrollTop = container.scrollHeight;
+                if (!silent) container.scrollTop = container.scrollHeight;
                 if (window.lucide) lucide.createIcons();
             }
         } catch (e) {
-            container.innerHTML = `<div class="text-center py-10 text-red-400">Erro ao carregar mensagens.</div>`;
+            console.error("Error loading messages:", e);
+            if (!silent) container.innerHTML = `<div class="text-center py-10 text-red-400">Erro ao carregar histórico: ${e.message}</div>`;
         }
     }
 
@@ -881,7 +922,37 @@
             // Notes
             document.getElementById('sidebar-notes').value = data.notes;
 
+            // Unknown UI
+            const addBox = document.getElementById('sidebar-add-unknown');
+            if (data.is_unknown) {
+                addBox.classList.remove('hidden');
+            } else {
+                addBox.classList.add('hidden');
+            }
+
         } catch (e) { console.error('Details error', e); }
+    }
+
+    async function convertUnknownToLead() {
+        if (!activeChat || activeChat.type !== 'atendimento') return;
+        const name = prompt("Nome completo para o novo Lead:", activeChat.id);
+        if (!name) return;
+
+        try {
+            const res = await fetch('/api/whatsapp/atendimento/convert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: activeChat.id, name: name })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Lead criado com sucesso!");
+                // Open the new lead chat
+                openChat('lead', data.lead_id, name, activeChat.id, '');
+            } else {
+                alert("Erro: " + data.error);
+            }
+        } catch (e) { alert("Erro na requisição"); }
     }
 
     // Notes Auto-save
