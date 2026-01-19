@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Client, User, Interaction, Task, LEAD_STATUS_WON
+from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON
 from utils import update_client_health, create_notification
 from datetime import datetime, date
 
@@ -74,7 +74,20 @@ def client_details(id):
     # Get MRR
     mrr = client.monthly_value if client.monthly_value else 0.0
     
-    return render_template('client_details.html', client=client, mrr=mrr, today=date.today())
+    # Financial Stats
+    client_txs = Transaction.query.filter_by(client_id=client.id).order_by(Transaction.due_date.desc()).all()
+    total_paid = sum(tx.amount for tx in client_txs if tx.status == 'paid')
+    total_pending = sum(tx.amount for tx in client_txs if tx.status == 'pending')
+    total_overdue = sum(tx.amount for tx in client_txs if tx.status == 'overdue')
+    
+    return render_template('client_details.html', 
+                          client=client, 
+                          mrr=mrr, 
+                          today=date.today(),
+                          client_txs=client_txs,
+                          total_paid=total_paid,
+                          total_pending=total_pending,
+                          total_overdue=total_overdue)
 
 @clients_bp.route('/clients/<int:id>/update', methods=['POST'])
 @login_required
