@@ -44,6 +44,51 @@ def new_contract(id):
     
     return render_template('contracts/new_contract.html', client=client, templates=templates, attachments=attachments)
 
+@contracts_bp.route('/contracts/<int:id>/resume')
+@login_required
+def resume_contract(id):
+    if not current_user.company_id:
+        abort(403)
+
+    contract = Contract.query.get_or_404(id)
+    if contract.company_id != current_user.company_id:
+        abort(403)
+        
+    client = contract.client
+    
+    # Load available templates for the select
+    from models import template_company_association
+    templates = ContractTemplate.query.outerjoin(template_company_association)\
+        .filter(
+            db.or_(
+                ContractTemplate.company_id == current_user.company_id,
+                ContractTemplate.is_global == True,
+                template_company_association.c.company_id == current_user.company_id
+            ),
+            ContractTemplate.active == True,
+            ContractTemplate.type == 'contract'
+        ).all()
+    
+    attachments = ContractTemplate.query.outerjoin(template_company_association)\
+        .filter(
+            db.or_(
+                ContractTemplate.company_id == current_user.company_id,
+                ContractTemplate.is_global == True,
+                template_company_association.c.company_id == current_user.company_id
+            ),
+            ContractTemplate.active == True,
+            ContractTemplate.type == 'attachment'
+        ).all()
+
+    draft_data = json.loads(contract.form_data) if contract.form_data else {}
+    
+    return render_template('contracts/new_contract.html', 
+                           client=client, 
+                           templates=templates, 
+                           attachments=attachments,
+                           draft_data=draft_data,
+                           contract_id=contract.id)
+
 @contracts_bp.route('/api/contracts/preview', methods=['POST'])
 @login_required
 def preview_contract():
