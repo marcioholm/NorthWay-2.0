@@ -302,9 +302,17 @@ class WhatsAppService:
             else:
                 # Orphan message (Unknown contact)
                 if not m.phone: continue
-                key = f"unknown_{m.phone}"
+                # Deduplicate: if phone is an @lid ID, group by sender_name or normalized ID
+                # This ensures "Viviane" with multiple IDs appears as one conversation
+                if '@lid' in m.phone or '@newsletter' in m.phone:
+                    # Use sender_name as key for grouping these transient IDs
+                    identifier = m.sender_name or m.phone
+                    key = f"unknown_grouped_{identifier}"
+                else:
+                    key = f"unknown_{m.phone}"
+                
                 c_type = 'atendimento'
-                c_id = m.phone # Use phone as ID for unknown
+                c_id = m.phone # Keep actual phone for API calls
                 name = m.sender_name or m.phone
                 phone = m.phone
                 obj = None

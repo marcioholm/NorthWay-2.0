@@ -602,7 +602,12 @@
                 const el = document.getElementById(eid);
                 if (el) {
                     el.classList[action]('hidden');
-                    if (eid !== 'chat-empty-state' && action === 'remove') el.classList.add('flex');
+                    // ENSURE chat-messages is flex-col
+                    if (eid === 'chat-messages' && action === 'remove') {
+                        el.classList.add('flex', 'flex-col');
+                    } else if (eid !== 'chat-empty-state' && action === 'remove') {
+                        el.classList.add('flex');
+                    }
                 }
             }
 
@@ -692,7 +697,7 @@
 
                     return `
                     ${dateHeader}
-                    <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-3 px-2">
+                    <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-3 px-2 w-full">
                         <div class="max-w-[85%] md:max-w-[70%] rounded-xl px-3 py-2 text-sm shadow-sm relative leading-relaxed ${msg.direction === 'out'
                             ? 'bg-northway-red text-white rounded-tr-none'
                             : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
