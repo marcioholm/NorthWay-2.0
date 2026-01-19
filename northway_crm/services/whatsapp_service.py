@@ -149,14 +149,25 @@ class WhatsAppService:
             url = f"{base_url}/{endpoint}"
             
             @retry_request()
-            def perform_send():
-                return requests.post(url, json=payload, headers=headers, timeout=15)
+            def perform_send(payload_data):
+                return requests.post(url, json=payload_data, headers=headers, timeout=15)
             
-            res = perform_send()
+            res = perform_send(payload)
             data = res.json()
             
-            # Z-API error handling
+            # 9th Digit Fallback (Brazil)
+            # If fail or if it's a 13-digit BR number, Z-API sometimes accepts but doesn't deliver
+            # To be safe, if the first try returns an error or if we want to ensure delivery:
             error_msg = data.get('error') or data.get('errorMessage')
+            if (res.status_code >= 400 or error_msg) and len(phone) == 13 and phone.startswith('55'):
+                # Try without the 9 (e.g., 55 42 9 8888 8888 -> 55 42 8888 8888)
+                phone_no_9 = phone[:4] + phone[5:]
+                payload["phone"] = phone_no_9
+                res = perform_send(payload)
+                data = res.json()
+                error_msg = data.get('error') or data.get('errorMessage')
+
+            # Z-API error handling
             if res.status_code >= 400 or error_msg:
                 # Save as FAILED
                 msg = WhatsAppMessage(
