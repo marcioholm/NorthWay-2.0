@@ -330,6 +330,8 @@ class WhatsAppService:
                         name = "Desconhecido"
                         phone = ""
                 
+                unread = 0 # Initialize unread count
+                
                 conversations[key] = {
                     'type': c_type,
                     'id': c_id,
@@ -338,7 +340,6 @@ class WhatsAppService:
                     'last_message_content': m.content,
                     'last_message_at': m.created_at.isoformat(),
                     'last_message_dir': m.direction,
-                    'last_message_status': m.status,
                     'last_message_status': m.status,
                     'unread_count': unread,
                     'profile_pic_url': getattr(obj, 'profile_pic_url', None)
