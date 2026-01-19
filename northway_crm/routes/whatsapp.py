@@ -121,11 +121,11 @@ def get_history(contact_id, type='lead', id=None):
     filters = {'company_id': current_user.company_id}
     
     if type == 'lead':
-        obj = Lead.query.get_or_404(int(contact_id))
+        obj = Lead.query.get_or_404(contact_id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
         filters['lead_id'] = obj.id
     elif type == 'client':
-        obj = Client.query.get_or_404(int(contact_id))
+        obj = Client.query.get_or_404(contact_id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
         filters['client_id'] = obj.id
     elif type == 'atendimento':
@@ -266,7 +266,7 @@ def sync_profile():
 def get_details(type, id):
     obj = None
     if type == 'lead':
-        obj = Lead.query.get_or_404(int(id))
+        obj = Lead.query.get_or_404(id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
         
         # Tags Logic
@@ -279,7 +279,7 @@ def get_details(type, id):
         name = obj.name
         
     elif type == 'client':
-        obj = Client.query.get_or_404(int(id))
+        obj = Client.query.get_or_404(id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
         
         tags = []
