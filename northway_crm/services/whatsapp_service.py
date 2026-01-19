@@ -409,6 +409,7 @@ class WhatsAppService:
         ]
         
         results = []
+        failed_endpoints = []
         for endp in endpoints:
             try:
                 url = f"{base_url}/{endp}"
@@ -419,15 +420,18 @@ class WhatsAppService:
                     return requests.put(url, json=payload, headers=headers, timeout=10)
                 
                 res = perform_put()
-                # Z-API usually returns 200 or 201 for these
-                results.append(res.status_code in [200, 201])
+                if res.status_code not in [200, 201]:
+                    failed_endpoints.append(f"{endp} ({res.status_code}: {res.text[:100]})")
+                    results.append(False)
+                else:
+                    results.append(True)
             except Exception as e:
-                import requests # Ensure requests is available if called in weird context
-                from flask import current_app
                 current_app.logger.error(f"Error updating Z-API webhook {endp}: {e}")
+                failed_endpoints.append(f"{endp} (Exception: {str(e)})")
                 results.append(False)
                 
         if all(results):
             return True
         else:
-            raise Exception("Falha ao configurar alguns webhooks na Z-API. Verifique sua conexão.")
+            error_details = ", ".join(failed_endpoints)
+            raise Exception(f"Falha ao configurar webhooks: {error_details}")
