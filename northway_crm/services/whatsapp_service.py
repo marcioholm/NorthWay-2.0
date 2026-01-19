@@ -333,17 +333,33 @@ class WhatsAppService:
     def process_webhook(company_id, data):
         """Processes incoming Z-API webhook payload."""
         
-        # 1. Extract Phone and Body
+        # 1. Handle Status Updates (Checkmarks)
+        if 'status' in data and 'messageId' in data:
+            ext_id = data.get('messageId')
+            new_status = data.get('status', '').lower()
+            # Map Z-API status to our status
+            # Z-API: RECEIVED, READ, etc.
+            status_map = {
+                'received': 'delivered',
+                'read': 'read',
+                'sent': 'sent'
+            }
+            final_status = status_map.get(new_status, new_status)
+            
+            msg = WhatsAppMessage.query.filter_by(company_id=company_id, external_id=ext_id).first()
+            if msg:
+                msg.status = final_status
+                db.session.commit()
+                return {'success': True, 'type': 'status_update'}
+
+        # 2. Extract Phone and Body
         phone = data.get('phone')
-        # Check Z-API payload structure variations
         if not phone and 'sender' in data:
              sender = data['sender']
              if isinstance(sender, dict): phone = sender.get('phone')
              elif isinstance(sender, str): phone = sender.split('@')[0]
              
-        # Ignore messages sent FROM the phone (unless we specifically want sync)
-        if data.get('fromMe'):
-            return {'ignored': True, 'reason': 'from_me'}
+        from_me = data.get('fromMe', False)
 
         # Get Body - handle different types
         body = data.get('message') or data.get('content')
@@ -362,30 +378,27 @@ class WhatsAppService:
         if not phone or not body:
             return {'ignored': True, 'reason': 'missing_data'}
             
-        # 2. Find Contact
+        # 3. Find Contact
         c_type, contact = WhatsAppService.find_contact(phone, company_id)
 
-        # 2a. Update Profile Pic (if present)
+        # 3a. Update Profile Pic (if present)
         sender_image = data.get('senderImage') or data.get('photo')
         if contact and sender_image:
             contact.profile_pic_url = sender_image
-            # We will commit when saving the message below
         
         if not contact:
-            # Unknown contact. Log it? Create it?
-            # For now, just Log
             current_app.logger.warning(f"Inbound from unknown: {phone}")
             return {'status': 'unknown_contact', 'phone': phone}
             
         try:
-            # 3. Save Message
+            # 4. Save Message
             msg = WhatsAppMessage(
                 company_id=company_id,
                 lead_id=contact.id if c_type == 'lead' else None,
                 client_id=contact.id if c_type == 'client' else None,
-                direction='in',
+                direction='out' if from_me else 'in',
                 content=body,
-                status='delivered',
+                status='sent' if from_me else 'delivered',
                 external_id=data.get('messageId')
             )
             db.session.add(msg)
@@ -414,6 +427,7 @@ class WhatsAppService:
         # Endpoints to update
         endpoints = [
             "update-webhook-received",
+            "update-webhook-sent",
             "update-webhook-disconnected",
             "update-webhook-connected",
             "update-webhook-message-status"
