@@ -17,9 +17,16 @@ class WhatsAppService:
         
         try:
             config = json.loads(integration.config_json) if integration.config_json else {}
+            api_url = config.get('api_url', 'https://api.z-api.io')
+            
+            # Robustness: Remove instance/token/method if user pasted full URL
+            if '/instances/' in api_url:
+                api_url = api_url.split('/instances/')[0]
+            api_url = api_url.rstrip('/')
+                
             return {
                 'instance_id': config.get('instance_id'),
-                'api_url': config.get('api_url', 'https://api.z-api.io'),
+                'api_url': api_url,
                 'client_token': config.get('client_token'),
                 'token': integration.api_key
             }
@@ -148,7 +155,26 @@ class WhatsAppService:
             res = perform_send()
             data = res.json()
             
-            # Save to DB
+            # Z-API error handling
+            error_msg = data.get('error') or data.get('errorMessage')
+            if res.status_code >= 400 or error_msg:
+                # Save as FAILED
+                msg = WhatsAppMessage(
+                    company_id=company_id,
+                    lead_id=target.id if target_type == 'lead' else None,
+                    client_id=target.id if target_type == 'client' else None,
+                    direction='out',
+                    content=content if not media_file else f"[{'FOTO' if 'image' in endpoint else 'ARQUIVO'}] {media_file.filename}",
+                    status='failed'
+                )
+                db.session.add(msg)
+                db.session.commit()
+                
+                err_text = f"Z-API Error ({res.status_code}): {error_msg}"
+                update_integration_health(company_id, 'z_api', error=err_text)
+                raise Exception(err_text)
+
+            # Save to DB as SUCCESS
             msg = WhatsAppMessage(
                 company_id=company_id,
                 lead_id=target.id if target_type == 'lead' else None,
@@ -166,7 +192,9 @@ class WhatsAppService:
             
         except Exception as e:
             current_app.logger.error(f"Z-API Send Error: {e}")
-            update_integration_health(company_id, 'z_api', error=e)
+            # If it's not a known Z-API error (e.g. timeout, connection), still log it
+            if not isinstance(e, Exception) or "Z-API Error" not in str(e):
+                update_integration_health(company_id, 'z_api', error=str(e))
             raise e
     @staticmethod
     def fetch_profile_picture(company_id, phone):
@@ -298,23 +326,32 @@ class WhatsAppService:
         phone = data.get('phone')
         # Check Z-API payload structure variations
         if not phone and 'sender' in data:
-             # Sometimes sender is "551199...@c.us"
              sender = data['sender']
              if isinstance(sender, dict): phone = sender.get('phone')
              elif isinstance(sender, str): phone = sender.split('@')[0]
              
+        # Ignore messages sent FROM the phone (unless we specifically want sync)
+        if data.get('fromMe'):
+            return {'ignored': True, 'reason': 'from_me'}
+
+        # Get Body - handle different types
         body = data.get('message') or data.get('content')
-        if not body and 'text' in data:
-            body = data.get('text', {}).get('message')
-            
+        if not body:
+            if 'text' in data:
+                body = data.get('text', {}).get('message')
+            elif 'image' in data:
+                body = f"[FOTO] {data.get('image', {}).get('caption', '')}".strip()
+            elif 'audio' in data:
+                body = "[ÁUDIO]"
+            elif 'video' in data:
+                body = "[VÍDEO]"
+            elif 'document' in data:
+                body = f"[ARQUIVO] {data.get('document', {}).get('fileName', '')}".strip()
+
         if not phone or not body:
             return {'ignored': True, 'reason': 'missing_data'}
             
         # 2. Find Contact
-        clean = WhatsAppService.normalize_phone(phone) # Should return 55...
-        # But wait, find_contact handles non-normalized DB too.
-        # Let's pass the raw-ish phone to find_contact which has logic
-        
         c_type, contact = WhatsAppService.find_contact(phone, company_id)
 
         # 2a. Update Profile Pic (if present)

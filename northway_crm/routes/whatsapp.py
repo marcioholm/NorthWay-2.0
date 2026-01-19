@@ -74,7 +74,12 @@ def test_connection():
 @whatsapp_bp.route('/api/whatsapp/setup-webhook', methods=['POST'])
 @login_required
 def setup_webhook():
-    webhook_url = f"{request.url_root.rstrip('/')}/api/webhooks/zapi/{current_user.company_id}"
+    root = request.url_root.rstrip('/')
+    # Force HTTPS if not localhost (Vercel/Production)
+    if 'localhost' not in root and '127.0.0.1' not in root:
+        root = root.replace('http://', 'https://')
+        
+    webhook_url = f"{root}/api/webhooks/zapi/{current_user.company_id}"
     try:
         WhatsAppService.configure_webhook(current_user.company_id, webhook_url)
         return jsonify({'success': True})
