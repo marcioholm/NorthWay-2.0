@@ -312,20 +312,23 @@ class WhatsAppService:
             if key not in conversations:
                 # First time seeing this contact (since we ordered by desc, this IS the latest msg)
                 
-                # Fetch Name lazily (n+1 problem, but usually okay for small inbox page size)
-                # Optimization: Could preload contacts, but lets keep it simple first
-                name = "Desconhecido"
-                phone = ""
-                unread = 0 # Todo: Implement
-                
-                if c_type == 'lead':
-                    obj = Lead.query.get(c_id)
+                if c_type == 'atendimento':
+                    name = m.sender_name or m.phone
+                    phone = m.phone
+                    obj = None
                 else:
-                    obj = Client.query.get(c_id)
-                    
-                if obj:
-                    name = obj.name
-                    phone = obj.phone
+                    # Fetch Name lazily
+                    if c_type == 'lead':
+                        obj = Lead.query.get(c_id)
+                    else:
+                        obj = Client.query.get(c_id)
+                        
+                    if obj:
+                        name = obj.name
+                        phone = obj.phone
+                    else:
+                        name = "Desconhecido"
+                        phone = ""
                 
                 conversations[key] = {
                     'type': c_type,
