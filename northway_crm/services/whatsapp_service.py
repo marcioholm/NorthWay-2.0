@@ -340,6 +340,9 @@ class WhatsAppService:
                 
                 unread = 0 # Initialize unread count
                 
+                # Priority: message.profile_pic_url -> contact.profile_pic_url
+                pic_url = m.profile_pic_url or getattr(obj, 'profile_pic_url', None)
+
                 conversations[key] = {
                     'type': c_type,
                     'id': c_id,
@@ -350,7 +353,7 @@ class WhatsAppService:
                     'last_message_dir': m.direction,
                     'last_message_status': m.status,
                     'unread_count': unread,
-                    'profile_pic_url': getattr(obj, 'profile_pic_url', None)
+                    'profile_pic_url': pic_url
                 }
                 
         return list(conversations.values())
@@ -387,19 +390,32 @@ class WhatsAppService:
              
         from_me = data.get('fromMe', False)
 
-        # Get Body - handle different types
+        # Get Body & Attachment - handle different types
         body = data.get('message') or data.get('content')
+        attachment_url = None
+        msg_type = 'text'
+
         if not body:
             if 'text' in data:
                 body = data.get('text', {}).get('message')
             elif 'image' in data:
-                body = f"[FOTO] {data.get('image', {}).get('caption', '')}".strip()
+                img_data = data.get('image', {})
+                attachment_url = img_data.get('url') or img_data.get('imageUrl')
+                body = img_data.get('caption') or "[FOTO]"
+                msg_type = 'image'
             elif 'audio' in data:
+                attachment_url = data.get('audio', {}).get('url')
                 body = "[ÁUDIO]"
+                msg_type = 'audio'
             elif 'video' in data:
+                attachment_url = data.get('video', {}).get('url')
                 body = "[VÍDEO]"
+                msg_type = 'video'
             elif 'document' in data:
-                body = f"[ARQUIVO] {data.get('document', {}).get('fileName', '')}".strip()
+                doc_data = data.get('document', {})
+                attachment_url = doc_data.get('url')
+                body = doc_data.get('fileName') or "[ARQUIVO]"
+                msg_type = 'document'
 
         if not phone or not body:
             return {'ignored': True, 'reason': 'missing_data'}
@@ -407,13 +423,11 @@ class WhatsAppService:
         # 3. Find Contact
         c_type, contact = WhatsAppService.find_contact(phone, company_id)
 
-        # 3a. Update Profile Pic (if present)
-        sender_image = data.get('senderImage') or data.get('photo')
-        if contact and sender_image:
-            contact.profile_pic_url = sender_image
-        
-        # 3b. Handle Unknown
-        sender_name = data.get('senderName') or data.get('instanceName')
+        # 3a. Capture Profile Pic
+        # Priority: senderImage from Z-API -> contact.profile_pic_url
+        incoming_pic = data.get('senderImage') or data.get('photo')
+        if contact and incoming_pic:
+            contact.profile_pic_url = incoming_pic
         
         # 4. Save Message
         try:
@@ -422,9 +436,12 @@ class WhatsAppService:
                 lead_id=contact.id if contact and c_type == 'lead' else None,
                 client_id=contact.id if contact and c_type == 'client' else None,
                 phone=phone,
-                sender_name=sender_name,
+                sender_name=data.get('senderName') or (contact.name if contact else None),
                 direction='out' if from_me else 'in',
+                type=msg_type,
                 content=body,
+                attachment_url=attachment_url,
+                profile_pic_url=incoming_pic or getattr(contact, 'profile_pic_url', None),
                 status='sent' if from_me else 'delivered',
                 external_id=data.get('messageId')
             )

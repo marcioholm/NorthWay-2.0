@@ -143,9 +143,11 @@ def get_history(type='lead', contact_id=None, id=None):
     return jsonify({
         'messages': [{
             'id': m.id,
-            'direction': m.direction,
             'content': m.content,
+            'direction': m.direction,
             'status': m.status,
+            'type': m.type or 'text',
+            'attachment_url': m.attachment_url,
             'timestamp': m.created_at.isoformat()
         } for m in msgs]
     })

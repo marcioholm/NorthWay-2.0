@@ -362,6 +362,8 @@ class WhatsAppMessage(db.Model):
     external_id = db.Column(db.String(100), nullable=True) # Z-API Message ID
     phone = db.Column(db.String(50), nullable=True) # For unknown contacts
     sender_name = db.Column(db.String(100), nullable=True) # From WhatsApp profile
+    profile_pic_url = db.Column(db.String(500), nullable=True) # URL from webhook
+    attachment_url = db.Column(db.String(1000), nullable=True) # Media URL (image, audio, etc.)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class QuickMessage(db.Model):
