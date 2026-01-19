@@ -241,7 +241,7 @@
 
                     {% if current_user.role in ['admin', 'manager'] %}
                     <div class="border-t border-gray-50 my-1 pt-1"></div>
-                    <form action="{{ url_for('main.delete_client', id=client.id) }}" method="POST"
+                    <form action="{{ url_for('clients.delete_client', id=client.id) }}" method="POST" class="inline"
                         onsubmit="return confirm('Tem certeza? Essa ação não pode ser desfeita.')">
                         <button type="submit"
                             class="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 flex items-center gap-3 transition-colors">

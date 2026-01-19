@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from models import db, User, Task, Role
+import json
 from auth import auth as auth_blueprint
 from master import master as master_blueprint
 from routes.financial import financial_bp
@@ -80,14 +81,26 @@ def create_app():
     def inject_globals():
         try:
             if current_user.is_authenticated:
-                # Defensive check for table existence/schema issues
-                pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
-                return dict(pending_tasks_count=pending_count, now=datetime.now())
+                try:
+                    # Defensive check for table existence/schema issues
+                    pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
+                    return dict(pending_tasks_count=pending_count, now=datetime.now())
+                except Exception as db_e:
+                    print(f"Database error in inject_globals: {db_e}")
+                    return dict(pending_tasks_count=0, now=datetime.now())
         except Exception as e:
             # Log error but don't crash the page
-            print(f"Error in inject_globals: {e}")
+            print(f"Critical error in inject_globals: {e}")
             return dict(pending_tasks_count=0, now=datetime.now())
         return dict(pending_tasks_count=0, now=datetime.now())
+
+    @app.template_filter('from_json')
+    def from_json_filter(s):
+        if not s: return {}
+        try:
+            return json.loads(s)
+        except:
+            return {}
 
     # --- ERROR HANDLERS ---
     @app.errorhandler(404)

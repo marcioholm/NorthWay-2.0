@@ -112,8 +112,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <p class="text-xs font-bold text-gray-400 uppercase mb-1">Instance ID</p>
-                    <p class="text-sm font-mono text-gray-700 text-ellipsis overflow-hidden">{{ zapi.config_json |
-                        from_json | attr('instance_id') }}</p>
+                    <p class="text-sm font-mono text-gray-700 text-ellipsis overflow-hidden">{{ (zapi.config_json |
+                        from_json).get('instance_id', 'N/A') }}</p>
                 </div>
                 <div>
                     <p class="text-xs font-bold text-gray-400 uppercase mb-1">Token</p>
@@ -290,7 +290,7 @@
             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
                 <div>
                     <p class="text-xs font-bold text-gray-400 uppercase mb-1">API Key</p>
-                    <p class="text-sm font-mono text-gray-700 truncate max-w-md">
+                    <p class="text-sm font-mono text-gray-700 text-ellipsis overflow-hidden">
                         {{ asaas.api_key[:8] }}*************************
                     </p>
                     <p class="text-xs text-gray-500 mt-1">Ambiente: <span class="font-bold">{{ (asaas.config_json |

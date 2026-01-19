@@ -149,6 +149,22 @@ def settings_integrations():
         
     return render_template('settings_integrations.html', company=current_user.company, integrations_map=integrations_map, zapi_config=zapi_config)
 
+@admin_bp.route('/settings/integrations/delete/<service>', methods=['POST'])
+def delete_integration(service):
+    from models import db, Integration
+    if not current_user.company_id:
+        abort(403)
+        
+    intg = Integration.query.filter_by(company_id=current_user.company_id, service=service).first()
+    if intg:
+        db.session.delete(intg)
+        db.session.commit()
+        flash(f'Integração {service} removida.', 'success')
+    else:
+        flash('Integração não encontrada.', 'error')
+        
+    return redirect(url_for('admin.settings_integrations'))
+
 @admin_bp.route('/profile', methods=['GET', 'POST'])
 def profile():
     from models import db

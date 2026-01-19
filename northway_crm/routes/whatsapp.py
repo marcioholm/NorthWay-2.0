@@ -25,7 +25,7 @@ def configure():
     
     if not instance_id or not token:
         flash('Instance ID e Token são obrigatórios.', 'error')
-        return redirect(url_for('main.settings_integrations'))
+        return redirect(url_for('admin.settings_integrations'))
         
     # Logic kept here as it's Admin/CRUD specific, or could move to Service setup
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='z_api').first()
@@ -48,7 +48,7 @@ def configure():
         db.session.rollback()
         flash(f'Erro: {e}', 'error')
         
-    return redirect(url_for('main.settings_integrations'))
+    return redirect(url_for('admin.settings_integrations'))
 
 @whatsapp_bp.route('/api/whatsapp/test', methods=['POST'])
 @login_required
