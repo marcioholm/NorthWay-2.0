@@ -189,6 +189,7 @@ class WhatsAppService:
                     company_id=company_id,
                     lead_id=target.id if target_type == 'lead' else None,
                     client_id=target.id if target_type == 'client' else None,
+                    phone=WhatsAppService.normalize_phone(target.phone),
                     direction='out',
                     content=content if not media_file else f"[{'FOTO' if 'image' in endpoint else 'ARQUIVO'}] {media_file.filename}",
                     status='failed'
@@ -205,7 +206,7 @@ class WhatsAppService:
                 company_id=company_id,
                 lead_id=target.id if target_type == 'lead' else None,
                 client_id=target.id if target_type == 'client' else None,
-                phone=WhatsAppService.normalize_phone(phone),
+                phone=WhatsAppService.normalize_phone(target.phone),
                 direction='out',
                 content=content if not media_file else f"[{'FOTO' if 'image' in endpoint else 'ARQUIVO'}] {media_file.filename}",
                 status='sent',
