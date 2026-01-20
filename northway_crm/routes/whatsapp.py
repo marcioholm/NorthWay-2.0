@@ -60,11 +60,11 @@ def test_connection():
         cid = current_user.company_id
         intg = Integration.query.filter_by(company_id=cid, service='z_api').first()
         if not intg:
-            return jsonify({'connected': False, 'message': f"ERRO DEBUG: Nenhuma integração encontrada para ID {cid}."})
+            return jsonify({'connected': False, 'message': "Instalação não localizada no banco de dados."})
         if not intg.is_active:
-            return jsonify({'connected': False, 'message': f"ERRO DEBUG: Integração inativa para ID {cid}."})
+            return jsonify({'connected': False, 'message': "A integração está desativada no painel."})
             
-        return jsonify({'connected': False, 'message': f"ERRO DEBUG: Configuração inválida ou incompleta (ID {cid})."})
+        return jsonify({'connected': False, 'message': "Configuração incompleta ou inválida."})
     
     import requests
     headers = {}
