@@ -207,8 +207,9 @@ def create_app():
                 # Seed minimal data if empty (prevent lockout)
                 if not User.query.first():
                      print("🌱 Seeding default Admin...")
+                     print("🌱 Seeding default Admin...")
                      # Create default company and user if needed
-                     from models import Company, User, Role
+                     from models import Company
                      from werkzeug.security import generate_password_hash
                      
                      if not Company.query.first():
