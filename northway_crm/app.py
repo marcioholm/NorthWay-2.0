@@ -34,22 +34,34 @@ def create_app():
     
     # Database
     database_url = os.environ.get('DATABASE_URL')
-    if database_url and database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-        
-    if not database_url:
-        # Vercel Workaround: Copy SQLite to /tmp
-        try:
+    try:
+        if database_url and database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+            
+        if not database_url:
+            # Vercel Workaround: Copy SQLite to /tmp
+            # This is critical and prone to failure if permissions are weird
             import shutil
             src_db = os.path.join(app.root_path, 'crm.db')
             tmp_db = '/tmp/crm.db'
+            
+            # Only try to copy if source exists
             if os.path.exists(src_db):
-                shutil.copy2(src_db, tmp_db)
-                database_url = f'sqlite:///{tmp_db}'
+                try:
+                    shutil.copy2(src_db, tmp_db)
+                    database_url = f'sqlite:///{tmp_db}'
+                except Exception as copy_e:
+                    print(f"Failed to copy DB to tmp: {copy_e}")
+                    # Fallback to in-memory if copy fails? Or original path (read-only likely)
+                    # Try original path as last resort (might work for read, fail for write)
+                    database_url = 'sqlite:///crm.db' 
             else:
-                database_url = 'sqlite:///crm.db'
-        except:
-            database_url = 'sqlite:///crm.db'
+                # If no DB file, use in-memory to allowing booting (will fail logic but page loads)
+                print("WARNING: crm.db not found. Starting with in-memory DB.")
+                database_url = 'sqlite:///:memory:' 
+    except Exception as e:
+        print(f"Critical DB setup error: {e}")
+        database_url = 'sqlite:///:memory:' # Absolute fallback to prevent crash
 
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
