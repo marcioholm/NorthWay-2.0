@@ -120,25 +120,34 @@ def get_history(type='lead', contact_id=None, id=None):
         type = 'client'
     
     # Check Auth & Get Messages
-    filters = {'company_id': current_user.company_id}
+    filters = []
     
     if type == 'lead':
         obj = Lead.query.get_or_404(contact_id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
-        filters['lead_id'] = obj.id
+        norm_phone = WhatsAppService.normalize_phone(obj.phone)
+        filters.append(WhatsAppMessage.lead_id == obj.id)
+        if norm_phone:
+            filters.append(WhatsAppMessage.phone == norm_phone)
     elif type == 'client':
         obj = Client.query.get_or_404(contact_id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
-        filters['client_id'] = obj.id
+        norm_phone = WhatsAppService.normalize_phone(obj.phone)
+        filters.append(WhatsAppMessage.client_id == obj.id)
+        if norm_phone:
+            filters.append(WhatsAppMessage.phone == norm_phone)
     elif type == 'atendimento':
         # Unknown contact, lookup by phone
-        filters['phone'] = contact_id
-        filters['lead_id'] = None
-        filters['client_id'] = None
+        norm_phone = WhatsAppService.normalize_phone(contact_id)
+        filters.append(WhatsAppMessage.phone == norm_phone)
+        filters.append(WhatsAppMessage.phone == contact_id) # Just in case
     else:
         return jsonify({'error': 'Invalid type'}), 400
         
-    msgs = WhatsAppMessage.query.filter_by(**filters).order_by(WhatsAppMessage.created_at.asc()).all()
+    msgs = WhatsAppMessage.query.filter(
+        WhatsAppMessage.company_id == current_user.company_id,
+        db.or_(*filters)
+    ).order_by(WhatsAppMessage.created_at.asc()).all()
     
     return jsonify({
         'messages': [{

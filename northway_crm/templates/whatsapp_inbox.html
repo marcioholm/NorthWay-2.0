@@ -746,10 +746,10 @@
                     `;
                     } else if (msg.type === 'audio' && msg.attachment_url) {
                         messageContent = `
-                        <div class="mb-2">
-                            <audio controls class="max-w-full h-8">
-                                <source src="${msg.attachment_url}" type="audio/mpeg">
-                                seu navegador não suporta áudio.
+                        <div class="mb-2 bg-gray-50 rounded-lg p-2 border border-gray-100">
+                            <audio controls class="w-full h-10">
+                                <source src="${msg.attachment_url}">
+                                <a href="${msg.attachment_url}" target="_blank" class="text-xs text-blue-500 underline">Baixar Áudio</a>
                             </audio>
                         </div>
                     `;

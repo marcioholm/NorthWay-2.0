@@ -287,6 +287,40 @@ class WhatsAppService:
             current_app.logger.error(f"Error fetching profile pic: {e}")
             update_integration_health(company_id, 'z_api', error=e)
             return None
+
+    @staticmethod
+    def store_media_in_supabase(company_id, media_url, file_extension):
+        """Downloads media from Z-API and stores it in Supabase for persistence."""
+        from flask import current_app
+        supabase = getattr(current_app, 'supabase', None)
+        if not supabase:
+            return media_url
+
+        try:
+            # 1. Download from Z-API
+            res = requests.get(media_url, timeout=20)
+            if res.status_code != 200:
+                return media_url
+            
+            # 2. Prepare Path
+            import uuid
+            filename = f"{uuid.uuid4()}.{file_extension}"
+            path = f"company_{company_id}/{filename}"
+            bucket = "whatsapp_media"
+            
+            # 3. Upload to Supabase
+            supabase.storage.from_(bucket).upload(
+                path=path,
+                file=res.content,
+                file_options={"content-type": res.headers.get('Content-Type', 'application/octet-stream')}
+            )
+            
+            # 4. Get Public URL
+            public_url = supabase.storage.from_(bucket).get_public_url(path)
+            return public_url
+        except Exception as e:
+            current_app.logger.error(f"Supabase Media Storage Error: {e}")
+            return media_url
     @staticmethod
     def get_inbox_conversations(company_id, limit=500):
         """
@@ -510,28 +544,39 @@ class WhatsAppService:
         norm_phone = WhatsAppService.normalize_phone(phone)
         attachment_url = None
         msg_type = 'text'
+        body = "" # FIX: Initialize body to avoid UnboundLocalError
 
+        if 'text' in data:
+            body = data.get('text', {}).get('message')
+        elif 'image' in data:
+            img_data = data.get('image', {})
+            raw_url = img_data.get('url') or img_data.get('imageUrl')
+            # Persistent storage
+            attachment_url = WhatsAppService.store_media_in_supabase(company_id, raw_url, 'jpg')
+            body = img_data.get('caption') or "[FOTO]"
+            msg_type = 'image'
+        elif 'audio' in data:
+            raw_url = data.get('audio', {}).get('url')
+            # Persistent storage (Z-API audios are usually .ogg or .mp3)
+            attachment_url = WhatsAppService.store_media_in_supabase(company_id, raw_url, 'ogg')
+            body = "[ÁUDIO]"
+            msg_type = 'audio'
+        elif 'video' in data:
+            raw_url = data.get('video', {}).get('url')
+            attachment_url = WhatsAppService.store_media_in_supabase(company_id, raw_url, 'mp4')
+            body = "[VÍDEO]"
+            msg_type = 'video'
+        elif 'document' in data:
+            doc_data = data.get('document', {})
+            raw_url = doc_data.get('url')
+            ext = doc_data.get('fileName', '').split('.')[-1] if '.' in doc_data.get('fileName', '') else 'dat'
+            attachment_url = WhatsAppService.store_media_in_supabase(company_id, raw_url, ext)
+            body = doc_data.get('fileName') or "[ARQUIVO]"
+            msg_type = 'document'
+        
+        # Fallback if body still empty but message/content exists in roots
         if not body:
-            if 'text' in data:
-                body = data.get('text', {}).get('message')
-            elif 'image' in data:
-                img_data = data.get('image', {})
-                attachment_url = img_data.get('url') or img_data.get('imageUrl')
-                body = img_data.get('caption') or "[FOTO]"
-                msg_type = 'image'
-            elif 'audio' in data:
-                attachment_url = data.get('audio', {}).get('url')
-                body = "[ÁUDIO]"
-                msg_type = 'audio'
-            elif 'video' in data:
-                attachment_url = data.get('video', {}).get('url')
-                body = "[VÍDEO]"
-                msg_type = 'video'
-            elif 'document' in data:
-                doc_data = data.get('document', {})
-                attachment_url = doc_data.get('url')
-                body = doc_data.get('fileName') or "[ARQUIVO]"
-                msg_type = 'document'
+            body = data.get('message') or data.get('content') or ""
 
         if not phone or not body:
             return {'ignored': True, 'reason': 'missing_data'}
