@@ -140,6 +140,7 @@ def create_app():
         return render_template('500.html', error=str(error), traceback=traceback.format_exc()), 500
 
     # --- REGISTER BLUEPRINTS ---
+    # --- REGISTER BLUEPRINTS ---
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(master_blueprint)
     app.register_blueprint(financial_bp)
@@ -148,18 +149,24 @@ def create_app():
     app.register_blueprint(prospecting_bp)
     app.register_blueprint(integrations_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(whatsapp_bp)
-    app.register_blueprint(clients_bp)
-    app.register_blueprint(leads_bp)
-    app.register_blueprint(contracts_bp)
-    app.register_blueprint(dashboard_bp)
-    app.register_blueprint(tasks_bp)
-    app.register_blueprint(templates_bp)
-    app.register_blueprint(checklists_bp)
-    app.register_blueprint(notifications_bp)
     
-    from routes.roles import roles_bp
-    app.register_blueprint(roles_bp)
+    # Safe Register for complex blueprints that might break on schema
+    try:
+        app.register_blueprint(whatsapp_bp)
+        app.register_blueprint(clients_bp)
+        app.register_blueprint(leads_bp)
+        app.register_blueprint(contracts_bp)
+        app.register_blueprint(dashboard_bp)
+        app.register_blueprint(tasks_bp)
+        app.register_blueprint(templates_bp)
+        app.register_blueprint(checklists_bp)
+        app.register_blueprint(notifications_bp)
+        
+        from routes.roles import roles_bp
+        app.register_blueprint(roles_bp)
+    except Exception as bp_e:
+        print(f"Blueprint Registration Error: {bp_e}")
+        # We continue so the app launches and sys_admin works
 
     return app
 
