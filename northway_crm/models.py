@@ -4,6 +4,18 @@ from flask_login import UserMixin
 
 db = SQLAlchemy()
 
+class Contact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String(36), unique=True, nullable=False) # UUID string
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    phone = db.Column(db.String(50), nullable=False) # Canonical E.164
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    leads = db.relationship('Lead', backref='contact', lazy=True)
+    clients = db.relationship('Client', backref='contact', lazy=True)
+    messages = db.relationship('WhatsAppMessage', backref='contact', lazy=True)
+
 # Enums (using simple strings for MVP sqlite compatibility/simplicity)
 ROLE_ADMIN = 'admin'
 ROLE_MANAGER = 'gestor'
@@ -206,6 +218,7 @@ class Lead(db.Model):
     pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True) # Nullable for transition / inbox
     pipeline_stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'))
     assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     interactions = db.relationship('Interaction', backref='lead', lazy=True)
@@ -272,6 +285,7 @@ class Client(db.Model):
     notes = db.Column(db.Text)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
 
     # Enhanced Contract Data
     document = db.Column(db.String(20), nullable=True) # CPF/CNPJ
@@ -333,6 +347,7 @@ class Contract(db.Model):
     generated_content = db.Column(db.Text, nullable=True) # Nullable for drafts
     form_data = db.Column(db.Text, nullable=True) # JSON store for draft inputs
     status = db.Column(db.String(20), default='draft') # draft, issued, signed
+    contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     client = db.relationship('Client', backref='contracts')
@@ -364,6 +379,7 @@ class WhatsAppMessage(db.Model):
     sender_name = db.Column(db.String(100), nullable=True) # From WhatsApp profile
     profile_pic_url = db.Column(db.String(500), nullable=True) # URL from webhook
     attachment_url = db.Column(db.String(1000), nullable=True) # Media URL (image, audio, etc.)
+    contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class QuickMessage(db.Model):
@@ -383,6 +399,7 @@ class Interaction(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy (Null for migration)
     type = db.Column(db.String(50), nullable=True) # ligacao, reuniao, email, nota, tarefa_criada
     content = db.Column(db.Text, nullable=True)
+    contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Notification(db.Model):
@@ -429,6 +446,7 @@ class Transaction(db.Model):
     due_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), default='pending') # pending, paid, overdue, cancelled
     paid_date = db.Column(db.Date, nullable=True)
+    contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # ASAAS Integration Fields

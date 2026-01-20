@@ -50,12 +50,7 @@ class WhatsAppService:
         # If 10 or 11 digits (DDD + 8 or 9 digits)
         if len(clean) in [10, 11]:
             clean = '55' + clean
-        
-        # If it has 12 or 13 digits but doesn't start with 55, we don't touch it 
-        # (could be international or already prefixed)
-        # But if it's 12 and starts with 5 (e.g. 54299...) but lacks the second 5,
-        # we might have an issue. For NorthWay (Brazil), we assume 55 prefix.
-        
+            
         return clean
 
     @staticmethod
@@ -341,100 +336,75 @@ class WhatsAppService:
             if not messages:
                 return []
 
-            # 2. Extract context for pre-fetching
-            all_phones = set()
-            for m in messages:
-                if m.phone: 
-                    all_phones.add(WhatsAppService.normalize_phone(m.phone))
-                # Fallback if phone is missing but ID is linked
-                elif m.lead_id or m.client_id:
-                    # We'll resolve these in the next step
-                    pass
-
-            # 3. Fetch ALL company contacts for robust resolution
-            # For NorthWay's scale, fetching all leads/clients for the company is faster 
-            # and more reliable than complex ILIKE queries that fail on formatting spaces.
-            all_leads = Lead.query.filter_by(company_id=company_id).all()
-            all_clients = Client.query.filter_by(company_id=company_id).all()
-
-            # Build Lookup: normalized_phone -> (type, obj)
-            # Priority: Client > Lead
-            phone_lookup = {}
-            for l in all_leads:
-                norm = WhatsAppService.normalize_phone(l.phone)
-                if norm: 
-                    # If multiple leads have same phone, this keeps the LATEST (last in list)
-                    # which is usually what the user wants, or we could sort by created_at.
-                    phone_lookup[norm] = ('lead', l)
-            for c in all_clients:
-                norm = WhatsAppService.normalize_phone(c.phone)
-                if norm: 
-                    phone_lookup[norm] = ('client', c)
-
-            # 4. Fetch unread counts by Phone
-            unread_stats = db.session.query(
-                WhatsAppMessage.phone,
-                db.func.count(WhatsAppMessage.id)
-            ).filter(
-                WhatsAppMessage.company_id == company_id,
-                WhatsAppMessage.direction == 'in',
-                WhatsAppMessage.status != 'read'
-            ).group_by(
-                WhatsAppMessage.phone
-            ).all()
-
-            unread_map = {} 
-            for ph, count in unread_stats:
-                norm_ph = WhatsAppService.normalize_phone(ph)
-                if norm_ph:
-                    unread_map[norm_ph] = unread_map.get(norm_ph, 0) + count
-
-            # 5. Group into Conversations by Normalized Phone
+            # 3. Group by Contact UUID
             conversations = {} 
+            from models import Contact
+            import uuid
+            
             for m in messages:
-                raw_phone = m.phone
+                # Primary Grouping Key: Contact UUID
+                key = m.contact_uuid
                 
-                # Resiliency: If phone is missing, try to get from linked IDs
-                if not raw_phone:
-                    if m.lead_id:
-                        lead = Lead.query.get(m.lead_id)
-                        raw_phone = lead.phone if lead else None
-                    elif m.client_id:
-                        client = Client.query.get(m.client_id)
-                        raw_phone = client.phone if client else None
-                
-                if not raw_phone: continue
-                norm_phone = WhatsAppService.normalize_phone(raw_phone)
-                if not norm_phone: continue
-                
-                # Resolve Identity based on normalized phone
-                # Priority: Client > Lead > sender_name > phone
-                c_type = 'atendimento'
-                c_id = norm_phone
-                name = m.sender_name or norm_phone
-                obj = None
-                
-                if norm_phone in phone_lookup:
-                    c_type, obj = phone_lookup[norm_phone]
-                    c_id, name = obj.id, obj.name
-
-                # Master Key: STICKY TO PHONE NUMBER
-                key = f"phone_{norm_phone}"
-                
+                # Fallback for legacy/unlinked (shouldn't happen after migration)
+                if not key:
+                   norm = WhatsAppService.normalize_phone(m.phone)
+                   key = f"phone_{norm}"
+                   
                 if key not in conversations:
-                    pic_url = m.profile_pic_url or getattr(obj, 'profile_pic_url', None)
+                    # Resolve Display Info
+                    name = m.sender_name or m.phone
+                    c_type = 'atendimento'
+                    c_id = m.phone or f"unknown_{uuid.uuid4()}" # Fallback
+                    pic_url = m.profile_pic_url
+                    
+                    if m.contact:
+                         # Prefer Client > Lead info if linked
+                         if m.contact.clients:
+                             client = m.contact.clients[0]
+                             name = client.name
+                             c_type = 'client'
+                             c_id = client.id
+                             pic_url = pic_url or getattr(client, 'profile_pic_url', None)
+                         elif m.contact.leads:
+                             lead = m.contact.leads[0]
+                             name = lead.name
+                             c_type = 'lead'
+                             c_id = lead.id
+                             pic_url = pic_url or getattr(lead, 'profile_pic_url', None)
+                             
                     conversations[key] = {
+                        'key': key, # Internal tracking
                         'type': c_type,
-                        'id': c_id,
+                        'id': c_id, # This is the ID used for routes/links
                         'name': name,
-                        'phone': norm_phone,
+                        'phone': m.contact.phone if m.contact else m.phone,
                         'last_message_content': m.content,
                         'last_message_at': m.created_at.isoformat(),
                         'last_message_dir': m.direction,
                         'last_message_status': m.status,
-                        'unread_count': unread_map.get(norm_phone, 0),
+                        # Unread count needs to be aggregated by CONTACT_UUID now
+                        'unread_count': 0, 
                         'profile_pic_url': pic_url
                     }
+                    
+            # 4. Fill Unread Counts (by Contact UUID)
+            unread_stats = db.session.query(
+                WhatsAppMessage.contact_uuid,
+                db.func.count(WhatsAppMessage.id)
+            ).filter(
+                WhatsAppMessage.company_id == company_id,
+                WhatsAppMessage.direction == 'in',
+                WhatsAppMessage.status != 'read',
+                WhatsAppMessage.contact_uuid != None
+            ).group_by(
+                WhatsAppMessage.contact_uuid
+            ).all()
+            
+            unread_map = {u: c for u, c in unread_stats}
+            
+            for k, v in conversations.items():
+                if k in unread_map:
+                    v['unread_count'] = unread_map[k]
                     
         except Exception as e:
             current_app.logger.error(f"Error in get_inbox_conversations: {e}")
@@ -548,42 +518,74 @@ class WhatsAppService:
         if not phone or not body:
             return {'ignored': True, 'reason': 'missing_data'}
             
-        # 3. Find Contact
-        c_type, contact = WhatsAppService.find_contact(norm_phone, company_id)
-
-        # CRITICAL: If a contact is found, use THEIR phone as the canonical phone for this message.
-        # This prevents thread splits if Z-API sends variants (e.g. 55 vs no-55, or 9th digit diffs)
-        # that our find_contact already knows how to resolve.
-        final_phone = norm_phone
-        if contact and contact.phone:
-            final_phone = WhatsAppService.normalize_phone(contact.phone)
-
+        # 3. Find or Create Contact
+        from models import Contact
+        import uuid
+        
+        contact = Contact.query.filter_by(company_id=company_id, phone=norm_phone).first()
+        if not contact:
+            contact = Contact(
+                uuid=str(uuid.uuid4()),
+                company_id=company_id,
+                phone=norm_phone,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(contact)
+            db.session.flush() # Generate ID
+            
         # 3a. Capture Profile Pic
         # Priority: senderImage from Z-API -> contact.profile_pic_url
         incoming_pic = data.get('senderImage') or data.get('photo')
-        if contact and incoming_pic and not from_me: # Only update if it's the contact's pic
-            contact.profile_pic_url = incoming_pic
         
-        # 4. Save Message
-        # If from_me, name should be the contact's name or None (not the sender's name from webhook)
+        # 3. Find or Create Contact
+        from models import Contact
+        import uuid
+        
+        contact = Contact.query.filter_by(company_id=company_id, phone=norm_phone).first()
+        if not contact:
+            # Try finding by loose match if strict match fails (migration safety)
+            # or just create new
+            contact = Contact(
+                uuid=str(uuid.uuid4()),
+                company_id=company_id,
+                phone=norm_phone,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(contact)
+            db.session.flush() # Generate ID
+
+        # 4. Save Message linked to Contact
         sender_name = data.get('senderName')
-        if from_me:
-            sender_name = contact.name if contact else None
-        elif not sender_name and contact:
-            sender_name = contact.name
+        
+        # Try to link to Lead/Client if they exist via Contact relations
+        lead_id = contact.leads[0].id if contact.leads else None
+        client_id = contact.clients[0].id if contact.clients else None
+        
+        # If no relation found but phone matches, check again (migration gap filler)
+        if not lead_id and not client_id:
+             c_type, found_obj = WhatsAppService.find_contact(norm_phone, company_id)
+             if c_type == 'lead':
+                 lead_id = found_obj.id
+                 # AUTO-LINK
+                 found_obj.contact_uuid = contact.uuid
+             elif c_type == 'client':
+                 client_id = found_obj.id
+                  # AUTO-LINK
+                 found_obj.contact_uuid = contact.uuid
 
         try:
             msg = WhatsAppMessage(
                 company_id=company_id,
-                lead_id=contact.id if contact and c_type == 'lead' else None,
-                client_id=contact.id if contact and c_type == 'client' else None,
-                phone=final_phone,
+                lead_id=lead_id,
+                client_id=client_id,
+                contact_uuid=contact.uuid, # THE KEY
+                phone=norm_phone,
                 sender_name=sender_name,
                 direction='out' if from_me else 'in',
                 type=msg_type,
                 content=body,
                 attachment_url=attachment_url,
-                profile_pic_url=incoming_pic if not from_me else getattr(contact, 'profile_pic_url', None),
+                profile_pic_url=incoming_pic,
                 status='sent' if from_me else 'delivered',
                 external_id=data.get('messageId')
             )
@@ -591,7 +593,8 @@ class WhatsAppService:
             db.session.commit()
             
             update_integration_health(company_id, 'z_api')
-            return {'success': True, 'msg_id': msg.id, 'contact_found': bool(contact)}
+            # Return UUID to allow frontend to update the correct thread
+            return {'success': True, 'msg_id': msg.id, 'contact_uuid': contact.uuid}
         except Exception as e:
             db.session.rollback()
             update_integration_health(company_id, 'z_api', error=e)
