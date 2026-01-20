@@ -40,47 +40,35 @@ def create_app():
         if database_url and database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         
-        # DRIVER CHECK: If using Postgres, ensure driver exists
+        # Priority check for Postgres
         if database_url and 'postgresql' in database_url:
             try:
                 import psycopg2
+                print("🐘 DATABASE: Using PostgreSQL (Supabase/External)")
             except ImportError:
-                print("⚠️ Postgres configured but 'psycopg2' missing. Falling back to SQLite.")
-                database_url = None # Force fallback logic below
+                print("⚠️ Postgres configured but 'psycopg2' missing. Attempting SQLite fallback.")
+                database_url = None 
             
         if not database_url:
-            # Vercel Workaround: Copy SQLite to /tmp
-            # This is critical and prone to failure if permissions are weird
+            # Vercel Workaround: Copy SQLite to /tmp (VOLATILE fallback)
             import shutil
             src_db = os.path.join(app.root_path, 'crm.db')
             tmp_db = '/tmp/crm.db'
             
-            # Only try to copy if source exists
             if os.path.exists(src_db):
                 try:
                     shutil.copy2(src_db, tmp_db)
                     database_url = f'sqlite:///{tmp_db}'
-                    print(f"✅ DB copied from {src_db} to {tmp_db}")
+                    print(f"⚠️ DATABASE: Using VOLATILE SQLite at {tmp_db} (Data will be lost on reset)")
                 except Exception as copy_e:
-                    print(f"Failed to copy DB to tmp: {copy_e}")
+                    print(f"Failed to copy DB: {copy_e}")
                     database_url = 'sqlite:///:memory:' 
             else:
-                # Fallback: Check CWD
-                cwd_db = os.path.join(os.getcwd(), 'crm.db')
-                if os.path.exists(cwd_db):
-                    try:
-                        shutil.copy2(cwd_db, tmp_db)
-                        database_url = f'sqlite:///{tmp_db}'
-                        print(f"✅ DB copied from CWD {cwd_db} to {tmp_db}")
-                    except Exception as copy_e:
-                        print(f"Failed to copy CWD DB: {copy_e}")
-                        database_url = 'sqlite:///:memory:'
-                else:
-                    print(f"WARNING: crm.db not found at {src_db} or {cwd_db}. Starting with in-memory DB.")
-                    database_url = 'sqlite:///:memory:' 
+                print("⚠️ DATABASE: No persistent DB found. Using in-memory (TEMPORARY).")
+                database_url = 'sqlite:///:memory:' 
     except Exception as e:
         print(f"Critical DB setup error: {e}")
-        database_url = 'sqlite:///:memory:' # Absolute fallback to prevent crash
+        database_url = 'sqlite:///:memory:' 
 
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
