@@ -50,15 +50,24 @@ def create_app():
                 try:
                     shutil.copy2(src_db, tmp_db)
                     database_url = f'sqlite:///{tmp_db}'
+                    print(f"✅ DB copied from {src_db} to {tmp_db}")
                 except Exception as copy_e:
                     print(f"Failed to copy DB to tmp: {copy_e}")
-                    # Fallback to in-memory if copy fails.
-                    # NEVER try root 'crm.db' because it is Read-Only on Vercel
                     database_url = 'sqlite:///:memory:' 
             else:
-                # If no DB file, use in-memory to allowing booting (will fail logic but page loads)
-                print("WARNING: crm.db not found. Starting with in-memory DB.")
-                database_url = 'sqlite:///:memory:' 
+                # Fallback: Check CWD
+                cwd_db = os.path.join(os.getcwd(), 'crm.db')
+                if os.path.exists(cwd_db):
+                    try:
+                        shutil.copy2(cwd_db, tmp_db)
+                        database_url = f'sqlite:///{tmp_db}'
+                        print(f"✅ DB copied from CWD {cwd_db} to {tmp_db}")
+                    except Exception as copy_e:
+                        print(f"Failed to copy CWD DB: {copy_e}")
+                        database_url = 'sqlite:///:memory:'
+                else:
+                    print(f"WARNING: crm.db not found at {src_db} or {cwd_db}. Starting with in-memory DB.")
+                    database_url = 'sqlite:///:memory:' 
     except Exception as e:
         print(f"Critical DB setup error: {e}")
         database_url = 'sqlite:///:memory:' # Absolute fallback to prevent crash

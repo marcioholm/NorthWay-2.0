@@ -1,9 +1,9 @@
-flask
-flask-sqlalchemy
-flask-login
-werkzeug
-supabase
-psycopg2-binary
-gunicorn
-requests
-markdown
+flask==3.0.3
+flask-sqlalchemy==3.1.1
+flask-login==0.6.3
+werkzeug==3.0.3
+supabase==2.4.5
+# psycopg2-binary
+requests==2.31.0
+markdown==3.6
+gunicorn==22.0.0

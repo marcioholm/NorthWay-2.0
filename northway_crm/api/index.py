@@ -5,7 +5,16 @@ import sys
 # so that 'app.py' and other modules can be imported.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app
+try:
+    import subprocess
+    print("📦 INSTALLED PACKAGES:")
+    subprocess.call([sys.executable, '-m', 'pip', 'freeze'])
+    from app import app
+except Exception as e:
+    import traceback
+    print(f"CRITICAL ERROR STARTING APP: {e}")
+    traceback.print_exc()
+    raise e
 
 # Vercel Serverless Function Entry Point
 # This works by exposing the WSGI app as a variable named 'app'
