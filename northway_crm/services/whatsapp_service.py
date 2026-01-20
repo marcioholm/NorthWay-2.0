@@ -317,15 +317,20 @@ class WhatsAppService:
             
             # 4. Get Public URL
             public_url = supabase.storage.from_(bucket).get_public_url(path)
+            current_app.logger.info(f"WhatsApp media stored successfully: {public_url}")
             return public_url
         except Exception as e:
-            current_app.logger.error(f"Supabase Media Storage Error: {e}")
+            current_app.logger.error(f"Supabase Media Storage Error for URL {media_url}: {str(e)}")
+            # Try to provide more detail if available
+            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                current_app.logger.error(f"Supabase Response: {e.response.text}")
             return media_url
+
     @staticmethod
     def get_inbox_conversations(company_id, limit=500):
         """
-        Fetches recent messages and groups them into unique conversations by identity.
-        Ultra-optimized to avoid ALL N+1 queries.
+        Fetches recent messages and groups them into unique conversations by PHONE.
+        Ensures that multiple contacts with the same phone appear as one thread.
         """
         try:
             # 1. Fetch recent messages
@@ -337,60 +342,37 @@ class WhatsAppService:
                 return []
 
             # 2. Extract context for pre-fetching
-            lead_ids = set()
-            client_ids = set()
             all_phones = set()
-            
             for m in messages:
-                if m.lead_id: lead_ids.add(m.lead_id)
-                if m.client_id: client_ids.add(m.client_id)
-                if m.phone: all_phones.add(WhatsAppService.normalize_phone(m.phone))
+                if m.phone: 
+                    all_phones.add(WhatsAppService.normalize_phone(m.phone))
+                # Fallback if phone is missing but ID is linked
+                elif m.lead_id or m.client_id:
+                    # We'll resolve these in the next step
+                    pass
 
-            # 3. Pre-fetch Leads and Clients by ID
-            leads_by_id = {l.id: l for l in Lead.query.filter(Lead.id.in_(lead_ids)).all()} if lead_ids else {}
-            clients_by_id = {c.id: c for c in Client.query.filter(Client.id.in_(client_ids)).all()} if client_ids else {}
+            # 3. Fetch ALL company contacts for robust resolution
+            # For NorthWay's scale, fetching all leads/clients for the company is faster 
+            # and more reliable than complex ILIKE queries that fail on formatting spaces.
+            all_leads = Lead.query.filter_by(company_id=company_id).all()
+            all_clients = Client.query.filter_by(company_id=company_id).all()
 
-            # 4. Pre-fetch based on Phones (for unlinked messages)
-            # We generate variants similar to find_contact to catch all possibilities
-            phone_variants = set()
-            for p in all_phones:
-                if not p: continue
-                phone_variants.add(p)
-                # local variant
-                local = p[2:] if p.startswith('55') and len(p) > 10 else p
-                phone_variants.add(local)
-                # 9th digit variations
-                if len(local) == 11 and local[2] == '9':
-                    phone_variants.add(local[:2] + local[3:])
-                elif len(local) == 10:
-                    phone_variants.add(local[:2] + '9' + local[2:])
-            
-            # Simplified broad search: Lead.phone in variants
-            # Since ILIKE is hard to bulk, we'll fetch all Leads/Clients for the company
-            # if the set of variants isn't too huge, or use a more clever query.
-            # For NorthWay's scale, fetching company contacts by phone fragments is okay.
-            
-            found_leads = Lead.query.filter_by(company_id=company_id).filter(
-                db.or_(*(Lead.phone.ilike(f"%{v}%") for v in phone_variants))
-            ).all() if phone_variants else []
-            
-            found_clients = Client.query.filter_by(company_id=company_id).filter(
-                db.or_(*(Client.phone.ilike(f"%{v}%") for v in phone_variants))
-            ).all() if phone_variants else []
-
-            # Build Lookup: normalized_phone -> obj
+            # Build Lookup: normalized_phone -> (type, obj)
+            # Priority: Client > Lead
             phone_lookup = {}
-            for l in found_leads:
+            for l in all_leads:
                 norm = WhatsAppService.normalize_phone(l.phone)
-                if norm: phone_lookup[norm] = ('lead', l)
-            for c in found_clients:
+                if norm: 
+                    # If multiple leads have same phone, this keeps the LATEST (last in list)
+                    # which is usually what the user wants, or we could sort by created_at.
+                    phone_lookup[norm] = ('lead', l)
+            for c in all_clients:
                 norm = WhatsAppService.normalize_phone(c.phone)
-                if norm: phone_lookup[norm] = ('client', c)
+                if norm: 
+                    phone_lookup[norm] = ('client', c)
 
-            # 5. Fetch unread counts once
+            # 4. Fetch unread counts by Phone
             unread_stats = db.session.query(
-                WhatsAppMessage.lead_id,
-                WhatsAppMessage.client_id,
                 WhatsAppMessage.phone,
                 db.func.count(WhatsAppMessage.id)
             ).filter(
@@ -398,61 +380,46 @@ class WhatsAppService:
                 WhatsAppMessage.direction == 'in',
                 WhatsAppMessage.status != 'read'
             ).group_by(
-                WhatsAppMessage.lead_id,
-                WhatsAppMessage.client_id,
                 WhatsAppMessage.phone
             ).all()
 
             unread_map = {} 
-            for lid, cid, ph, count in unread_stats:
-                if lid: k = f"lead_{lid}"
-                elif cid: k = f"client_{cid}"
-                else: 
-                    norm_ph = WhatsAppService.normalize_phone(ph)
-                    k = f"phone_{norm_ph}" if norm_ph else f"phone_{ph}"
-                unread_map[k] = unread_map.get(k, 0) + count
+            for ph, count in unread_stats:
+                norm_ph = WhatsAppService.normalize_phone(ph)
+                if norm_ph:
+                    unread_map[norm_ph] = unread_map.get(norm_ph, 0) + count
 
-            # 6. Group into Conversations
+            # 5. Group into Conversations by Normalized Phone
             conversations = {} 
             for m in messages:
                 raw_phone = m.phone
                 
-                # Resiliency: If phone is missing but lead/client is there, use their phone
-                obj = None
+                # Resiliency: If phone is missing, try to get from linked IDs
                 if not raw_phone:
-                    if m.lead_id and m.lead_id in leads_by_id:
-                        obj = leads_by_id[m.lead_id]
-                        raw_phone = obj.phone
-                    elif m.client_id and m.client_id in clients_by_id:
-                        obj = clients_by_id[m.client_id]
-                        raw_phone = obj.phone
+                    if m.lead_id:
+                        lead = Lead.query.get(m.lead_id)
+                        raw_phone = lead.phone if lead else None
+                    elif m.client_id:
+                        client = Client.query.get(m.client_id)
+                        raw_phone = client.phone if client else None
                 
                 if not raw_phone: continue
                 norm_phone = WhatsAppService.normalize_phone(raw_phone)
                 if not norm_phone: continue
                 
-                # Resolve Identity
+                # Resolve Identity based on normalized phone
+                # Priority: Client > Lead > sender_name > phone
                 c_type = 'atendimento'
                 c_id = norm_phone
                 name = m.sender_name or norm_phone
                 obj = None
                 
-                # PRIORITY 1: Existing database Link (FKS)
-                if m.lead_id and m.lead_id in leads_by_id:
-                    obj = leads_by_id[m.lead_id]
-                    c_type, c_id, name = 'lead', obj.id, obj.name
-                elif m.client_id and m.client_id in clients_by_id:
-                    obj = clients_by_id[m.client_id]
-                    c_type, c_id, name = 'client', obj.id, obj.name
-                # PRIORITY 2: Phone lookup (if not linked yet)
-                elif norm_phone in phone_lookup:
+                if norm_phone in phone_lookup:
                     c_type, obj = phone_lookup[norm_phone]
                     c_id, name = obj.id, obj.name
 
-                # Master Key: Identity-first to ensure unification
-                if c_type == 'lead': key = f"lead_{c_id}"
-                elif c_type == 'client': key = f"client_{c_id}"
-                else: key = f"phone_{norm_phone}"
+                # Master Key: STICKY TO PHONE NUMBER
+                key = f"phone_{norm_phone}"
                 
                 if key not in conversations:
                     pic_url = m.profile_pic_url or getattr(obj, 'profile_pic_url', None)
@@ -465,7 +432,7 @@ class WhatsAppService:
                         'last_message_at': m.created_at.isoformat(),
                         'last_message_dir': m.direction,
                         'last_message_status': m.status,
-                        'unread_count': unread_map.get(key, 0),
+                        'unread_count': unread_map.get(norm_phone, 0),
                         'profile_pic_url': pic_url
                     }
                     
