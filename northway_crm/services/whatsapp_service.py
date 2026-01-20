@@ -285,85 +285,87 @@ class WhatsAppService:
         Returns a list of conversation dicts ready for frontend.
         """
         # Fetch recent messages
-        messages = WhatsAppMessage.query.filter_by(company_id=company_id)\
-            .order_by(WhatsAppMessage.created_at.desc())\
-            .limit(limit).all()
+        try:
+            current_app.logger.info(f"Fetching inbox for company {company_id}, limit {limit}")
+            messages = WhatsAppMessage.query.filter_by(company_id=company_id)\
+                .order_by(WhatsAppMessage.created_at.desc())\
+                .limit(limit).all()
+            current_app.logger.info(f"Found {len(messages)} messages")
             
-        conversations = {} # Key: "normalized_phone" -> Data
-        
+            conversations = {} # Key: "normalized_phone" -> Data
             
-        for m in messages:
-            raw_phone = m.phone
-            if not raw_phone: continue
-            
-            phone = WhatsAppService.normalize_phone(raw_phone)
-            if not phone: continue
-            
-            # Resolve Identity FIRST to use as key
-            c_type = 'atendimento'
-            c_id = phone
-            name = m.sender_name or phone
-            obj = None
-            
-            if m.lead_id:
-                 lead = Lead.query.get(m.lead_id)
-                 if lead:
-                     c_type = 'lead'
-                     c_id = lead.id
-                     name = lead.name
-                     obj = lead
-            elif m.client_id:
-                 client = Client.query.get(m.client_id)
-                 if client:
-                     c_type = 'client'
-                     c_id = client.id
-                     name = client.name
-                     obj = client
-            else:
-                c_type_found, contact_found = WhatsAppService.find_contact(phone, company_id)
-                if contact_found:
-                    c_type = c_type_found
-                    c_id = contact_found.id
-                    name = contact_found.name
-                    obj = contact_found
-
-            # Key is based on resolved identity to prevent splitting
-            if c_type == 'lead': key = f"lead_{c_id}"
-            elif c_type == 'client': key = f"client_{c_id}"
-            else: key = f"phone_{phone}"
-            
-            if key not in conversations:
-                pic_url = m.profile_pic_url or getattr(obj, 'profile_pic_url', None)
-
-                # Fetch all phones for this identity for unread count
-                # If it's a lead/client, we should ideally count all messages for them
-                # For now, we'll keep it simple: count for the phone that started this conversation entry
-                # or all phones if we wanted to be more thorough.
+            for m in messages:
+                raw_phone = m.phone
+                if not raw_phone: continue
                 
-                # Fetch unread count for the whole identity
-                if c_type == 'lead':
-                    unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, lead_id=c_id)
-                elif c_type == 'client':
-                    unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, client_id=c_id)
+                phone = WhatsAppService.normalize_phone(raw_phone)
+                if not phone: continue
+                
+                # Resolve Identity FIRST to use as key
+                c_type = 'atendimento'
+                c_id = phone
+                name = m.sender_name or phone
+                obj = None
+                
+                if m.lead_id:
+                     lead = Lead.query.get(m.lead_id)
+                     if lead:
+                         c_type = 'lead'
+                         c_id = lead.id
+                         name = lead.name
+                         obj = lead
+                elif m.client_id:
+                     client = Client.query.get(m.client_id)
+                     if client:
+                         c_type = 'client'
+                         c_id = client.id
+                         name = client.name
+                         obj = client
                 else:
-                    unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, phone=phone)
-                
-                unread_count = unread_query.filter_by(direction='in').filter(WhatsAppMessage.status != 'read').count()
+                    c_type_found, contact_found = WhatsAppService.find_contact(phone, company_id)
+                    if contact_found:
+                        c_type = c_type_found
+                        c_id = contact_found.id
+                        name = contact_found.name
+                        obj = contact_found
 
-                conversations[key] = {
-                    'type': c_type,
-                    'id': c_id,
-                    'name': name,
-                    'phone': phone,
-                    'last_message_content': m.content,
-                    'last_message_at': m.created_at.isoformat(),
-                    'last_message_dir': m.direction,
-                    'last_message_status': m.status,
-                    'unread_count': unread_count,
-                    'profile_pic_url': pic_url
-                }
+                # Key is based on resolved identity to prevent splitting
+                if c_type == 'lead': key = f"lead_{c_id}"
+                elif c_type == 'client': key = f"client_{c_id}"
+                else: key = f"phone_{phone}"
                 
-        # Grouping done. Sort by last message date (desc)
+                if key not in conversations:
+                    pic_url = m.profile_pic_url or getattr(obj, 'profile_pic_url', None)
+
+                    # Fetch unread count for the whole identity
+                    if c_type == 'lead':
+                        unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, lead_id=c_id)
+                    elif c_type == 'client':
+                        unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, client_id=c_id)
+                    else:
+                        unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, phone=phone)
+                    
+                    unread_count = unread_query.filter_by(direction='in').filter(WhatsAppMessage.status != 'read').count()
+
+                    conversations[key] = {
+                        'type': c_type,
+                        'id': c_id,
+                        'name': name,
+                        'phone': phone,
+                        'last_message_content': m.content,
+                        'last_message_at': m.created_at.isoformat(),
+                        'last_message_dir': m.direction,
+                        'last_message_status': m.status,
+                        'unread_count': unread_count,
+                        'profile_pic_url': pic_url
+                    }
+                    
+        except Exception as e:
+            current_app.logger.error(f"Error in get_inbox_conversations: {e}")
+            import traceback
+            current_app.logger.error(traceback.format_exc())
+            raise e
+        
         result = list(conversations.values())
         result.sort(key=lambda x: x['last_message_at'], reverse=True)
         return result
