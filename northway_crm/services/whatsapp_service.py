@@ -373,6 +373,17 @@ class WhatsAppService:
             conversations = {} 
             for m in messages:
                 raw_phone = m.phone
+                
+                # Resiliency: If phone is missing but lead/client is there, use their phone
+                obj = None
+                if not raw_phone:
+                    if m.lead_id and m.lead_id in leads_by_id:
+                        obj = leads_by_id[m.lead_id]
+                        raw_phone = obj.phone
+                    elif m.client_id and m.client_id in clients_by_id:
+                        obj = clients_by_id[m.client_id]
+                        raw_phone = obj.phone
+                
                 if not raw_phone: continue
                 norm_phone = WhatsAppService.normalize_phone(raw_phone)
                 if not norm_phone: continue
@@ -469,7 +480,7 @@ class WhatsAppService:
                 return {'success': True, 'type': 'status_update'}
 
         # 2. Extract Phone and Body
-        phone = data.get('phone')
+        phone = data.get('phone') or data.get('to')
         if not phone and 'sender' in data:
              sender = data['sender']
              if isinstance(sender, dict): phone = sender.get('phone')
