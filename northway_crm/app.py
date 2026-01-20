@@ -37,6 +37,14 @@ def create_app():
     try:
         if database_url and database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
+        
+        # DRIVER CHECK: If using Postgres, ensure driver exists
+        if database_url and 'postgresql' in database_url:
+            try:
+                import psycopg2
+            except ImportError:
+                print("⚠️ Postgres configured but 'psycopg2' missing. Falling back to SQLite.")
+                database_url = None # Force fallback logic below
             
         if not database_url:
             # Vercel Workaround: Copy SQLite to /tmp
