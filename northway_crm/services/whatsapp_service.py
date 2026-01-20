@@ -291,49 +291,64 @@ class WhatsAppService:
             
         conversations = {} # Key: "normalized_phone" -> Data
         
+            
         for m in messages:
             raw_phone = m.phone
             if not raw_phone: continue
             
-            # Normalize key to avoid duplication (e.g. 55... vs 55...@c.us)
             phone = WhatsAppService.normalize_phone(raw_phone)
             if not phone: continue
             
-            key = phone
+            # Resolve Identity FIRST to use as key
+            c_type = 'atendimento'
+            c_id = phone
+            name = m.sender_name or phone
+            obj = None
+            
+            if m.lead_id:
+                 lead = Lead.query.get(m.lead_id)
+                 if lead:
+                     c_type = 'lead'
+                     c_id = lead.id
+                     name = lead.name
+                     obj = lead
+            elif m.client_id:
+                 client = Client.query.get(m.client_id)
+                 if client:
+                     c_type = 'client'
+                     c_id = client.id
+                     name = client.name
+                     obj = client
+            else:
+                c_type_found, contact_found = WhatsAppService.find_contact(phone, company_id)
+                if contact_found:
+                    c_type = c_type_found
+                    c_id = contact_found.id
+                    name = contact_found.name
+                    obj = contact_found
+
+            # Key is based on resolved identity to prevent splitting
+            if c_type == 'lead': key = f"lead_{c_id}"
+            elif c_type == 'client': key = f"client_{c_id}"
+            else: key = f"phone_{phone}"
             
             if key not in conversations:
-                # Resolve primary identity for this phone number
-                c_type = 'atendimento'
-                c_id = phone
-                name = m.sender_name or phone
-                obj = None
-                
-                # Check if it's linked to a Lead/Client in DB
-                if m.lead_id:
-                     lead = Lead.query.get(m.lead_id)
-                     if lead:
-                         c_type = 'lead'
-                         c_id = lead.id
-                         name = lead.name
-                         obj = lead
-                elif m.client_id:
-                     client = Client.query.get(m.client_id)
-                     if client:
-                         c_type = 'client'
-                         c_id = client.id
-                         name = client.name
-                         obj = client
-                else:
-                    # Try to find a contact if not explicitly linked to this message
-                    c_type_found, contact_found = WhatsAppService.find_contact(phone, company_id)
-                    if contact_found:
-                        c_type = c_type_found
-                        c_id = contact_found.id
-                        name = contact_found.name
-                        obj = contact_found
-
-                # Priority: message.profile_pic_url -> contact.profile_pic_url
                 pic_url = m.profile_pic_url or getattr(obj, 'profile_pic_url', None)
+
+                # Fetch all phones for this identity for unread count
+                # If it's a lead/client, we should ideally count all messages for them
+                # For now, we'll keep it simple: count for the phone that started this conversation entry
+                # or all phones if we wanted to be more thorough.
+                
+                # Fetch unread count for the whole identity
+                if c_type == 'lead':
+                    unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, lead_id=c_id)
+                elif c_type == 'client':
+                    unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, client_id=c_id)
+                else:
+                    unread_query = WhatsAppMessage.query.filter_by(company_id=company_id, phone=phone)
+                
+                unread_count = unread_query.filter_by(direction='in').filter(WhatsAppMessage.status != 'read').count()
 
                 conversations[key] = {
                     'type': c_type,
@@ -344,11 +359,7 @@ class WhatsAppService:
                     'last_message_at': m.created_at.isoformat(),
                     'last_message_dir': m.direction,
                     'last_message_status': m.status,
-                    'unread_count': WhatsAppMessage.query.filter_by(
-                        company_id=company_id,
-                        phone=phone,
-                        direction='in'
-                    ).filter(WhatsAppMessage.status != 'read').count(),
+                    'unread_count': unread_count,
                     'profile_pic_url': pic_url
                 }
                 
@@ -359,17 +370,27 @@ class WhatsAppService:
 
     @staticmethod
     def mark_as_read(company_id, phone):
-        """Marks all incoming messages from a phone as read."""
+        """Marks all incoming messages from a contact as read (identity-aware)."""
         try:
-            WhatsAppMessage.query.filter_by(
-                company_id=company_id,
-                phone=phone,
-                direction='in'
-            ).filter(WhatsAppMessage.status != 'read').update({WhatsAppMessage.status: 'read'})
+            c_type, contact = WhatsAppService.find_contact(phone, company_id)
+            
+            query = WhatsAppMessage.query.filter_by(company_id=company_id, direction='in')
+            
+            if c_type == 'lead':
+                query = query.filter_by(lead_id=contact.id)
+            elif c_type == 'client':
+                query = query.filter_by(client_id=contact.id)
+            else:
+                # Use normalized phone if no contact found
+                norm_phone = WhatsAppService.normalize_phone(phone)
+                query = query.filter_by(phone=norm_phone)
+
+            query.filter(WhatsAppMessage.status != 'read').update({WhatsAppMessage.status: 'read'}, synchronize_session=False)
             db.session.commit()
             return True
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(f"Error marking as read: {e}")
             return False
 
     @staticmethod
