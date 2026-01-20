@@ -11,9 +11,18 @@ class WhatsAppService:
     @staticmethod
     def get_config(company_id):
         """Retrieves and validates Z-API configuration for a company."""
-        integration = Integration.query.filter_by(company_id=company_id, service='z_api', is_active=True).first()
+        # Relaxed query to debug "Not Configured" error
+        integration = Integration.query.filter_by(company_id=company_id, service='z_api').first()
+        
         if not integration:
+            current_app.logger.warning(f"Z-API Config: No integration found for company {company_id}")
             return None
+            
+        if not integration.is_active:
+            current_app.logger.warning(f"Z-API Config: Integration found but inactive for company {company_id}")
+            # return None # OPENING ACCESS: Let's allow inactive to be read for checking, or return None.
+            return None
+
         
         try:
             config = json.loads(integration.config_json) if integration.config_json else {}
