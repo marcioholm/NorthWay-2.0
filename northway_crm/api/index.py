@@ -6,10 +6,9 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    import subprocess
-    print("📦 INSTALLED PACKAGES:")
-    subprocess.call([sys.executable, '-m', 'pip', 'freeze'])
+    print("🚀 STARTING APP IMPORT...")
     from app import app
+    print("✅ APP IMPORT SUCCESSFUL")
 except Exception as e:
     import traceback
     print(f"CRITICAL ERROR STARTING APP: {e}")
