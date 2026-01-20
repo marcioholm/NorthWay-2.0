@@ -197,7 +197,7 @@ class WhatsAppService:
                 company_id=company_id,
                 lead_id=target.id if target_type == 'lead' else None,
                 client_id=target.id if target_type == 'client' else None,
-                phone=phone,
+                phone=WhatsAppService.normalize_phone(phone),
                 direction='out',
                 content=content if not media_file else f"[{'FOTO' if 'image' in endpoint else 'ARQUIVO'}] {media_file.filename}",
                 status='sent',
@@ -292,9 +292,11 @@ class WhatsAppService:
         conversations = {} # Key: "normalized_phone" -> Data
         
         for m in messages:
-            phone = m.phone
+            raw_phone = m.phone
+            if not raw_phone: continue
             
-            # Group by phone primarily to avoid splitting
+            # Normalize key to avoid duplication (e.g. 55... vs 55...@c.us)
+            phone = WhatsAppService.normalize_phone(raw_phone)
             if not phone: continue
             
             key = phone
@@ -447,7 +449,7 @@ class WhatsAppService:
                 company_id=company_id,
                 lead_id=contact.id if contact and c_type == 'lead' else None,
                 client_id=contact.id if contact and c_type == 'client' else None,
-                phone=phone,
+                phone=WhatsAppService.normalize_phone(phone),
                 sender_name=data.get('senderName') or (contact.name if contact else None),
                 direction='out' if from_me else 'in',
                 type=msg_type,
