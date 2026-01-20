@@ -36,18 +36,26 @@ class WhatsAppService:
 
     @staticmethod
     def normalize_phone(phone):
-        """Cleans phone number: removes chars, ensures 55 prefix (BR standard)."""
+        """
+        Force canonical format: 55 + DDD + Number.
+        Removes all formatting and ensures BR country code.
+        """
         if not phone: return None
         
-        # Remove non-digits
-        clean = re.sub(r'\D', '', phone)
-        
+        # 1. Clean digits
+        clean = re.sub(r'\D', '', str(phone))
         if not clean: return None
         
-        # Basic Brazil rule: if 10 or 11 chars, add 55
+        # 2. Add Country Code if missing (assuming Brazil)
+        # If 10 or 11 digits (DDD + 8 or 9 digits)
         if len(clean) in [10, 11]:
             clean = '55' + clean
-            
+        
+        # If it has 12 or 13 digits but doesn't start with 55, we don't touch it 
+        # (could be international or already prefixed)
+        # But if it's 12 and starts with 5 (e.g. 54299...) but lacks the second 5,
+        # we might have an issue. For NorthWay (Brazil), we assume 55 prefix.
+        
         return clean
 
     @staticmethod
@@ -394,17 +402,19 @@ class WhatsAppService:
                 name = m.sender_name or norm_phone
                 obj = None
                 
+                # PRIORITY 1: Existing database Link (FKS)
                 if m.lead_id and m.lead_id in leads_by_id:
                     obj = leads_by_id[m.lead_id]
                     c_type, c_id, name = 'lead', obj.id, obj.name
                 elif m.client_id and m.client_id in clients_by_id:
                     obj = clients_by_id[m.client_id]
                     c_type, c_id, name = 'client', obj.id, obj.name
+                # PRIORITY 2: Phone lookup (if not linked yet)
                 elif norm_phone in phone_lookup:
                     c_type, obj = phone_lookup[norm_phone]
                     c_id, name = obj.id, obj.name
 
-                # Key
+                # Master Key: Identity-first to ensure unification
                 if c_type == 'lead': key = f"lead_{c_id}"
                 elif c_type == 'client': key = f"client_{c_id}"
                 else: key = f"phone_{norm_phone}"
@@ -528,6 +538,13 @@ class WhatsAppService:
         # 3. Find Contact
         c_type, contact = WhatsAppService.find_contact(norm_phone, company_id)
 
+        # CRITICAL: If a contact is found, use THEIR phone as the canonical phone for this message.
+        # This prevents thread splits if Z-API sends variants (e.g. 55 vs no-55, or 9th digit diffs)
+        # that our find_contact already knows how to resolve.
+        final_phone = norm_phone
+        if contact and contact.phone:
+            final_phone = WhatsAppService.normalize_phone(contact.phone)
+
         # 3a. Capture Profile Pic
         # Priority: senderImage from Z-API -> contact.profile_pic_url
         incoming_pic = data.get('senderImage') or data.get('photo')
@@ -547,7 +564,7 @@ class WhatsAppService:
                 company_id=company_id,
                 lead_id=contact.id if contact and c_type == 'lead' else None,
                 client_id=contact.id if contact and c_type == 'client' else None,
-                phone=norm_phone,
+                phone=final_phone,
                 sender_name=sender_name,
                 direction='out' if from_me else 'in',
                 type=msg_type,
