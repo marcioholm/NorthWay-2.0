@@ -197,6 +197,7 @@ class WhatsAppService:
                 company_id=company_id,
                 lead_id=target.id if target_type == 'lead' else None,
                 client_id=target.id if target_type == 'client' else None,
+                phone=phone,
                 direction='out',
                 content=content if not media_file else f"[{'FOTO' if 'image' in endpoint else 'ARQUIVO'}] {media_file.filename}",
                 status='sent',
@@ -280,7 +281,7 @@ class WhatsAppService:
     @staticmethod
     def get_inbox_conversations(company_id, limit=500):
         """
-        Fetches recent messages and groups them into unique conversations.
+        Fetches recent messages and groups them into unique conversations by phone number.
         Returns a list of conversation dicts ready for frontend.
         """
         # Fetch recent messages
@@ -288,58 +289,47 @@ class WhatsAppService:
             .order_by(WhatsAppMessage.created_at.desc())\
             .limit(limit).all()
             
-        conversations = {} # Key: "type_id" -> Data
+        conversations = {} # Key: "normalized_phone" -> Data
         
         for m in messages:
-            if m.lead_id:
-                key = f"lead_{m.lead_id}"
-                c_type = 'lead'
-                c_id = m.lead_id
-            elif m.client_id:
-                key = f"client_{m.client_id}"
-                c_type = 'client'
-                c_id = m.client_id
-            else:
-                # Orphan message (Unknown contact)
-                if not m.phone: continue
-                # Deduplicate: if phone is an @lid ID, group by sender_name or normalized ID
-                # This ensures "Viviane" with multiple IDs appears as one conversation
-                if '@lid' in m.phone or '@newsletter' in m.phone:
-                    # Use sender_name as key for grouping these transient IDs
-                    identifier = m.sender_name or m.phone
-                    key = f"unknown_grouped_{identifier}"
-                else:
-                    key = f"unknown_{m.phone}"
-                
+            phone = m.phone
+            
+            # Group by phone primarily to avoid splitting
+            if not phone: continue
+            
+            key = phone
+            
+            if key not in conversations:
+                # Resolve primary identity for this phone number
                 c_type = 'atendimento'
-                c_id = m.phone # Keep actual phone for API calls
-                name = m.sender_name or m.phone
-                phone = m.phone
+                c_id = phone
+                name = m.sender_name or phone
                 obj = None
                 
-            if key not in conversations:
-                # First time seeing this contact (since we ordered by desc, this IS the latest msg)
-                
-                if c_type == 'atendimento':
-                    name = m.sender_name or m.phone
-                    phone = m.phone
-                    obj = None
+                # Check if it's linked to a Lead/Client in DB
+                if m.lead_id:
+                     lead = Lead.query.get(m.lead_id)
+                     if lead:
+                         c_type = 'lead'
+                         c_id = lead.id
+                         name = lead.name
+                         obj = lead
+                elif m.client_id:
+                     client = Client.query.get(m.client_id)
+                     if client:
+                         c_type = 'client'
+                         c_id = client.id
+                         name = client.name
+                         obj = client
                 else:
-                    # Fetch Name lazily
-                    if c_type == 'lead':
-                        obj = Lead.query.get(c_id)
-                    else:
-                        obj = Client.query.get(c_id)
-                        
-                    if obj:
-                        name = obj.name
-                        phone = obj.phone
-                    else:
-                        name = "Desconhecido"
-                        phone = ""
-                
-                unread = 0 # Initialize unread count
-                
+                    # Try to find a contact if not explicitly linked to this message
+                    c_type_found, contact_found = WhatsAppService.find_contact(phone, company_id)
+                    if contact_found:
+                        c_type = c_type_found
+                        c_id = contact_found.id
+                        name = contact_found.name
+                        obj = contact_found
+
                 # Priority: message.profile_pic_url -> contact.profile_pic_url
                 pic_url = m.profile_pic_url or getattr(obj, 'profile_pic_url', None)
 
@@ -352,11 +342,33 @@ class WhatsAppService:
                     'last_message_at': m.created_at.isoformat(),
                     'last_message_dir': m.direction,
                     'last_message_status': m.status,
-                    'unread_count': unread,
+                    'unread_count': WhatsAppMessage.query.filter_by(
+                        company_id=company_id,
+                        phone=phone,
+                        direction='in'
+                    ).filter(WhatsAppMessage.status != 'read').count(),
                     'profile_pic_url': pic_url
                 }
                 
-        return list(conversations.values())
+        # Grouping done. Sort by last message date (desc)
+        result = list(conversations.values())
+        result.sort(key=lambda x: x['last_message_at'], reverse=True)
+        return result
+
+    @staticmethod
+    def mark_as_read(company_id, phone):
+        """Marks all incoming messages from a phone as read."""
+        try:
+            WhatsAppMessage.query.filter_by(
+                company_id=company_id,
+                phone=phone,
+                direction='in'
+            ).filter(WhatsAppMessage.status != 'read').update({WhatsAppMessage.status: 'read'})
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            return False
 
     @staticmethod
     def process_webhook(company_id, data):

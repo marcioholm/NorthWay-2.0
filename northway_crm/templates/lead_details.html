@@ -247,9 +247,10 @@
                             <label class="text-xs text-gray-500 block mb-1">Responsável</label>
                             <div class="flex items-center gap-2">
                                 <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
-                                    {{ lead.assigned_user.name[:2].upper() }}
+                                    {{ lead.assigned_user.name[:2].upper() if lead.assigned_user else 'UN' }}
                                 </div>
-                                <span class="text-sm text-gray-900">{{ lead.assigned_user.name }}</span>
+                                <span class="text-sm text-gray-900">{{ lead.assigned_user.name if lead.assigned_user
+                                    else 'Não atribuído' }}</span>
                             </div>
                         </div>
                     </div>

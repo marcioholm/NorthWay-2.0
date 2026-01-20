@@ -354,3 +354,31 @@ def update_notes(type, id):
     obj.notes = content
     db.session.commit()
     return jsonify({'success': True})
+
+@whatsapp_bp.route('/api/whatsapp/unread-counts')
+@login_required
+def get_unread_counts():
+    """Returns total unread count and count by tab."""
+    conversations = WhatsAppService.get_inbox_conversations(current_user.company_id)
+    
+    total = 0
+    by_tab = {'lead': 0, 'client': 0, 'atendimento': 0}
+    
+    for conv in conversations:
+        count = conv.get('unread_count', 0)
+        total += count
+        c_type = conv.get('type')
+        if c_type in by_tab:
+            by_tab[c_type] += count
+            
+    return jsonify({
+        'total': total,
+        'by_tab': by_tab
+    })
+
+@whatsapp_bp.route('/api/whatsapp/read/<string:phone>', methods=['POST'])
+@login_required
+def mark_read(phone):
+    """Marks a conversation as read."""
+    success = WhatsAppService.mark_as_read(current_user.company_id, phone)
+    return jsonify({'success': success})

@@ -275,13 +275,15 @@
                 </a>
                 {% endif %}
 
-                {% if current_user.has_permission('whatsapp_view') %}
                 <a href="{{ url_for('whatsapp.inbox') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'whatsapp.inbox' else 'text-gray-400' }}">
-                    <i data-lucide="message-circle" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="sidebar-text transition-opacity duration-300">WhatsApp</span>
+                    class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'whatsapp.inbox' else 'text-gray-400' }}">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="message-circle" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="sidebar-text transition-opacity duration-300">WhatsApp</span>
+                    </div>
+                    <span id="whatsapp-unread-badge"
+                        class="hidden sidebar-badge bg-northway-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">0</span>
                 </a>
-                {% endif %}
 
                 <!-- Divider -->
                 {% if current_user.has_permission('company_settings_view') or
@@ -801,6 +803,35 @@
         };
 
         // ... existing scripts ...
+    </script>
+    <script>
+        // WhatsApp Unread Polling
+        async function updateWhatsAppUnreadCount() {
+            try {
+                const res = await fetch('/api/whatsapp/unread-counts');
+                if (!res.ok) return;
+                const data = await res.json();
+                const badge = document.getElementById('whatsapp-unread-badge');
+                if (badge) {
+                    if (data.total > 0) {
+                        badge.textContent = data.total;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+
+                // Also update inbox tabs if we are on the inbox page
+                if (typeof updateInboxTabs === 'function') {
+                    updateInboxTabs(data.by_tab);
+                }
+            } catch (e) { }
+        }
+
+        if ({{ 'true' if current_user.is_authenticated else 'false' }}) {
+            updateWhatsAppUnreadCount();
+            setInterval(updateWhatsAppUnreadCount, 30000); // Every 30s
+        }
     </script>
 </body>
 

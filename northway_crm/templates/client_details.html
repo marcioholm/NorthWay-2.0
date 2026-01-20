@@ -336,7 +336,7 @@
                                             <i data-lucide="check-circle" class="w-3 h-3"></i> Ver Assinado
                                         </a>
                                         <button type="button"
-                                            onclick="openTerminationModal('{{ contract.id }}', '{{ contract.template.name }}')"
+                                            onclick="openTerminationModal('{{ contract.id }}', '{{ contract.template.name if contract.template else 'Contrato Avulso' }}')"
                                             class="text-xs text-red-400 hover:text-red-600 underline ml-2">Rescindir</button>
                                         {% endif %}
                                     </div>
@@ -391,10 +391,10 @@
                                             data'
                                             }}
                                         </p>
-                                        {% if task.assigned_to %}
+                                        {% if task.responsible %}
                                         <p class="text-xs text-gray-400 flex items-center gap-1">
                                             <i data-lucide="user" class="w-3 h-3"></i>
-                                            {{ task.assigned_to.name }}
+                                            {{ task.responsible.name }}
                                         </p>
                                         {% endif %}
                                     </div>
