@@ -480,16 +480,23 @@ class WhatsAppService:
                 return {'success': True, 'type': 'status_update'}
 
         # 2. Extract Phone and Body
-        phone = data.get('phone') or data.get('to')
+        from_me = data.get('fromMe', False)
+        phone = data.get('phone')
+        
+        # If it's fromMe, the 'phone' field in Z-API might be the sender's phone, 
+        # while 'to' is the actual contact.
+        if from_me and data.get('to'):
+            phone = data.get('to')
+            
         if not phone and 'sender' in data:
              sender = data['sender']
              if isinstance(sender, dict): phone = sender.get('phone')
              elif isinstance(sender, str): phone = sender.split('@')[0]
              
-        from_me = data.get('fromMe', False)
+        if not phone:
+            return {'ignored': True, 'reason': 'missing_phone'}
 
-        # Get Body & Attachment - handle different types
-        body = data.get('message') or data.get('content')
+        norm_phone = WhatsAppService.normalize_phone(phone)
         attachment_url = None
         msg_type = 'text'
 
@@ -519,27 +526,34 @@ class WhatsAppService:
             return {'ignored': True, 'reason': 'missing_data'}
             
         # 3. Find Contact
-        c_type, contact = WhatsAppService.find_contact(phone, company_id)
+        c_type, contact = WhatsAppService.find_contact(norm_phone, company_id)
 
         # 3a. Capture Profile Pic
         # Priority: senderImage from Z-API -> contact.profile_pic_url
         incoming_pic = data.get('senderImage') or data.get('photo')
-        if contact and incoming_pic:
+        if contact and incoming_pic and not from_me: # Only update if it's the contact's pic
             contact.profile_pic_url = incoming_pic
         
         # 4. Save Message
+        # If from_me, name should be the contact's name or None (not the sender's name from webhook)
+        sender_name = data.get('senderName')
+        if from_me:
+            sender_name = contact.name if contact else None
+        elif not sender_name and contact:
+            sender_name = contact.name
+
         try:
             msg = WhatsAppMessage(
                 company_id=company_id,
                 lead_id=contact.id if contact and c_type == 'lead' else None,
                 client_id=contact.id if contact and c_type == 'client' else None,
-                phone=WhatsAppService.normalize_phone(phone),
-                sender_name=data.get('senderName') or (contact.name if contact else None),
+                phone=norm_phone,
+                sender_name=sender_name,
                 direction='out' if from_me else 'in',
                 type=msg_type,
                 content=body,
                 attachment_url=attachment_url,
-                profile_pic_url=incoming_pic or getattr(contact, 'profile_pic_url', None),
+                profile_pic_url=incoming_pic if not from_me else getattr(contact, 'profile_pic_url', None),
                 status='sent' if from_me else 'delivered',
                 external_id=data.get('messageId')
             )
