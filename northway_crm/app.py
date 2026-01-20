@@ -52,9 +52,9 @@ def create_app():
                     database_url = f'sqlite:///{tmp_db}'
                 except Exception as copy_e:
                     print(f"Failed to copy DB to tmp: {copy_e}")
-                    # Fallback to in-memory if copy fails? Or original path (read-only likely)
-                    # Try original path as last resort (might work for read, fail for write)
-                    database_url = 'sqlite:///crm.db' 
+                    # Fallback to in-memory if copy fails.
+                    # NEVER try root 'crm.db' because it is Read-Only on Vercel
+                    database_url = 'sqlite:///:memory:' 
             else:
                 # If no DB file, use in-memory to allowing booting (will fail logic but page loads)
                 print("WARNING: crm.db not found. Starting with in-memory DB.")
