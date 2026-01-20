@@ -282,7 +282,7 @@ class WhatsAppService:
     def get_inbox_conversations(company_id, limit=500):
         """
         Fetches recent messages and groups them into unique conversations by identity.
-        Optimized to avoid N+1 queries.
+        Ultra-optimized to avoid ALL N+1 queries.
         """
         try:
             # 1. Fetch recent messages
@@ -293,16 +293,58 @@ class WhatsAppService:
             if not messages:
                 return []
 
-            # 2. Extract all IDs and Phones to pre-fetch context
-            lead_ids = {m.lead_id for m in messages if m.lead_id}
-            client_ids = {m.client_id for m in messages if m.client_id}
+            # 2. Extract context for pre-fetching
+            lead_ids = set()
+            client_ids = set()
+            all_phones = set()
             
-            # Pre-fetch Leads and Clients
-            leads_dict = {l.id: l for l in Lead.query.filter(Lead.id.in_(lead_ids)).all()} if lead_ids else {}
-            clients_dict = {c.id: c for c in Client.query.filter(Client.id.in_(client_ids)).all()} if client_ids else {}
+            for m in messages:
+                if m.lead_id: lead_ids.add(m.lead_id)
+                if m.client_id: client_ids.add(m.client_id)
+                if m.phone: all_phones.add(WhatsAppService.normalize_phone(m.phone))
 
-            # 3. Fetch unread counts for the whole company in one go
-            # Result: {(lead_id, client_id, phone): count}
+            # 3. Pre-fetch Leads and Clients by ID
+            leads_by_id = {l.id: l for l in Lead.query.filter(Lead.id.in_(lead_ids)).all()} if lead_ids else {}
+            clients_by_id = {c.id: c for c in Client.query.filter(Client.id.in_(client_ids)).all()} if client_ids else {}
+
+            # 4. Pre-fetch based on Phones (for unlinked messages)
+            # We generate variants similar to find_contact to catch all possibilities
+            phone_variants = set()
+            for p in all_phones:
+                if not p: continue
+                phone_variants.add(p)
+                # local variant
+                local = p[2:] if p.startswith('55') and len(p) > 10 else p
+                phone_variants.add(local)
+                # 9th digit variations
+                if len(local) == 11 and local[2] == '9':
+                    phone_variants.add(local[:2] + local[3:])
+                elif len(local) == 10:
+                    phone_variants.add(local[:2] + '9' + local[2:])
+            
+            # Simplified broad search: Lead.phone in variants
+            # Since ILIKE is hard to bulk, we'll fetch all Leads/Clients for the company
+            # if the set of variants isn't too huge, or use a more clever query.
+            # For NorthWay's scale, fetching company contacts by phone fragments is okay.
+            
+            found_leads = Lead.query.filter_by(company_id=company_id).filter(
+                db.or_(*(Lead.phone.ilike(f"%{v}%") for v in phone_variants))
+            ).all() if phone_variants else []
+            
+            found_clients = Client.query.filter_by(company_id=company_id).filter(
+                db.or_(*(Client.phone.ilike(f"%{v}%") for v in phone_variants))
+            ).all() if phone_variants else []
+
+            # Build Lookup: normalized_phone -> obj
+            phone_lookup = {}
+            for l in found_leads:
+                norm = WhatsAppService.normalize_phone(l.phone)
+                if norm: phone_lookup[norm] = ('lead', l)
+            for c in found_clients:
+                norm = WhatsAppService.normalize_phone(c.phone)
+                if norm: phone_lookup[norm] = ('client', c)
+
+            # 5. Fetch unread counts once
             unread_stats = db.session.query(
                 WhatsAppMessage.lead_id,
                 WhatsAppMessage.client_id,
@@ -318,68 +360,51 @@ class WhatsAppService:
                 WhatsAppMessage.phone
             ).all()
 
-            # Map counts to identities
-            # We normalize the phone in the map to match the grouping logic
-            unread_map = {} # key -> count
+            unread_map = {} 
             for lid, cid, ph, count in unread_stats:
                 if lid: k = f"lead_{lid}"
                 elif cid: k = f"client_{cid}"
                 else: 
                     norm_ph = WhatsAppService.normalize_phone(ph)
                     k = f"phone_{norm_ph}" if norm_ph else f"phone_{ph}"
-                
                 unread_map[k] = unread_map.get(k, 0) + count
 
+            # 6. Group into Conversations
             conversations = {} 
-            
             for m in messages:
                 raw_phone = m.phone
                 if not raw_phone: continue
-                
-                phone = WhatsAppService.normalize_phone(raw_phone)
-                if not phone: continue
+                norm_phone = WhatsAppService.normalize_phone(raw_phone)
+                if not norm_phone: continue
                 
                 # Resolve Identity
                 c_type = 'atendimento'
-                c_id = phone
-                name = m.sender_name or phone
+                c_id = norm_phone
+                name = m.sender_name or norm_phone
                 obj = None
                 
-                if m.lead_id and m.lead_id in leads_dict:
-                    lead = leads_dict[m.lead_id]
-                    c_type = 'lead'
-                    c_id = lead.id
-                    name = lead.name
-                    obj = lead
-                elif m.client_id and m.client_id in clients_dict:
-                    client = clients_dict[m.client_id]
-                    c_type = 'client'
-                    c_id = client.id
-                    name = client.name
-                    obj = client
-                else:
-                    # Fallback to in-memory check or simplified find_contact if necessary
-                    # But if it's not pre-fetched, it's likely a new contact or unlinked
-                    c_type_found, contact_found = WhatsAppService.find_contact(phone, company_id)
-                    if contact_found:
-                        c_type = c_type_found
-                        c_id = contact_found.id
-                        name = contact_found.name
-                        obj = contact_found
+                if m.lead_id and m.lead_id in leads_by_id:
+                    obj = leads_by_id[m.lead_id]
+                    c_type, c_id, name = 'lead', obj.id, obj.name
+                elif m.client_id and m.client_id in clients_by_id:
+                    obj = clients_by_id[m.client_id]
+                    c_type, c_id, name = 'client', obj.id, obj.name
+                elif norm_phone in phone_lookup:
+                    c_type, obj = phone_lookup[norm_phone]
+                    c_id, name = obj.id, obj.name
 
-                # Key is based on resolved identity
+                # Key
                 if c_type == 'lead': key = f"lead_{c_id}"
                 elif c_type == 'client': key = f"client_{c_id}"
-                else: key = f"phone_{phone}"
+                else: key = f"phone_{norm_phone}"
                 
                 if key not in conversations:
                     pic_url = m.profile_pic_url or getattr(obj, 'profile_pic_url', None)
-                    
                     conversations[key] = {
                         'type': c_type,
                         'id': c_id,
                         'name': name,
-                        'phone': phone,
+                        'phone': norm_phone,
                         'last_message_content': m.content,
                         'last_message_at': m.created_at.isoformat(),
                         'last_message_dir': m.direction,
@@ -392,8 +417,7 @@ class WhatsAppService:
             current_app.logger.error(f"Error in get_inbox_conversations: {e}")
             raise e
         
-        result = list(conversations.values())
-        result.sort(key=lambda x: x['last_message_at'], reverse=True)
+        result = sorted(conversations.values(), key=lambda x: x['last_message_at'], reverse=True)
         return result
 
     @staticmethod
