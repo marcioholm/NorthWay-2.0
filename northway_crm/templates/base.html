@@ -154,7 +154,7 @@
                 })();
         </script>
 
-        {% if current_user.is_authenticated and not current_user.is_super_admin %}
+        {% if current_user.is_authenticated %}
 
         <!-- Mobile Header -->
         <div
@@ -446,7 +446,7 @@
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-            {% if current_user.is_authenticated and not current_user.is_super_admin %}
+            {% if current_user.is_authenticated %}
             <!-- Top Header -->
             <header
                 class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 flex-shrink-0 z-40">
