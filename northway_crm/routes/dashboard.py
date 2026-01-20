@@ -10,7 +10,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def index():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.home'))
-    return render_template('landing.html')
+    return redirect(url_for('auth.login'))
 
 @dashboard_bp.route('/home')
 @login_required
