@@ -9,18 +9,26 @@ import base64
 
 class WhatsAppService:
     @staticmethod
+    @staticmethod
     def get_config(company_id):
         """Retrieves and validates Z-API configuration for a company."""
+        # Ensure ID is int
+        try:
+            cid = int(company_id)
+        except:
+            current_app.logger.error(f"Invalid company_id: {company_id}")
+            return None
+
         # Relaxed query to debug "Not Configured" error
-        integration = Integration.query.filter_by(company_id=company_id, service='z_api').first()
+        integration = Integration.query.filter_by(company_id=cid, service='z_api').first()
         
         if not integration:
-            current_app.logger.warning(f"Z-API Config: No integration found for company {company_id}")
+            current_app.logger.warning(f"Z-API Config: No integration found for company {cid}")
             return None
             
         if not integration.is_active:
-            current_app.logger.warning(f"Z-API Config: Integration found but inactive for company {company_id}")
-            # return None # OPENING ACCESS: Let's allow inactive to be read for checking, or return None.
+            current_app.logger.warning(f"Z-API Config: Integration found but inactive for company {cid}")
+            # Consider returning None or raising specific error if needed
             return None
 
         

@@ -54,7 +54,17 @@ def configure():
 @login_required
 def test_connection():
     config = WhatsAppService.get_config(current_user.company_id)
-    if not config: return "Não configurado", 400
+    if not config:
+        # DEBUG LOGIC FOR VERCEL
+        from models import Integration
+        cid = current_user.company_id
+        intg = Integration.query.filter_by(company_id=cid, service='z_api').first()
+        if not intg:
+            return jsonify({'connected': False, 'message': f"ERRO DEBUG: Nenhuma integração encontrada para ID {cid}."})
+        if not intg.is_active:
+            return jsonify({'connected': False, 'message': f"ERRO DEBUG: Integração inativa para ID {cid}."})
+            
+        return jsonify({'connected': False, 'message': f"ERRO DEBUG: Configuração inválida ou incompleta (ID {cid})."})
     
     import requests
     headers = {}
