@@ -60,11 +60,11 @@ def test_connection():
         cid = current_user.company_id
         intg = Integration.query.filter_by(company_id=cid, service='z_api').first()
         if not intg:
-            return jsonify({'connected': False, 'message': "Instalação não localizada no banco de dados."})
+            return jsonify({'connected': False, 'message': f"Inexistente no BD (Empresa {cid})"})
         if not intg.is_active:
-            return jsonify({'connected': False, 'message': "A integração está desativada no painel."})
+            return jsonify({'connected': False, 'message': f"Inativa no BD (Empresa {cid})"})
             
-        return jsonify({'connected': False, 'message': "Configuração incompleta ou inválida."})
+        return jsonify({'connected': False, 'message': f"Configuração inválida no BD (Empresa {cid})"})
     
     import requests
     headers = {}
@@ -100,7 +100,17 @@ def setup_webhook():
         WhatsAppService.configure_webhook(current_user.company_id, webhook_url)
         return jsonify({'success': True})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Check if it was a configuration error
+        err_msg = str(e)
+        if "WhatsApp não configurado" in err_msg:
+             # Add more context
+             cid = current_user.company_id
+             intg = Integration.query.filter_by(company_id=cid, service='z_api').first()
+             if not intg: err_msg += f" (Registro inexistente para empresa {cid})"
+             elif not intg.is_active: err_msg += f" (Registro inativo para empresa {cid})"
+             else: err_msg += f" (Erro desconhecido na recuperação da config para empresa {cid})"
+             
+        return jsonify({'error': err_msg}), 500
 
 # --- VIEWS ---
 @whatsapp_bp.route('/whatsapp')
