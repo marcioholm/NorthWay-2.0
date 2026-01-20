@@ -60,11 +60,11 @@ def test_connection():
         cid = current_user.company_id
         intg = Integration.query.filter_by(company_id=cid, service='z_api').first()
         if not intg:
-            return jsonify({'connected': False, 'message': f"Inexistente no BD (Empresa {cid})"})
+            return jsonify({'connected': False, 'message': "Instalação não localizada no banco de dados."})
         if not intg.is_active:
-            return jsonify({'connected': False, 'message': f"Inativa no BD (Empresa {cid})"})
+            return jsonify({'connected': False, 'message': "A integração está desativada no painel."})
             
-        return jsonify({'connected': False, 'message': f"Configuração inválida no BD (Empresa {cid})"})
+        return jsonify({'connected': False, 'message': "Configuração incompleta ou inválida."})
     
     import requests
     headers = {}
@@ -75,10 +75,13 @@ def test_connection():
         res = requests.get(url, headers=headers, timeout=10)
         data = res.json()
         
-        if 'error' in data: 
-            return jsonify({'connected': False, 'message': f"Erro Z-API: {data['error']}"})
+        if 'error' in data:
+            err = data['error']
+            if "already connected" in str(err).lower():
+                return jsonify({'connected': True, 'message': "Conectado! ✅"})
+            return jsonify({'connected': False, 'message': f"Erro Z-API: {err}"})
             
-        if data.get('connected'): 
+        if data.get('connected') or data.get('status') == 'CONNECTED': 
             phone = data.get('phone') or data.get('instanceId')
             return jsonify({'connected': True, 'phone': phone, 'message': "Conectado! ✅"})
             
