@@ -83,8 +83,13 @@ def create_app():
     # Supabase Setup
     app.config['SUPABASE_URL'] = os.environ.get('SUPABASE_URL', 'https://bnumpvhsfujpprovajkt.supabase.co')
     app.config['SUPABASE_KEY'] = os.environ.get('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudW1wdmhzZnVqcHByb3Zhamt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNjA5OTgsImV4cCI6MjA4MzkzNjk5OH0.pVcON2srZ2FXQ36Q-72WAHB-gVdrP_5Se-_K8XQ15Gs')
+    app.config['SUPABASE_KEY'] = os.environ.get('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudW1wdmhzZnVqcHByb3Zhamt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNjA5OTgsImV4cCI6MjA4MzkzNjk5OH0.pVcON2srZ2FXQ36Q-72WAHB-gVdrP_5Se-_K8XQ15Gs')
     app.config['SUPABASE_SERVICE_ROLE_KEY'] = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
-    app.supabase = init_supabase(app)
+    try:
+        app.supabase = init_supabase(app)
+    except Exception as supabase_e:
+        print(f"Supabase Init Error: {supabase_e}")
+        app.supabase = None
 
     # --- INITIALIZE EXTENSIONS ---
     db.init_app(app)
@@ -168,7 +173,53 @@ def create_app():
         print(f"Blueprint Registration Error: {bp_e}")
         # We continue so the app launches and sys_admin works
 
+    # --- AUTO-MIGRATION / TABLE CREATION ---
+    # Critical for Vercel/Ephemeral environments
+    with app.app_context():
+        try:
+            # Check if critical tables exist
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            if not inspector.has_table("user"):
+                print("⚠️ Tables missing! Running db.create_all()...")
+                db.create_all()
+                print("✅ Tables created.")
+                
+                # Seed minimal data if empty (prevent lockout)
+                if not User.query.first():
+                     print("🌱 Seeding default Admin...")
+                     # Create default company and user if needed
+                     from models import Company, User, Role
+                     from werkzeug.security import generate_password_hash
+                     
+                     if not Company.query.first():
+                         c = Company(name="NorthWay Default", plan="pro", status="active")
+                         db.session.add(c)
+                         db.session.commit()
+                         
+                         r = Role(name="Administrador", company_id=c.id, permissions=["admin_view"]) # Simplified
+                         db.session.add(r)
+                         db.session.commit()
+                         
+                         u = User(
+                             name="Admin", 
+                             email="admin@northway.com", 
+                             password_hash=generate_password_hash("123456"),
+                             company_id=c.id,
+                             role="admin",
+                             role_id=r.id
+                         )
+                         db.session.add(u)
+                         db.session.commit()
+                         print("✅ Default Admin created: admin@northway.com / 123456")
+        except Exception as seed_e:
+            print(f"❌ Auto-migration failed: {seed_e}")
+
     return app
+
+
+
+app = create_app()
 
 # --- TEMPORARY MIGRATION ROUTE ---
 # Triggers the schema update and data migration when accessed.
@@ -189,8 +240,6 @@ def sys_migrate_contacts():
         return jsonify({"status": "success", "message": "Migration completed successfully."})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
-app = create_app()
 
 if __name__ == '__main__':
     # Add a /ping route directly if not in any bp for debugging
