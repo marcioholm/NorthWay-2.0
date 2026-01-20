@@ -307,7 +307,12 @@ def get_details(type, id):
         tags = [{'text': 'Desconhecido', 'color': 'gray'}]
         deal_value = 'R$ 0,00'
         notes = 'Este contato ainda não foi adicionado ao CRM.'
-        name = id # Phone
+        
+        # Try to find a sender name from messages
+        last_msg = WhatsAppMessage.query.filter_by(company_id=current_user.company_id, phone=id)\
+            .filter(WhatsAppMessage.sender_name != None)\
+            .order_by(WhatsAppMessage.created_at.desc()).first()
+        name = last_msg.sender_name if last_msg else id
     else:
         return jsonify({'error': 'Invalid type'}), 400
         
@@ -325,13 +330,17 @@ def convert_unknown_to_lead():
     data = request.json
     phone = data.get('phone')
     name = data.get('name')
-    if not phone or not name: return jsonify({'error': 'Missing phone or name'}), 400
+    email = data.get('email')
+    
+    if not phone or not name: 
+        return jsonify({'error': 'Missing phone or name'}), 400
     
     # Create Lead
     lead = Lead(
         company_id=current_user.company_id,
         name=name,
         phone=phone,
+        email=email,
         status='new',
         source='whatsapp'
     )

@@ -278,11 +278,31 @@
 
         <!-- Add to Lead (Unknown only) -->
         <div id="sidebar-add-unknown" class="p-5 border-t border-gray-100 hidden">
-            <button onclick="convertUnknownToLead()"
-                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
-                <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                Adicionar como Lead
-            </button>
+            <h4 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Criar Novo Lead</h4>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Telefone</label>
+                    <div id="quick-lead-phone-display"
+                        class="text-sm font-mono text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 italic">
+                        -
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nome Completo</label>
+                    <input type="text" id="quick-lead-name" placeholder="Nome do contato"
+                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red transition-colors">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">E-mail (Opcional)</label>
+                    <input type="email" id="quick-lead-email" placeholder="email@exemplo.com"
+                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red transition-colors">
+                </div>
+                <button onclick="convertUnknownToLead()"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 mt-2">
+                    <i data-lucide="user-plus" class="w-5 h-5"></i>
+                    Criar Lead
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -991,6 +1011,9 @@
             const addBox = document.getElementById('sidebar-add-unknown');
             if (data.is_unknown) {
                 addBox.classList.remove('hidden');
+                document.getElementById('quick-lead-phone-display').textContent = id;
+                document.getElementById('quick-lead-name').value = data.name || '';
+                document.getElementById('quick-lead-email').value = '';
             } else {
                 addBox.classList.add('hidden');
             }
@@ -1000,14 +1023,21 @@
 
     async function convertUnknownToLead() {
         if (!activeChat || activeChat.type !== 'atendimento') return;
-        const name = prompt("Nome completo para o novo Lead:", activeChat.id);
-        if (!name) return;
+
+        const name = document.getElementById('quick-lead-name').value;
+        const email = document.getElementById('quick-lead-email').value;
+
+        if (!name) return alert("Por favor, informe o nome do Lead.");
 
         try {
             const res = await fetch('/api/whatsapp/atendimento/convert', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: activeChat.id, name: name })
+                body: JSON.stringify({
+                    phone: activeChat.id,
+                    name: name,
+                    email: email
+                })
             });
             const data = await res.json();
             if (data.success) {
