@@ -64,12 +64,18 @@ def test_connection():
     try:
         res = requests.get(url, headers=headers, timeout=10)
         data = res.json()
+        
         if 'error' in data: 
-            return f"Erro Z-API: {data['error']} (URL: {url.replace(config['token'], '***')})"
-        if data.get('connected'): return "Conectado! ✅"
-        return "Desconectado (ou QR Code necessário)."
+            return jsonify({'connected': False, 'message': f"Erro Z-API: {data['error']}"})
+            
+        if data.get('connected'): 
+            phone = data.get('phone') or data.get('instanceId')
+            return jsonify({'connected': True, 'phone': phone, 'message': "Conectado! ✅"})
+            
+        return jsonify({'connected': False, 'message': "Desconectado (ou QR Code necessário)."})
+        
     except Exception as e:
-        return f"Erro de conexão: {e} (URL: {url.replace(config['token'], '***')})"
+        return jsonify({'connected': False, 'message': f"Erro de conexão: {str(e)}"})
 
 @whatsapp_bp.route('/api/whatsapp/setup-webhook', methods=['POST'])
 @login_required

@@ -126,11 +126,20 @@
                     title="Pesquisar na conversa">
                     <i data-lucide="search" class="w-5 h-5"></i>
                 </button>
+                <button onclick="toggleSidebar()"
+                    class="p-2 hover:bg-gray-100 rounded-full hover:text-gray-700 transition-colors lg:hidden"
+                    title="Ver Informações">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                </button>
                 <button class="p-2 hover:bg-gray-100 rounded-full hover:text-gray-700 transition-colors"
                     title="Mais opções">
                     <i data-lucide="more-vertical" class="w-5 h-5"></i>
                 </button>
             </div>
+        </div>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden">
         </div>
 
         <!-- Messages Area -->
@@ -244,7 +253,8 @@
     </div>
 
     <!-- Right Sidebar: Context -->
-    <div id="chat-sidebar" class="w-[300px] border-l border-gray-200 bg-white hidden lg:flex flex-col overflow-y-auto">
+    <div id="chat-sidebar"
+        class="w-[300px] lg:w-[300px] border-l border-gray-200 bg-white hidden lg:flex flex-col overflow-y-auto fixed inset-y-0 right-0 z-30 lg:relative lg:z-auto shadow-xl lg:shadow-none h-full lg:h-auto">
         <!-- Header -->
         <div class="p-4 border-b border-gray-100">
             <h3 class="font-bold text-gray-800 text-lg mb-1">Contexto</h3>
@@ -1156,6 +1166,25 @@
             if (!silent) alert("Erro ao sincronizar perfil.");
         } finally {
             if (icon) icon.classList.remove('animate-spin');
+        }
+    }
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('chat-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        if (sidebar.classList.contains('hidden')) {
+            // Show
+            sidebar.classList.remove('hidden');
+            sidebar.classList.add('flex');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('block');
+        } else {
+            // Hide
+            sidebar.classList.add('hidden');
+            sidebar.classList.remove('flex');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('block');
         }
     }
 

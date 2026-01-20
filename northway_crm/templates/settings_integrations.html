@@ -143,12 +143,16 @@
             </div>
 
             <div class="mt-6 flex justify-end gap-2">
-                <form action="{{ url_for('whatsapp.test_connection') }}" method="POST" target="_blank">
-                    <button type="submit"
-                        class="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                        Testar Conexão / QR Code
+                <div class="flex items-center gap-3">
+                    <span id="whatsapp-status" class="text-sm font-bold"></span>
+                    <span id="whatsapp-phone-display"
+                        class="hidden bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold font-mono"></span>
+
+                    <button type="button" onclick="testZapiConnection(this)"
+                        class="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                        <i data-lucide="wifi" class="w-4 h-4"></i> Testar Conexão
                     </button>
-                </form>
+                </div>
 
                 <form action="{{ url_for('admin.delete_integration', service='z_api') }}" method="POST"
                     onsubmit="return confirm('Isso irá interromper o funcionamento do WhatsApp. Tem certeza?')">
@@ -544,6 +548,55 @@
             }
         } catch (e) {
             alert("Erro de conexão: " + e);
+        }
+    }
+
+    async function testZapiConnection(btn) {
+        const originalText = btn.innerHTML;
+        const icon = btn.querySelector('i');
+        if (icon) icon.classList.add('animate-pulse');
+        btn.disabled = true;
+
+        const statusEl = document.getElementById('whatsapp-status');
+        const phoneEl = document.getElementById('whatsapp-phone-display');
+
+        // Reset UI
+        statusEl.innerText = 'Testando...';
+        statusEl.className = 'text-gray-500 text-sm font-medium';
+        phoneEl.classList.add('hidden');
+
+        try {
+            const res = await fetch('/api/whatsapp/test', { method: 'POST' });
+
+            // Handle JSON response
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await res.json();
+                if (data.connected) {
+                    statusEl.className = 'text-green-600 font-bold ml-2';
+                    statusEl.innerText = data.message;
+                    if (data.phone) {
+                        phoneEl.innerText = `📱 ${data.phone}`;
+                        phoneEl.classList.remove('hidden');
+                    }
+                } else {
+                    statusEl.className = 'text-red-600 font-bold ml-2';
+                    statusEl.innerText = data.message;
+                }
+            } else {
+                // Fallback for legacy text response
+                const text = await res.text();
+                statusEl.innerText = text;
+                statusEl.className = text.includes('Conectado') ? 'text-green-600 font-bold ml-2' : 'text-red-600 font-bold ml-2';
+            }
+
+        } catch (e) {
+            statusEl.innerText = 'Erro ao conectar';
+            statusEl.className = 'text-red-600 font-bold ml-2';
+            console.error(e);
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     }
 </script>
