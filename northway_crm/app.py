@@ -88,19 +88,24 @@ def create_app():
     # --- CONTEXT PROCESSORS ---
     @app.context_processor
     def inject_globals():
+        # FAST FAIL: If DB isn't ready or schema is updating, don't crash
+        # This is critical for the migration route to work
         try:
-            if current_user.is_authenticated:
-                try:
-                    # Defensive check for table existence/schema issues
-                    pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
-                    return dict(pending_tasks_count=pending_count, now=datetime.now())
-                except Exception as db_e:
-                    print(f"Database error in inject_globals: {db_e}")
-                    return dict(pending_tasks_count=0, now=datetime.now())
-        except Exception as e:
-            # Log error but don't crash the page
-            print(f"Critical error in inject_globals: {e}")
-            return dict(pending_tasks_count=0, now=datetime.now())
+             # Only try this if user object is fully loaded and valid
+             if current_user and current_user.is_authenticated:
+                 # Minimal check, avoid complex joins
+                 from models import Task
+                 # Use a separate protected block for the query
+                 try:
+                     pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
+                     return dict(pending_tasks_count=pending_count, now=datetime.now())
+                 except:
+                     # If table doesn't exist or connection failed, return 0
+                     return dict(pending_tasks_count=0, now=datetime.now())
+        except:
+             # Absolute fallback
+             pass
+
         return dict(pending_tasks_count=0, now=datetime.now())
 
     @app.template_filter('from_json')
