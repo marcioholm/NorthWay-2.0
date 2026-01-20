@@ -146,6 +146,26 @@ def create_app():
 
     return app
 
+# --- TEMPORARY MIGRATION ROUTE ---
+# Triggers the schema update and data migration when accessed.
+# Security: Basic check or relying on admin login (if active) or just obscurity for this quick fix.
+# Ideally would be a CLI command.
+@app.route('/sys_admin/migrate_contacts_fix')
+def sys_migrate_contacts():
+    try:
+        from update_schema_contact import update_schema
+        from migrate_contacts import migrate_data
+        
+        # 1. Update Schema
+        update_schema()
+        
+        # 2. Migrate Data
+        migrate_data()
+        
+        return jsonify({"status": "success", "message": "Migration completed successfully."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 app = create_app()
 
 if __name__ == '__main__':
