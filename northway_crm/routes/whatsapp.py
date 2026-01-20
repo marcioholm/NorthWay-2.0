@@ -18,10 +18,10 @@ def from_json_filter(value):
 @whatsapp_bp.route('/api/whatsapp/config', methods=['POST'])
 @login_required
 def configure():
-    instance_id = request.form.get('instance_id')
-    token = request.form.get('token')
-    api_url = request.form.get('api_url') or 'https://api.z-api.io'
-    client_token = request.form.get('client_token')
+    instance_id = request.form.get('instance_id', '').strip()
+    token = request.form.get('token', '').strip()
+    api_url = request.form.get('api_url', 'https://api.z-api.io').strip()
+    client_token = request.form.get('client_token', '').strip()
     
     if not instance_id or not token:
         flash('Instance ID e Token são obrigatórios.', 'error')
