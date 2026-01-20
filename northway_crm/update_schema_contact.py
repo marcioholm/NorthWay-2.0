@@ -1,29 +1,32 @@
-import sqlite3
-import os
+from flask import current_app
+from sqlalchemy import text
+from app import db 
 
-DB_PATH = '/Users/Marci.Holm/Applications/NorthWay-2.0/northway_crm/crm.db'
+# This script is now designed to run INSIDE the Flask application context.
+# It uses the SQLAlchemy connection from the running app.
 
 def update_schema():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    print("Updating schema...")
+    print("Updating schema via SQLAlchemy Engine...")
     
     # 1. Create Contact Table
+    # Using raw SQL for direct control, compatible with SQLite (Vercel default)
+    create_contact_sql = text('''
+    CREATE TABLE IF NOT EXISTS contact (
+        id INTEGER PRIMARY KEY,
+        uuid VARCHAR(36) NOT NULL UNIQUE,
+        company_id INTEGER NOT NULL,
+        phone VARCHAR(50) NOT NULL,
+        created_at DATETIME,
+        FOREIGN KEY(company_id) REFERENCES company(id)
+    )
+    ''')
+    
     try:
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS contact (
-            id INTEGER PRIMARY KEY,
-            uuid VARCHAR(36) NOT NULL UNIQUE,
-            company_id INTEGER NOT NULL,
-            phone VARCHAR(50) NOT NULL,
-            created_at DATETIME,
-            FOREIGN KEY(company_id) REFERENCES company(id)
-        )
-        ''')
-        print("Created contact table.")
+        db.session.execute(create_contact_sql)
+        print("Created contact table (if not exists).")
     except Exception as e:
-        print(f"Error creating contact table: {e}")
+         print(f"Error creating contact table: {e}")
+         # Continue anyway as it might exist
 
     # 2. Add contact_uuid to tables
     tables = [
@@ -31,27 +34,34 @@ def update_schema():
         'contract', 'transaction', 'interaction'
     ]
     
+    # Get current columns to check if migration needed
+    # Note: Reflection is better, but raw PRAGMA is SQLite specific. 
+    # Since we know Vercel uses SQLite for this project (based on app.py), 
+    # we can stick to SQLite-ish syntax OR use a safer add-column approach.
+    
+    connection = db.engine.connect()
+    trans = connection.begin()
+    
     for table in tables:
         try:
-            # Check if column exists
-            cursor.execute(f"PRAGMA table_info({table})")
-            columns = [info[1] for info in cursor.fetchall()]
-            
-            if 'contact_uuid' not in columns:
-                cursor.execute(f'ALTER TABLE "{table}" ADD COLUMN contact_uuid VARCHAR(36) REFERENCES contact(uuid)')
-                print(f"Added contact_uuid to {table}")
-            else:
-                print(f"contact_uuid already in {table}")
-                
+            # Universal "Add Column if not exists" is hard in raw SQL.
+            # We'll try to add it and ignore "duplicate column" errors.
+            alter_sql = text(f'ALTER TABLE "{table}" ADD COLUMN contact_uuid VARCHAR(36) REFERENCES contact(uuid)')
+            connection.execute(alter_sql)
+            print(f"Added contact_uuid to {table}")
         except Exception as e:
-            print(f"Error updating {table}: {e}")
-
-    conn.commit()
-    conn.close()
+            # 90% chance this is "column already exists"
+            if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
+                print(f"contact_uuid already in {table}")
+            else:
+                 print(f"Error updating {table}: {e}")
+                 
+    trans.commit()
+    connection.close()
     print("Schema update complete.")
 
 if __name__ == '__main__':
-    if os.path.exists(DB_PATH):
+    # For local manual run
+    from app import app
+    with app.app_context():
         update_schema()
-    else:
-        print(f"Database not found at {DB_PATH}")

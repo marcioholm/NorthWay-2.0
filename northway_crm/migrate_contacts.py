@@ -1,13 +1,12 @@
-import sqlite3
-import os
+from flask import current_app
+from sqlalchemy import text
+from app import db 
 import uuid
 import re
 from datetime import datetime
 
-DB_PATH = '/Users/Marci.Holm/Applications/NorthWay-2.0/northway_crm/crm.db'
-
+# Logic mirror from WhatsAppService
 def normalize_phone(phone):
-    """Mirroring the logic we will implement in WhatsAppService"""
     if not phone: return None
     clean = re.sub(r'\D', '', str(phone))
     if not clean: return None
@@ -16,111 +15,113 @@ def normalize_phone(phone):
     return clean
 
 def migrate_data():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    print("Starting data migration via SQLAlchemy...")
+    connection = db.engine.connect()
+    trans = connection.begin()
     
-    print("Starting migration...")
-    
-    # 1. Fetch all Leads and Clients
-    cursor.execute("SELECT id, name, phone, company_id FROM lead")
-    leads = cursor.fetchall()
-    
-    cursor.execute("SELECT id, name, phone, company_id FROM client")
-    clients = cursor.fetchall()
-    
-    print(f"Found {len(leads)} leads and {len(clients)} clients.")
-    
-    # 2. Unify by Phone
-    # Map: normalized_phone -> contact_uuid
-    phone_map = {}
-    
-    # 2a. Process Clients FIRST (Priority)
-    for c in clients:
-        norm = normalize_phone(c['phone'])
-        if not norm: continue
+    try:
+        # 1. Fetch all Leads and Clients
+        leads = connection.execute(text("SELECT id, name, phone, company_id FROM lead")).mappings().all()
+        clients = connection.execute(text("SELECT id, name, phone, company_id FROM client")).mappings().all()
         
-        if norm not in phone_map:
-            # Create Contact
-            c_uuid = str(uuid.uuid4())
-            cursor.execute(
-                "INSERT INTO contact (uuid, company_id, phone, created_at) VALUES (?, ?, ?, ?)",
-                (c_uuid, c['company_id'], norm, datetime.utcnow())
-            )
-            phone_map[norm] = c_uuid
-            
-        # Update Client
-        cursor.execute("UPDATE client SET contact_uuid = ? WHERE id = ?", (phone_map[norm], c['id']))
-
-    # 2b. Process Leads
-    for l in leads:
-        norm = normalize_phone(l['phone'])
-        if not norm: continue
+        print(f"Found {len(leads)} leads and {len(clients)} clients.")
         
-        if norm not in phone_map:
-            # Create Contact
-            c_uuid = str(uuid.uuid4())
-            cursor.execute(
-                "INSERT INTO contact (uuid, company_id, phone, created_at) VALUES (?, ?, ?, ?)",
-                (c_uuid, l['company_id'], norm, datetime.utcnow())
-            )
-            phone_map[norm] = c_uuid
-            
-        # Update Lead
-        cursor.execute("UPDATE lead SET contact_uuid = ? WHERE id = ?", (phone_map[norm], l['id']))
-
-    print("Leads and Clients linked.")
-
-    # 3. Migrate WhatsApp Messages
-    # This is tricky because existing messages have phone, lead_id, or client_id
-    # We should iterate and update based on the Best Match
-    
-    cursor.execute("SELECT id, phone, lead_id, client_id, company_id FROM whats_app_message")
-    msgs = cursor.fetchall()
-    print(f"Migrating {len(msgs)} messages...")
-    
-    count = 0
-    for m in msgs:
-        c_uuid = None
+        phone_map = {} # normalized_phone -> contact_uuid
         
-        # Try finding by linked Client
-        if m['client_id']:
-            cursor.execute("SELECT contact_uuid FROM client WHERE id = ?", (m['client_id'],))
-            res = cursor.fetchone()
-            if res and res['contact_uuid']: c_uuid = res['contact_uuid']
+        # 2a. Process Clients FIRST (Priority)
+        for c in clients:
+            norm = normalize_phone(c['phone'])
+            if not norm: continue
             
-        # Try finding by linked Lead
-        if not c_uuid and m['lead_id']:
-            cursor.execute("SELECT contact_uuid FROM lead WHERE id = ?", (m['lead_id'],))
-            res = cursor.fetchone()
-            if res and res['contact_uuid']: c_uuid = res['contact_uuid']
-            
-        # Try finding by Phone
-        if not c_uuid and m['phone']:
-            norm = normalize_phone(m['phone'])
-            if norm and norm in phone_map:
-                c_uuid = phone_map[norm]
-            elif norm:
-                # Create 'Unknown' Contact for this phone
+            if norm not in phone_map:
                 c_uuid = str(uuid.uuid4())
-                cursor.execute(
-                    "INSERT INTO contact (uuid, company_id, phone, created_at) VALUES (?, ?, ?, ?)",
-                    (c_uuid, m['company_id'], norm, datetime.utcnow())
+                # Create Contact
+                connection.execute(
+                    text("INSERT INTO contact (uuid, company_id, phone, created_at) VALUES (:uuid, :cid, :phone, :now)"),
+                    {"uuid": c_uuid, "cid": c['company_id'], "phone": norm, "now": datetime.utcnow()}
                 )
                 phone_map[norm] = c_uuid
-        
-        if c_uuid:
-            cursor.execute("UPDATE whats_app_message SET contact_uuid = ? WHERE id = ?", (c_uuid, m['id']))
-            count += 1
+                
+            # Update Client
+            connection.execute(
+                text("UPDATE client SET contact_uuid = :cuuid WHERE id = :id"),
+                {"cuuid": phone_map[norm], "id": c['id']}
+            )
+
+        # 2b. Process Leads
+        for l in leads:
+            norm = normalize_phone(l['phone'])
+            if not norm: continue
             
-    print(f"Updated {count} messages.")
-    
-    conn.commit()
-    conn.close()
-    print("Migration complete.")
+            if norm not in phone_map:
+                c_uuid = str(uuid.uuid4())
+                connection.execute(
+                    text("INSERT INTO contact (uuid, company_id, phone, created_at) VALUES (:uuid, :cid, :phone, :now)"),
+                    {"uuid": c_uuid, "cid": l['company_id'], "phone": norm, "now": datetime.utcnow()}
+                )
+                phone_map[norm] = c_uuid
+            
+            connection.execute(
+                text("UPDATE lead SET contact_uuid = :cuuid WHERE id = :id"),
+                {"cuuid": phone_map[norm], "id": l['id']}
+            )
+            
+        print("Leads and Clients linked.")
+
+        # 3. Migrate WhatsApp Messages
+        msgs = connection.execute(text("SELECT id, phone, lead_id, client_id, company_id FROM whats_app_message")).mappings().all()
+        print(f"Migrating {len(msgs)} messages...")
+        
+        count = 0
+        for m in msgs:
+            c_uuid = None
+            
+            # Helper to fetch single value
+            def get_uuid_from_table(table, id_val):
+                res = connection.execute(text(f"SELECT contact_uuid FROM {table} WHERE id = :id"), {"id": id_val}).scalar()
+                return res
+
+            # Try Linked Client
+            if m['client_id']:
+                c_uuid = get_uuid_from_table('client', m['client_id'])
+                
+            # Try Linked Lead
+            if not c_uuid and m['lead_id']:
+                c_uuid = get_uuid_from_table('lead', m['lead_id'])
+                
+            # Try Phone
+            if not c_uuid and m['phone']:
+                norm = normalize_phone(m['phone'])
+                if norm and norm in phone_map:
+                    c_uuid = phone_map[norm]
+                elif norm:
+                    # Create Unknown Contact
+                    c_uuid = str(uuid.uuid4())
+                    connection.execute(
+                        text("INSERT INTO contact (uuid, company_id, phone, created_at) VALUES (:uuid, :cid, :phone, :now)"),
+                        {"uuid": c_uuid, "cid": m['company_id'], "phone": norm, "now": datetime.utcnow()}
+                    )
+                    phone_map[norm] = c_uuid
+            
+            if c_uuid:
+                connection.execute(
+                    text("UPDATE whats_app_message SET contact_uuid = :cuuid WHERE id = :id"),
+                    {"cuuid": c_uuid, "id": m['id']}
+                )
+                count += 1
+                
+        print(f"Updated {count} messages.")
+        trans.commit()
+        print("Migration complete.")
+        
+    except Exception as e:
+        trans.rollback()
+        print(f"Migration failed: {e}")
+        raise e
+    finally:
+        connection.close()
 
 if __name__ == '__main__':
-    if os.path.exists(DB_PATH):
+    from app import app
+    with app.app_context():
         migrate_data()
-    else:
-        print("DB not found.")
