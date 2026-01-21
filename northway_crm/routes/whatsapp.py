@@ -119,7 +119,10 @@ def setup_webhook():
 @whatsapp_bp.route('/whatsapp')
 @login_required
 def inbox():
-    return render_template('whatsapp_inbox.html')
+    from models import Pipeline, User
+    pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+    users = User.query.filter_by(company_id=current_user.company_id).all()
+    return render_template('whatsapp_inbox.html', pipelines=pipelines, users=users)
 
 # --- API ---
 
@@ -364,17 +367,20 @@ def convert_unknown_to_lead():
     if not phone or not name: 
         return jsonify({'error': 'Missing phone or name'}), 400
     
-    # Get default pipeline and stage for this company
+    # Get pipeline info from request, or fallback to defaults
     from models import Pipeline, PipelineStage
-    pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
-    stage_id = None
-    pipeline_id = None
     
-    if pipeline:
-        pipeline_id = pipeline.id
-        first_stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).first()
-        if first_stage:
-            stage_id = first_stage.id
+    pipeline_id = data.get('pipeline_id')
+    stage_id = data.get('stage_id')
+    user_id = data.get('user_id') or current_user.id
+    
+    if not pipeline_id:
+        pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+        if pipeline:
+            pipeline_id = pipeline.id
+            first_stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).first()
+            if first_stage:
+                stage_id = first_stage.id
 
     # Create Lead
     lead = Lead(
@@ -384,7 +390,7 @@ def convert_unknown_to_lead():
         email=email,
         status='new',
         source='whatsapp',
-        assigned_to_id=current_user.id,
+        assigned_to_id=user_id,
         pipeline_id=pipeline_id,
         pipeline_stage_id=stage_id
     )
