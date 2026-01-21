@@ -431,7 +431,6 @@ def get_unread_counts():
         current_app.logger.error(f"Unread Counts Error: {e}")
         return jsonify({'total': 0, 'by_tab': {}}), 500
 
-    })
 
 @whatsapp_bp.route('/api/whatsapp/read/<string:phone>', methods=['POST'])
 @login_required
