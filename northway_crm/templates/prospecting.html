@@ -191,12 +191,12 @@
 
         if (!query) return;
 
-        // Build composite query
+        // Build composite query: Order and punctuation matter for API
         let fullQuery = query;
         if (city) fullQuery += `, ${city}`;
         if (state) fullQuery += `, ${state}`;
         if (city || state) {
-            fullQuery += ", Brasil"; // Enforce Brazil if location is used
+            fullQuery += ", Brasil";
         }
 
         const btn = document.getElementById('searchBtn');
@@ -221,19 +221,22 @@
 
             if (data.error) throw new Error(data.error);
 
-            renderResults(data.results || []);
+            renderResults(data.results || [], data.debug);
             saveState(query, city, state, data.results || []);
 
         } catch (error) {
             console.error(error);
             container.innerHTML = `
-                <div class="col-span-full text-center py-10">
-                    <div class="bg-red-50 text-red-600 p-4 rounded-lg inline-block">
-                        <p class="font-bold">Erro na busca</p>
-                        <p class="text-sm">${error.message}</p>
+                <div class="col-span-full text-center py-10 px-6">
+                    <div class="bg-red-50 text-red-600 p-6 rounded-2xl inline-block max-w-lg">
+                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
+                        <p class="font-bold text-lg mb-2">Erro na busca</p>
+                        <p class="text-sm opacity-80">${error.message}</p>
+                        <button onclick="performSearch()" class="mt-4 text-xs font-bold underline uppercase tracking-widest">Tentar novamente</button>
                     </div>
                 </div>
             `;
+            if (window.lucide) lucide.createIcons();
         } finally {
             btn.disabled = false;
             btnText.classList.remove('hidden');
@@ -241,19 +244,28 @@
         }
     }
 
-    function renderResults(results) {
+    function renderResults(results, debug = null) {
         const container = document.getElementById('resultsContainer');
         const countDiv = document.getElementById('resultsCount');
         const headerDiv = document.getElementById('resultsHeader');
 
         if (results.length === 0) {
             if (headerDiv) headerDiv.classList.add('hidden');
-            else countDiv.classList.add('hidden');
+            else if (countDiv) countDiv.classList.add('hidden');
 
             container.innerHTML = `
                 <div class="col-span-full flex flex-col items-center justify-center text-gray-400 mt-10">
                     <i data-lucide="search-x" class="w-16 h-16 mb-4 text-gray-300"></i>
-                    <p>Nenhuma empresa encontrada com esses termos.</p>
+                    <p class="text-lg font-medium text-gray-600">Nenhuma empresa encontrada.</p>
+                    <p class="text-sm mt-1 max-w-sm text-center">Tente remover filtros de cidade/estado ou usar termos mais genéricos.</p>
+                    
+                    ${debug ? `
+                    <div class="mt-8 p-4 bg-gray-100 rounded-xl text-[10px] font-mono text-gray-500 text-left border border-gray-200">
+                        <p class="font-bold uppercase mb-1">Status Técnico:</p>
+                        <p>Query: ${debug.query_sent}</p>
+                        <p>Google Status: ${debug.google_status}</p>
+                    </div>
+                    ` : ''}
                 </div>
             `;
             if (window.lucide) lucide.createIcons();

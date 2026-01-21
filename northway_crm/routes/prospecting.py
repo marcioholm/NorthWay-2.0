@@ -31,19 +31,30 @@ def search_places():
     if not api_key:
         return api_response(success=False, error='API Key not configured for this company', status=500)
 
-    # Google Places Text Search
+    # Google Places Text Search - Legacy API
     url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
-    params = {
-        'query': query,
-        'key': api_key,
-        'language': 'pt-BR',
-        'region': 'br'
-    }
     
-    try:
+    def fetch_from_google(search_query, search_region='br'):
+        params = {
+            'query': search_query,
+            'key': api_key,
+            'language': 'pt-BR'
+        }
+        if search_region:
+            params['region'] = search_region
+            
         response = requests.get(url, params=params, timeout=10)
-        data = response.json()
+        return response.json()
+
+    try:
+        # Step 1: Main Search
+        data = fetch_from_google(query, search_region='br')
         status = data.get('status')
+        
+        # Step 2: Fallback if ZERO_RESULTS (Try without region restriction)
+        if status == 'ZERO_RESULTS':
+             data = fetch_from_google(query, search_region=None)
+             status = data.get('status')
         
         if status not in ['OK', 'ZERO_RESULTS']:
             error_msg = data.get('error_message', 'No error message provided by Google')
@@ -51,7 +62,6 @@ def search_places():
             
         # Clean data for frontend
         results = []
-        # Even if status is ZERO_RESULTS, data.get('results') will be an empty list
         for place in data.get('results', []):
             results.append({
                 'place_id': place.get('place_id'),
@@ -63,7 +73,14 @@ def search_places():
                 'types': place.get('types', [])
             })
             
-        return api_response(data={'results': results})
+        return api_response(data={
+            'results': results,
+            'debug': {
+                'query_sent': query,
+                'google_status': status,
+                'results_count': len(results)
+            }
+        })
         
     except Exception as e:
         return api_response(success=False, error=str(e), status=500)
