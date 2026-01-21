@@ -436,18 +436,20 @@ class WhatsAppService:
     def get_unread_summary(company_id):
         """Returns total unread count and count by tab efficiently (no N+1)."""
         try:
+            type_case = db.case(
+                (WhatsAppMessage.lead_id != None, 'lead'),
+                (WhatsAppMessage.client_id != None, 'client'),
+                else_='atendimento'
+            )
+            
             counts = db.session.query(
-                db.case(
-                    (WhatsAppMessage.lead_id != None, 'lead'),
-                    (WhatsAppMessage.client_id != None, 'client'),
-                    else_='atendimento'
-                ).label('type'),
+                type_case.label('type'),
                 db.func.count(WhatsAppMessage.id)
             ).filter(
                 WhatsAppMessage.company_id == company_id,
                 WhatsAppMessage.direction == 'in',
                 WhatsAppMessage.status != 'read'
-            ).group_by('type').all()
+            ).group_by(type_case).all()
             
             total = 0
             by_tab = {'lead': 0, 'client': 0, 'atendimento': 0}
