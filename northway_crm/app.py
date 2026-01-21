@@ -224,10 +224,38 @@ def create_app():
                 print("⚠️ Tables missing! Running db.create_all()...")
                 db.create_all()
                 print("✅ Tables created.")
+            else:
+                # MIGRATE: Add Enrichment Columns if missing
+                print("🐘 DATABASE: Checking for missing CNPJ enrichment columns...")
+                columns_to_add = [
+                    ("legal_name", "VARCHAR(200)"),
+                    ("cnpj", "VARCHAR(20)"),
+                    ("registration_status", "VARCHAR(50)"),
+                    ("company_size", "VARCHAR(50)"),
+                    ("cnae", "VARCHAR(200)"),
+                    ("partners_json", "TEXT"),
+                    ("enrichment_history", "TEXT")
+                ]
                 
-                # Seed minimal data if empty (prevent lockout)
-                if not User.query.first():
-                     print("🌱 Seeding default Admin...")
+                for col_name, col_type in columns_to_add:
+                    try:
+                        # Check if column exists
+                        has_col = any(c['name'] == col_name for c in inspector.get_columns("lead"))
+                        if not has_col:
+                            print(f"📦 MIGRATION: Adding {col_name} to lead table...")
+                            db.session.execute(text(f"ALTER TABLE lead ADD COLUMN {col_name} {col_type}"))
+                            db.session.commit()
+                            print(f"✅ MIGRATION: {col_name} added.")
+                    except Exception as migration_e:
+                        db.session.rollback()
+                        print(f"❌ MIGRATION ERROR on {col_name}: {migration_e}")
+                
+                # Update inspector for subsequent checks
+                inspector = inspect(db.engine)
+                
+            # Seed minimal data if empty (prevent lockout)
+            if not User.query.first():
+                 print("🌱 Seeding default Admin...")
                      print("🌱 Seeding default Admin...")
                      # Create default company and user if needed
                      from models import Company
