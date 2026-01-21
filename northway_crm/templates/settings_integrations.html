@@ -47,7 +47,8 @@
             </div>
 
             <div class="mt-4 flex gap-3">
-                <button onclick="testGoogleMaps('{{ integrations_map.get('google_maps').api_key }}')"
+                <button data-key="{{ integrations_map.get('google_maps').api_key }}"
+                    onclick="testGoogleMaps(this.dataset.key)"
                     class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">
                     <i data-lucide="check-circle" class="w-4 h-4 text-green-600"></i> Testar Conexão
                 </button>
@@ -301,8 +302,9 @@
                             from_json).get('environment', 'sandbox') | title }}</span></p>
                 </div>
                 <div class="flex gap-2">
-                    <button
-                        onclick="testAsaas('{{ asaas.api_key }}', '{{ (asaas.config_json | from_json).get('environment', 'sandbox') }}')"
+                    <button data-key="{{ asaas.api_key }}"
+                        data-env="{{ (asaas.config_json | from_json).get('environment', 'sandbox') }}"
+                        onclick="testAsaas(this.dataset.key, this.dataset.env)"
                         class="text-blue-600 hover:text-blue-700 text-sm font-medium border border-blue-200 px-3 py-1 rounded hover:bg-blue-50 transition-colors">
                         Testar
                     </button>

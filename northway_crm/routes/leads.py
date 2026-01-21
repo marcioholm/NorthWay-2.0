@@ -294,7 +294,17 @@ def update_lead_info(id):
         abort(403)
         
     lead.email = request.form.get('email')
-    lead.phone = request.form.get('phone')
+    
+    # Handle Split Phone
+    phone_ddi = request.form.get('phone_ddi')
+    phone_number = request.form.get('phone_number')
+    if phone_ddi and phone_number:
+        # Strip formatting from number
+        clean_number = ''.join(filter(str.isdigit, phone_number))
+        lead.phone = f"{phone_ddi}{clean_number}"
+    elif request.form.get('phone'): # Fallback / direct update
+        lead.phone = request.form.get('phone')
+
     lead.website = request.form.get('website')
     lead.address = request.form.get('address')
     lead.source = request.form.get('source')

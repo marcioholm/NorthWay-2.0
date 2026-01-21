@@ -227,39 +227,110 @@
                                 <label class="text-xs text-gray-500 block mb-1">E-mail</label>
                                 <input type="email" name="email" value="{{ lead.email or '' }}"
                                     placeholder="email@exemplo.com"
-                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                    class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
                             </div>
+
+                            <!-- Phone with DDI -->
                             <div>
                                 <label class="text-xs text-gray-500 block mb-1">Telefone</label>
-                                <input type="text" name="phone" value="{{ lead.phone or '' }}"
-                                    placeholder="(00) 00000-0000"
-                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                <div class="flex gap-2">
+                                    <select name="phone_ddi" id="inputDDI"
+                                        class="w-24 px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none bg-white">
+                                        <option value="+55">+55 (BR)</option>
+                                        <option value="+1">+1 (US)</option>
+                                        <option value="+351">+351 (PT)</option>
+                                        <option value="+44">+44 (UK)</option>
+                                        <option value="+34">+34 (ES)</option>
+                                        <option value="+33">+33 (FR)</option>
+                                        <option value="+49">+49 (DE)</option>
+                                        <option value="+39">+39 (IT)</option>
+                                    </select>
+                                    <input type="text" name="phone_number" id="inputPhoneNumber"
+                                        placeholder="(00) 00000-0000" oninput="maskPhone(this)"
+                                        class="flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                </div>
+                                <input type="hidden" id="rawPhone" value="{{ lead.phone or '' }}">
                             </div>
+
                             <div>
                                 <label class="text-xs text-gray-500 block mb-1">Website</label>
                                 <input type="text" name="website" value="{{ lead.website or '' }}"
                                     placeholder="www.site.com"
-                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                    class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
                             </div>
+
+                            <!-- Source Select -->
                             <div>
                                 <label class="text-xs text-gray-500 block mb-1">Origem</label>
-                                <input type="text" name="source" value="{{ lead.source or '' }}"
-                                    placeholder="Ex: Google, Indicação"
-                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                <select name="source"
+                                    class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none bg-white">
+                                    {% set sources = ['Google', 'Facebook', 'Instagram', 'WhatsApp', 'Indicação',
+                                    'Linkedin', 'Email', 'Site', 'Feira/Evento', 'Outros'] %}
+                                    <option value="">Selecione...</option>
+                                    {% for s in sources %}
+                                    <option value="{{ s }}" {{ 'selected' if lead.source==s else '' }}>{{ s }}</option>
+                                    {% endfor %}
+                                    {% if lead.source and lead.source not in sources %}
+                                    <option value="{{ lead.source }}" selected>{{ lead.source }} (Atual)</option>
+                                    {% endif %}
+                                </select>
                             </div>
+
                             <div class="col-span-2">
                                 <label class="text-xs text-gray-500 block mb-1">Endereço</label>
                                 <input type="text" name="address" value="{{ lead.address or '' }}"
                                     placeholder="Endereço completo"
-                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                    class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
                             </div>
                             <div class="col-span-2">
                                 <label class="text-xs text-gray-500 block mb-1">Interesse</label>
                                 <input type="text" name="interest" value="{{ lead.interest or '' }}"
                                     placeholder="Interesse principal"
-                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                    class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
                             </div>
                         </div>
+
+                        <script>
+                            function maskPhone(input) {
+                                let value = input.value.replace(/\D/g, '');
+                                if (value.length > 11) value = value.substring(0, 11);
+
+                                if (value.length > 10) {
+                                    value = value.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                                } else if (value.length > 5) {
+                                    value = value.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                                } else if (value.length > 2) {
+                                    value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+                                } else {
+                                    value = value.replace(/^(\d*)/, '($1');
+                                }
+                                input.value = value;
+                            }
+
+                            document.addEventListener("DOMContentLoaded", function () {
+                                const raw = document.getElementById('rawPhone').value;
+                                const ddiSelect = document.getElementById('inputDDI');
+                                const phoneInput = document.getElementById('inputPhoneNumber');
+
+                                if (raw) {
+                                    let matchedDDI = false;
+                                    for (let opt of ddiSelect.options) {
+                                        if (raw.startsWith(opt.value)) {
+                                            ddiSelect.value = opt.value;
+                                            let num = raw.substring(opt.value.length);
+                                            phoneInput.value = num;
+                                            maskPhone(phoneInput);
+                                            matchedDDI = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!matchedDDI) {
+                                        phoneInput.value = raw;
+                                        maskPhone(phoneInput);
+                                    }
+                                }
+                            });
+                        </script>
 
                         <!-- Read-only / System Fields -->
                         <div class="pt-2 border-t border-gray-100 grid grid-cols-2 gap-4">
