@@ -21,6 +21,10 @@ def search_cnpj():
         return api_response(success=False, error="Integração CNPJA não configurada", status=400)
     
     results = CNPJAService.search_by_name(query, integration.api_key)
+    
+    if isinstance(results, dict) and "error" in results:
+        return api_response(success=False, error=f"Erro na API CNPJA: {results.get('error')}", status=500)
+        
     return api_response(data=results)
 
 @enrichment_bp.route('/api/leads/<int:lead_id>/enrich', methods=['POST'])
