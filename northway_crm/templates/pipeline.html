@@ -16,7 +16,7 @@
 
                     <!-- Dropdown -->
                     <div
-                        class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50">
+                        class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50 before:block before:absolute before:-top-2 before:left-0 before:w-full before:h-2 before:bg-transparent">
                         <div class="p-2 space-y-1">
                             {% for p in pipelines %}
                             <a href="{{ url_for('leads.pipeline', pipeline_id=p.id) }}"
