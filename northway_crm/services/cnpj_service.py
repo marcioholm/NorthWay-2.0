@@ -10,7 +10,7 @@ class CNPJAService:
         if not api_key:
             raise ValueError("CNPJA API Key not provided")
         return {
-            "Authorization": f"Bearer {api_key}" if "Bearer" not in api_key else api_key,
+            "Authorization": api_key,
             "Content-Type": "application/json"
         }
 
