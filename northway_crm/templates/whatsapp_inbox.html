@@ -269,6 +269,24 @@
             </div>
         </div>
 
+        <!-- Lead Pipeline/Stage (For Leads) -->
+        <div id="sidebar-lead-stage-box" class="p-5 border-b border-gray-100 hidden">
+            <h4 class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Funil & Etapa</h4>
+            <div class="space-y-3">
+                <select id="sidebar-lead-pipeline" onchange="changeLeadPipeline()"
+                    class="w-full text-xs border-gray-200 rounded text-gray-700 font-medium">
+                    <option value="">Selecione...</option>
+                    {% for p in pipelines %}
+                    <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+                <select id="sidebar-lead-stage" onchange="changeLeadStage()"
+                    class="w-full text-xs border-gray-200 rounded text-gray-700 font-medium">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
+        </div>
+
         <!-- Deal Value -->
         <div class="p-5 border-b border-gray-100">
             <h4 class="text-xs font-bold text-gray-400 uppercase mb-2 tracking-wider">Valor do Negócio</h4>
@@ -1047,16 +1065,95 @@
 
             // Unknown UI
             const addBox = document.getElementById('sidebar-add-unknown');
+            const leadStageBox = document.getElementById('sidebar-lead-stage-box');
+
             if (data.is_unknown) {
                 addBox.classList.remove('hidden');
+                leadStageBox.classList.add('hidden');
                 document.getElementById('quick-lead-phone-display').textContent = id;
                 document.getElementById('quick-lead-name').value = data.name || '';
                 document.getElementById('quick-lead-email').value = '';
             } else {
                 addBox.classList.add('hidden');
+
+                // If it's a lead, show stage controls
+                if (type === 'lead') {
+                    leadStageBox.classList.remove('hidden');
+                    // Pre-fill selections
+                    const pipeSelect = document.getElementById('sidebar-lead-pipeline');
+                    if (data.pipeline_id) {
+                        pipeSelect.value = data.pipeline_id;
+                        // Load stages and set value
+                        await loadStagesForSidebar(data.pipeline_id, data.stage_id);
+                    } else {
+                        pipeSelect.value = "";
+                        document.getElementById('sidebar-lead-stage').innerHTML = '<option value="">Selecione funil...</option>';
+                    }
+                } else {
+                    leadStageBox.classList.add('hidden');
+                }
             }
 
         } catch (e) { console.error('Details error', e); }
+    }
+
+    // --- Sidebar Stage Management ---
+
+    async function loadStagesForSidebar(pipelineId, selectedStageId = null) {
+        const stageSelect = document.getElementById('sidebar-lead-stage');
+        stageSelect.innerHTML = '<option value="">Carregando...</option>';
+        stageSelect.disabled = true;
+
+        try {
+            const res = await fetch(`/api/pipelines/${pipelineId}/stages`);
+            const data = await res.json();
+
+            if (data.stages && data.stages.length > 0) {
+                stageSelect.innerHTML = data.stages.map(s =>
+                    `<option value="${s.id}">${s.name}</option>`
+                ).join('');
+                if (selectedStageId) stageSelect.value = selectedStageId;
+                stageSelect.disabled = false;
+            } else {
+                stageSelect.innerHTML = '<option value="">Sem etapas</option>';
+            }
+        } catch (e) {
+            console.error(e);
+            stageSelect.innerHTML = '<option value="">Erro</option>';
+        }
+    }
+
+    async function changeLeadPipeline() {
+        if (!activeChat || activeChat.type !== 'lead') return;
+        const pipelineId = document.getElementById('sidebar-lead-pipeline').value;
+        if (pipelineId) {
+            await loadStagesForSidebar(pipelineId);
+            // Note: changing pipeline doesn't auto-save stage until a stage is picked
+            // But we might want to prevent "orphan" leads. 
+            // Ideally we force user to pick a stage next.
+        } else {
+            document.getElementById('sidebar-lead-stage').innerHTML = '<option value="">Selecione funil...</option>';
+        }
+    }
+
+    async function changeLeadStage() {
+        if (!activeChat || activeChat.type !== 'lead') return;
+        const pipelineId = document.getElementById('sidebar-lead-pipeline').value;
+        const stageId = document.getElementById('sidebar-lead-stage').value;
+
+        if (!pipelineId || !stageId) return;
+
+        try {
+            // Save visual feedback could be added here
+            await fetch(`/api/whatsapp/leads/${activeChat.id}/stage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pipeline_id: pipelineId, stage_id: stageId })
+            });
+            // maybe toast?
+        } catch (e) {
+            alert("Erro ao salvar etapa.");
+        }
     }
 
     async function updateStageOptions() {

@@ -210,12 +210,17 @@ def convert_lead(id):
     lead.status = LEAD_STATUS_WON
     lead.client_id = client.id
     
+    # Find closing stage (Fechamento/Fechado) or fallback to last stage
     fechado_stage = PipelineStage.query.filter(
         PipelineStage.pipeline_id == lead.pipeline_id,
-        PipelineStage.company_id == current_user.company_id,
-        PipelineStage.name.ilike('%fechado%')
-    ).first()
+        PipelineStage.company_id == current_user.company_id
+    ).filter(db.or_(PipelineStage.name.ilike('%fechado%'), PipelineStage.name.ilike('%fechamento%'))).first()
     
+    if not fechado_stage:
+        # Fallback: Last stage by order
+        fechado_stage = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id)\
+            .order_by(PipelineStage.order.desc()).first()
+
     if fechado_stage:
         lead.pipeline_stage_id = fechado_stage.id
         

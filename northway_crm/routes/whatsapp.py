@@ -322,6 +322,8 @@ def get_details(type, id):
         deal_value = obj.bant_budget or 'R$ 0,00'
         notes = obj.notes or ''
         name = obj.name
+        pipeline_id = obj.pipeline_id
+        stage_id = obj.pipeline_stage_id
         
     elif type == 'client':
         obj = Client.query.get_or_404(id)
@@ -334,11 +336,16 @@ def get_details(type, id):
         deal_value = f"R$ {obj.monthly_value:,.2f}" if obj.monthly_value else 'R$ 0,00'
         notes = obj.notes or ''
         name = obj.name
+        pipeline_id = None
+        stage_id = None
+        
     elif type == 'atendimento':
         # Unknown contact
         tags = [{'text': 'Desconhecido', 'color': 'gray'}]
         deal_value = 'R$ 0,00'
         notes = 'Este contato ainda não foi adicionado ao CRM.'
+        pipeline_id = None
+        stage_id = None
         
         # Try to find a sender name from messages
         last_msg = WhatsAppMessage.query.filter_by(company_id=current_user.company_id, phone=id)\
@@ -353,8 +360,24 @@ def get_details(type, id):
         'tags': tags,
         'deal_value': deal_value,
         'notes': notes,
-        'is_unknown': type == 'atendimento'
+        'is_unknown': type == 'atendimento',
+        'pipeline_id': pipeline_id,
+        'stage_id': stage_id
     })
+
+@whatsapp_bp.route('/api/whatsapp/leads/<int:lead_id>/stage', methods=['POST'])
+@login_required
+def update_lead_stage(lead_id):
+    from models import Lead
+    data = request.json
+    lead = Lead.query.get_or_404(lead_id)
+    if lead.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+    
+    lead.pipeline_id = data.get('pipeline_id')
+    lead.pipeline_stage_id = data.get('stage_id')
+    db.session.commit()
+    
+    return jsonify({'success': True})
 
 @whatsapp_bp.route('/api/whatsapp/atendimento/convert', methods=['POST'])
 @login_required
