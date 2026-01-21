@@ -221,8 +221,12 @@
 
             if (data.error) throw new Error(data.error);
 
-            renderResults(data.results || [], data.debug);
-            saveState(query, city, state, data.results || []);
+            // Our api_response wraps actual data in a 'data' field
+            const results = data.data ? (data.data.results || []) : [];
+            const debugInfo = data.data ? data.data.debug : null;
+
+            renderResults(results, debugInfo);
+            saveState(query, city, state, results);
 
         } catch (error) {
             console.error(error);
