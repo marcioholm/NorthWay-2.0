@@ -214,7 +214,6 @@
                 </div>
 
                 <!-- Tab: Enrichment -->
-                <!-- Tab: Enrichment -->
                 <div id="content-page-enrichment" class="hidden space-y-6 pt-6">
 
                     {% if lead.legal_name %}
@@ -225,7 +224,7 @@
                                 <i data-lucide="info" class="w-4 h-4 text-purple-600"></i> Dados Cadastrais
                             </h3>
                             <span
-                                class="text-[10px] font-bold px-2 py-0.5 rounded-full {% if lead.registration_status == 'ATIVA' %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+                                class="text-[10px] font-bold px-2 py-0.5 rounded-full {% if lead.registration_status == 'Ativa' or lead.registration_status == 'ATIVA' %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}">
                                 {{ lead.registration_status or 'N/A' }}
                             </span>
                         </div>
@@ -256,8 +255,8 @@
                                     {% for partner in partners %}
                                     <span
                                         class="bg-purple-50 text-purple-700 text-[10px] px-2 py-0.5 rounded-full border border-purple-100 font-medium">
-                                        {{ partner.get('name') }} ({{ (partner.get('role', {})).get('text') or
-                                        'Sócio' }})
+                                        {{ partner.get('person', {}).get('name') or partner.get('name') or 'Sócio' }}
+                                        ({{ (partner.get('role', {})).get('text') or 'Sócio' }})
                                     </span>
                                     {% else %}
                                     <span class="text-gray-400 italic text-sm">Nenhum sócio listado.</span>
@@ -268,16 +267,19 @@
                     </div>
                     {% endif %}
 
+                    <!-- Action Banner -->
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
                         <div
                             class="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
                             <i data-lucide="building-2" class="w-6 h-6"></i>
                         </div>
-                        <h2 class="text-lg font-bold text-gray-900 mb-1">{% if lead.legal_name %}Atualizar Dados{% else
-                            %}Enriquecimento de Dados{% endif %}</h2>
-                        <p class="text-gray-500 text-xs mb-4">{% if lead.legal_name %}Os dados acima foram buscados na
-                            base da Receita Federal.{% else %}Busque informações corporativas detalhadas para este
-                            lead.{% endif %}</p>
+                        <h2 class="text-lg font-bold text-gray-900 mb-1">
+                            {% if lead.legal_name %}Atualizar Dados{% else %}Enriquecimento de Dados{% endif %}
+                        </h2>
+                        <p class="text-gray-500 text-xs mb-4">
+                            {% if lead.legal_name %}Os dados acima foram buscados na base da Receita Federal.{% else
+                            %}Busque informações corporativas detalhadas para este lead.{% endif %}
+                        </p>
 
                         <button onclick="openEnrichmentSearch()"
                             class="bg-purple-600 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-purple-700 transition-colors shadow-sm flex items-center gap-2 mx-auto">
@@ -285,57 +287,6 @@
                             {% if lead.legal_name %}Buscar Novamente{% else %}Buscar Empresa / CNPJ{% endif %}
                         </button>
                     </div>
-
-                    {% if lead.legal_name %}
-                    <!-- Corporate Data Card -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                            <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                <i data-lucide="info" class="w-4 h-4"></i> Dados Cadastrais
-                            </h3>
-                            <span
-                                class="text-xs font-bold px-2 py-0.5 rounded-full {% if lead.registration_status == 'ATIVA' %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}">
-                                {{ lead.registration_status or 'N/A' }}
-                            </span>
-                        </div>
-                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="text-xs text-gray-400 block uppercase font-bold mb-1">Razão
-                                    Social</label>
-                                <p class="text-sm font-medium text-gray-900">{{ lead.legal_name }}</p>
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400 block uppercase font-bold mb-1">CNPJ</label>
-                                <p class="text-sm font-mono text-gray-900">{{ lead.cnpj }}</p>
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400 block uppercase font-bold mb-1">Porte</label>
-                                <p class="text-sm text-gray-900">{{ lead.company_size or 'N/A' }}</p>
-                            </div>
-                            <div>
-                                <label class="text-xs text-gray-400 block uppercase font-bold mb-1">CNAE
-                                    Principal</label>
-                                <p class="text-sm text-gray-900">{{ lead.cnae or 'N/A' }}</p>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="text-xs text-gray-400 block uppercase font-bold mb-1">Sócios /
-                                    Administradores</label>
-                                <div class="mt-2 flex flex-wrap gap-2">
-                                    {% set partners = lead.partners_json | from_json %}
-                                    {% for partner in partners %}
-                                    <span
-                                        class="bg-purple-50 text-purple-700 text-xs px-3 py-1 rounded-full border border-purple-100 font-medium">
-                                        {{ partner.get('name') }} ({{ (partner.get('role', {})).get('text') or
-                                        'Sócio' }})
-                                    </span>
-                                    {% else %}
-                                    <span class="text-gray-400 italic text-sm">Nenhum sócio listado.</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
 
                     <!-- History -->
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
