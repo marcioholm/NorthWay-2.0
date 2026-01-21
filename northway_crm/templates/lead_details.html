@@ -214,46 +214,79 @@
             <!-- Sidebar Info -->
             <div class="space-y-6">
                 <!-- Info Card -->
+                <!-- Info Card (Editable) -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <h3
                         class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
-                        Informações</h3>
+                        Informações do Lead
+                    </h3>
 
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-xs text-gray-500 block mb-1">Origem</label>
-                            <div class="text-sm font-medium text-gray-900">{{ lead.source or 'Não informado' }}
+                    <form action="{{ url_for('leads.update_lead_info', id=lead.id) }}" method="POST" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">E-mail</label>
+                                <input type="email" name="email" value="{{ lead.email or '' }}"
+                                    placeholder="email@exemplo.com"
+                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">Telefone</label>
+                                <input type="text" name="phone" value="{{ lead.phone or '' }}"
+                                    placeholder="(00) 00000-0000"
+                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">Website</label>
+                                <input type="text" name="website" value="{{ lead.website or '' }}"
+                                    placeholder="www.site.com"
+                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">Origem</label>
+                                <input type="text" name="source" value="{{ lead.source or '' }}"
+                                    placeholder="Ex: Google, Indicação"
+                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-xs text-gray-500 block mb-1">Endereço</label>
+                                <input type="text" name="address" value="{{ lead.address or '' }}"
+                                    placeholder="Endereço completo"
+                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="text-xs text-gray-500 block mb-1">Interesse</label>
+                                <input type="text" name="interest" value="{{ lead.interest or '' }}"
+                                    placeholder="Interesse principal"
+                                    class="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
                             </div>
                         </div>
-                        <div>
-                            <label class="text-xs text-gray-500 block mb-1">Interesse</label>
-                            <div class="text-sm font-medium text-gray-900">{{ lead.interest or '-' }}</div>
-                        </div>
-                        {% if lead.notes %}
-                        <div>
-                            <label class="text-xs text-gray-500 block mb-1">Observações Iniciais</label>
-                            <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-100">{{
-                                lead.notes }}</div>
-                        </div>
-                        {% endif %}
-                        <div>
-                            <label class="text-xs text-gray-500 block mb-1">Criado em</label>
-                            <div class="text-sm font-medium text-gray-900">{{
-                                lead.created_at.strftime('%d/%m/%Y')
-                                }}
+
+                        <!-- Read-only / System Fields -->
+                        <div class="pt-2 border-t border-gray-100 grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">Criado em</label>
+                                <div class="text-sm font-medium text-gray-900">{{ lead.created_at.strftime('%d/%m/%Y')
+                                    }}</div>
                             </div>
-                        </div>
-                        <div>
-                            <label class="text-xs text-gray-500 block mb-1">Responsável</label>
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
-                                    {{ lead.assigned_user.name[:2].upper() if lead.assigned_user else 'UN' }}
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">Responsável</label>
+                                <div class="text-sm font-medium text-gray-900 flex items-center gap-1">
+                                    <div
+                                        class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px]">
+                                        {{ lead.assigned_user.name[:2].upper() if lead.assigned_user else 'UN' }}
+                                    </div>
+                                    {{ lead.assigned_user.name if lead.assigned_user else 'Não atribuído' }}
                                 </div>
-                                <span class="text-sm text-gray-900">{{ lead.assigned_user.name if lead.assigned_user
-                                    else 'Não atribuído' }}</span>
                             </div>
                         </div>
-                    </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button type="submit"
+                                class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-northway-red hover:border-northway-red px-4 py-1.5 rounded text-xs font-bold transition-colors uppercase tracking-wide">
+                                Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- BANT Qualification Card -->

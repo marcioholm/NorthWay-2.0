@@ -232,43 +232,56 @@
         <div class="p-6">
             <!-- Details Tab -->
             <div id="content-details">
+                <!-- Contact Info Form -->
+                <form id="infoForm" method="POST" class="mb-6 border-b border-gray-100 pb-6">
+                    <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4 text-gray-500"></i>
+                        Informações de Contato
+                    </h4>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">E-mail</label>
+                            <input type="email" name="email" id="modalInputEmail"
+                                class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Telefone</label>
+                            <input type="text" name="phone" id="modalInputPhone"
+                                class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Website</label>
+                            <input type="text" name="website" id="modalInputWebsite" placeholder="https://..."
+                                class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Origem</label>
+                            <input type="text" name="source" id="modalInputSource"
+                                class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Endereço</label>
+                            <input type="text" name="address" id="modalInputAddress"
+                                class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Interesse</label>
+                            <input type="text" name="interest" id="modalInputInterest"
+                                class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-3">
+                        <button type="submit"
+                            class="text-xs bg-gray-600 text-white px-3 py-1.5 rounded hover:bg-gray-700 font-bold uppercase tracking-wider">
+                            Salvar Info
+                        </button>
+                    </div>
+                </form>
+
                 <form id="bantForm" method="POST">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <!-- Basic Info (Read Only or Quick Edit if desired, for now Read Only context) -->
-                        <div class="p-4 bg-gray-50 rounded-lg col-span-2">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i data-lucide="info" class="w-4 h-4 text-gray-400"></i>
-                                <span class="text-sm font-bold text-gray-700">Interesse</span>
-                            </div>
-                            <p class="text-gray-600 text-sm" id="modalLeadInterest">-</p>
-                        </div>
-
-                        <!-- Contact Info (Compact) -->
-                        <div class="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-gray-50 p-3 rounded border border-gray-100">
-                                <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">E-mail</label>
-                                <div class="flex items-center gap-2 text-sm text-gray-700">
-                                    <i data-lucide="mail" class="w-4 h-4 text-gray-400"></i>
-                                    <span id="modalLeadEmail" class="truncate"></span>
-                                </div>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded border border-gray-100">
-                                <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Website</label>
-                                <div class="flex items-center gap-2 text-sm text-gray-700">
-                                    <i data-lucide="globe" class="w-4 h-4 text-gray-400"></i>
-                                    <a href="#" target="_blank" id="modalLeadWebsiteLink"
-                                        class="truncate hover:text-blue-600 hover:underline"></a>
-                                </div>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded border border-gray-100 col-span-2">
-                                <label class="text-[10px] uppercase font-bold text-gray-400 block mb-1">Endereço</label>
-                                <div class="flex items-center gap-2 text-sm text-gray-700">
-                                    <i data-lucide="map-pin" class="w-4 h-4 text-gray-400"></i>
-                                    <span id="modalLeadAddress" class="truncate"></span>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- BANT Fields -->
                         <div class="col-span-2">
                             <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -523,6 +536,7 @@
                 website: input.dataset.website,
                 address: input.dataset.address,
                 interest: input.dataset.interest,
+                source: input.dataset.source || 'Importado', // Add Source support
                 bant_budget: input.dataset.bantBudget,
                 bant_authority: input.dataset.bantAuthority,
                 bant_need: input.dataset.bantNeed,
@@ -533,20 +547,17 @@
 
         currentLeadId = lead.id; // Store globally for chat
 
-        // Populate Modal Fields
+        // Populate Modal Fields (Display)
         document.getElementById('modalLeadName').textContent = lead.name;
         document.getElementById('modalLeadPhone').textContent = lead.phone || 'Sem telefone';
-        document.getElementById('modalLeadInterest').textContent = lead.interest || 'Não informado';
 
-        // New Fields
-        document.getElementById('modalLeadEmail').textContent = lead.email || '-';
-
-        const websiteLink = document.getElementById('modalLeadWebsiteLink');
-        websiteLink.textContent = lead.website || '-';
-        websiteLink.href = lead.website && lead.website.startsWith('http') ? lead.website : `http://${lead.website}`;
-        if (!lead.website) websiteLink.removeAttribute('href');
-
-        document.getElementById('modalLeadAddress').textContent = lead.address || '-';
+        // Populate Inputs (New)
+        document.getElementById('modalInputEmail').value = lead.email || '';
+        document.getElementById('modalInputPhone').value = lead.phone || '';
+        document.getElementById('modalInputWebsite').value = lead.website || '';
+        document.getElementById('modalInputAddress').value = lead.address || '';
+        document.getElementById('modalInputSource').value = lead.source || '';
+        document.getElementById('modalInputInterest').value = lead.interest || '';
 
         // BANT Fields
         document.getElementById('bantBudget').value = lead.bant_budget || '';
@@ -554,9 +565,9 @@
         document.getElementById('bantTimeline').value = lead.bant_timeline || '';
         document.getElementById('bantNeed').value = lead.bant_need || '';
 
-        // Update Form Action
-        const form = document.getElementById('bantForm');
-        form.action = `/leads/${lead.id}/update_bant`;
+        // Update Form Actions
+        document.getElementById('infoForm').action = `/leads/${lead.id}/update_info`;
+        document.getElementById('bantForm').action = `/leads/${lead.id}/bant`;
 
         // Update Full Details Link
         document.getElementById('viewFullDetails').href = `/leads/${lead.id}`;

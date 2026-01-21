@@ -286,6 +286,24 @@ def update_bant(id):
     flash('Critérios BANT atualizados.', 'success')
     return redirect(url_for('leads.lead_details', id=id))
 
+@leads_bp.route('/leads/<int:id>/update_info', methods=['POST'])
+@login_required
+def update_lead_info(id):
+    lead = Lead.query.get_or_404(id)
+    if lead.company_id != current_user.company_id:
+        abort(403)
+        
+    lead.email = request.form.get('email')
+    lead.phone = request.form.get('phone')
+    lead.website = request.form.get('website')
+    lead.address = request.form.get('address')
+    lead.source = request.form.get('source')
+    lead.interest = request.form.get('interest')
+    
+    db.session.commit()
+    flash('Informações do lead atualizadas.', 'success')
+    return redirect(request.referrer or url_for('leads.lead_details', id=id))
+
 @leads_bp.route('/leads/<int:id>/interactions', methods=['POST'])
 @login_required
 def add_lead_interaction(id):
