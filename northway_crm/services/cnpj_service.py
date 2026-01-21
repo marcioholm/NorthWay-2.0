@@ -25,7 +25,11 @@ class CNPJAService:
         try:
             response = requests.get(url, params=params, headers=cls.get_headers(api_key), timeout=10)
             if response.status_code == 200:
-                return response.json()
+                data = response.json()
+                # Commercial API often wraps results in 'data' or 'items'
+                if isinstance(data, dict):
+                    return data.get('data') or data.get('items') or data
+                return data
             else:
                 current_app.logger.error(f"CNPJA Search Error: {response.text}")
                 return {"error": response.text, "status": response.status_code}
