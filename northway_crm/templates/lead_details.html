@@ -233,21 +233,21 @@
                             <!-- Phone with DDI -->
                             <div>
                                 <label class="text-xs text-gray-500 block mb-1">Telefone</label>
-                                <div class="flex gap-2">
+                                <div class="flex gap-2 min-w-0">
                                     <select name="phone_ddi" id="inputDDI"
-                                        class="w-24 px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none bg-white">
-                                        <option value="+55">+55 (BR)</option>
-                                        <option value="+1">+1 (US)</option>
-                                        <option value="+351">+351 (PT)</option>
-                                        <option value="+44">+44 (UK)</option>
-                                        <option value="+34">+34 (ES)</option>
-                                        <option value="+33">+33 (FR)</option>
-                                        <option value="+49">+49 (DE)</option>
-                                        <option value="+39">+39 (IT)</option>
+                                        class="w-20 px-1 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none bg-white">
+                                        <option value="+55">+55</option>
+                                        <option value="+1">+1</option>
+                                        <option value="+351">+351</option>
+                                        <option value="+44">+44</option>
+                                        <option value="+34">+34</option>
+                                        <option value="+33">+33</option>
+                                        <option value="+49">+49</option>
+                                        <option value="+39">+39</option>
                                     </select>
                                     <input type="text" name="phone_number" id="inputPhoneNumber"
                                         placeholder="(00) 00000-0000" oninput="maskPhone(this)"
-                                        class="flex-1 px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                        class="flex-1 min-w-0 px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
                                 </div>
                                 <input type="hidden" id="rawPhone" value="{{ lead.phone or '' }}">
                             </div>
@@ -341,13 +341,16 @@
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500 block mb-1">Responsável</label>
-                                <div class="text-sm font-medium text-gray-900 flex items-center gap-1">
-                                    <div
-                                        class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px]">
-                                        {{ lead.assigned_user.name[:2].upper() if lead.assigned_user else 'UN' }}
-                                    </div>
-                                    {{ lead.assigned_user.name if lead.assigned_user else 'Não atribuído' }}
-                                </div>
+                                <select name="assigned_to_id"
+                                    class="w-full bg-gray-50 border border-gray-200 rounded text-xs px-2 py-1 outline-none focus:border-northway-red text-gray-700">
+                                    <option value="none">Não atribuído</option>
+                                    {% for user in users %}
+                                    <option value="{{ user.id }}" {{ 'selected' if lead.assigned_to_id==user.id else ''
+                                        }}>
+                                        {{ user.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
                             </div>
                         </div>
 

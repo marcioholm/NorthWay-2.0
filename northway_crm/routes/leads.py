@@ -98,7 +98,9 @@ def lead_details(id):
     lead = Lead.query.get_or_404(id)
     if lead.company_id != current_user.company_id:
         abort(403)
-    return render_template('lead_details.html', lead=lead)
+    
+    users = User.query.filter_by(company_id=current_user.company_id).all()
+    return render_template('lead_details.html', lead=lead, users=users)
 
 @leads_bp.route('/pipeline')
 @leads_bp.route('/pipeline/<int:pipeline_id>')
@@ -309,6 +311,14 @@ def update_lead_info(id):
     lead.address = request.form.get('address')
     lead.source = request.form.get('source')
     lead.interest = request.form.get('interest')
+    
+    # Handle Assignment
+    assigned_id = request.form.get('assigned_to_id')
+    if assigned_id:
+        if assigned_id == 'none':
+            lead.assigned_to_id = None
+        else:
+            lead.assigned_to_id = int(assigned_id)
     
     db.session.commit()
     flash('Informações do lead atualizadas.', 'success')
