@@ -109,21 +109,20 @@ def test_google_maps():
     if not api_key:
         return api_response(success=False, error='API Key is required', status=400)
     
-    # Test by doing a simple search (e.g., "Northway")
-    url = "https://places.googleapis.com/v1/places:searchText"
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": "places.id"
+    # Test by doing a simple search (e.g., "Google") using Legacy API
+    url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
+    params = {
+        'query': 'Google',
+        'key': api_key
     }
-    payload = {"textQuery": "Google"}
     
     try:
-        res = requests.post(url, headers=headers, json=payload, timeout=10)
-        if res.status_code == 200:
+        res = requests.get(url, params=params, timeout=10)
+        data = res.json()
+        if res.status_code == 200 and data.get('status') == 'OK':
             return api_response(success=True)
         else:
-            err = res.json().get('error', {}).get('message', res.text)
+            err = data.get('error_message', data.get('status', 'Unknown Error'))
             return api_response(success=False, error=f"Google Error: {err}")
     except Exception as e:
         return api_response(success=False, error=str(e))
