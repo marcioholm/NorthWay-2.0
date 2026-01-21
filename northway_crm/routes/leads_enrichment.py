@@ -51,35 +51,42 @@ def enrich_lead(lead_id):
     try:
         # Enrich basic info if not present or explicitly requested
         # Map CNPJA fields to our model
-        # cnpja common fields: 'name' (Razão Social), 'alias' (Fantasia), 'tax_id' (CNPJ), 'status' -> 'text'
+        # CNPJA Commercial API uses 'taxId' and 'company' object
         
-        lead.legal_name = details.get('name')
-        lead.cnpj = details.get('tax_id')
+        lead.legal_name = details.get('company', {}).get('name') or details.get('alias')
+        lead.cnpj = details.get('taxId')
         
         status_info = details.get('status', {})
         lead.registration_status = status_info.get('text') if isinstance(status_info, dict) else status_info
         
-        lead.company_size = details.get('size', {}).get('text') if isinstance(details.get('size'), dict) else details.get('size')
+        # Company Size
+        size_info = details.get('company', {}).get('size', {})
+        lead.company_size = size_info.get('text') if isinstance(size_info, dict) else str(size_info)
         
-        # CNAE
-        main_activity = details.get('main_activity', {})
-        lead.cnae = f"{main_activity.get('code')} - {main_activity.get('text')}" if isinstance(main_activity, dict) else str(main_activity)
+        # CNAE (mainActivity)
+        main_activity = details.get('mainActivity', {})
+        if isinstance(main_activity, dict):
+            code = main_activity.get('id') or main_activity.get('code')
+            text = main_activity.get('text')
+            lead.cnae = f"{code} - {text}" if code else text
+        else:
+            lead.cnae = str(main_activity)
         
-        # Partners
-        partners = details.get('members', [])
+        # Partners (members inside company)
+        partners = details.get('company', {}).get('members', [])
         lead.partners_json = json.dumps(partners)
         
-        # Address (Optional enrichment)
+        # Address
         address_info = details.get('address', {})
         if address_info:
-            street = address_info.get('street')
-            number = address_info.get('number')
-            city = address_info.get('city')
-            state = address_info.get('state')
-            zip_code = address_info.get('zip')
+            street = address_info.get('street') or ''
+            number = address_info.get('number') or 'S/N'
+            city = address_info.get('city') or ''
+            state = address_info.get('state') or ''
+            zip_code = address_info.get('zip') or ''
             
             full_addr = f"{street}, {number} - {city}/{state} CEP: {zip_code}"
-            if not lead.address:
+            if not lead.address or lead.address.startswith('None'):
                 lead.address = full_addr
         
         # History

@@ -3,7 +3,7 @@ from flask import current_app
 import os
 
 class CNPJAService:
-    BASE_URL = "https://api.cnpja.com.br"
+    BASE_URL = "https://api.cnpja.com"
     
     @classmethod
     def get_headers(cls, api_key):
