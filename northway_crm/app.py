@@ -3,6 +3,7 @@ from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Blueprint
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine, text
 from flask_login import LoginManager, current_user
 from models import db, User, Task, Role
 import json
@@ -34,40 +35,70 @@ def create_app():
     # --- CONFIGURATION ---
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'northway-crm-secure-key')
     
-    # Database
+    # Database Setup with Resilience
     database_url = os.environ.get('DATABASE_URL')
+    
+    def test_db_connection(url):
+        if not url: return False
+        try:
+            # Short timeout (5s) to avoid hanging startup
+            engine = create_engine(url, connect_args={'connect_timeout': 5})
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            return True
+        except Exception as conn_e:
+            print(f"📡 DB CONNECTION TEST FAILED: {conn_e}")
+            return False
+
     try:
+        # 1. Normalize Postgres URL
         if database_url and database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         
-        # Priority check for Postgres
-        if database_url and 'postgresql' in database_url:
+        # 2. Check if we should use Postgres and if it's reachable
+        is_postgres = database_url and 'postgresql' in database_url
+        connection_ok = False
+        
+        if is_postgres:
             try:
                 import psycopg2
-                print("🐘 DATABASE: Using PostgreSQL (Supabase/External)")
+                print("🐘 DATABASE: Testing PostgreSQL connection...")
+                connection_ok = test_db_connection(database_url)
             except ImportError:
-                print("⚠️ Postgres configured but 'psycopg2' missing. Attempting SQLite fallback.")
-                database_url = None 
+                print("⚠️ Postgres configured but 'psycopg2' missing.")
+        
+        # 3. Decision Logic & Fallbacks
+        if is_postgres and connection_ok:
+            print("✅ DATABASE: Connection to PostgreSQL successful.")
+        else:
+            if is_postgres:
+                print("⚠️ DATABASE: PostgreSQL unreachable or driver error. Falling back to SQLite.")
             
-        if not database_url:
-            # Vercel Workaround: Copy SQLite to /tmp (VOLATILE fallback)
-            import shutil
+            # Vercel/Local SQLite Choice
             src_db = os.path.join(app.root_path, 'crm.db')
             tmp_db = '/tmp/crm.db'
             
             if os.path.exists(src_db):
-                try:
-                    shutil.copy2(src_db, tmp_db)
-                    database_url = f'sqlite:///{tmp_db}'
-                    print(f"⚠️ DATABASE: Using VOLATILE SQLite at {tmp_db} (Data will be lost on reset)")
-                except Exception as copy_e:
-                    print(f"Failed to copy DB: {copy_e}")
-                    database_url = 'sqlite:///:memory:' 
+                # If we are on Vercel (read-only), we might need to copy to /tmp
+                # On local mac, we can just use crm.db directly
+                if os.access(app.root_path, os.W_OK):
+                    database_url = f'sqlite:///{src_db}'
+                    print(f"🏠 DATABASE: Using local SQLite at {src_db}")
+                else:
+                    import shutil
+                    try:
+                        shutil.copy2(src_db, tmp_db)
+                        database_url = f'sqlite:///{tmp_db}'
+                        print(f"📦 DATABASE: Using copied SQLite at {tmp_db} (Vercel Mode)")
+                    except:
+                        database_url = 'sqlite:///:memory:'
+                        print("💾 DATABASE: Read-only FS and copy failed. Using In-Memory.")
             else:
-                print("⚠️ DATABASE: No persistent DB found. Using in-memory (TEMPORARY).")
-                database_url = 'sqlite:///:memory:' 
+                print("⚠️ DATABASE: No 'crm.db' found. Using In-Memory.")
+                database_url = 'sqlite:///:memory:'
+
     except Exception as e:
-        print(f"Critical DB setup error: {e}")
+        print(f"🔥 CRITICAL DB SETUP ERROR: {e}")
         database_url = 'sqlite:///:memory:' 
 
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
