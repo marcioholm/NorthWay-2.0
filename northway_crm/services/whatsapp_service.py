@@ -420,10 +420,40 @@ class WhatsAppService:
             ).all()
             
             unread_map = {u: c for u, c in unread_stats}
+
+            # 4b. Fill Unread Counts for Unlinked Messages (by Phone)
+            unread_stats_phone = db.session.query(
+                WhatsAppMessage.phone,
+                db.func.count(WhatsAppMessage.id)
+            ).filter(
+                WhatsAppMessage.company_id == company_id,
+                WhatsAppMessage.direction == 'in',
+                WhatsAppMessage.status != 'read',
+                WhatsAppMessage.contact_uuid == None
+            ).group_by(
+                WhatsAppMessage.phone
+            ).all()
+
+            # Create a map of Phone -> Conversation Key to handle unlinked messages
+            phone_to_key = {}
+            for k, v in conversations.items():
+                if v.get('phone'):
+                    norm = WhatsAppService.normalize_phone(v['phone'])
+                    if norm:
+                        phone_to_key[norm] = k
+
+            for p, c in unread_stats_phone:
+                if p:
+                    norm = WhatsAppService.normalize_phone(p)
+                    if norm and norm in phone_to_key:
+                        key = phone_to_key[norm]
+                        # Add to existing count (derived from UUIDs)
+                        conversations[key]['unread_count'] = conversations[key].get('unread_count', 0) + c
             
             for k, v in conversations.items():
                 if k in unread_map:
-                    v['unread_count'] = unread_map[k]
+                    # Initialize or add to what we found via phone
+                    v['unread_count'] = v.get('unread_count', 0) + unread_map[k]
                     
         except Exception as e:
             current_app.logger.error(f"Error in get_inbox_conversations: {e}")
