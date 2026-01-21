@@ -20,7 +20,7 @@ class CNPJAService:
         Searches for companies by name.
         """
         url = f"{cls.BASE_URL}/office"
-        params = {"name": name}
+        params = {"names.in": name}
         
         try:
             response = requests.get(url, params=params, headers=cls.get_headers(api_key), timeout=10)
