@@ -49,6 +49,10 @@
                         class="py-3 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
                         <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
                     </button>
+                    <button onclick="switchPageTab('enrichment')" id="tab-page-enrichment"
+                        class="py-3 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-4 h-4"></i> Empresa & CNPJ
+                    </button>
                 </div>
 
                 <!-- Tab: Details (Existing Feed) -->
@@ -206,6 +210,102 @@
                             <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas de ponta a
                             ponta.
                         </p>
+                    </div>
+
+                    <!-- Tab: Enrichment -->
+                    <div id="content-page-enrichment" class="hidden space-y-6 pt-6">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                            <div
+                                class="w-16 h-16 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="building-2" class="w-8 h-8"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-900 mb-2">Enriquecimento de Dados</h2>
+                            <p class="text-gray-500 text-sm mb-6">Busque informações corporativas detalhadas para este
+                                lead diretamente da base da Receita Federal.</p>
+
+                            <button onclick="openEnrichmentSearch()"
+                                class="bg-purple-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-purple-700 transition-colors shadow-sm flex items-center gap-2 mx-auto">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                                Buscar Empresa / CNPJ
+                            </button>
+                        </div>
+
+                        {% if lead.legal_name %}
+                        <!-- Corporate Data Card -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                                    <i data-lucide="info" class="w-4 h-4"></i> Dados Cadastrais
+                                </h3>
+                                <span
+                                    class="text-xs font-bold px-2 py-0.5 rounded-full {% if lead.registration_status == 'ATIVA' %}bg-green-100 text-green-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+                                    {{ lead.registration_status or 'N/A' }}
+                                </span>
+                            </div>
+                            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="text-xs text-gray-400 block uppercase font-bold mb-1">Razão
+                                        Social</label>
+                                    <p class="text-sm font-medium text-gray-900">{{ lead.legal_name }}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-400 block uppercase font-bold mb-1">CNPJ</label>
+                                    <p class="text-sm font-mono text-gray-900">{{ lead.cnpj }}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-400 block uppercase font-bold mb-1">Porte</label>
+                                    <p class="text-sm text-gray-900">{{ lead.company_size or 'N/A' }}</p>
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-400 block uppercase font-bold mb-1">CNAE
+                                        Principal</label>
+                                    <p class="text-sm text-gray-900">{{ lead.cnae or 'N/A' }}</p>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="text-xs text-gray-400 block uppercase font-bold mb-1">Sócios /
+                                        Administradores</label>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        {% set partners = lead.partners_json | from_json %}
+                                        {% for partner in partners %}
+                                        <span
+                                            class="bg-purple-50 text-purple-700 text-xs px-3 py-1 rounded-full border border-purple-100 font-medium">
+                                            {{ partner.get('name') }} ({{ (partner.get('role', {})).get('text') or
+                                            'Sócio' }})
+                                        </span>
+                                        {% else %}
+                                        <span class="text-gray-400 italic text-sm">Nenhum sócio listado.</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- History -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <i data-lucide="history" class="w-4 h-4 text-gray-400"></i>
+                                Histórico de Atualizações
+                            </h3>
+                            <div class="space-y-4">
+                                {% set history = lead.enrichment_history | from_json %}
+                                {% for item in history|reverse %}
+                                <div class="flex items-start gap-3 text-sm">
+                                    <div class="w-2 h-2 rounded-full bg-purple-400 mt-1.5"></div>
+                                    <div>
+                                        <p class="text-gray-900">Enriquecido por <strong>{{ item.user }}</strong> via
+                                            <strong>{{ item.source }}</strong>
+                                        </p>
+                                        <p class="text-xs text-gray-500">{{ item.date | replace('T', ' ') | truncate(16,
+                                            True, '') }} - CNPJ: {{ item.cnpj }}</p>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <p class="text-center text-gray-400 text-sm py-4 italic">Nenhuma atualização registrada
+                                    ainda.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -603,6 +703,36 @@
         </form>
     </div>
 </div>
+
+<!-- Enrichment Search Modal -->
+<div id="enrichmentModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Buscar Empresa / CNPJ</h3>
+            <button onclick="toggleModal('enrichmentModal')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <div class="flex gap-2">
+                <input type="text" id="enrichmentSearchInput" placeholder="Nome da empresa ou CNPJ"
+                    value="{{ lead.name }}"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600">
+                <button onclick="handleEnrichmentSearch()" id="btnDoEnrichmentSearch"
+                    class="bg-purple-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-purple-700 transition-colors">
+                    Buscar
+                </button>
+            </div>
+
+            <div id="enrichmentResults" class="max-h-64 overflow-y-auto space-y-2">
+                <!-- Results will appear here -->
+                <p class="text-center text-gray-400 text-sm py-8">Digite o nome da empresa ou CNPJ acima para buscar.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -622,35 +752,118 @@
     function switchPageTab(tabName) {
         const detailsTab = document.getElementById('tab-page-details');
         const whatsappTab = document.getElementById('tab-page-whatsapp');
+        const enrichmentTab = document.getElementById('tab-page-enrichment');
+
         const contentDetails = document.getElementById('content-page-details');
         const contentWhatsapp = document.getElementById('content-page-whatsapp');
+        const contentEnrichment = document.getElementById('content-page-enrichment');
+
+        // Reset tabs
+        [detailsTab, whatsappTab, enrichmentTab].forEach(t => {
+            if (t) {
+                t.classList.remove('text-northway-red', 'border-northway-red', 'text-green-600', 'border-green-600', 'text-purple-600', 'border-purple-600');
+                t.classList.add('text-gray-500', 'border-transparent');
+            }
+        });
+
+        // Reset content
+        [contentDetails, contentWhatsapp, contentEnrichment].forEach(c => {
+            if (c) c.classList.add('hidden');
+        });
 
         if (tabName === 'details') {
             detailsTab.classList.add('text-northway-red', 'border-northway-red');
             detailsTab.classList.remove('text-gray-500', 'border-transparent');
-
-            whatsappTab.classList.remove('text-green-600', 'border-green-600');
-            whatsappTab.classList.add('text-gray-500', 'border-transparent');
-
             contentDetails.classList.remove('hidden');
-            contentWhatsapp.classList.add('hidden');
+            if (pagePollingInterval) clearInterval(pagePollingInterval);
         } else if (tabName === 'whatsapp') {
-            detailsTab.classList.remove('text-northway-red', 'border-northway-red');
-            detailsTab.classList.add('text-gray-500', 'border-transparent');
-
             whatsappTab.classList.add('text-green-600', 'border-green-600');
             whatsappTab.classList.remove('text-gray-500', 'border-transparent');
-
-            contentDetails.classList.add('hidden');
             contentWhatsapp.classList.remove('hidden');
-
             loadPageWhatsAppMessages();
-
-            // Start Polling
             if (pagePollingInterval) clearInterval(pagePollingInterval);
             pagePollingInterval = setInterval(() => loadPageWhatsAppMessages(true), 5000);
-        } else {
+        } else if (tabName === 'enrichment') {
+            enrichmentTab.classList.add('text-purple-600', 'border-purple-600');
+            enrichmentTab.classList.remove('text-gray-500', 'border-transparent');
+            contentEnrichment.classList.remove('hidden');
             if (pagePollingInterval) clearInterval(pagePollingInterval);
+        }
+    }
+
+    // --- ENRICHMENT LOGIC ---
+    function openEnrichmentSearch() {
+        toggleModal('enrichmentModal');
+    }
+
+    async function handleEnrichmentSearch() {
+        const query = document.getElementById('enrichmentSearchInput').value.trim();
+        if (!query) return;
+
+        const resultsContainer = document.getElementById('enrichmentResults');
+        const btn = document.getElementById('btnDoEnrichmentSearch');
+
+        resultsContainer.innerHTML = '<div class="flex justify-center py-8"><div class="animate-spin h-8 w-8 border-4 border-purple-600 rounded-full border-t-transparent"></div></div>';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/api/leads/search-cnpj?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+
+            if (!data.success) {
+                resultsContainer.innerHTML = `<p class="text-center text-red-500 py-8">${data.error || 'Erro na busca'}</p>`;
+                return;
+            }
+
+            const results = data.data; // CNPJA returns a list or direct object
+            const companies = Array.isArray(results) ? results : (results.tax_id ? [results] : []);
+
+            if (companies.length === 0) {
+                resultsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhuma empresa encontrada.</p>';
+            } else {
+                resultsContainer.innerHTML = companies.map(c => `
+                    <div class="p-4 border border-gray-100 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer group" onclick="confirmEnrichment('${c.tax_id}', '${c.name.replace(/'/g, "\\'")}')">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h4 class="text-sm font-bold text-gray-900 group-hover:text-purple-600">${c.name}</h4>
+                                <p class="text-xs text-gray-500 mt-0.5">${c.tax_id} &bull; ${c.alias || ''}</p>
+                                <p class="text-[10px] text-gray-400 mt-1">${c.address ? c.address.city + '/' + c.address.state : ''}</p>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500 uppercase">${(c.status || {}).text || c.status || 'N/A'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            resultsContainer.innerHTML = `<p class="text-center text-red-500 py-8">Erro: ${e.message}</p>`;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function confirmEnrichment(cnpj, name) {
+        if (!confirm(`Deseja enriquecer este lead com os dados de "${name}"?`)) return;
+
+        const resultsContainer = document.getElementById('enrichmentResults');
+        resultsContainer.innerHTML = '<div class="flex justify-center py-8"><div class="animate-spin h-8 w-8 border-4 border-purple-600 rounded-full border-t-transparent"></div></div>';
+
+        try {
+            const res = await fetch(`/api/leads/${pageLeadId}/enrich`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cnpj: cnpj })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                alert('Lead enriquecido com sucesso!');
+                window.location.reload();
+            } else {
+                throw new Error(data.error || 'Erro desconhecido');
+            }
+        } catch (e) {
+            alert('Erro ao enriquecer: ' + e.message);
+            handleEnrichmentSearch(); // Refresh results
         }
     }
 

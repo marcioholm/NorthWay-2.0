@@ -240,10 +240,19 @@ class Lead(db.Model):
     bant_need = db.Column(db.Text, nullable=True) # Necessidade detalhada
     bant_timeline = db.Column(db.String(100), nullable=True) # Prazo estimado
     
-    # Prospecting Fields
+    # Prospecting & Enrichment Fields
     website = db.Column(db.String(200), nullable=True)
     address = db.Column(db.String(255), nullable=True)
     profile_pic_url = db.Column(db.String(500), nullable=True) # WhatsApp Profile Pic
+    
+    # CNPJ Enrichment
+    legal_name = db.Column(db.String(200), nullable=True) # Razão Social
+    cnpj = db.Column(db.String(20), nullable=True)
+    registration_status = db.Column(db.String(50), nullable=True) # Situação Cadastral
+    company_size = db.Column(db.String(50), nullable=True) # Porte
+    cnae = db.Column(db.String(200), nullable=True) # Atividade Principal
+    partners_json = db.Column(db.Text, nullable=True) # List of partners
+    enrichment_history = db.Column(db.Text, nullable=True) # Log of updates
 
     @property
     def task_progress(self):

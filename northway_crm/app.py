@@ -198,6 +198,8 @@ def create_app():
         app.register_blueprint(whatsapp_bp)
         app.register_blueprint(clients_bp)
         app.register_blueprint(leads_bp)
+        from routes.leads_enrichment import enrichment_bp
+        app.register_blueprint(enrichment_bp)
         app.register_blueprint(contracts_bp)
         app.register_blueprint(dashboard_bp)
         app.register_blueprint(tasks_bp)
