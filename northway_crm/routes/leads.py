@@ -318,7 +318,12 @@ def update_lead_info(id):
         if assigned_id == 'none':
             lead.assigned_to_id = None
         else:
-            lead.assigned_to_id = int(assigned_id)
+            # Validate Cross-Company Assignment
+            user_to_assign = User.query.get(int(assigned_id))
+            if user_to_assign and user_to_assign.company_id == current_user.company_id:
+                lead.assigned_to_id = int(assigned_id)
+            else:
+                flash("Erro: Tentativa de atribuir usuário inválido ou de outra organização.", "error")
     
     db.session.commit()
     flash('Informações do lead atualizadas.', 'success')
