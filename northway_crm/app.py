@@ -255,32 +255,31 @@ def create_app():
                 
             # Seed minimal data if empty (prevent lockout)
             if not User.query.first():
-                 print("🌱 Seeding default Admin...")
-                     print("🌱 Seeding default Admin...")
-                     # Create default company and user if needed
-                     from models import Company
-                     from werkzeug.security import generate_password_hash
-                     
-                     if not Company.query.first():
-                         c = Company(name="NorthWay Default", plan="pro", status="active")
-                         db.session.add(c)
-                         db.session.commit()
-                         
-                         r = Role(name="Administrador", company_id=c.id, permissions=["admin_view"]) # Simplified
-                         db.session.add(r)
-                         db.session.commit()
-                         
-                         u = User(
-                             name="Admin", 
-                             email="admin@northway.com", 
-                             password_hash=generate_password_hash("123456"),
-                             company_id=c.id,
-                             role="admin",
-                             role_id=r.id
-                         )
-                         db.session.add(u)
-                         db.session.commit()
-                         print("✅ Default Admin created: admin@northway.com / 123456")
+                print("🌱 Seeding default Admin...")
+                # Create default company and user if needed
+                from models import Company
+                from werkzeug.security import generate_password_hash
+                
+                if not Company.query.first():
+                    c = Company(name="NorthWay Default", plan="pro", status="active")
+                    db.session.add(c)
+                    db.session.commit()
+                    
+                    r = Role(name="Administrador", company_id=c.id, permissions=["admin_view"]) # Simplified
+                    db.session.add(r)
+                    db.session.commit()
+                    
+                    u = User(
+                        name="Admin", 
+                        email="admin@northway.com", 
+                        password_hash=generate_password_hash("123456"),
+                        company_id=c.id,
+                        role="admin",
+                        role_id=r.id
+                    )
+                    db.session.add(u)
+                    db.session.commit()
+                    print("✅ Default Admin created: admin@northway.com / 123456")
         except Exception as seed_e:
             print(f"❌ Auto-migration failed: {seed_e}")
 
