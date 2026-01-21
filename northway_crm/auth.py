@@ -1,9 +1,37 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES
 
 auth = Blueprint('auth', __name__)
+
+@auth.before_app_request
+def check_saas_status():
+    """
+    Middleware to enforce SaaS flow:
+    1. Login
+    2. Company Setup (if no company)
+    3. Payment (if inactive subscription)
+    """
+    if current_user.is_authenticated:
+        # Prevent infinite loops / allow static assets / allow auth routes
+        if not request.endpoint:
+            return
+            
+        if 'static' in request.endpoint or 'auth.' in request.endpoint:
+            # Explicitly allow setup_company and payment routes within auth
+            return
+            
+        # 1. Enforce Company Setup
+        if not current_user.company_id:
+            return redirect(url_for('auth.setup_company'))
+            
+        # 2. Enforce Subscription Active (Skip for Super Admin if needed)
+        if current_user.company and current_user.company.subscription_status != 'active':
+             # Allow access if bypassing payment (optional) or strictly redirect
+             # For now, strictly redirect to payment plan
+             if not getattr(current_user, 'is_super_admin', False):
+                 return redirect(url_for('auth.payment_plan'))
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -20,39 +48,25 @@ def login():
             })
             supabase_user = res.user
         except Exception as e:
-            # If Supabase login fails, we might fall back to legacy check logic below
-            # verify specifically if it was invalid credentials vs other error
-            pass # Keep supabase_user as None
+            pass 
 
         # 2. Local User Lookup
         user = User.query.filter_by(email=email).first()
         
-        # 3. Validation Logic
         authenticated = False
         
         if supabase_user:
-            # Supabase auth successful
             authenticated = True
-            
             if user:
-                # Link if not linked
                 if not user.supabase_uid:
                      user.supabase_uid = supabase_user.id
                      db.session.commit()
             else:
-                # User exists in Supabase but not locally?
-                # This could happen if signed up elsewhere. For now, we block or create.
-                # Let's create a minimal user linked to a default/orphan? Or just block.
-                # SAFEST: Flash error "Contact support" or implementation auto-create.
-                # For this task, we assume flow starts at Register.
-                flash('Usuário encontrado no Supabase mas não no sistema local. Contate suporte.', 'error')
+                flash('Usuário no Supabase mas não no DB Local. Contate suporte.', 'error')
                 return redirect(url_for('auth.login'))
 
         elif user and check_password_hash(user.password_hash, password):
-             # Legacy Auth Successful
              authenticated = True
-             # We should probably migrate them to Supabase here if we had the raw password,
-             # but we can't migrate the hash. So they stay legacy until manual password reset.
         
         if authenticated and user:
             login_user(user)
@@ -67,9 +81,10 @@ def login():
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        company_name = request.form.get('company_name')
+        # Step 1: User Info Only
         name = request.form.get('name')
         email = request.form.get('email')
+        phone = request.form.get('phone') # Captured but currently User model might not have strict column or we use it later
         password = request.form.get('password')
         
         # 1. Validation
@@ -86,7 +101,7 @@ def register():
                 "options": {
                     "data": {
                         "name": name,
-                        "company_name": company_name
+                        "phone": phone
                     }
                 }
             })
@@ -97,17 +112,63 @@ def register():
             return redirect(url_for('auth.register'))
 
         if not supabase_uid:
-             # Should be caught by exception but just in case
              flash('Erro desconhecido no cadastro.', 'error')
              return redirect(url_for('auth.register'))
             
-        # 2. Create Company
-        company = Company(name=company_name)
-        db.session.add(company)
-        db.session.flush() # Get ID
+        # 3. Create User (Orphaned - No Company Yet)
+        user = User(
+            name=name,
+            email=email,
+            phone=phone, # Ensure User model has this field
+            password_hash=generate_password_hash(password),
+            supabase_uid=supabase_uid,
+            company_id=None, # Explicitly None
+            role=None,
+            role_id=None
+        )
+        db.session.add(user)
+        db.session.commit()
         
-        # 3. Create Default Role (Admin)
-        # Updated Permissions to match new standard
+        # 4. Auto Login
+        login_user(user)
+        flash('Conta criada! Agora configure sua empresa.', 'success')
+        return redirect(url_for('auth.setup_company'))
+        
+    return render_template('register.html')
+
+@auth.route('/setup-company', methods=['GET', 'POST'])
+@login_required
+def setup_company():
+    # If already has company, skip
+    if current_user.company_id:
+        return redirect(url_for('dashboard.home'))
+
+    if request.method == 'POST':
+        company_name = request.form.get('company_name')
+        cpf_cnpj = request.form.get('cpf_cnpj')
+        person_type = request.form.get('person_type') # PF or PJ
+        
+        # Validation
+        if not company_name or not cpf_cnpj:
+            flash('Todos os campos são obrigatórios.', 'error')
+            return redirect(url_for('auth.setup_company'))
+            
+        # Check Uniqueness
+        if Company.query.filter_by(cpf_cnpj=cpf_cnpj).first():
+            flash('Este CPF/CNPJ já está cadastrado em outra conta.', 'error')
+            return redirect(url_for('auth.setup_company'))
+
+        # 1. Create Company
+        company = Company(
+            name=company_name,
+            cpf_cnpj=cpf_cnpj,
+            document=cpf_cnpj, # Legacy sync
+            subscription_status='inactive' # Needs payment
+        )
+        db.session.add(company)
+        db.session.flush()
+        
+        # 2. Create Default Role (Admin)
         admin_perms = [
             'dashboard_view', 'financial_view', 'leads_view', 'pipeline_view', 
             'goals_view', 'tasks_view', 'clients_view', 'whatsapp_view', 
@@ -124,33 +185,12 @@ def register():
         db.session.add(admin_role)
         db.session.flush()
         
-        # 4. Create or Update User
-        # Check if user was auto-created by Supabase Trigger (orphaned without company)
-        user = User.query.filter_by(email=email).first()
+        # 3. Bind User to Company & Role
+        current_user.company_id = company.id
+        current_user.role_id = admin_role.id
+        current_user.role = 'admin'
         
-        if user:
-             # Update existing orphaned user
-             user.name = name
-             user.password_hash = generate_password_hash(password)
-             user.supabase_uid = supabase_uid
-             user.company_id = company.id
-             user.role_id = admin_role.id
-             user.role = 'admin'
-        else:
-             # Create new user
-            user = User(
-                name=name,
-                email=email,
-                password_hash=generate_password_hash(password), # Keep legacy hash for fallback/hybrid
-                supabase_uid=supabase_uid, 
-                company_id=company.id,
-                role_id=admin_role.id,
-                role='admin' # Legacy field support
-            )
-            db.session.add(user)
-        
-        # 5. Bootstrap Defaults
-        
+        # 4. Bootstrap Defaults (Pipeline, Categories, etc)
         # Default Pipeline
         pipeline = Pipeline(name='Funil de Vendas', company_id=company.id)
         db.session.add(pipeline)
@@ -161,33 +201,54 @@ def register():
             stage = PipelineStage(name=s_name, order=i, pipeline_id=pipeline.id, company_id=company.id)
             db.session.add(stage)
             
-        # Assign Pipeline Access
-        user.allowed_pipelines.append(pipeline)
+        current_user.allowed_pipelines.append(pipeline)
         
         # Default Financial Categories
         cats = [
-            ('Vendas', 'revenue'),
-            ('Serviços', 'revenue'),
-            ('Marketing', 'cost'),
-            ('Equipe', 'expense'),
-            ('Escritório', 'expense'),
-            ('Impostos', 'expense')
+            ('Vendas', 'revenue'), ('Serviços', 'revenue'), ('Marketing', 'cost'),
+            ('Equipe', 'expense'), ('Escritório', 'expense'), ('Impostos', 'expense')
         ]
         for c_name, c_type in cats:
             db.session.add(FinancialCategory(name=c_name, type=c_type, is_default=True, company_id=company.id))
             
-        # Default Integration Placeholders
         db.session.add(Integration(company_id=company.id, service='z_api', is_active=False))
         db.session.add(Integration(company_id=company.id, service='google_maps', is_active=False))
         
         db.session.commit()
         
-        # 6. Auto Login
-        login_user(user)
-        flash(f'Bem-vindo à {company_name}! Sua conta foi criada.', 'success')
+        flash('Empresa configurada! Escolha seu plano.', 'success')
+        return redirect(url_for('auth.payment_plan'))
+        
+    return render_template('setup_company.html')
+
+@auth.route('/payment-plan')
+@login_required
+def payment_plan():
+    # Skip if active
+    if current_user.company and current_user.company.subscription_status == 'active':
         return redirect(url_for('dashboard.home'))
         
-    return render_template('register.html')
+    return render_template('payment_plan.html')
+
+@auth.route('/payment-checkout/<plan>', methods=['POST'])
+@login_required
+def payment_checkout(plan):
+    # INTEGRATION TODO: Call AsaasService here
+    # 1. Create Customer in Asaas (if not exists)
+    # 2. Create Subscription
+    # 3. Get Checkout URL
+    
+    # FOR NOW: Simulating Success for Development Flow
+    # In production, this would redirect to Asaas URL
+    
+    current_user.company.plan_type = plan
+    current_user.company.subscription_status = 'active' # SIMULATION
+    current_user.company.subscription_id = 'sub_sim_' + plan
+    
+    db.session.commit()
+    
+    flash('Pagamento simulado com sucesso! Bem-vindo.', 'success')
+    return redirect(url_for('dashboard.home'))
 
 @auth.route('/logout')
 @login_required

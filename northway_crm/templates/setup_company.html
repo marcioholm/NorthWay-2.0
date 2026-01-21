@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex bg-white">
+    <!-- Left Side: Image & Branding -->
+    <div class="hidden lg:flex lg:w-1/2 relative bg-northway-dark overflow-hidden">
+        <div id="setup-bg-image" class="absolute inset-0 bg-cover bg-center"
+            style="background-image: url('{{ url_for('static', filename='images/login-bg.png') }}'); opacity: 0.8;">
+        </div>
+        <div class="absolute inset-0 bg-northway-red/60 mix-blend-multiply"></div>
+
+        <div class="relative z-10 p-12 flex flex-col justify-center h-full w-full text-white">
+            <h2 class="text-4xl font-bold mb-4">Configurar Organização</h2>
+            <p class="text-xl opacity-90">Para começar, precisamos dos dados da sua empresa.</p>
+        </div>
+    </div>
+
+    <!-- Right Side: Form -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-gray-50">
+        <div class="w-full max-w-md space-y-8">
+            <div class="text-center lg:text-left">
+                <h2 class="text-3xl font-bold text-gray-900 tracking-tight">Dados da Empresa</h2>
+                <p class="mt-2 text-sm text-gray-500">Passo 2 de 3: Identificação</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="p-4 rounded-lg bg-red-50 border border-red-100 flex items-start gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"></i>
+                <p class="text-sm text-red-700">{{ message }}</p>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form class="mt-8 space-y-6" action="{{ url_for('auth.setup_company') }}" method="POST">
+
+                <!-- Person Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Cadastro</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="person_type" value="PJ" checked
+                                class="text-northway-red focus:ring-northway-red" onclick="toggleInputMask('PJ')">
+                            <span class="ml-2 text-gray-700">Pessoa Jurídica (CNPJ)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="person_type" value="PF"
+                                class="text-northway-red focus:ring-northway-red" onclick="toggleInputMask('PF')">
+                            <span class="ml-2 text-gray-700">Pessoa Física (CPF)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Company/Entity Name -->
+                <div>
+                    <label for="company_name" class="block text-sm font-medium text-gray-700">Nome da Empresa / Nome
+                        Fantasia</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="building" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                        </div>
+                        <input id="company_name" name="company_name" type="text" required
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
+                            placeholder="Nome Comercial">
+                    </div>
+                </div>
+
+                <!-- CPF/CNPJ -->
+                <div>
+                    <label for="cpf_cnpj" class="block text-sm font-medium text-gray-700">CPF / CNPJ</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="file-text" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                        </div>
+                        <input id="cpf_cnpj" name="cpf_cnpj" type="text" required
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
+                            placeholder="00.000.000/0000-00">
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-northway-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-northway-red transition-all transform hover:scale-[1.01]">
+                        Continuar para Planos
+                        <i data-lucide="arrow-right" class="ml-2 h-4 w-4"></i>
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('auth.logout') }}" class="text-sm text-gray-500 hover:text-gray-900">Sair e voltar
+                    depois</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleInputMask(type) {
+        const input = document.getElementById('cpf_cnpj');
+        if (type === 'PJ') {
+            input.placeholder = '00.000.000/0000-00';
+            // Simple logic, actual mask enforcement can be done with IMask or similar if present, 
+            // otherwise backend validation handles strictness.
+        } else {
+            input.placeholder = '000.000.000-00';
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+            Escolha seu Plano
+        </h2>
+        <p class="mt-4 text-xl text-gray-500">
+            Comece a transformar suas vendas hoje mesmo.
+        </p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="max-w-2xl w-full mb-8">
+        {% for category, message in messages %}
+        <div class="p-4 rounded-lg bg-red-50 border border-red-100 flex items-start gap-3 justify-center">
+            <p class="text-sm text-red-700">{{ message }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full">
+        <!-- Monthly Plan -->
+        <div
+            class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 hover:border-northway-red transition-all cursor-pointer relative group flex flex-col">
+            <div class="p-8 flex-grow">
+                <h3 class="text-lg font-medium text-gray-900">Mensal</h3>
+                <p class="mt-4 text-sm text-gray-500">Flexibilidade total para seu negócio.</p>
+                <div class="mt-6 flex items-baseline">
+                    <span class="text-5xl font-extrabold text-gray-900">R$ 97</span>
+                    <span class="ml-2 text-base font-medium text-gray-500">/mês</span>
+                </div>
+
+                <ul class="mt-6 space-y-4">
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="flex-shrink-0 h-5 w-5 text-green-500"></i>
+                        <span class="ml-3 text-sm text-gray-700">Leads Ilimitados</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="flex-shrink-0 h-5 w-5 text-green-500"></i>
+                        <span class="ml-3 text-sm text-gray-700">Gestão de Pipelines</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="flex-shrink-0 h-5 w-5 text-green-500"></i>
+                        <span class="ml-3 text-sm text-gray-700">Integração WhatsApp</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="p-8 bg-gray-50 border-t border-gray-100">
+                <form action="{{ url_for('auth.payment_checkout', plan='monthly') }}" method="POST">
+                    <button type="submit"
+                        class="w-full bg-white border border-northway-red text-northway-red hover:bg-red-50 font-bold py-3 px-6 rounded-lg transition-colors">
+                        Selecionar Mensal
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Annual Plan (Featured) -->
+        <div
+            class="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-northway-red relative flex flex-col transform md:-translate-y-4">
+            <div
+                class="absolute top-0 right-0 bg-northway-red text-white text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
+                Most Popular</div>
+            <div class="p-8 flex-grow">
+                <h3 class="text-lg font-medium text-gray-900">Anual</h3>
+                <p class="mt-4 text-sm text-gray-500">Economize 20% com pagamento anual.</p>
+                <div class="mt-6 flex items-baseline">
+                    <span class="text-5xl font-extrabold text-gray-900">R$ 77</span>
+                    <span class="ml-2 text-base font-medium text-gray-500">/mês</span>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Faturado anualmente (R$ 924)</p>
+
+                <ul class="mt-6 space-y-4">
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="flex-shrink-0 h-5 w-5 text-green-500"></i>
+                        <span class="ml-3 text-sm text-gray-700">Tudo do Plano Mensal</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i data-lucide="check" class="flex-shrink-0 h-5 w-5 text-green-500"></i>
+                        <span class="ml-3 text-sm text-gray-700">Prioridade no Suporte</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="p-8 bg-gray-50 border-t border-gray-100">
+                <form action="{{ url_for('auth.payment_checkout', plan='yearly') }}" method="POST">
+                    <button type="submit"
+                        class="w-full bg-northway-red text-white hover:bg-red-700 font-bold py-3 px-6 rounded-lg transition-colors shadow-lg shadow-red-200">
+                        Selecionar Anual
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-12">
+        <a href="{{ url_for('auth.logout') }}" class="text-gray-500 hover:text-gray-900">Cancelar e Sair</a>
+    </div>
+</div>
+{% endblock %}

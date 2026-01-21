@@ -51,18 +51,7 @@
 
             <form class="mt-8 space-y-6" action="{{ url_for('auth.register') }}" method="POST">
 
-                <!-- Company Name -->
-                <div>
-                    <label for="company_name" class="block text-sm font-medium text-gray-700">Nome da Empresa</label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i data-lucide="building" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
-                        </div>
-                        <input id="company_name" name="company_name" type="text" required
-                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
-                            placeholder="Ex: Minha Empresa Ltda">
-                    </div>
-                </div>
+                <!-- Company Name Removed (Moved to Setup Step) -->
 
                 <!-- User Name -->
                 <div>
@@ -74,6 +63,19 @@
                         <input id="name" name="name" type="text" required
                             class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
                             placeholder="Ex: João Silva">
+                    </div>
+                </div>
+
+                <!-- Phone -->
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700">Telefone / WhatsApp</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="phone" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                        </div>
+                        <input id="phone" name="phone" type="tel" required
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
+                            placeholder="(11) 99999-9999">
                     </div>
                 </div>
 

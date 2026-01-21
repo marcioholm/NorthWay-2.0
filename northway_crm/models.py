@@ -92,7 +92,14 @@ class Company(db.Model):
     pipelines = db.relationship('Pipeline', backref='company', lazy=True)
     
     # Enhanced Contract Data
-    document = db.Column(db.String(20), nullable=True) # CNPJ
+    document = db.Column(db.String(20), nullable=True) # CNPJ (Legacy/Contract) - We might merge this with new cpf_cnpj
+    cpf_cnpj = db.Column(db.String(20), unique=True, nullable=True) # Strict Identity
+    
+    # SaaS Subscription
+    subscription_id = db.Column(db.String(50), nullable=True) # Asaas Subscription ID
+    subscription_status = db.Column(db.String(20), default='inactive') # inactive, active, over_due
+    plan_type = db.Column(db.String(20), default='free') # free, monthly, yearly
+    
     address_street = db.Column(db.String(150), nullable=True)
     address_number = db.Column(db.String(20), nullable=True)
     address_neighborhood = db.Column(db.String(100), nullable=True)
