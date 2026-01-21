@@ -1,97 +1,137 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen flex bg-white">
+<div class="min-h-screen flex bg-white font-sans">
     <!-- Left Side: Image & Branding -->
-    <div class="hidden lg:flex lg:w-1/2 relative bg-northway-dark overflow-hidden">
-        <div id="setup-bg-image" class="absolute inset-0 bg-cover bg-center"
-            style="background-image: url('{{ url_for('static', filename='images/login-bg.png') }}'); opacity: 0.8;">
+    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <div id="setup-bg-image"
+            class="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] hover:scale-110"
+            style="background-image: url('{{ url_for('static', filename='images/login-bg.png') }}');">
         </div>
-        <div class="absolute inset-0 bg-northway-red/60 mix-blend-multiply"></div>
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-br from-northway-dark/95 via-northway-dark/60 to-northway-red/40">
+        </div>
 
-        <div class="relative z-10 p-12 flex flex-col justify-center h-full w-full text-white">
-            <h2 class="text-4xl font-bold mb-4">Configurar Organização</h2>
-            <p class="text-xl opacity-90">Para começar, precisamos dos dados da sua empresa.</p>
+        <div class="relative z-10 p-16 flex flex-col justify-between h-full w-full text-white">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay"
+                class="h-10 w-auto self-start opacity-90">
+
+            <div class="max-w-md">
+                <span
+                    class="inline-block px-3 py-1 bg-northway-red/20 border border-northway-red/30 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">Iniciando
+                    sua Jornada</span>
+                <h2 class="text-5xl font-display font-bold mb-6 leading-tight">Prepare sua <br>Organização</h2>
+                <p class="text-lg text-gray-300 font-light leading-relaxed">
+                    Estamos quase lá. Informe os detalhes da sua empresa para que possamos personalizar sua experiência
+                    e configurar seu ambiente exclusivo.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-4 text-sm text-gray-400">
+                <div class="flex -space-x-2">
+                    <div
+                        class="w-8 h-8 rounded-full border-2 border-northway-dark bg-gray-600 flex items-center justify-center text-[10px] font-bold">
+                        M</div>
+                    <div
+                        class="w-8 h-8 rounded-full border-2 border-northway-dark bg-gray-500 flex items-center justify-center text-[10px] font-bold">
+                        A</div>
+                    <div
+                        class="w-8 h-8 rounded-full border-2 border-northway-dark bg-gray-400 flex items-center justify-center text-[10px] font-bold">
+                        G</div>
+                </div>
+                <span>Junte-se a centenas de empresas líderes.</span>
+            </div>
         </div>
     </div>
 
     <!-- Right Side: Form -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 bg-gray-50">
-        <div class="w-full max-w-md space-y-8">
-            <div class="text-center lg:text-left">
-                <h2 class="text-3xl font-bold text-gray-900 tracking-tight">Dados da Empresa</h2>
-                <p class="mt-2 text-sm text-gray-500">Passo 2 de 3: Identificação</p>
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-20 bg-gray-50/50">
+        <div class="w-full max-w-md">
+            <div class="mb-10">
+                <div class="flex items-center gap-2 text-xs font-bold text-northway-red uppercase tracking-widest mb-2">
+                    <span class="w-8 h-0.5 bg-northway-red"></span>
+                    Passo 2 de 3: Identificação
+                </div>
+                <h2 class="text-4xl font-display font-bold text-gray-900 tracking-tight">Dados da Empresa</h2>
+                <p class="mt-4 text-gray-500 font-medium">Configure as informações fundamentais do seu negócio.</p>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
-            <div class="p-4 rounded-lg bg-red-50 border border-red-100 flex items-start gap-3">
+            <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-shake">
                 <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"></i>
-                <p class="text-sm text-red-700">{{ message }}</p>
+                <p class="text-sm text-red-700 font-medium">{{ message }}</p>
             </div>
             {% endfor %}
             {% endif %}
             {% endwith %}
 
-            <form class="mt-8 space-y-6" action="{{ url_for('auth.setup_company') }}" method="POST">
-
-                <!-- Person Type -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Cadastro</label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center">
-                            <input type="radio" name="person_type" value="PJ" checked
-                                class="text-northway-red focus:ring-northway-red" onclick="toggleInputMask('PJ')">
-                            <span class="ml-2 text-gray-700">Pessoa Jurídica (CNPJ)</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="person_type" value="PF"
-                                class="text-northway-red focus:ring-northway-red" onclick="toggleInputMask('PF')">
-                            <span class="ml-2 text-gray-700">Pessoa Física (CPF)</span>
-                        </label>
-                    </div>
+            <form class="space-y-6" action="{{ url_for('auth.setup_company') }}" method="POST">
+                <!-- Person Type Selector -->
+                <div class="p-1 bg-gray-100 rounded-xl flex gap-1">
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="person_type" value="PJ" checked class="hidden peer"
+                            onclick="toggleInputMask('PJ')">
+                        <div
+                            class="py-2.5 text-center rounded-lg text-sm font-bold transition-all peer-checked:bg-white peer-checked:text-northway-red peer-checked:shadow-sm text-gray-500">
+                            Pessoa Jurídica
+                        </div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="person_type" value="PF" class="hidden peer"
+                            onclick="toggleInputMask('PF')">
+                        <div
+                            class="py-2.5 text-center rounded-lg text-sm font-bold transition-all peer-checked:bg-white peer-checked:text-northway-red peer-checked:shadow-sm text-gray-500">
+                            Pessoa Física
+                        </div>
+                    </label>
                 </div>
 
-                <!-- Company/Entity Name -->
-                <div>
-                    <label for="company_name" class="block text-sm font-medium text-gray-700">Nome da Empresa / Nome
+                <!-- Company Name -->
+                <div class="space-y-2">
+                    <label for="company_name"
+                        class="block text-xs font-black text-gray-400 uppercase tracking-widest">Nome da Empresa / Nome
                         Fantasia</label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i data-lucide="building" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                    <div class="relative group">
+                        <div
+                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-northway-red transition-colors">
+                            <i data-lucide="building-2" class="h-5 w-5"></i>
                         </div>
                         <input id="company_name" name="company_name" type="text" required
-                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
-                            placeholder="Nome Comercial">
+                            class="block w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-northway-red/5 focus:border-northway-red text-sm transition-all placeholder:text-gray-300"
+                            placeholder="Ex: NorthWay Soluções Digitais">
                     </div>
                 </div>
 
                 <!-- CPF/CNPJ -->
-                <div>
-                    <label for="cpf_cnpj" class="block text-sm font-medium text-gray-700">CPF / CNPJ</label>
-                    <div class="mt-1 relative rounded-md shadow-sm">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i data-lucide="file-text" class="h-5 w-5 text-gray-400" aria-hidden="true"></i>
+                <div class="space-y-2">
+                    <label for="cpf_cnpj" class="block text-xs font-black text-gray-400 uppercase tracking-widest">CPF /
+                        CNPJ</label>
+                    <div class="relative group">
+                        <div
+                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-northway-red transition-colors">
+                            <i data-lucide="fingerprint" class="h-5 w-5"></i>
                         </div>
                         <input id="cpf_cnpj" name="cpf_cnpj" type="text" required
-                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red focus:border-northway-red text-sm transition-all"
+                            class="block w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-northway-red/5 focus:border-northway-red text-sm transition-all placeholder:text-gray-300"
                             placeholder="00.000.000/0000-00">
                     </div>
                 </div>
 
-                <div class="pt-4">
+                <div class="pt-6">
                     <button type="submit"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-northway-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-northway-red transition-all transform hover:scale-[1.01]">
-                        Continuar para Planos
-                        <i data-lucide="arrow-right" class="ml-2 h-4 w-4"></i>
+                        class="w-full flex justify-center items-center py-4 px-6 rounded-2xl text-base font-bold text-white bg-northway-red hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-northway-red/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-red-900/10">
+                        Prosseguir para Planos
+                        <i data-lucide="arrow-right" class="ml-2 h-5 w-5"></i>
                     </button>
                 </div>
             </form>
 
-            <div class="mt-4 text-center">
-                <a href="{{ url_for('auth.logout') }}" class="text-sm text-gray-500 hover:text-gray-900">Sair e voltar
-                    depois</a>
+            <div class="mt-8 text-center">
+                <a href="{{ url_for('auth.logout') }}"
+                    class="text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Sair
+                    da conta</a>
             </div>
         </div>
     </div>
@@ -102,11 +142,31 @@
         const input = document.getElementById('cpf_cnpj');
         if (type === 'PJ') {
             input.placeholder = '00.000.000/0000-00';
-            // Simple logic, actual mask enforcement can be done with IMask or similar if present, 
-            // otherwise backend validation handles strictness.
         } else {
             input.placeholder = '000.000.000-00';
         }
     }
 </script>
+
+<style>
+    @keyframes shake {
+
+        0%,
+        100% {
+            transform: translateX(0);
+        }
+
+        25% {
+            transform: translateX(-4px);
+        }
+
+        75% {
+            transform: translateX(4px);
+        }
+    }
+
+    .animate-shake {
+        animation: shake 0.4s ease-in-out 2;
+    }
+</style>
 {% endblock %}

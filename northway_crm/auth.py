@@ -219,7 +219,7 @@ def setup_company():
         flash('Empresa configurada! Escolha seu plano.', 'success')
         return redirect(url_for('auth.payment_plan'))
         
-    return render_template('setup_company.html')
+    return render_template('setup_company.html', minimal=True)
 
 @auth.route('/payment-plan')
 @login_required
@@ -228,7 +228,7 @@ def payment_plan():
     # if current_user.company and current_user.company.subscription_status == 'active':
     #     return redirect(url_for('dashboard.home'))
         
-    return render_template('payment_plan.html')
+    return render_template('payment_plan.html', minimal=True)
 
 @auth.route('/payment-checkout/<plan>', methods=['POST'])
 @login_required

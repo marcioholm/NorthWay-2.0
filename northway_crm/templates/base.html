@@ -154,8 +154,7 @@
                 })();
         </script>
 
-        {% if current_user.is_authenticated %}
-
+        {% if current_user.is_authenticated and not minimal %}
         <!-- Mobile Header -->
         <div
             class="md:hidden bg-northway-dark text-white p-4 flex justify-between items-center z-50 fixed w-full top-0 left-0 h-16 shadow-md">
@@ -445,8 +444,9 @@
         {% endif %}
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-            {% if current_user.is_authenticated %}
+        <main
+            class="flex-1 flex flex-col min-w-0 {{ 'overflow-y-auto no-scrollbar' if minimal else 'overflow-hidden' }} relative">
+            {% if current_user.is_authenticated and not minimal %}
             <!-- Top Header -->
             <header
                 class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 flex-shrink-0 z-40">
@@ -523,6 +523,7 @@
                     </div>
                 </div>
             </header>
+            {% endif %}
             {% endif %}
 
             <!-- Toast Notifications (Flash Messages) -->
