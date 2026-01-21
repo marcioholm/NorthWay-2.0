@@ -312,6 +312,22 @@ def update_lead_info(id):
     lead.source = request.form.get('source')
     lead.interest = request.form.get('interest')
     
+    # Enrichment fields (Manual Edit)
+    lead.legal_name = request.form.get('legal_name')
+    lead.cnpj = request.form.get('cnpj')
+    lead.foundation_date = request.form.get('foundation_date')
+    lead.legal_email = request.form.get('legal_email')
+    lead.legal_phone = request.form.get('legal_phone')
+    
+    equity_val = request.form.get('equity')
+    if equity_val:
+        try:
+            # Clean formatting if present
+            clean_equity = equity_val.replace('R$', '').replace('.', '').replace(',', '.').strip()
+            lead.equity = float(clean_equity)
+        except (ValueError, TypeError):
+            pass
+    
     # Handle Assignment
     assigned_id = request.form.get('assigned_to_id')
     if assigned_id:

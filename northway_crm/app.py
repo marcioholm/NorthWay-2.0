@@ -232,6 +232,10 @@ def create_app():
                     ("cnpj", "VARCHAR(20)"),
                     ("registration_status", "VARCHAR(50)"),
                     ("company_size", "VARCHAR(50)"),
+                    ("equity", "FLOAT"),
+                    ("foundation_date", "VARCHAR(20)"),
+                    ("legal_email", "VARCHAR(120)"),
+                    ("legal_phone", "VARCHAR(50)"),
                     ("cnae", "VARCHAR(200)"),
                     ("partners_json", "TEXT"),
                     ("enrichment_history", "TEXT")

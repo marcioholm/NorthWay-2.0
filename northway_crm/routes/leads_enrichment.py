@@ -63,6 +63,23 @@ def enrich_lead(lead_id):
         size_info = details.get('company', {}).get('size', {})
         lead.company_size = size_info.get('text') if isinstance(size_info, dict) else str(size_info)
         
+        # Capital Social
+        lead.equity = details.get('company', {}).get('equity')
+        
+        # Data de Abertura
+        lead.foundation_date = details.get('founded')
+        
+        # Email & Telefone (Receita)
+        emails = details.get('emails', [])
+        if emails and isinstance(emails, list):
+            lead.legal_email = emails[0].get('address')
+            
+        phones = details.get('phones', [])
+        if phones and isinstance(phones, list):
+            area = phones[0].get('area')
+            number = phones[0].get('number')
+            lead.legal_phone = f"({area}) {number}" if area and number else number
+        
         # CNAE (mainActivity)
         main_activity = details.get('mainActivity', {})
         if isinstance(main_activity, dict):
@@ -81,13 +98,14 @@ def enrich_lead(lead_id):
         if address_info:
             street = address_info.get('street') or ''
             number = address_info.get('number') or 'S/N'
+            district = address_info.get('district') or ''
             city = address_info.get('city') or ''
             state = address_info.get('state') or ''
             zip_code = address_info.get('zip') or ''
             
-            full_addr = f"{street}, {number} - {city}/{state} CEP: {zip_code}"
-            if not lead.address or lead.address.startswith('None'):
-                lead.address = full_addr
+            full_addr = f"{street}, {number} - {district}, {city}/{state} CEP: {zip_code}"
+            # Always update or set if empty
+            lead.address = full_addr
         
         # History
         history = json.loads(lead.enrichment_history or '[]')

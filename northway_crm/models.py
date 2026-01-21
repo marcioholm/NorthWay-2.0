@@ -250,6 +250,10 @@ class Lead(db.Model):
     cnpj = db.Column(db.String(20), nullable=True)
     registration_status = db.Column(db.String(50), nullable=True) # Situação Cadastral
     company_size = db.Column(db.String(50), nullable=True) # Porte
+    equity = db.Column(db.Float, nullable=True) # Capital Social
+    foundation_date = db.Column(db.String(20), nullable=True) # Data de Abertura
+    legal_email = db.Column(db.String(120), nullable=True) # Email na Receita
+    legal_phone = db.Column(db.String(50), nullable=True) # Telefone na Receita
     cnae = db.Column(db.String(200), nullable=True) # Atividade Principal
     partners_json = db.Column(db.Text, nullable=True) # List of partners
     enrichment_history = db.Column(db.Text, nullable=True) # Log of updates
