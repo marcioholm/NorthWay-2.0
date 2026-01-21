@@ -26,10 +26,19 @@ class CNPJAService:
             response = requests.get(url, params=params, headers=cls.get_headers(api_key), timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                # Commercial API often wraps results in 'data' or 'items'
-                if isinstance(data, dict):
-                    return data.get('data') or data.get('items') or data
-                return data
+                records = data.get('records', [])
+                
+                # Normalize for frontend expectations (tax_id and name)
+                normalized = []
+                for r in records:
+                    normalized.append({
+                        'tax_id': r.get('taxId'),
+                        'name': r.get('company', {}).get('name') or r.get('alias'),
+                        'alias': r.get('alias'),
+                        'status': r.get('status'),
+                        'address': r.get('address')
+                    })
+                return normalized
             else:
                 current_app.logger.error(f"CNPJA Search Error: {response.text}")
                 return {"error": response.text, "status": response.status_code}
