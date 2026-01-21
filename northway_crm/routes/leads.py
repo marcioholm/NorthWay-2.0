@@ -489,6 +489,46 @@ def import_leads():
             flash(f'{count} leads importados com sucesso!', 'success')
             
         except Exception as e:
-            flash(f'Erro ao processar arquivo: {str(e)}', 'error')
+            db.session.rollback()
+            flash(f'Erro na importação: {str(e)}', 'error')
             
     return redirect(url_for('leads.leads'))
+
+@leads_bp.route('/leads/fix-orphans')
+@login_required
+def fix_orphans():
+    # 1. Get or Create Default Pipeline
+    pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+    if not pipeline:
+         pipeline = Pipeline(name="Pipeline Comercial", company_id=current_user.company_id)
+         db.session.add(pipeline)
+         db.session.flush()
+         stages = ["Qualificação", "Apresentação", "Proposta", "Negociação", "Fechado"]
+         for i, s_name in enumerate(stages):
+            st = PipelineStage(name=s_name, pipeline_id=pipeline.id, company_id=current_user.company_id, order=i)
+            db.session.add(st)
+         db.session.commit()
+    
+    stages = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).all()
+    first_stage = stages[0]
+    last_stage = stages[-1]
+    
+    # Identify closed stage specifically if possible
+    fechado_stage = next((s for s in stages if 'fechado' in s.name.lower() or 'fechamento' in s.name.lower()), last_stage)
+    
+    # 2. Update Leads
+    orphans = Lead.query.filter_by(company_id=current_user.company_id, pipeline_id=None).all()
+    count = 0
+    for lead in orphans:
+        lead.pipeline_id = pipeline.id
+        # If won/converted -> closed stage
+        if lead.status == 'won' or lead.client_id:
+            lead.pipeline_stage_id = fechado_stage.id
+        else:
+            lead.pipeline_stage_id = first_stage.id
+        count += 1
+        
+    db.session.commit()
+    
+    flash(f'Correção aplicada: {count} leads atribuídos ao funil "{pipeline.name}".', 'success')
+    return redirect(url_for('leads.pipeline'))
