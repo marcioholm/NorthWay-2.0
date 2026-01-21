@@ -316,7 +316,7 @@
 
                 {% if current_user.has_permission('library_view') %}
                 <a href="{{ url_for('docs.library') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if 'docs' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint and 'docs' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="library" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Biblioteca</span>
                 </a>

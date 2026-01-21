@@ -224,9 +224,9 @@ def setup_company():
 @auth.route('/payment-plan')
 @login_required
 def payment_plan():
-    # Skip if active
-    if current_user.company and current_user.company.subscription_status == 'active':
-        return redirect(url_for('dashboard.home'))
+    # Skip if active (DISABLED FOR DEMO)
+    # if current_user.company and current_user.company.subscription_status == 'active':
+    #     return redirect(url_for('dashboard.home'))
         
     return render_template('payment_plan.html')
 
