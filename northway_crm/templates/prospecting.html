@@ -193,13 +193,10 @@
 
         // Build composite query
         let fullQuery = query;
-        if (city) fullQuery += ` em ${city}`;
-        if (state) fullQuery += ` - ${state}`;
-        if (!city && !state) {
-            // If user didn't specify location filters, we send as is
-            // fullQuery = query; 
-        } else {
-            // fullQuery += ", Brasil"; // Enforce Brazil if location is used
+        if (city) fullQuery += `, ${city}`;
+        if (state) fullQuery += `, ${state}`;
+        if (city || state) {
+            fullQuery += ", Brasil"; // Enforce Brazil if location is used
         }
 
         const btn = document.getElementById('searchBtn');

@@ -36,19 +36,22 @@ def search_places():
     params = {
         'query': query,
         'key': api_key,
-        'language': 'pt-BR'
+        'language': 'pt-BR',
+        'region': 'br'
     }
     
     try:
         response = requests.get(url, params=params, timeout=10)
         data = response.json()
-        print(f"DEBUG GOOGLE MAPS: {json.dumps(data, indent=2)}") # Debugging
+        status = data.get('status')
         
-        if data.get('status') not in ['OK', 'ZERO_RESULTS']:
-            return api_response(success=False, error=f"Google API Error: {data.get('status')}", data={'details': data.get('error_message')}, status=400)
+        if status not in ['OK', 'ZERO_RESULTS']:
+            error_msg = data.get('error_message', 'No error message provided by Google')
+            return api_response(success=False, error=f"Google API Error: {status}", data={'details': error_msg}, status=400)
             
-        # Clean data for frontend (minimize data transfer)
+        # Clean data for frontend
         results = []
+        # Even if status is ZERO_RESULTS, data.get('results') will be an empty list
         for place in data.get('results', []):
             results.append({
                 'place_id': place.get('place_id'),
