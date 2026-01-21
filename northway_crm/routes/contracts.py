@@ -44,6 +44,48 @@ def new_contract(id):
     
     return render_template('contracts/new_contract.html', client=client, templates=templates, attachments=attachments)
 
+@contracts_bp.route('/contracts/autosave', methods=['POST'])
+@login_required
+def autosave_contract():
+    try:
+        data = request.json
+        client_id = data.get('client_id')
+        template_id = data.get('template_id')
+        contract_id = data.get('contract_id')
+        form_data = data.get('form_data')
+        content = data.get('content')
+        
+        if not client_id or not template_id:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+        # Find or Create Draft
+        contract = None
+        if contract_id:
+            contract = Contract.query.get(contract_id)
+        
+        if not contract:
+            # Create new draft
+            contract = Contract(
+                client_id=client_id,
+                company_id=current_user.company_id,
+                template_id=template_id,
+                status='draft',
+                form_data=json.dumps(form_data) if form_data else None,
+                generated_content=content
+            )
+            db.session.add(contract)
+        else:
+            # Update existing draft
+            contract.template_id = template_id
+            contract.form_data = json.dumps(form_data) if form_data else contract.form_data
+            contract.generated_content = content
+            
+        db.session.commit()
+        return jsonify({'success': True, 'contract_id': contract.id})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @contracts_bp.route('/contracts/<int:contract_id>/resume')
 @login_required
 def load_draft(contract_id):

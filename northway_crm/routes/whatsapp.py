@@ -364,6 +364,18 @@ def convert_unknown_to_lead():
     if not phone or not name: 
         return jsonify({'error': 'Missing phone or name'}), 400
     
+    # Get default pipeline and stage for this company
+    from models import Pipeline, PipelineStage
+    pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+    stage_id = None
+    pipeline_id = None
+    
+    if pipeline:
+        pipeline_id = pipeline.id
+        first_stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).first()
+        if first_stage:
+            stage_id = first_stage.id
+
     # Create Lead
     lead = Lead(
         company_id=current_user.company_id,
@@ -371,7 +383,10 @@ def convert_unknown_to_lead():
         phone=phone,
         email=email,
         status='new',
-        source='whatsapp'
+        source='whatsapp',
+        assigned_to_id=current_user.id,
+        pipeline_id=pipeline_id,
+        pipeline_stage_id=stage_id
     )
     db.session.add(lead)
     db.session.flush() # Get ID
@@ -405,22 +420,17 @@ def update_notes(type, id):
 @whatsapp_bp.route('/api/whatsapp/unread-counts')
 @login_required
 def get_unread_counts():
-    """Returns total unread count and count by tab."""
-    conversations = WhatsAppService.get_inbox_conversations(current_user.company_id)
-    
-    total = 0
-    by_tab = {'lead': 0, 'client': 0, 'atendimento': 0}
-    
-    for conv in conversations:
-        count = conv.get('unread_count', 0)
-        total += count
-        c_type = conv.get('type')
-        if c_type in by_tab:
-            by_tab[c_type] += count
-            
-    return jsonify({
-        'total': total,
-        'by_tab': by_tab
+    """Returns total unread count and count by tab using optimized query."""
+    try:
+        total, by_tab = WhatsAppService.get_unread_summary(current_user.company_id)
+        return jsonify({
+            'total': total,
+            'by_tab': by_tab
+        })
+    except Exception as e:
+        current_app.logger.error(f"Unread Counts Error: {e}")
+        return jsonify({'total': 0, 'by_tab': {}}), 500
+
     })
 
 @whatsapp_bp.route('/api/whatsapp/read/<string:phone>', methods=['POST'])

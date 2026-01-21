@@ -6,9 +6,59 @@ from datetime import datetime, timedelta
 
 leads_bp = Blueprint('leads', __name__)
 
-@leads_bp.route('/leads')
+@leads_bp.route('/leads', methods=['GET', 'POST'])
 @login_required
 def leads():
+    if not current_user.company_id:
+        abort(403)
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        source = request.form.get('source')
+        assigned_to_id = request.form.get('assigned_to_id', current_user.id)
+        email = request.form.get('email')
+        interest = request.form.get('interest')
+        notes = request.form.get('notes')
+
+        if not name or not phone or not source:
+            flash('Nome, Telefone e Origem são obrigatórios.', 'error')
+            return redirect(url_for('leads.leads'))
+
+        # Get default pipeline and stage for this company
+        pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+        stage_id = None
+        pipeline_id = None
+        
+        if pipeline:
+            pipeline_id = pipeline.id
+            first_stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).first()
+            if first_stage:
+                stage_id = first_stage.id
+
+        new_lead = Lead(
+            name=name,
+            phone=phone,
+            email=email,
+            source=source,
+            bant_need=interest,
+            notes=notes,
+            company_id=current_user.company_id,
+            status=LEAD_STATUS_NEW,
+            assigned_to_id=assigned_to_id,
+            pipeline_id=pipeline_id,
+            pipeline_stage_id=stage_id
+        )
+
+        try:
+            db.session.add(new_lead)
+            db.session.commit()
+            flash('Lead criado com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao criar lead: {str(e)}', 'error')
+            
+        return redirect(url_for('leads.leads'))
     if not current_user.company_id:
         abort(403)
 

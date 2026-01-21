@@ -597,7 +597,7 @@
         const statusDiv = document.getElementById('saveStatus');
 
         try {
-            const response = await fetch('{{ url_for("main.autosave_contract") }}', {
+            const response = await fetch('{{ url_for("contracts.autosave_contract") }}', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

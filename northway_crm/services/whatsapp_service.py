@@ -335,14 +335,21 @@ class WhatsAppService:
             return media_url
 
     @staticmethod
-    def get_inbox_conversations(company_id, limit=500):
+    def get_inbox_conversations(company_id, limit=300):
         """
         Fetches recent messages and groups them into unique conversations by PHONE.
         Ensures that multiple contacts with the same phone appear as one thread.
+        Uses eager loading to prevent N+1 overhead.
         """
         try:
-            # 1. Fetch recent messages
-            messages = WhatsAppMessage.query.filter_by(company_id=company_id)\
+            from sqlalchemy.orm import joinedload
+            from models import Contact
+            
+            # 1. Fetch recent messages with relations pre-loaded
+            messages = WhatsAppMessage.query.options(
+                joinedload(WhatsAppMessage.contact).joinedload(Contact.leads),
+                joinedload(WhatsAppMessage.contact).joinedload(Contact.clients)
+            ).filter_by(company_id=company_id)\
                 .order_by(WhatsAppMessage.created_at.desc())\
                 .limit(limit).all()
             
@@ -351,7 +358,6 @@ class WhatsAppService:
 
             # 3. Group by Contact UUID
             conversations = {} 
-            from models import Contact
             import uuid
             
             for m in messages:
@@ -427,27 +433,74 @@ class WhatsAppService:
         return result
 
     @staticmethod
-    def mark_as_read(company_id, phone):
-        """Marks all incoming messages from a contact as read (identity-aware)."""
+    def get_unread_summary(company_id):
+        """Returns total unread count and count by tab efficiently (no N+1)."""
         try:
-            c_type, contact = WhatsAppService.find_contact(phone, company_id)
+            counts = db.session.query(
+                db.case(
+                    (WhatsAppMessage.lead_id != None, 'lead'),
+                    (WhatsAppMessage.client_id != None, 'client'),
+                    else_='atendimento'
+                ).label('type'),
+                db.func.count(WhatsAppMessage.id)
+            ).filter(
+                WhatsAppMessage.company_id == company_id,
+                WhatsAppMessage.direction == 'in',
+                WhatsAppMessage.status != 'read'
+            ).group_by('type').all()
             
+            total = 0
+            by_tab = {'lead': 0, 'client': 0, 'atendimento': 0}
+            
+            for c_type, count in counts:
+                total += count
+                if c_type in by_tab:
+                    by_tab[c_type] = count
+            
+            return total, by_tab
+        except Exception as e:
+            current_app.logger.error(f"Error in get_unread_summary: {e}")
+            return 0, {'lead': 0, 'client': 0, 'atendimento': 0}
+
+    @staticmethod
+    def mark_as_read(company_id, phone):
+        """Marks all incoming messages from a contact as read (resilient matching)."""
+        try:
+            # 1. Normalize phone to ensure consistency
+            norm_phone = WhatsAppService.normalize_phone(phone)
+            
+            # 2. Find Contact/Lead/Client
+            c_type, contact_obj = WhatsAppService.find_contact(norm_phone, company_id)
+            
+            # 3. Build Query
             query = WhatsAppMessage.query.filter_by(company_id=company_id, direction='in')
             
+            # 4. Filter by ID if available (Strong Match)
             if c_type == 'lead':
-                query = query.filter_by(lead_id=contact.id)
+                query = query.filter(db.or_(WhatsAppMessage.lead_id == contact_obj.id, WhatsAppMessage.phone == norm_phone))
+                # Update lead profile pic if missing and message has one
+                last_msg = WhatsAppMessage.query.filter_by(lead_id=contact_obj.id).order_by(WhatsAppMessage.created_at.desc()).first()
+                if last_msg and last_msg.profile_pic_url and not contact_obj.profile_pic_url:
+                    contact_obj.profile_pic_url = last_msg.profile_pic_url
             elif c_type == 'client':
-                query = query.filter_by(client_id=contact.id)
+                query = query.filter(db.or_(WhatsAppMessage.client_id == contact_obj.id, WhatsAppMessage.phone == norm_phone))
             else:
-                # Use normalized phone if no contact found
-                norm_phone = WhatsAppService.normalize_phone(phone)
-                query = query.filter_by(phone=norm_phone)
+                # Fallback to Phone/Contact UUID (Loose Match)
+                from models import Contact
+                contact = Contact.query.filter_by(company_id=company_id, phone=norm_phone).first()
+                if contact:
+                    query = query.filter(db.or_(WhatsAppMessage.contact_uuid == contact.uuid, WhatsAppMessage.phone == norm_phone))
+                else:
+                    query = query.filter_by(phone=norm_phone)
 
+            # 5. Execute Update
             query.filter(WhatsAppMessage.status != 'read').update({WhatsAppMessage.status: 'read'}, synchronize_session=False)
             db.session.commit()
             return True
         except Exception as e:
             db.session.rollback()
+            current_app.logger.error(f"Error in mark_as_read: {e}")
+            return False
             current_app.logger.error(f"Error marking as read: {e}")
             return False
 
@@ -544,54 +597,34 @@ class WhatsAppService:
                 created_at=datetime.utcnow()
             )
             db.session.add(contact)
-            db.session.flush() # Generate ID
-            
-        # 3a. Capture Profile Pic
-        # Priority: senderImage from Z-API -> contact.profile_pic_url
-        incoming_pic = data.get('senderImage') or data.get('photo')
-        
-        # 3. Find or Create Contact
-        from models import Contact
-        import uuid
-        
-        contact = Contact.query.filter_by(company_id=company_id, phone=norm_phone).first()
-        if not contact:
-            # Try finding by loose match if strict match fails (migration safety)
-            # or just create new
-            contact = Contact(
-                uuid=str(uuid.uuid4()),
-                company_id=company_id,
-                phone=norm_phone,
-                created_at=datetime.utcnow()
-            )
-            db.session.add(contact)
-            db.session.flush() # Generate ID
+            db.session.flush()
 
-        # 4. Save Message linked to Contact
-        sender_name = data.get('senderName')
-        
-        # Try to link to Lead/Client if they exist via Contact relations
+        # 4. Profile Picture
+        incoming_pic = data.get('senderImage') or data.get('photo')
+        if incoming_pic:
+             contact.profile_pic_url = incoming_pic
+
+        # 5. Link to Lead/Client (Strict then Loose)
         lead_id = contact.leads[0].id if contact.leads else None
         client_id = contact.clients[0].id if contact.clients else None
         
-        # If no relation found but phone matches, check again (migration gap filler)
         if not lead_id and not client_id:
              c_type, found_obj = WhatsAppService.find_contact(norm_phone, company_id)
              if c_type == 'lead':
                  lead_id = found_obj.id
-                 # AUTO-LINK
-                 found_obj.contact_uuid = contact.uuid
+                 found_obj.contact_uuid = contact.uuid # Sync UUID
              elif c_type == 'client':
                  client_id = found_obj.id
-                  # AUTO-LINK
-                 found_obj.contact_uuid = contact.uuid
+                 found_obj.contact_uuid = contact.uuid # Sync UUID
 
+        # 6. Save Message
+        sender_name = data.get('senderName')
         try:
             msg = WhatsAppMessage(
                 company_id=company_id,
                 lead_id=lead_id,
                 client_id=client_id,
-                contact_uuid=contact.uuid, # THE KEY
+                contact_uuid=contact.uuid,
                 phone=norm_phone,
                 sender_name=sender_name,
                 direction='out' if from_me else 'in',
