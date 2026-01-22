@@ -28,6 +28,41 @@
         </div>
 
         <div class="p-6">
+            <!-- Google Maps Guidance Banner -->
+            <div class="mb-8 relative overflow-hidden rounded-xl bg-white border border-gray-200 p-6 shadow-sm group">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="max-w-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span
+                                class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-gray-200">Requisito
+                                do Sistema</span>
+                            <span
+                                class="bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-orange-200">Custo
+                                Externo</span>
+                        </div>
+                        <h3 class="text-xl font-black text-gray-900 mb-2 leading-tight">Configuração Necessária: Google
+                            Maps API 📍</h3>
+                        <p class="text-sm text-gray-600 mb-0 leading-relaxed">
+                            A ferramenta de prospecção utiliza a infraestrutura do Google. Por segurança e tarifação,
+                            cada empresa deve <strong>vincular sua própria chave de API</strong>.
+                            O Google oferece um crédito mensal gratuito que costuma cobrir o uso moderado.
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank"
+                            class="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg font-black text-sm hover:bg-black transition-all shadow-lg hover:scale-[1.05] active:scale-95">
+                            <i data-lucide="external-link" class="w-4 h-4 text-blue-400"></i>
+                            OBTER CHAVE NO GOOGLE
+                        </a>
+                    </div>
+                </div>
+                <!-- Mini Stripes Decoration -->
+                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                <div class="absolute top-0 left-1 w-1 h-full bg-red-500"></div>
+                <div class="absolute top-0 left-2 w-1 h-full bg-yellow-500"></div>
+                <div class="absolute top-0 left-3 w-1 h-full bg-green-500"></div>
+            </div>
+
             {% if integrations_map.get('google_maps') and integrations_map.get('google_maps').is_active %}
             <!-- Active State -->
             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
