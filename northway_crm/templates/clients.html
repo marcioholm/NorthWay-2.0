@@ -13,6 +13,42 @@
             <!-- <button class="...">Novo Cliente</button> -->
         </header>
 
+        <!-- NorthWay Manifesto Banner: Clients -->
+        <div
+            class="mb-10 relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-red-950 to-black p-8 text-white shadow-xl border border-red-900/10">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                <div class="max-w-2xl">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span
+                            class="bg-northway-red/20 text-northway-red text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-northway-red/30">Valor
+                            Vitalício</span>
+                    </div>
+                    <h2 class="text-3xl font-black mb-3 leading-tight tracking-tight uppercase italic">Retenção é a base
+                        da <br><span class="text-northway-red not-italic">Escala Infinita</span> 🚀</h2>
+                    <p class="text-base text-gray-400 leading-relaxed font-light">
+                        Cuidar de quem já está dentro é o marketing mais barato e eficiente que existe.
+                        Sua excelência na entrega é o que transforma clientes em parceiros de longo prazo.
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <div
+                        class="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex flex-col items-center text-center">
+                        <div
+                            class="w-14 h-14 bg-gradient-to-br from-northway-red to-red-800 rounded-2xl flex items-center justify-center mb-3 shadow-xl">
+                            <i data-lucide="heart" class="w-7 h-7 text-white"></i>
+                        </div>
+                        <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Sucesso em
+                            Escala</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Abstract Decoration -->
+            <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-northway-red/10 rounded-full blur-3xl"></div>
+            <div class="absolute -left-10 top-0 opacity-5">
+                <i data-lucide="handshake" class="w-64 h-64 text-white"></i>
+            </div>
+        </div>
+
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
             <form action="{{ url_for('clients.clients') }}" method="GET" class="flex flex-wrap gap-4 items-end">
