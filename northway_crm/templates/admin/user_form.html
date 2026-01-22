@@ -1,63 +1,73 @@
-{% extends "base.html" %}
+{% extends "_settings_layout.html" %}
 
-{% block content %}
-<div class="p-8 max-w-2xl mx-auto">
+{% block settings_content %}
+<div class="max-w-2xl mx-auto">
     <div class="mb-8">
         <a href="{{ url_for('admin.users') }}"
-            class="text-gray-500 hover:text-white mb-4 inline-block transition-colors">
-            <i data-lucide="arrow-left" class="w-5 h-5 inline mr-1"></i> Voltar para Usuários
+            class="text-gray-400 hover:text-gray-900 mb-4 inline-flex items-center transition-colors text-sm font-medium">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Voltar para Equipe
         </a>
-        <h1 class="text-3xl font-bold text-white">
-            {% if user %}Editar Usuário{% else %}Novo Usuário{% endif %}
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
+            {% if user %}Editar Usuário{% else %}Novo Integrante{% endif %}
         </h1>
+        <p class="text-gray-500 text-sm mt-1">Configure as credenciais e permissões no sistema.</p>
     </div>
 
-    <div class="bg-gray-800/50 backdrop-blur-xl rounded-3xl p-8 border border-gray-700">
+    <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm">
         <form method="POST">
             <div class="space-y-6">
                 <!-- Name -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Nome
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nome
                         Completo</label>
                     <input type="text" name="name" value="{{ user.name if user else '' }}" required
-                        class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all placeholder-gray-600">
+                        placeholder="Ex: João Silva"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all placeholder-gray-400 text-sm">
                 </div>
 
                 <!-- Email -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Email</label>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Email
+                        corporativo</label>
                     <input type="email" name="email" value="{{ user.email if user else '' }}" required
-                        class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all placeholder-gray-600">
+                        placeholder="joao@suaempresa.com.br"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all placeholder-gray-400 text-sm">
                 </div>
 
                 <!-- Role -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Cargo /
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Cargo /
                         Permissão</label>
                     <select name="role"
-                        class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-red-500 outline-none">
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none text-sm appearance-none">
                         <option value="vendedor" {% if user and user.role=='vendedor' %}selected{% endif %}>Vendedor
                             (Padrão)</option>
                         <option value="gestor" {% if user and user.role=='gestor' %}selected{% endif %}>Gestor</option>
                         <option value="admin" {% if user and user.role=='admin' %}selected{% endif %}>Admin (Acesso
-                            Total à Empresa)</option>
+                            Total)</option>
                     </select>
-                    <p class="text-xs text-gray-500 mt-2">Admins podem gerenciar outros usuários desta empresa.</p>
+                    <p class="text-[10px] text-gray-400 mt-2 italic px-1">
+                        * Administradores possuem controle total sobre as configurações da empresa.
+                    </p>
                 </div>
 
                 <!-- Password -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
-                        {% if user %}Nova Senha (deixe em branco para manter){% else %}Senha{% endif %}
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                        {% if user %}Alterar Senha (opcional){% else %}Senha de Acesso{% endif %}
                     </label>
-                    <input type="password" name="password" {% if not user %}required{% endif %}
-                        class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all placeholder-gray-600">
+                    <input type="password" name="password" {% if not user %}required{% endif %} placeholder="••••••••"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all placeholder-gray-400 text-sm font-mono">
+                    {% if user %}
+                    <p class="text-[10px] text-gray-400 mt-2 italic px-1">Deixe em branco para manter a senha atual.</p>
+                    {% endif %}
                 </div>
 
-                <div class="pt-6 border-t border-gray-700">
+                <div class="pt-6 border-t border-gray-100">
                     <button type="submit"
-                        class="w-full bg-[#fa0102] text-white px-6 py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/30 flex justify-center items-center">
-                        <i data-lucide="save" class="w-5 h-5 mr-2"></i> Salvar Usuário
+                        class="w-full bg-northway-red text-white px-6 py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 flex justify-center items-center gap-2">
+                        <i data-lucide="save" class="w-5 h-5"></i>
+                        {% if user %}Salvar Alterações{% else %}Cadastrar na Equipe{% endif %}
                     </button>
                 </div>
             </div>
