@@ -367,6 +367,42 @@
         </div>
 
         <div class="p-6">
+            <!-- CNPJA Promo Banner (Enrichment) -->
+            <div
+                class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-700 to-indigo-900 p-6 text-white shadow-md border border-purple-500/20">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="max-w-xl">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span
+                                class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Inteligência
+                                de Dados</span>
+                            <span
+                                class="bg-purple-400 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Enriquecimento
+                                Automático</span>
+                        </div>
+                        <h3 class="text-xl font-black mb-2 leading-tight">Dados Precisos em Segundos 🏢</h3>
+                        <p class="text-sm text-purple-50 mb-0 leading-relaxed">
+                            Economize horas de preenchimento manual. Capture Razão Social, Sócios, Capital Social e
+                            contatos direto da Receita Federal.
+                            <br><span class="text-xs opacity-75">* Esta é uma API externa e possui custo por consulta
+                                realizada.</span>
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <a href="https://cnpja.com.br" target="_blank"
+                            class="inline-flex items-center gap-2 bg-white text-purple-700 px-6 py-3 rounded-lg font-black text-sm hover:bg-purple-50 transition-all shadow-lg hover:scale-[1.05] active:scale-95">
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                            VER PLANOS CNPJA
+                        </a>
+                    </div>
+                </div>
+                <!-- Abstract BG Decoration -->
+                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                <div class="absolute right-6 top-6 opacity-10">
+                    <i data-lucide="database" class="w-24 h-24 text-white"></i>
+                </div>
+            </div>
+
             {% if cnpja and cnpja.is_active %}
             <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <div class="truncate mr-4">
