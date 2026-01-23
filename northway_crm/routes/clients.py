@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON
+from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate
 from utils import update_client_health, create_notification
 from datetime import datetime, date
 
@@ -80,6 +80,9 @@ def client_details(id):
     total_pending = sum(tx.amount for tx in client_txs if tx.status == 'pending')
     total_overdue = sum(tx.amount for tx in client_txs if tx.status == 'overdue')
     
+    # Get Process Templates
+    process_templates = ProcessTemplate.query.filter_by(company_id=current_user.company_id).all()
+    
     return render_template('client_details.html', 
                           client=client, 
                           mrr=mrr, 
@@ -87,7 +90,8 @@ def client_details(id):
                           client_txs=client_txs,
                           total_paid=total_paid,
                           total_pending=total_pending,
-                          total_overdue=total_overdue)
+                          total_overdue=total_overdue,
+                          process_templates=process_templates)
 
 @clients_bp.route('/clients/<int:id>/update', methods=['POST'])
 @login_required

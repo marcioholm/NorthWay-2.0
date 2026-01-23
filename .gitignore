@@ -15,3 +15,12 @@ NorthWay/
 
 # Vercel
 .warning
+.env*.local
+
+# Local Development Junk
+*.db
+*.sqlite3
+cnpja_test_results.txt
+debug_enrichment_v2.py
+northway_crm/fix_company_schema_v2.py
+northway_crm/seed_crm_data.py
