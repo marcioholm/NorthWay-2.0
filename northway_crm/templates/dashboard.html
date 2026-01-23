@@ -389,7 +389,7 @@
             funnelChartInstance.destroy();
         }
 
-        const total = data.length > 0 ? Math.max(...data) : 1; // Avoid div by zero, use max as baseline or data[0]
+        const total = data.length > 0 ? Math.max(...data) : 1;
 
         funnelChartInstance = new Chart(ctxFunnel, {
             type: 'bar',
@@ -399,14 +399,15 @@
                     label: 'Leads',
                     data: data,
                     backgroundColor: [
-                        'rgba(220, 38, 38, 0.8)',   // northway-red
-                        'rgba(220, 38, 38, 0.65)',
-                        'rgba(220, 38, 38, 0.5)',
-                        'rgba(220, 38, 38, 0.35)',
-                        'rgba(220, 38, 38, 0.2)'
+                        '#7f1d1d', // Red 900
+                        '#991b1b', // Red 800
+                        '#b91c1c', // Red 700
+                        '#dc2626', // Red 600
+                        '#ef4444', // Red 500
+                        '#f87171'  // Red 400
                     ],
                     borderRadius: 4,
-                    barPercentage: 0.6,
+                    barPercentage: 0.8, // Thicker bars
                 }]
             },
             options: {
@@ -416,33 +417,35 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        enabled: false // Disable default tooltip to avoid clutter or keep enabled if preferred
+                        enabled: false
                     },
                     datalabels: {
-                        color: '#000',
-                        anchor: 'end',
-                        align: 'end',
+                        color: '#fff',
+                        anchor: 'center',
+                        align: 'center',
+                        textAlign: 'center',
                         font: {
+                            family: "'Inter', sans-serif",
                             weight: 'bold',
-                            size: 11
+                            size: 13
                         },
                         formatter: function (value, context) {
+                            const label = context.chart.data.labels[context.dataIndex];
                             const data = context.dataset.data;
-                            const total = data.length > 0 ? data[0] : 0;
-                            const prevValue = context.dataIndex > 0 ? data[context.dataIndex - 1] : 0;
+                            const total = data.length > 0 ? data[context.dataIndex] : 0; // Current value is the cumulative total
 
-                            const totalConversion = total > 0 ? Math.round((value / total) * 100) : 0;
-                            const stepConversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0;
+                            // Calculate % of the absolute top of the funnel (first stage)
+                            const firstStageValue = data.length > 0 ? data[0] : 1;
+                            const percentageOfTotal = firstStageValue > 0 ? Math.round((value / firstStageValue) * 100) : 0;
 
-                            if (context.dataIndex === 0) return `${value} (100%)`; // First bar represents the total pool
-
-                            return `${value} (${totalConversion}% Total | ${stepConversion}% Etapa Ant.)`;
+                            return `${label}\n${value} Leads (${percentageOfTotal}%)`;
                         }
                     }
                 },
                 layout: {
                     padding: {
-                        right: 80 // Add padding for labels
+                        right: 20,
+                        left: 20
                     }
                 },
                 scales: {
@@ -451,12 +454,8 @@
                         ticks: { display: false }
                     },
                     y: {
-                        grid: { display: false, drawBorder: false },
-                        ticks: {
-                            font: { family: "'Inter', sans-serif", size: 12 },
-                            color: '#374151',
-                            autoSkip: false
-                        }
+                        display: false, // Hide Y axis labels (Stage names are now on bars)
+                        grid: { display: false, drawBorder: false }
                     }
                 }
             }
