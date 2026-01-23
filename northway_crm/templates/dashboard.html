@@ -346,13 +346,8 @@
             });
         }
 
-        // Initialize Funnel with default data (injected or fetched)
-        // Check if we have initial data from template
-        {% if funnel_data and funnel_data.labels %}
-        const initialLabels = JSON.parse('{{ funnel_data.labels | tojson | safe }}');
-        const initialData = JSON.parse('{{ funnel_data.data | tojson | safe }}');
-        renderFunnelChart(initialLabels, initialData);
-        {% elif current_pipeline_id %}
+        // Initialize Funnel
+        {% if current_pipeline_id %}
         updateFunnelChart({{ current_pipeline_id }});
     {% endif %}
     });

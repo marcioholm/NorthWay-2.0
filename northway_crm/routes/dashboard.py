@@ -106,16 +106,7 @@ def dashboard():
     pipelines = Pipeline.query.filter_by(company_id=company_id).all()
     
     # Default Funnel Data (First Pipeline)
-    funnel_data = {'labels': [], 'data': []}
-    current_pipeline_id = None
-    
-    if pipelines:
-        current_pipeline_id = pipelines[0].id
-        stages = PipelineStage.query.filter_by(pipeline_id=current_pipeline_id).order_by(PipelineStage.order).all()
-        for stage in stages:
-            count = Lead.query.filter_by(company_id=company_id, pipeline_stage_id=stage.id).count()
-            funnel_data['labels'].append(stage.name)
-            funnel_data['data'].append(count)
+    current_pipeline_id = pipelines[0].id if pipelines else None
     
     return render_template('dashboard.html',
                            total_leads=total_leads,
@@ -125,9 +116,8 @@ def dashboard():
                            risky_clients=risky_clients,
                            pending_tasks=pending_tasks,
                            overdue_tasks=overdue_tasks,
-                           pipelines=pipelines,  # Pass pipelines
+                           pipelines=pipelines,
                            current_pipeline_id=current_pipeline_id,
-                           funnel_data=funnel_data,
                            now=datetime.now())
 
 @dashboard_bp.route('/api/dashboard/funnel-data/<int:pipeline_id>')
