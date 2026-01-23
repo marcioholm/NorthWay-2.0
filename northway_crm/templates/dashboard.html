@@ -189,10 +189,17 @@
 </div>
 </div>
 
+<!-- Chart.js Plugin Datalabels -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
 <script>
     let funnelChartInstance = null;
+    // Register the plugin globally or locally
+    Chart.register(ChartDataLabels);
 
     document.addEventListener('DOMContentLoaded', function () {
+        // ... (rest of code) ...
+
         const ctx = document.getElementById('activityChart').getContext('2d');
         let chartInstance = null;
 
@@ -410,19 +417,27 @@
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                const value = context.raw;
-                                const prevValue = context.dataIndex > 0 ? context.dataset.data[context.dataIndex - 1] : 0;
-                                const conversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0;
-
-                                let label = ` Leads: ${value}`;
-                                if (context.dataIndex > 0) {
-                                    label += ` (Conversão: ${conversion}%)`;
-                                }
-                                return label;
-                            }
+                        enabled: false // Disable default tooltip to avoid clutter or keep enabled if preferred
+                    },
+                    datalabels: {
+                        color: '#000',
+                        anchor: 'end',
+                        align: 'end',
+                        font: {
+                            weight: 'bold',
+                            size: 11
+                        },
+                        formatter: function (value, context) {
+                            const prevValue = context.dataIndex > 0 ? context.dataset.data[context.dataIndex - 1] : 0;
+                            const conversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0;
+                            if (context.dataIndex === 0) return value; // First bar just shows count
+                            return `${value} (${conversion}%)`;
                         }
+                    }
+                },
+                layout: {
+                    padding: {
+                        right: 80 // Add padding for labels
                     }
                 },
                 scales: {
