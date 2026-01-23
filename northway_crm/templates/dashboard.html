@@ -169,8 +169,18 @@
         <div class="flex items-center justify-between mb-6">
             <div>
                 <h3 class="text-lg font-bold text-gray-900">Funil de Vendas</h3>
-                <p class="text-xs text-gray-500">Conversão por etapa do pipeline principal</p>
+                <p class="text-xs text-gray-500">Conversão por etapa do pipeline</p>
             </div>
+            {% if pipelines %}
+            <select id="pipelineSelect"
+                class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red max-w-[150px]">
+                {% for pipeline in pipelines %}
+                <option value="{{ pipeline.id }}" {% if pipeline.id==current_pipeline_id %}selected{% endif %}>
+                    {{ pipeline.name }}
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
         </div>
         <div class="relative h-80 w-full">
             <canvas id="funnelChart"></canvas>
@@ -180,6 +190,8 @@
 </div>
 
 <script>
+    let funnelChartInstance = null;
+
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('activityChart').getContext('2d');
         let chartInstance = null;
@@ -308,101 +320,128 @@
 
         // Event Listener
         const periodSelect = document.getElementById('chartPeriod');
-        periodSelect.addEventListener('change', (e) => {
-            // Initialize
-            updateChart('monthly');
-            initFunnelChart();
-        });
-
-        // Toggle Function
-        function togglePerformanceChart() {
-            const container = document.getElementById('performanceChartContainer');
-            const chevron = document.getElementById('perfChevron');
-
-            if (container.classList.contains('h-0')) {
-                container.classList.remove('h-0');
-                container.classList.add('h-80');
-                container.classList.remove('opacity-0');
-                chevron.classList.remove('-rotate-90');
-            } else {
-                container.classList.add('h-0');
-                container.classList.remove('h-80');
-                container.classList.add('opacity-0');
-                chevron.classList.add('-rotate-90');
-            }
+        if (periodSelect) {
+            periodSelect.addEventListener('change', (e) => {
+                updateChart(e.target.value);
+            });
         }
 
+        // Initial Load for Activity Chart
+        updateChart('monthly');
+
         // Funnel Chart Logic
-        function initFunnelChart() {
-            const ctxFunnel = document.getElementById('funnelChart').getContext('2d');
+        const pipelineSelect = document.getElementById('pipelineSelect');
+        if (pipelineSelect) {
+            pipelineSelect.addEventListener('change', (e) => {
+                updateFunnelChart(e.target.value);
+            });
+        }
 
-            // Data injected from Backend
-            // Data injected from Backend
-            const labels = JSON.parse('{{ funnel_data.labels | tojson | safe }}');
-            const data = JSON.parse('{{ funnel_data.data | tojson | safe }}');
+        // Initialize Funnel with default data (injected or fetched)
+        // Check if we have initial data from template
+        {% if funnel_data and funnel_data.labels %}
+        const initialLabels = JSON.parse('{{ funnel_data.labels | tojson | safe }}');
+        const initialData = JSON.parse('{{ funnel_data.data | tojson | safe }}');
+        renderFunnelChart(initialLabels, initialData);
+        {% elif current_pipeline_id %}
+        updateFunnelChart({{ current_pipeline_id }});
+    {% endif %}
+    });
 
-            // Calculate Conversion Rates for Tooltip
-            const total = data.length > 0 ? data[0] : 0;
+    // Toggle Function - Improved
+    function togglePerformanceChart() {
+        const container = document.getElementById('performanceChartContainer');
+        const chevron = document.getElementById('perfChevron');
+        const card = document.getElementById('performanceChartCard');
 
-            new Chart(ctxFunnel, {
-                type: 'bar', // Horizontal Bar to simulate funnel
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Leads',
-                        data: data,
-                        backgroundColor: [
-                            'rgba(250, 1, 2, 0.8)',   // Red
-                            'rgba(250, 1, 2, 0.65)',
-                            'rgba(250, 1, 2, 0.5)',
-                            'rgba(250, 1, 2, 0.35)',
-                            'rgba(250, 1, 2, 0.2)'
-                        ],
-                        borderRadius: 4,
-                        barPercentage: 0.6,
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', // Horizontal bars
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    const value = context.raw;
-                                    const prevValue = context.dataIndex > 0 ? context.dataset.data[context.dataIndex - 1] : 0;
-                                    const conversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0;
-                                    const totalConversion = total > 0 ? Math.round((value / total) * 100) : 0;
+        if (container.classList.contains('h-0')) {
+            // Expand
+            container.classList.remove('h-0', 'opacity-0');
+            container.classList.add('h-80');
+            chevron.classList.remove('-rotate-90');
+        } else {
+            // Collapse
+            container.classList.add('h-0', 'opacity-0');
+            container.classList.remove('h-80');
+            chevron.classList.add('-rotate-90');
+        }
+    }
 
-                                    let label = ` Leads: ${value}`;
-                                    if (context.dataIndex > 0) {
-                                        label += ` (Conversão da etapa anterior: ${conversion}%)`;
-                                    }
-                                    return label;
+    function updateFunnelChart(pipelineId) {
+        fetch(`/api/dashboard/funnel-data/${pipelineId}`)
+            .then(res => res.json())
+            .then(data => {
+                renderFunnelChart(data.labels, data.data);
+            })
+            .catch(err => console.error("Error fetching funnel:", err));
+    }
+
+    function renderFunnelChart(labels, data) {
+        const ctxFunnel = document.getElementById('funnelChart').getContext('2d');
+
+        if (funnelChartInstance) {
+            funnelChartInstance.destroy();
+        }
+
+        const total = data.length > 0 ? Math.max(...data) : 1; // Avoid div by zero, use max as baseline or data[0]
+
+        funnelChartInstance = new Chart(ctxFunnel, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Leads',
+                    data: data,
+                    backgroundColor: [
+                        'rgba(220, 38, 38, 0.8)',   // northway-red
+                        'rgba(220, 38, 38, 0.65)',
+                        'rgba(220, 38, 38, 0.5)',
+                        'rgba(220, 38, 38, 0.35)',
+                        'rgba(220, 38, 38, 0.2)'
+                    ],
+                    borderRadius: 4,
+                    barPercentage: 0.6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const value = context.raw;
+                                const prevValue = context.dataIndex > 0 ? context.dataset.data[context.dataIndex - 1] : 0;
+                                const conversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0;
+
+                                let label = ` Leads: ${value}`;
+                                if (context.dataIndex > 0) {
+                                    label += ` (Conversão: ${conversion}%)`;
                                 }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false, drawBorder: false },
-                            ticks: { display: false } // Hide X axis numbers
-                        },
-                        y: {
-                            grid: { display: false, drawBorder: false },
-                            ticks: {
-                                font: { family: "'Inter', sans-serif", size: 12 },
-                                color: '#374151',
-                                autoSkip: false
+                                return label;
                             }
                         }
                     }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { display: false }
+                    },
+                    y: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: {
+                            font: { family: "'Inter', sans-serif", size: 12 },
+                            color: '#374151',
+                            autoSkip: false
+                        }
+                    }
                 }
-            });
-        }
-    });
-        }
+            }
+        });
+    }
+
 </script>
 {% endblock %}

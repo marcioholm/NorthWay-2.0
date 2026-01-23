@@ -101,13 +101,17 @@ def dashboard():
     overdue_tasks = Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, status='pendente')\
                                .filter(Task.due_date < datetime.now()).count()
     
-    # 3. Funnel Data (First Pipeline)
+    # 3. Pipelines & Funnel Data (Default to First)
     from models import Pipeline, PipelineStage
-    first_pipeline = Pipeline.query.filter_by(company_id=company_id).first()
-    funnel_data = {'labels': [], 'data': []}
+    pipelines = Pipeline.query.filter_by(company_id=company_id).all()
     
-    if first_pipeline:
-        stages = PipelineStage.query.filter_by(pipeline_id=first_pipeline.id).order_by(PipelineStage.order).all()
+    # Default Funnel Data (First Pipeline)
+    funnel_data = {'labels': [], 'data': []}
+    current_pipeline_id = None
+    
+    if pipelines:
+        current_pipeline_id = pipelines[0].id
+        stages = PipelineStage.query.filter_by(pipeline_id=current_pipeline_id).order_by(PipelineStage.order).all()
         for stage in stages:
             count = Lead.query.filter_by(company_id=company_id, pipeline_stage_id=stage.id).count()
             funnel_data['labels'].append(stage.name)
@@ -121,8 +125,33 @@ def dashboard():
                            risky_clients=risky_clients,
                            pending_tasks=pending_tasks,
                            overdue_tasks=overdue_tasks,
-                           funnel_data=funnel_data, # Pass to template
+                           pipelines=pipelines,  # Pass pipelines
+                           current_pipeline_id=current_pipeline_id,
+                           funnel_data=funnel_data,
                            now=datetime.now())
+
+@dashboard_bp.route('/api/dashboard/funnel-data/<int:pipeline_id>')
+@login_required
+def get_funnel_data(pipeline_id):
+    if not current_user.company_id:
+        abort(403)
+        
+    from models import Pipeline, PipelineStage
+    
+    # Verify pipeline belongs to company
+    pipeline = Pipeline.query.filter_by(id=pipeline_id, company_id=current_user.company_id).first()
+    if not pipeline:
+        return jsonify({'error': 'Pipeline not found'}), 404
+        
+    funnel_data = {'labels': [], 'data': []}
+    stages = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).all()
+    
+    for stage in stages:
+        count = Lead.query.filter_by(company_id=current_user.company_id, pipeline_stage_id=stage.id).count()
+        funnel_data['labels'].append(stage.name)
+        funnel_data['data'].append(count)
+        
+    return jsonify(funnel_data)
 
 def get_today_tasks(company_id, user_id):
     # Tasks due today or before (overdue), ensuring standard DateTime comparison
