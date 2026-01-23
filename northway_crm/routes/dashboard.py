@@ -134,22 +134,77 @@ def dashboard():
 @login_required
 def get_funnel_data(pipeline_id):
     if not current_user.company_id:
-        abort(403)
+        return jsonify({'error': 'Unauthorized'}), 403
         
     from models import Pipeline, PipelineStage
     
-    # Verify pipeline belongs to company
+    # 1. Date Filtering
+    period = request.args.get('period', 'monthly')
+    now = datetime.now()
+    start_date = None
+    
+    if period == 'today':
+        start_date = datetime(now.year, now.month, now.day)
+    elif period == 'daily': # Last 30 days
+        start_date = now - timedelta(days=30)
+    elif period == 'weekly': # Last 12 weeks
+        start_date = now - timedelta(weeks=12)
+    elif period == 'monthly': # Last year
+        start_date = now - timedelta(days=365)
+    elif period == 'bimonthly':
+        start_date = now - timedelta(days=730)
+    elif period == 'quarterly':
+        start_date = now - timedelta(days=730)
+    elif period == 'semiannual':
+         start_date = now - timedelta(days=1095)
+    elif period == 'annual':
+        start_date = now - timedelta(days=1825)
+    else: # Default or all time
+        start_date = now - timedelta(days=365) # Default to year
+
+    # Verify pipeline
     pipeline = Pipeline.query.filter_by(id=pipeline_id, company_id=current_user.company_id).first()
     if not pipeline:
         return jsonify({'error': 'Pipeline not found'}), 404
         
-    funnel_data = {'labels': [], 'data': []}
+    # Get Stages
     stages = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).all()
     
+    # 2. Get Raw Counts per Stage (Filtered by Cohort/Date)
+    # We filter by Lead Creation Date to see the performance of the cohort generated in that period.
+    raw_counts = {}
+    base_query = Lead.query.filter(
+        Lead.company_id == current_user.company_id,
+        Lead.pipeline_id == pipeline.id
+    )
+    
+    if start_date:
+        base_query = base_query.filter(Lead.created_at >= start_date)
+        
+    leads = base_query.all()
+    
+    # Map leads to stage IDs
     for stage in stages:
-        count = Lead.query.filter_by(company_id=current_user.company_id, pipeline_stage_id=stage.id).count()
+        raw_counts[stage.id] = 0
+        
+    for lead in leads:
+        if lead.pipeline_stage_id in raw_counts:
+            raw_counts[lead.pipeline_stage_id] += 1
+            
+    # 3. Calculate Cumulative (Waterfall) Counts
+    # If a lead is in Stage 3, they count for Stage 3, Stage 2, and Stage 1.
+    funnel_data = {'labels': [], 'data': []}
+    
+    # Iterate stages in order
+    for i, stage in enumerate(stages):
+        cumulative_count = 0
+        
+        # Add counts from this stage AND all subsequent stages
+        for subsequent_stage in stages[i:]:
+            cumulative_count += raw_counts.get(subsequent_stage.id, 0)
+            
         funnel_data['labels'].append(stage.name)
-        funnel_data['data'].append(count)
+        funnel_data['data'].append(cumulative_count)
         
     return jsonify(funnel_data)
 

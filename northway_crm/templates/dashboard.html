@@ -330,6 +330,8 @@
         if (periodSelect) {
             periodSelect.addEventListener('change', (e) => {
                 updateChart(e.target.value);
+                const pipelineId = document.getElementById('pipelineSelect')?.value;
+                if (pipelineId) updateFunnelChart(pipelineId);
             });
         }
 
@@ -375,7 +377,9 @@
     }
 
     function updateFunnelChart(pipelineId) {
-        fetch(`/api/dashboard/funnel-data/${pipelineId}`)
+        const period = document.getElementById('chartPeriod')?.value || 'monthly';
+
+        fetch(`/api/dashboard/funnel-data/${pipelineId}?period=${period}`)
             .then(res => res.json())
             .then(data => {
                 renderFunnelChart(data.labels, data.data);
