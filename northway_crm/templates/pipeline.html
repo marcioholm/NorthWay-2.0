@@ -43,7 +43,8 @@
 
     <div class="flex gap-6 h-[calc(100vh-12rem)] pb-4">
         {% for stage in stages %}
-        <div class="flex-shrink-0 w-80 flex flex-col bg-gray-50 rounded-lg border border-gray-200 shadow-sm max-h-full">
+        <div class="flex-shrink-0 w-80 flex flex-col bg-gray-50 rounded-lg border border-gray-200 shadow-sm max-h-full pipeline-column"
+            data-stage-id="{{ stage.id }}">
             <!-- Column Header -->
             <div class="p-4 border-b border-gray-100 flex items-center justify-between group/header relative">
                 <div class="flex items-center gap-2">
@@ -59,7 +60,7 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full font-medium">
+                    <span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full font-medium count-badge">
                         {{ leads|selectattr("pipeline_stage_id", "equalto", stage.id)|list|length }}
                     </span>
 
@@ -91,15 +92,15 @@
             </div>
 
             <!-- Cards Container -->
-            <div class="flex-1 overflow-y-auto p-3 space-y-3">
+            <div class="flex-1 overflow-y-auto p-3 space-y-3 cards-container">
                 {% for lead in leads if lead.pipeline_stage_id == stage.id %}
-                <div onclick="openLeadModal(this)" data-id="{{ lead.id }}" data-name="{{ lead.name }}"
+                <div draggable="true" onclick="openLeadModal(this)" data-id="{{ lead.id }}" data-name="{{ lead.name }}"
                     data-phone="{{ lead.phone or '' }}" data-email="{{ lead.email or '' }}"
                     data-website="{{ lead.website or '' }}" data-address="{{ lead.address or '' }}"
                     data-interest="{{ lead.interest or '' }}" data-bant-budget="{{ lead.bant_budget or '' }}"
                     data-bant-authority="{{ lead.bant_authority or '' }}" data-bant-need="{{ lead.bant_need or '' }}"
                     data-bant-timeline="{{ lead.bant_timeline or '' }}"
-                    class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-pointer relative group {{ 'border-l-4 border-l-red-500 animate-pulse' if lead.days_inactive > 5 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
+                    class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-l-red-500 animate-pulse' if lead.days_inactive > 5 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
 
                     {% if lead.days_inactive > 5 %}
                     <div class="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md z-10"
@@ -123,28 +124,6 @@
                     <div class="mt-3 flex items-center justify-between">
                         <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">{{
                             lead.created_at.strftime('%d/%m') }}</span>
-                        <!-- Move actions -->
-                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <!-- Move Back -->
-                            <form action="{{ url_for('leads.move_lead', id=lead.id, direction='prev') }}" method="POST"
-                                class="inline">
-                                <button type="submit"
-                                    class="w-6 h-6 rounded hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-northway-red transition-colors"
-                                    title="Voltar Etapa" onclick="event.stopPropagation()">
-                                    <i data-lucide="arrow-left" class="w-3 h-3"></i>
-                                </button>
-                            </form>
-
-                            <!-- Move Next -->
-                            <form action="{{ url_for('leads.move_lead', id=lead.id, direction='next') }}" method="POST"
-                                class="inline">
-                                <button type="submit"
-                                    class="w-6 h-6 rounded hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-northway-red transition-colors"
-                                    title="Avançar Etapa" onclick="event.stopPropagation()">
-                                    <i data-lucide="arrow-right" class="w-3 h-3"></i>
-                                </button>
-                            </form>
-                        </div>
                     </div>
                 </div>
                 {% else %}
@@ -411,6 +390,103 @@
 <!-- Scripts -->
 <script>
     let currentLeadId = null;
+    let draggedLeadId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const columns = document.querySelectorAll('.pipeline-column');
+        const cards = document.querySelectorAll('.pipeline-card');
+
+        // Initialize Draggable Cards
+        cards.forEach(card => {
+            card.addEventListener('dragstart', handleDragStart);
+            card.addEventListener('dragend', handleDragEnd);
+        });
+
+        // Initialize Drop Zones (Columns)
+        columns.forEach(col => {
+            col.addEventListener('dragover', handleDragOver);
+            col.addEventListener('dragleave', handleDragLeave);
+            col.addEventListener('drop', handleDrop);
+        });
+    });
+
+    function handleDragStart(e) {
+        draggedLeadId = this.dataset.id;
+        this.classList.add('opacity-50', 'scale-95');
+        e.dataTransfer.effectAllowed = 'move';
+        // e.dataTransfer.setData('text/plain', draggedLeadId); // Fallback
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('opacity-50', 'scale-95');
+        draggedLeadId = null;
+
+        // Remove valid-drop class from all columns
+        document.querySelectorAll('.pipeline-column').forEach(col => {
+            col.classList.remove('bg-gray-100', 'border-northway-red');
+        });
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault(); // Necessary to allow dropping
+        e.dataTransfer.dropEffect = 'move';
+        this.classList.add('bg-gray-100', 'border-northway-red');
+    }
+
+    function handleDragLeave(e) {
+        this.classList.remove('bg-gray-100', 'border-northway-red');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        this.classList.remove('bg-gray-100', 'border-northway-red');
+
+        // Find the closest column (in case drop was on a child element)
+        const column = this.closest('.pipeline-column');
+        const stageId = column.dataset.stageId;
+
+        if (!draggedLeadId || !stageId) return;
+
+        // Perform DOM Move immediately (Optimistic UI)
+        const card = document.querySelector(`.pipeline-card[data-id="${draggedLeadId}"]`);
+        const container = column.querySelector('.cards-container');
+
+        if (card && container) {
+            container.appendChild(card);
+
+            // Update Count Badge Logic
+            updateColumnCounts();
+
+            // Send Request
+            fetch(`/api/leads/${draggedLeadId}/update_stage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ stage_id: stageId })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Erro ao mover lead: ' + data.error);
+                        location.reload(); // Revert on failure
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Erro de conexão.');
+                    location.reload();
+                });
+        }
+    }
+
+    function updateColumnCounts() {
+        document.querySelectorAll('.pipeline-column').forEach(col => {
+            const count = col.querySelectorAll('.pipeline-card').length;
+            const badge = col.querySelector('.count-badge');
+            if (badge) badge.textContent = count;
+        });
+    }
 
     function toggleModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -418,14 +494,16 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             // Reset to default tab
-            switchTab('details');
+            if (modalId === 'leadModal') switchTab('details');
         } else {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             // Clear chat on close
-            document.getElementById('chat-messages').innerHTML = '';
+            if (modalId === 'leadModal') document.getElementById('chat-messages').innerHTML = '';
         }
     }
+
+    // ... [Rest of existing functions strictly maintained] ...
 
     function switchTab(tabName) {
         const detailsTab = document.getElementById('tab-details');
@@ -451,7 +529,7 @@
 
             contentDetails.classList.add('hidden');
             contentWhatsapp.classList.remove('hidden');
-            contentWhatsapp.classList.add('flex'); // Because it's flex-col
+            contentWhatsapp.classList.add('flex');
 
             loadWhatsAppMessages(currentLeadId);
         }
@@ -461,9 +539,7 @@
         if (!leadId) return;
 
         const container = document.getElementById('chat-messages');
-        container.innerHTML = `<div class="flex justify-center">
-    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-</div>`;
+        container.innerHTML = `<div class="flex justify-center"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div></div>`;
 
         try {
             const response = await fetch(`/api/whatsapp/lead/${leadId}/messages`);
@@ -472,41 +548,21 @@
             if (data.error) throw new Error(data.error);
 
             if (data.messages.length === 0) {
-                container.innerHTML = `
-<div class="flex flex-col items-center justify-center h-full text-gray-400">
-    <i data-lucide="message-square" class="w-10 h-10 mb-2 opacity-50"></i>
-    <p class="text-sm">Nenhuma mensagem ainda.</p>
-    <p class="text-xs">Inicie a conversa abaixo.</p>
-</div>
-`;
+                container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400"><i data-lucide="message-square" class="w-10 h-10 mb-2 opacity-50"></i><p class="text-sm">Nenhuma mensagem ainda.</p><p class="text-xs">Inicie a conversa abaixo.</p></div>`;
             } else {
                 container.innerHTML = data.messages.map(msg => `
 <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}">
-    <div class="max-w-[80%] rounded-lg p-2 text-sm ${msg.direction === 'out'
-                        ? 'bg-green-100 text-green-900 rounded-tr-none'
-                        : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none'
-                    }">
+    <div class="max-w-[80%] rounded-lg p-2 text-sm ${msg.direction === 'out' ? 'bg-green-100 text-green-900 rounded-tr-none' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-none'}">
         <p>${msg.content}</p>
         <div class="flex justify-end items-center gap-1 mt-1">
-            <span class="text-[10px] opacity-60">${new Date(msg.timestamp).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}</span>
-            ${msg.direction === 'out' ?
-                        (msg.status === 'read' ? '<i data-lucide="check-check" class="w-3 h-3 text-blue-500"></i>' :
-                            msg.status === 'delivered' ? '<i data-lucide="check-check" class="w-3 h-3 text-gray-400"></i>' :
-                                '<i data-lucide="check" class="w-3 h-3 text-gray-400"></i>')
-                        : ''}
+            <span class="text-[10px] opacity-60">${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            ${msg.direction === 'out' ? (msg.status === 'read' ? '<i data-lucide="check-check" class="w-3 h-3 text-blue-500"></i>' : msg.status === 'delivered' ? '<i data-lucide="check-check" class="w-3 h-3 text-gray-400"></i>' : '<i data-lucide="check" class="w-3 h-3 text-gray-400"></i>') : ''}
         </div>
     </div>
-</div>
-`).join('');
-
-                // Scroll to bottom
+</div>`).join('');
                 container.scrollTop = container.scrollHeight;
             }
             if (window.lucide) lucide.createIcons();
-
         } catch (e) {
             container.innerHTML = `<p class="text-center text-red-500 text-xs">Erro ao carregar: ${e.message}</p>`;
         }
@@ -519,7 +575,6 @@
 
         if (!content || !currentLeadId) return;
 
-        // Disable UI
         input.disabled = true;
         btn.disabled = true;
         btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>`;
@@ -534,10 +589,8 @@
 
             if (data.error) throw new Error(data.error);
 
-            // Append message directly (Classic optimist UI)
             input.value = '';
             loadWhatsAppMessages(currentLeadId);
-
         } catch (e) {
             alert('Erro ao enviar: ' + e.message);
         } finally {
@@ -548,36 +601,25 @@
         }
     }
 
-    function editStage(id, name) {
-        document.getElementById(`edit-form-${id}`).classList.remove('hidden');
-    }
-
-    function cancelEdit(id) {
-        document.getElementById(`edit-form-${id}`).classList.add('hidden');
-    }
+    // ... Helpers ...
+    function editStage(id, name) { document.getElementById(`edit-form-${id}`).classList.remove('hidden'); }
+    function cancelEdit(id) { document.getElementById(`edit-form-${id}`).classList.add('hidden'); }
 
     function maskPhone(input) {
         let value = input.value.replace(/\D/g, '');
         if (value.length > 11) value = value.substring(0, 11);
-
-        if (value.length > 10) {
-            value = value.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-        } else if (value.length > 5) {
-            value = value.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-        } else if (value.length > 2) {
-            value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
-        } else {
-            value = value.replace(/^(\d*)/, '($1');
-        }
+        if (value.length > 10) value = value.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        else if (value.length > 5) value = value.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        else if (value.length > 2) value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+        else value = value.replace(/^(\d*)/, '($1');
         input.value = value;
     }
 
     function openLeadModal(input) {
         let lead = input;
-
-        // Check if input is a DOM element (has dataset)
         if (input.dataset) {
             lead = {
+                id: input.dataset.id,
                 name: input.dataset.name,
                 phone: input.dataset.phone,
                 email: input.dataset.email,
@@ -589,23 +631,16 @@
                 bant_authority: input.dataset.bantAuthority,
                 bant_need: input.dataset.bantNeed,
                 bant_timeline: input.dataset.bantTimeline,
-                id: input.dataset.id
             };
         }
-
-        currentLeadId = lead.id; // Store globally for chat
-
-        // Populate Modal Fields (Display)
+        currentLeadId = lead.id;
         document.getElementById('modalLeadName').textContent = lead.name;
-
-        // Populate Inputs (New)
+        document.getElementById('modalLeadPhone').textContent = lead.phone || 'Sem telefone'; // Fix
         document.getElementById('modalInputEmail').value = lead.email || '';
 
-        // Phone Split Logic
         const rawPhone = lead.phone || '';
         const ddiSelect = document.getElementById('modalInputPhoneDDI');
         const phoneInput = document.getElementById('modalInputPhoneNumber');
-
         if (rawPhone) {
             let matched = false;
             for (let opt of ddiSelect.options) {
@@ -617,10 +652,7 @@
                     break;
                 }
             }
-            if (!matched) {
-                phoneInput.value = rawPhone;
-                maskPhone(phoneInput);
-            }
+            if (!matched) { phoneInput.value = rawPhone; maskPhone(phoneInput); }
         } else {
             ddiSelect.value = '+55';
             phoneInput.value = '';
@@ -630,24 +662,16 @@
         document.getElementById('modalInputAddress').value = lead.address || '';
         document.getElementById('modalInputSource').value = lead.source || '';
         document.getElementById('modalInputInterest').value = lead.interest || '';
-
-        // BANT Fields
         document.getElementById('bantBudget').value = lead.bant_budget || '';
         document.getElementById('bantAuthority').value = lead.bant_authority || '';
         document.getElementById('bantTimeline').value = lead.bant_timeline || '';
         document.getElementById('bantNeed').value = lead.bant_need || '';
 
-        // Update Form Actions
         document.getElementById('infoForm').action = `/leads/${lead.id}/update_info`;
         document.getElementById('bantForm').action = `/leads/${lead.id}/bant`;
-
-        // Update Full Details Link
         document.getElementById('viewFullDetails').href = `/leads/${lead.id}`;
 
         toggleModal('leadModal');
-
-        // Clear previous chat to prevent leak
-        document.getElementById('chat-messages').innerHTML = '';
     }
 </script>
 

@@ -165,6 +165,31 @@ def move_lead(id, direction):
     db.session.commit()
     return redirect(url_for('leads.pipeline', pipeline_id=lead.pipeline_id))
 
+@leads_bp.route('/api/leads/<int:id>/update_stage', methods=['POST'])
+@login_required
+def update_lead_stage_api(id):
+    lead = Lead.query.get_or_404(id)
+    if lead.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    data = request.get_json()
+    stage_id = data.get('stage_id')
+    
+    if not stage_id:
+        return jsonify({'error': 'Stage ID required'}), 400
+        
+    stage = PipelineStage.query.get(stage_id)
+    if not stage or stage.pipeline_id != lead.pipeline_id:
+         return jsonify({'error': 'Invalid Stage'}), 400
+         
+    lead.pipeline_stage_id = stage.id
+    
+    # If moving to "Won" or "Closed" stages, we might want to trigger conversion logic?
+    # For now, just update the stage. Logic can be expanded if users want auto-convert on drag.
+    
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Lead moved successfully'})
+
 @leads_bp.route('/leads/\u003cint:id\u003e/convert', methods=['POST'])
 @login_required
 def convert_lead(id):
