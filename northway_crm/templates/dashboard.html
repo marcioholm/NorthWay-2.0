@@ -389,7 +389,13 @@
             funnelChartInstance.destroy();
         }
 
-        const total = data.length > 0 ? Math.max(...data) : 1;
+        const maxVal = data.length > 0 ? Math.max(...data) : 1;
+
+        // Calculate floating bars: [offset, offset + value]
+        const floatingData = data.map(val => {
+            const offset = (maxVal - val) / 2;
+            return [offset, offset + val];
+        });
 
         funnelChartInstance = new Chart(ctxFunnel, {
             type: 'bar',
@@ -397,17 +403,14 @@
                 labels: labels,
                 datasets: [{
                     label: 'Leads',
-                    data: data,
+                    data: floatingData,
                     backgroundColor: [
-                        '#7f1d1d', // Red 900
-                        '#991b1b', // Red 800
-                        '#b91c1c', // Red 700
-                        '#dc2626', // Red 600
-                        '#ef4444', // Red 500
-                        '#f87171'  // Red 400
+                        '#7f1d1d', '#991b1b', '#b91c1c',
+                        '#dc2626', '#ef4444', '#f87171'
                     ],
                     borderRadius: 4,
-                    barPercentage: 0.8, // Thicker bars
+                    barPercentage: 0.8,
+                    borderSkipped: false
                 }]
             },
             options: {
@@ -416,47 +419,31 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    tooltip: {
-                        enabled: false
-                    },
+                    tooltip: { enabled: false },
                     datalabels: {
                         color: '#fff',
                         anchor: 'center',
                         align: 'center',
                         textAlign: 'center',
-                        font: {
-                            family: "'Inter', sans-serif",
-                            weight: 'bold',
-                            size: 13
-                        },
+                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 13 },
                         formatter: function (value, context) {
                             const label = context.chart.data.labels[context.dataIndex];
-                            const data = context.dataset.data;
-                            const total = data.length > 0 ? data[context.dataIndex] : 0; // Current value is the cumulative total
+                            // value is [start, end], original = end - start
+                            const originalVal = value[1] - value[0];
 
-                            // Calculate % of the absolute top of the funnel (first stage)
-                            const firstStageValue = data.length > 0 ? data[0] : 1;
-                            const percentageOfTotal = firstStageValue > 0 ? Math.round((value / firstStageValue) * 100) : 0;
+                            // Get first item (max) from the specific dataset
+                            const firstItem = context.dataset.data[0];
+                            const firstStageVal = firstItem[1] - firstItem[0];
 
-                            return `${label}\n${value} Leads (${percentageOfTotal}%)`;
+                            const percentage = firstStageVal > 0 ? Math.round((originalVal / firstStageVal) * 100) : 0;
+                            return `${label}\n${originalVal} Leads (${percentage}%)`;
                         }
                     }
                 },
-                layout: {
-                    padding: {
-                        right: 20,
-                        left: 20
-                    }
-                },
+                layout: { padding: { right: 20, left: 20 } },
                 scales: {
-                    x: {
-                        grid: { display: false, drawBorder: false },
-                        ticks: { display: false }
-                    },
-                    y: {
-                        display: false, // Hide Y axis labels (Stage names are now on bars)
-                        grid: { display: false, drawBorder: false }
-                    }
+                    x: { grid: { display: false }, ticks: { display: false } },
+                    y: { display: false, grid: { display: false } }
                 }
             }
         });
