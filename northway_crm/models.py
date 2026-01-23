@@ -525,11 +525,13 @@ class ClientChecklist(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy
     name = db.Column(db.String(100), nullable=False)
     progress = db.Column(db.JSON, nullable=False) # Snapshot with status: [{"title": "...", "items": [{"text": "...", "done": True}]}]
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     client = db.relationship('Client', backref='checklists')
     template = db.relationship('ProcessTemplate')
+    assigned_to = db.relationship('User', backref='assigned_checklists')
 
 class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True)

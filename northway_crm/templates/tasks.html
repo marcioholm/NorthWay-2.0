@@ -26,7 +26,8 @@
                         Diária</span>
                 </div>
                 <h2 class="text-3xl font-black mb-3 leading-tight tracking-tight uppercase">Execução impecável gera
-                    <br><span class="text-northway-red italic">resultados fora da curva</span> ✅</h2>
+                    <br><span class="text-northway-red italic">resultados fora da curva</span> ✅
+                </h2>
                 <p class="text-base text-gray-400 leading-relaxed font-light">
                     Onde o improviso termina, a disciplina começa.
                     Cada tarefa concluída é um tijolo na construção da sua escala. Domine o hoje.
@@ -145,6 +146,13 @@
             </div>
 
             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
+                    data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
+                    data-assigned-to="{{ task.assigned_to_id or '' }}" onclick="openEditTaskModal(this)"
+                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar">
+                    <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
+                </button>
                 <!-- Delete Button inside Form -->
                 <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
                     <button type="submit"
@@ -208,6 +216,13 @@
             </div>
 
             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
+                    data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
+                    data-assigned-to="{{ task.assigned_to_id or '' }}" onclick="openEditTaskModal(this)"
+                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar">
+                    <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
+                </button>
                 <!-- Delete Button inside Form -->
                 <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
                     <button type="submit"
@@ -256,6 +271,13 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
+                    data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
+                    data-assigned-to="{{ task.assigned_to_id or '' }}" onclick="openEditTaskModal(this)"
+                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar">
+                    <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
+                </button>
                 <!-- Delete Button inside Form -->
                 <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
                     <button type="submit"
@@ -402,6 +424,53 @@
     </div>
 </div>
 
+<!-- Edit Task Modal -->
+<div id="editTaskModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Editar Tarefa</h3>
+            <button data-close-modal="editTaskModal" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <form id="editTaskForm" method="POST" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+                <input type="text" name="title" id="edit_task_title" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+                <select name="assigned_to_id" id="edit_task_assigned_to"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data e Hora</label>
+                <input type="datetime-local" name="due_date" id="edit_task_due_date"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+            </div>
+
+            <div class="pt-4 flex gap-3">
+                <button type="button" data-close-modal="editTaskModal"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Salvar Alterações
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // Progress Bar Optimization
@@ -505,5 +574,26 @@
         // Icons
         if (window.lucide) lucide.createIcons();
     });
+
+    function openEditTaskModal(btn) {
+        const modal = document.getElementById('editTaskModal');
+        const form = document.getElementById('editTaskForm');
+
+        const id = btn.dataset.id;
+        const title = btn.dataset.title;
+        const dueDate = btn.dataset.dueDate;
+        const assignedToId = btn.dataset.assignedTo;
+
+        // Populate fields
+        document.getElementById('edit_task_title').value = title;
+        document.getElementById('edit_task_due_date').value = dueDate;
+        document.getElementById('edit_task_assigned_to').value = assignedToId;
+
+        // Set action URL
+        form.action = `/tasks/${id}/update`;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
 </script>
 {% endblock %}

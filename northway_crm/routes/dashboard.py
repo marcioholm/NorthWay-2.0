@@ -101,6 +101,18 @@ def dashboard():
     overdue_tasks = Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, status='pendente')\
                                .filter(Task.due_date < datetime.now()).count()
     
+    # 3. Funnel Data (First Pipeline)
+    from models import Pipeline, PipelineStage
+    first_pipeline = Pipeline.query.filter_by(company_id=company_id).first()
+    funnel_data = {'labels': [], 'data': []}
+    
+    if first_pipeline:
+        stages = PipelineStage.query.filter_by(pipeline_id=first_pipeline.id).order_by(PipelineStage.order).all()
+        for stage in stages:
+            count = Lead.query.filter_by(company_id=company_id, pipeline_stage_id=stage.id).count()
+            funnel_data['labels'].append(stage.name)
+            funnel_data['data'].append(count)
+    
     return render_template('dashboard.html',
                            total_leads=total_leads,
                            active_clients=active_clients,
@@ -109,6 +121,7 @@ def dashboard():
                            risky_clients=risky_clients,
                            pending_tasks=pending_tasks,
                            overdue_tasks=overdue_tasks,
+                           funnel_data=funnel_data, # Pass to template
                            now=datetime.now())
 
 def get_today_tasks(company_id, user_id):

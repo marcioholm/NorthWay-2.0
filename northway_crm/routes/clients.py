@@ -83,6 +83,9 @@ def client_details(id):
     # Get Process Templates
     process_templates = ProcessTemplate.query.filter_by(company_id=current_user.company_id).all()
     
+    # Get Users for Assignment
+    users = User.query.filter_by(company_id=current_user.company_id).all()
+    
     return render_template('client_details.html', 
                           client=client, 
                           mrr=mrr, 
@@ -91,7 +94,8 @@ def client_details(id):
                           total_paid=total_paid,
                           total_pending=total_pending,
                           total_overdue=total_overdue,
-                          process_templates=process_templates)
+                          process_templates=process_templates,
+                          users=users)
 
 @clients_bp.route('/clients/<int:id>/update', methods=['POST'])
 @login_required

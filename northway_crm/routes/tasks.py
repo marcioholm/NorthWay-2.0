@@ -143,3 +143,48 @@ def dismiss_onboarding():
     current_user.onboarding_dismissed = True
     db.session.commit()
     return jsonify({'success': True})
+
+@tasks_bp.route('/tasks/<int:id>/update', methods=['POST'])
+@login_required
+def update_task(id):
+    task = Task.query.get_or_404(id)
+    if task.company_id != current_user.company_id:
+        abort(403)
+        
+    title = request.form.get('title')
+    due_date_str = request.form.get('due_date')
+    assigned_to_id = request.form.get('assigned_to_id')
+    
+    if title: 
+        task.title = title
+        
+    if due_date_str:
+        try:
+            task.due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            pass
+            
+    if assigned_to_id:
+        try:
+            new_assignee_id = int(assigned_to_id)
+            old_assignee_id = task.assigned_to_id
+            
+            if new_assignee_id != old_assignee_id:
+                task.assigned_to_id = new_assignee_id
+                
+                # Notify new assignee
+                if new_assignee_id != current_user.id:
+                    from utils import create_notification
+                    create_notification(
+                        user_id=new_assignee_id,
+                        company_id=current_user.company_id,
+                        type='task_assigned',
+                        title='Tarefa Delegada',
+                        message=f"{current_user.name} delegou a tarefa '{task.title}' para você."
+                    )
+        except ValueError:
+            pass
+
+    db.session.commit()
+    flash('Tarefa atualizada com sucesso.', 'success')
+    return redirect(request.referrer or url_for('tasks.tasks'))

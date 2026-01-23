@@ -25,7 +25,8 @@ def add_client_process(client_id):
                 title=item_text,
                 description=f"Item do processo: {template.name} - Etapa: {step['title']}",
                 client_id=client.id,
-                assigned_to_id=client.account_manager_id or current_user.id,
+                # Assign to chosen user or fallback to manager/creator
+                assigned_to_id=int(request.form.get('assigned_to_id')) if request.form.get('assigned_to_id') else (client.account_manager_id or current_user.id),
                 company_id=current_user.company_id,
                 status='pendente',
                 priority='media'
@@ -37,8 +38,15 @@ def add_client_process(client_id):
         
         progress.append({"title": step['title'], "items": new_items})
     
+    assigned_to_id = request.form.get('assigned_to_id')
+    
     checklist = ClientChecklist(
-        client_id=client.id, template_id=template.id, name=template.name, progress=progress, company_id=current_user.company_id
+        client_id=client.id, 
+        template_id=template.id, 
+        name=template.name, 
+        progress=progress, 
+        company_id=current_user.company_id,
+        assigned_to_id=int(assigned_to_id) if assigned_to_id else None
     )
     db.session.add(checklist)
     db.session.commit()
@@ -98,3 +106,51 @@ def delete_client_checklist(id):
     db.session.delete(checklist)
     db.session.commit()
     return jsonify({'success': True})
+
+@checklists_bp.route('/checklists/<int:id>/reassign', methods=['POST'])
+@login_required
+def reassign_checklist(id):
+    checklist = ClientChecklist.query.get_or_404(id)
+    if checklist.company_id != current_user.company_id:
+        abort(403)
+        
+    assigned_to_id = request.form.get('assigned_to_id')
+    if not assigned_to_id:
+        flash('Usuário não selecionado.', 'error')
+        return redirect(url_for('clients.client_details', id=checklist.client_id))
+        
+    try:
+        new_user_id = int(assigned_to_id)
+        # Update Checklist
+        checklist.assigned_to_id = new_user_id
+        
+        # Cascade to all incomplete tasks linked to this checklist
+        count_updated = 0
+        for step in checklist.progress:
+            for item in step['items']:
+                task_id = item.get('task_id')
+                # Only update checkable items with tasks
+                if task_id:
+                     task = Task.query.get(task_id)
+                     if task and task.status != 'concluida' and task.company_id == current_user.company_id:
+                         task.assigned_to_id = new_user_id
+                         count_updated += 1
+        
+        db.session.commit()
+        
+        # Notify
+        from utils import create_notification
+        create_notification(
+            user_id=new_user_id,
+            company_id=current_user.company_id,
+            type='task_assigned', # Reusing task type or create 'process_assigned'
+            title='Processo Delegado',
+            message=f"{current_user.name} delegou o processo '{checklist.name}' e {count_updated} tarefas para você."
+        )
+        
+        flash(f'Processo delegado com sucesso! ({count_updated} tarefas atualizadas)', 'success')
+        
+    except ValueError:
+        flash('ID de usuário inválido.', 'error')
+    
+    return redirect(url_for('clients.client_details', id=checklist.client_id))
