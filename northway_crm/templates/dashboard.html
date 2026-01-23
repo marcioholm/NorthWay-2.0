@@ -428,10 +428,16 @@
                             size: 11
                         },
                         formatter: function (value, context) {
-                            const prevValue = context.dataIndex > 0 ? context.dataset.data[context.dataIndex - 1] : 0;
-                            const conversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0;
-                            if (context.dataIndex === 0) return value; // First bar just shows count
-                            return `${value} (${conversion}%)`;
+                            const data = context.dataset.data;
+                            const total = data.length > 0 ? data[0] : 0;
+                            const prevValue = context.dataIndex > 0 ? data[context.dataIndex - 1] : 0;
+
+                            const totalConversion = total > 0 ? Math.round((value / total) * 100) : 0;
+                            const stepConversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0;
+
+                            if (context.dataIndex === 0) return `${value} (100%)`; // First bar represents the total pool
+
+                            return `${value} (${totalConversion}% Total | ${stepConversion}% Etapa Ant.)`;
                         }
                     }
                 },
