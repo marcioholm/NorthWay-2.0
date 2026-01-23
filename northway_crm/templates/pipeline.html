@@ -685,7 +685,8 @@
             </button>
         </div>
 
-        <form action="{{ url_for('leads.create_stage', id=active_pipeline.id) }}" method="POST" class="p-6 space-y-4">
+        <form action="{{ url_for('leads.create_stage') }}" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="pipeline_id" value="{{ active_pipeline.id }}">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Etapa *</label>
                 <input type="text" name="name" required placeholder="Ex: Triagem, Follow-up"
