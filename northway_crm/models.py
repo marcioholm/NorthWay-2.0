@@ -111,6 +111,7 @@ class Company(db.Model):
     
     # Branding
     logo_filename = db.Column(db.String(150), nullable=True)
+    logo_base64 = db.Column(db.Text, nullable=True) # Fallback for persistence
     primary_color = db.Column(db.String(7), default='#fa0102') # Default Northway Red
     secondary_color = db.Column(db.String(7), default='#111827') # Default Dark Gray
     

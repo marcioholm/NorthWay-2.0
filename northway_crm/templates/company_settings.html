@@ -58,9 +58,17 @@
                         <div class="flex items-center gap-4">
                             <div
                                 class="w-20 h-20 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center p-2">
-                                {% if company.logo_filename %}
+                                {% if company.logo_base64 %}
+                                <img src="data:image/png;base64,{{ company.logo_base64 }}" alt="Logo"
+                                    class="max-w-full max-h-full object-contain">
+                                {% elif company.logo_filename %}
+                                {% if company.logo_filename.startswith('http') %}
+                                <img src="{{ company.logo_filename }}" alt="Logo"
+                                    class="max-w-full max-h-full object-contain">
+                                {% else %}
                                 <img src="{{ url_for('static', filename='uploads/company/' + company.logo_filename) }}"
                                     alt="Logo" class="max-w-full max-h-full object-contain">
+                                {% endif %}
                                 {% else %}
                                 <i data-lucide="image" class="w-8 h-8 text-gray-300"></i>
                                 {% endif %}

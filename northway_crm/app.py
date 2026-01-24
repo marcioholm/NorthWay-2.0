@@ -269,6 +269,19 @@ def create_app():
                             print("✅ MIGRATION: assigned_to_id added to client_checklist.")
                     except Exception as cl_migration_e:
                         print(f"❌ MIGRATION ERROR on client_checklist: {cl_migration_e}")
+
+                # MIGRATE: Add logo_base64 to company if missing
+                if inspector.has_table("company"):
+                    try:
+                        has_col = any(c['name'] == 'logo_base64' for c in inspector.get_columns("company"))
+                        if not has_col:
+                            print("📦 MIGRATION: Adding logo_base64 to company...")
+                            with db.engine.connect() as conn:
+                                conn.execute(text("ALTER TABLE company ADD COLUMN logo_base64 TEXT"))
+                                conn.commit()
+                            print("✅ MIGRATION: logo_base64 added to company.")
+                    except Exception as co_migration_e:
+                        print(f"❌ MIGRATION ERROR on company: {co_migration_e}")
                 
             # Seed minimal data if empty (prevent lockout)
             if not User.query.first():
