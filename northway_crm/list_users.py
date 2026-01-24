@@ -1,10 +1,12 @@
+
 from app import create_app
-from models import db, User
+from models import User
 
 app = create_app()
 
 with app.app_context():
     users = User.query.all()
-    print(f"Total users: {len(users)}")
-    for u in users:
-        print(f"- {u.name} ({u.email}) [ID: {u.id}, Company: {u.company_id}]")
+    print("--- User List ---")
+    for user in users:
+        print(f"Name: {user.name} | Email: {user.email} | Role: {user.role}")
+    print("-----------------")
