@@ -172,30 +172,47 @@ def preview_contract():
             except:
                 pass
 
-    # Branding
-    logo_html = ""
+    # --- PREMIUM HEADER LOGIC ---
+    logo_img_tag = ""
     if client.company.logo_base64:
-        logo_html = f'<img src="data:image/png;base64,{client.company.logo_base64}" alt="Logo" class="h-16 object-contain">'
+        logo_img_tag = f'<img src="data:image/png;base64,{client.company.logo_base64}" alt="Logo" style="max-height: 80px; object-fit: contain;">'
     elif client.company.logo_filename:
         if client.company.logo_filename.startswith('http'):
             logo_url = client.company.logo_filename
         else:
             logo_url = url_for('static', filename='uploads/company/' + client.company.logo_filename)
-        logo_html = f'<img src="{logo_url}" alt="Logo" class="h-16 object-contain">'
+        logo_img_tag = f'<img src="{logo_url}" alt="Logo" style="max-height: 80px; object-fit: contain;">'
 
+    primary_col = client.company.primary_color or '#fa0102'
+    second_col = client.company.secondary_color or '#111827'
+    
     header_html = f"""
-    <div class="mb-8 border-b-2 pb-4" style="border-color: {client.company.primary_color or '#fa0102'}">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-2xl font-bold" style="color: {client.company.secondary_color or '#111827'}">{client.company.name}</h2>
-                <p class="text-sm text-gray-500">CNPJ: {client.company.document or ''}</p>
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 4px solid {primary_col}; margin-bottom: 40px;">
+            <div style="flex: 1;">
+                {logo_img_tag}
             </div>
-            {logo_html}
+            <div style="text-align: right;">
+                <h2 style="margin: 0; font-size: 24px; color: {second_col}; text-transform: uppercase; letter-spacing: 1px;">{client.company.name}</h2>
+                <p style="margin: 5px 0 0; color: #666; font-size: 14px;">CNPJ: {client.company.document or 'N/A'}</p>
+                <div style="margin-top: 5px; font-size: 12px; color: #999;">{datetime.now().strftime('%d de %B de %Y')}</div>
+            </div>
         </div>
-        <p class="text-xs text-gray-400 mt-2">Pré-visualização gerada em {datetime.now().strftime('%d/%m/%Y')}</p>
+    """
+
+    # Footer Logic
+    footer_html = f"""
+        <!-- Footer -->
+        <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid {primary_col}; text-align: center; font-size: 12px; color: #777; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+            <p style="margin: 0;"><strong>{client.company.name}</strong></p>
+            <p style="margin: 2px 0;">{client.company.address}</p>
+            <p style="margin: 2px 0;">{client.company.email_contact or ''}</p>
+        </div>
     </div>
     """
-    return jsonify({'content': header_html + content})
+    
+    return jsonify({'content': header_html + content + footer_html})
 
 @contracts_bp.route('/clients/<int:id>/contracts', methods=['POST'])
 @login_required
@@ -235,33 +252,47 @@ def create_contract(id):
         for key, value in replacements.items():
             generated_content = generated_content.replace(key, str(value))
         
-        generated_content = markdown.markdown(generated_content)
-
-        # Branded Header
+        # --- PREMIUM HEADER & FOOTER LOGIC (CREATE) ---
+        logo_img_tag = ""
         if current_user.company.logo_base64:
              logo_src = f"data:image/png;base64,{current_user.company.logo_base64}"
-             header_html = f"""
-                 <div style="text-align:center; margin-bottom: 40px; border-bottom: 2px solid {current_user.company.primary_color or '#fa0102'}; padding-bottom: 20px;">
-                     <h2 style="color: {current_user.company.secondary_color or '#111827'}; margin: 0; text-transform: uppercase;">{current_user.company.name}</h2>
-                     <p style="color: #666; font-size: 12px; margin: 5px 0;">CNPJ: {current_user.company.document}</p>
-                     <img src="{logo_src}" style="max-height: 60px; margin-top: 10px;">
-                 </div>
-             """
-             generated_content = header_html + generated_content
+             logo_img_tag = f'<img src="{logo_src}" alt="Logo" style="max-height: 80px; width: auto;">'
         elif current_user.company.logo_filename:
              if current_user.company.logo_filename.startswith('http'):
                  logo_url = current_user.company.logo_filename
              else:
                  logo_url = url_for('static', filename='uploads/company/' + current_user.company.logo_filename, _external=True)
-             
-             header_html = f"""
-                 <div style="text-align:center; margin-bottom: 40px; border-bottom: 2px solid {current_user.company.primary_color or '#fa0102'}; padding-bottom: 20px;">
-                     <h2 style="color: {current_user.company.secondary_color or '#111827'}; margin: 0; text-transform: uppercase;">{current_user.company.name}</h2>
-                     <p style="color: #666; font-size: 12px; margin: 5px 0;">CNPJ: {current_user.company.document}</p>
-                     <img src="{logo_url}" style="max-height: 60px; margin-top: 10px;">
-                 </div>
-             """
-             generated_content = header_html + generated_content
+             logo_img_tag = f'<img src="{logo_url}" alt="Logo" style="max-height: 80px; width: auto;">'
+
+        primary_col = current_user.company.primary_color or '#fa0102'
+        second_col = current_user.company.secondary_color or '#111827'
+
+        header_html = f"""
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
+            <div style="width: 100%; border-bottom: 4px solid {primary_col}; margin-bottom: 40px; padding-bottom: 20px;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td align="left" valign="middle">
+                            {logo_img_tag}
+                        </td>
+                        <td align="right" valign="middle">
+                            <h2 style="margin: 0; font-size: 24px; color: {second_col}; text-transform: uppercase; letter-spacing: 1px;">{current_user.company.name}</h2>
+                            <p style="margin: 5px 0 0; color: #666; font-size: 14px;">CNPJ: {current_user.company.document}</p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        """
+
+        footer_html = f"""
+            <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid {primary_col}; text-align: center; font-size: 12px; color: #777; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; page-break-inside: avoid;">
+                <p style="margin: 0;"><strong>{current_user.company.name}</strong></p>
+                <p style="margin: 2px 0;">{current_user.company.address}</p>
+            </div>
+        </div>
+        """
+        
+        generated_content = header_html + generated_content + footer_html
 
         status = 'issued' if action == 'issue' else 'draft'
         
