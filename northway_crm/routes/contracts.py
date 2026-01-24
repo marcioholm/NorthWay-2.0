@@ -188,14 +188,14 @@ def preview_contract():
     
     header_html = f"""
         <!-- Header -->
-        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 4px solid {primary_col}; margin-bottom: 40px;">
+        <div style="font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111827; display: flex; justify-content: space-between; align-items: center; padding-bottom: 25px; border-bottom: 1px solid #e5e7eb; margin-bottom: 40px;">
             <div style="flex: 1;">
                 {logo_img_tag}
             </div>
             <div style="text-align: right;">
-                <h2 style="margin: 0; font-size: 24px; color: {second_col}; text-transform: uppercase; letter-spacing: 1px;">{client.company.name}</h2>
-                <p style="margin: 5px 0 0; color: #666; font-size: 14px;">CNPJ: {client.company.document or 'N/A'}</p>
-                <div style="margin-top: 5px; font-size: 12px; color: #999;">{datetime.now().strftime('%d de %B de %Y')}</div>
+                <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: {second_col}; text-transform: uppercase; letter-spacing: 2px;">{client.company.name}</h2>
+                <p style="margin: 4px 0 0; color: #6b7280; font-size: 13px; font-weight: 500;">CNPJ: {client.company.document or 'N/A'}</p>
+                <div style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">{datetime.now().strftime('%d de %B de %Y')}</div>
             </div>
         </div>
     """
@@ -203,86 +203,101 @@ def preview_contract():
     # Footer Logic
     footer_html = f"""
         <!-- Footer -->
-        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-top: 60px; padding-top: 20px; border-top: 1px solid {primary_col}; text-align: center; font-size: 12px; color: #777;">
-            <p style="margin: 0;"><strong>{client.company.name}</strong></p>
-            <p style="margin: 2px 0;">{client.company.address}</p>
+        <div style="font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-top: 60px; padding-top: 25px; border-top: 1px solid #f3f4f6; text-align: center;">
+            <p style="margin: 0; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 1.5px;">{client.company.name}</p>
+            <p style="margin: 4px 0; font-size: 10px; color: #9ca3af; line-height: 1.6;">{client.company.address or ''}</p>
+            <div style="margin-top: 10px; width: 40px; height: 2px; background-color: {primary_col}; margin-left: auto; margin-right: auto; opacity: 0.3;"></div>
         </div>
     """
 
     # --- ANEXO I: QUADRO RESUMO (Mandatory) ---
     def generate_summary_sheet(client, replacements, primary_col):
         summary_html = f"""
-        <div style="page-break-before: always; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333;">
-            <h1 style="text-align: center; font-size: 24px; color: {primary_col}; margin-bottom: 30px; border-bottom: 2px solid {primary_col}; padding-bottom: 10px;">ANEXO I - QUADRO RESUMO</h1>
+        <div style="page-break-before: always; font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #111827;">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <h1 style="font-size: 20px; font-weight: 800; color: {primary_col}; margin: 0; text-transform: uppercase; letter-spacing: 2px;">ANEXO I - QUADRO RESUMO</h1>
+                <div style="width: 60px; height: 3px; background-color: {primary_col}; margin: 15px auto 0;"></div>
+            </div>
             
-            <p style="margin-bottom: 20px; font-size: 14px; color: #666;">Este anexo é parte integrante e indissociável do contrato principal, servindo como resumo vinculante das condições comerciais e financeiras acordadas.</p>
+            <p style="margin-bottom: 25px; font-size: 13px; color: #6b7280; line-height: 1.6; text-align: center; max-width: 80%; margin-left: auto; margin-right: auto;">
+                Este documento consolida as principais condições comerciais acordadas. 
+                Sua validade está vinculada ao contrato principal.
+            </p>
 
-            <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">1. PARTES</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
-                <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>CONTRATANTE:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{nome_empresarial_contratante}}', '')}</td>
+            <h3 style="font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background-color: {primary_col}; display: inline-block; margin-right: 8px;"></span>
+                1. Informações das Partes
+            </h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 30px; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden;">
+                <tr style="background-color: #fafafa;">
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; width: 30%; color: #6b7280;"><strong>CONTRATANTE</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; font-weight: 600;">{replacements.get('{{nome_empresarial_contratante}}', '')}</td>
                 </tr>
                  <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>CPF/CNPJ:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{cnpj_contratante}}', '')}</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; color: #6b7280;"><strong>CNPJ/CPF</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6;">{replacements.get('{{cnpj_contratante}}', '')}</td>
                 </tr>
                  <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Resp. Legal:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{representante_legal_contratante}}', '')}</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; color: #6b7280;"><strong>Responsável</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6;">{replacements.get('{{representante_legal_contratante}}', '')}</td>
                 </tr>
             </table>
 
-            <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">2. VIGÊNCIA E DATAS</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
-                <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>Data de Início:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{DATA_INICIO}}', replacements.get('{{data_inicio}}', ''))}</td>
+            <h3 style="font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 1px; margin: 25px 0 12px; display: flex; align-items: center; gap: 8px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background-color: {primary_col}; display: inline-block; margin-right: 8px;"></span>
+                2. Vigência e Prazo
+            </h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 30px; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden;">
+                <tr style="background-color: #fafafa;">
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; width: 30%; color: #6b7280;"><strong>Início</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; font-weight: 600;">{replacements.get('{{DATA_INICIO}}', replacements.get('{{data_inicio}}', ''))}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Data de Término:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{DATA_FIM}}', replacements.get('{{data_fim}}', 'Indeterminado'))}</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; color: #6b7280;"><strong>Término</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6;">{replacements.get('{{DATA_FIM}}', replacements.get('{{data_fim}}', 'Indeterminado'))}</td>
                 </tr>
                  <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Prazo (Meses):</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{VIGENCIA_MESES}}', replacements.get('{{vigencia_meses}}', ''))} meses</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; color: #6b7280;"><strong>Duração</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; font-weight: 600; color: {primary_col};">{replacements.get('{{VIGENCIA_MESES}}', replacements.get('{{vigencia_meses}}', ''))} meses</td>
                 </tr>
             </table>
-
-            <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">3. CONDIÇÕES FINANCEIRAS</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
-                <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>Valor Total:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">R$ {replacements.get('{{valor_total}}', '0,00')}</td>
+    
+            <h3 style="font-size: 12px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 1px; margin: 25px 0 12px; display: flex; align-items: center; gap: 8px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background-color: {primary_col}; display: inline-block; margin-right: 8px;"></span>
+                3. Condições Comerciais
+            </h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 40px; border: 1px solid #f3f4f6; border-radius: 8px; overflow: hidden;">
+                <tr style="background-color: #fafafa;">
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; width: 30%; color: #6b7280;"><strong>Valor Total</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; font-size: 15px; font-weight: 800; color: {primary_col};">R$ {replacements.get('{{valor_total}}', replacements.get('{{VALOR_TOTAL}}', '0,00'))}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Taxa de Implantação:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">R$ {replacements.get('{{VALOR_IMPLANTACAO}}', '0,00')}</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; color: #6b7280;"><strong>Implantação</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6;">R$ {replacements.get('{{VALOR_IMPLANTACAO}}', '0,00')}</td>
                 </tr>
                  <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Mensalidade:</strong></td>
-                     <td style="padding: 8px; border-bottom: 1px solid #eee;">
-                        {replacements.get('{{NUMERO_PARCELAS}}', '0')}x parcelas de <strong>R$ {replacements.get('{{VALOR_MENSAL}}', '0,00')}</strong>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6; color: #6b7280;"><strong>Mensalidade</strong></td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f3f4f6;">
+                        <span style="font-weight: 600;">{replacements.get('{{NUMERO_PARCELAS}}', '0')}x de R$ {replacements.get('{{VALOR_MENSAL}}', '0,00')}</span>
+                        <br><small style="color: #9ca3af;">Vencimento: dia {replacements.get('{{DIA_VENCIMENTO}}', '')}</small>
                     </td>
                 </tr>
-                 <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Vencimento:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">Dia {replacements.get('{{DIA_VENCIMENTO}}', '')} de cada mês</td>
-                </tr>
-                <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Tráfego Mínimo:</strong></td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">R$ {replacements.get('{{VALOR_MINIMO_TRAFEGO}}', '0,00')} / {replacements.get('{{PERIODO_TRAFEGO}}', '')}</td>
+                <tr style="background-color: #fafafa;">
+                    <td style="padding: 12px 15px; color: #6b7280;"><strong>Tráfego Mínimo</strong></td>
+                    <td style="padding: 12px 15px; font-weight: 500;">R$ {replacements.get('{{VALOR_MINIMO_TRAFEGO}}', '0,00')} / {replacements.get('{{PERIODO_TRAFEGO}}', 'mês')}</td>
                 </tr>
             </table>
 
-            <div style="margin-top: 60px; display: flex; justify-content: space-between; text-align: center;">
-                 <div style="width: 45%;">
-                    <p style="border-top: 1px solid #333; padding-top: 10px; margin-bottom: 5px;"><strong>{replacements.get('{{nome_empresarial_contratante}}', 'CONTRATANTE')}</strong></p>
-                    <p style="font-size: 12px; color: #777;">Contratante</p>
+            <div style="margin-top: 60px; display: flex; justify-content: space-between; gap: 40px; text-align: center;">
+                 <div style="flex: 1;">
+                    <div style="height: 1px; background-color: #374151; margin-bottom: 12px;"></div>
+                    <p style="margin: 0; font-size: 11px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.5px;">{replacements.get('{{nome_empresarial_contratante}}', 'CONTRATANTE')}</p>
+                    <p style="margin-top: 4px; font-size: 10px; color: #9ca3af; text-transform: uppercase;">Contratante</p>
                 </div>
-                <div style="width: 45%;">
-                    <p style="border-top: 1px solid #333; padding-top: 10px; margin-bottom: 5px;"><strong>{replacements.get('{{nome_empresarial_contratada}}', 'CONTRATADA')}</strong></p>
-                    <p style="font-size: 12px; color: #777;">Contratada</p>
+                <div style="flex: 1;">
+                    <div style="height: 1px; background-color: #374151; margin-bottom: 12px;"></div>
+                    <p style="margin: 0; font-size: 11px; font-weight: 700; color: #111827; text-transform: uppercase; letter-spacing: 0.5px;">{client.company.name}</p>
+                    <p style="margin-top: 4px; font-size: 10px; color: #9ca3af; text-transform: uppercase;">Contratada</p>
                 </div>
             </div>
         </div>

@@ -379,45 +379,32 @@
         width: 210mm;
         height: 297mm;
         background: white;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
         position: relative;
-        padding-top: 30mm;
-        padding-bottom: 20mm;
-        padding-left: 30mm;
-        padding-right: 20mm;
+        padding-top: 25mm;
+        padding-bottom: 25mm;
+        padding-left: 25mm;
+        padding-right: 25mm;
         overflow: hidden;
-        /* Strict A4 clipping */
         flex-shrink: 0;
+        margin-bottom: 40px;
+        border: 1px solid #f3f4f6;
     }
 
     .a4-content {
-        font-family: Arial, Helvetica, sans-serif !important;
-        font-size: 12pt;
-        line-height: 1.5;
-        color: #000;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+        font-size: 11.5pt;
+        line-height: 1.6;
+        color: #1f2937;
         height: 100%;
-        /* Debug border? No */
+        text-align: justify;
     }
 
     /* Standard Elements */
     .a4-content p {
-        margin-bottom: 6pt;
+        margin-bottom: 12pt;
         text-align: justify;
         text-align-last: left;
-        /* Prevents weird stretching on last line */
-        text-indent: 0;
-        /* Removed forced indentation */
-    }
-
-    /* Quill Alignment Overrides */
-    .a4-content .ql-align-center {
-        text-align: center !important;
-        text-indent: 0 !important;
-    }
-
-    .a4-content .ql-align-right {
-        text-align: right !important;
-        text-indent: 0 !important;
     }
 
     .a4-content h1,
@@ -425,12 +412,10 @@
     .a4-content h3,
     .a4-content strong,
     .a4-content b {
-        font-family: Arial, Helvetica, sans-serif !important;
-        font-size: 12pt;
-        font-weight: bold;
-        text-align: justify;
-        margin-bottom: 6pt;
-        text-indent: 0;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+        color: #111827;
+        font-weight: 700;
+        margin-bottom: 10pt;
     }
 
     .a4-content h1.ql-align-center,
