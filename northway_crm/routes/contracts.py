@@ -174,8 +174,13 @@ def preview_contract():
 
     # Branding
     logo_html = ""
-    if client.company.logo_filename:
-        logo_url = url_for('static', filename='uploads/company/' + client.company.logo_filename)
+    if client.company.logo_base64:
+        logo_html = f'<img src="data:image/png;base64,{client.company.logo_base64}" alt="Logo" class="h-16 object-contain">'
+    elif client.company.logo_filename:
+        if client.company.logo_filename.startswith('http'):
+            logo_url = client.company.logo_filename
+        else:
+            logo_url = url_for('static', filename='uploads/company/' + client.company.logo_filename)
         logo_html = f'<img src="{logo_url}" alt="Logo" class="h-16 object-contain">'
 
     header_html = f"""
@@ -233,8 +238,22 @@ def create_contract(id):
         generated_content = markdown.markdown(generated_content)
 
         # Branded Header
-        if current_user.company.logo_filename:
-             logo_url = url_for('static', filename='uploads/company/' + current_user.company.logo_filename, _external=True)
+        if current_user.company.logo_base64:
+             logo_src = f"data:image/png;base64,{current_user.company.logo_base64}"
+             header_html = f"""
+                 <div style="text-align:center; margin-bottom: 40px; border-bottom: 2px solid {current_user.company.primary_color or '#fa0102'}; padding-bottom: 20px;">
+                     <h2 style="color: {current_user.company.secondary_color or '#111827'}; margin: 0; text-transform: uppercase;">{current_user.company.name}</h2>
+                     <p style="color: #666; font-size: 12px; margin: 5px 0;">CNPJ: {current_user.company.document}</p>
+                     <img src="{logo_src}" style="max-height: 60px; margin-top: 10px;">
+                 </div>
+             """
+             generated_content = header_html + generated_content
+        elif current_user.company.logo_filename:
+             if current_user.company.logo_filename.startswith('http'):
+                 logo_url = current_user.company.logo_filename
+             else:
+                 logo_url = url_for('static', filename='uploads/company/' + current_user.company.logo_filename, _external=True)
+             
              header_html = f"""
                  <div style="text-align:center; margin-bottom: 40px; border-bottom: 2px solid {current_user.company.primary_color or '#fa0102'}; padding-bottom: 20px;">
                      <h2 style="color: {current_user.company.secondary_color or '#111827'}; margin: 0; text-transform: uppercase;">{current_user.company.name}</h2>
