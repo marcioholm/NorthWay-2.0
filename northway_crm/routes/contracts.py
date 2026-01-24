@@ -207,7 +207,6 @@ def preview_contract():
         <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid {primary_col}; text-align: center; font-size: 12px; color: #777; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
             <p style="margin: 0;"><strong>{client.company.name}</strong></p>
             <p style="margin: 2px 0;">{client.company.address}</p>
-            <p style="margin: 2px 0;">{client.company.email_contact or ''}</p>
         </div>
     </div>
     """
