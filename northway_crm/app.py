@@ -256,6 +256,19 @@ def create_app():
                 
                 # Update inspector for subsequent checks
                 inspector = inspect(db.engine)
+
+                # MIGRATE: Add assigned_to_id to client_checklist if missing
+                if inspector.has_table("client_checklist"):
+                    try:
+                        has_col = any(c['name'] == 'assigned_to_id' for c in inspector.get_columns("client_checklist"))
+                        if not has_col:
+                            print("📦 MIGRATION: Adding assigned_to_id to client_checklist...")
+                            with db.engine.connect() as conn:
+                                conn.execute(text("ALTER TABLE client_checklist ADD COLUMN assigned_to_id INTEGER REFERENCES \"user\"(id)"))
+                                conn.commit()
+                            print("✅ MIGRATION: assigned_to_id added to client_checklist.")
+                    except Exception as cl_migration_e:
+                        print(f"❌ MIGRATION ERROR on client_checklist: {cl_migration_e}")
                 
             # Seed minimal data if empty (prevent lockout)
             if not User.query.first():
