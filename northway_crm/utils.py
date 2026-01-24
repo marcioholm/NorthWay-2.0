@@ -163,10 +163,20 @@ def get_contract_replacements(client, form_data):
         '{{VIGENCIA_MESES}}': form_data.get('vigencia_meses', '12'),
         '{{DATA_FIM}}': form_data.get('data_fim', ''),
         '{{DATA_FINAL}}': form_data.get('data_fim', ''),
+        '{{DATA_TERMINO}}': form_data.get('data_fim', ''),
         '{{CIDADE_FORO}}': foro_comarca,
         '{{ESTADO_FORO}}': foro_estado,
+        '{{FORO_COMARCA}}': foro_comarca,
+        '{{FORO_ESTADO}}': foro_estado,
         '{{DATA_ATUAL}}': date.today().strftime('%d/%m/%Y'),
         '{{CURRENT_DATE}}': date.today().strftime('%d/%m/%Y'),
+        '{{CIDADE_ASSINATURA}}': form_data.get('cidade_assinatura', foro_comarca),
+        '{{DATA_ASSINATURA}}': form_data.get('data_assinatura', date.today().strftime('%d/%m/%Y')),
+        '{{NUMERO_VIAS}}': form_data.get('numero_vias', '2'),
+
+        # --- ASSINATURAS ---
+        '{{CONTRATANTE_ASSINATURA_NOME}}': form_data.get('contratante_representante') or client.representative or (form_data.get('contratante_nome') or client.name),
+        '{{CONTRATADA_ASSINATURA_NOME}}': getattr(client.company, 'representative', '') or current_user_name,
 
         # --- LOWERCASE ALIASES (Fixing User Issue) ---
         '{{nome_empresarial_contratante}}': form_data.get('contratante_nome') or client.name,
@@ -181,7 +191,7 @@ def get_contract_replacements(client, form_data):
         '{{endereco_contratada}}': format_addr(client.company),
         '{{representante_legal_contratada}}': getattr(client.company, 'representative', '') or current_user_name,
         '{{cpf_representante_contratada}}': getattr(client.company, 'representative_cpf', '') or '',
-        '{{endereco_representante_contratada}}': '', # Not usually stored for company rep, can be manually filled or ignored
+        '{{endereco_representante_contratada}}': '', 
 
         '{{valor_total}}': form_data.get('valor_total', '0,00'),
         '{{valor_mensal}}': form_data.get('valor_parcela', '0,00'),
@@ -191,9 +201,13 @@ def get_contract_replacements(client, form_data):
 
         # --- TESTEMUNHAS ---
         '{{nome_testemunha_1}}': form_data.get('testemunha1_nome', '__________________________'),
+        '{{TESTEMUNHA1_NOME}}': form_data.get('testemunha1_nome', '__________________________'),
         '{{cpf_testemunha_1}}': form_data.get('testemunha1_cpf', ''),
+        '{{TESTEMUNHA1_CPF}}': form_data.get('testemunha1_cpf', ''),
         '{{nome_testemunha_2}}': form_data.get('testemunha2_nome', '__________________________'),
+        '{{TESTEMUNHA2_NOME}}': form_data.get('testemunha2_nome', '__________________________'),
         '{{cpf_testemunha_2}}': form_data.get('testemunha2_cpf', ''),
+        '{{TESTEMUNHA2_CPF}}': form_data.get('testemunha2_cpf', ''),
     }
     return replacements
 

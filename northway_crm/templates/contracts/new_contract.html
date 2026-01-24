@@ -69,35 +69,35 @@
                         <div class="col-span-2">
                             <div class="relative group">
                                 <label for="valor_total"
-                                    class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Valor
+                                    class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Valor
                                     Total (Contrato)</label>
-                                <input type="text" id="valor_total" name="valor_total" placeholder="0,00"
+                                <input type="text" id="valor_total" name="valor_total" placeholder="0,00" required
                                     class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono font-medium">
                             </div>
                         </div>
 
                         <div class="relative group">
                             <label for="valor_parcela"
-                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Parcela
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Parcela
                                 Mensal</label>
-                            <input type="text" id="valor_parcela" name="valor_parcela" placeholder="0,00"
+                            <input type="text" id="valor_parcela" name="valor_parcela" placeholder="0,00" required
                                 value="{{ client.monthly_value }}"
-                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono bg-gray-50/50">
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
                         </div>
 
                         <div class="relative group">
                             <label for="qtd_parcelas"
-                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Qtd
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Qtd
                                 Meses</label>
-                            <input type="number" id="qtd_parcelas" name="qtd_parcelas" value="12"
+                            <input type="number" id="qtd_parcelas" name="qtd_parcelas" value="12" required
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
                         </div>
 
                         <div class="relative group">
                             <label for="dia_vencimento"
-                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Dia
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Dia
                                 Vencimento</label>
-                            <input type="number" id="dia_vencimento" name="dia_vencimento" value="5"
+                            <input type="number" id="dia_vencimento" name="dia_vencimento" value="5" required
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono">
                         </div>
 
@@ -174,38 +174,69 @@
                 <!-- 3. Dates & Config -->
                 <div class="space-y-4">
                     <h3 class="text-xs font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2 mb-4">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Datas
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Datas e Vigência
                     </h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="relative group">
                             <label for="data_inicio"
-                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Início</label>
-                            <input type="text" id="data_inicio" name="data_inicio" placeholder="DD/MM/AAAA"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Início
+                                Vigência</label>
+                            <input type="text" id="data_inicio" name="data_inicio" placeholder="DD/MM/AAAA" required
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all mask-date">
                         </div>
                         <div class="relative group">
                             <label for="vigencia_meses"
-                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Vigência
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Vigência
                                 (Meses)</label>
-                            <input type="number" id="vigencia_meses" name="vigencia_meses" value="12"
+                            <input type="number" id="vigencia_meses" name="vigencia_meses" value="12" required
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all">
                         </div>
                         <div class="col-span-2 relative group">
+                            <label for="data_fim"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Término
+                                Vigência (Calculado)</label>
+                            <input type="text" id="data_fim" name="data_fim" placeholder="DD/MM/AAAA" readonly
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 cursor-not-allowed">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                        <h3
+                            class="col-span-2 text-xs font-bold text-gray-900 uppercase tracking-widest flex items-center gap-2 mb-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Assinatura e Foro
+                        </h3>
+                        <div class="col-span-2 relative group">
                             <label for="cidade_assinatura"
-                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Cidade
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Cidade
+                                de
                                 Assinatura</label>
                             <input type="text" id="cidade_assinatura" name="cidade_assinatura"
-                                placeholder="ex: São Paulo"
-                                value="{{ client.company.address.split('-')[-1].strip() if client.company.address else 'São Paulo' }}"
+                                placeholder="ex: São Paulo" required
+                                value="{{ client.company.address_city if client.company.address_city else 'São Paulo' }}"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all">
+                        </div>
+                        <div class="col-span-2 relative group">
+                            <label for="data_assinatura"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Data
+                                de
+                                Assinatura</label>
+                            <input type="text" id="data_assinatura" name="data_assinatura" placeholder="DD/MM/AAAA"
+                                required value="{{ current_date }}"
+                                class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all mask-date">
+                        </div>
+                        <div class="col-span-2 relative group">
+                            <label for="cidade_foro"
+                                class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-gray-400 group-focus-within:text-northway-red transition-colors uppercase">Foro
+                                (Comarca - Estado)</label>
+                            <input type="text" id="cidade_foro" name="cidade_foro" placeholder="ex: São Paulo - SP"
+                                value="São Paulo - SP"
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all">
                         </div>
                     </div>
-                    <!-- Hidden fields from original form -->
-                    <input type="hidden" name="data_fim">
-                    <input type="hidden" name="cidade_foro" value="São Paulo - SP">
+
+                    <!-- Other hidden fields -->
                     <input type="hidden" name="data_proposta" value="{{ current_date }}">
                     <input type="hidden" name="numero_vias" value="2">
-                    <input type="hidden" name="data_assinatura" value="{{ current_date }}">
                 </div>
 
                 <hr class="border-gray-100 my-6">

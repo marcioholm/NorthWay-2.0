@@ -208,8 +208,90 @@ def preview_contract():
             <p style="margin: 2px 0;">{client.company.address}</p>
         </div>
     """
+
+    # --- ANEXO I: QUADRO RESUMO (Mandatory) ---
+    def generate_summary_sheet(client, replacements, primary_col):
+        summary_html = f"""
+        <div style="page-break-before: always; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333;">
+            <h1 style="text-align: center; font-size: 24px; color: {primary_col}; margin-bottom: 30px; border-bottom: 2px solid {primary_col}; padding-bottom: 10px;">ANEXO I - QUADRO RESUMO</h1>
+            
+            <p style="margin-bottom: 20px; font-size: 14px; color: #666;">Este anexo é parte integrante e indissociável do contrato principal, servindo como resumo vinculante das condições comerciais e financeiras acordadas.</p>
+
+            <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">1. PARTES</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>CONTRATANTE:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{nome_empresarial_contratante}}', '')}</td>
+                </tr>
+                 <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>CPF/CNPJ:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{cnpj_contratante}}', '')}</td>
+                </tr>
+                 <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Resp. Legal:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{representante_legal_contratante}}', '')}</td>
+                </tr>
+            </table>
+
+            <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">2. VIGÊNCIA E DATAS</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>Data de Início:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{DATA_INICIO}}', replacements.get('{{data_inicio}}', ''))}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Data de Término:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{DATA_FIM}}', replacements.get('{{data_fim}}', 'Indeterminado'))}</td>
+                </tr>
+                 <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Prazo (Meses):</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{VIGENCIA_MESES}}', replacements.get('{{vigencia_meses}}', ''))} meses</td>
+                </tr>
+            </table>
+
+            <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">3. CONDIÇÕES FINANCEIRAS</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>Valor Total:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">R$ {replacements.get('{{valor_total}}', '0,00')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Taxa de Implantação:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">R$ {replacements.get('{{VALOR_IMPLANTACAO}}', '0,00')}</td>
+                </tr>
+                 <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Mensalidade:</strong></td>
+                     <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                        {replacements.get('{{NUMERO_PARCELAS}}', '0')}x parcelas de <strong>R$ {replacements.get('{{VALOR_MENSAL}}', '0,00')}</strong>
+                    </td>
+                </tr>
+                 <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Vencimento:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">Dia {replacements.get('{{DIA_VENCIMENTO}}', '')} de cada mês</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Tráfego Mínimo:</strong></td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">R$ {replacements.get('{{VALOR_MINIMO_TRAFEGO}}', '0,00')} / {replacements.get('{{PERIODO_TRAFEGO}}', '')}</td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 60px; display: flex; justify-content: space-between; text-align: center;">
+                 <div style="width: 45%;">
+                    <p style="border-top: 1px solid #333; padding-top: 10px; margin-bottom: 5px;"><strong>{replacements.get('{{nome_empresarial_contratante}}', 'CONTRATANTE')}</strong></p>
+                    <p style="font-size: 12px; color: #777;">Contratante</p>
+                </div>
+                <div style="width: 45%;">
+                    <p style="border-top: 1px solid #333; padding-top: 10px; margin-bottom: 5px;"><strong>{replacements.get('{{nome_empresarial_contratada}}', 'CONTRATADA')}</strong></p>
+                    <p style="font-size: 12px; color: #777;">Contratada</p>
+                </div>
+            </div>
+        </div>
+        """
+        return summary_html
+
+    summary_sheet = generate_summary_sheet(client, replacements, primary_col)
     
-    return jsonify({'content': header_html + content + footer_html})
+    return jsonify({'content': header_html + content + footer_html + summary_sheet})
 
 @contracts_bp.route('/clients/<int:id>/contracts', methods=['POST'])
 @login_required
@@ -238,11 +320,18 @@ def create_contract(id):
             client.representative_cpf = form_data.get('contratante_cpf') or client.representative_cpf
             client.email_contact = form_data.get('contratante_email') or client.email_contact
             
+            # Sync Address if present
+            if form_data.get('contratante_endereco'):
+                client.address_street = form_data.get('contratante_endereco') # Simplified sync
+            
+            # Sync Financials
             val_p = form_data.get('valor_parcela')
             if val_p:
                 try:
                     client.monthly_value = float(val_p.replace('R$', '').replace('.', '').replace(',', '.').strip())
                 except: pass
+            
+            client.start_date = datetime.strptime(form_data.get('data_inicio'), '%d/%m/%Y').date() if form_data.get('data_inicio') else client.start_date
         
         # Generate Content
         generated_content = template.content
@@ -288,6 +377,89 @@ def create_contract(id):
         """
         
         generated_content = header_html + generated_content + footer_html
+
+        # --- ANEXO I: QUADRO RESUMO (Mandatory - Duplicated for Safety) ---
+        def generate_summary_sheet_create(client, replacements, primary_col):
+            summary_html = f"""
+            <div style="page-break-before: always; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333;">
+                <h1 style="text-align: center; font-size: 24px; color: {primary_col}; margin-bottom: 30px; border-bottom: 2px solid {primary_col}; padding-bottom: 10px;">ANEXO I - QUADRO RESUMO</h1>
+                
+                <p style="margin-bottom: 20px; font-size: 14px; color: #666;">Este anexo é parte integrante e indissociável do contrato principal, servindo como resumo vinculante das condições comerciais e financeiras acordadas.</p>
+    
+                <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">1. PARTES</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>CONTRATANTE:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{nome_empresarial_contratante}}', '')}</td>
+                    </tr>
+                     <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>CPF/CNPJ:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{cnpj_contratante}}', '')}</td>
+                    </tr>
+                     <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Resp. Legal:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{representante_legal_contratante}}', '')}</td>
+                    </tr>
+                </table>
+    
+                <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">2. VIGÊNCIA E DATAS</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>Data de Início:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{DATA_INICIO}}', replacements.get('{{data_inicio}}', ''))}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Data de Término:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{DATA_FIM}}', replacements.get('{{data_fim}}', 'Indeterminado'))}</td>
+                    </tr>
+                     <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Prazo (Meses):</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{replacements.get('{{VIGENCIA_MESES}}', replacements.get('{{vigencia_meses}}', ''))} meses</td>
+                    </tr>
+                </table>
+    
+                <h3 style="background-color: #f3f4f6; padding: 10px; margin: 20px 0 10px; font-size: 16px; border-left: 4px solid {primary_col};">3. CONDIÇÕES FINANCEIRAS</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee; width: 30%;"><strong>Valor Total:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">R$ {replacements.get('{{valor_total}}', replacements.get('{{VALOR_TOTAL}}', '0,00'))}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Taxa de Implantação:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">R$ {replacements.get('{{VALOR_IMPLANTACAO}}', '0,00')}</td>
+                    </tr>
+                     <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Mensalidade:</strong></td>
+                         <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                            {replacements.get('{{NUMERO_PARCELAS}}', '0')}x parcelas de <strong>R$ {replacements.get('{{VALOR_MENSAL}}', '0,00')}</strong>
+                        </td>
+                    </tr>
+                     <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Vencimento:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">Dia {replacements.get('{{DIA_VENCIMENTO}}', '')} de cada mês</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Tráfego Mínimo:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">R$ {replacements.get('{{VALOR_MINIMO_TRAFEGO}}', '0,00')} / {replacements.get('{{PERIODO_TRAFEGO}}', '')}</td>
+                    </tr>
+                </table>
+    
+                <div style="margin-top: 60px; display: flex; justify-content: space-between; text-align: center;">
+                     <div style="width: 45%;">
+                        <p style="border-top: 1px solid #333; padding-top: 10px; margin-bottom: 5px;"><strong>{replacements.get('{{nome_empresarial_contratante}}', 'CONTRATANTE')}</strong></p>
+                        <p style="font-size: 12px; color: #777;">Contratante</p>
+                    </div>
+                    <div style="width: 45%;">
+                        <p style="border-top: 1px solid #333; padding-top: 10px; margin-bottom: 5px;"><strong>{replacements.get('{{nome_empresarial_contratada}}', 'CONTRATADA')}</strong></p>
+                        <p style="font-size: 12px; color: #777;">Contratada</p>
+                    </div>
+                </div>
+            </div>
+            """
+            return summary_html
+
+        summary_sheet = generate_summary_sheet_create(client, replacements, primary_col)
+        generated_content += summary_sheet
 
         status = 'issued' if action == 'issue' else 'draft'
         
