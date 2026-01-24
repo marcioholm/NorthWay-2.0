@@ -187,9 +187,8 @@ def preview_contract():
     second_col = client.company.secondary_color or '#111827'
     
     header_html = f"""
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
         <!-- Header -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 4px solid {primary_col}; margin-bottom: 40px;">
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 4px solid {primary_col}; margin-bottom: 40px;">
             <div style="flex: 1;">
                 {logo_img_tag}
             </div>
@@ -204,11 +203,10 @@ def preview_contract():
     # Footer Logic
     footer_html = f"""
         <!-- Footer -->
-        <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid {primary_col}; text-align: center; font-size: 12px; color: #777; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-top: 60px; padding-top: 20px; border-top: 1px solid {primary_col}; text-align: center; font-size: 12px; color: #777;">
             <p style="margin: 0;"><strong>{client.company.name}</strong></p>
             <p style="margin: 2px 0;">{client.company.address}</p>
         </div>
-    </div>
     """
     
     return jsonify({'content': header_html + content + footer_html})
@@ -267,8 +265,7 @@ def create_contract(id):
         second_col = current_user.company.secondary_color or '#111827'
 
         header_html = f"""
-        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
-            <div style="width: 100%; border-bottom: 4px solid {primary_col}; margin-bottom: 40px; padding-bottom: 20px;">
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; width: 100%; border-bottom: 4px solid {primary_col}; margin-bottom: 40px; padding-bottom: 20px;">
                 <table width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                         <td align="left" valign="middle">
@@ -284,11 +281,10 @@ def create_contract(id):
         """
 
         footer_html = f"""
-            <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid {primary_col}; text-align: center; font-size: 12px; color: #777; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; page-break-inside: avoid;">
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-top: 60px; padding-top: 20px; border-top: 1px solid {primary_col}; text-align: center; font-size: 12px; color: #777; page-break-inside: avoid;">
                 <p style="margin: 0;"><strong>{current_user.company.name}</strong></p>
                 <p style="margin: 2px 0;">{current_user.company.address}</p>
             </div>
-        </div>
         """
         
         generated_content = header_html + generated_content + footer_html

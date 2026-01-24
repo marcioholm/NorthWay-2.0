@@ -187,6 +187,13 @@ def get_contract_replacements(client, form_data):
         '{{valor_mensal}}': form_data.get('valor_parcela', '0,00'),
         '{{dia_vencimento}}': form_data.get('dia_vencimento', '5'),
         '{{data_inicio}}': form_data.get('data_inicio', date.today().strftime('%d/%m/%Y')),
+        '{{data_proposta}}': form_data.get('data_proposta', date.today().strftime('%d/%m/%Y')),
+
+        # --- TESTEMUNHAS ---
+        '{{nome_testemunha_1}}': form_data.get('testemunha1_nome', '__________________________'),
+        '{{cpf_testemunha_1}}': form_data.get('testemunha1_cpf', ''),
+        '{{nome_testemunha_2}}': form_data.get('testemunha2_nome', '__________________________'),
+        '{{cpf_testemunha_2}}': form_data.get('testemunha2_cpf', ''),
     }
     return replacements
 

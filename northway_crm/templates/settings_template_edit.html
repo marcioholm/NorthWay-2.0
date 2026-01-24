@@ -117,7 +117,12 @@
                                 ('{{VALOR_TOTAL_CONTRATO}}', 'Fin: Valor Total'),
                                 ('{{VALOR_PARCELA}}', 'Fin: Parcela'),
                                 ('{{DATA_INICIO}}', 'Data: Início'),
-                                ('{{DATA_FINAL}}', 'Data: Fim')
+                                ('{{DATA_FINAL}}', 'Data: Fim'),
+                                ('{{descricao_servicos}}', 'Serviço: Descrição'),
+                                ('{{nome_testemunha_1}}', 'Testem. 1: Nome'),
+                                ('{{cpf_testemunha_1}}', 'Testem. 1: CPF'),
+                                ('{{nome_testemunha_2}}', 'Testem. 2: Nome'),
+                                ('{{cpf_testemunha_2}}', 'Testem. 2: CPF')
                                 ] %}
                                 {% for code, label in vars %}
                                 <button type="button" onclick="insertVar('{{ code }}')"
