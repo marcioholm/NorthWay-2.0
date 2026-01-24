@@ -166,7 +166,27 @@ def get_contract_replacements(client, form_data):
         '{{CIDADE_FORO}}': foro_comarca,
         '{{ESTADO_FORO}}': foro_estado,
         '{{DATA_ATUAL}}': date.today().strftime('%d/%m/%Y'),
-        '{{CURRENT_DATE}}': date.today().strftime('%d/%m/%Y')
+        '{{CURRENT_DATE}}': date.today().strftime('%d/%m/%Y'),
+
+        # --- LOWERCASE ALIASES (Fixing User Issue) ---
+        '{{nome_empresarial_contratante}}': form_data.get('contratante_nome') or client.name,
+        '{{cnpj_contratante}}': form_data.get('contratante_documento') or client.document or 'N/A',
+        '{{endereco_contratante}}': form_data.get('contratante_endereco') or format_addr(client),
+        '{{representante_legal_contratante}}': form_data.get('contratante_representante') or client.representative or '',
+        '{{cpf_representante_contratante}}': form_data.get('contratante_cpf') or client.representative_cpf or '',
+        '{{endereco_representante_contratante}}': form_data.get('contratante_endereco_representante') or '',
+
+        '{{nome_empresarial_contratada}}': client.company.name,
+        '{{cnpj_contratada}}': client.company.document,
+        '{{endereco_contratada}}': format_addr(client.company),
+        '{{representante_legal_contratada}}': getattr(client.company, 'representative', '') or current_user_name,
+        '{{cpf_representante_contratada}}': getattr(client.company, 'representative_cpf', '') or '',
+        '{{endereco_representante_contratada}}': '', # Not usually stored for company rep, can be manually filled or ignored
+
+        '{{valor_total}}': form_data.get('valor_total', '0,00'),
+        '{{valor_mensal}}': form_data.get('valor_parcela', '0,00'),
+        '{{dia_vencimento}}': form_data.get('dia_vencimento', '5'),
+        '{{data_inicio}}': form_data.get('data_inicio', date.today().strftime('%d/%m/%Y')),
     }
     return replacements
 

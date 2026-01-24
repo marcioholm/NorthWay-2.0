@@ -372,7 +372,10 @@
     .a4-content p {
         margin-bottom: 6pt;
         text-align: justify;
-        text-indent: 1.25cm;
+        text-align-last: left;
+        /* Prevents weird stretching on last line */
+        text-indent: 0;
+        /* Removed forced indentation */
     }
 
     /* Quill Alignment Overrides */
