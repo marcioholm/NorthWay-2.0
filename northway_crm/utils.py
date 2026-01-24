@@ -194,10 +194,37 @@ def get_contract_replacements(client, form_data):
         '{{endereco_representante_contratada}}': '', 
 
         '{{valor_total}}': form_data.get('valor_total', '0,00'),
+        '{{VALOR_TOTAL_CONTRATO}}': form_data.get('valor_total', '0,00'),
+        '{{valor_total_contrato}}': form_data.get('valor_total', '0,00'),
+        
         '{{valor_mensal}}': form_data.get('valor_parcela', '0,00'),
+        '{{valor_parcela}}': form_data.get('valor_parcela', '0,00'),
+        
+        '{{valor_implantacao}}': form_data.get('valor_implantacao', '0,00'),
+        '{{VALOR_IMPLANTACAO}}': form_data.get('valor_implantacao', '0,00'),
+        
         '{{dia_vencimento}}': form_data.get('dia_vencimento', '5'),
+        
+        '{{qtd_parcelas}}': form_data.get('qtd_parcelas', '12'),
+        '{{quantidade_parcelas}}': form_data.get('qtd_parcelas', '12'),
+        '{{NUMERO_PARCELAS}}': form_data.get('qtd_parcelas', '12'),
+
         '{{data_inicio}}': form_data.get('data_inicio', date.today().strftime('%d/%m/%Y')),
+        '{{data_inicio_contrato}}': form_data.get('data_inicio', date.today().strftime('%d/%m/%Y')),
+        
         '{{data_proposta}}': form_data.get('data_proposta', date.today().strftime('%d/%m/%Y')),
+        
+        '{{data_fim}}': form_data.get('data_fim', ''),
+        '{{data_fim_contrato}}': form_data.get('data_fim', ''),
+        
+        '{{foro_comarca}}': foro_comarca,
+        '{{foro_estado}}': foro_estado,
+        
+        '{{cidade_assinatura}}': form_data.get('cidade_assinatura', foro_comarca),
+        '{{data_assinatura}}': form_data.get('data_assinatura', date.today().strftime('%d/%m/%Y')),
+
+        '{{nome_assinante_contratante}}': form_data.get('contratante_representante') or client.representative or (form_data.get('contratante_nome') or client.name),
+        '{{nome_assinante_contratada}}': getattr(client.company, 'representative', '') or current_user_name,
 
         # --- TESTEMUNHAS ---
         '{{nome_testemunha_1}}': form_data.get('testemunha1_nome', '__________________________'),
