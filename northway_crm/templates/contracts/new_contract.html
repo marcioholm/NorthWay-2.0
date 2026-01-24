@@ -539,25 +539,31 @@
 
         // Vigência (Meses) for End Date Calculation
         const vigenciaInput = document.querySelector('input[name="vigencia_meses"]');
+        const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
+
         if (vigenciaInput) {
             vigenciaInput.addEventListener('input', () => {
+                if (qtdInput) qtdInput.value = vigenciaInput.value;
                 calculateEndDate();
+                calculateFinancials();
             });
         }
 
-        // When Start Date changes, recalc End Date if Vigência is present
+        if (qtdInput) {
+            qtdInput.addEventListener('input', () => {
+                if (vigenciaInput) vigenciaInput.value = qtdInput.value;
+                calculateEndDate();
+                calculateFinancials();
+            });
+        }
+
+        // When Start Date changes, recalc End Date
         const startInput = document.querySelector('input[name="data_inicio"]');
         if (startInput) {
             startInput.addEventListener('change', () => {
-                if (vigenciaInput && vigenciaInput.value) calculateEndDate();
+                calculateEndDate();
                 triggerAutoSave();
             });
-        }
-
-        // Qtd Parcelas ONLY for Financials now
-        const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
-        if (qtdInput) {
-            qtdInput.addEventListener('input', calculateFinancials);
         }
 
         // Initialize Draft Data
@@ -686,10 +692,11 @@
                 months -= startDate.getMonth();
                 months += endDate.getMonth();
 
-                // If days match roughly whole month? Usually contracts are 12, 24..
-                // Let's just trust the diff.
                 if (months > 0) {
                     qtdInput.value = months;
+                    const vigenciaInput = document.querySelector('input[name="vigencia_meses"]');
+                    if (vigenciaInput) vigenciaInput.value = months;
+
                     calculateFinancials();
                     updatePreview();
                 }
@@ -700,14 +707,14 @@
 
 
     function calculateEndDate() {
-        const startStr = document.querySelector('input[name="data_inicio"]').value;
-        const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
+        const startInput = document.querySelector('input[name="data_inicio"]');
+        const vigenciaInput = document.querySelector('input[name="vigencia_meses"]');
         const endInput = document.querySelector('input[name="data_fim"]');
 
-        if (startStr && startStr.length === 10 && qtdInput && qtdInput.value) {
-            const startParts = startStr.split('/');
+        if (startInput && startInput.value.length === 10 && vigenciaInput && vigenciaInput.value) {
+            const startParts = startInput.value.split('/');
             const startDate = new Date(startParts[2], startParts[1] - 1, startParts[0]);
-            const months = parseInt(qtdInput.value);
+            const months = parseInt(vigenciaInput.value);
 
             if (months > 0) {
                 // Add months
@@ -715,7 +722,7 @@
 
                 // Format to DD/MM/YYYY
                 const day = String(startDate.getDate()).padStart(2, '0');
-                const month = String(startDate.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+                const month = String(startDate.getMonth() + 1).padStart(2, '0');
                 const year = startDate.getFullYear();
 
                 endInput.value = `${day}/${month}/${year}`;
