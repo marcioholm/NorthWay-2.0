@@ -1,8 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import login_required, current_user
 # Defer model imports to avoid circular dependency with app initialization
 # from models import db, User, Role, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
+import os
+import time
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -106,8 +109,42 @@ def company_settings():
         company.primary_color = request.form.get('primary_color', '#fa0102')
         company.secondary_color = request.form.get('secondary_color', '#111827')
         
-        # Logo handled via separate logic or app context if needed
-        # For now, keep it simple as app.py had logic involving app.config
+        # Logo Upload Logic
+        if 'logo' in request.files:
+            file = request.files['logo']
+            if file and file.filename != '':
+                try:
+                    filename = secure_filename(file.filename)
+                    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'png'
+                    unique_filename = f"logo_{company.id}_{int(time.time())}.{ext}"
+                    
+                    uploaded = False
+                    # 1. Try Supabase Storage
+                    if hasattr(current_app, 'supabase') and current_app.supabase:
+                        try:
+                            bucket = 'company-assets'
+                            file_content = file.read()
+                            path = f"logos/{unique_filename}"
+                            current_app.supabase.storage.from_(bucket).upload(path, file_content, {"content-type": file.content_type})
+                            public_url = current_app.supabase.storage.from_(bucket).get_public_url(path)
+                            company.logo_filename = public_url
+                            uploaded = True
+                        except Exception as storage_e:
+                            print(f"⚠️ Supabase Upload Failed: {storage_e}")
+                            file.seek(0)
+                    
+                    # 2. Fallback to Local
+                    if not uploaded:
+                        upload_folder = current_app.config.get('COMPANY_UPLOAD_FOLDER', '/tmp/uploads/company')
+                        if not os.path.exists(upload_folder):
+                            os.makedirs(upload_folder, exist_ok=True)
+                        file_path = os.path.join(upload_folder, unique_filename)
+                        file.save(file_path)
+                        company.logo_filename = unique_filename
+
+                except Exception as e:
+                    print(f"❌ Error uploading logo: {e}")
+                    flash('Erro ao salvar logotipo.', 'error')
     
         db.session.commit()
         flash('Configurações da empresa atualizadas!', 'success')
