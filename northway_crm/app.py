@@ -5,6 +5,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, text
 from flask_login import LoginManager, current_user
+from flask_migrate import Migrate
 from models import db, User, Task, Role
 import json
 from auth import auth as auth_blueprint
@@ -119,9 +120,8 @@ def create_app():
         os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
 
     # Supabase Setup
-    app.config['SUPABASE_URL'] = os.environ.get('SUPABASE_URL', 'https://bnumpvhsfujpprovajkt.supabase.co')
-    app.config['SUPABASE_KEY'] = os.environ.get('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudW1wdmhzZnVqcHByb3Zhamt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNjA5OTgsImV4cCI6MjA4MzkzNjk5OH0.pVcON2srZ2FXQ36Q-72WAHB-gVdrP_5Se-_K8XQ15Gs')
-    app.config['SUPABASE_KEY'] = os.environ.get('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudW1wdmhzZnVqcHByb3Zhamt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNjA5OTgsImV4cCI6MjA4MzkzNjk5OH0.pVcON2srZ2FXQ36Q-72WAHB-gVdrP_5Se-_K8XQ15Gs')
+    app.config['SUPABASE_URL'] = os.environ.get('SUPABASE_URL')
+    app.config['SUPABASE_KEY'] = os.environ.get('SUPABASE_KEY')
     app.config['SUPABASE_SERVICE_ROLE_KEY'] = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
     try:
         app.supabase = init_supabase(app)
@@ -131,6 +131,7 @@ def create_app():
 
     # --- INITIALIZE EXTENSIONS ---
     db.init_app(app)
+    migrate = Migrate(app, db)
     
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
