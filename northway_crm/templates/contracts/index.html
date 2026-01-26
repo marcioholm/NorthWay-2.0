@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 overflow-y-auto bg-gray-100 p-8">
+    <div class="max-w-7xl mx-auto pb-20">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Contratos</h1>
+                <p class="text-gray-500 text-sm mt-1">Gerencie todos os contratos emitidos pela empresa.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('clients.clients') }}"
+                    class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Novo Contrato</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Contracts Table Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100">
+                            <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Código /
+                                Data</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cliente
+                            </th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Modelo
+                            </th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Valor
+                            </th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status
+                            </th>
+                            <th
+                                class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">
+                                Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for contract in contracts %}
+                        <tr class="hover:bg-gray-50/50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <p class="text-[11px] font-mono text-gray-400 mb-0.5">{{ contract.code or '#' ~
+                                    contract.id }}</p>
+                                <p class="text-sm font-medium text-gray-700">{{ contract.created_at.strftime('%d/%m/%Y')
+                                    if contract.created_at else 'N/A' }}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <a href="{{ url_for('clients.client_details', id=contract.client.id) }}"
+                                    class="flex items-center gap-3 group/client">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-[10px] font-bold text-northway-red">
+                                        {{ contract.client.name[:2].upper() }}
+                                    </div>
+                                    <span
+                                        class="text-sm font-bold text-gray-900 group-hover/client:text-northway-red transition-colors">{{
+                                        contract.client.name }}</span>
+                                </a>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm text-gray-600 font-medium">
+                                    {{ contract.template.name if contract.template else 'Contrato Avulso' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% set form_data = contract.form_data|from_json %}
+                                <p class="text-sm font-bold text-gray-900">R$ {{ form_data.get('valor_total', '0,00') }}
+                                </p>
+                                <p class="text-[10px] text-gray-400">{{ form_data.get('qtd_parcelas', '1') }}x de R$ {{
+                                    form_data.get('valor_parcela', '0,00') }}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md 
+                                    {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else 
+                                       ('bg-green-100 text-green-700' if contract.status == 'active' else 
+                                       ('bg-red-100 text-red-700' if contract.status == 'cancelled' else 'bg-blue-100 text-blue-700')) }}">
+                                    {{ 'Rascunho' if contract.status == 'draft' else
+                                    ('Ativo' if contract.status == 'active' else
+                                    ('Cancelado' if contract.status == 'cancelled' else
+                                    ('Emitido' if contract.status == 'issued' else contract.status))) }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div
+                                    class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <a href="{{ url_for('contracts.view_contract', id=contract.id) }}"
+                                        class="p-2 text-gray-400 hover:text-northway-red hover:bg-red-50 rounded-lg transition-all"
+                                        title="Visualizar">
+                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    </a>
+                                    {% if contract.status == 'draft' %}
+                                    <a href="{{ url_for('contracts.load_draft', contract_id=contract.id) }}"
+                                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                        title="Editar Rascunho">
+                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-gray-400">
+                                    <div class="bg-gray-50 p-4 rounded-full mb-4">
+                                        <i data-lucide="file-x" class="w-10 h-10 opacity-30"></i>
+                                    </div>
+                                    <p class="text-lg font-bold">Nenhum contrato encontrado</p>
+                                    <p class="text-sm mt-1">Comece emitindo um contrato através da página de um cliente.
+                                    </p>
+                                    <a href="{{ url_for('clients.clients') }}"
+                                        class="mt-6 text-northway-red font-bold hover:underline flex items-center gap-2">
+                                        Ir para Clientes <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

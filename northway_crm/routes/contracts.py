@@ -623,6 +623,18 @@ def sign_contract(id):
         db.session.rollback()
         return jsonify({'message': f'Erro: {str(e)}'}), 500
 
+@contracts_bp.route('/contracts')
+@login_required
+def index():
+    if not current_user.company_id:
+        abort(403)
+
+    # Fetch all contracts for the current company
+    contracts = Contract.query.filter_by(company_id=current_user.company_id)\
+        .order_by(Contract.created_at.desc()).all()
+    
+    return render_template('contracts/index.html', contracts=contracts)
+
 @contracts_bp.route('/contracts/<int:id>')
 @login_required
 def view_contract(id):
