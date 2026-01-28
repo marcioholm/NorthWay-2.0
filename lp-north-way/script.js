@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Construct WhatsApp Message
                 const name = document.getElementById('name').value;
-                const whatsapp = "5511999999999"; // Replace with actual number
+                const whatsapp = "5542999896358"; // NorthWay Business Number
                 const message = `Olá, me chamo ${name} e gostaria de agendar um diagnóstico gratuito da NorthWay.`;
                 const url = `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
 
