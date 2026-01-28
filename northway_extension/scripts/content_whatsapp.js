@@ -379,11 +379,19 @@ function bindEvents() {
         showState('loading');
         const name = getEl('nw-new-name').value;
         const phone = getEl('nw-new-phone').value;
+        const email = getEl('nw-new-email').value;
+        const interest = getEl('nw-new-interest').value;
         const stageId = getEl('nw-new-stage').value;
 
         const res = await chrome.runtime.sendMessage({
             action: "CREATE_LEAD",
-            data: { name, phone, stage_id: stageId || null }
+            data: {
+                name,
+                phone,
+                email,
+                bant_need: interest, // Mapping Interest to bant_need 
+                pipeline_stage_id: stageId || null
+            }
         });
 
         if (res.success) {

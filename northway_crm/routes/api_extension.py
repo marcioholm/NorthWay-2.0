@@ -189,6 +189,7 @@ def create_lead(current_user):
     new_lead = Lead(
         name=name,
         phone=phone,
+        email=data.get('email'), # New Field
         source="WhatsApp Extension",
         notes=data.get('notes'),
         company_id=current_user.company_id,
@@ -196,7 +197,7 @@ def create_lead(current_user):
         assigned_to_id=current_user.id,
         pipeline_id=pipeline_id,
         pipeline_stage_id=stage_id,
-        bant_need=data.get('bant_need') # Used for tags/interest in extension?
+        bant_need=data.get('bant_need') # Used for "Interesse"
     )
     
     db.session.add(new_lead)
