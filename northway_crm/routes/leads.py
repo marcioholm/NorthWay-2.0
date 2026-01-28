@@ -551,8 +551,16 @@ def import_leads():
         
     if file:
         try:
-            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
-            csv_input = csv.reader(stream, delimiter=';')
+            # Read content first to detect delimiter
+            content = file.stream.read().decode("UTF8")
+            stream = io.StringIO(content, newline=None)
+            
+            # Auto-detect delimiter (Robuster for different versions of the extension)
+            delimiter = ';'
+            if content.count(',') > content.count(';'):
+                delimiter = ','
+                
+            csv_input = csv.reader(stream, delimiter=delimiter)
             header = next(csv_input, None) # Skip header
             
             count = 0
