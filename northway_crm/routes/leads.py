@@ -403,6 +403,31 @@ def update_lead_info(id):
     flash('Informações do lead atualizadas.', 'success')
     return redirect(request.referrer or url_for('leads.lead_details', id=id))
 
+@leads_bp.route('/leads/<int:id>/interactions', methods=['POST'])
+@login_required
+def add_lead_interaction(id):
+    lead = Lead.query.get_or_404(id)
+    if lead.company_id != current_user.company_id:
+        abort(403)
+    
+    content = request.form.get('content')
+    if not content:
+        flash('Conteúdo da nota é obrigatório.', 'error')
+        return redirect(url_for('leads.lead_details', id=id))
+
+    interaction = Interaction(
+        lead_id=lead.id,
+        user_id=current_user.id,
+        company_id=current_user.company_id,
+        type='note',
+        content=content,
+        created_at=datetime.now()
+    )
+    db.session.add(interaction)
+    db.session.commit()
+    flash('Nota adicionada.', 'success')
+    return redirect(url_for('leads.lead_details', id=id))
+
 @leads_bp.route('/leads/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_lead(id):
