@@ -45,20 +45,46 @@
 </head>
 
 <body>
-    <h1>NorthWay Connect</h1>
+    <h1>ZapWay</h1>
 
-    <div id="login-form">
-        <div id="error-msg" class="error hidden"></div>
-        <input type="email" id="email" placeholder="Email" value="admin@northway.com">
-        <input type="password" id="password" placeholder="Senha" value="123456">
-        <button id="btn-login">Entrar</button>
+    <!-- Tabs / Navigation -->
+    <div
+        style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #ddd; padding-bottom:5px;">
+        <span id="tab-login" style="cursor:pointer; font-weight:bold;">Login</span>
+        <span id="tab-settings" style="cursor:pointer; color:#666;">Configurações</span>
     </div>
 
-    <div id="profile-view" class="hidden">
-        <p>Conectado como:</p>
-        <strong id="user-name">Usuário</strong>
-        <p id="user-email" style="font-size: 12px; color: #666"></p>
-        <div style="margin-top:20px; color: green; font-size: 12px;">● Extensão Ativa</div>
+    <!-- LOGIN AREA -->
+    <div id="view-login">
+        <div id="login-form">
+            <div id="error-msg" class="error hidden"></div>
+            <input type="email" id="email" placeholder="Email" value="admin@northway.com">
+            <input type="password" id="password" placeholder="Senha" value="123456">
+            <button id="btn-login">Entrar</button>
+        </div>
+
+        <div id="profile-view" class="hidden">
+            <p>Conectado como:</p>
+            <strong id="user-name">Usuário</strong>
+            <p id="user-email" style="font-size: 12px; color: #666"></p>
+            <div style="margin-top:20px; color: green; font-size: 12px;">● Extensão Ativa</div>
+            <button id="btn-logout" style="background:#555; margin-top:10px;">Sair</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS AREA (Control Panel) -->
+    <div id="view-settings" class="hidden">
+        <label style="font-size:12px; display:block; margin-top:10px;">Intervalo Mínimo (seg)</label>
+        <input type="number" id="setting-min-delay" value="5" min="1">
+
+        <label style="font-size:12px; display:block; margin-top:10px;">Intervalo Máximo (seg)</label>
+        <input type="number" id="setting-max-delay" value="15" min="2">
+
+        <label style="font-size:12px; display:block; margin-top:10px;">Limite Diário de Envios</label>
+        <input type="number" id="setting-daily-limit" value="100" min="10">
+
+        <button id="btn-save-settings" style="margin-top:15px; background:#25D366;">Salvar Configurações</button>
+        <div id="settings-msg" style="margin-top:5px; font-size:12px; color:green; display:none;">Salvo!</div>
     </div>
 
     <script src="popup.js"></script>

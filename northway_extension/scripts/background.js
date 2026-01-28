@@ -5,13 +5,60 @@
 // const API_BASE = "https://north-way-2-0.vercel.app/api/ext";
 const API_BASE = "http://127.0.0.1:5001/api/ext"; // Dev Mode
 
+// Queue & Rate Limit State
+let messageQueue = [];
+let isProcessingQueue = false;
+let config = {
+    minDelay: 5,
+    maxDelay: 15,
+    dailyLimit: 100,
+    sentToday: 0
+};
+
+// Initialize Settings
+chrome.storage.local.get(['minDelay', 'maxDelay', 'dailyLimit', 'sentToday', 'lastResetDate'], (data) => {
+    if (data.minDelay) config.minDelay = data.minDelay;
+    if (data.maxDelay) config.maxDelay = data.maxDelay;
+    if (data.dailyLimit) config.dailyLimit = data.dailyLimit;
+
+    // Daily Limit Reset Logic
+    const today = new Date().toDateString();
+    if (data.lastResetDate !== today) {
+        config.sentToday = 0;
+        chrome.storage.local.set({ sentToday: 0, lastResetDate: today });
+    } else {
+        config.sentToday = data.sentToday || 0;
+    }
+});
+
 // Listen for messages from Content Script or Popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === "LOGIN") {
         login(request.email, request.password).then(sendResponse);
-        return true; // Keep channel open for async response
+        return true;
     }
+
+    if (request.action === "LOGOUT") {
+        chrome.storage.local.remove(['authToken', 'user'], () => {
+            sendResponse({ success: true });
+        });
+        return true;
+    }
+
+    if (request.action === "UPDATE_SETTINGS") {
+        // Refresh config from storage
+        chrome.storage.local.get(['minDelay', 'maxDelay', 'dailyLimit'], (data) => {
+            if (data.minDelay) config.minDelay = data.minDelay;
+            if (data.maxDelay) config.maxDelay = data.maxDelay;
+            if (data.dailyLimit) config.dailyLimit = data.dailyLimit;
+            console.log("ZapWay Config Updated:", config);
+        });
+        return false;
+    }
+
+    // --- CRM API PROXIES ---
+    // Content Script NEVER calls API directly. It asks Background to do it.
 
     if (request.action === "GET_CONTACT") {
         let qs = `phone=${encodeURIComponent(request.phone || '')}`;
@@ -39,6 +86,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         getToken().then(token => sendResponse({ token: token }));
         return true;
     }
+
+    // Future: "ENQUEUE_MESSAGE" action for automated sending
 });
 
 async function getToken() {

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "NorthWay Connect",
+  "name": "ZapWay",
   "version": "1.0",
-  "description": "WhatsApp Web CRM Integration for NorthWay.",
+  "description": "WhatsApp Web CRM Integration for ZapWay.",
   "permissions": [
     "storage",
     "scripting",
