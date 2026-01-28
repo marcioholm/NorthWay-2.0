@@ -448,5 +448,251 @@ function bindEvents() {
 }
 
 
+// --- GROUP EXPORT LOGIC ---
+async function scrapeGroupContacts(groupName) {
+    // 1. Open Group Info
+    const header = document.querySelector('header');
+    if (!header) return alert("Erro: Cabeçalho não encontrado.");
+
+    // Config: Click the header safely
+    header.click();
+
+    // Wait for drawer
+    await new Promise(r => setTimeout(r, 1000));
+
+    // 2. Find Participant List
+    // Look for the text "participants" or "participantes" to find the container
+    const drawer = document.querySelector('div._aigv') || document.querySelector('section');
+    if (!drawer) return alert("Erro: Painel lateral não abriu.");
+
+    const spans = Array.from(drawer.querySelectorAll('span'));
+    const participantHeader = spans.find(s => s.innerText.match(/\d+ participantes/i) || s.innerText.match(/\d+ participants/i));
+
+    if (!participantHeader) return alert("Erro: Lista de participantes não encontrada.");
+
+    // Click to open full list (if "See all" exists)
+    // Sometimes it's already open in the main drawer, sometimes it's a sub-page.
+    // For now we assume the list is scrollable within the drawer or we need to click "See all"
+
+    // Let's look for the scrollable container below the header
+    // Usually it's a div with role="list" or similar
+    const listContainer = participantHeader.closest('div[role="button"]')?.parentElement || participantHeader.closest('div').parentElement.parentElement;
+
+    // To be robust: We might need to implement a "Click 'View all'" logic here if the list is truncated
+    // For this MVP, we assume the user expanded it or we just scroll what is visible. 
+    // BUT: efficient scraping needs the "Click View All" usually.
+
+    // Heuristic: Click the participant header block to ensure it expands
+    const clickableBlock = participantHeader.closest('div[role="button"]');
+    if (clickableBlock) clickableBlock.click();
+
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Now find the scroller. It's usually the modal or the side pane.
+    // We look for a div with high scrollHeight
+    const scrollers = Array.from(document.querySelectorAll('div')).filter(d => d.scrollHeight > 500 && d.style.overflowY === 'auto' || d.classList.contains('overflow-y-auto'));
+    // The specific modal one usually appears on top
+    const scroller = scrollers[scrollers.length - 1]; // Likely the last opened one
+
+    if (!scroller) return alert("Erro: Área de rolagem não detectada.");
+
+    // 3. Scroll and Scrape
+    const uniqueContacts = new Map();
+    const progressText = getEl('nw-export-status');
+    const progressFill = getEl('nw-progress-fill');
+    getEl('nw-export-progress').classList.remove('hidden');
+
+    let previousHeight = 0;
+    let attempts = 0;
+
+    while (attempts < 5) {
+        scroller.scrollTop = scroller.scrollHeight;
+        await new Promise(r => setTimeout(r, 800)); // Wait for lazy load
+
+        // Scrape currently visible
+        const rows = scroller.querySelectorAll('div[role="listitem"]');
+        rows.forEach(row => {
+            const text = row.innerText.split('\n');
+            // Usually: [Name, Bio/Status] or [Phone, Bio]
+            let rawName = text[0];
+            let rawPhone = "";
+            let screenName = "";
+
+            // Simple heuristic
+            if (rawName.match(/^\+?\d[\d\s-]{8,}$/)) {
+                // Is Phone
+                rawPhone = rawName.replace(/\D/g, '');
+                screenName = "Contato WhatsApp"; // Default
+            } else {
+                // Is Name
+                screenName = rawName;
+                // Try to find phone in secondary text? 
+                // WhatsApp Web often hides the phone if saved as contact.
+                // If not saved, name IS phone.
+            }
+
+            // Refined extraction logic from simpler scraping:
+            // If text starts with +, it's phone. Else it's name.
+            if (screenName && !rawPhone) {
+                // We can't easily get the phone if it's a saved contact without opening it.
+                // We will skip this complex step for now and stick to what's visible.
+                // For UNSAVED contacts (targets), the name IS the phone.
+            }
+
+            // Normalization
+            if (screenName === "Você" || screenName === "You") return;
+
+            // Generate Key
+            const key = rawPhone || screenName;
+            if (!uniqueContacts.has(key)) {
+                uniqueContacts.set(key, {
+                    name: screenName,
+                    phone: rawPhone,
+                    group: groupName
+                });
+            }
+        });
+
+        // Check scroll end
+        if (scroller.scrollHeight === previousHeight) {
+            attempts++;
+        } else {
+            previousHeight = scroller.scrollHeight;
+            attempts = 0;
+        }
+
+        // Update UI
+        progressText.textContent = `Extraindo... ${uniqueContacts.size} encontrados`;
+    }
+
+    // 4. Generate CSV
+    downloadCSV(Array.from(uniqueContacts.values()));
+    getEl('nw-export-progress').classList.add('hidden');
+}
+
+function downloadCSV(contacts) {
+    const header = ['Nome', 'Email', 'Telefone', 'Origem', 'Interesse', 'Observações'];
+    const rows = contacts.map(c => {
+        // Format Phone: (DD) 9XXXX-XXXX
+        // Basic cleaner
+        let p = c.phone || c.name.replace(/\D/g, ''); // Fallback
+        if (p.startsWith('55') && p.length > 10) p = p.substring(2); // Strip DDI
+
+        let fmtPhone = p;
+        if (p.length >= 10) {
+            fmtPhone = `(${p.substring(0, 2)}) ${p.substring(2, 7)}-${p.substring(7)}`;
+        }
+
+        const obs = `Contato extraído do grupo '${c.group}' em ${new Date().toLocaleDateString()}`;
+
+        return [
+            c.name || "Contato WhatsApp",
+            "", // Email
+            fmtPhone,
+            `Grupo WhatsApp - ${c.group}`,
+            "A definir",
+            obs
+        ].map(f => `"${f || ''}"`).join(';');
+    });
+
+    const csvContent = "\uFEFF" + [header.join(';'), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `contatos_grupo_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Modify bindEvents
+function bindEvents() {
+    // ... (Existing Event Listeners) ...
+    getEl('nw-btn-create').addEventListener('click', async () => { /* ... */ });
+    getEl('nw-btn-save').addEventListener('click', async () => { /* ... */ });
+    getEl('nw-link-crm').addEventListener('click', (e) => { /* ... */ });
+
+    // NEW: Export Button
+    const exportBtn = getEl('nw-btn-export');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const groupName = getEl('nw-group-name').textContent;
+            scrapeGroupContacts(groupName);
+        });
+    }
+}
+
+// Updated checkActiveChat to allow group detection
+function checkActiveChat() {
+    try {
+        let name = null;
+        let phone = null;
+        let isGroup = false;
+
+        // ... (Existing Drawer Logic) ...
+        // Check for Group in Drawer
+        if (!phone) {
+            const drawerTitle = Array.from(document.querySelectorAll('span')).find(el => el.innerText === "Dados do grupo" || el.innerText === "Group info");
+            if (drawerTitle) isGroup = true;
+        }
+
+        // --- STRATEGY B: Main Chat Header ---
+        const mainPanel = document.getElementById('main') || document.querySelector('div[role="main"]');
+        if (mainPanel && !phone) {
+            const mainHeader = mainPanel.querySelector('header');
+            if (mainHeader) {
+                // Fiber JID check
+                const root = mainHeader;
+                const fiber = getReactInstance(root) || getReactInstance(root.querySelector('img'));
+                if (fiber) {
+                    const jid = findJidInFiber(fiber);
+                    if (jid) {
+                        if (jid.includes('@g.us')) isGroup = true;
+                        else if (jid.includes('@c.us')) {
+                            const clean = jid.replace('@c.us', '');
+                            if (clean.match(/^\d+$/) && clean.length >= 10) phone = clean;
+                        }
+                    }
+                }
+
+                // Name Extraction (Same as before)
+                // ...
+                const titleSpan = mainHeader.querySelector('span[title]');
+                if (titleSpan) name = titleSpan.getAttribute('title');
+            }
+        }
+
+        // Dispatch
+        if (isGroup) {
+            if (currentPhone !== 'GROUP:' + name) {
+                currentPhone = 'GROUP:' + name;
+                showState('group');
+                getEl('nw-group-name').textContent = name || "Grupo";
+            }
+        } else if (phone && phone !== currentPhone) {
+            // ... (Existing Single Contact logic)
+            currentPhone = phone;
+            updateSidebar(name || phone, phone);
+        } else if (name && !phone && !name.includes("WhatsApp") && name !== "Contato") {
+            // ...
+            if (currentPhone !== name) {
+                currentPhone = name;
+                updateSidebar(name, null, name);
+            }
+        }
+
+    } catch (err) { console.error(err); }
+}
+
+function showState(state) {
+    ['idle', 'loading', 'new', 'contact', 'group'].forEach(s => { // Added 'group'
+        const el = getEl(`nw-state-${s}`);
+        if (el) el.classList.add('hidden');
+    });
+    const active = getEl(`nw-state-${state}`);
+    if (active) active.classList.remove('hidden');
+}
+
 // Start
 setTimeout(init, 3000);

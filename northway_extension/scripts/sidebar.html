@@ -62,39 +62,65 @@
 
             <button id="nw-btn-create" class="nw-btn primary">Cadastrar no CRM</button>
         </div>
-    </div>
+        <!-- Content State: Group Export -->
+        <div id="nw-state-group" class="nw-state hidden">
+            <div class="nw-card">
+                <h3>Grupo Detectado</h3>
+                <div class="nw-group-info">
+                    <div class="nw-avatar-group">
+                        <span class="icon-params">👥</span>
+                    </div>
+                    <h2 id="nw-group-name">Nome do Grupo</h2>
+                </div>
 
-    <!-- Content State: Existing Contact -->
-    <div id="nw-state-contact" class="nw-state hidden">
-        <div class="nw-profile">
-            <div class="nw-avatar" id="nw-contact-avatar"></div>
-            <h2 id="nw-contact-name">Nome do Contato</h2>
-            <p id="nw-contact-phone">+55 11 99999-9999</p>
-            <span id="nw-contact-status" class="badge">Novo</span>
-        </div>
+                <div class="nw-info-box">
+                    <p>Extraia os contatos deste grupo para uma planilha compatível com o CRM.</p>
+                </div>
 
-        <div class="nw-form">
-            <div class="nw-field">
-                <label>Etapa do Funil</label>
-                <select id="nw-input-stage">
-                    <option value="">Carregando...</option>
-                </select>
-            </div>
+                <div id="nw-export-progress" class="hidden">
+                    <p id="nw-export-status">Extraindo... 0/0</p>
+                    <div class="nw-progress-bar">
+                        <div id="nw-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
 
-            <div class="nw-field">
-                <label>Tags / Interesse</label>
-                <input type="text" id="nw-input-tags" placeholder="Ex: Contabilidade, BPO...">
-            </div>
-
-            <div class="nw-field">
-                <label>Observações</label>
-                <textarea id="nw-input-notes" rows="4"></textarea>
-            </div>
-
-            <div class="nw-actions">
-                <button id="nw-btn-save" class="nw-btn primary">Salvar Alterações</button>
-                <a href="#" id="nw-link-crm" target="_blank" class="nw-link">Ver no CRM ↗</a>
+                <button id="nw-btn-export" class="nw-btn primary">
+                    <span class="icon-params">📥</span> Exportar Participantes
+                </button>
             </div>
         </div>
+
+        <!-- Content State: Existing Contact -->
+        <div id="nw-state-contact" class="nw-state hidden">
+            <div class="nw-profile">
+                <div class="nw-avatar" id="nw-contact-avatar"></div>
+                <h2 id="nw-contact-name">Nome do Contato</h2>
+                <p id="nw-contact-phone">+55 11 99999-9999</p>
+                <span id="nw-contact-status" class="badge">Novo</span>
+            </div>
+
+            <div class="nw-form">
+                <div class="nw-field">
+                    <label>Etapa do Funil</label>
+                    <select id="nw-input-stage">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
+
+                <div class="nw-field">
+                    <label>Tags / Interesse</label>
+                    <input type="text" id="nw-input-tags" placeholder="Ex: Contabilidade, BPO...">
+                </div>
+
+                <div class="nw-field">
+                    <label>Observações</label>
+                    <textarea id="nw-input-notes" rows="4"></textarea>
+                </div>
+
+                <div class="nw-actions">
+                    <button id="nw-btn-save" class="nw-btn primary">Salvar Alterações</button>
+                    <a href="#" id="nw-link-crm" target="_blank" class="nw-link">Ver no CRM ↗</a>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
