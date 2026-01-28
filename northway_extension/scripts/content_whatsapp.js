@@ -308,177 +308,93 @@ async function loadPipelines(currentStageId, targetId = 'nw-input-stage') {
     }
 }
 
-// --- GROUP EXPORT LOGIC ---
-// --- GROUP EXPORT LOGIC ---
-async function scrapeGroupContacts(groupName) {
-    const progressText = getEl('nw-export-status');
-    const progressBar = getEl('nw-export-progress');
+// --- GROUP EXPORT LOGIC (PASSIVE MODE) ---
+const GroupExtractor = {
+    isExtracting: false,
+    contacts: new Map(),
+    observer: null,
+    container: null,
+    groupName: "",
 
-    if (progressBar) progressBar.classList.remove('hidden');
-    if (progressText) progressText.textContent = "Localizando painel...";
-
-    // 1. Helper: Robust Container Finder
-    const findContainer = () => {
-        // Strategy A: Look for the Side Panel (usually a <section>)
-        const sections = Array.from(document.querySelectorAll('section, div[role="dialog"]'));
-
-        for (const section of sections) {
-            // Check visibility
-            if (section.offsetParent === null) continue;
-
-            const text = section.innerText.toLowerCase();
-            // Keywords that indicate a Group Info panel or Participant List
-            const hasKeyword = text.includes('dados do grupo') ||
-                text.includes('group info') ||
-                text.match(/\d+ membros/) ||
-                text.match(/\d+ participants/) ||
-                text.match(/\d+ participantes/);
-
-            if (hasKeyword) {
-                // Return this section as the container
-                return section;
-            }
-        }
-        return null;
-    };
-
-    let container = findContainer();
-
-    // 2. Open Panel if NOT found
-    if (!container) {
-        if (progressText) progressText.textContent = "Abrindo painel do grupo...";
-        const header = document.querySelector('header');
-        if (header) {
-            // Click title to open
-            const titleClick = header.querySelector('div[role="button"]') || header.querySelector('span[dir="auto"]');
-            if (titleClick) titleClick.click();
-            else header.click();
-        }
-
-        // Polling wait
-        for (let i = 0; i < 25; i++) {
-            await new Promise(r => setTimeout(r, 400));
-            container = findContainer();
-            if (container) break;
-        }
-    }
-
-    if (!container) {
-        if (progressBar) progressBar.classList.add('hidden');
-        return alert("Não foi possível detectar a lista de participantes.\n\nPor favor, ABRA A LISTA DE MEMBROS manualmente e tente novamente.");
-    }
-
-    // 3. Drill down to the Participant List
-    if (progressText) progressText.textContent = "Acessando lista de membros...";
-
-    // Helper: Close unwanted popups (Encryption info, etc)
-    const dismissNuissance = () => {
-        const dialogs = document.querySelectorAll('div[role="dialog"]');
-        dialogs.forEach(d => {
-            if (d.innerText.match(/criptografia|encryption|proteger|security/i)) {
-                const btn = d.querySelector('div[role="button"]');
-                if (btn) btn.click();
-            }
-        });
-    };
-    dismissNuissance();
-
-    // Sometimes the container is the main info panel, but the list is hidden behind "Check All"
-    // "Ver tudo" / "View All"
-    const viewAllBtn = Array.from(container.querySelectorAll('div[role="button"]'))
-        .find(b => b.innerText.match(/ver tudo|view all|mais|more/i));
-
-    if (viewAllBtn) {
-        viewAllBtn.click();
-
-        // Loop to wait for valid modal, potentially dismissing junk along the way
-        for (let i = 0; i < 6; i++) {
-            await new Promise(r => setTimeout(r, 1000));
-
-            // Check for nuisance and kill it
-            dismissNuissance();
-
-            // Check for valid modal
-            const dialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
-            const validModal = dialogs.find(d => {
-                const t = d.innerText.toLowerCase();
-                // Must have relevant keywords AND NOT be encryption popup
-                return t.match(/membros|participantes|participants|members|dados do grupo/) && !t.match(/criptografia|encryption|segurança/);
-            });
-
-            if (validModal) {
-                container = validModal;
-                break;
-            }
-        }
-    }
-
-    // 4. Find the Scrollable Area
-    // The list is always in a div with overflow-y: auto/scroll
-    let scroller = Array.from(container.querySelectorAll('div')).find(div => {
-        const style = window.getComputedStyle(div);
-        const isScrollable = (style.overflowY === 'auto' || style.overflowY === 'scroll');
-        // Critical check: It must ACTUALLY have content to scroll
-        return isScrollable && div.scrollHeight > div.clientHeight;
-    });
-
-    if (!scroller) {
-        // Fallback: Check for any div that is taller than its container
-        scroller = Array.from(container.querySelectorAll('div')).find(div => {
-            return div.scrollHeight > (div.clientHeight + 100) && div.clientHeight > 0;
-        });
-    }
-
-    if (!scroller) {
-        // Fallback: The container itself might be the scroller
-        const style = window.getComputedStyle(container);
-        if (style.overflowY === 'auto' || style.overflowY === 'scroll') scroller = container;
-    }
-
-    // SMALL GROUP FALLBACK: If we still don't have a scroller, check if the items are already visible
-    if (!scroller) {
-        const visibleItems = container.querySelectorAll('div[role="listitem"]');
-        if (visibleItems.length > 0) {
-            // Treat the container as the scroller, and we'll just scrape it once
-            scroller = container;
-        }
-    }
-
-    if (!scroller) return alert("Erro: Lista de rolagem não encontrada. Abra a lista completa de membros.");
-
-    // 5. Scrape Logic
-    const uniqueContacts = new Map();
-    let noChangeCount = 0;
-    let prevHeight = 0;
-
-    // Determine if we need to scroll or just grab visible
-    // If scrollHeight is basically same as clientHeight, we assume small group or wrong container
-    const isSmallGroup = scroller.scrollHeight <= scroller.clientHeight;
-
-    // Scroll top first to reset
-    if (!isSmallGroup) {
-        scroller.scrollTop = 0;
-        await new Promise(r => setTimeout(r, 600));
-    }
-
-    while (noChangeCount < 3) {
-        // Scroll down
-        if (!isSmallGroup) {
-            scroller.scrollTop = scroller.scrollHeight;
-            // Increased wait time for lazy load (critical for large groups)
-            await new Promise(r => setTimeout(r, 2000));
+    toggle: async function () {
+        if (this.isExtracting) {
+            this.stop();
         } else {
-            // For small groups, just wait once to be safe then exit loop after scrape
-            await new Promise(r => setTimeout(r, 1000));
-            noChangeCount = 10; // Force exit after first pass
+            await this.start();
+        }
+    },
+
+    start: async function () {
+        const progressText = getEl('nw-export-status');
+        const btn = getEl('nw-btn-export');
+
+        // 1. Passive Container Detection
+        // User MUST have the list open. We do not click anything.
+        const sections = Array.from(document.querySelectorAll('section, div._aigv, div[role="dialog"]'));
+        this.container = sections.find(s => {
+            if (s.offsetParent === null) return false; // Hidden
+            const t = s.innerText.toLowerCase();
+            return t.match(/membros|participantes|participants|dados do grupo/);
+        });
+
+        // Specific check for small lists (no separate container, just inside drawer)
+        if (!this.container) {
+            const drawer = document.querySelector('div[role="navigation"]') || document.querySelector('div._aigv'); // Fallback
+            if (drawer && drawer.innerText.match(/membros|participantes/i)) this.container = drawer;
         }
 
-        // Scrape visible items
-        // WhatsApp list items usually have role="listitem" or specific structure
-        const items = container.querySelectorAll('div[role="listitem"]');
+        if (!this.container) {
+            alert("⚠️ Ação Manual Necessária:\n\n1. Abra o grupo.\n2. Clique no topo para ver os dados.\n3. Role até ver a LISTA DE PARTICIPANTES.\n\nDepois clique em 'Iniciar' novamente.");
+            return;
+        }
 
-        // If no listitems found, try generic divs with text
-        const rows = items.length > 0 ? items : container.querySelectorAll('div._Aigv'); // Fallback class if needed, or query direct children
+        // 2. Initialize
+        this.isExtracting = true;
+        this.contacts.clear();
+        this.groupName = getEl('nw-group-name').textContent || "Grupo";
+
+        // 3. UI Feedback
+        if (btn) btn.textContent = "Finalizar e Baixar";
+        if (btn) btn.style.backgroundColor = "#dc3545"; // Red for stop
+        getEl('nw-export-progress').classList.remove('hidden');
+        if (progressText) progressText.innerText = "Extração Ativa! Role a lista manualmente...";
+
+        // 4. Initial Scrape (Visible items)
+        this.scrapeVisible();
+
+        // 5. Start Observer (Watch for Scroll/New Items)
+        this.observer = new MutationObserver(() => {
+            if (this.checkForSecurityPopup()) return;
+            this.scrapeVisible();
+        });
+
+        this.observer.observe(this.container, { childList: true, subtree: true });
+    },
+
+    stop: function () {
+        this.isExtracting = false;
+        if (this.observer) this.observer.disconnect();
+
+        // Generate CSV
+        this.downloadCSV();
+
+        // Reset UI
+        const btn = getEl('nw-btn-export');
+        const progressText = getEl('nw-export-status');
+        if (btn) {
+            btn.textContent = "Extrair Participantes";
+            btn.style.backgroundColor = ""; // Reset color
+        }
+        if (progressText) progressText.innerText = `Finalizado! ${this.contacts.size} contatos exportados.`;
+
+        setTimeout(() => getEl('nw-export-progress').classList.add('hidden'), 5000);
+    },
+
+    scrapeVisible: function () {
+        if (!this.isExtracting || !this.container) return;
+
+        // Broad selector for contacts
+        const items = this.container.querySelectorAll('div[role="listitem"]');
 
         items.forEach(item => {
             const lines = item.innerText.split('\n');
@@ -488,18 +404,12 @@ async function scrapeGroupContacts(groupName) {
             let secondary = lines[1] || "";
             let phone = "";
 
-            // Extract phone info
+            // Phone Extraction Logic
             if (name.match(/^\+?\d[\d\s-]{8,}$/)) {
-                // Name IS phone
                 phone = name.replace(/\D/g, '');
-                name = "Contato WhatsApp"; // Placeholder for unsaved
-                // Try to grab nickname from secondary line (~Nick)
+                name = "Contato WhatsApp";
                 if (secondary.includes('~')) name = secondary.replace(/[~]/g, '').trim();
             } else {
-                // Name is likely a contact name
-                // Phone is usually NOT visible for saved contacts in the list unless clicked
-                // BUT, user requires phone. 
-                // We will save what we have. If secondary looks like phone, grab it.
                 if (secondary.match(/^\+?\d[\d\s-]{8,}$/)) phone = secondary.replace(/\D/g, '');
             }
 
@@ -508,53 +418,57 @@ async function scrapeGroupContacts(groupName) {
 
             const key = phone || name;
 
-            if (!uniqueContacts.has(key)) {
-                uniqueContacts.set(key, {
+            if (!this.contacts.has(key)) {
+                this.contacts.set(key, {
                     name: name.replace(/"/g, ''),
                     phone: phone,
-                    origin: `Grupo: ${groupName}`,
+                    origin: `Grupo: ${this.groupName}`,
                     date: new Date().toLocaleDateString()
                 });
-                if (progressText) progressText.innerText = `Extraindo... ${uniqueContacts.size}`;
+                // Live Update
+                const p = getEl('nw-export-status');
+                if (p) p.innerText = `Capturando... ${this.contacts.size} detetados`;
             }
         });
+    },
 
-        if (isSmallGroup) break;
+    checkForSecurityPopup: function () {
+        const dialogs = document.querySelectorAll('div[role="dialog"]');
+        const securityAlert = Array.from(dialogs).find(d => d.innerText.match(/criptografia|encryption|segurança/i));
 
-        if (scroller.scrollHeight === prevHeight) noChangeCount++;
-        else {
-            prevHeight = scroller.scrollHeight;
-            noChangeCount = 0;
+        if (securityAlert) {
+            this.observer.disconnect(); // Pause observation
+            getEl('nw-export-status').innerText = "⏸ PAUSADO: Alerta de Segurança do WhatsApp";
+            alert("⚠️ AVISO DE SEGURANÇA:\n\nO WhatsApp exibiu um alerta de criptografia.\n\nA extração foi PAUSADA automaticamente por segurança.\nConfirme o aviso no WhatsApp e clique em 'Finalizar' para salvar o que já foi pego.");
+            return true;
         }
+        return false;
+    },
+
+    downloadCSV: function () {
+        const csvHeader = ["Nome", "Email", "Telefone", "Origem", "Interesse", "Observações"];
+        const csvRows = Array.from(this.contacts.values()).map(c => {
+            return [
+                `"${c.name}"`,
+                `""`,
+                `"${c.phone}"`,
+                `"${c.origin}"`,
+                `"A definir"`,
+                `"Extraído em ${c.date}"`
+            ].join(',');
+        });
+
+        const csvContent = "\uFEFF" + csvHeader.join(',') + "\n" + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `grupo_${this.groupName.replace(/\s/g, '_')}_${Date.now()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
-
-    // 6. Generate & Download CSV
-    const csvHeader = ["Nome", "Email", "Telefone", "Origem", "Interesse", "Observações"];
-    const csvRows = Array.from(uniqueContacts.values()).map(c => {
-        return [
-            `"${c.name}"`,
-            `""`,
-            `"${c.phone}"`,
-            `"${c.origin}"`,
-            `"A definir"`,
-            `"Extraído em ${c.date}"`
-        ].join(',');
-    });
-
-    const csvContent = "\uFEFF" + csvHeader.join(',') + "\n" + csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `grupo_${groupName.replace(/\s/g, '_')}_${Date.now()}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    if (progressText) progressText.textContent = `Sucesso! ${uniqueContacts.size} contatos baixados.`;
-    setTimeout(() => { if (progressBar) progressBar.classList.add('hidden'); }, 4000);
-}
-
+};
 
 function bindEvents() {
     getEl('nw-btn-create').addEventListener('click', async () => {
@@ -594,8 +508,8 @@ function bindEvents() {
     const exportBtn = getEl('nw-btn-export');
     if (exportBtn) {
         exportBtn.addEventListener('click', () => {
-            const name = getEl('nw-group-name').textContent;
-            scrapeGroupContacts(name);
+            // Use the toggle method primarily
+            GroupExtractor.toggle();
         });
     }
 }
