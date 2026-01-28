@@ -217,7 +217,7 @@ def create_lead(current_user):
              company_id=current_user.company_id,
              type='note',
              content=new_lead.notes,
-             created_at=datetime.utcnow()
+             created_at=datetime.datetime.utcnow()
         )
         db.session.add(interaction)
 
