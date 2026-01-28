@@ -309,220 +309,229 @@ async function loadPipelines(currentStageId, targetId = 'nw-input-stage') {
 }
 
 // --- GROUP EXPORT LOGIC ---
+// --- GROUP EXPORT LOGIC ---
 async function scrapeGroupContacts(groupName) {
     const progressText = getEl('nw-export-status');
     const progressBar = getEl('nw-export-progress');
-    const fill = getEl('nw-progress-fill');
 
     if (progressBar) progressBar.classList.remove('hidden');
-    if (progressText) progressText.textContent = "Abrindo dados do grupo...";
+    if (progressText) progressText.textContent = "Localizando painel...";
 
-    // 1. Open Group Info
-    const header = document.querySelector('header');
-    if (!header) return alert("Erro: Cabeçalho não encontrado.");
+    // 1. Helper: Robust Container Finder
+    const findContainer = () => {
+        // Strategy A: Look for the Side Panel (usually a <section>)
+        const sections = Array.from(document.querySelectorAll('section, div[role="dialog"]'));
 
-    // Try click specific clickable div in header first
-    const titleClickable = header.querySelector('div[role="button"]');
-    if (titleClickable) titleClickable.click();
-    else header.click();
+        for (const section of sections) {
+            // Check visibility
+            if (section.offsetParent === null) continue;
 
-    await new Promise(r => setTimeout(r, 2000));
+            const text = section.innerText.toLowerCase();
+            // Keywords that indicate a Group Info panel or Participant List
+            const hasKeyword = text.includes('dados do grupo') ||
+                text.includes('group info') ||
+                text.match(/\d+ membros/) ||
+                text.match(/\d+ participants/) ||
+                text.match(/\d+ participantes/);
 
-    // 2. Find Drawer
-    // Flexible search for the side panel
-    let drawer = null;
-    const sidePanels = document.querySelectorAll('div._aigv, section');
-    // Search reversed as the active one is usually last
-    for (let i = sidePanels.length - 1; i >= 0; i--) {
-        const p = sidePanels[i];
-        if (p.innerText.match(/dados do grupo|group info|participa/i) && p.offsetHeight > 400) {
-            drawer = p;
-            break;
+            if (hasKeyword) {
+                // Return this section as the container
+                return section;
+            }
+        }
+        return null;
+    };
+
+    let container = findContainer();
+
+    // 2. Open Panel if NOT found
+    if (!container) {
+        if (progressText) progressText.textContent = "Abrindo painel do grupo...";
+        const header = document.querySelector('header');
+        if (header) {
+            // Click title to open
+            const titleClick = header.querySelector('div[role="button"]') || header.querySelector('span[dir="auto"]');
+            if (titleClick) titleClick.click();
+            else header.click();
+        }
+
+        // Polling wait
+        for (let i = 0; i < 25; i++) {
+            await new Promise(r => setTimeout(r, 400));
+            container = findContainer();
+            if (container) break;
         }
     }
 
-    if (!drawer) {
+    if (!container) {
         if (progressBar) progressBar.classList.add('hidden');
-        return alert("Erro: Painel não abriu. Desbloqueie popups e tente novamente.");
+        return alert("Não foi possível detectar a lista de participantes.\n\nPor favor, ABRA A LISTA DE MEMBROS manualmente e tente novamente.");
     }
 
-    // 3. Find "Participants" Link/Section
-    if (progressText) progressText.textContent = "Buscando lista de participantes...";
+    // 3. Drill down to the Participant List
+    if (progressText) progressText.textContent = "Acessando lista de membros...";
 
-    // Scroll drawer slightly to ensure participants section is loaded
-    const drawerScroller = drawer.querySelector('div[class*="overflow"]');
-    if (drawerScroller) drawerScroller.scrollTop = 400;
+    // Sometimes the container is the main info panel, but the list is hidden behind "Check All"
+    // Check for "View All" / "Ver tudo" button
+    const viewAllBtn = Array.from(container.querySelectorAll('div[role="button"]'))
+        .find(b => b.innerText.match(/ver tudo|view all|mais|more/i));
 
-    await new Promise(r => setTimeout(r, 1500));
-
-    // Look for "View all" or clickable participant count header
-    // The text varies: "123 participants", "123 participantes"
-    const spans = Array.from(drawer.querySelectorAll('span'));
-    const partHeader = spans.find(s => s.innerText.match(/\d+ participating|\d+ participantes/i));
-
-    if (partHeader) {
-        const btn = partHeader.closest('div[role="button"]');
-        if (btn) {
-            btn.click();
-            await new Promise(r => setTimeout(r, 2000));
-        }
+    if (viewAllBtn) {
+        viewAllBtn.click();
+        await new Promise(r => setTimeout(r, 1500));
+        // Re-detect container as it might have switched to a modal
+        container = document.querySelector('div[role="dialog"]') || container;
     }
 
-    // 4. Find the Modal/List Scroller
-    // If a modal opened (View All), it's usually role=dialog
-    const modal = document.querySelector('div[role="dialog"]');
-    let scroller = null;
+    // 4. Find the Scrollable Area
+    // The list is always in a div with overflow-y: auto/scroll
+    let scroller = Array.from(container.querySelectorAll('div')).find(div => {
+        const style = window.getComputedStyle(div);
+        return (style.overflowY === 'auto' || style.overflowY === 'scroll') && div.scrollHeight > 50;
+    });
 
-    if (modal) {
-        scroller = Array.from(modal.querySelectorAll('div')).find(d => getComputedStyle(d).overflowY === 'auto' || d.style.overflowY === 'auto');
-    }
-
-    // If no modal, check inside drawer (for small groups)
     if (!scroller) {
-        // Drawer internal list often matches specific classes or just overflow-y
-        scroller = Array.from(drawer.querySelectorAll('div')).find(d => getComputedStyle(d).overflowY === 'auto' && d.scrollHeight > 300);
+        // Fallback: The container itself might be the scroller
+        const style = window.getComputedStyle(container);
+        if (style.overflowY === 'auto' || style.overflowY === 'scroll') scroller = container;
     }
 
-    if (!scroller && drawerScroller) scroller = drawerScroller; // Fallback
+    if (!scroller) return alert("Erro: Lista de rolagem não encontrada. Abra a lista completa de membros.");
 
-    if (!scroller) return alert("Erro: Lista não encontrada.");
-
-    // 5. Scrape Loop
+    // 5. Scrape Logic
     const uniqueContacts = new Map();
-    let previousHeight = 0;
     let noChangeCount = 0;
+    let prevHeight = 0;
+
+    // Scroll top first
+    scroller.scrollTop = 0;
 
     while (noChangeCount < 3) {
+        // Scroll down
         scroller.scrollTop = scroller.scrollHeight;
-        await new Promise(r => setTimeout(r, 1200));
+        await new Promise(r => setTimeout(r, 1200)); // Wait for lazy load
 
-        const items = document.querySelectorAll('div[role="listitem"]');
-        items.forEach(row => {
-            const text = row.innerText.split('\n');
-            // WhatsApp rows: 
-            // 1. Name (or Phone if unsaved)
-            // 2. Status / Info (Optional)
+        // Scrape visible items
+        // WhatsApp list items usually have role="listitem" or specific structure
+        const items = container.querySelectorAll('div[role="listitem"]');
 
-            let name = text[0] || "Sem Nome";
+        // If no listitems found, try generic divs with text
+        const rows = items.length > 0 ? items : container.querySelectorAll('div._Aigv'); // Fallback class if needed, or query direct children
+
+        items.forEach(item => {
+            const lines = item.innerText.split('\n');
+            if (lines.length < 1) return;
+
+            let name = lines[0];
+            let secondary = lines[1] || "";
             let phone = "";
-            let extra = text[1] || "";
 
-            // Heuristic: Check if 'name' is actually a phone
-            if (name.match(/\d{4}.?\d{4}/) && name.length < 20) {
-                // It's a phone number
+            // Extract phone info
+            if (name.match(/^\+?\d[\d\s-]{8,}$/)) {
+                // Name IS phone
                 phone = name.replace(/\D/g, '');
-                name = "Contato WhatsApp"; // Placeholder
-                // Sometimes the 'status' is '~Notify_Name', we can grab that
-                if (extra.includes('~')) name = extra.replace('~', '');
+                name = "Contato WhatsApp"; // Placeholder for unsaved
+                // Try to grab nickname from secondary line (~Nick)
+                if (secondary.includes('~')) name = secondary.replace(/[~]/g, '').trim();
             } else {
-                // It's a saved contact name
-                // We CANNOT get the phone from saved contacts easily on Web unless we click them.
-                // But for the export requirement, we leave blank or put name as fallback key?
-                // Wait, user wants phone. If we abuse the "drag" trick or Fiber we could, but let's be safe.
-                // For now, if no phone visible, we leave blank but add to list.
-                // Actually, let's try to grab phone from 'extra' if it looks like one (rare)
+                // Name is likely a contact name
+                // Phone is usually NOT visible for saved contacts in the list unless clicked
+                // BUT, user requires phone. 
+                // We will save what we have. If secondary looks like phone, grab it.
+                if (secondary.match(/^\+?\d[\d\s-]{8,}$/)) phone = secondary.replace(/\D/g, '');
             }
 
-            // Ignore You
-            if (name === "You" || name === "Você") return;
-
-            // Clean phone (add country code if missing/guess)
+            if (name === "Você" || name === "You") return;
             if (phone && !phone.startsWith('55') && phone.length <= 11) phone = '55' + phone;
 
             const key = phone || name;
+
             if (!uniqueContacts.has(key)) {
                 uniqueContacts.set(key, {
-                    name: name.replace(/"/g, ''), // Sanitize quotes
+                    name: name.replace(/"/g, ''),
                     phone: phone,
-                    origin: `Grupo WhatsApp - ${groupName}`,
-                    interest: "A definir",
-                    obs: `Extraído em ${new Date().toLocaleDateString()}`
+                    origin: `Grupo: ${groupName}`,
+                    date: new Date().toLocaleDateString()
                 });
-
                 if (progressText) progressText.innerText = `Extraindo... ${uniqueContacts.size}`;
             }
         });
 
-        if (scroller.scrollHeight === previousHeight) {
-            noChangeCount++;
-        } else {
-            previousHeight = scroller.scrollHeight;
+        if (scroller.scrollHeight === prevHeight) noChangeCount++;
+        else {
+            prevHeight = scroller.scrollHeight;
             noChangeCount = 0;
         }
     }
 
-    // 6. Download (Strict CSV Format)
-    // Nome,Email,Telefone,Origem,Interesse,Observações
+    // 6. Generate & Download CSV
     const csvHeader = ["Nome", "Email", "Telefone", "Origem", "Interesse", "Observações"];
-    const rows = Array.from(uniqueContacts.values()).map(c => {
+    const csvRows = Array.from(uniqueContacts.values()).map(c => {
         return [
             `"${c.name}"`,
-            `""`, // Email empty
+            `""`,
             `"${c.phone}"`,
             `"${c.origin}"`,
-            `"${c.interest}"`,
-            `"${c.obs}"`
+            `"A definir"`,
+            `"Extraído em ${c.date}"`
         ].join(',');
     });
 
-    const csvContent = "\uFEFF" + csvHeader.join(',') + "\n" + rows.join('\n');
-
+    const csvContent = "\uFEFF" + csvHeader.join(',') + "\n" + csvRows.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `grupo_${groupName.replace(/\s/g, '_')}_${new Date().getTime()}.csv`;
+    link.download = `grupo_${groupName.replace(/\s/g, '_')}_${Date.now()}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    if (progressText) progressText.textContent = `Concluído! ${uniqueContacts.size} contatos.`;
-    setTimeout(() => { if (progressBar) progressBar.classList.add('hidden'); }, 3000);
+    if (progressText) progressText.textContent = `Sucesso! ${uniqueContacts.size} contatos baixados.`;
+    setTimeout(() => { if (progressBar) progressBar.classList.add('hidden'); }, 4000);
 }
 
 
 function bindEvents() {
-    getEl('nw-btn-create').addEventListener('click', async () => {
-        const name = getEl('nw-new-name').value;
-        const phone = getEl('nw-new-phone').value;
-        const email = getEl('nw-new-email').value;
-        const interest = getEl('nw-new-interest').value;
-        const notes = getEl('nw-new-notes').value;
-        const stageId = getEl('nw-new-stage').value;
-        const res = await chrome.runtime.sendMessage({
-            action: "CREATE_LEAD",
-            data: { name, phone, email, notes, bant_need: interest, pipeline_stage_id: stageId }
-        });
-        if (res.success) renderContact(res.lead);
-        else alert(res.error);
+    const phone = getEl('nw-new-phone').value;
+    const email = getEl('nw-new-email').value;
+    const interest = getEl('nw-new-interest').value;
+    const notes = getEl('nw-new-notes').value;
+    const stageId = getEl('nw-new-stage').value;
+    const res = await chrome.runtime.sendMessage({
+        action: "CREATE_LEAD",
+        data: { name, phone, email, notes, bant_need: interest, pipeline_stage_id: stageId }
     });
+    if (res.success) renderContact(res.lead);
+    else alert(res.error);
+});
 
-    getEl('nw-btn-save').addEventListener('click', async () => {
-        if (!currentLeadId) return;
-        const notes = getEl('nw-input-notes').value;
-        const tags = getEl('nw-input-tags').value;
-        const stageId = getEl('nw-input-stage').value;
-        await chrome.runtime.sendMessage({
-            action: "UPDATE_LEAD",
-            id: currentLeadId,
-            data: { notes, bant_need: tags, pipeline_stage_id: stageId }
-        });
-        const btn = getEl('nw-btn-save');
-        btn.textContent = "Salvo!";
-        setTimeout(() => btn.textContent = "Salvar Alterações", 2000);
+getEl('nw-btn-save').addEventListener('click', async () => {
+    if (!currentLeadId) return;
+    const notes = getEl('nw-input-notes').value;
+    const tags = getEl('nw-input-tags').value;
+    const stageId = getEl('nw-input-stage').value;
+    await chrome.runtime.sendMessage({
+        action: "UPDATE_LEAD",
+        id: currentLeadId,
+        data: { notes, bant_need: tags, pipeline_stage_id: stageId }
     });
+    const btn = getEl('nw-btn-save');
+    btn.textContent = "Salvo!";
+    setTimeout(() => btn.textContent = "Salvar Alterações", 2000);
+});
 
-    getEl('nw-link-crm').addEventListener('click', (e) => {
-        if (currentLeadId) e.target.href = `https://north-way-2-0.vercel.app/leads/${currentLeadId}`;
+getEl('nw-link-crm').addEventListener('click', (e) => {
+    if (currentLeadId) e.target.href = `https://north-way-2-0.vercel.app/leads/${currentLeadId}`;
+});
+
+const exportBtn = getEl('nw-btn-export');
+if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+        const name = getEl('nw-group-name').textContent;
+        scrapeGroupContacts(name);
     });
-
-    const exportBtn = getEl('nw-btn-export');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', () => {
-            const name = getEl('nw-group-name').textContent;
-            scrapeGroupContacts(name);
-        });
-    }
+}
 }
 
 setTimeout(init, 3000);
