@@ -12,6 +12,18 @@
     ],
     "routes": [
         {
+            "src": "/",
+            "dest": "/lp-north-way/index.html"
+        },
+        {
+            "src": "/(style.css|script.js|logo.png|dashboard-financial.png|dashboard-preview.png)",
+            "dest": "/lp-north-way/$1"
+        },
+        {
+            "src": "/assets/(.*)",
+            "dest": "/lp-north-way/assets/$1"
+        },
+        {
             "src": "/(.*)",
             "dest": "northway_crm/api/index.py"
         }
