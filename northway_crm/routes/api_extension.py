@@ -260,7 +260,7 @@ def update_lead(current_user, id):
                 company_id=current_user.company_id,
                 type='note',
                 content=lead.notes, # Or f"Nota atualizada via extensão: {lead.notes}"
-                created_at=datetime.utcnow()
+                created_at=datetime.datetime.utcnow()
             )
             db.session.add(interaction)
         
