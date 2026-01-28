@@ -390,23 +390,26 @@ async function scrapeGroupContacts(groupName) {
 
     if (viewAllBtn) {
         viewAllBtn.click();
-        await new Promise(r => setTimeout(r, 1500));
 
-        // Re-detect container as it might have switched to a modal
-        // BUT verify it's the RIGHT modal (Group info / Participants), not a random alert
-        const dialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
-        const validModal = dialogs.find(d => {
-            const t = d.innerText.toLowerCase();
-            // Must have relevant keywords
-            return t.match(/membros|participantes|participants|members|dados do grupo/);
-        });
+        // Loop to wait for valid modal, potentially dismissing junk along the way
+        for (let i = 0; i < 6; i++) {
+            await new Promise(r => setTimeout(r, 1000));
 
-        if (validModal) {
-            container = validModal;
-        } else {
-            // If no valid modal appeared, maybe the drawer just expanded. 
-            // We keep the old 'container' (drawer)
-            dismissNuissance(); // Check again if an error popup blocked us
+            // Check for nuisance and kill it
+            dismissNuissance();
+
+            // Check for valid modal
+            const dialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+            const validModal = dialogs.find(d => {
+                const t = d.innerText.toLowerCase();
+                // Must have relevant keywords AND NOT be encryption popup
+                return t.match(/membros|participantes|participants|members|dados do grupo/) && !t.match(/criptografia|encryption|segurança/);
+            });
+
+            if (validModal) {
+                container = validModal;
+                break;
+            }
         }
     }
 
