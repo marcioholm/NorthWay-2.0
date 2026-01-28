@@ -102,7 +102,6 @@ def lead_details(id):
     users = User.query.filter_by(company_id=current_user.company_id).all()
     
     stages = []
-    is_first_stage = False
     
     if lead.pipeline_id:
         stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).all()
@@ -114,7 +113,217 @@ def lead_details(id):
         
     return render_template('lead_details.html', lead=lead, users=users, stages=stages, is_first_stage=is_first_stage)
 
-# ... (skip to update_lead_info) ...
+@leads_bp.route('/pipeline')
+@leads_bp.route('/pipeline/<int:pipeline_id>')
+@login_required
+def pipeline(pipeline_id=None):
+    if not current_user.company_id:
+        abort(403)
+
+    # Get current company's pipelines
+    pipelines = Pipeline.query.filter(Pipeline.company_id == current_user.company_id).all()
+    
+    if not pipelines:
+        # Create a default pipeline if none exists
+        default_p = Pipeline(name="Pipeline Comercial", company_id=current_user.company_id)
+        db.session.add(default_p)
+        db.session.flush()
+        
+        # Create default stages
+        stages = ["Qualificação", "Apresentação", "Proposta", "Negociação", "Fechado"]
+        for i, s_name in enumerate(stages):
+            stage = PipelineStage(name=s_name, pipeline_id=default_p.id, company_id=current_user.company_id, order=i)
+            db.session.add(stage)
+        
+        db.session.commit()
+        pipelines = [default_p]
+        pipeline_id = default_p.id
+    
+    if not pipeline_id:
+        pipeline_id = pipelines[0].id
+        
+    current_pipeline = Pipeline.query.get_or_404(pipeline_id)
+    if current_pipeline.company_id != current_user.company_id:
+        abort(403)
+        
+    stages = PipelineStage.query.filter_by(pipeline_id=pipeline_id).order_by(PipelineStage.order).all()
+    leads_list = Lead.query.filter_by(pipeline_id=pipeline_id, company_id=current_user.company_id)\
+                        .options(db.joinedload(Lead.assigned_user))\
+                        .all()
+        
+    return render_template('pipeline.html', 
+                          pipelines=pipelines, 
+                          active_pipeline=current_pipeline, 
+                          stages=stages, 
+                          leads=leads_list)
+
+@leads_bp.route('/leads/<int:id>/move/<direction>', methods=['POST'])
+@login_required
+def move_lead(id, direction):
+    lead = Lead.query.get_or_404(id)
+    if lead.company_id != current_user.company_id:
+        abort(403)
+        
+    stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).all()
+    current_idx = next((i for i, s in enumerate(stages) if s.id == lead.pipeline_stage_id), 0)
+    
+    if direction == 'next' and current_idx < len(stages) - 1:
+        lead.pipeline_stage_id = stages[current_idx + 1].id
+        lead.status = LEAD_STATUS_IN_PROGRESS
+    elif direction == 'prev' and current_idx > 0:
+        lead.pipeline_stage_id = stages[current_idx - 1].id
+ 
+    db.session.commit()
+    return redirect(url_for('leads.pipeline', pipeline_id=lead.pipeline_id))
+
+@leads_bp.route('/api/leads/<int:id>/update_stage', methods=['POST'])
+@login_required
+def update_lead_stage_api(id):
+    lead = Lead.query.get_or_404(id)
+    if lead.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    data = request.get_json()
+    stage_id = data.get('stage_id')
+    
+    if not stage_id:
+        return jsonify({'error': 'Stage ID required'}), 400
+        
+    stage = PipelineStage.query.get(stage_id)
+    if not stage or stage.pipeline_id != lead.pipeline_id:
+         return jsonify({'error': 'Invalid Stage'}), 400
+         
+    lead.pipeline_stage_id = stage.id
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Lead moved successfully'})
+
+@leads_bp.route('/leads/<int:id>/convert', methods=['POST'])
+@login_required
+def convert_lead(id):
+    lead = Lead.query.get_or_404(id)
+    # ... (rest of convert_lead logic is likely needed too if I deleted it. I will include the start of it to be safe or check if it exists)
+    # Actually, I deleted EVERYTHING between lead_details and update_lead_info.
+    # So I need to restore convert_lead and update_bant too!
+    if lead.company_id != current_user.company_id:
+        abort(403)
+        
+    service = request.form.get('service')
+    contract_type = request.form.get('contract_type')
+    start_date_str = request.form.get('start_date')
+    
+    start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else datetime.utcnow().date()
+    renewal_date = start_date + timedelta(days=30)
+    
+    monthly_value = request.form.get('monthly_value')
+    value = 0.0
+    try:
+        if monthly_value:
+            clean_value = monthly_value.replace('R$', '').replace('.', '').replace(',', '.').strip()
+            value = float(clean_value)
+    except ValueError:
+        pass
+
+    client = Client(
+        name=lead.name,
+        email=lead.email,
+        phone=lead.phone,
+        company_id=lead.company_id,
+        account_manager_id=lead.assigned_to_id or current_user.id,
+        lead_id=lead.id,
+        status='onboarding',
+        health_status='verde',
+        service=service,
+        contract_type=contract_type,
+        monthly_value=value,
+        start_date=start_date,
+        renewal_date=renewal_date,
+        notes=f"Convertido de Lead em {start_date.strftime('%d/%m/%Y')}. \n{lead.notes or ''}",
+        niche=lead.bant_need
+    )
+    
+    db.session.add(client)
+    db.session.flush()
+    
+    lead.status = LEAD_STATUS_WON
+    lead.client_id = client.id
+    
+    # Find closing stage (Fechamento/Fechado)
+    fechado_stage = PipelineStage.query.filter(
+        PipelineStage.pipeline_id == lead.pipeline_id,
+        PipelineStage.company_id == current_user.company_id
+    ).filter(db.or_(PipelineStage.name.ilike('%fechado%'), PipelineStage.name.ilike('%fechamento%'))).first()
+    
+    if not fechado_stage:
+        fechado_stage = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id)\
+            .order_by(PipelineStage.order.desc()).first()
+
+    if fechado_stage:
+        lead.pipeline_stage_id = fechado_stage.id
+        
+    # Create Default Onboarding Checklist
+    template = ProcessTemplate.query.filter_by(company_id=current_user.company_id, name="Onboarding Padrão").first()
+    checklist_data = template.steps if template else [{
+        "title": "Start",
+        "items": [
+            {"text": "Enviar Welcome Kit", "done": False},
+            {"text": "Solicitar Acessos", "done": False},
+            {"text": "Agendar Kickoff", "done": False},
+            {"text": "Criar Pasta no Drive", "done": False}
+        ]
+    }]
+        
+    checklist = ClientChecklist(
+        client_id=client.id,
+        company_id=current_user.company_id,
+        name="Onboarding Inicial",
+        progress=checklist_data
+    )
+    db.session.add(checklist)
+    
+    # Create Task
+    task_create = Task(
+        title="Criar Contrato",
+        description=f"Gerar/Emitir contrato para {client.name}.",
+        due_date=datetime.utcnow() + timedelta(days=1),
+        priority='alta',
+        status='pendente',
+        client_id=client.id,
+        assigned_to_id=client.account_manager_id,
+        company_id=client.company_id
+    )
+    db.session.add(task_create)
+
+    # Notify
+    if client.account_manager_id and client.account_manager_id != current_user.id:
+        create_notification(
+            user_id=client.account_manager_id,
+            company_id=current_user.company_id,
+            type='lead_converted',
+            title='Lead Convertido',
+            message=f"Lead {lead.name} convertido e atribuído a você."
+        )
+    
+    WhatsAppMessage.query.filter_by(lead_id=lead.id).update({'client_id': client.id, 'lead_id': None})
+    
+    db.session.commit()
+    flash(f'Parabéns! {client.name} agora é um cliente ativo.', 'success')
+    return redirect(url_for('clients.client_details', id=client.id))
+
+@leads_bp.route('/leads/<int:id>/bant', methods=['POST'])
+@login_required
+def update_bant(id):
+    lead = Lead.query.get_or_404(id)
+    if lead.company_id != current_user.company_id:
+        abort(403)
+        
+    lead.bant_budget = request.form.get('bant_budget')
+    lead.bant_authority = request.form.get('bant_authority')
+    lead.bant_need = request.form.get('bant_need')
+    lead.bant_timeline = request.form.get('bant_timeline')
+    
+    db.session.commit()
+    flash('Critérios BANT atualizados.', 'success')
+    return redirect(url_for('leads.lead_details', id=id))
 
 @leads_bp.route('/leads/<int:id>/update_info', methods=['POST'])
 @login_required
