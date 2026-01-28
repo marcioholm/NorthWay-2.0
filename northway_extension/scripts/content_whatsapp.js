@@ -5,7 +5,7 @@ let currentLeadId = null;
 
 // --- INITIALIZATION ---
 async function init() {
-    console.log("NW: Initializing...");
+    console.log("NW: Initializing... v2.1 - Syntax Fixed");
 
     let sidebarContainer = document.getElementById('northway-sidebar-host');
     if (!sidebarContainer) {
