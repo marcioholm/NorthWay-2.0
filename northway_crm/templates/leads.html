@@ -359,6 +359,49 @@
 
     // Handle Table Row Clicks (Premium UX)
     document.addEventListener('DOMContentLoaded', function () {
+        // File Upload Feedback
+        const fileInput = document.getElementById('dropzone-file');
+        const dropzoneLabel = fileInput?.closest('label');
+
+        if (fileInput && dropzoneLabel) {
+            fileInput.addEventListener('change', function (e) {
+                if (e.target.files.length > 0) {
+                    const fileName = e.target.files[0].name;
+                    // Replace content with file info
+                    dropzoneLabel.innerHTML = `
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i data-lucide="file-check" class="w-10 h-10 text-green-500 mb-2"></i>
+                            <p class="text-sm text-gray-700 font-medium">${fileName}</p>
+                            <p class="text-xs text-gray-500">Pronto para importar</p>
+                        </div>
+                        <input id="dropzone-file" name="file" type="file" class="hidden" accept=".csv" required />
+                    `;
+                    // Re-init Lucide icons if available in global scope, or just rely on CSS
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                    // Re-attach listener? No, because we replaced the input too! 
+                    // Wait, replacing innerHTML destroys the input if it's inside label. 
+                    // Better approach: target the span inside.
+                }
+            });
+
+            // Re-write to only target span content to avoid destroying the input element
+            fileInput.addEventListener('change', function (e) {
+                if (e.target.files.length > 0) {
+                    const fileName = e.target.files[0].name;
+                    const container = dropzoneLabel.querySelector('span'); // The main span wrapper
+                    if (container) {
+                        container.innerHTML = `
+                             <i data-lucide="file-check" class="w-10 h-10 text-green-500 mb-2"></i>
+                             <span class="text-sm text-gray-900 font-bold">${fileName}</span>
+                             <span class="text-xs text-green-600">Arquivo Selecionado</span>
+                        `;
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    }
+                }
+            });
+        }
+
         // Row Click
         const rows = document.querySelectorAll('.clickable-row');
         rows.forEach(row => {
