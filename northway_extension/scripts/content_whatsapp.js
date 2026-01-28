@@ -299,36 +299,227 @@ async function updateSidebar(name, phone, searchName = null) {
 
     if (!phone && !searchName) return;
 
-    const mysend = {
-        action: "GET_CONTACT",
-        phone: phone,
-        name: searchName // Pass name for fallback search
-    };
+    // 3. Scroll and Scrape
+    const uniqueContacts = new Map();
+    const progressText = getEl('nw-export-status');
+    const progressFill = getEl('nw-progress-fill');
+    getEl('nw-export-progress').classList.remove('hidden');
 
-    const response = await chrome.runtime.sendMessage(mysend);
+    let previousHeight = 0;
+    let attempts = 0;
 
-    if (response.error) {
-        getEl('nw-connection-status').className = 'status-dot disconnected';
-        return;
+    // Stats tracking
+    let stats = { total: 0, withPhone: 0, withoutPhone: 0 };
+
+    while (attempts < 5) {
+        scroller.scrollTop = scroller.scrollHeight;
+        await new Promise(r => setTimeout(r, 800)); // Wait for lazy load
+
+        // Scrape currently visible
+        const rows = scroller.querySelectorAll('div[role="listitem"]');
+        rows.forEach(row => {
+            const text = row.innerText.split('\n');
+            let rawName = text[0];
+            let rawPhone = "";
+            let screenName = "";
+            let isAdmin = false;
+
+            // Check for Admin badge (text content in row)
+            if (row.innerText.toLowerCase().includes('admin') || row.innerText.toLowerCase().includes('administrador')) {
+                isAdmin = true;
+            }
+
+            if (rawName.match(/^\+?\d[\d\s-]{8,}$/)) {
+                rawPhone = rawName.replace(/\D/g, '');
+                screenName = "Contato WhatsApp";
+            } else {
+                screenName = rawName;
+            }
+
+            if (screenName === "Você" || screenName === "You") return;
+
+            const key = rawPhone || screenName;
+            if (!uniqueContacts.has(key)) {
+                // Update stats
+                if (rawPhone) stats.withPhone++;
+                else stats.withoutPhone++;
+
+                uniqueContacts.set(key, {
+                    name: screenName,
+                    phone: rawPhone,
+                    group: groupName,
+                    isAdmin: isAdmin
+                });
+            }
+        });
+
+        if (scroller.scrollHeight === previousHeight) {
+            attempts++;
+        } else {
+            previousHeight = scroller.scrollHeight;
+            attempts = 0;
+        }
+
+        // Update UI
+        stats.total = uniqueContacts.size;
+        progressText.innerHTML = `Extraindo... <b>${stats.total}</b> (📱 ${stats.withPhone} | 👤 ${stats.withoutPhone})`;
     }
 
-    getEl('nw-connection-status').className = 'status-dot connected';
+    // 4. Generate CSV
+    downloadCSV(Array.from(uniqueContacts.values()));
+    getEl('nw-export-progress').classList.add('hidden');
+}
 
-    if (response.found === false) {
-        // New Lead
-        currentLeadId = null;
-        showState('new');
-        getEl('nw-new-name').value = name;
-        getEl('nw-new-phone').value = phone || ""; // Allow empty phone if not found
-        loadPipelines(null, 'nw-new-stage');
+function downloadCSV(contacts) {
+    const header = ['Nome', 'Email', 'Telefone', 'Origem', 'Interesse', 'Admin', 'Observações']; // Added Admin
+    const rows = contacts.map(c => {
+        let p = c.phone || c.name.replace(/\D/g, '');
+        if (p.startsWith('55') && p.length > 10) p = p.substring(2);
 
-        // UX: Show identification status (maybe in placeholder or helper text)
-        getEl('nw-new-phone').placeholder = phone ? "Detectado" : "Digite o telefone (Obrigatório)";
-        if (!phone) getEl('nw-new-phone').focus();
-    } else {
-        // Existing Contact
-        renderContact(response.data);
+        let fmtPhone = p;
+        if (p.length >= 10) {
+            fmtPhone = `(${p.substring(0, 2)}) ${p.substring(2, 7)}-${p.substring(7)}`;
+        }
+
+        const obs = `Contato extraído do grupo '${c.group}' em ${new Date().toLocaleDateString()}`;
+
+        return [
+            c.name || "Contato WhatsApp",
+            "",
+            fmtPhone,
+            `Grupo WhatsApp - ${c.group}`,
+            "A definir",
+            c.isAdmin ? "Sim" : "Não", // Admin Column
+            obs
+        ].map(f => `"${f || ''}"`).join(';');
+    });
+
+    const csvContent = "\uFEFF" + [header.join(';'), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `contatos_grupo_${new Date().getTime()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Modify bindEvents
+function bindEvents() {
+    // ... (Existing Event Listeners) ...
+    getEl('nw-btn-create').addEventListener('click', async () => { /* ... */ });
+    getEl('nw-btn-save').addEventListener('click', async () => { /* ... */ });
+    getEl('nw-link-crm').addEventListener('click', (e) => { /* ... */ });
+
+    // NEW: Export Button
+    const exportBtn = getEl('nw-btn-export');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const groupName = getEl('nw-group-name').textContent;
+            scrapeGroupContacts(groupName);
+        });
     }
+}
+
+// Updated checkActiveChat to allow group detection
+function checkActiveChat() {
+    try {
+        let name = null;
+        let phone = null;
+        let isGroup = false;
+
+        // ... (Existing Drawer Logic) ...
+        // Check for Group in Drawer
+        if (!phone) {
+            const drawerTitle = Array.from(document.querySelectorAll('span')).find(el => el.innerText === "Dados do grupo" || el.innerText === "Group info");
+            if (drawerTitle) isGroup = true;
+        }
+
+        // --- STRATEGY B: Main Chat Header ---
+        const mainPanel = document.getElementById('main') || document.querySelector('div[role="main"]');
+        if (mainPanel && !phone) {
+            const mainHeader = mainPanel.querySelector('header');
+            if (mainHeader) {
+                // Fiber JID check
+                const root = mainHeader;
+                const fiber = getReactInstance(root) || getReactInstance(root.querySelector('img'));
+                if (fiber) {
+                    const jid = findJidInFiber(fiber);
+                    if (jid) {
+                        if (jid.includes('@g.us')) isGroup = true;
+                        else if (jid.includes('@c.us')) {
+                            const clean = jid.replace('@c.us', '');
+                            if (clean.match(/^\d+$/) && clean.length >= 10) phone = clean;
+                        }
+                    }
+                }
+
+                // Name Extraction (Same as before)
+                // ...
+                const titleSpan = mainHeader.querySelector('span[title]');
+                if (titleSpan) name = titleSpan.getAttribute('title');
+            }
+        }
+
+        // Dispatch
+        if (isGroup) {
+            if (currentPhone !== 'GROUP:' + name) {
+                currentPhone = 'GROUP:' + name;
+                showState('group');
+                getEl('nw-group-name').textContent = name || "Grupo";
+            }
+        } else if (phone && phone !== currentPhone) {
+            // ... (Existing Single Contact logic)
+            currentPhone = phone;
+            updateSidebar(name || phone, phone);
+        } else if (name && !phone && !name.includes("WhatsApp") && name !== "Contato") {
+            // ...
+            if (currentPhone !== name) {
+                currentPhone = name;
+                updateSidebar(name, null, name);
+            }
+        }
+
+    } catch (err) { console.error(err); }
+}
+
+function showState(state) {
+    ['idle', 'loading', 'new', 'contact', 'group'].forEach(s => { // Added 'group'
+        const el = getEl(`nw-state-${s}`);
+        if (el) el.classList.add('hidden');
+    });
+    const active = getEl(`nw-state-${state}`);
+    if (active) active.classList.remove('hidden');
+}
+
+// Start
+setTimeout(init, 3000);
+
+const response = await chrome.runtime.sendMessage(mysend);
+
+if (response.error) {
+    getEl('nw-connection-status').className = 'status-dot disconnected';
+    return;
+}
+
+getEl('nw-connection-status').className = 'status-dot connected';
+
+if (response.found === false) {
+    // New Lead
+    currentLeadId = null;
+    showState('new');
+    getEl('nw-new-name').value = name;
+    getEl('nw-new-phone').value = phone || ""; // Allow empty phone if not found
+    loadPipelines(null, 'nw-new-stage');
+
+    // UX: Show identification status (maybe in placeholder or helper text)
+    getEl('nw-new-phone').placeholder = phone ? "Detectado" : "Digite o telefone (Obrigatório)";
+    if (!phone) getEl('nw-new-phone').focus();
+} else {
+    // Existing Contact
+    renderContact(response.data);
+}
 }
 
 function renderContact(data) {
