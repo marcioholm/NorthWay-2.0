@@ -453,7 +453,7 @@ async function scrapeGroupContacts(groupName) {
 
     // 6. Download (Strict CSV Format)
     // Nome,Email,Telefone,Origem,Interesse,Observações
-    const header = ["Nome", "Email", "Telefone", "Origem", "Interesse", "Observações"];
+    const csvHeader = ["Nome", "Email", "Telefone", "Origem", "Interesse", "Observações"];
     const rows = Array.from(uniqueContacts.values()).map(c => {
         return [
             `"${c.name}"`,
@@ -465,7 +465,7 @@ async function scrapeGroupContacts(groupName) {
         ].join(',');
     });
 
-    const csvContent = "\uFEFF" + header.join(',') + "\n" + rows.join('\n');
+    const csvContent = "\uFEFF" + csvHeader.join(',') + "\n" + rows.join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
