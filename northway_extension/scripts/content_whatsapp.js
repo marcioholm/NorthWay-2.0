@@ -125,67 +125,100 @@ function checkActiveChat() {
         let phone = null;
         let isGroup = false;
 
-        // --- STRATEGY A: Contact Info Drawer ---
-        const drawerTitle = Array.from(document.querySelectorAll('span')).find(el =>
-            el.innerText === "Dados do contato" || el.innerText === "Contact info" ||
-            el.innerText === "Dados da empresa" || el.innerText === "Business info" ||
-            el.innerText === "Dados do grupo" || el.innerText === "Group info"
-        );
+        const mainPanel = document.getElementById('main') || document.querySelector('div[role="main"]');
 
-        if (drawerTitle) {
-            if (drawerTitle.innerText.includes('grupo') || drawerTitle.innerText.includes('Group')) {
-                isGroup = true;
-            }
-
-            const drawerContainer = drawerTitle.closest('section') || drawerTitle.closest('div._aigv');
-            if (drawerContainer) {
-                // Fiber Check
-                const drawerImg = drawerContainer.querySelector('img');
-                if (drawerImg) {
-                    const fiber = getReactInstance(drawerImg);
+        if (mainPanel) {
+            const header = mainPanel.querySelector('header');
+            if (header) {
+                // 1. Fiber Analysis (Primary Source of Truth for ID)
+                const img = header.querySelector('img');
+                if (img) {
+                    const fiber = getReactInstance(img);
                     if (fiber) {
                         const jid = findJidInFiber(fiber);
                         if (jid) {
-                            if (jid.includes('@g.us')) isGroup = true;
-                            else if (jid.includes('@c.us')) {
-                                const clean = jid.replace('@c.us', '');
+                            if (jid.includes('@g.us')) {
+                                isGroup = true;
+                            } else if (jid.includes('@c.us') || jid.includes('@s.whatsapp.net')) {
+                                const clean = jid.replace(/@.+/, '');
                                 if (clean.match(/^\d+$/) && clean.length >= 10) phone = clean;
                             }
                         }
                     }
                 }
 
-                // Name Check
-                const heading = drawerContainer.querySelector('h2') || drawerContainer.querySelector('span[dir="auto"]');
-                if (heading) name = heading.innerText;
+                // 2. Precise Name Extraction (Targeting Title Only)
+                // The header usually contains a clickable info div. Inside, Title is first, Subtitle is second.
+                const infoButton = header.querySelector('div[role="button"]');
+                if (infoButton) {
+                    // Get all text containers that might be title/subtitle
+                    // Title usually has [dir="auto"] and is the first significant text element
+                    // Subtitle (participants) is usually the second one
+                    const textElements = Array.from(infoButton.querySelectorAll('span[dir="auto"]'));
+
+                    if (textElements.length > 0) {
+                        // First element is usually the Name
+                        name = textElements[0].innerText;
+
+                        // Check second element (Subtitle) for Group Indicators
+                        if (textElements.length > 1) {
+                            const subtitle = textElements[1].innerText;
+                            // Strong heuristic: If subtitle contains multiple commas, it's a participant list -> Group
+                            if (subtitle.includes(',') && subtitle.length > 15) {
+                                isGroup = true;
+                            }
+                            // Or specific keywords
+                            if (subtitle.toLowerCase().includes('participante') || subtitle.toLowerCase().includes('group') || subtitle.toLowerCase().includes('clique para dados')) {
+                                isGroup = true;
+                            }
+                        }
+                    }
+                }
+
+                // 3. Fallback: If Name looks like a giant list of names (commas), we grabbed the wrong thing or it's a group without title?
+                if (name && name.includes(',') && name.length > 50) {
+                    // This is likely the participant list mistakenly grabbed as name
+                    // Trigger group mode but try to find a better name if possible, or default to "Grupo"
+                    isGroup = true;
+                    name = "Grupo (Nome não detectado)";
+                }
+
+                // 4. Fallback Phone via Regex (Unsaved Contact)
+                if (!phone && name && name.match(/^\+?\d[\d\s-]{10,}$/)) {
+                    const clean = name.replace(/\D/g, '');
+                    if (clean.length >= 10) phone = clean;
+                }
             }
         }
 
-        // --- STRATEGY B: Main Chat Header ---
-        const mainPanel = document.getElementById('main') || document.querySelector('div[role="main"]');
-        if (mainPanel && (!phone || !name)) {
-            const mainHeader = mainPanel.querySelector('header');
-            if (mainHeader) {
-                // Fiber JID
-                if (!phone) {
-                    const root = mainHeader;
-                    const fiber = getReactInstance(root) || getReactInstance(root.querySelector('img'));
-                    if (fiber) {
-                        const jid = findJidInFiber(fiber);
-                        if (jid) {
-                            if (jid.includes('@g.us')) isGroup = true;
-                            else if (jid.includes('@c.us')) {
-                                const clean = jid.replace('@c.us', '');
+        // --- DRAWER OVERRIDE ---
+        const drawerTitle = Array.from(document.querySelectorAll('span')).find(el =>
+            ['Dados do contato', 'Contact info', 'Dados da empresa', 'Business info', 'Dados do grupo', 'Group info'].includes(el.innerText)
+        );
+
+        if (drawerTitle) {
+            const container = drawerTitle.closest('div._aigv') || drawerTitle.closest('section');
+            if (drawerTitle.innerText.match(/group|grupo/i)) {
+                isGroup = true;
+                if (container) {
+                    const h2 = container.querySelector('h2') || container.querySelector('span[dir="auto"]'); // h2 is safer in drawer
+                    if (h2) name = h2.innerText;
+                }
+            } else {
+                // Contact Drawer
+                // Try to recover phone from drawer image if header failed (Saved Contact case)
+                if (!phone && container) {
+                    const dImg = container.querySelector('img');
+                    if (dImg) {
+                        const f = getReactInstance(dImg);
+                        if (f) {
+                            const j = findJidInFiber(f);
+                            if (j) {
+                                const clean = j.replace(/@.+/, '');
                                 if (clean.match(/^\d+$/) && clean.length >= 10) phone = clean;
                             }
                         }
                     }
-                }
-
-                // Name Scrape
-                if (!name) {
-                    const titleSpan = mainHeader.querySelector('span[title]');
-                    if (titleSpan) name = titleSpan.getAttribute('title');
                 }
             }
         }
@@ -194,9 +227,9 @@ function checkActiveChat() {
 
         // --- DISPATCH ---
         if (isGroup) {
-            const groupKey = 'GROUP:' + (name || 'Unknown');
-            if (currentPhone !== groupKey) {
-                currentPhone = groupKey;
+            const key = `GROUP:${name}`;
+            if (currentPhone !== key) {
+                currentPhone = key;
                 console.log("NW: Group Detected", name);
                 showState('group');
                 getEl('nw-group-name').textContent = name || "Grupo";
@@ -205,10 +238,10 @@ function checkActiveChat() {
             currentPhone = phone;
             console.log(`NW: Phone Detected: ${phone}`);
             updateSidebar(name || phone, phone);
-        } else if (name && !phone && !isGroup && name !== "Contato" && !name.includes("WhatsApp")) {
+        } else if (name && !phone && !name.includes("WhatsApp") && name !== "Contato") {
             if (currentPhone !== name) {
                 currentPhone = name;
-                console.log(`NW: Name Detected: ${name}`);
+                console.log(`NW: Saved Contact Detected (No Phone): ${name}`);
                 updateSidebar(name, null, name);
             }
         }
