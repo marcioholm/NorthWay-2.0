@@ -342,6 +342,10 @@ def sys_migrate_contacts():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/checkout')
+def checkout_fallback():
+    return render_template('checkout_page.html')
+
 if __name__ == '__main__':
     # Add a /ping route directly if not in any bp for debugging
     @app.route('/ping')
