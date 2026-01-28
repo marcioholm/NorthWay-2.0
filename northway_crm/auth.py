@@ -32,7 +32,7 @@ def check_saas_status():
              # Allow access if bypassing payment (optional) or strictly redirect
              # For now, strictly redirect to payment plan
              if not getattr(current_user, 'is_super_admin', False):
-                 return redirect(url_for('auth.payment_plan'))
+                 return redirect('/checkout')
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -218,7 +218,7 @@ def setup_company():
         db.session.commit()
         
         flash('Empresa configurada! Escolha seu plano.', 'success')
-        return redirect(url_for('auth.payment_plan'))
+        return redirect('/checkout')
         
     return render_template('setup_company.html', minimal=True)
 
