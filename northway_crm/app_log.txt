@@ -1,0 +1,15 @@
+ * Tip: There are .env files present. Install python-dotenv to use them.
+🚀 APP STARTUP: VERSION FIXED-DRIVER-CHECK-V2
+🏠 DATABASE: Using local SQLite at /Users/Marci.Holm/Applications/NorthWay-2.0/northway_crm/crm.db
+🐘 DATABASE: Checking for missing CNPJ enrichment columns...
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Tip: There are .env files present. Install python-dotenv to use them.
+ * Debugger is active!
+ * Debugger PIN: 106-429-681
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/multiprocessing/resource_tracker.py:301: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-5ucjqzhu'}
+  warnings.warn(

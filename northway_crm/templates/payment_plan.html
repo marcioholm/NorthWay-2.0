@@ -25,6 +25,13 @@
             radial-gradient(at 100% 100%, rgba(250, 1, 2, 0.03) 0px, transparent 50%);
     }
 </style>
+<!-- Pixel Tracking: InitiateCheckout -->
+<script>
+    // Track when user views plans (Checkout Step 1)
+    if (typeof fbq === 'function') {
+        fbq('track', 'InitiateCheckout');
+    }
+</script>
 {% endblock %}
 
 {% block content %}

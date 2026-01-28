@@ -2,6 +2,7 @@ from flask import Blueprint, request, current_app, url_for
 from flask_login import login_required, current_user
 from models import db, Integration, FinancialEvent, Transaction, Contract
 from services.asaas_service import AsaasService
+from services.facebook_capi_service import FacebookCapiService
 from utils import api_response, retry_request
 import json
 import requests
@@ -167,6 +168,29 @@ def asaas_webhook(company_id):
             if event == 'PAYMENT_RECEIVED' or event == 'PAYMENT_CONFIRMED':
                 transaction.status = 'paid'
                 transaction.paid_date = db.func.current_date()
+                
+                # --- FACEBOOK CAPI TRIGGER ---
+                try:
+                    # Resolve user (payer)
+                    user = None
+                    if transaction.client and transaction.client.account_manager:
+                         # Fallback: attribute to account manager or try to find a contact?
+                         # Ideally we need the actual payer person. For now, let's use the company owner or client email if available.
+                         # Assuming transaction.client has contact info or linked user.
+                         # Simplification: Use the first user found or the account manager as proxy for testing 
+                         # (In prod, we should store payer_email/phone on transaction)
+                         user = transaction.client.account_manager 
+                    
+                    if user:
+                        capi = FacebookCapiService()
+                        capi.send_purchase(
+                            user=user, 
+                            amount=payment_data.get('value', 0), 
+                            transaction_id=transaction.id
+                        )
+                except Exception as capi_e:
+                    current_app.logger.error(f"CAPI Trigger Error: {capi_e}")
+                # -----------------------------
             elif event == 'PAYMENT_OVERDUE':
                 transaction.status = 'overdue'
             elif event in ['PAYMENT_REFUNDED', 'PAYMENT_REVERSED']:

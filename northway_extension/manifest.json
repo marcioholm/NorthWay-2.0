@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "NorthWay Connect",
+  "version": "1.0",
+  "description": "WhatsApp Web CRM Integration for NorthWay.",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://web.whatsapp.com/*",
+    "http://127.0.0.1:5001/*",
+    "https://north-way-2-0.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "scripts/background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ],
+      "js": [
+        "scripts/content_whatsapp.js"
+      ],
+      "css": [
+        "scripts/sidebar.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "scripts/sidebar.html",
+        "scripts/sidebar.css",
+        "assets/*"
+      ],
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ]
+    }
+  ],
+  "icons": {
+    "128": "icons/icon128.png"
+  }
+}

@@ -196,6 +196,8 @@ def create_app():
     
     # Safe Register for complex blueprints that might break on schema
     try:
+        from routes.api_extension import api_ext
+        app.register_blueprint(api_ext)
         app.register_blueprint(whatsapp_bp)
         app.register_blueprint(clients_bp)
         app.register_blueprint(leads_bp)

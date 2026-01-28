@@ -1,0 +1,83 @@
+<div class="nw-container">
+    <!-- Header -->
+    <div class="nw-header">
+        <div class="nw-logo">
+            <span>NorthWay Connect</span>
+        </div>
+        <div class="nw-status">
+            <span id="nw-connection-status" class="status-dot disconnected"></span>
+        </div>
+    </div>
+
+    <!-- Content State: No Chat -->
+    <div id="nw-state-idle" class="nw-state">
+        <div class="nw-empty-state">
+            <p>Abra uma conversa para visualizar os dados.</p>
+        </div>
+    </div>
+
+    <!-- Content State: Loading -->
+    <div id="nw-state-loading" class="nw-state hidden">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line"></div>
+    </div>
+
+    <!-- Content State: New Lead -->
+    <div id="nw-state-new" class="nw-state hidden">
+        <div class="nw-card">
+            <h3>Novo Lead Detectado</h3>
+            <div class="nw-field">
+                <label>Nome</label>
+                <input type="text" id="nw-new-name">
+            </div>
+            <div class="nw-field">
+                <label>Telefone</label>
+                <input type="text" id="nw-new-phone" placeholder="Ex: 11999999999">
+            </div>
+
+            <div class="nw-field">
+                <label>Etapa do Funil</label>
+                <select id="nw-new-stage">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+
+            <button id="nw-btn-create" class="nw-btn primary">Cadastrar no CRM</button>
+        </div>
+    </div>
+
+    <!-- Content State: Existing Contact -->
+    <div id="nw-state-contact" class="nw-state hidden">
+        <div class="nw-profile">
+            <div class="nw-avatar" id="nw-contact-avatar"></div>
+            <h2 id="nw-contact-name">Nome do Contato</h2>
+            <p id="nw-contact-phone">+55 11 99999-9999</p>
+            <span id="nw-contact-status" class="badge">Novo</span>
+        </div>
+
+        <div class="nw-form">
+            <div class="nw-field">
+                <label>Etapa do Funil</label>
+                <select id="nw-input-stage">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+
+            <div class="nw-field">
+                <label>Tags / Interesse</label>
+                <input type="text" id="nw-input-tags" placeholder="Ex: Contabilidade, BPO...">
+            </div>
+
+            <div class="nw-field">
+                <label>Observações</label>
+                <textarea id="nw-input-notes" rows="4"></textarea>
+            </div>
+
+            <div class="nw-actions">
+                <button id="nw-btn-save" class="nw-btn primary">Salvar Alterações</button>
+                <a href="#" id="nw-link-crm" target="_blank" class="nw-link">Ver no CRM ↗</a>
+            </div>
+        </div>
+    </div>
+</div>

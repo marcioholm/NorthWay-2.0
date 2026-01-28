@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="popup.css">
+    <style>
+        body {
+            width: 300px;
+            padding: 16px;
+            font-family: sans-serif;
+        }
+
+        h1 {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            color: red;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>NorthWay Connect</h1>
+
+    <div id="login-form">
+        <div id="error-msg" class="error hidden"></div>
+        <input type="email" id="email" placeholder="Email" value="admin@northway.com">
+        <input type="password" id="password" placeholder="Senha" value="123456">
+        <button id="btn-login">Entrar</button>
+    </div>
+
+    <div id="profile-view" class="hidden">
+        <p>Conectado como:</p>
+        <strong id="user-name">Usuário</strong>
+        <p id="user-email" style="font-size: 12px; color: #666"></p>
+        <div style="margin-top:20px; color: green; font-size: 12px;">● Extensão Ativa</div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

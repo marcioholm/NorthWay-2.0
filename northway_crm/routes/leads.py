@@ -616,3 +616,54 @@ def fix_orphans():
     
     flash(f'Correção aplicada: {count} leads atribuídos ao funil "{pipeline.name}".', 'success')
     return redirect(url_for('leads.pipeline'))
+
+@leads_bp.route('/api/leads/quick-add', methods=['POST'])
+@login_required # Relies on session cookie shared with browser
+def quick_add_lead():
+    data = request.get_json()
+    name = data.get('name')
+    # Info helps map phone or company/job title
+    info = data.get('info') 
+    source = data.get('source', 'Extension')
+    
+    if not name:
+        return jsonify({'error': 'Name required'}), 400
+        
+    # Heuristic for phone vs company in "info"
+    phone = None
+    notes = None
+    if info:
+        # Simple check: if it looks like a phone, use it. Else put in notes.
+        if any(c.isdigit() for c in info) and len(info) < 20: 
+            phone = info
+        else:
+            notes = f"Info capturada: {info}"
+
+    # Get default pipeline
+    pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+    stage_id = None
+    pipeline_id = None
+    if pipeline:
+        pipeline_id = pipeline.id
+        stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).first()
+        if stage:
+            stage_id = stage.id
+
+    lead = Lead(
+        name=name,
+        phone=phone or "Não informado",
+        source=source,
+        notes=notes,
+        company_id=current_user.company_id,
+        status=LEAD_STATUS_NEW,
+        assigned_to_id=current_user.id,
+        pipeline_id=pipeline_id,
+        pipeline_stage_id=stage_id
+    )
+    
+    try:
+        db.session.add(lead)
+        db.session.commit()
+        return jsonify({'success': True, 'lead_id': lead.id})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
