@@ -447,18 +447,25 @@ const GroupExtractor = {
 
     downloadCSV: function () {
         const csvHeader = ["Nome", "Email", "Telefone", "Origem", "Interesse", "Observações"];
+
+        const toCSV = (text) => {
+            if (!text) return '""';
+            const safe = String(text).replace(/"/g, '""');
+            return `"${safe}"`;
+        };
+
         const csvRows = Array.from(this.contacts.values()).map(c => {
             return [
-                `"${c.name}"`,
-                `""`,
-                `"${c.phone}"`,
-                `"${c.origin}"`,
-                `"A definir"`,
-                `"Extraído em ${c.date}"`
-            ].join(',');
+                toCSV(c.name),
+                toCSV(""),
+                toCSV(c.phone),
+                toCSV(c.origin),
+                toCSV("A definir"),
+                toCSV(`Extraído em ${c.date}`)
+            ].join(';');
         });
 
-        const csvContent = "\uFEFF" + csvHeader.join(',') + "\n" + csvRows.join('\n');
+        const csvContent = "\uFEFF" + csvHeader.join(';') + "\n" + csvRows.join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
