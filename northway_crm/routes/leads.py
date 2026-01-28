@@ -102,221 +102,19 @@ def lead_details(id):
     users = User.query.filter_by(company_id=current_user.company_id).all()
     
     stages = []
+    is_first_stage = False
+    
     if lead.pipeline_id:
         stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).all()
+        if stages and lead.pipeline_stage_id == stages[0].id:
+            is_first_stage = True
+    else:
+        # If no pipeline assigned yet (orphan), treat as first stage (editable)
+        is_first_stage = True
         
-    return render_template('lead_details.html', lead=lead, users=users, stages=stages)
+    return render_template('lead_details.html', lead=lead, users=users, stages=stages, is_first_stage=is_first_stage)
 
-@leads_bp.route('/pipeline')
-@leads_bp.route('/pipeline/<int:pipeline_id>')
-@login_required
-def pipeline(pipeline_id=None):
-    if not current_user.company_id:
-        abort(403)
-
-    # Get current company's pipelines
-    pipelines = Pipeline.query.filter(Pipeline.company_id == current_user.company_id).all()
-    
-    if not pipelines:
-        # Create a default pipeline if none exists
-        default_p = Pipeline(name="Pipeline Comercial", company_id=current_user.company_id)
-        db.session.add(default_p)
-        db.session.flush()
-        
-        # Create default stages
-        stages = ["Qualificação", "Apresentação", "Proposta", "Negociação", "Fechado"]
-        for i, s_name in enumerate(stages):
-            stage = PipelineStage(name=s_name, pipeline_id=default_p.id, company_id=current_user.company_id, order=i)
-            db.session.add(stage)
-        
-        db.session.commit()
-        pipelines = [default_p]
-        pipeline_id = default_p.id
-    
-    if not pipeline_id:
-        pipeline_id = pipelines[0].id
-        
-    current_pipeline = Pipeline.query.get_or_404(pipeline_id)
-    if current_pipeline.company_id != current_user.company_id:
-        abort(403)
-        
-    stages = PipelineStage.query.filter_by(pipeline_id=pipeline_id).order_by(PipelineStage.order).all()
-    leads_list = Lead.query.filter_by(pipeline_id=pipeline_id, company_id=current_user.company_id)\
-                        .options(db.joinedload(Lead.assigned_user))\
-                        .all()
-        
-    return render_template('pipeline.html', 
-                          pipelines=pipelines, 
-                          active_pipeline=current_pipeline, 
-                          stages=stages, 
-                          leads=leads_list)
-
-@leads_bp.route('/leads/<int:id>/move/\u003cdirection\u003e', methods=['POST'])
-@login_required
-def move_lead(id, direction):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
-        
-    stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).all()
-    current_idx = next((i for i, s in enumerate(stages) if s.id == lead.pipeline_stage_id), 0)
-    
-    if direction == 'next' and current_idx < len(stages) - 1:
-        lead.pipeline_stage_id = stages[current_idx + 1].id
-        lead.status = LEAD_STATUS_IN_PROGRESS
-    elif direction == 'prev' and current_idx > 0:
-        lead.pipeline_stage_id = stages[current_idx - 1].id
-
-    db.session.commit()
-    return redirect(url_for('leads.pipeline', pipeline_id=lead.pipeline_id))
-
-@leads_bp.route('/api/leads/<int:id>/update_stage', methods=['POST'])
-@login_required
-def update_lead_stage_api(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
-        
-    data = request.get_json()
-    stage_id = data.get('stage_id')
-    
-    if not stage_id:
-        return jsonify({'error': 'Stage ID required'}), 400
-        
-    stage = PipelineStage.query.get(stage_id)
-    if not stage or stage.pipeline_id != lead.pipeline_id:
-         return jsonify({'error': 'Invalid Stage'}), 400
-         
-    lead.pipeline_stage_id = stage.id
-    
-    # If moving to "Won" or "Closed" stages, we might want to trigger conversion logic?
-    # For now, just update the stage. Logic can be expanded if users want auto-convert on drag.
-    
-    db.session.commit()
-    return jsonify({'success': True, 'message': 'Lead moved successfully'})
-
-@leads_bp.route('/leads/\u003cint:id\u003e/convert', methods=['POST'])
-@login_required
-def convert_lead(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
-        
-    service = request.form.get('service')
-    contract_type = request.form.get('contract_type')
-    start_date_str = request.form.get('start_date')
-    
-    start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else datetime.utcnow().date()
-    renewal_date = start_date + timedelta(days=30)
-    
-    monthly_value = request.form.get('monthly_value')
-    value = 0.0
-    try:
-        if monthly_value:
-            clean_value = monthly_value.replace('R$', '').replace('.', '').replace(',', '.').strip()
-            value = float(clean_value)
-    except ValueError:
-        pass
-
-    client = Client(
-        name=lead.name,
-        email=lead.email,
-        phone=lead.phone,
-        company_id=lead.company_id,
-        account_manager_id=lead.assigned_to_id or current_user.id,
-        lead_id=lead.id,
-        status='onboarding',
-        health_status='verde',
-        service=service,
-        contract_type=contract_type,
-        monthly_value=value,
-        start_date=start_date,
-        renewal_date=renewal_date,
-        notes=f"Convertido de Lead em {start_date.strftime('%d/%m/%Y')}. \n{lead.notes or ''}",
-        niche=lead.bant_need
-    )
-    
-    db.session.add(client)
-    db.session.flush()
-    
-    lead.status = LEAD_STATUS_WON
-    lead.client_id = client.id
-    
-    # Find closing stage (Fechamento/Fechado) or fallback to last stage
-    fechado_stage = PipelineStage.query.filter(
-        PipelineStage.pipeline_id == lead.pipeline_id,
-        PipelineStage.company_id == current_user.company_id
-    ).filter(db.or_(PipelineStage.name.ilike('%fechado%'), PipelineStage.name.ilike('%fechamento%'))).first()
-    
-    if not fechado_stage:
-        # Fallback: Last stage by order
-        fechado_stage = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id)\
-            .order_by(PipelineStage.order.desc()).first()
-
-    if fechado_stage:
-        lead.pipeline_stage_id = fechado_stage.id
-        
-    template = ProcessTemplate.query.filter_by(company_id=current_user.company_id, name="Onboarding Padrão").first()
-    checklist_data = template.steps if template else [{
-        "title": "Start",
-        "items": [
-            {"text": "Enviar Welcome Kit", "done": False},
-            {"text": "Solicitar Acessos", "done": False},
-            {"text": "Agendar Kickoff", "done": False},
-            {"text": "Criar Pasta no Drive", "done": False}
-        ]
-    }]
-        
-    checklist = ClientChecklist(
-        client_id=client.id,
-        company_id=current_user.company_id,
-        name="Onboarding Inicial",
-        progress=checklist_data
-    )
-    db.session.add(checklist)
-    
-    task_create = Task(
-        title="Criar Contrato",
-        description=f"Gerar/Emitir contrato para {client.name}.",
-        due_date=datetime.utcnow() + timedelta(days=1),
-        priority='alta',
-        status='pendente',
-        client_id=client.id,
-        assigned_to_id=client.account_manager_id,
-        company_id=client.company_id
-    )
-    db.session.add(task_create)
-
-    if client.account_manager_id and client.account_manager_id != current_user.id:
-        create_notification(
-            user_id=client.account_manager_id,
-            company_id=current_user.company_id,
-            type='lead_converted',
-            title='Lead Convertido',
-            message=f"Lead {lead.name} convertido e atribuído a você."
-        )
-    
-    WhatsAppMessage.query.filter_by(lead_id=lead.id).update({'client_id': client.id, 'lead_id': None})
-    
-    db.session.commit()
-    flash(f'Parabéns! {client.name} agora é um cliente ativo.', 'success')
-    return redirect(url_for('clients.client_details', id=client.id))
-
-@leads_bp.route('/leads/\u003cint:id\u003e/bant', methods=['POST'])
-@login_required
-def update_bant(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
-        
-    lead.bant_budget = request.form.get('bant_budget')
-    lead.bant_authority = request.form.get('bant_authority')
-    lead.bant_need = request.form.get('bant_need')
-    lead.bant_timeline = request.form.get('bant_timeline')
-    
-    db.session.commit()
-    flash('Critérios BANT atualizados.', 'success')
-    return redirect(url_for('leads.lead_details', id=id))
+# ... (skip to update_lead_info) ...
 
 @leads_bp.route('/leads/<int:id>/update_info', methods=['POST'])
 @login_required
@@ -324,7 +122,22 @@ def update_lead_info(id):
     lead = Lead.query.get_or_404(id)
     if lead.company_id != current_user.company_id:
         abort(403)
-        
+    
+    # Check if allowed to edit identity (First Stage Only)
+    is_first_stage = False
+    if lead.pipeline_id:
+        first_stage = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).first()
+        if first_stage and lead.pipeline_stage_id == first_stage.id:
+            is_first_stage = True
+    else:
+        is_first_stage = True
+
+    # Identity Fields (Restricted)
+    if is_first_stage:
+        new_name = request.form.get('name')
+        if new_name:
+            lead.name = new_name
+
     lead.email = request.form.get('email')
     
     # Handle Split Phone
@@ -356,9 +169,7 @@ def update_lead_info(id):
             clean_equity = equity_val.replace('R$', '').replace('.', '').replace(',', '.').strip()
             lead.equity = float(clean_equity)
         except (ValueError, TypeError):
-            lead.equity = float(clean_equity)
-        except (ValueError, TypeError):
-            pass
+             pass
             
     # Stage Update
     pipeline_stage_id = request.form.get('pipeline_stage_id')
@@ -383,30 +194,24 @@ def update_lead_info(id):
     flash('Informações do lead atualizadas.', 'success')
     return redirect(request.referrer or url_for('leads.lead_details', id=id))
 
-@leads_bp.route('/leads/<int:id>/interactions', methods=['POST'])
+@leads_bp.route('/leads/<int:id>/delete', methods=['POST'])
 @login_required
-def add_lead_interaction(id):
+def delete_lead(id):
     lead = Lead.query.get_or_404(id)
     if lead.company_id != current_user.company_id:
         abort(403)
-    
-    content = request.form.get('content')
-    if not content:
-        flash('Conteúdo da nota é obrigatório.', 'error')
-        return redirect(url_for('leads.lead_details', id=id))
-
-    interaction = Interaction(
-        lead_id=lead.id,
-        user_id=current_user.id,
-        company_id=current_user.company_id,
-        type='note',
-        content=content,
-        created_at=datetime.now()
-    )
-    db.session.add(interaction)
+        
+    # Validation: Only delete if in first stage
+    if lead.pipeline_id:
+        first_stage = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).first()
+        if first_stage and lead.pipeline_stage_id != first_stage.id:
+            flash('Só é possível excluir leads na primeira etapa do funil (Qualificação).', 'error')
+            return redirect(url_for('leads.lead_details', id=id))
+            
+    db.session.delete(lead)
     db.session.commit()
-    flash('Nota adicionada.', 'success')
-    return redirect(url_for('leads.lead_details', id=id))
+    flash('Lead excluído com sucesso.', 'success')
+    return redirect(url_for('leads.leads'))
 
 @leads_bp.route('/pipeline/stages/new', methods=['POST'])
 @login_required
