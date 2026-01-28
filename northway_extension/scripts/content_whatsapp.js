@@ -371,16 +371,43 @@ async function scrapeGroupContacts(groupName) {
     // 3. Drill down to the Participant List
     if (progressText) progressText.textContent = "Acessando lista de membros...";
 
+    // Helper: Close unwanted popups (Encryption info, etc)
+    const dismissNuissance = () => {
+        const dialogs = document.querySelectorAll('div[role="dialog"]');
+        dialogs.forEach(d => {
+            if (d.innerText.match(/criptografia|encryption|proteger|security/i)) {
+                const btn = d.querySelector('div[role="button"]');
+                if (btn) btn.click();
+            }
+        });
+    };
+    dismissNuissance();
+
     // Sometimes the container is the main info panel, but the list is hidden behind "Check All"
-    // Check for "View All" / "Ver tudo" button
+    // "Ver tudo" / "View All"
     const viewAllBtn = Array.from(container.querySelectorAll('div[role="button"]'))
         .find(b => b.innerText.match(/ver tudo|view all|mais|more/i));
 
     if (viewAllBtn) {
         viewAllBtn.click();
         await new Promise(r => setTimeout(r, 1500));
+
         // Re-detect container as it might have switched to a modal
-        container = document.querySelector('div[role="dialog"]') || container;
+        // BUT verify it's the RIGHT modal (Group info / Participants), not a random alert
+        const dialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+        const validModal = dialogs.find(d => {
+            const t = d.innerText.toLowerCase();
+            // Must have relevant keywords
+            return t.match(/membros|participantes|participants|members|dados do grupo/);
+        });
+
+        if (validModal) {
+            container = validModal;
+        } else {
+            // If no valid modal appeared, maybe the drawer just expanded. 
+            // We keep the old 'container' (drawer)
+            dismissNuissance(); // Check again if an error popup blocked us
+        }
     }
 
     // 4. Find the Scrollable Area
