@@ -417,8 +417,17 @@ async function scrapeGroupContacts(groupName) {
     // The list is always in a div with overflow-y: auto/scroll
     let scroller = Array.from(container.querySelectorAll('div')).find(div => {
         const style = window.getComputedStyle(div);
-        return (style.overflowY === 'auto' || style.overflowY === 'scroll') && div.scrollHeight > 50;
+        const isScrollable = (style.overflowY === 'auto' || style.overflowY === 'scroll');
+        // Critical check: It must ACTUALLY have content to scroll
+        return isScrollable && div.scrollHeight > div.clientHeight;
     });
+
+    if (!scroller) {
+        // Fallback: Check for any div that is taller than its container
+        scroller = Array.from(container.querySelectorAll('div')).find(div => {
+            return div.scrollHeight > (div.clientHeight + 100) && div.clientHeight > 0;
+        });
+    }
 
     if (!scroller) {
         // Fallback: The container itself might be the scroller
@@ -427,7 +436,6 @@ async function scrapeGroupContacts(groupName) {
     }
 
     // SMALL GROUP FALLBACK: If we still don't have a scroller, check if the items are already visible
-    // This happens for small groups (e.g. < 10 members) where no scrollbar appears.
     if (!scroller) {
         const visibleItems = container.querySelectorAll('div[role="listitem"]');
         if (visibleItems.length > 0) {
@@ -436,30 +444,32 @@ async function scrapeGroupContacts(groupName) {
         }
     }
 
-    if (!scroller) return alert("Erro: Lista de membros não detectada visualmente.\n\nTente rolar a lista um pouco manualmente e clique novamente.");
+    if (!scroller) return alert("Erro: Lista de rolagem não encontrada. Abra a lista completa de membros.");
 
     // 5. Scrape Logic
     const uniqueContacts = new Map();
     let noChangeCount = 0;
     let prevHeight = 0;
 
-    // Scroll top first (only if it actually scrolls)
-    if (scroller.scrollHeight > scroller.clientHeight) {
-        scroller.scrollTop = 0;
-    }
-
-    // If it's a small group, we don't need to loop much, but we keep the loop structure for consistency
-    // just change the exit condition logic slightly
+    // Determine if we need to scroll or just grab visible
+    // If scrollHeight is basically same as clientHeight, we assume small group or wrong container
     const isSmallGroup = scroller.scrollHeight <= scroller.clientHeight;
+
+    // Scroll top first to reset
+    if (!isSmallGroup) {
+        scroller.scrollTop = 0;
+        await new Promise(r => setTimeout(r, 600));
+    }
 
     while (noChangeCount < 3) {
         // Scroll down
         if (!isSmallGroup) {
             scroller.scrollTop = scroller.scrollHeight;
-            await new Promise(r => setTimeout(r, 1200)); // Wait for lazy load
+            // Increased wait time for lazy load (critical for large groups)
+            await new Promise(r => setTimeout(r, 2000));
         } else {
             // For small groups, just wait once to be safe then exit loop after scrape
-            await new Promise(r => setTimeout(r, 500));
+            await new Promise(r => setTimeout(r, 1000));
             noChangeCount = 10; // Force exit after first pass
         }
 
