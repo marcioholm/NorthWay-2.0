@@ -174,9 +174,15 @@ def create_lead(current_user):
         
     # Get Metadata
     pipeline_id = data.get('pipeline_id')
-    stage_id = data.get('stage_id')
+    stage_id = data.get('stage_id') or data.get('pipeline_stage_id')
     
-    # If no pipeline specified, get default
+    # If stage is selected, ensure we use its pipeline
+    if stage_id:
+        stage = PipelineStage.query.get(stage_id)
+        if stage and stage.company_id == current_user.company_id:
+            pipeline_id = stage.pipeline_id
+    
+    # If no pipeline specified (and no valid stage), get default
     if not pipeline_id:
         pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
         if pipeline:
@@ -189,7 +195,7 @@ def create_lead(current_user):
     new_lead = Lead(
         name=name,
         phone=phone,
-        email=data.get('email'), # New Field
+        email=data.get('email'),
         source="WhatsApp Extension",
         notes=data.get('notes'),
         company_id=current_user.company_id,
@@ -197,10 +203,24 @@ def create_lead(current_user):
         assigned_to_id=current_user.id,
         pipeline_id=pipeline_id,
         pipeline_stage_id=stage_id,
-        bant_need=data.get('bant_need') # Used for "Interesse"
+        bant_need=data.get('bant_need')
     )
     
     db.session.add(new_lead)
+    db.session.flush() # Flush to get ID
+    
+    # Create Interaction for the Note (so it appears in timeline)
+    if new_lead.notes:
+        interaction = Interaction(
+             lead_id=new_lead.id,
+             user_id=current_user.id,
+             company_id=current_user.company_id,
+             type='note',
+             content=new_lead.notes,
+             created_at=datetime.utcnow()
+        )
+        db.session.add(interaction)
+
     db.session.commit()
     
     return jsonify({
