@@ -493,45 +493,47 @@ async function scrapeGroupContacts(groupName) {
 
 
 function bindEvents() {
-    const phone = getEl('nw-new-phone').value;
-    const email = getEl('nw-new-email').value;
-    const interest = getEl('nw-new-interest').value;
-    const notes = getEl('nw-new-notes').value;
-    const stageId = getEl('nw-new-stage').value;
-    const res = await chrome.runtime.sendMessage({
-        action: "CREATE_LEAD",
-        data: { name, phone, email, notes, bant_need: interest, pipeline_stage_id: stageId }
+    getEl('nw-btn-create').addEventListener('click', async () => {
+        const name = getEl('nw-new-name').value;
+        const phone = getEl('nw-new-phone').value;
+        const email = getEl('nw-new-email').value;
+        const interest = getEl('nw-new-interest').value;
+        const notes = getEl('nw-new-notes').value;
+        const stageId = getEl('nw-new-stage').value;
+        const res = await chrome.runtime.sendMessage({
+            action: "CREATE_LEAD",
+            data: { name, phone, email, notes, bant_need: interest, pipeline_stage_id: stageId }
+        });
+        if (res.success) renderContact(res.lead);
+        else alert(res.error);
     });
-    if (res.success) renderContact(res.lead);
-    else alert(res.error);
-});
 
-getEl('nw-btn-save').addEventListener('click', async () => {
-    if (!currentLeadId) return;
-    const notes = getEl('nw-input-notes').value;
-    const tags = getEl('nw-input-tags').value;
-    const stageId = getEl('nw-input-stage').value;
-    await chrome.runtime.sendMessage({
-        action: "UPDATE_LEAD",
-        id: currentLeadId,
-        data: { notes, bant_need: tags, pipeline_stage_id: stageId }
+    getEl('nw-btn-save').addEventListener('click', async () => {
+        if (!currentLeadId) return;
+        const notes = getEl('nw-input-notes').value;
+        const tags = getEl('nw-input-tags').value;
+        const stageId = getEl('nw-input-stage').value;
+        await chrome.runtime.sendMessage({
+            action: "UPDATE_LEAD",
+            id: currentLeadId,
+            data: { notes, bant_need: tags, pipeline_stage_id: stageId }
+        });
+        const btn = getEl('nw-btn-save');
+        btn.textContent = "Salvo!";
+        setTimeout(() => btn.textContent = "Salvar Alterações", 2000);
     });
-    const btn = getEl('nw-btn-save');
-    btn.textContent = "Salvo!";
-    setTimeout(() => btn.textContent = "Salvar Alterações", 2000);
-});
 
-getEl('nw-link-crm').addEventListener('click', (e) => {
-    if (currentLeadId) e.target.href = `https://north-way-2-0.vercel.app/leads/${currentLeadId}`;
-});
-
-const exportBtn = getEl('nw-btn-export');
-if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
-        const name = getEl('nw-group-name').textContent;
-        scrapeGroupContacts(name);
+    getEl('nw-link-crm').addEventListener('click', (e) => {
+        if (currentLeadId) e.target.href = `https://north-way-2-0.vercel.app/leads/${currentLeadId}`;
     });
-}
+
+    const exportBtn = getEl('nw-btn-export');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const name = getEl('nw-group-name').textContent;
+            scrapeGroupContacts(name);
+        });
+    }
 }
 
 setTimeout(init, 3000);
