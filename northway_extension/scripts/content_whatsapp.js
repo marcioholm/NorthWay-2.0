@@ -327,18 +327,21 @@ async function updateSidebar(name, phone, searchName = null) {
         if (!phone) getEl('nw-new-phone').focus();
     } else {
         // Existing Contact
-        const data = response.data;
-        currentLeadId = data.id;
-
-        showState('contact');
-        getEl('nw-contact-name').textContent = data.name;
-        getEl('nw-contact-phone').textContent = data.phone;
-        getEl('nw-contact-status').textContent = data.status;
-        getEl('nw-input-notes').value = data.notes || '';
-        getEl('nw-input-tags').value = data.bant_need || '';
-
-        loadPipelines(data.pipeline_stage_id);
+        renderContact(response.data);
     }
+}
+
+function renderContact(data) {
+    currentLeadId = data.id;
+
+    showState('contact');
+    getEl('nw-contact-name').textContent = data.name;
+    getEl('nw-contact-phone').textContent = data.phone;
+    getEl('nw-contact-status').textContent = data.status;
+    getEl('nw-input-notes').value = data.notes || '';
+    getEl('nw-input-tags').value = data.bant_need || '';
+
+    loadPipelines(data.pipeline_stage_id);
 }
 
 function showState(state) {
@@ -381,6 +384,7 @@ function bindEvents() {
         const phone = getEl('nw-new-phone').value;
         const email = getEl('nw-new-email').value;
         const interest = getEl('nw-new-interest').value;
+        const notes = getEl('nw-new-notes').value;
         const stageId = getEl('nw-new-stage').value;
 
         const res = await chrome.runtime.sendMessage({
@@ -389,13 +393,15 @@ function bindEvents() {
                 name,
                 phone,
                 email,
-                bant_need: interest, // Mapping Interest to bant_need 
+                notes,
+                bant_need: interest,
                 pipeline_stage_id: stageId || null
             }
         });
 
         if (res.success) {
-            updateSidebar(name, phone);
+            // Direct Render - No more refresh needed
+            renderContact(res.lead);
         } else {
             alert("Erro ao criar lead: " + (res.error || 'Unknown'));
             showState('new');

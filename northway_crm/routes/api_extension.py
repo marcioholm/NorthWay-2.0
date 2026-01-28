@@ -228,7 +228,12 @@ def create_lead(current_user):
         'lead': {
             'id': new_lead.id,
             'name': new_lead.name,
-            'status': new_lead.status
+            'phone': new_lead.phone,
+            'status': new_lead.status,
+            'pipeline_stage_id': new_lead.pipeline_stage_id,
+            'pipeline_id': new_lead.pipeline_id,
+            'notes': new_lead.notes,
+            'bant_need': new_lead.bant_need
         }
     })
 
