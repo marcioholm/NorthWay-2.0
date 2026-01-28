@@ -16,7 +16,7 @@
             "dest": "/lp-north-way/index.html"
         },
         {
-            "src": "/(style.css|script.js|logo.png|dashboard-financial.png|dashboard-preview.png)",
+            "src": "/(.*\\.(html|css|js|png|jpg|jpeg|svg|ico|json))",
             "dest": "/lp-north-way/$1"
         },
         {
