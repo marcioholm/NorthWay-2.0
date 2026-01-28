@@ -31,7 +31,7 @@ def create_app():
     app = Flask(__name__, instance_path='/tmp')
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     
-    print("🚀 APP STARTUP: VERSION FIXED-DRIVER-CHECK-V2")
+    print("🚀 APP STARTUP: VERSION VERCEL-FIX-V3")
     
     # --- CONFIGURATION ---
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'northway-crm-secure-key')
