@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Estratégico | NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            dark: '#0f0f0f',
+                            gray: '#1a1a1a',
+                            light: '#f9fafb'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem 2rem;
+            position: relative;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .slide-dark {
+            background-color: #0f0f0f;
+            color: white;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .slide-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .highlight {
+            color: #fa0102;
+        }
+
+        .card-dark {
+            background: #1a1a1a;
+            border: 1px solid #333;
+        }
+
+        .step-number {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #fa0102;
+            opacity: 0.1;
+            line-height: 1;
+            position: absolute;
+            top: -1rem;
+            left: -1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+    <!-- SLIDE 1: CAPA -->
+    <section class="slide slide-dark text-center">
+        <div class="slide-content">
+            <div class="mb-8">
+                <span
+                    class="bg-northway-red/10 text-northway-red border border-northway-red/20 px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase">Relatório
+                    2026</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black mb-6 leading-tight tracking-tight">
+                O Crescimento das Óticas na <br><span class="highlight">Nova Era do Consumo Local</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-400 font-light max-w-3xl mx-auto mb-12">
+                Dados, comportamento do consumidor e oportunidades reais de crescimento para óticas independentes.
+            </p>
+            <div class="flex justify-center gap-8 text-gray-500">
+                <div class="flex flex-col items-center"><i data-lucide="eye" class="w-6 h-6 mb-2"></i><span
+                        class="text-xs uppercase tracking-wider">Visão</span></div>
+                <div class="flex flex-col items-center"><i data-lucide="store" class="w-6 h-6 mb-2"></i><span
+                        class="text-xs uppercase tracking-wider">Varejo</span></div>
+                <div class="flex flex-col items-center"><i data-lucide="trending-up" class="w-6 h-6 mb-2"></i><span
+                        class="text-xs uppercase tracking-wider">Crescimento</span></div>
+            </div>
+        </div>
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-gray-700">
+            <i data-lucide="chevron-down" class="w-6 h-6"></i>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: CONTEXTO DO MERCADO -->
+    <section class="slide bg-white">
+        <div class="slide-content grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-4xl font-bold mb-8">O que está mudando no mercado de óticas?</h2>
+                <div class="space-y-6">
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="smartphone" class="text-gray-600"></i></div>
+                        <div>
+                            <h3 class="font-bold">Consumidor Digital</h3>
+                            <p class="text-gray-600 text-sm">A decisão de compra começa na tela do celular, dias antes
+                                de entrar na loja.</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="thumbs-up" class="text-gray-600"></i></div>
+                        <div>
+                            <h3 class="font-bold">Percepção de Valor</h3>
+                            <p class="text-gray-600 text-sm">Uma presença online fraca diminui a confiança e a percepção
+                                de autoridade da ótica.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-8 rounded-2xl flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="w-48 h-48 text-gray-200"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: O CUSTO DA INÉRCIA -->
+    <section class="slide slide-dark bg-[#0f0f0f] text-center">
+        <div class="slide-content">
+            <span class="text-northway-red font-bold tracking-widest uppercase text-sm mb-4 block">A conta que ninguém
+                faz</span>
+            <h2 class="text-4xl md:text-6xl font-black mb-12 text-white">Quanto custa <span
+                    class="text-northway-red">ignorar isso?</span></h2>
+            <div
+                class="max-w-4xl mx-auto bg-[#1a1a1a] rounded-3xl p-8 md:p-12 border border-gray-800 shadow-2xl relative overflow-hidden">
+                <div class="text-center">
+                    <p class="text-gray-400 text-lg mb-4">Dinheiro deixado na mesa todo ano:</p>
+                    <div
+                        class="inline-block bg-northway-red text-white px-8 py-4 rounded-xl transform hover:scale-105 transition-transform shadow-lg shadow-red-900/50">
+                        <p class="text-5xl md:text-7xl font-black tracking-tighter">R$ 120.000,00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 12: PITCH FINAL / CTA -->
+    <section class="slide slide-dark bg-[#0f0f0f] text-center border-none">
+        <div class="slide-content">
+            <h2 class="text-2xl font-bold uppercase tracking-[0.2em] text-gray-500 mb-8">Próximo Passo</h2>
+            <a href="https://wa.me/5500000000000"
+                class="group relative inline-flex items-center justify-center gap-4 bg-northway-red text-white px-12 py-6 rounded-full text-xl font-bold hover:bg-red-700 transition-all shadow-2xl hover:scale-105 hover:shadow-red-900/50">
+                <span
+                    class="absolute inset-0 w-full h-full rounded-full border border-white opacity-20 animate-ping"></span>
+                Agendar Reunião de Diagnóstico
+                <i data-lucide="arrow-right" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></i>
+            </a>
+            <p class="mt-8 text-gray-400 text-lg">Descubra onde sua ótica pode crescer <br> nos próximos meses.</p>
+        </div>
+    </section>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

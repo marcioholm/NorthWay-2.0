@@ -125,24 +125,123 @@ function findJidInFiber(fiber) {
 
 function checkActiveChat() {
     try {
-        // Robust Main Panel Detection
-        const mainPanel = document.getElementById('main') || document.querySelector('div[role="main"]');
-        if (!mainPanel) {
-            if (currentPhone || currentLeadId) {
-                // Wait a bit before clearing to handle quick reloads/transitions
-            }
-            return;
-        }
-
-        const mainHeader = mainPanel.querySelector('header');
-        if (!mainHeader) return;
-
         let name = null;
         let phone = null;
         let detectionMethod = null;
 
-        // Helper for text validation
-        const isInvalidText = (t) => {
+        // --- STRATEGY A: Contact Info Drawer (High Accuracy) ---
+        // Look for the "Dados do contato" or similar drawer title
+        const drawerTitle = Array.from(document.querySelectorAll('span')).find(el =>
+            el.innerText === "Dados do contato" ||
+            el.innerText === "Contact info" ||
+            el.innerText === "Dados da empresa" ||
+            el.innerText === "Business info"
+        );
+
+        if (drawerTitle) {
+            // Traverse up to find the container (Section or Div)
+            const drawerContainer = drawerTitle.closest('section') || drawerTitle.closest('div._aigv');
+
+            if (drawerContainer) {
+                // 1. Try React Fiber on the drawer image (Best for Phone)
+                const drawerImg = drawerContainer.querySelector('img');
+                if (drawerImg) {
+                    const fiber = getReactInstance(drawerImg);
+                    if (fiber) {
+                        const jid = findJidInFiber(fiber);
+                        if (jid) {
+                            const clean = jid.replace('@c.us', '').replace('@g.us', '');
+                            if (clean.match(/^\d+$/) && clean.length >= 10) {
+                                phone = clean;
+                                detectionMethod = 'DRAWER_FIBER';
+                            }
+                        }
+                    }
+                }
+
+                // 2. Try scraping the phone text visible in the drawer
+                if (!phone) {
+                    const spans = drawerContainer.querySelectorAll('span');
+                    for (const span of spans) {
+                        const txt = span.innerText;
+                        // Look for phone format
+                        if (txt && txt.match(/^\+?\d[\d\s-]{10,}$/)) {
+                            // Verify it's not a message timestamp or random number
+                            if (txt.includes(':') || txt.length > 20) continue;
+
+                            const clean = txt.replace(/\D/g, '');
+                            if (clean.length >= 10) {
+                                phone = clean;
+                                detectionMethod = 'DRAWER_TEXT';
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // 3. Get Name from Drawer
+                // Usually the main heading (h2) or a large text
+                const heading = drawerContainer.querySelector('h2') || drawerContainer.querySelector('span[dir="auto"]');
+                if (heading) name = heading.innerText;
+            }
+        }
+
+        // --- STRATEGY B: Main Chat Header (Standard) ---
+        const mainPanel = document.getElementById('main') || document.querySelector('div[role="main"]');
+
+        // If we found phone in drawer, we trust it more than header (which might be missing/scrolled)
+        if (mainPanel && (!phone || !name)) {
+            const mainHeader = mainPanel.querySelector('header');
+
+            if (mainHeader) {
+                // Fiber JID (Header)
+                if (!phone) {
+                    const roots = [
+                        mainHeader,
+                        mainHeader.querySelector('img'),
+                        mainHeader.querySelector('div[role="button"]')
+                    ];
+                    for (const root of roots) {
+                        if (!root) continue;
+                        const fiber = getReactInstance(root);
+                        if (fiber) {
+                            const jid = findJidInFiber(fiber);
+                            if (jid) {
+                                const clean = jid.replace('@c.us', '').replace('@g.us', '');
+                                if (clean.match(/^\d+$/) && clean.length >= 10) {
+                                    phone = clean;
+                                    detectionMethod = 'HEADER_FIBER';
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Name Scrape (Header)
+                if (!name) {
+                    const titleSpan = mainHeader.querySelector('span[title]');
+                    if (titleSpan && !isInvalidText(titleSpan.getAttribute('title'))) {
+                        name = titleSpan.getAttribute('title');
+                    }
+
+                    if (!name) {
+                        const infoBlock = mainHeader.querySelector('div[role="button"]');
+                        if (infoBlock) {
+                            const spans = infoBlock.querySelectorAll('span');
+                            for (const span of spans) {
+                                if (isInvalidText(span.innerText)) continue;
+                                name = span.innerText;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Helper for Text Validation ---
+        function isInvalidText(t) {
             if (!t) return true;
             const lower = t.toLowerCase();
             return (lower.includes('online') ||
@@ -156,87 +255,14 @@ function checkActiveChat() {
                 lower.includes('dados do contato') ||
                 lower.includes('grupo') ||
                 t.length < 2);
-        };
-
-        // --- LAYER 1: JID (React Fiber) ---
-        const roots = [
-            mainHeader,
-            mainHeader.querySelector('img'),
-            mainHeader.querySelector('div[role="button"]')
-        ];
-
-        for (const root of roots) {
-            if (!root) continue;
-            const fiber = getReactInstance(root);
-            if (fiber) {
-                const jid = findJidInFiber(fiber);
-                if (jid) {
-                    const clean = jid.replace('@c.us', '').replace('@g.us', '');
-                    if (clean.match(/^\d+$/) && clean.length >= 10) {
-                        phone = clean;
-                        detectionMethod = 'JID';
-                        break;
-                    }
-                }
-            }
         }
 
-        // --- LAYER 2: WA.ME Link (Fallback) ---
-        if (!phone) {
-            const links = mainHeader.querySelectorAll('a[href*="wa.me"]');
-            for (const link of links) {
-                const href = link.getAttribute('href');
-                const match = href.match(/wa\.me\/(\d+)/);
-                if (match && match[1]) {
-                    phone = match[1];
-                    detectionMethod = 'WA.ME';
-                    break;
-                }
-            }
-        }
+        // --- Final Dispatch ---
+        if (name === "WhatsApp") name = null;
 
-        // --- LAYER 3: Name & Visual Scraping (Last Resort) ---
-
-        // 1. Get Name via Title
-        const titleSpan = mainHeader.querySelector('span[title]');
-        if (titleSpan) {
-            const possibleName = titleSpan.getAttribute('title');
-            if (!isInvalidText(possibleName)) {
-                name = possibleName;
-            }
-        }
-
-        // 2. Fallback: Scan all spans
-        if (!name) {
-            const infoBlock = mainHeader.querySelector('div[role="button"]');
-            if (infoBlock) {
-                const spans = infoBlock.querySelectorAll('span');
-                for (const span of spans) {
-                    const text = span.innerText;
-                    if (isInvalidText(text)) continue;
-
-                    name = text;
-                    break;
-                }
-            }
-        }
-
-        // 3. Try to extract phone from detected name
-        if (!phone && name && name.match(/^\+?\d[\d\s-]{8,}$/)) {
-            const p = name.replace(/\D/g, '');
-            if (p.length >= 10) {
-                phone = p;
-                detectionMethod = 'NAME_PARSE';
-            }
-        }
-
-        // --- UX Updates ---
-        if (isInvalidText(name) || name === "WhatsApp") name = null;
-
-        // Dispatch
         if (phone && phone !== currentPhone) {
             currentPhone = phone;
-            console.log(`NW: Identified via ${detectionMethod}: ${phone}`);
+            console.log(`NW: Found via ${detectionMethod}: ${phone}`);
             updateSidebar(name || phone, phone);
         } else if (name && !phone && name !== "Contato") {
             if (currentPhone !== name) {
@@ -245,7 +271,6 @@ function checkActiveChat() {
                 updateSidebar(name, null, name);
             }
         }
-
     } catch (err) {
         console.error("NW: checkActiveChat error", err);
     }

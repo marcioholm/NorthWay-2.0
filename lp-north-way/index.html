@@ -1,0 +1,433 @@
+<html class="dark" lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>NorthWay CRM | Organize e Cresça</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f20d0d",
+                        "background-light": "#f8f5f5",
+                        "background-dark": "#050505",
+                        "surface": "#121212",
+                        "surface-highlight": "#1E1E1E"
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <!-- 
+      === RASTREAMENTO (PIXELS) === 
+    -->
+
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                    n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '775641965566957');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=775641965566957&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
+
+    <!-- Exemplo Google Analytics (Descomente e coloque o ID se tiver) -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SEU_ID_DO_GA"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-SEU_ID_DO_GA');
+    </script>
+    -->
+
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-white/5 bg-background-dark/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="h-10">
+                    <img src="logo.png" alt="NorthWay Logo" class="h-full w-auto object-contain">
+                </div>
+            </div>
+            <nav class="hidden md:flex items-center gap-8">
+                <a class="text-white/60 hover:text-white text-sm font-medium transition-colors"
+                    href="#problemas">Problemas</a>
+                <a class="text-white/60 hover:text-white text-sm font-medium transition-colors"
+                    href="#solucao">Soluções</a>
+                <a class="text-white/60 hover:text-white text-sm font-medium transition-colors" href="#processo">Como
+                    Funciona</a>
+                <a class="bg-primary hover:bg-red-600 px-6 py-2.5 rounded-full text-white text-sm font-bold transition-all shadow-[0_0_20px_rgba(242,13,13,0.3)] hover:shadow-[0_0_30px_rgba(242,13,13,0.5)]"
+                    href="https://wa.me/5542999896358?text=Olá,%20gostaria%20de%20falar%20com%20um%20especialista.">Falar
+                    com Especialista</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative bg-background-dark pt-16 pb-24 overflow-hidden">
+        <!-- Background Elements -->
+        <div
+            class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10">
+            <div class="flex flex-col gap-8">
+                <div
+                    class="inline-flex items-center gap-2 bg-surface border border-white/10 px-4 py-1.5 rounded-full w-fit">
+                    <span class="relative flex h-2 w-2">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    <span class="text-white/80 text-xs font-bold uppercase tracking-wider">Gestão e Crescimento</span>
+                </div>
+
+                <h1 class="text-white text-5xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight">
+                    Organize clientes, contratos, tarefas e finanças <span class="text-primary">em um só lugar.</span>
+                </h1>
+
+                <p class="text-white/60 text-lg lg:text-xl max-w-lg leading-relaxed">
+                    Tudo o que sua pequena empresa precisa para crescer de forma organizada e eficiente, sem planilhas
+                    complexas.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 mt-2">
+                    <a href="https://wa.me/5542999896358?text=Quero%20organizar%20minha%20empresa"
+                        class="bg-primary hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all flex items-center justify-center gap-3 group shadow-[0_4px_20px_rgba(242,13,13,0.4)] hover:shadow-[0_4px_30px_rgba(242,13,13,0.6)] hover:-translate-y-1">
+                        Começar Agora
+                        <span
+                            class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </a>
+                </div>
+
+                <p class="text-white/30 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">check_circle</span> Sem cartão de crédito
+                    necessário para demonstração.
+                </p>
+            </div>
+
+            <div class="relative group perspective-1000">
+                <div
+                    class="absolute -inset-1 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200">
+                </div>
+                <div
+                    class="relative bg-surface border border-white/10 rounded-2xl p-2 shadow-2xl transform transition-transform duration-500 hover:rotate-y-2 hover:rotate-x-2">
+                    <!-- Dashboard Image -->
+                    <img src="dashboard-financial.png" alt="NorthWay Financial Dashboard"
+                        class="rounded-xl w-full h-auto object-cover shadow-inner">
+
+                    <!-- Floating Cards Overlay (Visual Flourish) -->
+                    <div class="absolute -bottom-6 -left-6 bg-surface-highlight border border-white/10 p-4 rounded-xl shadow-xl flex items-center gap-4 animate-bounce"
+                        style="animation-duration: 3s;">
+                        <div class="bg-green-500/20 p-2 rounded-lg text-green-500">
+                            <span class="material-symbols-outlined">trending_up</span>
+                        </div>
+                        <div>
+                            <p class="text-xs text-white/50">Vendas hoje</p>
+                            <p class="text-white font-bold">+R$ 1.250,00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problems Section -->
+    <section class="py-24 bg-surface" id="problemas">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <h2 class="text-white text-3xl md:text-5xl font-bold mb-6">
+                    Você se identifica com algum desses <span class="text-primary">problemas?</span>
+                </h2>
+                <p class="text-white/60 text-lg">
+                    A maioria das pequenas empresas trava no crescimento porque perde tempo organizando a bagunça ao
+                    invés de vender.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div
+                    class="bg-background-dark border border-white/5 p-8 rounded-2xl hover:border-primary/50 transition-all duration-300 group hover:-translate-y-2">
+                    <div
+                        class="size-16 bg-white/5 rounded-xl flex items-center justify-center mb-6 group-hover:bg-white/10 transition-colors p-3">
+                        <img src="assets/icons/trello.png"
+                            class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Adeus, Trello</h3>
+                    <p class="text-white/60 leading-relaxed">
+                        Chega de post-its digitais bagunçados. O NorthWay organiza seus leads em um funil de vendas
+                        profissional e automatizado.
+                    </p>
+                </div>
+
+                <!-- Card 2 -->
+                <div
+                    class="bg-background-dark border border-white/5 p-8 rounded-2xl hover:border-primary/50 transition-all duration-300 group hover:-translate-y-2">
+                    <div
+                        class="size-16 bg-white/5 rounded-xl flex items-center justify-center mb-6 group-hover:bg-white/10 transition-colors p-3">
+                        <img src="assets/icons/notion.png"
+                            class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Fim da Bagunça no Notion</h3>
+                    <p class="text-white/60 leading-relaxed">
+                        Pare de tentar construir um CRM do zero. Tenha seus contratos e processos organizados sem
+                        precisar programar nada.
+                    </p>
+                </div>
+
+                <!-- Card 3 -->
+                <div
+                    class="bg-background-dark border border-white/5 p-8 rounded-2xl hover:border-primary/50 transition-all duration-300 group hover:-translate-y-2">
+                    <div
+                        class="size-16 bg-white/5 rounded-xl flex items-center justify-center mb-6 group-hover:bg-white/10 transition-colors p-3">
+                        <img src="assets/icons/sheets.png"
+                            class="w-full h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300">
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-4">Chega de Planilhas</h3>
+                    <p class="text-white/60 leading-relaxed">
+                        Aposenta aquele Excel pesado. Saiba exatamente quanto vai entrar no caixa com um financeiro
+                        integrado de verdade.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VSL Video Section -->
+    <section class="py-24 bg-background-dark relative">
+        <div class="max-w-5xl mx-auto px-6 text-center">
+            <h2 class="text-white text-3xl md:text-4xl font-bold mb-12">
+                Veja como a NorthWay resolve isso em <span class="text-primary">minutos</span>
+            </h2>
+
+            <div
+                class="relative w-full aspect-video rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-black">
+                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/zKJnmZwTDJw?si=NorthWayDemo"
+                    title="NorthWay CRM Demo" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen></iframe>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section class="py-24 bg-surface" id="solucao">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                <div class="max-w-2xl">
+                    <span class="text-primary font-bold uppercase tracking-wider text-sm mb-2 block">Solução
+                        Completa</span>
+                    <h2 class="text-white text-4xl md:text-5xl font-bold">
+                        Tudo o que você precisa para <span class="text-primary">crescer.</span>
+                    </h2>
+                </div>
+                <a href="https://wa.me/5542999896358?text=Quero%20conhecer%20a%20ferramenta"
+                    class="text-white/70 hover:text-primary flex items-center gap-2 font-bold transition-colors">
+                    Ver todas as funcionalidades <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Feature 1 -->
+                <div
+                    class="bg-background-dark p-6 rounded-2xl border border-white/5 hover:border-primary/30 transition-colors">
+                    <div
+                        class="w-12 h-12 bg-surface-highlight rounded-lg flex items-center justify-center text-white mb-4">
+                        <span class="material-symbols-outlined">view_kanban</span>
+                    </div>
+                    <h4 class="text-white font-bold text-lg mb-2">Funil de Vendas</h4>
+                    <p class="text-white/60 text-sm">Visualize suas negociações em um quadro Kanban intuitivo. Arraste e
+                        solte para mover leads.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div
+                    class="bg-background-dark p-6 rounded-2xl border border-white/5 hover:border-primary/30 transition-colors">
+                    <div
+                        class="w-12 h-12 bg-surface-highlight rounded-lg flex items-center justify-center text-white mb-4">
+                        <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <h4 class="text-white font-bold text-lg mb-2">Contratos Automáticos</h4>
+                    <p class="text-white/60 text-sm">Gere contratos e propostas com um clique, usando os dados do
+                        cliente cadastrado.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div
+                    class="bg-background-dark p-6 rounded-2xl border border-white/5 hover:border-primary/30 transition-colors">
+                    <div
+                        class="w-12 h-12 bg-surface-highlight rounded-lg flex items-center justify-center text-white mb-4">
+                        <span class="material-symbols-outlined">attach_money</span>
+                    </div>
+                    <h4 class="text-white font-bold text-lg mb-2">Financeiro Integrado</h4>
+                    <p class="text-white/60 text-sm">Emissão de boletos, controle de inadimplência e fluxo de caixa em
+                        tempo real.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div
+                    class="bg-background-dark p-6 rounded-2xl border border-white/5 hover:border-primary/30 transition-colors">
+                    <div
+                        class="w-12 h-12 bg-surface-highlight rounded-lg flex items-center justify-center text-white mb-4">
+                        <span class="material-symbols-outlined">task_alt</span>
+                    </div>
+                    <h4 class="text-white font-bold text-lg mb-2">Central de Tarefas</h4>
+                    <p class="text-white/60 text-sm">Nunca mais esqueça um follow-up. Organize o dia a dia da sua
+                        equipe.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="py-24 bg-background-dark border-t border-white/5" id="processo">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-white text-3xl font-bold">Como funciona?</h2>
+                <p class="text-white/60 mt-4">É mais simples do que você imagina.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 relative">
+                <!-- Line Connector (Desktop) -->
+                <div
+                    class="hidden md:block absolute top-12 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0 z-0">
+                </div>
+
+                <!-- Step 1 -->
+                <div class="relative z-10 text-center">
+                    <div
+                        class="size-24 bg-surface mx-auto rounded-full border-4 border-background-dark flex items-center justify-center mb-6 shadow-xl relative group">
+                        <div
+                            class="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/40 transition-all">
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-primary">chat_bubble</span>
+                    </div>
+                    <h4 class="text-white font-bold text-xl mb-2">1. Fale com um Especialista</h4>
+                    <p class="text-white/60 text-sm px-8">Agende uma conversa rápida no WhatsApp para entendermos sua
+                        necessidade.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative z-10 text-center">
+                    <div
+                        class="size-24 bg-surface mx-auto rounded-full border-4 border-background-dark flex items-center justify-center mb-6 shadow-xl relative group">
+                        <div
+                            class="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/40 transition-all">
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-primary">engineering</span>
+                    </div>
+                    <h4 class="text-white font-bold text-xl mb-2">2. Diagnóstico</h4>
+                    <p class="text-white/60 text-sm px-8">Mapeamos seus processos e mostramos como o CRM resolve seus
+                        gargalos.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative z-10 text-center">
+                    <div
+                        class="size-24 bg-surface mx-auto rounded-full border-4 border-background-dark flex items-center justify-center mb-6 shadow-xl relative group">
+                        <div
+                            class="absolute inset-0 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/40 transition-all">
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-primary">rocket_launch</span>
+                    </div>
+                    <h4 class="text-white font-bold text-xl mb-2">3. Configuração</h4>
+                    <p class="text-white/60 text-sm px-8">Entregamos sua conta configurada e treinamos sua equipe para
+                        começar a usar.</p>
+                </div>
+            </div>
+
+            <div class="text-center mt-16">
+                <a href="https://wa.me/5542999896358?text=Quero%20começar%20agora"
+                    class="bg-white text-background-dark hover:bg-gray-200 font-bold py-4 px-10 rounded-full text-lg transition-all inline-flex items-center gap-2">
+                    Falar com Consultor
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-surface border-t border-white/5 pt-20 pb-10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
+                <div class="flex items-center gap-3 opacity-50 grayscale hover:grayscale-0 transition-all">
+                    <img src="logo.png" alt="NorthWay" class="h-8">
+                </div>
+                <div class="text-white/40 text-sm">
+                    &copy; 2024 NorthWay. Todos os direitos reservados.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating WhatsApp -->
+    <a href="https://wa.me/5542999896358?text=Olá,%20vim%20pelo%20site."
+        class="fixed bottom-8 right-8 z-50 size-16 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-[0_4px_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform hover:shadow-[0_4px_30px_rgba(37,211,102,0.6)] animate-pulse">
+        <svg class="size-8" fill="currentColor" viewBox="0 0 24 24">
+            <path
+                d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.522-2.961-2.638-.087-.117-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217s.231.001.332.005c.109.004.253-.041.397.301.144.344.491 1.196.534 1.282.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.101-.177.211-.077.385.101.174.449.741.964 1.201.662.592 1.221.777 1.394.864.174.088.275.073.376-.042.101-.116.434-.506.549-.68.116-.174.231-.144.39-.087.158.058 1.002.473 1.176.56.173.088.289.13.332.202.045.072.045.419-.1.824z">
+            </path>
+        </svg>
+    </a>
+
+</body>
+
+</html>
