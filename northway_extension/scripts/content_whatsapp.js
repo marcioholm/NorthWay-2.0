@@ -396,20 +396,42 @@ async function scrapeGroupContacts(groupName) {
         if (style.overflowY === 'auto' || style.overflowY === 'scroll') scroller = container;
     }
 
-    if (!scroller) return alert("Erro: Lista de rolagem não encontrada. Abra a lista completa de membros.");
+    // SMALL GROUP FALLBACK: If we still don't have a scroller, check if the items are already visible
+    // This happens for small groups (e.g. < 10 members) where no scrollbar appears.
+    if (!scroller) {
+        const visibleItems = container.querySelectorAll('div[role="listitem"]');
+        if (visibleItems.length > 0) {
+            // Treat the container as the scroller, and we'll just scrape it once
+            scroller = container;
+        }
+    }
+
+    if (!scroller) return alert("Erro: Lista de membros não detectada visualmente.\n\nTente rolar a lista um pouco manualmente e clique novamente.");
 
     // 5. Scrape Logic
     const uniqueContacts = new Map();
     let noChangeCount = 0;
     let prevHeight = 0;
 
-    // Scroll top first
-    scroller.scrollTop = 0;
+    // Scroll top first (only if it actually scrolls)
+    if (scroller.scrollHeight > scroller.clientHeight) {
+        scroller.scrollTop = 0;
+    }
+
+    // If it's a small group, we don't need to loop much, but we keep the loop structure for consistency
+    // just change the exit condition logic slightly
+    const isSmallGroup = scroller.scrollHeight <= scroller.clientHeight;
 
     while (noChangeCount < 3) {
         // Scroll down
-        scroller.scrollTop = scroller.scrollHeight;
-        await new Promise(r => setTimeout(r, 1200)); // Wait for lazy load
+        if (!isSmallGroup) {
+            scroller.scrollTop = scroller.scrollHeight;
+            await new Promise(r => setTimeout(r, 1200)); // Wait for lazy load
+        } else {
+            // For small groups, just wait once to be safe then exit loop after scrape
+            await new Promise(r => setTimeout(r, 500));
+            noChangeCount = 10; // Force exit after first pass
+        }
 
         // Scrape visible items
         // WhatsApp list items usually have role="listitem" or specific structure
@@ -456,6 +478,8 @@ async function scrapeGroupContacts(groupName) {
                 if (progressText) progressText.innerText = `Extraindo... ${uniqueContacts.size}`;
             }
         });
+
+        if (isSmallGroup) break;
 
         if (scroller.scrollHeight === prevHeight) noChangeCount++;
         else {
