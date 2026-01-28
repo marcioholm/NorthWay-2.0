@@ -248,7 +248,21 @@ def update_lead(current_user, id):
     data = request.get_json()
     
     if 'notes' in data:
+        old_notes = lead.notes
         lead.notes = data['notes']
+        
+        # Determine if we should create a timeline event
+        # Only if content changed and is not empty
+        if lead.notes and lead.notes != old_notes:
+            interaction = Interaction(
+                lead_id=lead.id,
+                user_id=current_user.id,
+                company_id=current_user.company_id,
+                type='note',
+                content=lead.notes, # Or f"Nota atualizada via extensão: {lead.notes}"
+                created_at=datetime.utcnow()
+            )
+            db.session.add(interaction)
         
     if 'pipeline_stage_id' in data:
         lead.pipeline_stage_id = data['pipeline_stage_id']
