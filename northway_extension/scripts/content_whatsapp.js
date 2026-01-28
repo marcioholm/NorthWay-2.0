@@ -186,7 +186,7 @@ function checkActiveChat() {
             }
         }
 
-        // --- STRATEGY B: Main Chat Header (Standard) ---
+        // --- STRATEGY B: Main Chat Header (Relaxed) ---
         const mainPanel = document.getElementById('main') || document.querySelector('div[role="main"]');
 
         // If we found phone in drawer, we trust it more than header (which might be missing/scrolled)
@@ -218,13 +218,27 @@ function checkActiveChat() {
                     }
                 }
 
-                // Name Scrape (Header)
+                // Name Scrape (Header) - NEW RELAXED LOGIC
                 if (!name) {
+                    // 1. Try "title" attribute on spans (Classic)
                     const titleSpan = mainHeader.querySelector('span[title]');
-                    if (titleSpan && !isInvalidText(titleSpan.getAttribute('title'))) {
-                        name = titleSpan.getAttribute('title');
+                    if (titleSpan) {
+                        const t = titleSpan.getAttribute('title');
+                        if (!isInvalidText(t)) name = t;
                     }
 
+                    // 2. Try the largest text element in the header (Heuristic)
+                    if (!name) {
+                        const allSpans = Array.from(mainHeader.querySelectorAll('span[dir="auto"]'));
+                        // Filter out small stuff like "last seen"
+                        const candidate = allSpans.find(s => {
+                            const txt = s.innerText;
+                            return !isInvalidText(txt) && txt.length > 2; // Simple heuristic
+                        });
+                        if (candidate) name = candidate.innerText;
+                    }
+
+                    // 3. Fallback: Any valid span in the info block
                     if (!name) {
                         const infoBlock = mainHeader.querySelector('div[role="button"]');
                         if (infoBlock) {
