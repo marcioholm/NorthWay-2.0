@@ -100,7 +100,12 @@ def lead_details(id):
         abort(403)
     
     users = User.query.filter_by(company_id=current_user.company_id).all()
-    return render_template('lead_details.html', lead=lead, users=users)
+    
+    stages = []
+    if lead.pipeline_id:
+        stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).all()
+        
+    return render_template('lead_details.html', lead=lead, users=users, stages=stages)
 
 @leads_bp.route('/pipeline')
 @leads_bp.route('/pipeline/<int:pipeline_id>')
@@ -351,7 +356,15 @@ def update_lead_info(id):
             clean_equity = equity_val.replace('R$', '').replace('.', '').replace(',', '.').strip()
             lead.equity = float(clean_equity)
         except (ValueError, TypeError):
+            lead.equity = float(clean_equity)
+        except (ValueError, TypeError):
             pass
+            
+    # Stage Update
+    pipeline_stage_id = request.form.get('pipeline_stage_id')
+    if pipeline_stage_id:
+        lead.pipeline_stage_id = int(pipeline_stage_id)
+        lead.status = LEAD_STATUS_IN_PROGRESS
     
     # Handle Assignment
     assigned_id = request.form.get('assigned_to_id')

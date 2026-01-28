@@ -399,6 +399,24 @@
                                     class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
                             </div>
 
+                            <!-- Pipeline Stage -->
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">Etapa do Funil</label>
+                                <select name="pipeline_stage_id"
+                                    class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none bg-white">
+                                    {% if stages %}
+                                    {% for stage in stages %}
+                                    <option value="{{ stage.id }}" {{ 'selected' if lead.pipeline_stage_id==stage.id
+                                        else '' }}>
+                                        {{ stage.name }}
+                                    </option>
+                                    {% endfor %}
+                                    {% else %}
+                                    <option value="">Nenhum funil associado</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+
                             <!-- Source Select -->
                             <div>
                                 <label class="text-xs text-gray-500 block mb-1">Origem</label>
