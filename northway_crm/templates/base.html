@@ -339,7 +339,7 @@
                 <!-- Prospecting -->
                 {% if current_user.has_permission('prospecting_view') %}
                 <a href="{{ url_for('prospecting.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if 'prospecting' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint and 'prospecting' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="globe" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Prospecção</span>
                 </a>
@@ -350,13 +350,13 @@
                     <!-- Dynamic Link: Master vs Company Admin -->
                     {% if current_user.is_super_admin %}
                     <a href="{{ url_for('admin.master_companies') }}"
-                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if 'master' in request.endpoint else 'text-gray-400' }}">
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if (request.endpoint and 'master' in request.endpoint) else 'text-gray-400' }}">
                         <i data-lucide="shield-alert" class="w-5 h-5 text-northway-red flex-shrink-0"></i>
                         <span class="sidebar-text transition-opacity duration-300">Master Admin</span>
                     </a>
                     {% else %}
                     <a href="{{ url_for('admin.users') }}"
-                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if 'admin' in request.endpoint else 'text-gray-400' }}">
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if (request.endpoint and 'admin' in request.endpoint) else 'text-gray-400' }}">
                         <i data-lucide="users" class="w-5 h-5 text-blue-300 flex-shrink-0"></i>
                         <span class="sidebar-text transition-opacity duration-300">Usuários</span>
                     </a>
@@ -816,15 +816,6 @@
                     hidden.value = btn.value;
                     form.appendChild(hidden);
                 }
-            }
-        };
-        if (btn.name) {
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = btn.name;
-            hidden.value = btn.value;
-            form.appendChild(hidden);
-        }
             }
         };
 
