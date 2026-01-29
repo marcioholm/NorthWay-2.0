@@ -85,6 +85,11 @@ def dashboard():
 def impersonate(user_id):
     target_user = User.query.get_or_404(user_id)
     
+    
+    if target_user.id == current_user.id:
+        flash("Você não pode impersonar a si mesmo.", "warning")
+        return redirect(url_for('admin.master_companies'))
+
     # Store original admin ID in session
     session['super_admin_id'] = current_user.id
     
@@ -99,14 +104,14 @@ def revert_access():
     original_id = session.get('super_admin_id')
     if not original_id:
         flash("Sessão de super admin não encontrada.", "error")
-        return redirect(url_for('dashboard.home'))
+        return redirect(url_for('admin.master_companies'))
         
     original_user = User.query.get(original_id)
     if original_user:
         login_user(original_user)
         session.pop('super_admin_id', None)
         flash("Sessão Master restaurada.", "success")
-        return redirect(url_for('master.dashboard'))
+        return redirect(url_for('admin.master_companies'))
     
     return redirect(url_for('auth.login'))
 
