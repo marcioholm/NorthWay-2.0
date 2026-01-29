@@ -1044,6 +1044,26 @@ def user_debug():
         "company_id": current_user.company_id
     }
 
+@master.route('/master/fix-library')
+@login_required
+def fix_library():
+    from models import LibraryBook
+    if not current_user.is_super_admin:
+        return "Acesso negado", 403
+    
+    books = LibraryBook.query.all()
+    if not current_user.company:
+        return "Empresa não encontrada para o usuário atual", 404
+        
+    count = 0
+    for book in books:
+        if book not in current_user.company.accessible_books:
+            current_user.company.accessible_books.append(book)
+            count += 1
+    
+    db.session.commit()
+    return f"Sucesso! {count} materiais liberados para sua empresa. <a href='/library'>Ver Biblioteca</a>"
+
 @master.route('/master/refresh-roles')
 @login_required
 def refresh_roles():
