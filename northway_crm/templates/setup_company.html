@@ -1,80 +1,102 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-screen flex bg-white font-sans">
-    <!-- Left Side: Image & Branding -->
-    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+<div class="min-h-screen flex bg-white font-sans selection:bg-red-600 selection:text-white">
+    <!-- Left Side: Cinematic Image (Consistent with Login/Register) -->
+    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gray-900">
+        <!-- Background Image -->
         <div id="setup-bg-image"
-            class="absolute inset-0 bg-cover bg-center transition-transform duration-[10s] hover:scale-110"
-            style="background-image: url('{{ url_for('static', filename='images/login-bg.png') }}');">
-        </div>
-        <!-- Gradient Overlay -->
-        <div class="absolute inset-0 bg-gradient-to-br from-northway-dark/95 via-northway-dark/60 to-northway-red/40">
-        </div>
+            class="absolute inset-0 bg-cover bg-center transition-transform duration-[40s] ease-out transform scale-100 hover:scale-110"
+            data-bg="{{ url_for('static', filename='images/login-bg.png') }}"></div>
 
-        <div class="relative z-10 p-16 flex flex-col justify-between h-full w-full text-white">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay"
-                class="h-10 w-auto self-start opacity-90">
+        <!-- Elegant Overlay -->
+        <div
+            class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent mix-blend-multiply opacity-90">
+        </div>
+        <div class="absolute inset-0 bg-red-900/20 mix-blend-overlay"></div>
 
-            <div class="max-w-md">
-                <span
-                    class="inline-block px-3 py-1 bg-northway-red/20 border border-northway-red/30 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">Iniciando
-                    sua Jornada</span>
-                <h2 class="text-5xl font-display font-bold mb-6 leading-tight">Prepare sua <br>Organização</h2>
-                <p class="text-lg text-gray-300 font-light leading-relaxed">
+        <!-- Content -->
+        <div class="relative z-10 p-16 flex flex-col justify-between h-full w-full">
+            <div>
+                <!-- Glass Logo Container -->
+                <div
+                    class="inline-flex p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay"
+                        class="h-10 w-auto brightness-200 contrast-125 filter drop-shadow-sm">
+                </div>
+            </div>
+
+            <div class="max-w-xl">
+                <!-- Stepper Indicator -->
+                <div
+                    class="inline-block px-3 py-1 bg-red-600/20 border border-red-500/30 rounded-full text-red-100 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-sm">
+                    Iniciando sua Jornada
+                </div>
+
+                <h2 class="text-4xl md:text-5xl font-bold leading-[1.1] mb-6 text-white tracking-tight drop-shadow-xl">
+                    Prepare sua <span class="text-red-500">Organização</span>
+                </h2>
+
+                <p class="text-white/70 font-medium leading-relaxed text-lg border-l-2 border-red-600 pl-6">
                     Estamos quase lá. Informe os detalhes da sua empresa para que possamos personalizar sua experiência
                     e configurar seu ambiente exclusivo.
                 </p>
             </div>
 
+            <!-- Bottom Indicator -->
             <div class="flex items-center gap-4 text-sm text-gray-400">
-                <div class="flex -space-x-2">
+                <div class="flex -space-x-3">
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-northway-dark bg-gray-600 flex items-center justify-center text-[10px] font-bold">
+                        class="w-10 h-10 rounded-full border-2 border-gray-900 bg-gray-700 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
                         M</div>
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-northway-dark bg-gray-500 flex items-center justify-center text-[10px] font-bold">
+                        class="w-10 h-10 rounded-full border-2 border-gray-900 bg-gray-600 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
                         A</div>
                     <div
-                        class="w-8 h-8 rounded-full border-2 border-northway-dark bg-gray-400 flex items-center justify-center text-[10px] font-bold">
+                        class="w-10 h-10 rounded-full border-2 border-gray-900 bg-gray-500 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
                         G</div>
                 </div>
-                <span>Junte-se a centenas de empresas líderes.</span>
+                <span class="font-medium tracking-wide text-xs uppercase opacity-70">Junte-se a centenas de empresas
+                    líderes</span>
             </div>
         </div>
     </div>
 
     <!-- Right Side: Form -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-20 bg-gray-50/50">
-        <div class="w-full max-w-md">
-            <div class="mb-10">
-                <div class="flex items-center gap-2 text-xs font-bold text-northway-red uppercase tracking-widest mb-2">
-                    <span class="w-8 h-0.5 bg-northway-red"></span>
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-20 bg-white relative">
+        <div class="w-full max-w-[480px] space-y-10 relative z-10">
+
+            <!-- Header with Step Indicator -->
+            <div>
+                <div class="flex items-center gap-3 text-xs font-bold text-red-600 uppercase tracking-widest mb-4">
+                    <span class="w-10 h-0.5 bg-red-600"></span>
                     Passo 2 de 3: Identificação
                 </div>
-                <h2 class="text-4xl font-display font-bold text-gray-900 tracking-tight">Dados da Empresa</h2>
-                <p class="mt-4 text-gray-500 font-medium">Configure as informações fundamentais do seu negócio.</p>
+                <h1 class="text-4xl font-bold tracking-tight text-gray-900 mb-3">Dados da Empresa</h1>
+                <p class="text-base text-gray-500 font-medium">Configure as informações fundamentais do seu negócio.</p>
             </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
             {% for category, message in messages %}
-            <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-shake">
-                <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5"></i>
-                <p class="text-sm text-red-700 font-medium">{{ message }}</p>
+            <div class="p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake shadow-sm">
+                <div class="p-1 bg-red-100 rounded-full text-red-600">
+                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                </div>
+                <p class="text-sm text-red-800 font-semibold leading-relaxed pt-0.5">{{ message }}</p>
             </div>
             {% endfor %}
             {% endif %}
             {% endwith %}
 
-            <form class="space-y-6" action="{{ url_for('auth.setup_company') }}" method="POST">
+            <form class="space-y-8" action="{{ url_for('auth.setup_company') }}" method="POST">
                 <!-- Person Type Selector -->
-                <div class="p-1 bg-gray-100 rounded-xl flex gap-1">
+                <div class="p-1.5 bg-gray-100 rounded-xl flex gap-1 shadow-inner">
                     <label class="flex-1 cursor-pointer">
                         <input type="radio" name="person_type" value="PJ" checked class="hidden peer"
                             onclick="toggleInputMask('PJ')">
                         <div
-                            class="py-2.5 text-center rounded-lg text-sm font-bold transition-all peer-checked:bg-white peer-checked:text-northway-red peer-checked:shadow-sm text-gray-500">
+                            class="py-3 text-center rounded-lg text-sm font-bold transition-all peer-checked:bg-white peer-checked:text-red-600 peer-checked:shadow-md text-gray-500 hover:text-gray-700">
                             Pessoa Jurídica
                         </div>
                     </label>
@@ -82,57 +104,63 @@
                         <input type="radio" name="person_type" value="PF" class="hidden peer"
                             onclick="toggleInputMask('PF')">
                         <div
-                            class="py-2.5 text-center rounded-lg text-sm font-bold transition-all peer-checked:bg-white peer-checked:text-northway-red peer-checked:shadow-sm text-gray-500">
+                            class="py-3 text-center rounded-lg text-sm font-bold transition-all peer-checked:bg-white peer-checked:text-red-600 peer-checked:shadow-md text-gray-500 hover:text-gray-700">
                             Pessoa Física
                         </div>
                     </label>
                 </div>
 
-                <!-- Company Name -->
-                <div class="space-y-2">
-                    <label for="company_name"
-                        class="block text-xs font-black text-gray-400 uppercase tracking-widest">Nome da Empresa / Nome
-                        Fantasia</label>
-                    <div class="relative group">
-                        <div
-                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-northway-red transition-colors">
-                            <i data-lucide="building-2" class="h-5 w-5"></i>
+                <div class="space-y-6">
+                    <!-- Company Name -->
+                    <div class="group">
+                        <label for="company_name"
+                            class="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-red-600 transition-colors">Nome
+                            da Empresa / Fantasia</label>
+                        <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="building-2"
+                                    class="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                            </div>
+                            <input id="company_name" name="company_name" type="text" required
+                                class="block w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium"
+                                placeholder="Ex: NorthWay Soluções Digitais">
                         </div>
-                        <input id="company_name" name="company_name" type="text" required
-                            class="block w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-northway-red/5 focus:border-northway-red text-sm transition-all placeholder:text-gray-300"
-                            placeholder="Ex: NorthWay Soluções Digitais">
+                    </div>
+
+                    <!-- CPF/CNPJ -->
+                    <div class="group">
+                        <label for="cpf_cnpj"
+                            class="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-red-600 transition-colors">CPF
+                            / CNPJ</label>
+                        <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="fingerprint"
+                                    class="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                            </div>
+                            <input id="cpf_cnpj" name="cpf_cnpj" type="text" required
+                                class="block w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium"
+                                placeholder="00.000.000/0000-00">
+                        </div>
                     </div>
                 </div>
 
-                <!-- CPF/CNPJ -->
-                <div class="space-y-2">
-                    <label for="cpf_cnpj" class="block text-xs font-black text-gray-400 uppercase tracking-widest">CPF /
-                        CNPJ</label>
-                    <div class="relative group">
-                        <div
-                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-northway-red transition-colors">
-                            <i data-lucide="fingerprint" class="h-5 w-5"></i>
-                        </div>
-                        <input id="cpf_cnpj" name="cpf_cnpj" type="text" required
-                            class="block w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-northway-red/5 focus:border-northway-red text-sm transition-all placeholder:text-gray-300"
-                            placeholder="00.000.000/0000-00">
-                    </div>
-                </div>
-
-                <div class="pt-6">
-                    <button type="submit"
-                        class="w-full flex justify-center items-center py-4 px-6 rounded-2xl text-base font-bold text-white bg-northway-red hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-northway-red/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-red-900/10">
-                        Prosseguir para Planos
-                        <i data-lucide="arrow-right" class="ml-2 h-5 w-5"></i>
-                    </button>
-                </div>
+                <button type="submit"
+                    class="w-full flex justify-center items-center py-4 px-6 rounded-xl shadow-[0_10px_30px_rgba(220,38,38,0.25)] text-base font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all transform hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(220,38,38,0.35)] active:scale-95">
+                    Prosseguir para Planos
+                    <i data-lucide="arrow-right" class="ml-2 h-5 w-5"></i>
+                </button>
             </form>
 
-            <div class="mt-8 text-center">
+            <div class="mt-8 pt-8 text-center border-t border-gray-100">
                 <a href="{{ url_for('auth.logout') }}"
-                    class="text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">Sair
-                    da conta</a>
+                    class="text-xs font-bold text-gray-400 hover:text-red-600 transition-colors uppercase tracking-widest">
+                    Sair da conta
+                </a>
             </div>
+
+            <p class="text-center text-[11px] text-gray-300 uppercase tracking-widest mt-8 font-bold">
+                &copy; 2026 NorthWay Systems
+            </p>
         </div>
     </div>
 </div>
@@ -146,6 +174,20 @@
             input.placeholder = '000.000.000-00';
         }
     }
+
+    (function () {
+        const bg = document.getElementById('setup-bg-image');
+        if (bg) {
+            bg.style.backgroundImage = `url('${bg.getAttribute('data-bg')}')`;
+
+            // Subtle Parallax
+            document.addEventListener('mousemove', (e) => {
+                const x = (window.innerWidth - e.pageX * 2) / 100;
+                const y = (window.innerHeight - e.pageY * 2) / 100;
+                bg.style.transform = `scale(1.1) translate(${x}px, ${y}px)`;
+            });
+        }
+    })();
 </script>
 
 <style>
