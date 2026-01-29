@@ -345,6 +345,25 @@ def generate_payment(company_id):
                 flash(f"Falha Asaas: {error_msg}", "error")
                 return redirect(url_for('master.company_details', company_id=company.id))
         
+        # 2.5 Validation: Check if existing subscription is valid in Asaas
+        # If we have an ID like 'sub_sim_pro' (legacy/dummy), this will fail effectively.
+        if company.subscription_id:
+            # Import newly added function
+            from services.asaas_service import get_subscription
+            
+            sub_check = get_subscription(company.subscription_id)
+            if not sub_check or 'id' not in sub_check:
+                print(f"⚠️ Invalid/Deleted Subscription found ({company.subscription_id}). Clearing to regenerate.")
+                company.subscription_id = None
+                company.payment_status = 'pending' # Reset status
+                db.session.commit()
+            elif sub_check.get('status') == 'DELETED':
+                 # Also regenerate if deleted
+                print(f"⚠️ Subscription {company.subscription_id} was DELETED in Asaas. Regenerating.")
+                company.subscription_id = None
+                company.payment_status = 'pending'
+                db.session.commit()
+
         # 3. Ensure Subscription
         if not company.subscription_id:
             # Determine Value based on Plan

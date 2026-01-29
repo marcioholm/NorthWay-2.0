@@ -57,6 +57,18 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key
         print(f"❌ Exception creating customer: {e}")
         return None, str(e)
 
+def get_subscription(subscription_id, api_key=None):
+    """
+    Retrieves subscription details to check status/validity.
+    """
+    try:
+        response = requests.get(f"{ASAAS_API_URL}/subscriptions/{subscription_id}", headers=get_headers(api_key))
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except Exception:
+        return None
+
 def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', description="NorthWay CRM Subscription", api_key=None):
     """
     Creates a recurring subscription.
