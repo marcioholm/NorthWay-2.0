@@ -92,14 +92,14 @@ def impersonate(user_id):
     login_user(target_user)
     
     flash(f"Acessando como: {target_user.name} @ {target_user.company.name}", "warning")
-    return redirect(url_for('main.home'))
+    return redirect(url_for('dashboard.home'))
 
 @master.route('/master/revert')
 def revert_access():
     original_id = session.get('super_admin_id')
     if not original_id:
         flash("Sessão de super admin não encontrada.", "error")
-        return redirect(url_for('main.home'))
+        return redirect(url_for('dashboard.home'))
         
     original_user = User.query.get(original_id)
     if original_user:
