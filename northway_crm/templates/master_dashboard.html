@@ -203,15 +203,18 @@
                                     {% if company.next_due_date %}
                                     {% set days = (company.next_due_date - now_date).days %}
                                     <div class="flex flex-col items-center">
-                                        <span class="text-sm font-bold text-white">{{
-                                            company.next_due_date.strftime('%d/%m') }}</span>
+                                        <span class="text-xs font-bold text-white">{{
+                                            company.next_due_date.strftime('%d/%m/%Y') }}</span>
                                         <span
-                                            class="text-[10px] uppercase font-bold {{ 'text-red-400' if days < 5 else 'text-emerald-400' }}">
-                                            {{ 'HOJE' if days == 0 else (days|abs ~ 'd ' ~ ('atraso' if days < 0 else ''
-                                                )) }} </span>
+                                            class="text-[9px] uppercase font-black {{ 'text-red-400' if days < 5 else 'text-emerald-400' }} mt-0.5">
+                                            {{ 'Vence Hoje' if days == 0 else (days|abs ~ 'd ' ~ ('atrasado' if days < 0
+                                                else 'restantes' )) }} </span>
                                     </div>
                                     {% else %}
-                                    <span class="text-xs text-gray-600">-</span>
+                                    <div class="flex flex-col items-center">
+                                        <span class="text-[10px] text-gray-600 font-medium italic">Sem Data</span>
+                                        <div class="w-4 h-0.5 bg-white/5 mt-1"></div>
+                                    </div>
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 text-center">
@@ -276,10 +279,23 @@
                                             onsubmit="return confirm('Tem certeza que deseja GERAR PAGAMENTO para {{ company.name }}?');">
                                             <button type="submit"
                                                 class="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
-                                                title="Gerar Pagamento">
+                                                title="Gerar Pagamento Asaas">
                                                 <i data-lucide="credit-card" class="w-4 h-4"></i>
                                             </button>
                                         </form>
+
+                                        <!-- Manual Activation (Override) -->
+                                        {% if company.payment_status != 'active' or company.platform_inoperante %}
+                                        <form action="{{ url_for('master.manual_activate', company_id=company.id) }}"
+                                            method="POST" class="inline"
+                                            onsubmit="return confirm('Deseja ATIVAR MANUALMENTE esta empresa? Isso concederá 30 dias de acesso ignorando o pagamento.');">
+                                            <button type="submit"
+                                                class="p-2 text-gray-400 hover:text-purple-400 hover:bg-purple-400/10 rounded-lg transition-colors"
+                                                title="Ativação Manual (Ignorar Pagamento)">
+                                                <i data-lucide="check-check" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
 
                                         <!-- Manage Users -->
                                         <a href="{{ url_for('master.company_users', company_id=company.id) }}"
@@ -304,27 +320,27 @@
                                         {% endif %}
                                     </div>
                                 </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-                </table>
-            </div>
-            {% if not stats %}
-            <div class="p-16 text-center">
-                <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="building-2" class="w-10 h-10 text-gray-600"></i>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                <h3 class="text-xl font-bold text-white mb-2">Nenhuma empresa encontrada</h3>
-                <p class="text-gray-500 mb-8 max-w-sm mx-auto">O sistema ainda não possui tenants cadastrados.
-                    Comece criando o primeiro.</p>
-                <a href="{{ url_for('master.company_new') }}"
-                    class="inline-flex bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-red-900/40 items-center gap-2">
-                    <i data-lucide="plus" class="w-5 h-5"></i> Criar Nova Empresa
-                </a>
+                {% if not stats %}
+                <div class="p-16 text-center">
+                    <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="building-2" class="w-10 h-10 text-gray-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Nenhuma empresa encontrada</h3>
+                    <p class="text-gray-500 mb-8 max-w-sm mx-auto">O sistema ainda não possui tenants cadastrados.
+                        Comece criando o primeiro.</p>
+                    <a href="{{ url_for('master.company_new') }}"
+                        class="inline-flex bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-red-900/40 items-center gap-2">
+                        <i data-lucide="plus" class="w-5 h-5"></i> Criar Nova Empresa
+                    </a>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
-</div>
 </div>
 {% endblock %}

@@ -503,6 +503,32 @@ def company_unlock(company_id):
     flash(f"Acesso LIBERADO para {company.name} por {days} dias.", "success")
     return redirect(url_for('master.dashboard'))
 
+@master.route('/master/company/<int:company_id>/manual-activate', methods=['POST'])
+@login_required
+def manual_activate(company_id):
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    company = Company.query.get_or_404(company_id)
+    
+    from datetime import date, timedelta
+    
+    company.platform_inoperante = False
+    company.payment_status = 'active'
+    company.overdue_since = None
+    
+    # Set next due date to 30 days from now
+    company.next_due_date = date.today() + timedelta(days=30)
+    
+    try:
+        db.session.commit()
+        flash(f"Empresa {company.name} ativada manualmente! Próximo vencimento: {company.next_due_date.strftime('%d/%m/%Y')}", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao ativar manualmente: {e}", "error")
+        
+    return redirect(url_for('master.dashboard'))
+
 @master.route('/master/library/new', methods=['GET', 'POST'])
 def library_new():
     if request.method == 'POST':
