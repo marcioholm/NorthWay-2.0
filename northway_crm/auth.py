@@ -81,11 +81,12 @@ def login():
         if authenticated and user:
             login_user(user, remember=remember)
             
-            # Track Activity (Company Only for now)
+            # Track Activity
             try:
+                user.last_login = datetime.utcnow()
                 if user.company:
                     user.company.last_active_at = datetime.utcnow()
-                    db.session.commit()
+                db.session.commit()
             except:
                 pass
             
