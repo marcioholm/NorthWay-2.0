@@ -5,6 +5,9 @@
             <span>ZapWay</span>
         </div>
         <div class="nw-status">
+            <button id="nw-btn-nav-broadcast" class="nw-icon-btn" title="Disparo Assistido">
+                <span class="icon-params">🚀</span>
+            </button>
             <span id="nw-connection-status" class="status-dot disconnected"></span>
         </div>
     </div>
@@ -126,6 +129,83 @@
                 <button id="nw-btn-save" class="nw-btn primary">Salvar Alterações</button>
                 <a href="#" id="nw-link-crm" target="_blank" class="nw-link">Ver no CRM ↗</a>
             </div>
+        </div>
+    </div>
+
+    <!-- Content State: Broadcast Dashboard -->
+    <div id="nw-state-broadcast" class="nw-state hidden">
+        <div class="nw-broadcast-header">
+            <h3>Disparo Assistido</h3>
+            <button id="nw-btn-close-broadcast" class="nw-icon-btn">✕</button>
+        </div>
+
+        <!-- Section: Import -->
+        <div id="nw-broadcast-setup">
+            <div class="nw-card broadcast-card">
+                <label class="nw-label-caps">1. Importar Contatos</label>
+                <textarea id="nw-broadcast-import-text" rows="4"
+                    placeholder="Cole aqui: Nome;Telefone;Variavel&#10;Ex: Maria;5511999999999;Loja Centro"></textarea>
+                <div class="nw-file-input">
+                    <label for="nw-broadcast-import-file" class="nw-btn-outline">
+                        <span>📁 Carregar CSV</span>
+                    </label>
+                    <input type="file" id="nw-broadcast-import-file" accept=".csv" class="hidden">
+                </div>
+            </div>
+
+            <!-- Section: Templates -->
+            <div class="nw-card broadcast-card">
+                <label class="nw-label-caps">2. Template da Mensagem</label>
+                <div class="nw-tabs-mini">
+                    <button class="nw-tab-btn active" data-tab="A">A</button>
+                    <button class="nw-tab-btn" data-tab="B">B</button>
+                    <button class="nw-tab-btn" data-tab="C">C</button>
+                </div>
+                <textarea id="nw-broadcast-template" rows="5" placeholder="Olá {nome}, como vai?"></textarea>
+                <p class="nw-hint">Variáveis: {nome}, {cidade}, {variavel}</p>
+            </div>
+
+            <button id="nw-btn-start-broadcast" class="nw-btn primary">Iniciar Fila de Disparo</button>
+        </div>
+
+        <!-- Section: Active Queue -->
+        <div id="nw-broadcast-active" class="hidden">
+            <div class="nw-stats-grid">
+                <div class="nw-stat-item">
+                    <span id="nw-stat-pending">0</span>
+                    <label>Fila</label>
+                </div>
+                <div class="nw-stat-item green">
+                    <span id="nw-stat-sent">0</span>
+                    <label>Enviados</label>
+                </div>
+                <div class="nw-stat-item red">
+                    <span id="nw-stat-failed">0</span>
+                    <label>Falhas</label>
+                </div>
+            </div>
+
+            <div class="nw-current-contact-card">
+                <div class="nw-contact-info-mini">
+                    <strong id="nw-bc-current-name">Aguardando...</strong>
+                    <span id="nw-bc-current-phone"></span>
+                </div>
+                <div class="nw-message-preview" id="nw-bc-message-preview">
+                    Toque em "Próximo" para carregar...
+                </div>
+            </div>
+
+            <div class="nw-broadcast-controls">
+                <button id="nw-btn-bc-skip" class="nw-btn-outline tiny">Pular</button>
+                <button id="nw-btn-bc-pause" class="nw-btn-outline tiny">Pausar</button>
+                <button id="nw-btn-bc-confirm" class="nw-btn primary">Confirmar Envio</button>
+            </div>
+
+            <div class="nw-queue-list-mini" id="nw-bc-queue-list">
+                <!-- Items added dynamically -->
+            </div>
+
+            <button id="nw-btn-bc-stop" class="nw-btn-link red">Interromper Disparo</button>
         </div>
     </div>
 </div>

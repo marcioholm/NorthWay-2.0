@@ -192,3 +192,211 @@ textarea:focus {
     margin-bottom: 8px;
     border-radius: 4px;
 }
+/* Broadcast Dashboard */
+.nw-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nw-icon-btn:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+.nw-broadcast-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.nw-broadcast-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.broadcast-card {
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #f0f0f0;
+}
+
+.nw-label-caps {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.nw-tabs-mini {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.nw-tab-btn {
+    flex: 1;
+    padding: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.nw-tab-btn.active {
+    background: #111827;
+    color: #fff;
+    border-color: #111827;
+}
+
+.nw-hint {
+    font-size: 10px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.nw-file-input {
+    margin-top: 10px;
+}
+
+.nw-btn-outline {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+}
+
+.nw-btn-outline.tiny {
+    padding: 6px;
+    font-size: 11px;
+}
+
+.nw-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.nw-stat-item {
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #f0f0f0;
+}
+
+.nw-stat-item span {
+    display: block;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.nw-stat-item label {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: #9ca3af;
+    font-weight: 700;
+}
+
+.nw-stat-item.green { color: #059669; background: #ecfdf5; }
+.nw-stat-item.red { color: #dc2626; background: #fef2f2; }
+
+.nw-current-contact-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.nw-contact-info-mini {
+    margin-bottom: 12px;
+}
+
+.nw-current-contact-card strong {
+    display: block;
+    font-size: 14px;
+}
+
+.nw-current-contact-card span {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.nw-message-preview {
+    font-size: 13px;
+    background: #f3f4f6;
+    padding: 12px;
+    border-radius: 8px;
+    line-height: 1.5;
+    color: #374151;
+    max-height: 100px;
+    overflow-y: auto;
+    border-left: 3px solid #111827;
+}
+
+.nw-broadcast-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.nw-queue-list-mini {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.nw-q-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f9fafb;
+    font-size: 12px;
+}
+
+.nw-q-item.active { background: #f0f9ff; }
+.nw-q-status { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 2px 4px; }
+.nw-q-status.PENDENTE { background: #f3f4f6; color: #6b7280; }
+.nw-q-status.ENVIADO { background: #dcfce7; color: #166534; }
+.nw-q-status.FALHOU { background: #fee2e2; color: #991b1b; }
+
+.nw-btn-link {
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.nw-btn-link.red { color: #dc2626; }

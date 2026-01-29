@@ -477,7 +477,219 @@ const GroupExtractor = {
     }
 };
 
+// --- BROADCAST ENGINE ---
+const BroadcastEngine = {
+    queue: [],
+    currentIndex: -1,
+    isPaused: false,
+    templates: { A: "", B: "", C: "" },
+    currentTab: "A",
+
+    init: async function () {
+        // Load state from storage
+        const result = await chrome.storage.local.get(['bc_queue', 'bc_index', 'bc_active']);
+        if (result.bc_queue) this.queue = result.bc_queue;
+        if (result.bc_index !== undefined) this.currentIndex = result.bc_index;
+
+        if (result.bc_active) {
+            showState('broadcast');
+            getEl('nw-broadcast-setup').classList.add('hidden');
+            getEl('nw-broadcast-active').classList.remove('hidden');
+            this.renderQueue();
+            this.updateStats();
+            this.renderCurrent();
+        }
+    },
+
+    save: async function () {
+        await chrome.storage.local.set({
+            bc_queue: this.queue,
+            bc_index: this.currentIndex,
+            bc_active: this.currentIndex >= 0
+        });
+    },
+
+    importContacts: function (text) {
+        const lines = text.split('\n');
+        this.queue = [];
+        lines.forEach(line => {
+            const parts = line.split(';');
+            if (parts.length >= 2) {
+                const phone = parts[1].replace(/\D/g, '');
+                if (phone.length >= 10) {
+                    this.queue.push({
+                        name: parts[0].trim(),
+                        phone: phone,
+                        variable: parts[2] ? parts[2].trim() : "",
+                        status: "PENDENTE"
+                    });
+                }
+            }
+        });
+        this.save();
+        this.renderQueue();
+        this.updateStats();
+    },
+
+    renderQueue: function () {
+        const list = getEl('nw-bc-queue-list');
+        if (!list) return;
+        list.innerHTML = '';
+        this.queue.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `nw-q-item ${index === this.currentIndex ? 'active' : ''}`;
+            div.innerHTML = `
+                <span>${item.name}</span>
+                <span class="nw-q-status ${item.status}">${item.status}</span>
+            `;
+            list.appendChild(div);
+        });
+    },
+
+    updateStats: function () {
+        const p = getEl('nw-stat-pending');
+        if (p) p.textContent = this.queue.filter(i => i.status === 'PENDENTE').length;
+        const s = getEl('nw-stat-sent');
+        if (s) s.textContent = this.queue.filter(i => i.status === 'ENVIADO').length;
+        const f = getEl('nw-stat-failed');
+        if (f) f.textContent = this.queue.filter(i => i.status === 'FALHOU').length;
+    },
+
+    start: function () {
+        if (this.queue.length === 0) {
+            alert("⚠️ Importe contatos primeiro!");
+            return;
+        }
+        getEl('nw-broadcast-setup').classList.add('hidden');
+        getEl('nw-broadcast-active').classList.remove('hidden');
+        this.currentIndex = -1;
+        this.next();
+    },
+
+    renderCurrent: function () {
+        if (this.currentIndex < 0 || this.currentIndex >= this.queue.length) return "";
+        const item = this.queue[this.currentIndex];
+        const currentNameEl = getEl('nw-bc-current-name');
+        if (currentNameEl) currentNameEl.textContent = item.name;
+        const currentPhoneEl = getEl('nw-bc-current-phone');
+        if (currentPhoneEl) currentPhoneEl.textContent = item.phone;
+
+        // Rotation A/B/C
+        const variantKeys = ['A', 'B', 'C'];
+        const currentVariant = variantKeys[this.currentIndex % 3];
+        const template = this.templates[currentVariant] || this.templates['A'] || getEl('nw-broadcast-template').value;
+
+        const message = template
+            .replace(/{nome}/gi, item.name)
+            .replace(/{variavel}/gi, item.variable)
+            .replace(/{telefone}/gi, item.phone);
+
+        const previewEl = getEl('nw-bc-message-preview');
+        if (previewEl) previewEl.textContent = `[Variação ${currentVariant}] ${message}`;
+        return message;
+    },
+
+    next: async function () {
+        this.currentIndex++;
+        if (this.currentIndex >= this.queue.length) {
+            alert("✅ Disparo finalizado!");
+            this.stop();
+            return;
+        }
+
+        const item = this.queue[this.currentIndex];
+        if (item.status !== 'PENDENTE') return this.next();
+
+        this.renderQueue();
+        const message = this.renderCurrent();
+        this.save();
+
+        // Open Chat using a safer method that won't infinite loop
+        const currentUrl = new URL(window.location.href);
+        const targetUrl = `https://web.whatsapp.com/send?phone=${item.phone}&text=${encodeURIComponent(message)}`;
+
+        if (!currentUrl.search.includes(item.phone)) {
+            window.location.href = targetUrl;
+        }
+    },
+
+    confirmSend: function () {
+        if (this.currentIndex < 0) return;
+        this.queue[this.currentIndex].status = 'ENVIADO';
+        this.updateStats();
+        this.save();
+
+        const min = 5, max = 15;
+        const delay = Math.floor(Math.random() * (max - min + 1) + min) * 1000;
+
+        const btn = getEl('nw-btn-bc-confirm');
+        btn.textContent = `Aguardando ${delay / 1000}s...`;
+        btn.disabled = true;
+
+        setTimeout(() => {
+            btn.textContent = "Confirmar Envio";
+            btn.disabled = false;
+            this.next();
+        }, delay);
+    },
+
+    stop: async function () {
+        this.currentIndex = -1;
+        await chrome.storage.local.remove(['bc_queue', 'bc_index', 'bc_active']);
+        getEl('nw-broadcast-setup').classList.remove('hidden');
+        getEl('nw-broadcast-active').classList.add('hidden');
+        showState('broadcast');
+    }
+};
+
 function bindEvents() {
+    BroadcastEngine.init();
+    // Nav
+    getEl('nw-btn-nav-broadcast').addEventListener('click', () => showState('broadcast'));
+    getEl('nw-btn-close-broadcast').addEventListener('click', () => showState('idle'));
+
+    // Tabs
+    shadowRoot.querySelectorAll('.nw-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            shadowRoot.querySelectorAll('.nw-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            BroadcastEngine.currentTab = btn.dataset.tab;
+            // Update textarea with chosen template variation (if stored)
+            getEl('nw-broadcast-template').value = BroadcastEngine.templates[BroadcastEngine.currentTab] || "";
+        });
+    });
+
+    getEl('nw-broadcast-template').addEventListener('input', (e) => {
+        BroadcastEngine.templates[BroadcastEngine.currentTab] = e.target.value;
+    });
+
+    // Import
+    getEl('nw-broadcast-import-text').addEventListener('input', (e) => {
+        BroadcastEngine.importContacts(e.target.value);
+    });
+
+    getEl('nw-broadcast-import-file').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            BroadcastEngine.importContacts(f.target.result);
+            getEl('nw-broadcast-import-text').value = f.target.result;
+        };
+        reader.readAsText(file);
+    });
+
+    getEl('nw-btn-start-broadcast').addEventListener('click', () => BroadcastEngine.start());
+
+    // Controls
+    getEl('nw-btn-bc-confirm').addEventListener('click', () => BroadcastEngine.confirmSend());
+    getEl('nw-btn-bc-skip').addEventListener('click', () => {
+        BroadcastEngine.queue[BroadcastEngine.currentIndex].status = 'PULADO';
+        BroadcastEngine.next();
+    });
+    getEl('nw-btn-bc-stop').addEventListener('click', () => BroadcastEngine.stop());
+
+    // Legacy Binds
     getEl('nw-btn-create').addEventListener('click', async () => {
         const name = getEl('nw-new-name').value;
         const phone = getEl('nw-new-phone').value;
