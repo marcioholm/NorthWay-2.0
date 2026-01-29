@@ -360,7 +360,9 @@ def create_app():
     except Exception as factory_e:
         import traceback
         traceback.print_exc()
-        print(f"🔥 FATAL FACTORY EXPLOSION: {factory_e}")
+        # Capture error for closure
+        error_msg = str(factory_e)
+        print(f"🔥 FATAL FACTORY EXPLOSION: {error_msg}")
         
         # EMERGENCY APP
         from flask import Flask, render_template
@@ -368,7 +370,7 @@ def create_app():
         @fallback.route('/')
         @fallback.route('/<path:path>')
         def emergency_catch_all(path=''):
-            return f"<h1>EMERGENCY MODE</h1><p>The app failed to start.</p><pre>{factory_e}</pre>", 503
+            return f"<h1>EMERGENCY MODE</h1><p>The app failed to start.</p><pre>{error_msg}</pre>", 503
             
         @fallback.route('/ping')
         def ping(): return "pong_emergency"
