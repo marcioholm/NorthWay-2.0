@@ -225,13 +225,23 @@ def create_app():
         if not request.endpoint: return
         if request.endpoint.startswith('static'): return
         if request.endpoint in ['auth.login', 'auth.register', 'auth.logout', 
-                              'billing.asaas_webhook', 'billing.payment_pending']:
+                              'billing.asaas_webhook', 'billing.payment_pending',
+                              'auth.suspended_account', 'master.revert_access']: # Allow revert!
             return
 
         # Check Login & Inoperability
         if current_user.is_authenticated and current_user.company:
             company = current_user.company
             
+            # 1. STRICT SUSPENSION CHECK (Overrides everything)
+            # If status is suspended or cancelled, BLOCK ACCESS immediately.
+            # Except for Super Admin (real one, not impersonating) - actually, if impersonating we might want to see it?
+            # Let's block everyone including impersonators, BUT allow revert_access (added above).
+            if getattr(company, 'status', 'active') in ['suspended', 'cancelled']:
+                # If it's a super admin viewing, maybe we show a flash? 
+                # For now, strict block to ensure security.
+                return render_template('suspended.html', company_name=company.name, company_id=company.id)
+
             # --- LAZY BLOCK ENGINE (D+30) ---
             # If Overdue > 30 days, force block immediately on next request
             # EXEMPTION: 'courtesy' status is immune to blocks
