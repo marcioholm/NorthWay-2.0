@@ -84,17 +84,15 @@ def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', desc
     try:
         response = requests.post(f"{ASAAS_API_URL}/subscriptions", json=payload, headers=get_headers(api_key))
         if response.status_code == 200:
-            return response.json()
+            return response.json(), None
         else:
-             with open('asaas_debug.log', 'a') as f:
-                 f.write(f"Subscription Error [{response.status_code}]: {response.text}\nPayload: {json.dumps(payload)}\n")
              print(f"❌ Error creating subscription: {response.text}")
-             return None
+             error_data = response.json()
+             error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+             return None, error_msg
     except Exception as e:
-        with open('asaas_debug.log', 'a') as f:
-             f.write(f"Exception: {str(e)}\n")
         print(f"❌ Exception creating subscription: {e}")
-        return None
+        return None, str(e)
 
 def get_subscription_payments(subscription_id, api_key=None):
     """

@@ -70,9 +70,9 @@ def process_checkout():
         # Due date: Today
         next_due = (datetime.now() + timedelta(days=1)).date().strftime('%Y-%m-%d')
         
-        sub_data = create_subscription(customer_id, value, next_due, cycle, desc)
+        sub_data, sub_error = create_subscription(customer_id, value, next_due, cycle, desc)
         if not sub_data:
-             flash("Erro ao gerar assinatura. Contate o suporte.", "error")
+             flash(f"Erro ao gerar assinatura: {sub_error}", "error")
              return redirect(url_for('dashboard.checkout'))
              
         company.subscription_id = sub_data['id']
