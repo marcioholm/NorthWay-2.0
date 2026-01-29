@@ -74,7 +74,7 @@ def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', desc
     """
     payload = {
         "customer": customer_id,
-        "billingType": "UNDEFINED", # Lets user choose in the payment link (Initial Invoice) or set 'PIX'/'BOLETO' if known
+        "billingType": "BOLETO", # Forced BOLETO for immediate visibility in Asaas Dashboard
         "value": value,
         "nextDueDate": next_due_date, # YYYY-MM-DD
         "cycle": cycle,
