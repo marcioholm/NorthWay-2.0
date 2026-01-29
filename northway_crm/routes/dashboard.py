@@ -18,7 +18,7 @@ def checkout():
     if not current_user.company_id:
         return redirect(url_for('auth.login'))
         
-    return render_template('checkout_page.html')
+    return render_template('checkout_standalone.html')
 
 @dashboard_bp.route('/home')
 @login_required
