@@ -28,10 +28,10 @@ def check_saas_status():
             return redirect(url_for('auth.setup_company'))
             
         # 2. Enforce Subscription Active (Skip for Super Admin if needed)
-        if current_user.company and current_user.company.subscription_status != 'active':
-             # Allow access if bypassing payment (optional) or strictly redirect
-             # For now, strictly redirect to payment plan
-             if not getattr(current_user, 'is_super_admin', False):
+        if current_user.company:
+             is_active = current_user.company.subscription_status == 'active' or current_user.company.payment_status == 'active'
+             
+             if not is_active and not getattr(current_user, 'is_super_admin', False):
                  return redirect('/checkout')
 
 @auth.route('/login', methods=['GET', 'POST'])

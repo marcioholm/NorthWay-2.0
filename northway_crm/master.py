@@ -205,7 +205,7 @@ def company_new():
             return redirect(url_for('master.company_new'))
             
         try:
-            new_comp = Company(name=name, plan=plan, status='active')
+            new_comp = Company(name=name, plan=plan, status='active', payment_status='pending', subscription_status='inactive')
             
             # Set limits based on plan
             if plan == 'enterprise':
@@ -515,6 +515,7 @@ def manual_activate(company_id):
     
     company.platform_inoperante = False
     company.payment_status = 'active'
+    company.subscription_status = 'active'
     company.overdue_since = None
     
     # Set next due date to 30 days from now
