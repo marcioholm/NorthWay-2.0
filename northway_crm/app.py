@@ -347,6 +347,21 @@ def create_app():
                         db.session.add(u)
                         db.session.commit()
                         print("✅ Default Admin created.")
+
+                # 3. Add next_due_date if missing (Critical for Billing)
+                # MIGRATE: Add next_due_date (Date type)
+                if inspector.has_table("company"):
+                    try:
+                        has_col = any(c['name'] == 'next_due_date' for c in inspector.get_columns("company"))
+                        if not has_col:
+                            print("📦 MIGRATION: Adding next_due_date to company...")
+                            with db.engine.connect() as conn:
+                                # Use safe DDL (Date type)
+                                conn.execute(text("ALTER TABLE company ADD COLUMN next_due_date DATE"))
+                                conn.commit()
+                            print("✅ MIGRATION: next_due_date added.")
+                    except Exception as next_due_mig_e:
+                        print(f"❌ MIGRATION ERROR on next_due_date: {next_due_mig_e}")
                         
             except Exception as seed_e:
                 # Log but don't crash the factory
