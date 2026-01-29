@@ -11,9 +11,19 @@ try:
     print("✅ APP IMPORT SUCCESSFUL")
 except Exception as e:
     import traceback
-    print(f"CRITICAL ERROR STARTING APP: {e}")
-    traceback.print_exc()
-    raise e
+    err_msg = traceback.format_exc()
+    print(f"CRITICAL ERROR STARTING APP: {err_msg}")
+    
+    # Inline Fallback App
+    from flask import Flask
+    app = Flask(__name__)
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def catch_all(path):
+        return f"<h1>⚠️ CRITICAL STARTUP ERROR</h1><pre>{err_msg}</pre>", 500
+        
+    @app.route('/ping')
+    def ping(): return "pong_critical_fallback"
 
 # Vercel Serverless Function Entry Point
 # This works by exposing the WSGI app as a variable named 'app'
