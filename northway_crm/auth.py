@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES
-from services.asaas_service import AsaasService
+
 
 auth = Blueprint('auth', __name__)
 
@@ -225,56 +225,8 @@ def setup_company():
 @auth.route('/payment-plan')
 @login_required
 def payment_plan():
-    # Skip if active (DISABLED FOR DEMO)
-    # if current_user.company and current_user.company.subscription_status == 'active':
-    #     return redirect(url_for('dashboard.home'))
-        
-    return render_template('payment_plan.html', minimal=True)
-
-@auth.route('/payment-checkout/<plan>', methods=['POST'])
-@login_required
-def payment_checkout(plan):
-    # Retrieve API Key
-    try:
-        # 1. Create Customer in Asaas (if not exists)
-        customer_id = AsaasService.create_customer(current_user, current_user.company)
-        
-        if not customer_id:
-            flash('Erro ao criar cliente no sistema de pagamento. Verifique o CPF/CNPJ.', 'error')
-            return redirect(url_for('auth.payment_plan'))
-            
-        # 2. Create Subscription
-        # NOTE: Using 'monthly' hardcoded for MVP.
-        sub_data = AsaasService.create_subscription(customer_id, 'monthly')
-        
-        if not sub_data:
-             flash('Erro ao gerar cobrança. Tente novamente.', 'error')
-             return redirect(url_for('auth.payment_plan'))
-             
-        # 3. Handle Success
-        invoice_url = sub_data.get('billUrl') or sub_data.get('invoiceUrl')
-        
-        # Save subscription ID locally
-        current_user.company.plan_type = plan
-        current_user.company.subscription_id = sub_data.get('id')
-        current_user.company.subscription_status = 'pending' # Waiting payment
-        db.session.commit()
-        
-        # Redirect to Asaas Invoice
-        if invoice_url:
-            return redirect(invoice_url)
-            
-        flash('Cobrança gerada, mas link não encontrado via API.', 'warning')
-        return redirect(url_for('dashboard.home'))
-
-    except ValueError as e:
-        # API Key missing
-        flash('Sistema de pagamento não configurado no servidor (API Key missing).', 'error')
-        return redirect(url_for('auth.payment_plan'))
-    except Exception as e:
-        current_app.logger.error(f"Checkout Error: {e}")
-        flash('Erro interno ao processar pagamento.', 'error')
-        return redirect(url_for('auth.payment_plan'))
+    # Helper redirect to main checkout
+    return redirect('/checkout')
 
 @auth.route('/logout')
 @login_required
