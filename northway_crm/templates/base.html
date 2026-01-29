@@ -206,9 +206,17 @@
             <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto no-scrollbar">
                 <!-- Navigation Links -->
                 <a href="{{ url_for('dashboard.home') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'dashboard.home' %}bg-white/10 text-white font-semibold{% endif %}">
-                    <i data-lucide="home" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="sidebar-text transition-opacity duration-300">Início</span>
+                    class="flex items-center justify-between px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'dashboard.home' %}bg-white/10 text-white font-semibold{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="home" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="sidebar-text transition-opacity duration-300">Início</span>
+                    </div>
+                    {% if subscription_days_remaining is not none %}
+                    <span
+                        class="sidebar-text text-[10px] uppercase font-bold px-2 py-0.5 rounded-full {{ 'bg-green-500/20 text-green-400' if subscription_days_remaining > 5 else 'bg-red-500/20 text-red-400' }}">
+                        {{ subscription_days_remaining }}d
+                    </span>
+                    {% endif %}
                 </a>
 
                 {% if current_user.has_permission('dashboard_view') %}

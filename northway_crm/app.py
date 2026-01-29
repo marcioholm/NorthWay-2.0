@@ -362,12 +362,29 @@ def create_app():
                             print("✅ MIGRATION: next_due_date added.")
                     except Exception as next_due_mig_e:
                         print(f"❌ MIGRATION ERROR on next_due_date: {next_due_mig_e}")
-                        
+                # 3. Add next_due_date if missing (Critical for Billing)
+                # ... (Migration logic was here) ...
+            
             except Exception as seed_e:
                 # Log but don't crash the factory
                 print(f"❌ Auto-migration failed: {seed_e}")
                 import traceback
                 traceback.print_exc()
+
+        # --- GLOBAL CONTEXT PROCESSOR ---
+        @app.context_processor
+        def inject_saas_metrics():
+            if not current_user.is_authenticated or not current_user.company_id:
+                return {}
+            
+            # Days Remaining Calculation
+            days_remaining = None
+            if current_user.company and current_user.company.next_due_date:
+                from datetime import date
+                delta = current_user.company.next_due_date - date.today()
+                days_remaining = delta.days
+            
+            return dict(subscription_days_remaining=days_remaining)
 
         return app
 
