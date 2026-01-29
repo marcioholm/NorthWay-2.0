@@ -179,20 +179,33 @@ def create_app():
             tb = traceback.format_exc()
             return render_template('500.html', error=str(error), traceback=tb), 500
 
-        # Debug Route for Schema (Added for Diagnosis)
         @app.route('/debug_schema')
         def debug_schema():
+            debug_info = {}
             try:
-                from sqlalchemy import inspect
+                # 1. Env Var Check
+                url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+                masked_url = url.replace(url.split('@')[0], '***') if '@' in url else '***'
+                debug_info['masked_url'] = masked_url
+                
+                # 2. Connection Test
+                from sqlalchemy import text, inspect
+                with db.engine.connect() as conn:
+                    result = conn.execute(text("SELECT 1")).scalar()
+                    debug_info['connection_status'] = "OK" if result == 1 else "FAILED"
+                
+                # 3. Schema Inspect
                 inspector = inspect(db.engine)
                 tables = inspector.get_table_names()
                 schema_info = {}
                 for table in tables:
                      cols = [c['name'] for c in inspector.get_columns(table)]
                      schema_info[table] = cols
-                return jsonify({'status': 'ok', 'tables': tables, 'schema': schema_info})
+                
+                return jsonify({'status': 'ok', 'debug_info': debug_info, 'tables': tables, 'schema': schema_info})
             except Exception as e:
-                return jsonify({'error': str(e)}), 500
+                import traceback
+                return jsonify({'error': str(e), 'traceback': traceback.format_exc(), 'partial_info': debug_info}), 500
 
         # --- REGISTER BLUEPRINTS ---
             # --- REGISTER BLUEPRINTS ---
