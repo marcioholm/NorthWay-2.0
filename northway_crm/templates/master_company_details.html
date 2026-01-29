@@ -185,6 +185,68 @@
                     </div>
                 </div>
 
+                <!-- Admin Contact Info (For Remarketing) -->
+                {% if admin_user %}
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <i data-lucide="contact" class="w-32 h-32"></i>
+                    </div>
+
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i data-lucide="user-circle" class="w-5 h-5 text-blue-400"></i>
+                        Contato do Administrador
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Nome Completo
+                            </p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-medium text-lg">{{ admin_user.name }}</span>
+                                <button onclick="navigator.clipboard.writeText('{{ admin_user.name }}')"
+                                    class="text-gray-600 hover:text-white transition-colors" title="Copiar">
+                                    <i data-lucide="copy" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Email</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-medium break-all">{{ admin_user.email }}</span>
+                                <button onclick="navigator.clipboard.writeText('{{ admin_user.email }}')"
+                                    class="text-gray-600 hover:text-white transition-colors" title="Copiar">
+                                    <i data-lucide="copy" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Telefone /
+                                WhatsApp</p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-white font-medium">{{ admin_user.phone or 'Não informado' }}</span>
+                                {% if admin_user.phone %}
+                                <a href="https://wa.me/55{{ admin_user.phone|replace(' ', '')|replace('-', '')|replace('(', '')|replace(')', '') }}"
+                                    target="_blank" class="text-green-500 hover:text-green-400">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Último Acesso
+                            </p>
+                            <p class="text-gray-300">
+                                {{ admin_user.last_login.strftime('%d/%m/%Y %H:%M') if admin_user.last_login else
+                                'Nunca' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Advanced Data (JSON View or extended tables could go here) -->
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
                     <h3 class="text-lg font-bold text-white mb-4">Dados Técnicos</h3>

@@ -152,7 +152,9 @@
                                             {{ company.name[:1].upper() }}
                                         </div>
                                         <div>
-                                            <div class="font-bold text-white text-base">{{ company.name }}</div>
+                                            <a href="{{ url_for('master.company_details', company_id=company.id) }}"
+                                                class="font-bold text-white text-base hover:text-blue-400 hover:underline transition-colors">{{
+                                                company.name }}</a>
                                             <div class="text-xs text-gray-500 font-mono mt-0.5">#{{ company.id }} • {{
                                                 company.document or 'Sem Doc' }}</div>
                                         </div>
