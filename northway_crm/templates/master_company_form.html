@@ -2,101 +2,138 @@
 
 {% block content %}
 <div class="h-screen flex flex-col bg-gray-900 text-white">
-    <!-- Header -->
-    <div class="h-16 border-b border-gray-800 flex items-center gap-4 px-8 bg-black/40">
-        <a href="{{ url_for('master.companies') }}" class="text-gray-400 hover:text-white transition-colors">
-            <i data-lucide="arrow-left" class="w-5 h-5"></i>
-        </a>
-        <h1 class="text-xl font-bold tracking-tight">
-            {{ 'Editar Empresa' if company else 'Nova Empresa' }}
-        </h1>
+    <!-- Master Header -->
+    <div
+        class="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md sticky top-0 z-30">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('master.companies') }}" class="text-gray-400 hover:text-white transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div
+                class="w-8 h-8 rounded bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center font-black text-white shadow-lg shadow-blue-900/50">
+                <i data-lucide="building-2" class="w-4 h-4"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight">{{ 'Editar Empresa' if company else 'Nova Empresa' }}</h1>
+                <p class="text-xs text-gray-400">{{ company.name if company else 'Cadastro de novo tenant' }}</p>
+            </div>
+        </div>
     </div>
 
     <!-- Form Content -->
     <div class="flex-1 overflow-y-auto p-8">
-        <div class="max-w-2xl mx-auto">
-            <form method="POST" class="space-y-6">
+        <div class="max-w-3xl mx-auto">
+            <form method="POST" class="space-y-8">
 
                 <!-- Identification -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg space-y-4">
-                    <h2 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Dados da Empresa</h2>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Nome da Empresa</label>
-                        <input type="text" name="name" value="{{ company.name if company else '' }}" required
-                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-northway-red focus:border-transparent outline-none">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">CNPJ / Documento</label>
-                        <input type="text" name="document" value="{{ company.document if company else '' }}"
-                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-northway-red focus:border-transparent outline-none">
-                    </div>
-                </div>
-
-                <!-- SaaS Plan & Status -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg space-y-4">
-                    <h2 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Plano e Status</h2>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Plano</label>
-                            <select name="plan"
-                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
-                                <option value="starter" {% if company and company.plan=='starter' %}selected{% endif %}>
-                                    Starter</option>
-                                <option value="pro" {% if company and company.plan=='pro' %}selected{% endif %}>Pro
-                                </option>
-                                <option value="enterprise" {% if company and company.plan=='enterprise' %}selected{%
-                                    endif %}>Enterprise</option>
-                            </select>
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Dados da Empresa
+                    </h3>
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 backdrop-blur-sm">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Nome Oficial</label>
+                            <input type="text" name="name" value="{{ company.name if company else '' }}" required
+                                placeholder="Ex: NorthWay Tecnologia Ltda"
+                                class="w-full bg-gray-900/50 border border-gray-600 focus:border-blue-500 rounded-lg px-4 py-3 text-white placeholder-gray-600 outline-none transition-all focus:ring-1 focus:ring-blue-500/50">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Status</label>
-                            <select name="status"
-                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
-                                <option value="active" {% if company and company.status=='active' %}selected{% endif %}>
-                                    Ativa</option>
-                                <option value="suspended" {% if company and company.status=='suspended' %}selected{%
-                                    endif %} class="text-yellow-500">Suspensa</option>
-                                <option value="cancelled" {% if company and company.status=='cancelled' %}selected{%
-                                    endif %} class="text-red-500">Cancelada</option>
-                            </select>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">CNPJ /
+                                Documento</label>
+                            <input type="text" name="document" value="{{ company.document if company else '' }}"
+                                placeholder="00.000.000/0000-00"
+                                class="w-full bg-gray-900/50 border border-gray-600 focus:border-blue-500 rounded-lg px-4 py-3 text-white placeholder-gray-600 outline-none transition-all focus:ring-1 focus:ring-blue-500/50">
                         </div>
                     </div>
                 </div>
 
-                <!-- Limits Override (Only if editing) -->
-                {% if company %}
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg space-y-4">
-                    <h2 class="text-lg font-bold text-white border-b border-gray-700 pb-2">Limites Personalizados</h2>
-                    <p class="text-xs text-yellow-500 mb-2">Atenção: Ao mudar o plano acima, os limites não são
-                        alterados automaticamente aqui para evitar conflitos. Ajuste se necessário.</p>
+                <!-- Plan & Configuration -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="settings-2" class="w-4 h-4"></i> Configuração do Tenant
+                    </h3>
+                    <div class="bg-gray-800/50 p-6 rounded-xl border border-gray-700/50 backdrop-blur-sm space-y-6">
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Máx. Usuários</label>
-                            <input type="number" name="max_users" value="{{ company.max_users }}" required
-                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        <!-- Plan Selector (Simplified) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Plano de
+                                    Acesso</label>
+                                <div class="relative">
+                                    <select name="plan"
+                                        class="w-full bg-gray-900/50 border border-gray-600 focus:border-blue-500 rounded-lg px-4 py-3 text-white appearance-none outline-none transition-all">
+                                        <!-- Simplified Options per user user request -->
+                                        <option value="pro" {% if not company or company.plan=='pro' %}selected{% endif
+                                            %}>💎 Plano Pro (Padrão)</option>
+                                        <option value="enterprise" {% if company and company.plan=='enterprise'
+                                            %}selected{% endif %}>🏢 Enterprise (Personalizado)</option>
+                                        <option value="starter" {% if company and company.plan=='starter' %}selected{%
+                                            endif %}>🌱 Starter (Legado)</option>
+                                    </select>
+                                    <i data-lucide="chevron-down"
+                                        class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
+                                </div>
+                                <p class="text-[10px] text-gray-500 mt-1.5">No momento, o Plano Pro é o valor único
+                                    praticado.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Status da
+                                    Conta</label>
+                                <div class="relative">
+                                    <select name="status"
+                                        class="w-full bg-gray-900/50 border border-gray-600 focus:border-blue-500 rounded-lg px-4 py-3 text-white appearance-none outline-none transition-all">
+                                        <option value="active" {% if company and company.status=='active' %}selected{%
+                                            endif %}>✅ Ativa</option>
+                                        <option value="suspended" {% if company and company.status=='suspended'
+                                            %}selected{% endif %}>⏸️ Suspensa</option>
+                                        <option value="cancelled" {% if company and company.status=='cancelled'
+                                            %}selected{% endif %}>🚫 Cancelada</option>
+                                    </select>
+                                    <i data-lucide="chevron-down"
+                                        class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
+                                </div>
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-400 mb-1">Máx. Leads</label>
-                            <input type="number" name="max_leads" value="{{ company.max_leads }}" required
-                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        <!-- Manual Limits -->
+                        <div class="border-t border-gray-700 pt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <label class="text-xs font-bold text-gray-400 uppercase">Limites Personalizados</label>
+                                <span
+                                    class="text-[10px] bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded border border-yellow-500/20">Avançado</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-[10px] text-gray-500 mb-1">MÁX. USUÁRIOS</label>
+                                    <input type="number" name="max_users"
+                                        value="{{ company.max_users if company else 5 }}" required
+                                        class="w-full bg-gray-900/50 border border-gray-600 focus:border-yellow-500 rounded-lg px-4 py-2 text-white outline-none text-center font-mono placeholder-gray-600">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-500 mb-1">MÁX. LEADS</label>
+                                    <input type="number" name="max_leads"
+                                        value="{{ company.max_leads if company else 1000 }}" required
+                                        class="w-full bg-gray-900/50 border border-gray-600 focus:border-yellow-500 rounded-lg px-4 py-2 text-white outline-none text-center font-mono placeholder-gray-600">
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-2 italic">* Estes valores sobrescrevem o padrão do
+                                plano selecionado.</p>
                         </div>
                     </div>
                 </div>
-                {% endif %}
 
                 <!-- Actions -->
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-800">
+                <div class="flex items-center justify-end gap-4 pt-6">
                     <a href="{{ url_for('master.companies') }}"
-                        class="px-6 py-2.5 text-gray-400 hover:text-white transition-colors text-sm font-medium">Cancelar</a>
+                        class="px-6 py-3 text-gray-400 hover:text-white transition-colors text-sm font-bold">Cancelar</a>
                     <button type="submit"
-                        class="bg-northway-red hover:bg-red-700 text-white px-8 py-2.5 rounded-lg font-bold text-sm transition-colors shadow-lg">
-                        Salvar Empresa
+                        class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-8 py-3 rounded-lg font-bold text-sm transition-all shadow-lg shadow-blue-900/30 flex items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        {{ 'Salvar Alterações' if company else 'Criar Empresa' }}
                     </button>
                 </div>
             </form>
