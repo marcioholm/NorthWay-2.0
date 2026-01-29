@@ -270,18 +270,25 @@ def create_app():
         
     # --- AUTO-MIGRATION / TABLE CREATION ---
     # Critical for Vercel/Ephemeral environments
-    with app.app_context():
-        try:
-            # Check if critical tables exist
-            from sqlalchemy import inspect
-            inspector = inspect(db.engine)
-            if not inspector.has_table("user"):
-                print("⚠️ Tables missing! Running db.create_all()...")
-                db.create_all()
-                print("✅ Tables created.")
-            else:
-                # MIGRATE: Add Enrichment Columns if missing
-                print("🐘 DATABASE: Checking for missing CNPJ enrichment columns...")
+    # --- AUTO-MIGRATION / TABLE CREATION ---
+    # Critical for Vercel/Ephemeral environments
+    # DISABLED FOR STABILITY DIAGNOSIS
+    # with app.app_context():
+    #     pass 
+        # try:
+        #     # Check if critical tables exist
+        #     from sqlalchemy import inspect
+        #     inspector = inspect(db.engine)
+        #     if not inspector.has_table("user"):
+        #         print("⚠️ Tables missing! Running db.create_all()...")
+        #         db.create_all()
+        #         print("✅ Tables created.")
+        #     else:
+        #         # MIGRATE: Add Enrichment Columns if missing
+        #         print("🐘 DATABASE: Checking for missing CNPJ enrichment columns...")
+        #         # ... (Rest of migration logic commented out implicitly by not running the block)
+        # except Exception as seed_e:
+        #     print(f"❌ Auto-migration failed: {seed_e}")
                 columns_to_add = [
                     ("legal_name", "VARCHAR(200)"),
                     ("cnpj", "VARCHAR(20)"),
@@ -422,8 +429,8 @@ def create_app():
                     db.session.add(u)
                     db.session.commit()
                     print("✅ Default Admin created: admin@northway.com / 123456")
-        except Exception as seed_e:
-            print(f"❌ Auto-migration failed: {seed_e}")
+                # ...
+                pass
 
     return app
 
