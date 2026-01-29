@@ -225,6 +225,16 @@
                                 <td class="px-6 py-4 text-right">
                                     <div
                                         class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                        <!-- Generate Payment Button -->
+                                        <form action="{{ url_for('master.generate_payment', company_id=company.id) }}"
+                                            method="POST" class="inline">
+                                            <button type="submit"
+                                                class="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
+                                                title="Gerar/Ver Cobrança">
+                                                <i data-lucide="credit-card" class="w-4 h-4"></i>
+                                            </button>
+                                        </form>
+
                                         <!-- Manage Users -->
                                         <a href="{{ url_for('master.company_users', company_id=company.id) }}"
                                             class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
