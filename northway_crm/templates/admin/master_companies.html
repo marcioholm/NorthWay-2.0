@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Master Admin: Empresas</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Gerenciamento global de tenants.</p>
+        </div>
+        <div
+            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-blue-200 dark:text-blue-800">
+            Acesso Super Admin
+        </div>
+    </div>
+
+    <!-- Companies List -->
+    <div
+        class="bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-background-dark dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="px-6 py-4">Empresa</th>
+                        <th scope="col" class="px-6 py-4">Responsável</th>
+                        <th scope="col" class="px-6 py-4">Status Pagto</th>
+                        <th scope="col" class="px-6 py-4">Plano</th>
+                        <th scope="col" class="px-6 py-4">Criado em</th>
+                        <th scope="col" class="px-6 py-4 text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for company in companies %}
+                    <tr
+                        class="bg-white border-b dark:bg-surface dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                            {{ company.name }}
+                            {% if company.document %}
+                            <div class="text-xs text-gray-500">{{ company.document }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ company.representative or '-' }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if company.payment_status == 'courtesy' %}
+                            <span
+                                class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded border border-purple-200">
+                                👑 CORTESIA VIP
+                            </span>
+                            {% elif company.payment_status == 'active' %}
+                            <span
+                                class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded border border-green-200">
+                                Ativo
+                            </span>
+                            {% elif company.payment_status == 'overdue' %}
+                            <span
+                                class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded border border-red-200">
+                                Atrasado
+                            </span>
+                            {% elif company.payment_status == 'pending' %}
+                            <span
+                                class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded border border-yellow-200">
+                                Pendente
+                            </span>
+                            {% else %}
+                            <span
+                                class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded border border-gray-200">
+                                {{ company.payment_status }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ company.plan_type|default('N/A')|upper }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ company.created_at.strftime('%d/%m/%Y') }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <form action="{{ url_for('admin.master_toggle_courtesy', id=company.id) }}" method="POST"
+                                class="inline-block">
+                                {% if company.payment_status == 'courtesy' %}
+                                <button type="submit" name="action" value="revoke"
+                                    class="text-yellow-600 hover:text-yellow-900 font-medium text-xs border border-yellow-600 px-3 py-1 rounded hover:bg-yellow-50 transition-colors">
+                                    Remover Cortesia
+                                </button>
+                                {% else %}
+                                <button type="submit" name="action" value="grant"
+                                    class="text-purple-600 hover:text-purple-900 font-bold text-xs border border-purple-600 px-3 py-1 rounded hover:bg-purple-50 transition-colors">
+                                    ✨ DAR CORTESIA
+                                </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

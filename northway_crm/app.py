@@ -234,7 +234,8 @@ def create_app():
             
             # --- LAZY BLOCK ENGINE (D+30) ---
             # If Overdue > 30 days, force block immediately on next request
-            if company.payment_status == 'overdue' and company.overdue_since:
+            # EXEMPTION: 'courtesy' status is immune to blocks
+            if company.payment_status == 'overdue' and company.overdue_since and company.payment_status != 'courtesy':
                 days_late = (datetime.utcnow() - company.overdue_since).days
                 if days_late >= 30 and not company.platform_inoperante:
                     print(f"🚫 BLOCKING COMPANY {company.name} due to {days_late} days overdue.")

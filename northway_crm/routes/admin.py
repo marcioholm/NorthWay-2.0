@@ -233,6 +233,45 @@ def profile():
         
     return render_template('profile.html', user=current_user)
 
+@admin_bp.route('/admin/master/companies')
+@login_required
+def master_companies():
+    from models import Company, User
+    # Security Check: Only Super Admin
+    if not current_user.is_super_admin:
+        abort(403)
+        
+    companies = Company.query.order_by(Company.created_at.desc()).all()
+    
+    # Simple stats
+    total_revenue = 0
+    # for c in companies: ... (calc revenue if needed)
+    
+    return render_template('admin/master_companies.html', companies=companies)
+
+@admin_bp.route('/admin/master/companies/<int:id>/toggle-courtesy', methods=['POST'])
+@login_required
+def master_toggle_courtesy(id):
+    from models import db, Company
+    if not current_user.is_super_admin:
+        abort(403)
+        
+    company = Company.query.get_or_404(id)
+    action = request.form.get('action') # 'grant' or 'revoke'
+    
+    if action == 'grant':
+        company.payment_status = 'courtesy'
+        company.plan_type = 'courtesy_vip'
+        company.platform_inoperante = False # Unblock
+        flash(f'Cortesia concedida para {company.name}. Acesso liberado vitalício.', 'success')
+    elif action == 'revoke':
+        company.payment_status = 'pending' # Reset to pending to force regular flow or checking
+        company.plan_type = 'monthly' # Default back
+        flash(f'Cortesia revogada de {company.name}.', 'info')
+        
+    db.session.commit()
+    return redirect(url_for('admin.master_companies'))
+
 @admin_bp.route('/settings')
 @login_required
 def settings_index():
