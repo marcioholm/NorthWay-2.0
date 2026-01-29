@@ -550,12 +550,12 @@ def terminate_contract(id):
             Transaction.status.in_(['pending', 'overdue'])
         ).all()
     
-        from services.asaas_service import AsaasService
-        for tx in targets:
-            tx.status = 'cancelled'
-            if tx.asaas_id:
-                try: AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
-                except: pass
+        # from services.asaas_service import AsaasService
+        # for tx in targets:
+        #     tx.status = 'cancelled'
+        #     if tx.asaas_id:
+        #         try: AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
+        #         except: pass
     
         db.session.commit()
     
@@ -568,11 +568,11 @@ def terminate_contract(id):
             )
             db.session.add(fee_tx)
             db.session.commit()
-            try:
-                cust_id = AsaasService.create_customer(contract.company_id, contract.client)
-                AsaasService.create_payment(contract.company_id, cust_id, fee_tx)
-                db.session.commit()
-            except: pass
+            # try:
+            #     cust_id = AsaasService.create_customer(contract.company_id, contract.client)
+            #     AsaasService.create_payment(contract.company_id, cust_id, fee_tx)
+            #     db.session.commit()
+            # except: pass
     
         return jsonify({'message': 'Contrato encerrado com sucesso.'})
     except Exception as e:

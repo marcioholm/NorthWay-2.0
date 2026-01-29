@@ -1,7 +1,7 @@
 from flask import Blueprint, request, current_app, url_for
 from flask_login import login_required, current_user
 from models import db, Integration, FinancialEvent, Transaction, Contract
-from services.asaas_service import AsaasService
+
 from services.facebook_capi_service import FacebookCapiService
 from utils import api_response, retry_request
 import json
@@ -45,60 +45,12 @@ def save_asaas_config():
 @integrations_bp.route('/api/integrations/asaas/test', methods=['POST'])
 @login_required
 def test_asaas_connection():
-    if not current_user.company_id:
-        return api_response(success=False, error='Usuário sem empresa vinculada', status=403)
-
-    # Use the saved key or the one provided in request (for testing before save)
-    # But for security, usually we use the saved one or temporary one.
-    # Let's use the one in request if provided, else saved.
-    data = request.json
-    api_key = data.get('api_key')
-    environment = data.get('environment', 'sandbox')
-    
-    if not api_key:
-        # Try to fetch from DB
-        existing = Integration.query.filter(Integration.company_id == current_user.company_id, Integration.service == 'asaas').first()
-        if existing and existing.api_key:
-            api_key = existing.api_key
-            if existing.config_json:
-                try:
-                    conf = json.loads(existing.config_json)
-                    environment = conf.get('environment', environment)
-                except: pass
-        else:
-            return api_response(success=False, error='API Key missing', status=400)
-
-    # Test by listing customers (limit 1)
-    base_url = AsaasService.get_base_url(environment)
-    headers = AsaasService.get_headers(api_key)
-    
-    try:
-        @retry_request(retries=2)
-        def perform_test():
-            return requests.get(f"{base_url}/customers?limit=1", headers=headers, timeout=10)
-        
-        res = perform_test()
-        if res.status_code == 200:
-            return api_response(success=True, data={'message': 'Conexão estabelecida com sucesso!'})
-        elif res.status_code == 401:
-            return api_response(success=False, error='Chave API inválida.', status=401)
-        else:
-            return api_response(success=False, error=f"Erro ASAAS: {res.text}", status=400)
-    except Exception as e:
-        return api_response(success=False, error=str(e), status=500)
+    return api_response(success=False, error='Manutenção da Integração Asaas (v2)', status=503)
 
 @integrations_bp.route('/api/integrations/asaas/setup-webhook', methods=['POST'])
 @login_required
 def setup_asaas_webhook():
-    if not current_user.company_id:
-         return api_response(success=False, error='Usuário sem empresa vinculada', status=403)
-
-    webhook_url = f"{request.url_root.rstrip('/')}/api/webhooks/asaas/{current_user.company_id}"
-    try:
-        AsaasService.configure_webhook(current_user.company_id, webhook_url)
-        return api_response(success=True)
-    except Exception as e:
-        return api_response(success=False, error=str(e), status=500)
+     return api_response(success=False, error='Configuração Automática Desabilitada. Use o Painel Asaas.', status=503)
 
 @integrations_bp.route('/api/integrations/google-maps/test', methods=['POST'])
 @login_required

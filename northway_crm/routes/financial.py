@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, jsonify, abort, request
 from flask_login import login_required, current_user
 from models import db, Contract, Transaction, FinancialCategory, Expense, ROLE_ADMIN, ROLE_MANAGER
-from services.asaas_service import AsaasService
+
 from datetime import date, datetime
 import json
 from sqlalchemy import func, desc, extract
@@ -404,40 +404,41 @@ def create_manual_charge(id):
     if not description or not amount_str or not due_date_str:
         return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
         
-    try:
-        amount = float(amount_str.replace('R$', '').replace('.', '').replace(',', '.').strip())
-        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+    # try:
+    #     amount = float(amount_str.replace('R$', '').replace('.', '').replace(',', '.').strip())
+    #     due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
         
-        # Create Transaction (Local)
-        tx = Transaction(
-            contract_id=None, # Manual Charge
-            client_id=client.id,
-            company_id=client.company_id,
-            description=description,
-            amount=amount,
-            due_date=due_date,
-            status='pending'
-        )
-        db.session.add(tx)
-        db.session.flush()
+    #     # Create Transaction (Local)
+    #     tx = Transaction(
+    #         contract_id=None, # Manual Charge
+    #         client_id=client.id,
+    #         company_id=client.company_id,
+    #         description=description,
+    #         amount=amount,
+    #         due_date=due_date,
+    #         status='pending'
+    #     )
+    #     db.session.add(tx)
+    #     db.session.flush()
         
-        # Create in Asaas
-        # Ensure customer exists
-        customer_id = AsaasService.create_customer(client.company_id, client)
-        payment_data = AsaasService.create_payment(client.company_id, customer_id, tx)
+    #     # Create in Asaas
+    #     # Ensure customer exists
+    #     # customer_id = AsaasService.create_customer(client.company_id, client)
+    #     # payment_data = AsaasService.create_payment(client.company_id, customer_id, tx)
         
-        tx.asaas_id = payment_data.get('id')
-        tx.asaas_invoice_url = payment_data.get('invoiceUrl')
+    #     # tx.asaas_id = payment_data.get('id')
+    #     # tx.asaas_invoice_url = payment_data.get('invoiceUrl')
         
-        db.session.commit()
+    #     db.session.commit()
          
-        return jsonify({'success': True, 'message': 'Cobrança gerada com sucesso!'})
+    #     return jsonify({'success': True, 'message': 'Cobrança gerada com sucesso!'})
         
-    except Exception as e:
-        db.session.rollback()
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+    # except Exception as e:
+    #     db.session.rollback()
+    #     import traceback
+    #     traceback.print_exc()
+    #     return jsonify({'error': str(e)}), 500
+    return jsonify({'error': 'Funcionalidade em manutenção (Migração Asaas v2)'}), 503
 
 @financial_bp.route('/api/transactions/<int:id>/cancel', methods=['POST'])
 @login_required
@@ -463,14 +464,15 @@ def cancel_transaction_route(id):
     try:
         # Cancel in Asaas if linked
         if tx.asaas_id:
-            try:
-                success = AsaasService.cancel_payment(current_user.company_id, tx.asaas_id)
-                if not success:
-                    # In some cases, we might want to allow local cancellation even if Asaas fails?
-                    # For now, we enforce sync.
-                    return jsonify({'success': False, 'error': 'Falha ao cancelar no Asaas. Verifique se a cobrança já foi paga ou removida.'}), 400
-            except Exception as asaas_error:
-                 return jsonify({'success': False, 'error': f'Erro de comunicação com Asaas: {str(asaas_error)}'}), 500
+            return jsonify({'success': False, 'error': 'Cancelamento Asaas em manutenção. Cancele direto no painel.'}), 400
+            # try:
+            #     success = AsaasService.cancel_payment(current_user.company_id, tx.asaas_id)
+            #     if not success:
+            #         # In some cases, we might want to allow local cancellation even if Asaas fails?
+            #         # For now, we enforce sync.
+            #         return jsonify({'success': False, 'error': 'Falha ao cancelar no Asaas. Verifique se a cobrança já foi paga ou removida.'}), 400
+            # except Exception as asaas_error:
+            #      return jsonify({'success': False, 'error': f'Erro de comunicação com Asaas: {str(asaas_error)}'}), 500
 
         # Update Local Status
         tx.status = 'cancelled'
