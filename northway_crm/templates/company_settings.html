@@ -46,6 +46,40 @@
             <p class="text-sm text-gray-500">Estas informações serão utilizadas automaticamente nos contratos.</p>
         </div>
 
+        <!-- Subscription Section (Tenant Admin View) -->
+        <div class="px-6 py-4 bg-indigo-50/50 border-b border-indigo-100 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-700">
+                    <i data-lucide="credit-card" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-gray-900">Sua Assinatura: {{ company.plan|capitalize }}</h4>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="text-gray-500">Status:
+                            <span
+                                class="{{ 'text-green-600 font-bold' if company.payment_status == 'active' else 'text-red-500 font-bold' }}">
+                                {{ company.payment_status|upper }}
+                            </span>
+                        </span>
+                        {% if subscription_days_remaining is not none %}
+                        <span class="text-gray-400">•</span>
+                        <span
+                            class="{{ 'text-red-500 font-bold' if subscription_days_remaining < 5 else 'text-gray-600' }}">
+                            Vence em {{ subscription_days_remaining }} dias
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <form action="{{ url_for('admin.generate_self_payment') }}" method="POST">
+                <button type="submit"
+                    class="flex items-center gap-2 px-3 py-1.5 bg-white border border-indigo-200 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                    <i data-lucide="barcode" class="w-4 h-4"></i>
+                    Gerar Boleto / 2ª Via
+                </button>
+            </form>
+        </div>
+
         <form action="{{ url_for('admin.company_settings') }}" method="POST" enctype="multipart/form-data"
             class="p-6 space-y-6">
 
