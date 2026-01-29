@@ -4,7 +4,6 @@ import json
 from flask import current_app
 
 ASAAS_API_URL = os.environ.get('ASAAS_API_URL', 'https://www.asaas.com/api/v3') # Use 'https://sandbox.asaas.com/api/v3' for test
-ASAAS_API_URL = os.environ.get('ASAAS_API_URL', 'https://www.asaas.com/api/v3') # Use 'https://sandbox.asaas.com/api/v3' for test
 
 def get_headers(api_key=None):
     token = api_key or os.environ.get('ASAAS_API_KEY')

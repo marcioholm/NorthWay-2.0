@@ -428,6 +428,14 @@ def generate_payment(company_id):
             if sub_data:
                 company.subscription_id = sub_data['id']
                 company.payment_status = 'pending'
+                
+                # Save Next Due Date immediately
+                if 'nextDueDate' in sub_data:
+                    try:
+                         company.next_due_date = datetime.strptime(sub_data['nextDueDate'], '%Y-%m-%d').date()
+                    except:
+                        pass
+                
                 db.session.commit()
                 flash("Assinatura criada com sucesso.", "success")
             else:
@@ -440,9 +448,9 @@ def generate_payment(company_id):
             invoice_url = payments[0]['invoiceUrl']
             return redirect(invoice_url)
         else:
-            flash("Assinatura ativa, mas boleto não encontrado (pode estar sendo gerado).", "warning")
+            flash("Assinatura criada/ativa, mas o link do boleto ainda não foi gerado pelo Asaas. Tente novamente em instantes.", "warning")
             
-        return redirect(url_for('master.company_details', company_id=company.id))
+        return redirect(url_for('master.dashboard')) # Redirect to dashboard list instead of details for flow usage
         
     except Exception as e:
         print(f"Generate Payment Error: {e}")
