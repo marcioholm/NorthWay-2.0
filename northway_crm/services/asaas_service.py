@@ -86,9 +86,13 @@ def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', desc
         if response.status_code == 200:
             return response.json()
         else:
+             with open('asaas_debug.log', 'a') as f:
+                 f.write(f"Subscription Error [{response.status_code}]: {response.text}\nPayload: {json.dumps(payload)}\n")
              print(f"❌ Error creating subscription: {response.text}")
              return None
     except Exception as e:
+        with open('asaas_debug.log', 'a') as f:
+             f.write(f"Exception: {str(e)}\n")
         print(f"❌ Exception creating subscription: {e}")
         return None
 

@@ -68,7 +68,7 @@ def process_checkout():
         
         # 4. Create Subscription
         # Due date: Today
-        next_due = datetime.now().date().strftime('%Y-%m-%d')
+        next_due = (datetime.now() + timedelta(days=1)).date().strftime('%Y-%m-%d')
         
         sub_data = create_subscription(customer_id, value, next_due, cycle, desc)
         if not sub_data:
