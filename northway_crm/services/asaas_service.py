@@ -6,24 +6,25 @@ from flask import current_app
 ASAAS_API_URL = os.environ.get('ASAAS_API_URL', 'https://www.asaas.com/api/v3') # Use 'https://sandbox.asaas.com/api/v3' for test
 ASAAS_API_KEY = os.environ.get('ASAAS_API_KEY')
 
-def get_headers():
+def get_headers(api_key=None):
     return {
         'Content-Type': 'application/json',
-        'access_token': ASAAS_API_KEY
+        'access_token': api_key or ASAAS_API_KEY
     }
 
-def create_customer(name, email, cpf_cnpj, phone=None, external_id=None):
+def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key=None):
     """
     Creates or Retrieves a customer in Asaas.
     """
-    if not ASAAS_API_KEY:
+    token = api_key or ASAAS_API_KEY
+    if not token:
         print("❌ ERROR: ASAAS_API_KEY not found.")
         return None
 
     # First, try to find existing customer by CPF/CNPJ to avoid duplicates
     try:
         search_url = f"{ASAAS_API_URL}/customers?cpfCnpj={cpf_cnpj}"
-        response = requests.get(search_url, headers=get_headers())
+        response = requests.get(search_url, headers=get_headers(token))
         if response.status_code == 200:
             data = response.json()
             if data.get('totalCount', 0) > 0:
@@ -43,7 +44,7 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None):
         payload["mobilePhone"] = phone
 
     try:
-        response = requests.post(f"{ASAAS_API_URL}/customers", json=payload, headers=get_headers())
+        response = requests.post(f"{ASAAS_API_URL}/customers", json=payload, headers=get_headers(token))
         if response.status_code == 200:
             return response.json()['id']
         else:
@@ -53,7 +54,7 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None):
         print(f"❌ Exception creating customer: {e}")
         return None
 
-def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', description="NorthWay CRM Subscription"):
+def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', description="NorthWay CRM Subscription", api_key=None):
     """
     Creates a recurring subscription.
     """
@@ -67,7 +68,7 @@ def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', desc
     }
     
     try:
-        response = requests.post(f"{ASAAS_API_URL}/subscriptions", json=payload, headers=get_headers())
+        response = requests.post(f"{ASAAS_API_URL}/subscriptions", json=payload, headers=get_headers(api_key))
         if response.status_code == 200:
             return response.json()
         else:
@@ -77,12 +78,12 @@ def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', desc
         print(f"❌ Exception creating subscription: {e}")
         return None
 
-def get_subscription_payments(subscription_id):
+def get_subscription_payments(subscription_id, api_key=None):
     """
     Get pending payments for a subscription to redirect user to payment page.
     """
     try:
-        response = requests.get(f"{ASAAS_API_URL}/subscriptions/{subscription_id}/payments", headers=get_headers())
+        response = requests.get(f"{ASAAS_API_URL}/subscriptions/{subscription_id}/payments", headers=get_headers(api_key))
         if response.status_code == 200:
             return response.json()['data']
         return []

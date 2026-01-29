@@ -603,6 +603,34 @@ def sign_contract(id):
         venc = int(data.get('dia_vencimento', '5'))
         start_d = datetime.strptime(data.get('data_inicio'), '%d/%m/%Y').date()
     
+        # --- TENANT BILLING LOGIC ---
+        from models import Integration
+        from services.asaas_service import create_customer, create_payment
+        
+        # 1. Check if Tenant has Asaas Configured
+        tenant_integration = Integration.query.filter_by(
+            company_id=current_user.company_id, 
+            service='asaas', 
+            is_active=True
+        ).first()
+        
+        tenant_api_key = tenant_integration.api_key if tenant_integration else None
+        
+        asaas_customer_id = None
+        if tenant_api_key:
+            # Create/Get Customer in Tenant's Asaas
+            try:
+                asaas_customer_id = create_customer(
+                    name=contract.client.name,
+                    email=contract.client.email,
+                    cpf_cnpj=contract.client.document,
+                    phone=contract.client.phone,
+                    external_id=contract.client.id,
+                    api_key=tenant_api_key
+                )
+            except Exception as e:
+                print(f"⚠️ Failed to create Asaas customer: {e}")
+
         if Transaction.query.filter_by(contract_id=contract.id).count() == 0:
             for i in range(qtd_p):
                 target_m = add_months_helper(start_d, i)
@@ -614,11 +642,36 @@ def sign_contract(id):
                     description=f"Parcela {i+1}/{qtd_p}", amount=val_p, due_date=due_d, status='pending'
                 )
                 db.session.add(t)
+                db.session.flush() # Get ID
+                
+                # Create Real Boleto if Tenant Configured
+                if tenant_api_key and asaas_customer_id:
+                    try:
+                        payment = create_payment(
+                            customer_id=asaas_customer_id,
+                            value=val_p,
+                            due_date=due_d.strftime('%Y-%m-%d'),
+                            description=f"Contrato #{contract.id} - Parcela {i+1}/{qtd_p}",
+                            external_ref=t.id,
+                            api_key=tenant_api_key
+                        )
+                        if payment:
+                            t.asaas_id = payment.get('id')
+                            t.asaas_invoice_url = payment.get('invoiceUrl') or payment.get('bankSlipUrl')
+                    except Exception as bill_e:
+                        print(f"❌ Failed to generate boleto {i+1}: {bill_e}")
         
         contract.signed_at = datetime.now()
         contract.status = 'active'
         db.session.commit()
-        return jsonify({'message': 'Contrato assinado e parcelas geradas.'})
+        
+        msg = 'Contrato assinado.'
+        if tenant_api_key and asaas_customer_id:
+            msg += ' Boletos gerados no seu Asaas com sucesso!'
+        else:
+            msg += ' (Boletos não gerados: configure sua integração Asaas)'
+            
+        return jsonify({'message': msg})
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': f'Erro: {str(e)}'}), 500
