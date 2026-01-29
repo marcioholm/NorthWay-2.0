@@ -295,7 +295,7 @@ def company_details(company_id):
                 # Update DB
                 next_due_str = sub_data['nextDueDate']
                 next_due = datetime.strptime(next_due_str, '%Y-%m-%d').date()
-                company.next_due_date = next_due
+                # company.next_due_date = next_due
                 
                 # Check Status (Sync DB if needed)
                 if sub_data.get('status') == 'ACTIVE':
@@ -314,10 +314,10 @@ def company_details(company_id):
             print(f"Error fetching sub details: {e}")
 
     # Fallback if DB has date but API failed or wasn't called
-    if not days_remaining and company.next_due_date:
-        delta = company.next_due_date - date.today()
-        days_remaining = delta.days
-        next_due_fmt = company.next_due_date.strftime('%d/%m/%Y')
+    # if not days_remaining and company.next_due_date:
+    #     delta = company.next_due_date - date.today()
+    #     days_remaining = delta.days
+    #     next_due_fmt = company.next_due_date.strftime('%d/%m/%Y')
 
     return render_template('master_company_details.html', 
                           company=company, 
