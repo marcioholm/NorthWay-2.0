@@ -229,10 +229,11 @@
                                         class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                         <!-- Generate Payment Button -->
                                         <form action="{{ url_for('master.generate_payment', company_id=company.id) }}"
-                                            method="POST" class="inline">
+                                            method="POST" class="inline"
+                                            onsubmit="return confirm('Tem certeza que deseja GERAR PAGAMENTO para {{ company.name }}?');">
                                             <button type="submit"
                                                 class="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
-                                                title="Gerar/Ver Cobrança">
+                                                title="Gerar Pagamento">
                                                 <i data-lucide="credit-card" class="w-4 h-4"></i>
                                             </button>
                                         </form>
