@@ -104,51 +104,110 @@
     </div>
     {% endif %}
 
-    <!-- Dynamic Splash Screen -->
+    <!-- Premium Splash Screen -->
     <div id="splash-screen"
-        class="fixed inset-0 bg-[#fdfdfd] z-[60] flex flex-col items-center justify-center transition-opacity duration-700 hidden">
-        <div class="animate-bounce mb-8">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay Logo"
-                class="w-48 h-auto shadow-2xl rounded-xl">
+        class="fixed inset-0 bg-northway-dark z-[150] flex flex-col items-center justify-center transition-all duration-1000 hidden overflow-hidden">
+
+        <!-- Animated Background Elements -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div
+                class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-red-600/10 rounded-full blur-[120px] animate-pulse">
+            </div>
+            <div class="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-red-600/10 rounded-full blur-[120px] animate-pulse"
+                style="animation-delay: 2s;"></div>
         </div>
-        <p id="splash-text" class="text-[#fa0102] text-sm font-bold animate-pulse tracking-widest uppercase">
-            Carregando...</p>
+
+        <div class="relative flex flex-col items-center gap-10">
+            <!-- Central Logo with Glow -->
+            <div class="relative group">
+                <div
+                    class="absolute inset-0 bg-red-600 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-1000 rounded-full">
+                </div>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay Logo"
+                    class="w-56 h-auto relative z-10 brightness-200 drop-shadow-[0_0_25px_rgba(250,1,2,0.5)] transform scale-90 animate-[scaleIn_1s_ease-out_forwards]">
+            </div>
+
+            <!-- Modern Loading Indicator -->
+            <div class="flex flex-col items-center gap-4 relative z-10">
+                <div class="flex gap-1.5 h-1">
+                    <div class="w-8 h-full bg-red-600 rounded-full animate-[loadingLine_1.5s_infinite]"></div>
+                    <div class="w-2 h-full bg-white/10 rounded-full"></div>
+                    <div class="w-2 h-full bg-white/10 rounded-full"></div>
+                </div>
+                <p id="splash-text"
+                    class="text-white/40 text-[10px] font-black tracking-[0.3em] uppercase animate-pulse">
+                    Iniciando Experiência
+                </p>
+            </div>
+        </div>
     </div>
+
+    <style>
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+                filter: blur(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes loadingLine {
+            0% {
+                transform: translateX(-10px);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: translateX(10px);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(-10px);
+                opacity: 0.3;
+            }
+        }
+    </style>
 
     <!-- Layout Wrapper (Sidebar + Main) -->
     <div class="flex-1 flex flex-row overflow-hidden relative w-full h-full">
 
         <script>
-                // Splash Screen Logic (Immediate execution to block if needed)
+                // Premium Splash Screen Logic
                 (function () {
-                    // Only show on Dashboard or root, and only once per session
                     const path = window.location.pathname;
-                    const isDashboard = path === '/' || path.includes('dashboard');
+                    const isDashboard = path === '/' || path.includes('dashboard') || path.includes('master');
 
                     if (isDashboard && !sessionStorage.getItem('northway_welcome_shown')) {
                         const splash = document.getElementById('splash-screen');
                         if (splash) {
                             splash.classList.remove('hidden');
 
-                            // Dynamic Messages
                             const messages = [
-                                "Preparando seu painel...",
-                                "Sincronizando clientes...",
-                                "Organizando tarefas...",
-                                "Bem-vindo de volta!",
-                                "Conectando à base..."
+                                "Sincronizando Ecossistema...",
+                                "Preparando sua Inteligência...",
+                                "Otimizando Negociações...",
+                                "Bem-vindo à NorthWay",
+                                "Conectando ao Sucesso..."
                             ];
                             const randomMsg = messages[Math.floor(Math.random() * messages.length)];
                             document.getElementById('splash-text').textContent = randomMsg;
 
-                            // Hide after delay
                             setTimeout(() => {
                                 splash.style.opacity = '0';
+                                splash.style.filter = 'blur(20px)';
+                                splash.style.transform = 'scale(1.1)';
                                 setTimeout(() => {
                                     splash.classList.add('hidden');
                                     sessionStorage.setItem('northway_welcome_shown', 'true');
-                                }, 700);
-                            }, 1500);
+                                }, 1000);
+                            }, 2000);
                         }
                     }
                 })();
