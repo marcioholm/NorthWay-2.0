@@ -19,7 +19,7 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key
     token = api_key or ASAAS_API_KEY
     if not token:
         print("❌ ERROR: ASAAS_API_KEY not found.")
-        return None
+        return None, "ASAAS_API_KEY Missing"
 
     # First, try to find existing customer by CPF/CNPJ to avoid duplicates
     try:
@@ -29,7 +29,7 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key
             data = response.json()
             if data.get('totalCount', 0) > 0:
                 print(f"✅ Customer found in Asaas: {data['data'][0]['id']}")
-                return data['data'][0]['id']
+                return data['data'][0]['id'], None
     except Exception as e:
         print(f"⚠️ Error searching customer in Asaas: {e}")
 
