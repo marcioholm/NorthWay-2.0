@@ -359,16 +359,27 @@ def create_app():
                                     conn.commit()
                                 print(f"✅ MIGRATION: {col_name} added to company.")
                         
-                        # Check for next_due_date separately (Date type)
+                                    conn.execute(text(f"ALTER TABLE company ADD COLUMN {col_name} {col_type}"))
+                                    conn.commit()
+                                print(f"✅ MIGRATION: {col_name} added to company.")
+                        
+                    except Exception as bill_migration_e:
+                         print(f"❌ MIGRATION ERROR on Billing Columns: {bill_migration_e}")
+                    
+                    # MIGRATE: Add next_due_date (Date type) - INDEPENDENT CHECK
+                    try:
+                        # Refresh inspector to be safe
+                        inspector = inspect(db.engine)
+                        existing_cols = [c['name'] for c in inspector.get_columns("company")]
+                        
                         if 'next_due_date' not in existing_cols:
                             print("📦 MIGRATION: Adding next_due_date to company...")
                             with db.engine.connect() as conn:
                                 conn.execute(text("ALTER TABLE company ADD COLUMN next_due_date DATE"))
                                 conn.commit()
                             print("✅ MIGRATION: next_due_date added to company.")
-                                
-                    except Exception as bill_migration_e:
-                         print(f"❌ MIGRATION ERROR on Billing Columns: {bill_migration_e}")
+                    except Exception as date_migration_e:
+                        print(f"❌ MIGRATION ERROR on next_due_date: {date_migration_e}")
 
                 # MIGRATE: Create BillingEvent table if missing
                 if not inspector.has_table("billing_event"):
