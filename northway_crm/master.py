@@ -546,7 +546,7 @@ def library_new():
             name=name,
             type=type_,
             content=content,
-            is_global=True,
+            is_global=False,
             active=True
         )
         
@@ -593,6 +593,64 @@ def library_edit(id):
     return render_template('master_library_form.html', companies=companies, template=tmpl)
 
 # --- Temporary Migration Route ---
+@master.route('/master/restore-production-docs')
+@login_required
+def restore_production_docs():
+    """
+    Emergency restoration for production documents after launch reset.
+    Ensures LibraryBooks exist and are linked to the Master Admin.
+    """
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    try:
+        from models import LibraryBook, Company, User
+        
+        # 1. Identify Master Company
+        master_user = User.query.filter_by(email='master@northway.com').first()
+        if not master_user:
+             return "Master user not found."
+             
+        master_company_id = master_user.company_id
+        master_company = Company.query.get(master_company_id)
+        
+        # 2. Define Initial Books (Private for Master)
+        initial_books = [
+            {'title': 'Diagnóstico Estratégico', 'description': 'Análise completa para Óticas 2026.', 'category': 'Vendas', 'route_name': 'docs.presentation_consultancy'},
+            {'title': 'Apresentação Institucional', 'description': 'Marketing com Direção - Quem somos e o que fazemos.', 'category': 'Institucional', 'route_name': 'docs.presentation_institutional'},
+            {'title': 'Oferta Principal', 'description': 'Estrutura Completa da Proposta Comercial.', 'category': 'Vendas', 'route_name': 'docs.presentation_offer_main'},
+            {'title': 'Plano Essencial (Downsell)', 'description': 'Alternativa de proposta para recuperação.', 'category': 'Vendas', 'route_name': 'docs.presentation_offer_downsell'},
+            {'title': 'Manual de Onboarding', 'description': 'Guia operacional para início de jornada.', 'category': 'Processos', 'route_name': 'docs.user_manual'},
+            {'title': 'Scripts & Técnicas', 'description': 'Roteiros de vendas e técnicas de fechamento.', 'category': 'Vendas', 'route_name': 'docs.playbook_comercial'},
+            {'title': 'Objeções & SDR', 'description': 'Matriz de objeções e guia para pré-vendas.', 'category': 'Processos', 'route_name': 'docs.playbook_processos'},
+            {'title': 'Academia de Treinamento', 'description': 'Training & Scripts area.', 'category': 'Treinamento', 'route_name': 'docs.playbook_treinamento'}
+        ]
+        
+        count = 0
+        for data in initial_books:
+            book = LibraryBook.query.filter_by(route_name=data['route_name']).first()
+            if not book:
+                book = LibraryBook(
+                    title=data['title'],
+                    description=data['description'],
+                    category=data['category'],
+                    route_name=data['route_name'],
+                    active=True
+                )
+                db.session.add(book)
+            
+            # Ensure association with Master
+            if master_company and master_company not in book.allowed_companies:
+                book.allowed_companies.append(master_company)
+                count += 1
+                
+        db.session.commit()
+        return f"Restored {count} associations for company #{master_company_id}. <a href='/library'>Go to Library</a>"
+        
+    except Exception as e:
+        db.session.rollback()
+        return f"Error: {e}"
+
 @master.route('/master/migrate-library-now')
 @login_required
 def run_library_migration():
