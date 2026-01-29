@@ -462,9 +462,9 @@ def sys_migrate_contacts():
 def checkout_fallback():
     return render_template('checkout_page.html')
 
+# Health Check - Visible in Production
+@app.route('/ping')
+def ping(): return "pong"
+
 if __name__ == '__main__':
-    # Add a /ping route directly if not in any bp for debugging
-    @app.route('/ping')
-    def ping(): return "pong"
-    
     app.run(debug=True, port=5001)
