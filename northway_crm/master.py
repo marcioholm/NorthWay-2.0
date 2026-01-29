@@ -709,41 +709,53 @@ def books_edit(id):
         
     companies = Company.query.all()
     return render_template('master_book_form.html', companies=companies, book=book)
-@master.route('/master/system-reset')
+@master.route('/master/launch-wipe')
 @login_required
-def system_reset():
+def launch_wipe():
     """
-    EMERGENCY ROUTE: Wipes all users EXCEPT the current user.
-    Promotes the current user to Super Admin and 'reset' state.
+    LAUNCH CLEANUP: Deletes ALL Companies (and associated data) EXCEPT the current user's company (Admin).
+    Use this to clear test data before official launch.
     """
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
     try:
-        # 1. Promote Self (Just in case they lost it)
-        current_user.is_super_admin = True
-        current_user.role = 'ADMIN' # Ensure they have admin role too
+        my_company_id = current_user.company_id
         
-        # 2. Find and Delete Others
-        # Note: If cascade DELETE is not set on relationships (Leads, etc), this might fail or leave orphans.
-        # For a "Reset", orphans might be acceptable or we should delete them too. 
-        # For simplicity/safety, we just delete users. SQLAlchemy usually handles simple relationships.
+        # 1. Identify companies to delete
+        companies_to_delete = Company.query.filter(Company.id != my_company_id).all()
+        count = len(companies_to_delete)
         
-        others = User.query.filter(User.id != current_user.id).all()
-        count = len(others)
-        
-        for u in others:
-            db.session.delete(u)
+        if count == 0:
+             return f"<h1>Cleanup Complete</h1><p>No other companies found besides yours (#{my_company_id}). Database is clean.</p><a href='{url_for('master.dashboard')}'>Back to Dashboard</a>"
+
+        deleted_names = []
+        for comp in companies_to_delete:
+            deleted_names.append(comp.name)
+            
+            # Cascade delete usually handles children, but let's be safe with users first to avoid constraint issues if cascade missing
+            users = User.query.filter_by(company_id=comp.id).all()
+            for u in users:
+                db.session.delete(u)
+            
+            db.session.delete(comp)
             
         db.session.commit()
         
         return f"""
-        <h1>System Reset Successful</h1>
-        <p>User <strong>{current_user.email}</strong> is now the ONLY user and is SUPER ADMIN.</p>
-        <p>Deleted {count} other users.</p>
-        <br>
-        <a href='/'>Go to Dashboard</a>
+        <div style="font-family: sans-serif; padding: 40px; text-align: center;">
+            <h1 style="color: #10b981;">Launch Cleanup Successful 🚀</h1>
+            <p><strong>Kept:</strong> Your Company (#{my_company_id})</p>
+            <p><strong>Deleted ({count}):</strong> {', '.join(deleted_names)}</p>
+            <br>
+            <p>Your database is now ready for real clients.</p>
+            <br>
+            <a href='{url_for('master.dashboard')}' style="background: #000; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 6px;">Go to Dashboard</a>
+        </div>
         """
     except Exception as e:
         db.session.rollback()
-        return f"Reset Failed: {str(e)}<br>Check logs for integrity errors (orphan records)."
+        return f"<h1>Cleanup Failed</h1><p>{str(e)}</p><p>Check if there are protected relationships (like Contracts/Blueprints) preventing deletion.</p>"
 @master.route('/master/migrate-saas')
 @login_required
 def migrate_saas():
