@@ -358,6 +358,14 @@ def create_app():
                                     conn.execute(text(f"ALTER TABLE company ADD COLUMN {col_name} {col_type}"))
                                     conn.commit()
                                 print(f"✅ MIGRATION: {col_name} added to company.")
+                        
+                        # Check for next_due_date separately (Date type)
+                        if 'next_due_date' not in existing_cols:
+                            print("📦 MIGRATION: Adding next_due_date to company...")
+                            with db.engine.connect() as conn:
+                                conn.execute(text("ALTER TABLE company ADD COLUMN next_due_date DATE"))
+                                conn.commit()
+                            print("✅ MIGRATION: next_due_date added to company.")
                                 
                     except Exception as bill_migration_e:
                          print(f"❌ MIGRATION ERROR on Billing Columns: {bill_migration_e}")

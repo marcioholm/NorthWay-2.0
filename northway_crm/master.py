@@ -276,11 +276,54 @@ def company_edit(company_id):
 
 @master.route('/master/company/<int:company_id>/details')
 @login_required
+@master_required
 def company_details(company_id):
+    from datetime import datetime, date
     company = Company.query.get_or_404(company_id)
-    # Find active admin for quick access
-    admin_user = User.query.filter_by(company_id=company.id, role=ROLE_ADMIN).first()
-    return render_template('master_company_details.html', company=company, admin_user=admin_user)
+    admin_user = User.query.filter_by(company_id=company_id, role='admin').first()
+    
+    # Subscription & Remaining Time Logic
+    days_remaining = None
+    next_due_fmt = None
+    
+    if company.subscription_id:
+        try:
+            from services.asaas_service import get_subscription
+            sub_data = get_subscription(company.subscription_id)
+            
+            if sub_data and 'nextDueDate' in sub_data:
+                # Update DB
+                next_due_str = sub_data['nextDueDate']
+                next_due = datetime.strptime(next_due_str, '%Y-%m-%d').date()
+                company.next_due_date = next_due
+                
+                # Check Status (Sync DB if needed)
+                if sub_data.get('status') == 'ACTIVE':
+                    if company.payment_status != 'active': company.payment_status = 'active'
+                elif sub_data.get('status') == 'OVERDUE':
+                    if company.payment_status != 'overdue': company.payment_status = 'overdue'
+
+                db.session.commit()
+                
+                # Calculate Remaining Days
+                delta = next_due - date.today()
+                days_remaining = delta.days
+                next_due_fmt = next_due.strftime('%d/%m/%Y')
+                
+        except Exception as e:
+            print(f"Error fetching sub details: {e}")
+
+    # Fallback if DB has date but API failed or wasn't called
+    if not days_remaining and company.next_due_date:
+        delta = company.next_due_date - date.today()
+        days_remaining = delta.days
+        next_due_fmt = company.next_due_date.strftime('%d/%m/%Y')
+
+    return render_template('master_company_details.html', 
+                          company=company, 
+                          admin_user=admin_user,
+                          days_remaining=days_remaining,
+                          next_due_fmt=next_due_fmt)
 
 
 @master.route('/master/company/<int:company_id>/generate-payment', methods=['POST'])

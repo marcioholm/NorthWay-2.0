@@ -84,6 +84,27 @@
                         </div>
                     </div>
 
+                    <!-- Remaining Time Indicator -->
+                    {% if days_remaining is not none %}
+                    <div class="mb-6 p-4 rounded-lg border flex items-center gap-3 
+                        {% if days_remaining < 0 %} bg-red-900/20 border-red-800 text-red-200
+                        {% elif days_remaining <= 5 %} bg-yellow-900/20 border-yellow-800 text-yellow-200
+                        {% else %} bg-blue-900/20 border-blue-800 text-blue-200 {% endif %}">
+
+                        <div class="p-2 rounded-full bg-black/20">
+                            <i data-lucide="clock" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase font-bold opacity-70">Próxima Renovação</p>
+                            <p class="font-bold text-lg">
+                                {% if days_remaining < 0 %} Vencido há {{ days_remaining|abs }} dias {% elif
+                                    days_remaining==0 %} Vence HOJE {% else %} {{ days_remaining }} dias restantes {%
+                                    endif %} </p>
+                                    <p class="text-xs opacity-70">{{ next_due_fmt }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="space-y-3">
                         <div class="flex justify-between items-center text-sm">
                             <span class="text-gray-400">ID Asaas:</span>
