@@ -458,6 +458,51 @@ def generate_payment(company_id):
         return redirect(url_for('master.company_details', company_id=company_id))
 
 
+
+@master.route('/master/company/<int:company_id>/block', methods=['POST'])
+@login_required
+def company_block(company_id):
+    if notZN getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    company = Company.query.get_or_404(company_id)
+    company.platform_inoperante = True
+    company.payment_status = 'blocked'
+    db.session.commit()
+    
+    flash(f"Acesso da empresa {company.name} foi BLOQUEADO.", "success")
+    return redirect(url_for('master.dashboard'))
+
+@master.route('/master/company/<int:company_id>/unlock', methods=['POST'])
+@login_required
+def company_unlock(company_id):
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    company = Company.query.get_or_404(company_id)
+    
+    # Unlock Logic: Give 7 days or custom
+    days = 5
+    if request.form.get('days'):
+        try:
+            days = int(request.form.get('days'))
+        except:
+            pass
+            
+    from datetime import datetime, timedelta, date
+    
+    company.platform_inoperante = False
+    company.payment_status = 'active' # Force active visually
+    company.overdue_since = None # Clear overdue flag
+    
+    # Push next due date to future to prevent auto-block scripts from catching it immediately
+    company.next_due_date = date.today() + timedelta(days=days)
+    
+    db.session.commit()
+    
+    flash(f"Acesso LIBERADO para {company.name} por {days} dias.", "success")
+    return redirect(url_for('master.dashboard'))
+
 @master.route('/master/library/new', methods=['GET', 'POST'])
 def library_new():
     if request.method == 'POST':

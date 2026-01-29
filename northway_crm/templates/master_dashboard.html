@@ -225,63 +225,95 @@
                                     <span class="text-sm font-bold text-white">{{ stat.user_count }}</span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <div
-                                        class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <!-- Generate Payment Button -->
-                                        <form action="{{ url_for('master.generate_payment', company_id=company.id) }}"
-                                            method="POST" class="inline"
-                                            onsubmit="return confirm('Tem certeza que deseja GERAR PAGAMENTO para {{ company.name }}?');">
-                                            <button type="submit"
-                                                class="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
-                                                title="Gerar Pagamento">
-                                                <i data-lucide="credit-card" class="w-4 h-4"></i>
-                                            </button>
-                                        </form>
+                                    <!-- Block/Unlock Controls -->
+                                    {% if company.platform_inoperante %}
+                                    <form action="{{ url_for('master.company_unlock', company_id=company.id) }}"
+                                        method="POST" class="inline">
+                                        <button type="submit"
+                                            class="p-2 text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white rounded-lg transition-colors font-bold text-xs uppercase"
+                                            title="Desbloquear Acesso">
+                                            <i data-lucide="lock-open" class="w-4 h-4 inline mr-1"></i> Liberar
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    {% if company.payment_status == 'overdue' %}
+                                    <form action="{{ url_for('master.company_unlock', company_id=company.id) }}"
+                                        method="POST" class="inline mr-2">
+                                        <input type="hidden" name="days" value="5">
+                                        <button type="submit"
+                                            class="p-2 text-green-400 bg-green-500/10 hover:bg-green-500 hover:text-white rounded-lg transition-colors font-bold text-xs uppercase"
+                                            title="Liberar por 5 dias">
+                                            <i data-lucide="clock" class="w-4 h-4 inline mr-1"></i> +5 Dias
+                                        </button>
+                                    </form>
+                                    {% endif %}
 
-                                        <!-- Manage Users -->
-                                        <a href="{{ url_for('master.company_users', company_id=company.id) }}"
-                                            class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                                            title="Gerenciar Usuários">
-                                            <i data-lucide="users" class="w-4 h-4"></i>
-                                        </a>
+                                    <form action="{{ url_for('master.company_block', company_id=company.id) }}"
+                                        method="POST" class="inline"
+                                        onsubmit="return confirm('Tem certeza que deseja BLOQUEAR o acesso desta empresa?');">
+                                        <button type="submit"
+                                            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                            title="Bloquear Acesso">
+                                            <i data-lucide="lock" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
 
-                                        <!-- Edit -->
-                                        <a href="{{ url_for('master.company_edit', company_id=company.id) }}"
-                                            class="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
-                                            title="Editar Preferências">
-                                            <i data-lucide="settings-2" class="w-4 h-4"></i>
-                                        </a>
+                                    <!-- Generate Payment Button -->
+                                    <form action="{{ url_for('master.generate_payment', company_id=company.id) }}"
+                                        method="POST" class="inline"
+                                        onsubmit="return confirm('Tem certeza que deseja GERAR PAGAMENTO para {{ company.name }}?');">
+                                        <button type="submit"
+                                            class="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
+                                            title="Gerar Pagamento">
+                                            <i data-lucide="credit-card" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
 
-                                        {% if stat.target_user_id %}
-                                        <a href="{{ url_for('master.impersonate', user_id=stat.target_user_id) }}"
-                                            class="flex items-center gap-1.5 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-wide rounded-lg hover:bg-gray-200 transition-colors shadow-lg ml-2"
-                                            title="Acessar Tenant">
-                                            <i data-lucide="log-in" class="w-3 h-3"></i> Acessar
-                                        </a>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    <!-- Manage Users -->
+                                    <a href="{{ url_for('master.company_users', company_id=company.id) }}"
+                                        class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                        title="Gerenciar Usuários">
+                                        <i data-lucide="users" class="w-4 h-4"></i>
+                                    </a>
+
+                                    <!-- Edit -->
+                                    <a href="{{ url_for('master.company_edit', company_id=company.id) }}"
+                                        class="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                                        title="Editar Preferências">
+                                        <i data-lucide="settings-2" class="w-4 h-4"></i>
+                                    </a>
+
+                                    {% if stat.target_user_id and not company.platform_inoperante %}
+                                    <a href="{{ url_for('master.impersonate', user_id=stat.target_user_id) }}"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-wide rounded-lg hover:bg-gray-200 transition-colors shadow-lg ml-2"
+                                        title="Acessar Tenant">
+                                        <i data-lucide="log-in" class="w-3 h-3"></i> Acessar
+                                    </a>
+                                    {% endif %}
                 </div>
-                {% if not stats %}
-                <div class="p-16 text-center">
-                    <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <i data-lucide="building-2" class="w-10 h-10 text-gray-600"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-2">Nenhuma empresa encontrada</h3>
-                    <p class="text-gray-500 mb-8 max-w-sm mx-auto">O sistema ainda não possui tenants cadastrados.
-                        Comece criando o primeiro.</p>
-                    <a href="{{ url_for('master.company_new') }}"
-                        class="inline-flex bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-red-900/40 items-center gap-2">
-                        <i data-lucide="plus" class="w-5 h-5"></i> Criar Nova Empresa
-                    </a>
-                </div>
-                {% endif %}
+                </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                </table>
             </div>
+            {% if not stats %}
+            <div class="p-16 text-center">
+                <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="building-2" class="w-10 h-10 text-gray-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Nenhuma empresa encontrada</h3>
+                <p class="text-gray-500 mb-8 max-w-sm mx-auto">O sistema ainda não possui tenants cadastrados.
+                    Comece criando o primeiro.</p>
+                <a href="{{ url_for('master.company_new') }}"
+                    class="inline-flex bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-red-900/40 items-center gap-2">
+                    <i data-lucide="plus" class="w-5 h-5"></i> Criar Nova Empresa
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
+</div>
 </div>
 {% endblock %}
