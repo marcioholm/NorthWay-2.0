@@ -153,7 +153,6 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     supabase_uid = db.Column(db.String(100), unique=True, nullable=True)
     password_hash = db.Column(db.String(200), nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False, default=ROLE_SALES) # Legacy/Fallback
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=True) # New RBAC
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Nullable for Supabase Auth Triggers
