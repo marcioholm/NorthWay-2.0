@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col h-full bg-gray-900 text-white">
+    <!-- Master Header -->
+    <div
+        class="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md sticky top-0 z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('master.companies') }}" class="text-gray-400 hover:text-white transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div
+                class="w-8 h-8 rounded bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center font-black text-white shadow-lg shadow-blue-900/50">
+                <i data-lucide="building-2" class="w-4 h-4"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight">Detalhes do Cliente</h1>
+                <p class="text-xs text-gray-400">Visão completa do tenant</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('master.company_edit', company_id=company.id) }}"
+                class="text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition-colors">
+                <i data-lucide="edit-2" class="w-4 h-4 inline-block mr-1"></i> Editar
+            </a>
+        </div>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left Column: Identity & Plan -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Identity Card -->
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <i data-lucide="building" class="w-32 h-32"></i>
+                    </div>
+
+                    <div
+                        class="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-2xl font-bold text-white mb-4 shadow-lg">
+                        {{ company.name[:1].upper() }}
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-white mb-1">{{ company.name }}</h2>
+                    <p class="text-sm text-gray-400 font-mono mb-4">#{{ company.id }}</p>
+
+                    <div class="space-y-3 pt-4 border-t border-gray-700">
+                        <div>
+                            <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Documento (CNPJ/CPF)
+                            </p>
+                            <p class="text-sm text-gray-200 font-mono">{{ company.document or company.cpf_cnpj or 'Não
+                                informado' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Responsável</p>
+                            <p class="text-sm text-gray-200">{{ company.representative or '---' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Criado em</p>
+                            <p class="text-sm text-gray-200">{{ company.created_at.strftime('%d/%m/%Y às %H:%M') if
+                                company.created_at else '---' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plan & Status Card -->
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i data-lucide="credit-card" class="w-5 h-5 text-northway-red"></i>
+                        Plano e Pagamento
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gray-700/50 p-3 rounded-lg border border-gray-600">
+                            <p class="text-[10px] text-gray-400 uppercase font-bold">Plano Atual</p>
+                            <p class="text-white font-bold">{{ company.plan|default('PRO')|upper }}</p>
+                        </div>
+                        <div class="bg-gray-700/50 p-3 rounded-lg border border-gray-600">
+                            <p class="text-[10px] text-gray-400 uppercase font-bold">Status Pagto</p>
+                            <p class="text-white font-bold capitalize">{{ company.payment_status|default('Pendente') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-400">ID Asaas:</span>
+                            <span class="font-mono text-xs text-gray-500">{{ company.asaas_customer_id or 'Não gerado'
+                                }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-400">Assinatura:</span>
+                            <span class="font-mono text-xs text-gray-500">{{ company.subscription_id or '---' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Manual Payment Trigger -->
+                    <div class="mt-6 pt-6 border-t border-gray-700">
+                        <form action="{{ url_for('master.generate_payment', company_id=company.id) }}" method="POST">
+                            <button type="submit"
+                                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-green-900/20 flex items-center justify-center gap-2 transition-all group">
+                                <i data-lucide="banknote"
+                                    class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                                Gerar Link de Pagamento
+                            </button>
+                            <p class="text-[10px] text-gray-500 text-center mt-2">
+                                Cria cliente e assinatura no Asaas se não existirem.
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Stats & Users -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Quick Actions -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="{{ url_for('master.company_users', company_id=company.id) }}"
+                        class="bg-gray-800 p-4 rounded-xl border border-gray-700 hover:border-gray-500 transition-colors flex items-center gap-3 group">
+                        <div class="bg-blue-500/10 p-2 rounded-lg text-blue-400 group-hover:text-blue-300">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white">Gerenciar Usuários</p>
+                            <p class="text-xs text-gray-400">Ver e editar equipe</p>
+                        </div>
+                    </a>
+
+                    {% if admin_user %}
+                    <a href="{{ url_for('master.impersonate', user_id=admin_user.id) }}"
+                        class="bg-gray-800 p-4 rounded-xl border border-gray-700 hover:border-gray-500 transition-colors flex items-center gap-3 group">
+                        <div class="bg-purple-500/10 p-2 rounded-lg text-purple-400 group-hover:text-purple-300">
+                            <i data-lucide="log-in" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white">Acessar Painel</p>
+                            <p class="text-xs text-gray-400">Logar como Admin</p>
+                        </div>
+                    </a>
+                    {% else %}
+                    <div
+                        class="bg-gray-800 p-4 rounded-xl border border-gray-700 opacity-50 flex items-center gap-3 cursor-not-allowed">
+                        <div class="bg-gray-700 p-2 rounded-lg text-gray-500">
+                            <i data-lucide="log-in" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-400">Sem Admin</p>
+                            <p class="text-xs text-gray-600">Impossível acessar</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center gap-3">
+                        <div class="bg-yellow-500/10 p-2 rounded-lg text-yellow-400">
+                            <i data-lucide="hard-drive" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white">Uso de Dados</p>
+                            <p class="text-xs text-gray-400">Em desenvolvimento</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Data (JSON View or extended tables could go here) -->
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">Dados Técnicos</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                        <div class="flex justify-between border-b border-gray-700 pb-2">
+                            <span class="text-gray-400">Limite Usuários</span>
+                            <span class="text-white font-mono">{{ company.max_users }}</span>
+                        </div>
+                        <div class="flex justify-between border-b border-gray-700 pb-2">
+                            <span class="text-gray-400">Limite Leads</span>
+                            <span class="text-white font-mono">{{ company.max_leads }}</span>
+                        </div>
+                        <div class="flex justify-between border-b border-gray-700 pb-2">
+                            <span class="text-gray-400">Cor Primária</span>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full" style="background-color: {{ company.primary_color }}">
+                                </div>
+                                <span class="text-white font-mono">{{ company.primary_color }}</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between border-b border-gray-700 pb-2">
+                            <span class="text-gray-400">Cor Secundária</span>
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full"
+                                    style="background-color: {{ company.secondary_color }}"></div>
+                                <span class="text-white font-mono">{{ company.secondary_color }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

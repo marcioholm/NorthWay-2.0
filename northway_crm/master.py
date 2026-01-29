@@ -274,6 +274,89 @@ def company_edit(company_id):
     return render_template('master_company_form.html', company=company)
 
 
+@master.route('/master/company/<int:company_id>/details')
+@login_required
+def company_details(company_id):
+    company = Company.query.get_or_404(company_id)
+    # Find active admin for quick access
+    admin_user = User.query.filter_by(company_id=company.id, role=ROLE_ADMIN).first()
+    return render_template('master_company_details.html', company=company, admin_user=admin_user)
+
+
+@master.route('/master/company/<int:company_id>/generate-payment', methods=['POST'])
+@login_required
+def generate_payment(company_id):
+    """
+    Manually triggers payment generation (Asaas Customer + Subscription) for a company.
+    Useful if the automatic flow failed or was skipped.
+    """
+    try:
+        from services.asaas_service import create_customer, create_subscription, get_subscription_payments
+        from datetime import datetime
+        
+        company = Company.query.get_or_404(company_id)
+        
+        # 1. Ensure Customer
+        if not company.asaas_customer_id:
+            customer_id = create_customer(
+                name=company.representative or company.name, 
+                email=f"billing_{company.id}@example.com" if not company.representative else None, # Fallback email needs real one ideally
+                cpf_cnpj=company.cpf_cnpj or company.document, 
+                phone=None, # Retrieve from user if possible? 
+                external_id=company.id
+            )
+            if customer_id:
+                company.asaas_customer_id = customer_id
+                db.session.commit()
+                flash("Cliente Asaas criado com sucesso.", "success")
+            else:
+                flash("Falha ao criar Cliente no Asaas. Verifique logs.", "error")
+                return redirect(url_for('master.company_details', company_id=company.id))
+        
+        # 2. Ensure Subscription
+        if not company.subscription_id:
+            # Determine Value based on Plan
+            val = 197.00
+            if getattr(company, 'plan', 'pro') == 'enterprise':
+                val = 997.00
+            elif getattr(company, 'plan_type', 'monthly') == 'annual':
+                val = 1999.00
+                
+            next_due = datetime.now().date().strftime('%Y-%m-%d')
+            
+            sub_data = create_subscription(
+                customer_id=company.asaas_customer_id, 
+                value=val, 
+                next_due_date=next_due, 
+                cycle='MONTHLY' if getattr(company, 'plan_type', 'monthly') != 'annual' else 'YEARLY',
+                description=f"NorthWay CRM - {company.name}"
+            )
+            if sub_data:
+                company.subscription_id = sub_data['id']
+                company.payment_status = 'pending'
+                db.session.commit()
+                flash("Assinatura criada com sucesso.", "success")
+            else:
+                flash("Falha ao criar assinatura.", "error")
+                return redirect(url_for('master.company_details', company_id=company.id))
+                
+        # 3. Get Invoice URL
+        payments = get_subscription_payments(company.subscription_id)
+        if payments:
+            invoice_url = payments[0]['invoiceUrl']
+            flash(f"Link gerado! Redirecionando...", "success")
+            return redirect(invoice_url)
+        else:
+            flash("Assinatura existe, mas nenhum boleto pendente encontrado.", "warning")
+            
+        return redirect(url_for('master.company_details', company_id=company.id))
+        
+    except Exception as e:
+        print(f"Generate Payment Error: {e}")
+        flash(f"Erro interno: {str(e)}", "error")
+        return redirect(url_for('master.company_details', company_id=company_id))
+
+
 @master.route('/master/library/new', methods=['GET', 'POST'])
 def library_new():
     if request.method == 'POST':
