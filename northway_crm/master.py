@@ -24,6 +24,67 @@ def check_master_access():
     ]:
         return
 
+@master.route('/master/system_reset', methods=['GET', 'POST'])
+@login_required
+def system_reset():
+    """
+    DESTRUCTIVE: Clears all test data while preserving Master Admin and system assets.
+    """
+    if current_user.email != 'master@northway.com':
+        abort(403)
+        
+    if request.method == 'POST' and request.form.get('confirm') == 'RESET_PRODUCTION':
+        from models import (
+            WhatsAppMessage, Task, Interaction, Transaction, Contract, 
+            Lead, Client, Contact, Pipeline, PipelineStage, User, Company
+        )
+        
+        try:
+            from datetime import date, timedelta
+            # 1. Identify Master to preserve
+            master_user = current_user
+            master_company = current_user.company
+            
+            # 2. Delete Activity Data
+            WhatsAppMessage.query.delete()
+            Task.query.delete()
+            Interaction.query.delete()
+            Transaction.query.delete()
+            Contract.query.delete()
+            
+            # 3. Delete CRM Data
+            Lead.query.delete()
+            Client.query.delete()
+            Contact.query.delete()
+            
+            # Delete stages for non-master companies first (to avoid orphan issues if not cascaded)
+            PipelineStage.query.filter(PipelineStage.company_id != master_company.id).delete()
+            Pipeline.query.filter(Pipeline.company_id != master_company.id).delete()
+            
+            # 4. Delete Users except Master
+            User.query.filter(User.id != master_user.id).delete()
+            
+            # 5. Delete Companies except Master
+            Company.query.filter(Company.id != master_company.id).delete()
+            
+            # 6. Reset Master Company Status
+            master_company.payment_status = 'active'
+            master_company.subscription_status = 'active'
+            master_company.status = 'active'
+            master_company.platform_inoperante = False
+            master_company.next_due_date = date.today() + timedelta(days=30)
+            
+            db.session.commit()
+            flash("SISTEMA RESETADO! A base de dados está limpa para operação oficial.", "success")
+            return redirect(url_for('master.dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro Crítico durante o reset: {e}", "error")
+            return redirect(url_for('master.dashboard'))
+            
+    return render_template('master_system_reset.html')
+
     # For all other master routes, MUST be super_admin
     if not getattr(current_user, 'is_super_admin', False):
         abort(403)
