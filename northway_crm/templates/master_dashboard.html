@@ -99,6 +99,13 @@
                             <td class="px-6 py-4 text-right">
                                 {% if stat.target_user_id %}
                                 <div class="flex gap-2 justify-end">
+                                    <!-- View Details (NEW) -->
+                                    <a href="{{ url_for('master.company_details', company_id=stat.company.id) }}"
+                                        class="inline-flex items-center justify-center bg-gray-700 hover:bg-emerald-600 text-white w-10 h-10 rounded-lg transition-colors shadow-lg"
+                                        title="Ver Detalhes">
+                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    </a>
+
                                     <a href="{{ url_for('master.company_users', company_id=stat.company.id) }}"
                                         class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg">
                                         <i data-lucide="users" class="w-4 h-4"></i> Usuários
@@ -110,6 +117,13 @@
                                 </div>
                                 {% else %}
                                 <div class="flex gap-2 justify-end">
+                                    <!-- View Details (NEW) -->
+                                    <a href="{{ url_for('master.company_details', company_id=stat.company.id) }}"
+                                        class="inline-flex items-center justify-center bg-gray-700 hover:bg-emerald-600 text-white w-10 h-10 rounded-lg transition-colors shadow-lg"
+                                        title="Ver Detalhes">
+                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    </a>
+
                                     <a href="{{ url_for('master.company_users', company_id=stat.company.id) }}"
                                         class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg">
                                         <i data-lucide="users" class="w-4 h-4"></i> Usuários
