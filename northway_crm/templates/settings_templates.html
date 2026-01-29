@@ -82,7 +82,8 @@
                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                 </a>
 
-                {% if not tmpl.is_global or (tmpl.is_global and tmpl.company_id == current_user.company_id) %}
+                {% if current_user.is_super_admin or (not tmpl.is_global or (tmpl.is_global and tmpl.company_id ==
+                current_user.company_id)) %}
                 <form action="{{ url_for('templates.delete_template', id=tmpl.id) }}" method="POST"
                     onsubmit="return confirm('Tem certeza que deseja excluir este modelo?');" class="inline">
                     <button type="submit"

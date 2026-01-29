@@ -14,14 +14,18 @@ def settings_templates():
     if current_user.role != ROLE_ADMIN:
         abort(403)
     
-    # Get company templates
+    # SUPER ADMIN: Sees everything
+    if getattr(current_user, 'is_super_admin', False):
+        all_templates = ContractTemplate.query.all()
+        return render_template('settings_templates.html', templates=all_templates)
+
+    # Standard Admin: Get company templates
     company_templates = ContractTemplate.query.filter(ContractTemplate.company_id == current_user.company_id).all()
     
     # Get global templates
     global_templates = ContractTemplate.query.filter_by(is_global=True).all()
     
     # Get library templates (Shared with this company)
-    # This involves the association table
     from models import template_company_association
     library_templates = ContractTemplate.query.join(template_company_association)\
                                              .filter(template_company_association.c.company_id == current_user.company_id).all()
@@ -65,7 +69,9 @@ def new_template():
 @login_required
 def edit_template(id):
     template = ContractTemplate.query.get_or_404(id)
-    if template.company_id != current_user.company_id and not template.is_global:
+    is_super = getattr(current_user, 'is_super_admin', False)
+    
+    if not is_super and template.company_id != current_user.company_id and not template.is_global:
         abort(403)
         
     if request.method == 'POST':
@@ -89,7 +95,9 @@ def edit_template(id):
 @login_required
 def delete_template(id):
     template = ContractTemplate.query.get_or_404(id)
-    if template.company_id != current_user.company_id:
+    is_super = getattr(current_user, 'is_super_admin', False)
+    
+    if not is_super and template.company_id != current_user.company_id:
         abort(403)
         
     db.session.delete(template)
