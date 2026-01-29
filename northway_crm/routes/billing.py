@@ -35,6 +35,12 @@ def process_checkout():
         phone = data.get('phone')
         
         # 1. Update Company Identity
+        # Check for duplicates first
+        existing_company = Company.query.filter_by(cpf_cnpj=cpf_cnpj).first()
+        if existing_company and existing_company.id != current_user.company_id:
+             flash("Este CPF/CNPJ já está cadastrado em outra conta.", "error")
+             return redirect(url_for('dashboard.checkout'))
+
         company = current_user.company
         company.cpf_cnpj = cpf_cnpj
         company.representative = name
