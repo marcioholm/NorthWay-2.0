@@ -298,10 +298,13 @@
                                         {% endif %}
 
                                         <!-- Manage Users -->
-                                        <a href="{{ url_for('master.company_users', company_id=company.id) }}"
-                                            class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                                            title="Gerenciar Usuários">
-                                            <i data-lucide="users" class="w-4 h-4"></i>
+                                        </a>
+
+                                        <!-- Manage Materials Permissions -->
+                                        <a href="{{ url_for('master.company_materials', company_id=company.id) }}"
+                                            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                            title="Liberar Materiais">
+                                            <i data-lucide="files" class="w-4 h-4"></i>
                                         </a>
 
                                         <!-- Edit -->

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-4 md:p-8">
+
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <a href="{{ url_for('master.dashboard') }}" class="hover:text-northway-red">Master Admin</a>
+        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        <span class="text-gray-900 font-medium">Gestão de Materiais: {{ company.name }}</span>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+        <div class="p-8 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Gerenciar Permissões de Acesso</h1>
+                <p class="text-gray-500 mt-1">Empresa: <span class="text-northway-red font-bold">{{ company.name
+                        }}</span></p>
+            </div>
+            <div class="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                <i data-lucide="shield-check" class="text-green-500 w-6 h-6"></i>
+                <div class="text-xs">
+                    <p class="text-gray-400 uppercase font-black">Status do Tenant</p>
+                    <p class="font-bold text-gray-900">{{ (company.payment_status or 'Ativo').upper() }}</p>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" class="p-8 space-y-10">
+
+            <!-- Section 1: Biblioteca de Playbooks & Cursos -->
+            <div>
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="p-2 bg-red-100 text-northway-red rounded-lg">
+                        <i data-lucide="book-open" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Biblioteca & Playbooks</h2>
+                        <p class="text-sm text-gray-400">Conteúdo educacional e estratégico</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for book in books %}
+                    <label class="group flex items-center p-4 rounded-2xl border-2 transition-all cursor-pointer 
+                        {% if company in book.allowed_companies %}
+                        border-northway-red bg-red-50/30
+                        {% else %}
+                        border-gray-100 bg-white hover:border-gray-300
+                        {% endif %}">
+
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" name="books" value="{{ book.id }}"
+                                class="w-6 h-6 text-northway-red bg-gray-100 border-gray-300 rounded-lg focus:ring-northway-red focus:ring-offset-0 transition-all cursor-pointer"
+                                {% if company in book.allowed_companies %}checked{% endif %}>
+                        </div>
+
+                        <div class="ml-4 flex-1">
+                            <p class="font-bold text-gray-900 group-hover:text-northway-red transition-colors">{{
+                                book.title }}</p>
+                            <p class="text-xs text-gray-400 capitalize">{{ book.category }}</p>
+                        </div>
+
+                        {% if company in book.allowed_companies %}
+                        <div class="text-northway-red">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                        </div>
+                        {% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <hr class="border-gray-100">
+
+            <!-- Section 2: Modelos de Contrato e Documentos -->
+            <div>
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Modelos de Contrato</h2>
+                        <p class="text-sm text-gray-400">Templates e documentos jurídicos/comerciais</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for tmpl in templates %}
+                    <label class="group flex items-center p-4 rounded-2xl border-2 transition-all cursor-pointer 
+                        {% if company in tmpl.allowed_companies %}
+                        border-purple-500 bg-purple-50/30
+                        {% else %}
+                        border-gray-100 bg-white hover:border-gray-300
+                        {% endif %}">
+
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" name="templates" value="{{ tmpl.id }}"
+                                class="w-6 h-6 text-purple-600 bg-gray-100 border-gray-300 rounded-lg focus:ring-purple-500 focus:ring-offset-0 transition-all cursor-pointer"
+                                {% if company in tmpl.allowed_companies %}checked{% endif %}>
+                        </div>
+
+                        <div class="ml-4 flex-1">
+                            <p class="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">{{
+                                tmpl.name }}</p>
+                            <p class="text-xs text-gray-400 capitalize">{{ tmpl.type }}</p>
+                        </div>
+
+                        {% if company in tmpl.allowed_companies %}
+                        <div class="text-purple-600">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                        </div>
+                        {% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-10 border-t border-gray-100">
+                <p class="text-xs text-gray-400 max-w-sm">
+                    Alterações entram em vigor imediatamente para todos os usuários da empresa selecionada.
+                </p>
+                <div class="flex items-center gap-4">
+                    <a href="{{ url_for('master.dashboard') }}"
+                        class="text-gray-500 font-bold hover:text-gray-800 transition-colors px-6 py-3 rounded-xl border border-transparent hover:border-gray-200">
+                        Voltar
+                    </a>
+                    <button type="submit"
+                        class="bg-northway-red hover:bg-[#d00102] text-white px-10 py-4 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 active:translate-y-0 transition-all font-black uppercase tracking-widest text-sm">
+                        Confirmar Acessos
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

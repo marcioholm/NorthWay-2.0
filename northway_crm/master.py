@@ -85,6 +85,54 @@ def dashboard():
     from datetime import date
     return render_template('master_dashboard.html', stats=stats, kpis=global_kpis, now_date=date.today())
 
+@master.route('/master/company/<int:company_id>/materials', methods=['GET', 'POST'])
+@login_required
+def company_materials(company_id):
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    company = Company.query.get_or_404(company_id)
+    
+    if request.method == 'POST':
+        # 1. Update Library Books
+        allowed_book_ids = request.form.getlist('books')
+        from models import LibraryBook
+        
+        all_books = LibraryBook.query.all()
+        for book in all_books:
+            if str(book.id) in allowed_book_ids:
+                if company not in book.allowed_companies:
+                    book.allowed_companies.append(company)
+            else:
+                if company in book.allowed_companies:
+                    book.allowed_companies.remove(company)
+
+        # 2. Update Contract Templates
+        allowed_template_ids = request.form.getlist('templates')
+        from models import ContractTemplate
+        
+        all_templates = ContractTemplate.query.all()
+        for tmpl in all_templates:
+            if str(tmpl.id) in allowed_template_ids:
+                if company not in tmpl.allowed_companies:
+                    tmpl.allowed_companies.append(company)
+            else:
+                if company in tmpl.allowed_companies:
+                    tmpl.allowed_companies.remove(company)
+                    
+        db.session.commit()
+        flash(f"Permissões de materiais para {company.name} atualizadas!", "success")
+        return redirect(url_for('master.dashboard'))
+        
+    from models import LibraryBook, ContractTemplate
+    books = LibraryBook.query.filter_by(active=True).all()
+    templates = ContractTemplate.query.filter_by(active=True).all()
+    
+    return render_template('master_company_materials.html', 
+                           company=company, 
+                           books=books, 
+                           templates=templates)
+
 @master.route('/master/impersonate/<int:user_id>')
 def impersonate(user_id):
     target_user = User.query.get_or_404(user_id)
