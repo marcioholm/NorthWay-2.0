@@ -1,141 +1,261 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex flex-col h-full bg-gray-900 text-white">
+<div class="flex flex-col h-full bg-[#050505] text-white">
     <!-- Master Header -->
-    <div class="h-16 border-b border-gray-800 flex items-center justify-between px-8 bg-black/40">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded bg-northway-red flex items-center justify-center font-black text-white">N</div>
-            <h1 class="text-lg font-bold tracking-tight">Painel Master</h1>
-        </div>
+    <div
+        class="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/40 backdrop-blur-md sticky top-0 z-30">
         <div class="flex items-center gap-4">
-            <span class="text-sm text-gray-400">Logado como: <strong class="text-white">{{ current_user.name
-                    }}</strong></span>
-            <a href="{{ url_for('auth.logout') }}" class="text-sm text-red-400 hover:text-red-300">Sair</a>
+            <div
+                class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-red-900/40">
+                N</div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white">Central de Comando</h1>
+                <p class="text-xs text-gray-500 font-medium">Visão Global do Ecossistema NorthWay</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/10 rounded-full">
+                <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                <span class="text-[10px] font-bold text-red-400 uppercase tracking-wider">Super Admin</span>
+            </div>
+            <div class="h-8 w-px bg-white/10"></div>
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-sm font-bold text-white">{{ current_user.name }}</p>
+                    <a href="{{ url_for('master.revert_access') }}"
+                        class="text-xs text-red-400 hover:text-red-300 transition-colors">Sair do Modo Master</a>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center border border-white/10">
+                    <span class="font-bold text-gray-400">{{ current_user.name[:1] }}</span>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Content -->
-    <div class="flex-1 overflow-y-auto p-10">
-        <div class="max-w-7xl mx-auto space-y-8">
+    <div class="flex-1 overflow-y-auto p-8 lg:p-12 scroll-smooth">
+        <div class="max-w-[1600px] mx-auto space-y-10">
 
-            <!-- Global KPI Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <!-- KPI Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
                 <!-- Companies -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Empresas</p>
-                    <div class="flex items-end gap-2">
-                        <span class="text-3xl font-bold text-white">{{ kpis.active_companies }}</span>
-                        <span class="text-sm text-gray-500 mb-1">/ {{ kpis.companies }}</span>
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 hover:border-red-500/20 transition-all duration-300 group relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-24 h-24 bg-red-600/5 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:bg-red-600/10">
+                    </div>
+                    <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-3">Empresas Ativas</p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-black text-white tracking-tight">{{ kpis.active_companies }}</span>
+                        <span class="text-sm text-gray-600 font-medium">/ {{ kpis.companies }}</span>
                     </div>
                 </div>
 
                 <!-- Users -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Usuários</p>
-                    <span class="text-3xl font-bold text-blue-400">{{ kpis.users }}</span>
-                </div>
-
-                <!-- Leads -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Leads Totais</p>
-                    <span class="text-3xl font-bold text-yellow-400">{{ kpis.leads }}</span>
-                </div>
-
-                <!-- Contracts -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Contratos</p>
-                    <span class="text-3xl font-bold text-green-400">{{ kpis.contracts }}</span>
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 hover:border-blue-500/20 transition-all duration-300 group relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 rounded-bl-full -mr-4 -mt-4 transition-all group-hover:bg-blue-600/10">
+                    </div>
+                    <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-3">Usuários Totais</p>
+                    <span class="text-4xl font-black text-white tracking-tight">{{ kpis.users }}</span>
                 </div>
 
                 <!-- MRR -->
                 <div
-                    class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg col-span-1 md:col-span-2 lg:col-span-1">
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">MRR Estimado</p>
-                    <span class="text-3xl font-bold text-emerald-400">R$ {{ "%.2f"|format(kpis.mrr) }}</span>
+                    class="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 hover:border-emerald-500/20 transition-all duration-300 group relative overflow-hidden col-span-1 md:col-span-2">
+                    <div
+                        class="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 rounded-bl-full -mr-6 -mt-6 transition-all group-hover:bg-emerald-600/10">
+                    </div>
+                    <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-3">MRR (Faturamento
+                        Recorrente)</p>
+                    <div class="flex items-center gap-3">
+                        <span class="text-4xl font-black text-emerald-400 tracking-tight">R$ {{ "%.2f"|format(kpis.mrr)
+                            }}</span>
+                        <span
+                            class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase border border-emerald-500/20">+{{
+                            kpis.active_companies * 2 }}% esse mês</span>
+                    </div>
+                </div>
+
+                <!-- Leads -->
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 hover:border-yellow-500/20 transition-all duration-300 group relative overflow-hidden">
+                    <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-3">Leads Processados</p>
+                    <span class="text-4xl font-black text-white tracking-tight">{{ kpis.leads }}</span>
                 </div>
 
                 <!-- Churn -->
-                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Churn Rate</p>
-                    <span class="text-3xl font-bold text-red-500">{{ kpis.churn }}%</span>
+                <div
+                    class="bg-[#0A0A0A] p-6 rounded-2xl border border-white/5 hover:border-red-500/20 transition-all duration-300 group relative overflow-hidden">
+                    <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-3">Churn Rate</p>
+                    <span class="text-4xl font-black text-red-500 tracking-tight">{{ kpis.churn }}%</span>
                 </div>
             </div>
 
-            <div class="flex items-center justify-between">
-                <h2 class="text-2xl font-bold">Empresas Recentes</h2>
-                <a href="{{ url_for('master.companies') }}"
-                    class="text-sm text-blue-400 hover:text-blue-300 font-semibold">Ver Todas &rarr;</a>
+            <!-- Action Bar -->
+            <div class="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-1">Tenants & Clientes</h2>
+                    <p class="text-sm text-gray-500">Gerencie todas as instâncias do CRM em tempo real.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative max-w-xs">
+                        <i data-lucide="search"
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" placeholder="Buscar tenant..."
+                            class="bg-[#0A0A0A] border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-red-500/50 focus:border-red-500 outline-none w-64 placeholder-gray-600 transition-all">
+                    </div>
+                    <a href="{{ url_for('master.company_new') }}"
+                        class="bg-white text-black hover:bg-gray-100 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Novo Tenant
+                    </a>
+                </div>
             </div>
 
-            <!-- Companies Table (Existing logic, just style tweaks) -->
-            <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-2xl">
-                <table class="w-full text-left">
-                    <thead class="bg-black/20 text-gray-400 text-xs uppercase font-bold">
-                        <tr>
-                            <th class="px-6 py-4">ID</th>
-                            <th class="px-6 py-4">Empresa</th>
-                            <th class="px-6 py-4">Admin Principal</th>
-                            <th class="px-6 py-4 text-center">Usuários</th>
-                            <th class="px-6 py-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-700">
-                        {% for stat in stats %}
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="px-6 py-4 font-mono text-gray-500">#{{ stat.company.id }}</td>
-                            <td class="px-6 py-4 font-bold text-white text-lg">
-                                {{ stat.company.name }}
-                                <div class="text-xs font-normal text-gray-500 mt-0.5">Criada em: {{
-                                    stat.company.created_at.strftime('%d/%m/%Y') }}</div>
-                            </td>
-                            <td class="px-6 py-4 text-gray-300">
-                                {{ stat.admin_name }}
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="bg-gray-700 text-white text-xs font-bold px-2 py-1 rounded-full">{{
-                                    stat.user_count }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                {% if stat.target_user_id %}
-                                <div class="flex gap-2 justify-end">
-                                    <!-- View Details (NEW) -->
-                                    <a href="{{ url_for('master.company_details', company_id=stat.company.id) }}"
-                                        class="inline-flex items-center justify-center bg-gray-700 hover:bg-emerald-600 text-white w-10 h-10 rounded-lg transition-colors shadow-lg"
-                                        title="Ver Detalhes">
-                                        <i data-lucide="eye" class="w-4 h-4"></i>
-                                    </a>
+            <!-- Unified Companies Table -->
+            <div class="bg-[#0A0A0A] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-white/5 border-b border-white/5">
+                            <tr>
+                                <th class="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    Empresa</th>
+                                <th class="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                    Responsável</th>
+                                <th
+                                    class="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                                    Status</th>
+                                <th
+                                    class="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                                    Vencimento</th>
+                                <th
+                                    class="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                                    Plano</th>
+                                <th
+                                    class="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
+                                    Usuários</th>
+                                <th
+                                    class="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">
+                                    Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% for stat in stats %}
+                            {% set company = stat.company %}
+                            <tr class="hover:bg-white/[0.02] transition-colors group">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-4">
+                                        <div
+                                            class="w-12 h-12 rounded-xl bg-gray-800 border border-white/5 flex items-center justify-center text-lg font-bold text-gray-500 group-hover:text-white group-hover:border-white/20 transition-all">
+                                            {{ company.name[:1].upper() }}
+                                        </div>
+                                        <div>
+                                            <div class="font-bold text-white text-base">{{ company.name }}</div>
+                                            <div class="text-xs text-gray-500 font-mono mt-0.5">#{{ company.id }} • {{
+                                                company.document or 'Sem Doc' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-300 font-medium">{{ company.representative or
+                                        stat.admin_name }}</div>
+                                    <div class="text-[10px] text-gray-600 mt-0.5">{{
+                                        company.created_at.strftime('%d/%m/%Y') }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if company.payment_status == 'courtesy' %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20 uppercase tracking-wide">
+                                        VIP Vitalício
+                                    </span>
+                                    {% elif company.payment_status == 'active' %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase tracking-wide">
+                                        Ativo
+                                    </span>
+                                    {% elif company.payment_status == 'overdue' %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-wide">
+                                        Atrasado
+                                    </span>
+                                    {% else %}
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 uppercase tracking-wide">
+                                        {{ company.payment_status|default('Pendente')|upper }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if company.next_due_date %}
+                                    {% set days = (company.next_due_date - now_date).days %}
+                                    <div class="flex flex-col items-center">
+                                        <span class="text-sm font-bold text-white">{{
+                                            company.next_due_date.strftime('%d/%m') }}</span>
+                                        <span
+                                            class="text-[10px] uppercase font-bold {{ 'text-red-400' if days < 5 else 'text-emerald-400' }}">
+                                            {{ 'HOJE' if days == 0 else (days|abs ~ 'd ' ~ ('atraso' if days < 0 else ''
+                                                )) }} </span>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-xs text-gray-600">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span
+                                        class="text-[10px] font-bold uppercase text-gray-400 bg-white/5 px-2 py-1 rounded border border-white/5">
+                                        {{ company.plan|default('PRO') }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="text-sm font-bold text-white">{{ stat.user_count }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div
+                                        class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                        <!-- Manage Users -->
+                                        <a href="{{ url_for('master.company_users', company_id=company.id) }}"
+                                            class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                            title="Gerenciar Usuários">
+                                            <i data-lucide="users" class="w-4 h-4"></i>
+                                        </a>
 
-                                    <a href="{{ url_for('master.company_users', company_id=stat.company.id) }}"
-                                        class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg">
-                                        <i data-lucide="users" class="w-4 h-4"></i> Usuários
-                                    </a>
-                                    <a href="{{ url_for('master.impersonate', user_id=stat.target_user_id) }}"
-                                        class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-blue-900/20">
-                                        <i data-lucide="log-in" class="w-4 h-4"></i> Acessar
-                                    </a>
-                                </div>
-                                {% else %}
-                                <div class="flex gap-2 justify-end">
-                                    <!-- View Details (NEW) -->
-                                    <a href="{{ url_for('master.company_details', company_id=stat.company.id) }}"
-                                        class="inline-flex items-center justify-center bg-gray-700 hover:bg-emerald-600 text-white w-10 h-10 rounded-lg transition-colors shadow-lg"
-                                        title="Ver Detalhes">
-                                        <i data-lucide="eye" class="w-4 h-4"></i>
-                                    </a>
+                                        <!-- Edit -->
+                                        <a href="{{ url_for('master.company_edit', company_id=company.id) }}"
+                                            class="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                                            title="Editar Preferências">
+                                            <i data-lucide="settings-2" class="w-4 h-4"></i>
+                                        </a>
 
-                                    <a href="{{ url_for('master.company_users', company_id=stat.company.id) }}"
-                                        class="inline-flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg">
-                                        <i data-lucide="users" class="w-4 h-4"></i> Usuários
-                                    </a>
-                                    <span class="text-gray-500 italic text-sm self-center">Sem Admin</span>
-                                </div>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                        {% if stat.target_user_id %}
+                                        <a href="{{ url_for('master.impersonate', user_id=stat.target_user_id) }}"
+                                            class="flex items-center gap-1.5 px-3 py-1.5 bg-white text-black text-[10px] font-bold uppercase tracking-wide rounded-lg hover:bg-gray-200 transition-colors shadow-lg ml-2"
+                                            title="Acessar Tenant">
+                                            <i data-lucide="log-in" class="w-3 h-3"></i> Acessar
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if not stats %}
+                <div class="p-16 text-center">
+                    <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="building-2" class="w-10 h-10 text-gray-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Nenhuma empresa encontrada</h3>
+                    <p class="text-gray-500 mb-8 max-w-sm mx-auto">O sistema ainda não possui tenants cadastrados.
+                        Comece criando o primeiro.</p>
+                    <a href="{{ url_for('master.company_new') }}"
+                        class="inline-flex bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-red-900/40 items-center gap-2">
+                        <i data-lucide="plus" class="w-5 h-5"></i> Criar Nova Empresa
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

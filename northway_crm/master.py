@@ -18,7 +18,8 @@ def check_master_access():
 @master.route('/master/dashboard')
 @login_required
 def dashboard():
-    companies = Company.query.all()
+    # Fetch all companies ordered by newest first
+    companies = Company.query.order_by(Company.created_at.desc()).all()
     
     # Global Metrics Aggregation
     total_companies = len(companies)
@@ -28,19 +29,18 @@ def dashboard():
     total_users = User.query.count()
     from models import Lead, Contract
     try:
-        total_leads = Lead.query.count()
+        total_leads = Lead.query.count() or 0
     except Exception:
         total_leads = 0
         
     try:
-        total_contracts = Contract.query.count()
+        total_contracts = Contract.query.count() or 0
     except Exception:
         total_contracts = 0
     
     # Mock MRR Calculation (Plan based)
-    # Pro = 297, Enterprise = 997, Free = 0
     mrr = 0
-    plan_prices = {'free': 0, 'starter': 149, 'pro': 297, 'enterprise': 997}
+    plan_prices = {'free': 0, 'starter': 149, 'pro': 297, 'enterprise': 997, 'courtesy_vip': 0}
     
     # Churn mock (companies with status='cancelled')
     cancelled_companies = sum(1 for c in companies if getattr(c, 'status', 'active') == 'cancelled')
@@ -50,8 +50,9 @@ def dashboard():
     
     for comp in companies:
         # Calculate MRR per company
-        # Safe fallback for plan and status
         plan_name = (getattr(comp, 'plan', 'pro') or 'pro').lower()
+        if comp.payment_status == 'courtesy': plan_name = 'courtesy_vip'
+        
         mrr += plan_prices.get(plan_name, 0)
         
         # Find an admin to login as
@@ -61,6 +62,8 @@ def dashboard():
             admin_user = User.query.filter_by(company_id=comp.id).first()
             
         user_count = User.query.filter_by(company_id=comp.id).count()
+        comp.user_count = user_count # Attach for direct usage if needed
+        comp.admin = admin_user
         
         stats.append({
             'company': comp,
@@ -78,8 +81,9 @@ def dashboard():
         'mrr': mrr,
         'churn': round(churn_rate, 1)
     }
-        
-    return render_template('master_dashboard.html', stats=stats, kpis=global_kpis)
+    
+    from datetime import date
+    return render_template('master_dashboard.html', stats=stats, kpis=global_kpis, now_date=date.today())
 
 @master.route('/master/impersonate/<int:user_id>')
 def impersonate(user_id):
@@ -185,15 +189,8 @@ def edit_user(user_id):
 @master.route('/master/companies')
 @login_required
 def companies():
-    companies_list = Company.query.order_by(Company.created_at.desc()).all()
-    
-    # Enrich with user counts
-    for c in companies_list:
-        c.user_count = User.query.filter_by(company_id=c.id).count()
-        c.admin = User.query.filter_by(company_id=c.id, role=ROLE_ADMIN).first()
-    
-    from datetime import date
-    return render_template('master_companies.html', companies=companies_list, now_date=date.today())
+    # Redirect to Unified Dashboard
+    return redirect(url_for('master.dashboard'))
 
 @master.route('/master/company/new', methods=['GET', 'POST'])
 @login_required
