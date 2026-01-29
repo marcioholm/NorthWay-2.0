@@ -19,8 +19,8 @@ def check_saas_status():
         if not request.endpoint:
             return
             
-        if 'static' in request.endpoint or 'auth.' in request.endpoint:
-            # Explicitly allow setup_company and payment routes within auth
+        if 'static' in request.endpoint or 'auth.' in request.endpoint or 'checkout' in request.endpoint:
+            # Explicitly allow setup_company, payment routes, and checkout
             return
             
         # 1. Enforce Company Setup
