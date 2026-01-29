@@ -23,7 +23,6 @@
                         "primary": "#f20d0d",
                         "background-dark": "#050505",
                         "surface": "#121212",
-                        "surface-light": "#1E1E1E",
                     },
                     fontFamily: {
                         "display": ["Manrope", "sans-serif"]
@@ -45,7 +44,7 @@
 
 <body class="bg-background-dark text-white min-h-screen flex flex-col">
 
-    <!-- HEADER SIMPLIFICADO -->
+    <!-- HEADER -->
     <header class="w-full bg-background-dark/80 backdrop-blur-md border-b border-white/5 py-4">
         <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
             <img src="logo.png" alt="NorthWay Logo" class="h-8 md:h-10 w-auto object-contain">
@@ -53,101 +52,112 @@
         </div>
     </header>
 
-    <!-- CHECKOUT CONTENT -->
+    <!-- CONTENT -->
     <main class="flex-grow py-20 bg-surface">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center max-w-2xl mx-auto mb-16">
-                <span class="text-primary font-bold uppercase tracking-wider text-sm mb-4 block">Finalize seu
-                    Cadastro</span>
+                <span class="text-primary font-bold uppercase tracking-wider text-sm mb-4 block">Oferta Especial de
+                    Lançamento</span>
                 <h1 class="text-3xl md:text-5xl font-bold mb-6">
-                    Escolha o plano ideal para <span class="text-white">ativar sua conta.</span>
+                    Acelere sua empresa <span class="text-white">agora.</span>
                 </h1>
                 <p class="text-white/60 text-lg">
-                    Você já deu o primeiro passo. Agora escolha como quer acelerar seu crescimento.
+                    Garanta o preço promocional por tempo limitado.
                 </p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <!-- Basic Plan -->
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
+
+                <!-- MENSAL -->
                 <div
-                    class="bg-background-dark border border-white/5 p-8 rounded-3xl hover:border-white/10 transition-colors flex flex-col">
-                    <div class="mb-6">
-                        <span class="text-white/60 text-sm font-bold uppercase tracking-wider">NorthWay CRM</span>
-                        <div class="flex items-baseline gap-1 mt-4">
+                    class="bg-background-dark border border-white/5 p-8 rounded-3xl hover:border-white/10 transition-colors flex flex-col order-2 md:order-1">
+                    <div class="mb-2">
+                        <span class="text-white/60 text-sm font-bold uppercase tracking-wider">Plano Mensal</span>
+                    </div>
+
+                    <div class="mb-6 border-b border-white/5 pb-6">
+                        <div class="text-white/40 text-sm font-medium line-through mb-1">De R$ 365/mês</div>
+                        <div class="flex items-baseline gap-1">
                             <span class="text-white text-4xl font-bold">R$ 197</span>
                             <span class="text-white/60">/mês</span>
                         </div>
-                        <p class="text-white/60 mt-4 text-sm leading-relaxed">
-                            A ferramenta essencial para quem quer sair das planilhas e começar a vender com organização.
+                        <p class="text-white/60 mt-4 text-sm">
+                            Ideal para quem quer flexibilidade. Cancele quando quiser.
                         </p>
                     </div>
 
-                    <ul class="flex flex-col gap-4 mb-8 flex-grow">
+                    <ul class="flex flex-col gap-3 mb-8">
                         <li class="flex items-center gap-3 text-white/80 text-sm">
                             <span class="material-symbols-outlined text-green-500 text-base">check</span>
-                            Funil de Vendas Ilimitado
+                            Acesso Completo ao CRM
                         </li>
                         <li class="flex items-center gap-3 text-white/80 text-sm">
                             <span class="material-symbols-outlined text-green-500 text-base">check</span>
-                            Contratos e Propostas
+                            1 Usuário Incluso
                         </li>
                         <li class="flex items-center gap-3 text-white/80 text-sm">
                             <span class="material-symbols-outlined text-green-500 text-base">check</span>
-                            Financeiro Integrado
-                        </li>
-                        <li class="flex items-center gap-3 text-white/80 text-sm">
-                            <span class="material-symbols-outlined text-green-500 text-base">check</span>
-                            1 Usuário (adicional +R$ 65)
+                            Suporte via Email
                         </li>
                     </ul>
 
-                    <a href="https://wa.me/5542999896358?text=Quero%20ativar%20meu%20plano%20CRM%20de%20197"
-                        class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl text-center transition-colors border border-white/5 flex items-center justify-center gap-2">
-                        Ativar Plano Standard
+                    <a href="https://wa.me/5542999896358?text=Quero%20ativar%20o%20Plano%20Mensal%20(197)"
+                        class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl text-center transition-colors border border-white/5">
+                        Assinar Mensal
                     </a>
                 </div>
 
-                <!-- Pro Plan -->
+                <!-- ANUAL (Highlighted) -->
                 <div
-                    class="bg-gradient-to-b from-background-dark to-surface border border-primary/30 p-8 rounded-3xl relative overflow-hidden flex flex-col shadow-[0_0_40px_rgba(242,13,13,0.15)] transform md:-translate-y-4">
+                    class="bg-gradient-to-b from-background-dark to-[#1a0505] border border-primary/40 p-10 rounded-3xl relative overflow-hidden flex flex-col shadow-[0_0_50px_rgba(242,13,13,0.15)] order-1 md:order-2 transform md:-translate-y-6">
                     <div
                         class="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl uppercase tracking-wider">
-                        Recomendado
+                        2 Meses Grátis
                     </div>
 
-                    <div class="mb-6">
-                        <span class="text-primary text-sm font-bold uppercase tracking-wider">Consultoria + CRM</span>
-                        <div class="flex items-baseline gap-1 mt-4">
-                            <span class="text-white text-4xl font-bold">R$ 499</span>
-                            <span class="text-white/60">/mês</span>
+                    <div class="mb-2">
+                        <span class="text-primary text-sm font-bold uppercase tracking-wider">Plano Anual • Melhor
+                            Escolha</span>
+                    </div>
+
+                    <div class="mb-6 border-b border-white/5 pb-6">
+                        <div class="text-white/40 text-sm font-medium line-through mb-1">De R$ 2.365/ano</div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-white text-5xl font-extrabold">R$ 1.999</span>
+                            <span class="text-white/60">/ano</span>
                         </div>
-                        <p class="text-white/60 mt-4 text-sm leading-relaxed">
-                            Para quem quer velocidade. Implementamos o CRM para você e treinamos seu time comercial.
+                        <div
+                            class="mt-2 inline-flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
+                            <span class="material-symbols-outlined text-green-500 text-sm">credit_card</span>
+                            <span class="text-green-400 text-xs font-bold">Em até 12x de R$ 166,58</span>
+                        </div>
+                        <p class="text-white/60 mt-4 text-sm">
+                            Economize <b>R$ 366,00</b> e tenha um ano inteiro de organização garantida.
                         </p>
                     </div>
 
-                    <ul class="flex flex-col gap-4 mb-8 flex-grow">
+                    <ul class="flex flex-col gap-3 mb-8">
                         <li class="flex items-center gap-3 text-white text-sm font-medium">
-                            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
-                            Todo o Plano Standard
+                            <span class="material-symbols-outlined text-primary text-base">star</span>
+                            <b>2 Meses de Acesso Grátis</b>
                         </li>
                         <li class="flex items-center gap-3 text-white text-sm font-medium">
                             <span class="material-symbols-outlined text-primary text-base">check_circle</span>
-                            Diagnóstico de Processos
+                            Prioridade no Suporte
                         </li>
                         <li class="flex items-center gap-3 text-white text-sm font-medium">
                             <span class="material-symbols-outlined text-primary text-base">check_circle</span>
-                            Implementação Guiada
+                            Setup Acompanhado
                         </li>
                         <li class="flex items-center gap-3 text-white text-sm font-medium">
                             <span class="material-symbols-outlined text-primary text-base">check_circle</span>
-                            Treinamento de Equipe
+                            Sua empresa blindada por 1 ano
                         </li>
                     </ul>
 
-                    <a href="https://wa.me/5542999896358?text=Quero%20ativar%20o%20plano%20com%20Consultoria%20(499)"
-                        class="w-full bg-primary hover:bg-red-600 text-white font-bold py-4 rounded-xl text-center transition-all shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-2">
-                        Ativar Plano Consultoria
+                    <a href="https://wa.me/5542999896358?text=Quero%20aproveitar%20a%20oferta%20do%20Plano%20Anual%20(1999)"
+                        class="w-full bg-primary hover:bg-red-600 text-white font-bold py-5 rounded-xl text-center transition-all shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-2 text-lg">
+                        Garantir Oferta Anual
                         <span class="material-symbols-outlined">arrow_forward</span>
                     </a>
                 </div>
@@ -155,24 +165,28 @@
 
             <!-- FAQ Simple -->
             <div class="max-w-3xl mx-auto mt-20 pt-10 border-t border-white/5">
-                <h3 class="text-xl font-bold text-center mb-8">Dúvidas Frequentes</h3>
-                <div class="grid gap-6">
-                    <div class="bg-background-dark p-6 rounded-xl border border-white/5">
-                        <h4 class="font-bold text-white mb-2">Como funciona a ativação?</h4>
-                        <p class="text-white/60 text-sm">Ao clicar no botão, você falará diretamente com nosso time
-                            financeiro para gerar sua fatura e liberar seu acesso imediato.</p>
-                    </div>
+                <div class="flex items-center justify-center gap-2 text-white/40 text-sm mb-6">
+                    <span class="material-symbols-outlined">lock</span>
+                    Pagamento 100% Seguro via Pix ou Cartão de Crédito
+                </div>
+
+                <div class="text-center">
+                    <p class="text-white/60 text-sm mb-2">Precisa de ajuda com implementação ou consultoria?</p>
+                    <a href="https://wa.me/5542999896358?text=Tenho%20duvidas%20sobre%20a%20Consultoria"
+                        class="text-primary hover:text-white transition-colors text-sm font-bold underline">
+                        Fale sobre o Plano Enterprise
+                    </a>
                 </div>
             </div>
         </div>
     </main>
 
     <footer class="bg-background-dark py-8 border-t border-white/5 text-center">
-        <p class="text-white/30 text-xs">Northway CRM &copy; 2024. Todos os direitos reservados.</p>
+        <p class="text-white/30 text-xs">NorthWay CRM &copy; 2024. Todos os direitos reservados.</p>
     </footer>
 
     <!-- Floating WhatsApp -->
-    <a href="https://wa.me/5542999896358?text=Preciso%20de%20ajuda%20no%20pagamento"
+    <a href="https://wa.me/5542999896358?text=Estou%20com%20duvida%20no%20pagamento"
         class="fixed bottom-6 right-6 z-50 w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
             <path
