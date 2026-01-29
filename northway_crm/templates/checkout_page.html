@@ -4,10 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    <title>NorthWay CRM | Organize e Cresça</title>
+    <title>Escolha seu Plano | NorthWay CRM</title>
 
     <!-- Tailwind & Fonts -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -23,10 +20,10 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#f20d0d", // NorthWay Red
-                        "background-dark": "#050505", // Deep Black
-                        "surface": "#121212", // Dark Gray Surface
-                        "surface-light": "#1E1E1E", // Highlight
+                        "primary": "#f20d0d",
+                        "background-dark": "#050505",
+                        "surface": "#121212",
+                        "surface-light": "#1E1E1E",
                     },
                     fontFamily: {
                         "display": ["Manrope", "sans-serif"]
@@ -43,310 +40,141 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-
-        .text-glow {
-            text-shadow: 0 0 20px rgba(242, 13, 13, 0.3);
-        }
     </style>
 </head>
 
-<body class="bg-background-dark text-white overflow-x-hidden selection:bg-primary selection:text-white">
+<body class="bg-background-dark text-white min-h-screen flex flex-col">
 
-    <!-- BLOCK 2: HEADER -->
-    <header class="fixed top-0 z-50 w-full bg-background-dark/80 backdrop-blur-md border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <!-- HEADER SIMPLIFICADO -->
+    <header class="w-full bg-background-dark/80 backdrop-blur-md border-b border-white/5 py-4">
+        <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
             <img src="logo.png" alt="NorthWay Logo" class="h-8 md:h-10 w-auto object-contain">
-
-            <a href="https://wa.me/5542999896358?text=Olá,%20gostaria%20de%20falar%20com%20um%20especialista."
-                class="hidden md:flex items-center gap-2 text-sm font-bold text-white/80 hover:text-primary transition-colors">
-                Falar com Especialista
-                <span class="material-symbols-outlined text-lg">arrow_outward</span>
-            </a>
+            <a href="/" class="text-white/60 hover:text-white text-sm transition-colors">Voltar ao site</a>
         </div>
     </header>
 
-    <!-- BLOCK 3: HERO (DOBRA PRINCIPAL) -->
-    <section class="min-h-screen flex items-center pt-32 pb-20 relative overflow-hidden">
-        <!-- Background Glow -->
-        <div
-            class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none">
-        </div>
+    <!-- CHECKOUT CONTENT -->
+    <main class="flex-grow py-20 bg-surface">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <span class="text-primary font-bold uppercase tracking-wider text-sm mb-4 block">Finalize seu
+                    Cadastro</span>
+                <h1 class="text-3xl md:text-5xl font-bold mb-6">
+                    Escolha o plano ideal para <span class="text-white">ativar sua conta.</span>
+                </h1>
+                <p class="text-white/60 text-lg">
+                    Você já deu o primeiro passo. Agora escolha como quer acelerar seu crescimento.
+                </p>
+            </div>
 
-        <div class="max-w-7xl mx-auto px-6 w-full grid lg:grid-cols-2 gap-12 items-center relative z-10">
-            <div class="flex flex-col gap-8">
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Basic Plan -->
                 <div
-                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 w-fit">
-                    <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                    <span class="text-xs font-bold uppercase tracking-wider text-white/80">Gestão e Crescimento</span>
+                    class="bg-background-dark border border-white/5 p-8 rounded-3xl hover:border-white/10 transition-colors flex flex-col">
+                    <div class="mb-6">
+                        <span class="text-white/60 text-sm font-bold uppercase tracking-wider">NorthWay CRM</span>
+                        <div class="flex items-baseline gap-1 mt-4">
+                            <span class="text-white text-4xl font-bold">R$ 197</span>
+                            <span class="text-white/60">/mês</span>
+                        </div>
+                        <p class="text-white/60 mt-4 text-sm leading-relaxed">
+                            A ferramenta essencial para quem quer sair das planilhas e começar a vender com organização.
+                        </p>
+                    </div>
+
+                    <ul class="flex flex-col gap-4 mb-8 flex-grow">
+                        <li class="flex items-center gap-3 text-white/80 text-sm">
+                            <span class="material-symbols-outlined text-green-500 text-base">check</span>
+                            Funil de Vendas Ilimitado
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80 text-sm">
+                            <span class="material-symbols-outlined text-green-500 text-base">check</span>
+                            Contratos e Propostas
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80 text-sm">
+                            <span class="material-symbols-outlined text-green-500 text-base">check</span>
+                            Financeiro Integrado
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80 text-sm">
+                            <span class="material-symbols-outlined text-green-500 text-base">check</span>
+                            1 Usuário (adicional +R$ 65)
+                        </li>
+                    </ul>
+
+                    <a href="https://wa.me/5542999896358?text=Quero%20ativar%20meu%20plano%20CRM%20de%20197"
+                        class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl text-center transition-colors border border-white/5 flex items-center justify-center gap-2">
+                        Ativar Plano Standard
+                    </a>
                 </div>
 
-                <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight">
-                    Organize seu negócio, ganhe controle e <span class="text-primary text-glow">escale com
-                        processo.</span>
-                </h1>
+                <!-- Pro Plan -->
+                <div
+                    class="bg-gradient-to-b from-background-dark to-surface border border-primary/30 p-8 rounded-3xl relative overflow-hidden flex flex-col shadow-[0_0_40px_rgba(242,13,13,0.15)] transform md:-translate-y-4">
+                    <div
+                        class="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl uppercase tracking-wider">
+                        Recomendado
+                    </div>
 
-                <p class="text-xl text-white/60 leading-relaxed max-w-lg">
-                    Um CRM criado para empresas que querem sair do improviso e operar com clareza, controle e
-                    previsibilidade.
-                </p>
+                    <div class="mb-6">
+                        <span class="text-primary text-sm font-bold uppercase tracking-wider">Consultoria + CRM</span>
+                        <div class="flex items-baseline gap-1 mt-4">
+                            <span class="text-white text-4xl font-bold">R$ 499</span>
+                            <span class="text-white/60">/mês</span>
+                        </div>
+                        <p class="text-white/60 mt-4 text-sm leading-relaxed">
+                            Para quem quer velocidade. Implementamos o CRM para você e treinamos seu time comercial.
+                        </p>
+                    </div>
 
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="https://wa.me/5542999896358?text=Quero%20organizar%20meu%20negócio"
-                        class="bg-primary hover:bg-red-600 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all shadow-[0_4px_20px_rgba(242,13,13,0.4)] hover:shadow-[0_4px_30px_rgba(242,13,13,0.6)] hover:-translate-y-1 flex items-center justify-center gap-2 group">
-                        Agendar reunião no WhatsApp
-                        <span
-                            class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    <ul class="flex flex-col gap-4 mb-8 flex-grow">
+                        <li class="flex items-center gap-3 text-white text-sm font-medium">
+                            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+                            Todo o Plano Standard
+                        </li>
+                        <li class="flex items-center gap-3 text-white text-sm font-medium">
+                            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+                            Diagnóstico de Processos
+                        </li>
+                        <li class="flex items-center gap-3 text-white text-sm font-medium">
+                            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+                            Implementação Guiada
+                        </li>
+                        <li class="flex items-center gap-3 text-white text-sm font-medium">
+                            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+                            Treinamento de Equipe
+                        </li>
+                    </ul>
+
+                    <a href="https://wa.me/5542999896358?text=Quero%20ativar%20o%20plano%20com%20Consultoria%20(499)"
+                        class="w-full bg-primary hover:bg-red-600 text-white font-bold py-4 rounded-xl text-center transition-all shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-2">
+                        Ativar Plano Consultoria
+                        <span class="material-symbols-outlined">arrow_forward</span>
                     </a>
                 </div>
             </div>
 
-            <!-- Hero Image/Visual -->
-            <div class="relative">
-                <div class="absolute -inset-1 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur opacity-20">
-                </div>
-                <img src="dashboard-financial.png" alt="NorthWay Dashboard"
-                    class="relative rounded-xl shadow-2xl border border-white/10 w-full h-auto">
-            </div>
-        </div>
-    </section>
-
-    <!-- BLOCK 4: VSL VIDEO -->
-    <section class="py-24 bg-surface relative border-y border-white/5">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            <div
-                class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black mb-10">
-                <iframe width="100%" height="100%" src="https://www.youtube.com/embed/zKJnmZwTDJw" title="NorthWay Demo"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen></iframe>
-            </div>
-
-            <h3 class="text-2xl font-semibold text-white mb-6">
-                Veja como o Northway CRM organiza comercial, financeiro e contratos em um único lugar.
-            </h3>
-
-            <a href="https://wa.me/5542999896358?text=Vi%20o%20video%20e%20quero%20falar%20com%20especialista"
-                class="inline-flex items-center gap-2 text-primary hover:text-white font-bold transition-colors border-b border-primary hover:border-white pb-1">
-                Quero falar com um especialista <span class="material-symbols-outlined icon-sm">open_in_new</span>
-            </a>
-        </div>
-    </section>
-
-    <!-- BLOCK 5: PROBLEM (DOR) -->
-    <section class="py-24 bg-background-dark">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="max-w-3xl mb-16">
-                <h2 class="text-4xl md:text-5xl font-bold mb-6">
-                    O problema não é falta de cliente.<br>
-                    <span class="text-primary">É falta de processo.</span>
-                </h2>
-                <p class="text-white/60 text-lg">
-                    Empresas sem estrutura crescem até um teto e depois estagnam no caos.
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-surface p-8 rounded-2xl border border-white/5 hover:border-primary/30 transition-colors">
-                    <span class="material-symbols-outlined text-4xl text-red-500 mb-4">money_off</span>
-                    <h3 class="text-xl font-bold mb-2">Falta de Controle Financeiro</h3>
-                    <p class="text-white/60 text-sm">Não saber exatamente quanto tem a receber ou quem está
-                        inadimplente.</p>
-                </div>
-                <div class="bg-surface p-8 rounded-2xl border border-white/5 hover:border-primary/30 transition-colors">
-                    <span class="material-symbols-outlined text-4xl text-red-500 mb-4">folder_off</span>
-                    <h3 class="text-xl font-bold mb-2">Contratos Espalhados</h3>
-                    <p class="text-white/60 text-sm">Propostas aceitas no WhatsApp, contratos no e-mail, dados perdidos.
-                    </p>
-                </div>
-                <div class="bg-surface p-8 rounded-2xl border border-white/5 hover:border-primary/30 transition-colors">
-                    <span class="material-symbols-outlined text-4xl text-red-500 mb-4">person_off</span>
-                    <h3 class="text-xl font-bold mb-2">Leads Perdidos</h3>
-                    <p class="text-white/60 text-sm">Esquecer de responder um cliente ou fazer follow-up na hora certa.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- BLOCK 6: SOLUTION (FEATURES) -->
-    <section class="py-24 bg-surface border-y border-white/5">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl md:text-5xl font-bold mb-6">
-                    Tudo o que sustenta um negócio organizado,<br>
-                    <span class="text-primary">em um único sistema.</span>
-                </h2>
-            </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="flex gap-4 items-start">
-                    <div class="bg-primary/20 p-3 rounded-lg text-primary">
-                        <span class="material-symbols-outlined">view_kanban</span>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-bold mb-1">Gestão de Tarefas</h4>
-                        <p class="text-white/60 text-sm">Centralize o que precisa ser feito e por quem.</p>
-                    </div>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="flex gap-4 items-start">
-                    <div class="bg-primary/20 p-3 rounded-lg text-primary">
-                        <span class="material-symbols-outlined">monitoring</span>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-bold mb-1">Dashboard & DRE</h4>
-                        <p class="text-white/60 text-sm">Visão clara de lucro, receita e despesas.</p>
-                    </div>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="flex gap-4 items-start">
-                    <div class="bg-primary/20 p-3 rounded-lg text-primary">
-                        <span class="material-symbols-outlined">filter_alt</span>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-bold mb-1">Funil de Vendas</h4>
-                        <p class="text-white/60 text-sm">Organize a jornada do cliente do primeiro "oi" ao contrato.</p>
-                    </div>
-                </div>
-
-                <!-- Feature 4 -->
-                <div class="flex gap-4 items-start">
-                    <div class="bg-primary/20 p-3 rounded-lg text-primary">
-                        <span class="material-symbols-outlined">description</span>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-bold mb-1">Contratos Automáticos</h4>
-                        <p class="text-white/60 text-sm">Gere PDF de contratos com dados do cliente em 1 clique.</p>
-                    </div>
-                </div>
-
-                <!-- Feature 5 -->
-                <div class="flex gap-4 items-start">
-                    <div class="bg-primary/20 p-3 rounded-lg text-primary">
-                        <span class="material-symbols-outlined">attach_money</span>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-bold mb-1">Financeiro Integrado</h4>
-                        <p class="text-white/60 text-sm">Emissão de boletos e fluxo de caixa real.</p>
+            <!-- FAQ Simple -->
+            <div class="max-w-3xl mx-auto mt-20 pt-10 border-t border-white/5">
+                <h3 class="text-xl font-bold text-center mb-8">Dúvidas Frequentes</h3>
+                <div class="grid gap-6">
+                    <div class="bg-background-dark p-6 rounded-xl border border-white/5">
+                        <h4 class="font-bold text-white mb-2">Como funciona a ativação?</h4>
+                        <p class="text-white/60 text-sm">Ao clicar no botão, você falará diretamente com nosso time
+                            financeiro para gerar sua fatura e liberar seu acesso imediato.</p>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </main>
 
-    <!-- BLOCK 7: BENEFITS (TRANSFORMATION) -->
-    <section class="py-24 bg-background-dark text-center relative overflow-hidden">
-        <div class="absolute inset-0 bg-primary/5 blur-3xl pointer-events-none"></div>
-        <div class="max-w-4xl mx-auto px-6 relative z-10">
-            <h2 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
-                "Processo não trava.<br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500">Processo
-                    liberta."</span>
-            </h2>
-            <div class="flex flex-wrap justify-center gap-6 text-white/80">
-                <span class="flex items-center gap-2 px-4 py-2 border border-white/10 rounded-full bg-white/5">
-                    <span class="material-symbols-outlined text-primary text-sm">check</span> Clareza
-                </span>
-                <span class="flex items-center gap-2 px-4 py-2 border border-white/10 rounded-full bg-white/5">
-                    <span class="material-symbols-outlined text-primary text-sm">check</span> Previsibilidade
-                </span>
-                <span class="flex items-center gap-2 px-4 py-2 border border-white/10 rounded-full bg-white/5">
-                    <span class="material-symbols-outlined text-primary text-sm">check</span> Escala
-                </span>
-            </div>
-        </div>
-    </section>
-
-    <!-- BLOCK 8: PRICING (PLANOS) -->
-    <section class="py-24 bg-surface" id="planos">
-        <div class="max-w-7xl mx-auto px-6 text-center">
-            <h2 class="text-4xl font-bold mb-12">Simples, direto e sem pegadinhas.</h2>
-
-            <div
-                class="max-w-md mx-auto bg-background-dark border border-white/10 p-10 rounded-3xl shadow-2xl relative">
-                <div
-                    class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">
-                    Plano Profissional
-                </div>
-
-                <div class="mb-8">
-                    <div class="flex justify-center items-baseline gap-1">
-                        <span class="text-white text-6xl font-extrabold">R$ 197</span>
-                        <span class="text-white/60 text-xl font-medium">/mês</span>
-                    </div>
-                </div>
-
-                <ul class="text-left space-y-4 mb-10 text-white/80">
-                    <li class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary">check_circle</span>
-                        <span>CRM Completo e Ilimitado</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary">check_circle</span>
-                        <span>Financeiro Integrado</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary">check_circle</span>
-                        <span>Contratos e Documentos</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-primary">check_circle</span>
-                        <span>Dashboard de Performance</span>
-                    </li>
-                    <li class="flex items-center gap-3 border-t border-white/5 pt-4 text-white/60 text-sm">
-                        <span class="material-symbols-outlined">group_add</span>
-                        <span>1 Usuário incluso (add +R$ 65/user)</span>
-                    </li>
-                </ul>
-
-                <a href="https://wa.me/5542999896358?text=Quero%20assinar%20o%20Plano%20Profissional"
-                    class="block w-full bg-primary hover:bg-red-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-primary/40 mb-4">
-                    Assinar Agora
-                </a>
-                <p class="text-white/40 text-xs">Sem fidelidade. Cancele quando quiser.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- BLOCK 9: FINAL CTA -->
-    <section class="py-24 bg-background-dark border-t border-white/5 text-center">
-        <div class="max-w-2xl mx-auto px-6">
-            <h2 class="text-3xl md:text-4xl font-bold mb-6">Pronto para sair do improviso?</h2>
-            <p class="text-white/60 text-xl mb-10">
-                Agende uma conversa e veja se o Northway CRM faz sentido para o seu negócio.
-            </p>
-            <a href="https://wa.me/5542999896358?text=Quero%20agendar%20uma%20reunião"
-                class="bg-white text-background-dark hover:bg-gray-200 font-bold py-4 px-10 rounded-full text-lg transition-all inline-flex items-center gap-3 shadow-xl">
-                Agendar reunião no WhatsApp
-                <span class="material-symbols-outlined">chat</span>
-            </a>
-        </div>
-    </section>
-
-    <!-- BLOCK 11: FOOTER -->
-    <footer class="bg-surface py-12 border-t border-white/5">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="text-center md:text-left">
-                <img src="logo.png" alt="NorthWay" class="h-6 mx-auto md:mx-0 opacity-50 mb-2">
-                <p class="text-white/30 text-sm">Northway — processo, clareza e crescimento sustentável.</p>
-            </div>
-
-            <a href="https://www.instagram.com/northway.mkt/" target="_blank"
-                class="text-white/40 hover:text-white transition-colors flex items-center gap-2">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg"
-                    class="w-5 h-5 filter grayscale opacity-50 hover:opacity-100 hover:grayscale-0 transition-all">
-                @northway.mkt
-            </a>
-        </div>
+    <footer class="bg-background-dark py-8 border-t border-white/5 text-center">
+        <p class="text-white/30 text-xs">Northway CRM &copy; 2024. Todos os direitos reservados.</p>
     </footer>
 
     <!-- Floating WhatsApp -->
-    <a href="https://wa.me/5542999896358?text=Olá,%20vim%20pelo%20site."
-        class="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-[0_4px_15px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform hover:shadow-[0_4px_25px_rgba(37,211,102,0.6)] animate-pulse">
-        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+    <a href="https://wa.me/5542999896358?text=Preciso%20de%20ajuda%20no%20pagamento"
+        class="fixed bottom-6 right-6 z-50 w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
             <path
                 d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.522-2.961-2.638-.087-.117-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217s.231.001.332.005c.109.004.253-.041.397.301.144.344.491 1.196.534 1.282.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.101-.177.211-.077.385.101.174.449.741.964 1.201.662.592 1.221.777 1.394.864.174.088.275.073.376-.042.101-.116.434-.506.549-.68.116-.174.231-.144.39-.087.158.058 1.002.473 1.176.56.173.088.289.13.332.202.045.072.045.419-.1.824z">
             </path>
