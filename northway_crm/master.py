@@ -1025,6 +1025,25 @@ def recreate_master_user():
         db.session.commit()
         return "Master User already existed, permissions updated. <a href='/login'>Go to Login</a>"
 
+@master.route('/master/super-me')
+@login_required
+def super_me():
+    current_user.is_super_admin = True
+    db.session.commit()
+    return "Seu usuário agora é Super Admin! <a href='/master/dashboard'>Ir para o Dashboard</a>"
+
+@master.route('/master/user-debug')
+def user_debug():
+    if not current_user.is_authenticated:
+        return {"authenticated": False}
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "is_super_admin": getattr(current_user, 'is_super_admin', False),
+        "company_id": current_user.company_id
+    }
+
 @master.route('/master/refresh-roles')
 @login_required
 def refresh_roles():
