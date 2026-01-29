@@ -644,8 +644,16 @@ def restore_production_docs():
                 book.allowed_companies.append(master_company)
                 count += 1
                 
+        # 3. Re-associate and Private-ize Contract Templates
+        templates = ContractTemplate.query.all()
+        t_count = 0
+        for tmpl in templates:
+            tmpl.is_global = False
+            tmpl.company_id = master_company_id
+            t_count += 1
+                
         db.session.commit()
-        return f"Restored {count} associations for company #{master_company_id}. <a href='/library'>Go to Library</a>"
+        return f"Restored {count} library books and {t_count} templates for company #{master_company_id}. <a href='/library'>Go to Library</a>"
         
     except Exception as e:
         db.session.rollback()
