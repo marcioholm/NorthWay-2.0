@@ -149,7 +149,10 @@ def debug_template():
     if os.path.exists(path):
         with open(path, 'r') as f:
             content = f.read()
-        return {"path": path, "content_preview": content[8000:9000]} # Check the middle where the buttons are
+        index = content.find('Materiais')
+        if index != -1:
+            return {"found": True, "context": content[index-100:index+200]}
+        return {"found": False, "length": len(content), "preview_end": content[-500:]}
     return {"error": "Not found", "path": path}
 
 @master.route('/master/impersonate/<int:user_id>')
