@@ -1027,8 +1027,6 @@ def recreate_master_user():
 
 @master.route('/master/super-me')
 @login_required
-@master.route('/master/super-me')
-@login_required
 def super_me():
     current_user.is_super_admin = True
     db.session.commit()
