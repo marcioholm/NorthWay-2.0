@@ -83,6 +83,40 @@
         <form action="{{ url_for('admin.company_settings') }}" method="POST" enctype="multipart/form-data"
             class="p-6 space-y-6">
 
+            <!-- Subscription Section (Tenant Admin View) -->
+            <div class="mb-8 bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="p-2 bg-indigo-100 rounded-lg text-indigo-700">
+                        <i data-lucide="credit-card" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-900">Sua Assinatura: {{ company.plan|capitalize }}</h4>
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="text-gray-500">Status:
+                                <span
+                                    class="{{ 'text-green-600 font-bold' if company.payment_status == 'active' else 'text-red-500 font-bold' }}">
+                                    {{ company.payment_status|upper }}
+                                </span>
+                            </span>
+                            {% if subscription_days_remaining is not none %}
+                            <span class="text-gray-400">•</span>
+                            <span
+                                class="{{ 'text-red-500 font-bold' if subscription_days_remaining < 5 else 'text-gray-600' }}">
+                                Vence em {{ subscription_days_remaining }} dias
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <form action="{{ url_for('admin.generate_self_payment') }}" method="POST" class="m-0 p-0">
+                    <button type="submit"
+                        class="flex items-center gap-2 px-3 py-1.5 bg-white border border-indigo-200 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                        <i data-lucide="barcode" class="w-4 h-4"></i>
+                        Gerar Boleto / 2ª Via
+                    </button>
+                </form>
+            </div>
+
             <div class="border-b border-gray-100 pb-6 mb-6">
                 <h3 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Identidade Visual</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">

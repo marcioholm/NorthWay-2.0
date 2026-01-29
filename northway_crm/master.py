@@ -191,8 +191,9 @@ def companies():
     for c in companies_list:
         c.user_count = User.query.filter_by(company_id=c.id).count()
         c.admin = User.query.filter_by(company_id=c.id, role=ROLE_ADMIN).first()
-        
-    return render_template('master_companies.html', companies=companies_list)
+    
+    from datetime import date
+    return render_template('master_companies.html', companies=companies_list, now_date=date.today())
 
 @master.route('/master/company/new', methods=['GET', 'POST'])
 @login_required
