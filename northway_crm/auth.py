@@ -36,6 +36,11 @@ def check_saas_status():
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        if getattr(current_user, 'is_super_admin', False):
+            return redirect(url_for('master.dashboard'))
+        return redirect(url_for('dashboard.home'))
+
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -99,10 +104,13 @@ def login():
             print(f"❌ Login Failed for {email}. User found? {bool(user)}")
             flash('Email ou senha incorretos.', 'error')
             
-    return render_template('login.html')
+    return render_template('login.html', minimal=True)
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard.home'))
+        
     if request.method == 'POST':
         # Step 1: User Info Only
         name = request.form.get('name')
@@ -157,7 +165,7 @@ def register():
         flash('Conta criada! Agora configure sua empresa.', 'success')
         return redirect(url_for('auth.setup_company'))
         
-    return render_template('register.html')
+    return render_template('register.html', minimal=True)
 
 @auth.route('/setup-company', methods=['GET', 'POST'])
 @login_required
