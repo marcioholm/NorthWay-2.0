@@ -1,4 +1,8 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv() # Load env vars before anything else
+
 from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Blueprint
 from werkzeug.middleware.proxy_fix import ProxyFix

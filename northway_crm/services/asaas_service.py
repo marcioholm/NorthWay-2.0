@@ -4,19 +4,20 @@ import json
 from flask import current_app
 
 ASAAS_API_URL = os.environ.get('ASAAS_API_URL', 'https://www.asaas.com/api/v3') # Use 'https://sandbox.asaas.com/api/v3' for test
-ASAAS_API_KEY = os.environ.get('ASAAS_API_KEY')
+ASAAS_API_URL = os.environ.get('ASAAS_API_URL', 'https://www.asaas.com/api/v3') # Use 'https://sandbox.asaas.com/api/v3' for test
 
 def get_headers(api_key=None):
+    token = api_key or os.environ.get('ASAAS_API_KEY')
     return {
         'Content-Type': 'application/json',
-        'access_token': api_key or ASAAS_API_KEY
+        'access_token': token
     }
 
 def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key=None):
     """
     Creates or Retrieves a customer in Asaas.
     """
-    token = api_key or ASAAS_API_KEY
+    token = api_key or os.environ.get('ASAAS_API_KEY')
     if not token:
         print("❌ ERROR: ASAAS_API_KEY not found.")
         return None, "ASAAS_API_KEY Missing"
