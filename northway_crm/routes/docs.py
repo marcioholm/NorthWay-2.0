@@ -79,3 +79,19 @@ def view_document(id):
         abort(403)
         
     return render_template('docs/view_document.html', doc=doc)
+
+@docs_bp.route('/book/<int:id>')
+@login_required
+def view_book(id):
+    from models import LibraryBook
+    from flask_login import current_user
+    from flask import abort
+    
+    book = LibraryBook.query.get_or_404(id)
+    
+    # Security Check: Ensure book is accessible to user's company or user is super admin
+    is_super = getattr(current_user, 'is_super_admin', False)
+    if not is_super and current_user.company not in book.allowed_companies:
+        abort(403)
+        
+    return render_template('docs/view_book.html', book=book)

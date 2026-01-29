@@ -1170,3 +1170,69 @@ def fix_missing_pipelines():
             
     db.session.commit()
     return f"Fixed pipelines for {count} companies."
+
+@master.route('/master/library/new', methods=['GET', 'POST'])
+@login_required
+def master_library_new():
+    from models import LibraryBook
+    from datetime import datetime
+    if not current_user.is_super_admin:
+        abort(403)
+        
+    if request.method == 'POST':
+        title = request.form.get('title')
+        category = request.form.get('category')
+        description = request.form.get('description')
+        cover_image = request.form.get('cover_image')
+        content = request.form.get('content')
+        
+        book = LibraryBook(
+            title=title,
+            category=category,
+            description=description,
+            cover_image=cover_image,
+            content=content,
+            created_at=datetime.utcnow()
+        )
+        db.session.add(book)
+        db.session.commit()
+        flash(f"Material '{title}' criado com sucesso!", "success")
+        return redirect(url_for('docs.library'))
+        
+    return render_template('master_library_edit.html', book=None)
+
+@master.route('/master/library/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def master_library_edit(id):
+    from models import LibraryBook
+    if not current_user.is_super_admin:
+        abort(403)
+        
+    book = LibraryBook.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        book.title = request.form.get('title')
+        book.category = request.form.get('category')
+        book.description = request.form.get('description')
+        book.cover_image = request.form.get('cover_image')
+        book.content = request.form.get('content')
+        
+        db.session.commit()
+        flash(f"Material '{book.title}' atualizado!", "success")
+        return redirect(url_for('docs.library'))
+        
+    return render_template('master_library_edit.html', book=book)
+
+@master.route('/master/library/<int:id>/delete', methods=['POST'])
+@login_required
+def master_library_delete(id):
+    from models import LibraryBook
+    if not current_user.is_super_admin:
+        abort(403)
+        
+    book = LibraryBook.query.get_or_404(id)
+    title = book.title
+    db.session.delete(book)
+    db.session.commit()
+    flash(f"Material '{title}' excluído.", "success")
+    return redirect(url_for('docs.library'))

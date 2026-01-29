@@ -4,7 +4,15 @@
 <div class="p-8 max-w-7xl mx-auto h-full overflow-y-auto">
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Biblioteca NorthWay</h1>
-        <p class="text-gray-500">Acesse nossos materiais educativos e guias estratégicos.</p>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <p class="text-gray-500">Acesse nossos materiais educativos e guias estratégicos.</p>
+            {% if current_user.is_super_admin %}
+            <a href="{{ url_for('master.master_library_new') }}"
+                class="inline-flex items-center gap-2 bg-[#fa0102] text-white px-6 py-2.5 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20">
+                <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Material
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Section: Private Company Library (Legacy/Uploaded) -->
@@ -97,12 +105,30 @@
                     </h3>
                     <p class="text-sm text-gray-500 mb-4 line-clamp-2">{{ book.description or '' }}</p>
 
-                    <div class="mt-auto">
-                        <a href="{{ url_for(book.route_name) if book.route_name else '#' }}"
+                    <div class="mt-auto flex items-center justify-between">
+                        <a href="{{ url_for(book.route_name) if book.route_name else url_for('docs.view_book', id=book.id) }}"
                             class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-[#fa0102] transition-colors">
                             Acessar Material <i data-lucide="arrow-right"
                                 class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
                         </a>
+
+                        {% if current_user.is_super_admin %}
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('master.master_library_edit', id=book.id) }}"
+                                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                title="Editar">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </a>
+                            <form action="{{ url_for('master.master_library_delete', id=book.id) }}" method="POST"
+                                onsubmit="return confirm('Excluir este material permanentemente?');">
+                                <button type="submit"
+                                    class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                    title="Excluir">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -169,12 +195,30 @@
                     <h3 class="text-xl font-bold text-gray-900 mb-2">{{ book.title }}</h3>
                     <p class="text-sm text-gray-500 mb-4 line-clamp-2">{{ book.description or '' }}</p>
 
-                    <div class="mt-auto">
-                        <a href="{{ url_for(book.route_name) if book.route_name else '#' }}"
+                    <div class="mt-auto flex items-center justify-between">
+                        <a href="{{ url_for(book.route_name) if book.route_name else url_for('docs.view_book', id=book.id) }}"
                             class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
                             Ler Material <i data-lucide="arrow-right"
                                 class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
                         </a>
+
+                        {% if current_user.is_super_admin %}
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('master.master_library_edit', id=book.id) }}"
+                                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                title="Editar">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </a>
+                            <form action="{{ url_for('master.master_library_delete', id=book.id) }}" method="POST"
+                                onsubmit="return confirm('Excluir este material permanentemente?');">
+                                <button type="submit"
+                                    class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                    title="Excluir">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
