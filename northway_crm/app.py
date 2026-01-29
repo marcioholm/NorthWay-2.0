@@ -229,8 +229,22 @@ def create_app():
             return
 
         # Check Login & Inoperability
-        if current_user.is_authenticated:
-            if current_user.company and getattr(current_user.company, 'platform_inoperante', False):
+        if current_user.is_authenticated and current_user.company:
+            company = current_user.company
+            
+            # --- LAZY BLOCK ENGINE (D+30) ---
+            # If Overdue > 30 days, force block immediately on next request
+            if company.payment_status == 'overdue' and company.overdue_since:
+                days_late = (datetime.utcnow() - company.overdue_since).days
+                if days_late >= 30 and not company.platform_inoperante:
+                    print(f"🚫 BLOCKING COMPANY {company.name} due to {days_late} days overdue.")
+                    company.platform_inoperante = True
+                    company.payment_status = 'blocked'
+                    # Ideally we would send email here, but for laziness we skip or trigger async
+                    db.session.commit()
+
+            # --- ACCESS CONTROL ---
+            if getattr(company, 'platform_inoperante', False):
                 # Allow access to specific routes needed for billing
                 if request.endpoint.startswith('billing.'):
                     return
