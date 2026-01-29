@@ -366,20 +366,26 @@ def create_app():
                     except Exception as bill_migration_e:
                          print(f"❌ MIGRATION ERROR on Billing Columns: {bill_migration_e}")
                     
-                    # MIGRATE: Add next_due_date (Date type) - INDEPENDENT CHECK
+                    except Exception as bill_migration_e:
+                         print(f"❌ MIGRATION ERROR on Billing Columns: {bill_migration_e}")
+                    
+                    # MIGRATE: Add next_due_date (Date type) - BLIND ATTEMPT
                     try:
-                        # Refresh inspector to be safe
-                        inspector = inspect(db.engine)
-                        existing_cols = [c['name'] for c in inspector.get_columns("company")]
-                        
-                        if 'next_due_date' not in existing_cols:
-                            print("📦 MIGRATION: Adding next_due_date to company...")
-                            with db.engine.connect() as conn:
-                                conn.execute(text("ALTER TABLE company ADD COLUMN next_due_date DATE"))
-                                conn.commit()
-                            print("✅ MIGRATION: next_due_date added to company.")
+                        print("📦 MIGRATION ATTEMPT: Adding next_due_date to company (Blind)...")
+                        with db.engine.connect() as conn:
+                            # Try to add it assuming it is missing
+                            conn.execute(text("ALTER TABLE company ADD COLUMN next_due_date DATE"))
+                            conn.commit()
+                        print("✅ MIGRATION: next_due_date added to company.")
                     except Exception as date_migration_e:
-                        print(f"❌ MIGRATION ERROR on next_due_date: {date_migration_e}")
+                        # Catch specific SQLite/Postgres "duplicate column" errors
+                        err_str = str(date_migration_e).lower()
+                        if "duplicate column" in err_str or "already exists" in err_str:
+                             print("ℹ️ MIGRATION: next_due_date already exists (Ignored).")
+                        else:
+                             print(f"❌ MIGRATION ERROR on next_due_date: {date_migration_e}")
+
+                # MIGRATE: Create BillingEvent table if missing
 
                 # MIGRATE: Create BillingEvent table if missing
                 if not inspector.has_table("billing_event"):
