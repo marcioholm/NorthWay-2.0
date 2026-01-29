@@ -276,3 +276,102 @@ def master_toggle_courtesy(id):
 @login_required
 def settings_index():
     return redirect(url_for('admin.profile'))
+
+@admin_bp.route('/settings/subscription/pay', methods=['POST'])
+@login_required
+def generate_self_payment():
+    """
+    Allows the Tenant Admin to generate their own slip/subscription link.
+    Reuses logic from master but strictly scoped to current_user.company_id.
+    """
+    # 1. Security Check
+    if not current_user.company_id:
+        abort(403)
+        
+    # Ensure only admin role (or has permission)
+    if not current_user.has_permission('admin_view') and current_user.role.lower() != 'admin':
+        flash("Apenas administradores podem gerenciar pagamentos.", "error")
+        return redirect(url_for('admin.company_settings'))
+
+    company_id = current_user.company_id
+    
+    try:
+        from models import Company
+        from services.asaas_service import create_customer, create_subscription, get_subscription_payments, get_subscription
+        from datetime import datetime
+        
+        company = Company.query.get_or_404(company_id)
+        
+        # 2. Gather Data (Self Context)
+        name = company.representative or company.name
+        email = current_user.email # Use the admin's email for contact
+        cpf_cnpj = company.cpf_cnpj or company.document
+        phone = current_user.phone
+        
+        if not cpf_cnpj:
+            flash("Atualize o CNPJ/CPF da empresa antes de gerar o pagamento.", "error")
+            return redirect(url_for('admin.company_settings'))
+
+        # Clean CNPJ
+        import re
+        cpf_cnpj_clean = re.sub(r'[^0-9]', '', str(cpf_cnpj))
+        
+        # 3. Ensure Customer
+        if not company.asaas_customer_id:
+            customer_id, error_msg = create_customer(
+                name=name, email=email, cpf_cnpj=cpf_cnpj_clean, phone=phone, external_id=company.id
+            )
+            if customer_id:
+                company.asaas_customer_id = customer_id
+                db.session.commit()
+            else:
+                flash(f"Erro no cadastro Asaas: {error_msg}", "error")
+                return redirect(url_for('admin.company_settings'))
+                
+        # 4. Check/Ensure Subscription
+        if company.subscription_id:
+             # Check validity
+            sub_check = get_subscription(company.subscription_id)
+            if not sub_check or 'id' not in sub_check or sub_check.get('status') == 'DELETED':
+                 company.subscription_id = None
+                 company.payment_status = 'pending'
+                 db.session.commit()
+
+        if not company.subscription_id:
+            # Create New
+            val = 197.00
+            plan_key = getattr(company, 'plan', 'pro')
+            if plan_key == 'enterprise': val = 997.00
+            
+            next_due = datetime.now().date().strftime('%Y-%m-%d')
+            
+            sub_data = create_subscription(
+                customer_id=company.asaas_customer_id, 
+                value=val, 
+                next_due_date=next_due, 
+                cycle='MONTHLY',
+                description=f"NorthWay CRM - {company.name} ({plan_key})"
+            )
+            if sub_data:
+                company.subscription_id = sub_data['id']
+                company.payment_status = 'pending'
+                db.session.commit()
+                flash("Assinatura gerada com sucesso.", "success")
+            else:
+                flash("Falha ao criar assinatura.", "error")
+                return redirect(url_for('admin.company_settings'))
+
+        # 5. Redirect to Invoice
+        payments = get_subscription_payments(company.subscription_id)
+        if payments:
+            invoice_url = payments[0]['invoiceUrl']
+            return redirect(invoice_url)
+        else:
+            flash("Boleto ainda sendo processado. Tente novamente em 1 minuto.", "warning")
+            
+        return redirect(url_for('admin.company_settings'))
+        
+    except Exception as e:
+        print(f"Self Payment Error: {e}")
+        flash(f"Erro interno: {e}", "error")
+        return redirect(url_for('admin.company_settings'))
