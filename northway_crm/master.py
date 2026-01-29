@@ -462,7 +462,7 @@ def generate_payment(company_id):
 @master.route('/master/company/<int:company_id>/block', methods=['POST'])
 @login_required
 def company_block(company_id):
-    if notZN getattr(current_user, 'is_super_admin', False):
+    if not getattr(current_user, 'is_super_admin', False):
         abort(403)
         
     company = Company.query.get_or_404(company_id)
