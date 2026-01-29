@@ -135,6 +135,7 @@ class Company(db.Model):
     
     # Timestamps
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_active_at = db.Column(db.DateTime, nullable=True) # Aggregated activity
 
     @property
     def address(self):
@@ -157,6 +158,7 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=True) # New RBAC
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Nullable for Supabase Auth Triggers
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime, nullable=True)
 
     # Profile Fields
     profile_image = db.Column(db.String(150), nullable=True)

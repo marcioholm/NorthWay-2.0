@@ -37,6 +37,7 @@
                             <th class="px-6 py-4">Nome</th>
                             <th class="px-6 py-4">Email</th>
                             <th class="px-6 py-4">Cargo (Role)</th>
+                            <th class="px-6 py-4">Último Login</th>
                             <th class="px-6 py-4 text-right">Ações</th>
                         </tr>
                     </thead>
@@ -52,6 +53,14 @@
                             </td>
                             <td class="px-6 py-4 text-gray-300">{{ user.email }}</td>
                             <td class="px-6 py-4 text-gray-400 uppercase text-xs font-bold">{{ user.role }}</td>
+                            <td class="px-6 py-4 text-gray-400 text-xs">
+                                {% if user.last_login %}
+                                <span class="text-emerald-400 font-mono">{{ user.last_login.strftime('%d/%m/%Y %H:%M')
+                                    }}</span>
+                                {% else %}
+                                <span class="opacity-50">-</span>
+                                {% endif %}
+                            </td>
                             <td class="px-6 py-4 text-right flex gap-2 justify-end">
                                 <a href="{{ url_for('master.edit_user', user_id=user.id) }}"
                                     class="inline-flex items-center gap-2 bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs transition-colors shadow-lg">
