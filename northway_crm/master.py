@@ -133,28 +133,6 @@ def company_materials(company_id):
                            books=books, 
                            templates=templates)
 
-@master.route('/master/debug-path')
-def debug_path():
-    import os
-    return {
-        "file": __file__,
-        "cwd": os.getcwd(),
-        "dir": os.path.dirname(os.path.abspath(__file__))
-    }
-
-@master.route('/master/debug-template')
-def debug_template():
-    import os
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates', 'master_dashboard.html')
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            content = f.read()
-        index = content.find('Materiais')
-        if index != -1:
-            return {"found": True, "context": content[index-100:index+200]}
-        return {"found": False, "length": len(content), "preview_end": content[-500:]}
-    return {"error": "Not found", "path": path}
-
 @master.route('/master/impersonate/<int:user_id>')
 def impersonate(user_id):
     target_user = User.query.get_or_404(user_id)
