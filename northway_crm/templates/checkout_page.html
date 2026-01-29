@@ -1,282 +1,256 @@
-<!DOCTYPE html>
-<html class="dark" lang="pt-BR" data-version="v2.1-premium">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Escolha seu Plano | NorthWay CRM</title>
+{% block content %}
+<div class="min-h-screen flex flex-col bg-white font-sans selection:bg-red-600 selection:text-white">
 
-    <!-- Tailwind & Fonts -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap"
-        rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
-
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#f20d0d",
-                        "background-dark": "#050505",
-                        "surface": "#121212",
-                    },
-                    fontFamily: {
-                        "display": ["Manrope", "sans-serif"]
-                    }
-                },
-            },
-        }
-    </script>
-    <style>
-        body {
-            font-family: 'Manrope', sans-serif;
-        }
-
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
-</head>
-
-<body class="bg-background-dark text-white min-h-screen flex flex-col">
-
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="fixed top-4 right-4 z-50 flex flex-col gap-2">
-        {% for category, message in messages %}
+    <!-- Scarcity Banner -->
+    <div class="bg-red-600 text-white text-center py-2 relative overflow-hidden group cursor-default">
         <div
-            class="bg-surface border border-white/10 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2">
-            {% if category == 'error' %}
-            <span class="material-symbols-outlined text-red-500">error</span>
-            {% else %}
-            <span class="material-symbols-outlined text-green-500">check_circle</span>
-            {% endif %}
-            <span class="text-sm font-medium">{{ message }}</span>
+            class="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10">
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
-
-    <!-- SCARCITY BANNER -->
-    <div class="bg-primary/10 border-b border-primary/20 py-2 text-center">
         <p
-            class="text-primary text-xs md:text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-sm animate-pulse">local_fire_department</span>
+            class="text-xs md:text-sm font-bold uppercase tracking-widest relative z-10 flex items-center justify-center gap-2">
+            <i data-lucide="flame" class="w-4 h-4 text-orange-200 animate-pulse"></i>
             Oferta exclusiva para os próximos 25 novos usuários
         </p>
     </div>
 
-    <!-- HEADER -->
-    <header class="w-full bg-background-dark/80 backdrop-blur-md border-b border-white/5 py-6 sticky top-0 z-40">
+    <!-- Header (Simplified implementation of base navbar but specific for checkout focus) -->
+    <header class="w-full bg-white/80 backdrop-blur-md border-b border-gray-100 py-6 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
-            <!-- Fixed Logo Path -->
-            <img src="{{ url_for('static', filename='images/logo.png') }}"
-                onerror="this.src='https://placehold.co/200x50?text=NORTHWAY'" alt="NorthWay Logo"
-                class="h-12 md:h-14 w-auto object-contain hover:opacity-90 transition-opacity">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay Logo" class="h-10 w-auto">
 
-            <div class="flex items-center gap-6">
-                <span class="text-white/40 text-xs hidden md:inline font-mono tracking-wide">Logado como <span
-                        class="text-white/80">{{ current_user.email }}</span></span>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-400 text-xs hidden md:inline font-medium tracking-wide">
+                    Logado como <span class="text-gray-900 font-bold">{{ current_user.email }}</span>
+                </span>
                 <a href="{{ url_for('auth.logout') }}"
-                    class="text-white/60 hover:text-white text-sm font-semibold transition-colors border border-white/10 px-4 py-2 rounded-lg hover:bg-white/5">Sair</a>
+                    class="text-gray-500 hover:text-red-600 text-sm font-bold transition-colors border border-gray-200 hover:border-red-200 px-4 py-2 rounded-xl">
+                    Sair
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- CONTENT -->
-    <main class="flex-grow py-20 bg-surface relative overflow-hidden">
-        <!-- Background Gradients (Atmosphere) -->
+    <main class="flex-grow py-16 relative overflow-hidden">
+        <!-- Background Decorators -->
         <div
-            class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none">
+            class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-red-50/50 rounded-full blur-[120px] -z-10 pointer-events-none">
         </div>
 
-        <div class="max-w-7xl mx-auto px-6 relative z-10">
+        <div class="max-w-7xl mx-auto px-6">
+
+            <!-- Hero Section -->
             <div class="text-center max-w-3xl mx-auto mb-16">
                 <span
-                    class="inline-block py-1 px-3 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider mb-6 animate-fade-in-up">
-                    Oferta de Lançamento
+                    class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full bg-red-50 border border-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest mb-6 shadow-sm">
+                    <i data-lucide="sparkles" class="w-3 h-3"></i> Oferta de Lançamento
                 </span>
-                <h1 class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+                <h1 class="text-4xl md:text-5xl font-extrabold mb-6 text-gray-900 tracking-tight leading-tight">
                     Acelere sua empresa <span
-                        class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500">agora.</span>
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-red-500 relative">
+                        agora.
+                        <svg class="absolute w-full h-2 -bottom-0 left-0 text-red-200 -z-10" viewBox="0 0 100 10"
+                            preserveAspectRatio="none">
+                            <path d="M0 5 Q 50 10 100 5" stroke="currentColor" stroke-width="4" fill="none" />
+                        </svg>
+                    </span>
                 </h1>
-                <p class="text-white/60 text-lg md:text-xl font-light max-w-2xl mx-auto leading-relaxed">
+                <p class="text-gray-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
                     A ferramenta definitiva para organizar seus processos, vender mais e escalar seu negócio com
                     segurança.
                 </p>
             </div>
 
-            <!-- CHECKOUT FORM -->
-            <form action="{{ url_for('billing.process_checkout') }}" method="POST" class="max-w-5xl mx-auto">
+            <form action="{{ url_for('billing.process_checkout') }}" method="POST" class="max-w-6xl mx-auto">
 
-                <!-- Billing Details -->
+                <!-- Billing Data Section -->
                 <div
-                    class="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-3xl mb-16 flex flex-col md:flex-row items-center gap-8 shadow-2xl">
+                    class="bg-white border border-gray-200 p-8 rounded-3xl mb-16 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col md:flex-row items-center gap-8 relative overflow-hidden">
                     <div
-                        class="w-16 h-16 bg-gradient-to-br from-primary to-orange-600 rounded-2xl flex items-center justify-center text-white shadow-lg shrink-0 transform rotate-3">
-                        <span class="material-symbols-outlined text-3xl">badge</span>
+                        class="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2">
                     </div>
+
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200 shrink-0 transform -rotate-3">
+                        <i data-lucide="receipt" class="w-8 h-8"></i>
+                    </div>
+
                     <div class="flex-1 w-full grid md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-white/40 text-xs uppercase font-bold tracking-wider mb-2 ml-1">CPF
-                                ou CNPJ (Para Nota Fiscal)</label>
-                            <input type="text" name="cpf_cnpj" required placeholder="000.000.000-00"
-                                class="w-full bg-background-dark/50 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-mono">
-                        </div>
-                        <div>
+                        <div class="group">
                             <label
-                                class="block text-white/40 text-xs uppercase font-bold tracking-wider mb-2 ml-1">Celular
+                                class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1 group-focus-within:text-red-600 transition-colors">CPF
+                                ou CNPJ (Para Nota Fiscal)</label>
+                            <input type="text" name="cpf_cnpj" required
+                                value="{{ current_user.company.cpf_cnpj if current_user.company else '' }}"
+                                placeholder="000.000.000-00"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 text-gray-900 font-bold placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-red-50 focus:border-red-500 transition-all font-mono">
+                            <p class="text-[10px] text-gray-400 mt-1.5 ml-1 flex items-center gap-1">
+                                <i data-lucide="check-circle-2" class="w-3 h-3 text-green-500"></i>
+                                Dados puxados do cadastro da empresa
+                            </p>
+                        </div>
+                        <div class="group">
+                            <label
+                                class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1 group-focus-within:text-red-600 transition-colors">Celular
                                 / WhatsApp</label>
                             <input type="text" name="phone" placeholder="(00) 99999-9999"
-                                class="w-full bg-background-dark/50 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-white/20 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-mono">
+                                value="{{ current_user.phone if current_user.phone else '' }}"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 text-gray-900 font-bold placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-red-50 focus:border-red-500 transition-all font-mono">
                         </div>
                     </div>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-8 items-start">
+                <!-- Plans Grid -->
+                <div class="grid md:grid-cols-2 gap-8 items-start relative">
 
-                    <!-- MENSAL -->
+                    <!-- Monthly Plan -->
                     <div
-                        class="bg-background-dark/80 backdrop-blur border border-white/5 p-8 rounded-3xl hover:border-white/20 transition-all duration-300 flex flex-col order-2 md:order-1 relative group hover:-translate-y-1">
-                        <div class="mb-4">
+                        class="bg-white border border-gray-100 p-8 rounded-3xl shadow-lg shadow-gray-200/50 flex flex-col order-2 md:order-1 relative group hover:-translate-y-1 transition-all duration-300">
+                        <div class="mb-6">
                             <span
-                                class="text-white/60 text-sm font-bold uppercase tracking-wider bg-white/5 px-3 py-1 rounded-lg">Mensal</span>
+                                class="text-gray-500 text-xs font-black uppercase tracking-widest bg-gray-100 px-3 py-1.5 rounded-lg">Mensal</span>
                         </div>
 
-                        <div class="mb-8 border-b border-white/5 pb-8">
-                            <div class="text-white/30 text-sm font-medium line-through mb-2">De R$ 365/mês</div>
+                        <div class="mb-8 border-b border-gray-100 pb-8">
+                            <div class="text-gray-400 text-sm font-bold line-through mb-1">De R$ 365/mês</div>
                             <div class="flex items-baseline gap-1">
-                                <span class="text-white text-5xl font-bold tracking-tighter">R$ 197</span>
-                                <span class="text-white/40 font-medium">/mês</span>
+                                <span class="text-5xl font-extrabold text-gray-900 tracking-tight">R$ 197</span>
+                                <span class="text-gray-400 font-bold">/mês</span>
                             </div>
-                            <p class="text-white/50 mt-4 text-sm leading-relaxed">
+                            <p class="text-gray-500 mt-4 text-sm font-medium leading-relaxed">
                                 Flexibilidade total. Cancele a qualquer momento sem multas ou fidelidade.
                             </p>
                         </div>
 
-                        <ul class="flex flex-col gap-4 mb-8">
-                            <li class="flex items-center gap-3 text-white/70 text-sm">
-                                <span class="material-symbols-outlined text-white/20">check_circle</span>
-                                Acesso Completo ao CRM
-                            </li>
-                            <li class="flex items-center gap-3 text-white/70 text-sm">
-                                <span class="material-symbols-outlined text-white/20">check_circle</span>
-                                1 Usuário Incluso
-                            </li>
-                            <li class="flex items-center gap-3 text-white/70 text-sm">
-                                <span class="material-symbols-outlined text-white/20">check_circle</span>
-                                Suporte via Email
-                            </li>
-                        </ul>
+                        <div class="space-y-4 mb-8">
+                            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">O que está
+                                incluso:</p>
+                            <ul class="space-y-3">
+                                {% for feature in ['Dashboard Completo', 'Gestão de Clientes', 'Pipeline (Kanban)',
+                                'Financeiro Completo', 'DRE Gerencial', 'Geração de Contratos', 'Boletos Automatizados',
+                                'Ferramentas de Prospecção'] %}
+                                <li class="flex items-center gap-3 text-gray-700 text-sm font-semibold">
+                                    <div
+                                        class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                                        <i data-lucide="check" class="w-3 h-3 text-red-600 stroke-[3]"></i>
+                                    </div>
+                                    {{ feature }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
 
                         <button type="submit" name="plan_type" value="monthly"
-                            class="w-full bg-transparent hover:bg-white text-white hover:text-black font-bold py-4 rounded-xl text-center transition-all border border-white/20 cursor-pointer">
+                            class="w-full bg-white border-2 border-gray-200 text-gray-900 font-bold py-4 rounded-xl text-center transition-all hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]">
                             Assinar Mensal
                         </button>
                     </div>
 
-                    <!-- ANUAL (Premium) -->
+                    <!-- Annual Plan (Highlighted) -->
                     <div
-                        class="bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] border border-white/10 p-1 rounded-3xl relative overflow-visible flex flex-col shadow-2xl order-1 md:order-2 transform md:-translate-y-8 z-10">
-                        <!-- Glow Effect behind -->
+                        class="bg-gray-900 text-white p-1 rounded-[26px] relative shadow-2xl shadow-red-900/20 order-1 md:order-2 transform md:-translate-y-8 z-10 transition-transform active:scale-[0.99]">
+                        <!-- Glow -->
                         <div
-                            class="absolute -inset-1 bg-gradient-to-r from-primary to-orange-600 rounded-[26px] blur opacity-30 group-hover:opacity-60 transition duration-500">
+                            class="absolute -inset-0.5 bg-gradient-to-br from-red-600 to-orange-600 rounded-[26px] blur opacity-75">
                         </div>
 
-                        <div class="bg-[#0f0f0f] rounded-[22px] p-9 h-full relative">
+                        <div class="bg-gray-900 rounded-[24px] p-8 h-full relative overflow-hidden">
+                            <!-- Shine Effect -->
                             <div
-                                class="absolute top-0 right-0 bg-gradient-to-l from-primary to-orange-600 text-white text-[10px] font-extrabold px-4 py-2 rounded-bl-xl uppercase tracking-widest shadow-lg">
+                                class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-5 rotate-45 blur-3xl rounded-full">
+                            </div>
+
+                            <div
+                                class="absolute top-0 right-0 bg-gradient-to-bl from-red-600 to-red-700 text-white text-[10px] font-black px-4 py-2 rounded-bl-xl uppercase tracking-widest shadow-lg">
                                 2 Meses Grátis
                             </div>
 
-                            <div class="mb-4">
+                            <div class="mb-6">
                                 <span
-                                    class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-500 text-sm font-black uppercase tracking-wider">Anual
-                                    • Recomendado</span>
+                                    class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 text-xs font-black uppercase tracking-widest">
+                                    Anual • Recomendado
+                                </span>
                             </div>
 
-                            <div class="mb-8 border-b border-white/5 pb-8">
-                                <div class="text-white/30 text-sm font-medium line-through mb-2">De R$ 4.380/ano</div>
+                            <div class="mb-8 border-b border-gray-800 pb-8">
+                                <div class="text-gray-500 text-sm font-bold line-through mb-1">De R$ 4.380/ano</div>
                                 <div class="flex items-baseline gap-1">
-                                    <span class="text-white text-6xl font-black tracking-tighter">R$ 1.999</span>
-                                    <span class="text-white/40 font-medium">/ano</span>
+                                    <span class="text-6xl font-black tracking-tight text-white">R$ 1.999</span>
+                                    <span class="text-gray-500 font-bold">/ano</span>
                                 </div>
                                 <div
-                                    class="mt-4 inline-flex items-center gap-2 bg-green-500/10 px-4 py-1.5 rounded-full border border-green-500/20">
-                                    <span class="material-symbols-outlined text-green-500 text-base">credit_card</span>
+                                    class="mt-4 inline-flex items-center gap-2 bg-green-900/30 px-3 py-1.5 rounded-full border border-green-500/20">
+                                    <i data-lucide="credit-card" class="w-4 h-4 text-green-400"></i>
                                     <span class="text-green-400 text-xs font-bold tracking-wide">12x de R$ 166,58</span>
                                 </div>
-                                <p class="text-white/60 mt-4 text-sm">
+                                <p class="text-gray-400 mt-4 text-sm font-medium">
                                     Economize <span class="text-green-400 font-bold">R$ 2.381,00</span> em comparação ao
                                     mensal.
                                 </p>
                             </div>
 
-                            <ul class="flex flex-col gap-4 mb-10">
-                                <li class="flex items-center gap-3 text-white text-sm font-semibold">
-                                    <span class="material-symbols-outlined text-primary text-xl">verified</span>
-                                    Tudo do Plano Mensal
-                                </li>
-                                <li class="flex items-center gap-3 text-white text-sm font-medium">
-                                    <span class="material-symbols-outlined text-primary text-xl">rocket_launch</span>
-                                    Prioridade no Suporte (WhatsApp)
-                                </li>
-                                <li class="flex items-center gap-3 text-white text-sm font-medium">
-                                    <span class="material-symbols-outlined text-primary text-xl">school</span>
-                                    Treinamento de Onboarding
-                                </li>
-                                <li class="flex items-center gap-3 text-white text-sm font-medium">
-                                    <span class="material-symbols-outlined text-primary text-xl">shield</span>
-                                    Preço Travado por 1 ano
-                                </li>
-                            </ul>
+                            <div class="space-y-4 mb-10">
+                                <p class="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Tudo do
+                                    mensal, mais:</p>
+                                <ul class="space-y-3">
+                                    <li class="flex items-center gap-3 text-white text-sm font-bold">
+                                        <i data-lucide="zap" class="w-5 h-5 text-yellow-400 fill-yellow-400/20"></i>
+                                        Prioridade no Suporte (WhatsApp)
+                                    </li>
+                                    <li class="flex items-center gap-3 text-white text-sm font-bold">
+                                        <i data-lucide="graduation-cap" class="w-5 h-5 text-blue-400"></i>
+                                        Treinamento de Onboarding
+                                    </li>
+                                    <li class="flex items-center gap-3 text-white text-sm font-bold">
+                                        <i data-lucide="shield-check" class="w-5 h-5 text-green-400"></i>
+                                        Preço Travado por 1 ano
+                                    </li>
+                                    <li class="flex items-center gap-3 text-white text-sm font-bold">
+                                        <i data-lucide="rocket" class="w-5 h-5 text-purple-400"></i>
+                                        Acesso antecipado a novas features
+                                    </li>
+                                </ul>
+                            </div>
 
                             <button type="submit" name="plan_type" value="annual"
-                                class="w-full bg-gradient-to-r from-primary to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-5 rounded-xl text-center transition-all shadow-[0_10px_30px_rgba(242,13,13,0.3)] hover:shadow-[0_15px_40px_rgba(242,13,13,0.5)] flex items-center justify-center gap-3 text-lg transform hover:-translate-y-1">
+                                class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold py-5 rounded-xl text-center transition-all shadow-lg shadow-red-900/40 hover:shadow-red-900/60 flex items-center justify-center gap-3 text-lg group">
                                 Garantir Oferta VIP
-                                <span class="material-symbols-outlined">arrow_forward</span>
+                                <i data-lucide="arrow-right"
+                                    class="w-5 h-5 transition-transform group-hover:translate-x-1"></i>
                             </button>
 
-                            <p class="text-center mt-4 text-xs text-white/20">Renovação automática. Cancele quando
-                                quiser.</p>
+                            <p class="text-center mt-4 text-[10px] text-gray-600 uppercase tracking-widest font-bold">
+                                Renovação anual automática</p>
                         </div>
                     </div>
                 </div>
             </form>
 
-            <!-- FAQ Support -->
-            <div class="max-w-3xl mx-auto mt-24 pt-10 border-t border-white/5 text-center">
+            <!-- Trust Footer -->
+            <div class="max-w-3xl mx-auto mt-24 text-center">
                 <div
-                    class="inline-flex items-center gap-2 bg-white/5 px-4 py-2 rounded-full border border-white/5 text-white/40 text-xs mb-8">
-                    <span class="material-symbols-outlined text-base">lock</span>
-                    Pagamento processado com criptografia bancária de ponta a ponta.
+                    class="inline-flex items-center gap-2 bg-gray-50 px-5 py-2.5 rounded-full border border-gray-100 text-gray-500 text-xs font-bold mb-8">
+                    <i data-lucide="lock" class="w-4 h-4 text-green-600"></i>
+                    Pagamento processado com criptografia bancária de 256-bits.
                 </div>
 
                 <div>
-                    <h3 class="text-white text-lg font-bold mb-2">Dúvidas antes de assinar?</h3>
-                    <p class="text-white/50 text-sm mb-4">Nossa equipe comercial está pronta para te atender.</p>
+                    <h3 class="text-gray-900 text-lg font-bold mb-2">Dúvidas antes de assinar?</h3>
+                    <p class="text-gray-500 text-sm mb-4 font-medium">Nossa equipe comercial está pronta para te
+                        atender.</p>
                     <a href="https://wa.me/5542999896358?text=Tenho%20duvidas%20sobre%20os%20Planos"
-                        class="inline-flex items-center gap-2 text-primary hover:text-white transition-colors text-sm font-bold uppercase tracking-wider">
-                        <span class="material-symbols-outlined">chat</span>
+                        class="inline-flex items-center gap-2 text-red-600 hover:text-red-800 transition-colors text-sm font-bold uppercase tracking-wider group">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
                         Falar com Consultor
                     </a>
                 </div>
             </div>
+
+            <p class="text-center text-[11px] text-gray-300 uppercase tracking-widest mt-16 font-bold">
+                &copy; 2026 NorthWay Systems
+            </p>
         </div>
     </main>
-
-    <footer class="bg-background-dark py-10 border-t border-white/5 text-center">
-        <img src="{{ url_for('static', filename='images/logo.png') }}"
-            class="h-6 w-auto mx-auto mb-4 opacity-30 grayscale" alt="">
-        <p class="text-white/20 text-xs font-mono">NorthWay CRM &copy; 2024. All rights reserved.</p>
-    </footer>
-
-</body>
-
-</html>
+</div>
+{% endblock %}
