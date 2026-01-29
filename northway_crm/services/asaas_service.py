@@ -46,13 +46,15 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key
     try:
         response = requests.post(f"{ASAAS_API_URL}/customers", json=payload, headers=get_headers(token))
         if response.status_code == 200:
-            return response.json()['id']
+            return response.json()['id'], None
         else:
-            print(f"❌ Error creating customer in Asaas: {response.text}")
-            return None
+            error_data = response.json()
+            error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+            print(f"❌ Error creating customer in Asaas: {error_msg}")
+            return None, error_msg
     except Exception as e:
         print(f"❌ Exception creating customer: {e}")
-        return None
+        return None, str(e)
 
 def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', description="NorthWay CRM Subscription", api_key=None):
     """

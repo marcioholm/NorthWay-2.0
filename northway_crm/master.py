@@ -324,12 +324,16 @@ def generate_payment(company_id):
             flash("Empresa sem Documento (CPF/CNPJ). Edite a empresa antes de gerar pagamento.", "error")
             return redirect(url_for('master.company_details', company_id=company.id))
 
+        # Clean CNPJ/CPF (Remove dots, dashes, slashes)
+        import re
+        cpf_cnpj_clean = re.sub(r'[^0-9]', '', str(cpf_cnpj))
+        
         # 2. Ensure Customer
         if not company.asaas_customer_id:
-            customer_id = create_customer(
+            customer_id, error_msg = create_customer(
                 name=name, 
                 email=email,
-                cpf_cnpj=cpf_cnpj, 
+                cpf_cnpj=cpf_cnpj_clean, 
                 phone=phone, 
                 external_id=company.id
             )
@@ -338,7 +342,7 @@ def generate_payment(company_id):
                 db.session.commit()
                 flash(f"Cliente Asaas criado: {name} ({email})", "success")
             else:
-                flash(f"Falha ao criar Cliente no Asaas para {name} ({cpf_cnpj}). Verifique se o CPNJ é válido.", "error")
+                flash(f"Falha Asaas: {error_msg}", "error")
                 return redirect(url_for('master.company_details', company_id=company.id))
         
         # 3. Ensure Subscription
