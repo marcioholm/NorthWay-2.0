@@ -142,6 +142,16 @@ def debug_path():
         "dir": os.path.dirname(os.path.abspath(__file__))
     }
 
+@master.route('/master/debug-template')
+def debug_template():
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates', 'master_dashboard.html')
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            content = f.read()
+        return {"path": path, "content_preview": content[8000:9000]} # Check the middle where the buttons are
+    return {"error": "Not found", "path": path}
+
 @master.route('/master/impersonate/<int:user_id>')
 def impersonate(user_id):
     target_user = User.query.get_or_404(user_id)
