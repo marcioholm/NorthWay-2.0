@@ -364,8 +364,9 @@ def create_app():
         error_msg = str(factory_e)
         print(f"🔥 FATAL FACTORY EXPLOSION: {error_msg}")
         
+        
         # EMERGENCY APP
-        from flask import Flask, render_template
+        # from flask import Flask, render_template (Already imported globally)
         fallback = Flask(__name__)
         @fallback.route('/')
         @fallback.route('/<path:path>')
