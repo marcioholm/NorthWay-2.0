@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Pendente | NorthWay CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1"
+        rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-[#050505] text-white h-screen flex items-center justify-center p-6">
+
+    <div
+        class="max-w-md w-full bg-[#121212] border border-red-900/30 rounded-2xl p-8 text-center shadow-2xl relative overflow-hidden">
+        <!-- Glow -->
+        <div
+            class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+        </div>
+
+        <span class="material-symbols-outlined text-6xl text-red-600 mb-6">lock_person</span>
+
+        <h1 class="text-2xl font-bold mb-2">Acesso Temporariamente Bloqueado</h1>
+        <p class="text-white/60 text-sm mb-8 leading-relaxed">
+            Identificamos uma pendência financeira superior a 30 dias em sua assinatura.
+            Para reativar o acesso imediato de toda a sua equipe, por favor régularize o pagamento.
+        </p>
+
+        <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-8 text-left">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-xs uppercase tracking-wider text-red-500 font-bold">Status</span>
+                <span class="text-xs text-red-400 font-mono">Inoperante</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-xs uppercase tracking-wider text-white/40 font-bold">Plano</span>
+                <span class="text-xs text-white font-mono">{{ current_user.company.plan_type|upper }}</span>
+            </div>
+        </div>
+
+        <form action="{{ url_for('billing.process_checkout') }}" method="POST">
+            <input type="hidden" name="cpf_cnpj" value="{{ current_user.company.cpf_cnpj }}">
+            <input type="hidden" name="plan_type" value="{{ current_user.company.plan_type }}">
+
+            <!-- Since subscription exists, we might just want to redirect to existing invoice -->
+            <a href="https://wa.me/5542999896358?text=Minha%20conta%20NorthWay%20está%20bloqueada,%20quero%20regularizar"
+                class="block w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl mb-3 transition-colors">
+                <div class="flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg">chat</span>
+                    Regularizar via Suporte
+                </div>
+            </a>
+
+            <!-- Or if we had a direct invoice link stored locally, we'd use it here -->
+            {% if current_user.company.subscription_id %}
+            <!-- Ideally we call proper backend route to get fresh link -->
+            {% endif %}
+        </form>
+
+        <a href="{{ url_for('auth.logout') }}"
+            class="text-white/30 text-xs hover:text-white transition-colors mt-6 inline-block">Sair da conta</a>
+    </div>
+
+</body>
+
+</html>

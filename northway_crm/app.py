@@ -25,6 +25,7 @@ from routes.tasks import tasks_bp
 from routes.templates import templates_bp
 from routes.checklists import checklists_bp
 from routes.notifications import notifications_bp
+from routes.billing import billing_bp
 from services.supabase_service import init_supabase
 
 def create_app():
@@ -212,10 +213,30 @@ def create_app():
         
         from routes.roles import roles_bp
         app.register_blueprint(roles_bp)
+        app.register_blueprint(billing_bp)
     except Exception as bp_e:
         print(f"Blueprint Registration Error: {bp_e}")
         # We continue so the app launches and sys_admin works
 
+    # --- BILLING MIDDLEWARE ---
+    @app.before_request
+    def check_platform_access():
+        # Open Routes (Webhooks, Static, Auth)
+        if not request.endpoint: return
+        if request.endpoint.startswith('static'): return
+        if request.endpoint in ['auth.login', 'auth.register', 'auth.logout', 
+                              'billing.asaas_webhook', 'billing.payment_pending']:
+            return
+
+        # Check Login & Inoperability
+        if current_user.is_authenticated:
+            if current_user.company and getattr(current_user.company, 'platform_inoperante', False):
+                # Allow access to specific routes needed for billing
+                if request.endpoint.startswith('billing.'):
+                    return
+                # Redirect everything else to payment pending
+                return redirect(url_for('billing.payment_pending'))
+        
     # --- AUTO-MIGRATION / TABLE CREATION ---
     # Critical for Vercel/Ephemeral environments
     with app.app_context():

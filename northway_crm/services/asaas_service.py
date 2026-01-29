@@ -1,113 +1,90 @@
-import requests
-from flask import current_app
 import os
+import requests
+import json
+from flask import current_app
 
-class AsaasService:
-    BASE_URL = "https://www.asaas.com/api/v3" # Or sandbox: https://sandbox.asaas.com/api/v3
+ASAAS_API_URL = os.environ.get('ASAAS_API_URL', 'https://www.asaas.com/api/v3') # Use 'https://sandbox.asaas.com/api/v3' for test
+ASAAS_API_KEY = os.environ.get('ASAAS_API_KEY')
+
+def get_headers():
+    return {
+        'Content-Type': 'application/json',
+        'access_token': ASAAS_API_KEY
+    }
+
+def create_customer(name, email, cpf_cnpj, phone=None, external_id=None):
+    """
+    Creates or Retrieves a customer in Asaas.
+    """
+    if not ASAAS_API_KEY:
+        print("❌ ERROR: ASAAS_API_KEY not found.")
+        return None
+
+    # First, try to find existing customer by CPF/CNPJ to avoid duplicates
+    try:
+        search_url = f"{ASAAS_API_URL}/customers?cpfCnpj={cpf_cnpj}"
+        response = requests.get(search_url, headers=get_headers())
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('totalCount', 0) > 0:
+                print(f"✅ Customer found in Asaas: {data['data'][0]['id']}")
+                return data['data'][0]['id']
+    except Exception as e:
+        print(f"⚠️ Error searching customer in Asaas: {e}")
+
+    # If not found, create new
+    payload = {
+        "name": name,
+        "email": email,
+        "cpfCnpj": cpf_cnpj,
+        "externalReference": str(external_id) if external_id else None
+    }
+    if phone:
+        payload["mobilePhone"] = phone
+
+    try:
+        response = requests.post(f"{ASAAS_API_URL}/customers", json=payload, headers=get_headers())
+        if response.status_code == 200:
+            return response.json()['id']
+        else:
+            print(f"❌ Error creating customer in Asaas: {response.text}")
+            return None
+    except Exception as e:
+        print(f"❌ Exception creating customer: {e}")
+        return None
+
+def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', description="NorthWay CRM Subscription"):
+    """
+    Creates a recurring subscription.
+    """
+    payload = {
+        "customer": customer_id,
+        "billingType": "UNDEFINED", # Lets user choose in the payment link (Initial Invoice) or set 'PIX'/'BOLETO' if known
+        "value": value,
+        "nextDueDate": next_due_date, # YYYY-MM-DD
+        "cycle": cycle,
+        "description": description
+    }
     
-    @staticmethod
-    def get_headers(api_key=None):
-        # 1. Use passed key
-        if api_key:
-            return {"access_token": api_key, "Content-Type": "application/json"}
-            
-        # 2. Try Env Var
-        env_key = os.environ.get('ASAAS_API_KEY')
-        if env_key:
-            return {"access_token": env_key, "Content-Type": "application/json"}
-            
-        # 3. Try Database (Integration)
-        # Needs app context
-        try:
-            from models import Integration
-            # We need a company_id, but this method is static. 
-            # Usually create_customer passes 'company' object.
-            # But get_headers is distinct. 
-            # Ideally we should pass company_id to every call or context.
-            # For now, let's try to get from current_user if available (Flask Login)
-            from flask_login import current_user
-            if current_user and current_user.is_authenticated and current_user.company_id:
-                integration = Integration.query.filter_by(company_id=current_user.company_id, service='asaas').first()
-                if integration and integration.api_key:
-                    return {"access_token": integration.api_key, "Content-Type": "application/json"}
-        except Exception:
-            pass
+    try:
+        response = requests.post(f"{ASAAS_API_URL}/subscriptions", json=payload, headers=get_headers())
+        if response.status_code == 200:
+            return response.json()
+        else:
+             print(f"❌ Error creating subscription: {response.text}")
+             return None
+    except Exception as e:
+        print(f"❌ Exception creating subscription: {e}")
+        return None
 
-        raise ValueError("ASAAS_API_KEY not configured in Env or Database")
-        
-    @staticmethod
-    def get_base_url(env='sandbox'):
-        # Allow checking DB for environment setting if not passed explicit
-        if env == 'sandbox': # Default passed by methods
-             # Try to resolve real env from DB if possible
-             try:
-                from models import Integration
-                from flask_login import current_user
-                import json
-                if current_user and current_user.is_authenticated and current_user.company_id:
-                    integration = Integration.query.filter_by(company_id=current_user.company_id, service='asaas').first()
-                    if integration and integration.config_json:
-                         conf = json.loads(integration.config_json)
-                         env = conf.get('environment', 'sandbox')
-             except:
-                 pass
-                 
-        if env == 'production':
-            return "https://www.asaas.com/api/v3"
-        return "https://sandbox.asaas.com/api/v3"
-
-    @classmethod
-    def create_customer(cls, user, company):
-        """
-        Creates a customer in Asaas.
-        """
-        payload = {
-            "name": company.name,
-            "email": user.email,
-            "mobilePhone": user.phone,
-            "cpfCnpj": company.cpf_cnpj,
-            "externalReference": str(company.id)
-        }
-        
-        try:
-            base_url = cls.get_base_url() # Will resolve from DB/User context
-            response = requests.post(f"{base_url}/customers", json=payload, headers=cls.get_headers())
-            if response.status_code == 200:
-                data = response.json()
-                return data.get('id')
-            else:
-                current_app.logger.error(f"Asaas Create Customer Error: {response.text}")
-                return None
-        except Exception as e:
-            current_app.logger.error(f"Asaas Connection Error: {e}")
-            return None
-
-    @classmethod
-    def create_subscription(cls, customer_id, plan_type):
-        """
-        Creates a subscription.
-        plan_type: 'monthly' or 'yearly'
-        """
-        value = 97.00 if plan_type == 'monthly' else 924.00
-        cycle = 'MONTHLY' if plan_type == 'monthly' else 'YEARLY'
-        
-        payload = {
-            "customer": customer_id,
-            "billingType": "BOLETO", # Default, can be PIX or CREDIT_CARD
-            "value": value,
-            "cycle": cycle,
-            "description": f"Assinatura NorthWay CRM - {plan_type.title()}"
-        }
-        
-        try:
-            base_url = cls.get_base_url()
-            response = requests.post(f"{base_url}/subscriptions", json=payload, headers=cls.get_headers())
-            if response.status_code == 200:
-                data = response.json()
-                return data # Return full object to access invoiceUrl/billUrl
-            else:
-                current_app.logger.error(f"Asaas Create Subscription Error: {response.text}")
-                return None
-        except Exception as e:
-            current_app.logger.error(f"Asaas Connection Error: {e}")
-            return None
+def get_subscription_payments(subscription_id):
+    """
+    Get pending payments for a subscription to redirect user to payment page.
+    """
+    try:
+        response = requests.get(f"{ASAAS_API_URL}/subscriptions/{subscription_id}/payments", headers=get_headers())
+        if response.status_code == 200:
+            return response.json()['data']
+        return []
+    except Exception as e:
+        return []

@@ -95,10 +95,20 @@ class Company(db.Model):
     document = db.Column(db.String(20), nullable=True) # CNPJ (Legacy/Contract) - We might merge this with new cpf_cnpj
     cpf_cnpj = db.Column(db.String(20), unique=True, nullable=True) # Strict Identity
     
-    # SaaS Subscription
+    # SaaS Subscription & Billing
+    plan_id = db.Column(db.String(50), nullable=True) # UUID of the plan
+    asaas_customer_id = db.Column(db.String(50), nullable=True)
     subscription_id = db.Column(db.String(50), nullable=True) # Asaas Subscription ID
-    subscription_status = db.Column(db.String(20), default='inactive') # inactive, active, over_due
-    plan_type = db.Column(db.String(20), default='free') # free, monthly, yearly
+    
+    # Status Control
+    # ENUM: trial, pending, active, overdue, blocked, canceled
+    payment_status = db.Column(db.String(20), default='trial') 
+    platform_inoperante = db.Column(db.Boolean, default=False) # MASTER SWITCH
+    overdue_since = db.Column(db.DateTime, nullable=True) # D+0 reference
+    
+    # Legacy fields mapping (kept for compatibility)
+    subscription_status = db.Column(db.String(20), default='inactive') 
+    plan_type = db.Column(db.String(20), default='free') 
     
     address_street = db.Column(db.String(150), nullable=True)
     address_number = db.Column(db.String(20), nullable=True)
@@ -111,13 +121,13 @@ class Company(db.Model):
     
     # Branding
     logo_filename = db.Column(db.String(150), nullable=True)
-    logo_base64 = db.Column(db.Text, nullable=True) # Fallback for persistence
-    primary_color = db.Column(db.String(7), default='#fa0102') # Default Northway Red
-    secondary_color = db.Column(db.String(7), default='#111827') # Default Dark Gray
+    logo_base64 = db.Column(db.Text, nullable=True) 
+    primary_color = db.Column(db.String(7), default='#fa0102') 
+    secondary_color = db.Column(db.String(7), default='#111827') 
     
     # SaaS Management Fields
-    status = db.Column(db.String(20), default='active') # active, suspended, cancelled
-    plan = db.Column(db.String(50), default='pro') # free, starter, pro, enterprise
+    status = db.Column(db.String(20), default='active') 
+    plan = db.Column(db.String(50), default='pro') 
     max_users = db.Column(db.Integer, default=5)
     max_leads = db.Column(db.Integer, default=1000)
     max_storage_gb = db.Column(db.Float, default=1.0)
@@ -479,6 +489,15 @@ class Transaction(db.Model):
     
     contract = db.relationship('Contract', backref=db.backref('transactions', cascade='all, delete-orphan'))
     client = db.relationship('Client', backref=db.backref('transactions', lazy=True))
+
+class BillingEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Nullable if we can't identify company yet
+    event_type = db.Column(db.String(50), nullable=False) # PAYMENT_RECEIVED, PAYMENT_OVERDUE
+    payload = db.Column(db.JSON, nullable=True) # Full webhook payload
+    processed_at = db.Column(db.DateTime, nullable=True)
+    idempotency_key = db.Column(db.String(100), unique=True, nullable=True) # payment_id + event
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class FinancialEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)

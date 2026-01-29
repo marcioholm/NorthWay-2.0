@@ -44,6 +44,25 @@
 
 <body class="bg-background-dark text-white min-h-screen flex flex-col">
 
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="fixed top-4 right-4 z-50 flex flex-col gap-2">
+        {% for category, message in messages %}
+        <div
+            class="bg-surface border border-white/10 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2">
+            {% if category == 'error' %}
+            <span class="material-symbols-outlined text-red-500">error</span>
+            {% else %}
+            <span class="material-symbols-outlined text-green-500">check_circle</span>
+            {% endif %}
+            <span class="text-sm font-medium">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <!-- SCARCITY BANNER -->
     <div class="bg-primary/10 border-b border-primary/20 py-2 text-center">
         <p
@@ -56,15 +75,22 @@
     <!-- HEADER -->
     <header class="w-full bg-background-dark/80 backdrop-blur-md border-b border-white/5 py-4">
         <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
-            <img src="logo.png" alt="NorthWay Logo" class="h-8 md:h-10 w-auto object-contain">
-            <a href="/" class="text-white/60 hover:text-white text-sm transition-colors">Voltar ao site</a>
+            <img src="{{ url_for('static', filename='logo.png') }}"
+                onerror="this.src='https://placehold.co/200x50?text=NORTHWAY'" alt="NorthWay Logo"
+                class="h-8 md:h-10 w-auto object-contain">
+
+            <div class="flex items-center gap-4">
+                <span class="text-white/40 text-xs hidden md:inline">Logado como {{ current_user.email }}</span>
+                <a href="{{ url_for('auth.logout') }}"
+                    class="text-white/60 hover:text-white text-sm transition-colors">Sair</a>
+            </div>
         </div>
     </header>
 
     <!-- CONTENT -->
     <main class="flex-grow py-20 bg-surface">
         <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center max-w-2xl mx-auto mb-16">
+            <div class="text-center max-w-2xl mx-auto mb-12">
                 <h1 class="text-3xl md:text-5xl font-bold mb-6">
                     Acelere sua empresa <span class="text-white">agora.</span>
                 </h1>
@@ -73,102 +99,127 @@
                 </p>
             </div>
 
-            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
+            <!-- CHECKOUT FORM -->
+            <form action="{{ url_for('billing.process_checkout') }}" method="POST" class="max-w-4xl mx-auto">
 
-                <!-- MENSAL -->
+                <!-- Billing Details -->
                 <div
-                    class="bg-background-dark border border-white/5 p-8 rounded-3xl hover:border-white/10 transition-colors flex flex-col order-2 md:order-1">
-                    <div class="mb-2">
-                        <span class="text-white/60 text-sm font-bold uppercase tracking-wider">Plano Mensal</span>
-                    </div>
-
-                    <div class="mb-6 border-b border-white/5 pb-6">
-                        <div class="text-white/40 text-sm font-medium line-through mb-1">De R$ 365/mês</div>
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-white text-4xl font-bold">R$ 197</span>
-                            <span class="text-white/60">/mês</span>
-                        </div>
-                        <p class="text-white/60 mt-4 text-sm">
-                            Ideal para quem quer flexibilidade. Cancele quando quiser.
-                        </p>
-                    </div>
-
-                    <ul class="flex flex-col gap-3 mb-8">
-                        <li class="flex items-center gap-3 text-white/80 text-sm">
-                            <span class="material-symbols-outlined text-green-500 text-base">check</span>
-                            Acesso Completo ao CRM
-                        </li>
-                        <li class="flex items-center gap-3 text-white/80 text-sm">
-                            <span class="material-symbols-outlined text-green-500 text-base">check</span>
-                            1 Usuário Incluso
-                        </li>
-                        <li class="flex items-center gap-3 text-white/80 text-sm">
-                            <span class="material-symbols-outlined text-green-500 text-base">check</span>
-                            Suporte via Email
-                        </li>
-                    </ul>
-
-                    <a href="https://wa.me/5542999896358?text=Quero%20ativar%20o%20Plano%20Mensal%20(197)"
-                        class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl text-center transition-colors border border-white/5">
-                        Assinar Mensal
-                    </a>
-                </div>
-
-                <!-- ANUAL (Highlighted) -->
-                <div
-                    class="bg-gradient-to-b from-background-dark to-[#1a0505] border border-primary/40 p-10 rounded-3xl relative overflow-hidden flex flex-col shadow-[0_0_50px_rgba(242,13,13,0.15)] order-1 md:order-2 transform md:-translate-y-6">
+                    class="bg-background-dark border border-white/5 p-6 rounded-2xl mb-12 flex flex-col md:flex-row items-center gap-6 shadow-xl">
                     <div
-                        class="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl uppercase tracking-wider">
-                        2 Meses Grátis
+                        class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center text-primary shrink-0">
+                        <span class="material-symbols-outlined">badge</span>
                     </div>
-
-                    <div class="mb-2">
-                        <span class="text-primary text-sm font-bold uppercase tracking-wider">Plano Anual • Melhor
-                            Escolha</span>
+                    <div class="flex-1 w-full">
+                        <label class="block text-white/60 text-xs uppercase font-bold tracking-wider mb-2">CPF ou CNPJ
+                            (Obrigatório para Nota Fiscal)</label>
+                        <input type="text" name="cpf_cnpj" required placeholder="000.000.000-00"
+                            class="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
                     </div>
-
-                    <div class="mb-6 border-b border-white/5 pb-6">
-                        <div class="text-white/40 text-sm font-medium line-through mb-1">De R$ 4.380/ano</div>
-                        <div class="flex items-baseline gap-1">
-                            <span class="text-white text-5xl font-extrabold">R$ 1.999</span>
-                            <span class="text-white/60">/ano</span>
-                        </div>
-                        <div
-                            class="mt-2 inline-flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
-                            <span class="material-symbols-outlined text-green-500 text-sm">credit_card</span>
-                            <span class="text-green-400 text-xs font-bold">Em até 12x de R$ 166,58</span>
-                        </div>
-                        <p class="text-white/60 mt-4 text-sm">
-                            Economize <b>R$ 2.381,00</b> e tenha um ano inteiro de organização garantida.
-                        </p>
+                    <div class="flex-1 w-full">
+                        <label class="block text-white/60 text-xs uppercase font-bold tracking-wider mb-2">Telefone /
+                            WhatsApp</label>
+                        <input type="text" name="phone" placeholder="(00) 99999-9999"
+                            class="w-full bg-surface border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
                     </div>
-
-                    <ul class="flex flex-col gap-3 mb-8">
-                        <li class="flex items-center gap-3 text-white text-sm font-medium">
-                            <span class="material-symbols-outlined text-primary text-base">star</span>
-                            <b>2 Meses de Acesso Grátis</b>
-                        </li>
-                        <li class="flex items-center gap-3 text-white text-sm font-medium">
-                            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
-                            Prioridade no Suporte
-                        </li>
-                        <li class="flex items-center gap-3 text-white text-sm font-medium">
-                            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
-                            Setup Acompanhado
-                        </li>
-                        <li class="flex items-center gap-3 text-white text-sm font-medium">
-                            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
-                            Sua empresa blindada por 1 ano
-                        </li>
-                    </ul>
-
-                    <a href="https://wa.me/5542999896358?text=Quero%20aproveitar%20a%20oferta%20do%20Plano%20Anual%20(1999)"
-                        class="w-full bg-primary hover:bg-red-600 text-white font-bold py-5 rounded-xl text-center transition-all shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-2 text-lg">
-                        Garantir Oferta Anual
-                        <span class="material-symbols-outlined">arrow_forward</span>
-                    </a>
                 </div>
-            </div>
+
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+
+                    <!-- MENSAL -->
+                    <div
+                        class="bg-background-dark border border-white/5 p-8 rounded-3xl hover:border-white/10 transition-colors flex flex-col order-2 md:order-1 relative group">
+                        <div class="mb-2">
+                            <span class="text-white/60 text-sm font-bold uppercase tracking-wider">Plano Mensal</span>
+                        </div>
+
+                        <div class="mb-6 border-b border-white/5 pb-6">
+                            <div class="text-white/40 text-sm font-medium line-through mb-1">De R$ 365/mês</div>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-white text-4xl font-bold">R$ 197</span>
+                                <span class="text-white/60">/mês</span>
+                            </div>
+                            <p class="text-white/60 mt-4 text-sm">
+                                Ideal para quem quer flexibilidade. Cancele quando quiser.
+                            </p>
+                        </div>
+
+                        <ul class="flex flex-col gap-3 mb-8">
+                            <li class="flex items-center gap-3 text-white/80 text-sm">
+                                <span class="material-symbols-outlined text-green-500 text-base">check</span>
+                                Acesso Completo ao CRM
+                            </li>
+                            <li class="flex items-center gap-3 text-white/80 text-sm">
+                                <span class="material-symbols-outlined text-green-500 text-base">check</span>
+                                1 Usuário Incluso
+                            </li>
+                            <li class="flex items-center gap-3 text-white/80 text-sm">
+                                <span class="material-symbols-outlined text-green-500 text-base">check</span>
+                                Suporte via Email
+                            </li>
+                        </ul>
+
+                        <button type="submit" name="plan_type" value="monthly"
+                            class="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-xl text-center transition-colors border border-white/5 cursor-pointer">
+                            Assinar Mensal
+                        </button>
+                    </div>
+
+                    <!-- ANUAL (Highlighted) -->
+                    <div
+                        class="bg-gradient-to-b from-background-dark to-[#1a0505] border border-primary/40 p-10 rounded-3xl relative overflow-hidden flex flex-col shadow-[0_0_50px_rgba(242,13,13,0.15)] order-1 md:order-2 transform md:-translate-y-6">
+                        <div
+                            class="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl uppercase tracking-wider">
+                            2 Meses Grátis
+                        </div>
+
+                        <div class="mb-2">
+                            <span class="text-primary text-sm font-bold uppercase tracking-wider">Plano Anual • Melhor
+                                Escolha</span>
+                        </div>
+
+                        <div class="mb-6 border-b border-white/5 pb-6">
+                            <div class="text-white/40 text-sm font-medium line-through mb-1">De R$ 4.380/ano</div>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-white text-5xl font-extrabold">R$ 1.999</span>
+                                <span class="text-white/60">/ano</span>
+                            </div>
+                            <div
+                                class="mt-2 inline-flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
+                                <span class="material-symbols-outlined text-green-500 text-sm">credit_card</span>
+                                <span class="text-green-400 text-xs font-bold">Em até 12x de R$ 166,58</span>
+                            </div>
+                            <p class="text-white/60 mt-4 text-sm">
+                                Economize <b>R$ 2.381,00</b> e tenha um ano inteiro de organização garantida.
+                            </p>
+                        </div>
+
+                        <ul class="flex flex-col gap-3 mb-8">
+                            <li class="flex items-center gap-3 text-white text-sm font-medium">
+                                <span class="material-symbols-outlined text-primary text-base">star</span>
+                                <b>2 Meses de Acesso Grátis</b>
+                            </li>
+                            <li class="flex items-center gap-3 text-white text-sm font-medium">
+                                <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+                                Prioridade no Suporte
+                            </li>
+                            <li class="flex items-center gap-3 text-white text-sm font-medium">
+                                <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+                                Setup Acompanhado
+                            </li>
+                            <li class="flex items-center gap-3 text-white text-sm font-medium">
+                                <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+                                Sua empresa blindada por 1 ano
+                            </li>
+                        </ul>
+
+                        <button type="submit" name="plan_type" value="annual"
+                            class="w-full bg-primary hover:bg-red-600 text-white font-bold py-5 rounded-xl text-center transition-all shadow-lg hover:shadow-primary/30 flex items-center justify-center gap-2 text-lg">
+                            Garantir Oferta Anual
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
 
             <!-- FAQ Simple -->
             <div class="max-w-3xl mx-auto mt-20 pt-10 border-t border-white/5">
@@ -191,16 +242,6 @@
     <footer class="bg-background-dark py-8 border-t border-white/5 text-center">
         <p class="text-white/30 text-xs">NorthWay CRM &copy; 2024. Todos os direitos reservados.</p>
     </footer>
-
-    <!-- Floating WhatsApp -->
-    <a href="https://wa.me/5542999896358?text=Estou%20com%20duvida%20no%20pagamento"
-        class="fixed bottom-6 right-6 z-50 w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path
-                d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.522-2.961-2.638-.087-.117-.708-.941-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217s.231.001.332.005c.109.004.253-.041.397.301.144.344.491 1.196.534 1.282.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.101-.177.211-.077.385.101.174.449.741.964 1.201.662.592 1.221.777 1.394.864.174.088.275.073.376-.042.101-.116.434-.506.549-.68.116-.174.231-.144.39-.087.158.058 1.002.473 1.176.56.173.088.289.13.332.202.045.072.045.419-.1.824z">
-            </path>
-        </svg>
-    </a>
 
 </body>
 
