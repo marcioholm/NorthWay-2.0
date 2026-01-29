@@ -85,7 +85,7 @@ def process_checkout():
 
     except Exception as e:
         print(f"Checkout Error: {e}")
-        flash("Erro interno no checkout.", "error")
+        flash(f"Erro interno no checkout: {str(e)}", "error")
         return redirect(url_for('dashboard.checkout'))
 
 @billing_bp.route('/webhooks/asaas', methods=['POST'])
