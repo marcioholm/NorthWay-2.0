@@ -133,6 +133,15 @@ def company_materials(company_id):
                            books=books, 
                            templates=templates)
 
+@master.route('/master/debug-path')
+def debug_path():
+    import os
+    return {
+        "file": __file__,
+        "cwd": os.getcwd(),
+        "dir": os.path.dirname(os.path.abspath(__file__))
+    }
+
 @master.route('/master/impersonate/<int:user_id>')
 def impersonate(user_id):
     target_user = User.query.get_or_404(user_id)
