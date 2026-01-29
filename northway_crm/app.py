@@ -1,7 +1,9 @@
 import os
-from dotenv import load_dotenv
-
-load_dotenv() # Load env vars before anything else
+try:
+    from dotenv import load_dotenv
+    load_dotenv() # Load env vars before anything else
+except ImportError:
+    pass # In production (Vercel), env vars are usually injected directly, so this is fine.
 
 from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Blueprint
