@@ -306,6 +306,57 @@ def create_app():
                             print("✅ MIGRATION: logo_base64 added to company.")
                     except Exception as co_migration_e:
                         print(f"❌ MIGRATION ERROR on company: {co_migration_e}")
+
+                # MIGRATE: Add Asaas Billing columns to company if missing
+                if inspector.has_table("company"):
+                    try:
+                        billing_cols = [
+                            ("plan_id", "VARCHAR(50)"),
+                            ("asaas_customer_id", "VARCHAR(50)"),
+                            ("payment_status", "VARCHAR(20) DEFAULT 'trial'"),
+                            ("platform_inoperante", "BOOLEAN DEFAULT FALSE"),
+                            ("overdue_since", "TIMESTAMP")
+                        ]
+                        existing_cols = [c['name'] for c in inspector.get_columns("company")]
+                        
+                        for col_name, col_type in billing_cols:
+                            if col_name not in existing_cols:
+                                print(f"📦 MIGRATION: Adding {col_name} to company...")
+                                with db.engine.connect() as conn:
+                                    # Use safe DDL
+                                    conn.execute(text(f"ALTER TABLE company ADD COLUMN {col_name} {col_type}"))
+                                    conn.commit()
+                                print(f"✅ MIGRATION: {col_name} added to company.")
+                                
+                    except Exception as bill_migration_e:
+                         print(f"❌ MIGRATION ERROR on Billing Columns: {bill_migration_e}")
+
+                # MIGRATE: Create BillingEvent table if missing
+                if not inspector.has_table("billing_event"):
+                    print("📦 MIGRATION: Creating BillingEvent table...")
+                    try:
+                        with db.engine.connect() as conn:
+                            # Use cross-compatible SQL (works on PG and mostly SQLite)
+                            conn.execute(text("""
+                                CREATE TABLE billing_event (
+                                    id SERIAL PRIMARY KEY,
+                                    company_id INTEGER REFERENCES company(id),
+                                    event_type VARCHAR(50) NOT NULL,
+                                    payload JSON,
+                                    processed_at TIMESTAMP,
+                                    idempotency_key VARCHAR(100) UNIQUE,
+                                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                );
+                            """))
+                            conn.commit()
+                        print("✅ MIGRATION: BillingEvent table created.")
+                    except Exception as be_migration_e:
+                        # Fallback for SQLite locally if SERIAL fails
+                        if 'syntax error' in str(be_migration_e) and 'sqlite' in str(db.engine.url):
+                             print("⚠️ SQLite fallback for BillingEvent...")
+                             db.create_all() # Let SQLAlchemy handle it
+                        else:
+                             print(f"❌ MIGRATION ERROR on BillingEvent: {be_migration_e}")
                 
             # Seed minimal data if empty (prevent lockout)
             if not User.query.first():
