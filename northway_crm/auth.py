@@ -81,6 +81,14 @@ def login():
         if authenticated and user:
             login_user(user, remember=remember)
             
+            # Track Activity (Company Only for now)
+            try:
+                if user.company:
+                    user.company.last_active_at = datetime.utcnow()
+                    db.session.commit()
+            except:
+                pass
+            
             print(f"✅ Login Success: {user.name} (SuperAdmin? {getattr(user, 'is_super_admin', False)})")
             if getattr(user, 'is_super_admin', False):
                 return redirect(url_for('master.dashboard'))

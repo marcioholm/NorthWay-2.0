@@ -135,6 +135,7 @@ class Company(db.Model):
     
     # Timestamps
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_active_at = db.Column(db.DateTime, nullable=True)
 
     @property
     def address(self):

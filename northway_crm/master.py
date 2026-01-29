@@ -752,7 +752,7 @@ def migrate_saas():
             "ALTER TABLE company ADD COLUMN max_leads INTEGER DEFAULT 1000;",
             "ALTER TABLE company ADD COLUMN max_storage_gb FLOAT DEFAULT 1.0;",
             "ALTER TABLE company ADD COLUMN updated_at TIMESTAMP;",
-            "ALTER TABLE user ADD COLUMN last_login TIMESTAMP;",
+            "ALTER TABLE \"user\" ADD COLUMN last_login TIMESTAMP;",
             "ALTER TABLE company ADD COLUMN last_active_at TIMESTAMP;"
         ]
         
