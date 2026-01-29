@@ -350,22 +350,16 @@ def create_app():
                         ]
                         existing_cols = [c['name'] for c in inspector.get_columns("company")]
                         
-                        for col_name, col_type in billing_cols:
-                            if col_name not in existing_cols:
-                                print(f"📦 MIGRATION: Adding {col_name} to company...")
-                                with db.engine.connect() as conn:
-                                    # Use safe DDL
-                                    conn.execute(text(f"ALTER TABLE company ADD COLUMN {col_name} {col_type}"))
-                                    conn.commit()
-                                print(f"✅ MIGRATION: {col_name} added to company.")
+                        # for col_name, col_type in billing_cols:
+                        #     if col_name not in existing_cols:
+                        #         print(f"📦 MIGRATION: Adding {col_name} to company...")
+                        #         with db.engine.connect() as conn:
+                        #             # Use safe DDL
+                        #             conn.execute(text(f"ALTER TABLE company ADD COLUMN {col_name} {col_type}"))
+                        #             conn.commit()
+                        #         print(f"✅ MIGRATION: {col_name} added to company.")
+                        pass # Validating stability first
                         
-                                    conn.execute(text(f"ALTER TABLE company ADD COLUMN {col_name} {col_type}"))
-                                    conn.commit()
-                                print(f"✅ MIGRATION: {col_name} added to company.")
-                        
-                    except Exception as bill_migration_e:
-                         print(f"❌ MIGRATION ERROR on Billing Columns: {bill_migration_e}")
-                    
                     except Exception as bill_migration_e:
                          print(f"❌ MIGRATION ERROR on Billing Columns: {bill_migration_e}")
                     
