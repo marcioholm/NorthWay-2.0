@@ -985,6 +985,46 @@ def migrate_saas():
         db.session.rollback()
         return f"Migration Failed: {str(e)}"
 
+@master.route('/master/emergency-recreate', methods=['GET'])
+def recreate_master_user():
+    # This route is unprotected because the master user CANNOT log in
+    # It should only be used in emergencies
+    from werkzeug.security import generate_password_hash
+    
+    # 1. Create/Find Master Company
+    master_company = Company.query.filter_by(name='NorthWay Master').first()
+    if not master_company:
+        master_company = Company(
+            name='NorthWay Master',
+            cpf_cnpj='00000000000',
+            document='00000000000',
+            subscription_status='active',
+            payment_status='active'
+        )
+        db.session.add(master_company)
+        db.session.flush()
+    
+    # 2. Create Master User
+    master_user = User.query.filter_by(email='master@northway.com').first()
+    if not master_user:
+        master_user = User(
+            name='Master Admin',
+            email='master@northway.com',
+            password_hash=generate_password_hash('admin123'),
+            is_super_admin=True,
+            company_id=master_company.id,
+            role='admin'
+        )
+        db.session.add(master_user)
+        db.session.commit()
+        return "Master User and Company recreated successfully. <a href='/login'>Go to Login</a>"
+    else:
+        # Update existing user to ensure super_admin and correct company
+        master_user.is_super_admin = True
+        master_user.company_id = master_company.id
+        db.session.commit()
+        return "Master User already existed, permissions updated. <a href='/login'>Go to Login</a>"
+
 @master.route('/master/refresh-roles')
 @login_required
 def refresh_roles():
