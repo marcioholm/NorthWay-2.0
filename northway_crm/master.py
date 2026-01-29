@@ -296,30 +296,61 @@ def generate_payment(company_id):
         
         company = Company.query.get_or_404(company_id)
         
-        # 1. Ensure Customer
+        # 1. Gather Best Available Data
+        # Priority: Company Representative/Doc -> Admin User Data -> Fallbacks
+        
+        # Default/Fallback values
+        name = company.representative or company.name
+        email = f"billing_{company.id}@northway.com.br" # Generic fallback
+        cpf_cnpj = company.cpf_cnpj or company.document
+        phone = None
+        
+        # Try to find an Admin User to enrich data
+        admin = User.query.filter_by(company_id=company.id, role=ROLE_ADMIN).first()
+        if not admin:
+             # Fallback to any user
+             admin = User.query.filter_by(company_id=company.id).first()
+             
+        if admin:
+            # If company representative is missing, use Admin's name
+            if not company.representative:
+                name = admin.name
+                
+            # Always prefer Admin email over generic one, unless company has a specific financial email field (which it doesn't yet)
+            email = admin.email
+            phone = admin.phone
+            
+        if not cpf_cnpj:
+            flash("Empresa sem Documento (CPF/CNPJ). Edite a empresa antes de gerar pagamento.", "error")
+            return redirect(url_for('master.company_details', company_id=company.id))
+
+        # 2. Ensure Customer
         if not company.asaas_customer_id:
             customer_id = create_customer(
-                name=company.representative or company.name, 
-                email=f"billing_{company.id}@example.com" if not company.representative else None, # Fallback email needs real one ideally
-                cpf_cnpj=company.cpf_cnpj or company.document, 
-                phone=None, # Retrieve from user if possible? 
+                name=name, 
+                email=email,
+                cpf_cnpj=cpf_cnpj, 
+                phone=phone, 
                 external_id=company.id
             )
             if customer_id:
                 company.asaas_customer_id = customer_id
                 db.session.commit()
-                flash("Cliente Asaas criado com sucesso.", "success")
+                flash(f"Cliente Asaas criado: {name} ({email})", "success")
             else:
-                flash("Falha ao criar Cliente no Asaas. Verifique logs.", "error")
+                flash(f"Falha ao criar Cliente no Asaas para {name} ({cpf_cnpj}). Verifique se o CPNJ é válido.", "error")
                 return redirect(url_for('master.company_details', company_id=company.id))
         
-        # 2. Ensure Subscription
+        # 3. Ensure Subscription
         if not company.subscription_id:
             # Determine Value based on Plan
             val = 197.00
-            if getattr(company, 'plan', 'pro') == 'enterprise':
+            plan_key = getattr(company, 'plan', 'pro')
+            plan_type = getattr(company, 'plan_type', 'monthly')
+            
+            if plan_key == 'enterprise':
                 val = 997.00
-            elif getattr(company, 'plan_type', 'monthly') == 'annual':
+            elif plan_type == 'annual':
                 val = 1999.00
                 
             next_due = datetime.now().date().strftime('%Y-%m-%d')
@@ -328,8 +359,8 @@ def generate_payment(company_id):
                 customer_id=company.asaas_customer_id, 
                 value=val, 
                 next_due_date=next_due, 
-                cycle='MONTHLY' if getattr(company, 'plan_type', 'monthly') != 'annual' else 'YEARLY',
-                description=f"NorthWay CRM - {company.name}"
+                cycle='MONTHLY' if plan_type != 'annual' else 'YEARLY',
+                description=f"NorthWay CRM - {company.name} ({plan_key}/{plan_type})"
             )
             if sub_data:
                 company.subscription_id = sub_data['id']
@@ -337,17 +368,16 @@ def generate_payment(company_id):
                 db.session.commit()
                 flash("Assinatura criada com sucesso.", "success")
             else:
-                flash("Falha ao criar assinatura.", "error")
+                flash("Falha ao criar assinatura no Asaas.", "error")
                 return redirect(url_for('master.company_details', company_id=company.id))
                 
-        # 3. Get Invoice URL
+        # 4. Get Invoice URL
         payments = get_subscription_payments(company.subscription_id)
         if payments:
             invoice_url = payments[0]['invoiceUrl']
-            flash(f"Link gerado! Redirecionando...", "success")
             return redirect(invoice_url)
         else:
-            flash("Assinatura existe, mas nenhum boleto pendente encontrado.", "warning")
+            flash("Assinatura ativa, mas boleto não encontrado (pode estar sendo gerado).", "warning")
             
         return redirect(url_for('master.company_details', company_id=company.id))
         
