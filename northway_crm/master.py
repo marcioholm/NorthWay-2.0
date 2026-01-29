@@ -591,67 +591,6 @@ def manual_activate(company_id):
         
     return redirect(url_for('master.dashboard'))
 
-@master.route('/master/library/new', methods=['GET', 'POST'])
-def library_new():
-    if request.method == 'POST':
-        name = request.form['name']
-        type_ = request.form['type']
-        content = request.form['content']
-        allowed_company_ids = request.form.getlist('companies')
-        
-        # Super Admin owns these, but let's link to their company for consistency
-        # or just purely global.
-        
-        tmpl = ContractTemplate(
-            company_id=current_user.company_id, # Owner
-            name=name,
-            type=type_,
-            content=content,
-            is_global=False,
-            active=True
-        )
-        
-        # Add permissions
-        for cid in allowed_company_ids:
-            comp = Company.query.get(int(cid))
-            if comp:
-                tmpl.allowed_companies.append(comp)
-                
-        db.session.add(tmpl)
-        db.session.commit()
-        flash("Modelo de biblioteca criado!", "success")
-        return redirect(url_for('master.library'))
-        
-    companies = Company.query.all()
-    return render_template('master_library_form.html', companies=companies, template=None)
-
-@master.route('/master/library/<int:id>/edit', methods=['GET', 'POST'])
-def library_edit(id):
-    tmpl = ContractTemplate.query.get_or_404(id)
-    # Security check? Only Super Admin hits these routes via before_request
-    
-    if request.method == 'POST':
-        tmpl.name = request.form['name']
-        tmpl.type = request.form['type']
-        tmpl.content = request.form['content']
-        
-        # Update permissions
-        allowed_company_ids = request.form.getlist('companies')
-        
-        # Clear existing
-        tmpl.allowed_companies = []
-        
-        for cid in allowed_company_ids:
-            comp = Company.query.get(int(cid))
-            if comp:
-                tmpl.allowed_companies.append(comp)
-                
-        db.session.commit()
-        flash("Modelo de biblioteca atualizado!", "success")
-        return redirect(url_for('master.library'))
-        
-    companies = Company.query.all()
-    return render_template('master_library_form.html', companies=companies, template=tmpl)
 
 # --- Temporary Migration Route ---
 @master.route('/master/restore-production-docs')
