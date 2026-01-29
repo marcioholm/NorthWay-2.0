@@ -8,7 +8,7 @@ master = Blueprint('master', __name__)
 @login_required
 def check_master_access():
     # Allow 'revert' route even if current_user is not super_admin (because they are impersonating)
-    if request.endpoint in ['master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 'master.refresh_roles']:
+    if request.endpoint in ['master.recreate_master_user', 'master.super_me', 'master.fix_library', 'master.user_debug', 'master.revert_access', 'master.super_helper', 'master.run_library_migration', 'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 'master.refresh_roles']:
         return
 
     # For all other master routes, MUST be super_admin
@@ -1025,6 +1025,8 @@ def recreate_master_user():
         db.session.commit()
         return "Master User already existed, permissions updated. <a href='/login'>Go to Login</a>"
 
+@master.route('/master/super-me')
+@login_required
 @master.route('/master/super-me')
 @login_required
 def super_me():
