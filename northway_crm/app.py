@@ -14,24 +14,7 @@ from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from models import db, User, Task, Role
 import json
-from auth import auth as auth_blueprint
-from master import master as master_blueprint
-from routes.financial import financial_bp
-from routes.docs import docs_bp
-from routes.goals import goals_bp
-from routes.prospecting import prospecting_bp
-from routes.integrations import integrations_bp
-from routes.admin import admin_bp
-from routes.whatsapp import whatsapp_bp
-from routes.clients import clients_bp
-from routes.leads import leads_bp
-from routes.contracts import contracts_bp
-from routes.dashboard import dashboard_bp
-from routes.tasks import tasks_bp
-from routes.templates import templates_bp
-from routes.checklists import checklists_bp
-from routes.notifications import notifications_bp
-from routes.billing import billing_bp
+# Blueprint imports moved to create_app to prevent global import crashes
 from services.supabase_service import init_supabase
 
 def create_app():
@@ -193,24 +176,45 @@ def create_app():
             return render_template('500.html', error=str(error), traceback=traceback.format_exc()), 500
 
         # --- REGISTER BLUEPRINTS ---
-        # --- REGISTER BLUEPRINTS ---
-        app.register_blueprint(auth_blueprint)
-        app.register_blueprint(master_blueprint)
-        app.register_blueprint(financial_bp)
-        app.register_blueprint(docs_bp)
-        app.register_blueprint(goals_bp)
-        app.register_blueprint(prospecting_bp)
-        app.register_blueprint(integrations_bp)
-        app.register_blueprint(admin_bp)
-        
-        # Safe Register for complex blueprints that might break on schema
+            # --- REGISTER BLUEPRINTS ---
         try:
+            from auth import auth as auth_blueprint
+            from master import master as master_blueprint
+            from routes.financial import financial_bp
+            from routes.docs import docs_bp
+            from routes.goals import goals_bp
+            from routes.prospecting import prospecting_bp
+            from routes.integrations import integrations_bp
+            from routes.admin import admin_bp
+            
+            app.register_blueprint(auth_blueprint)
+            app.register_blueprint(master_blueprint)
+            app.register_blueprint(financial_bp)
+            app.register_blueprint(docs_bp)
+            app.register_blueprint(goals_bp)
+            app.register_blueprint(prospecting_bp)
+            app.register_blueprint(integrations_bp)
+            app.register_blueprint(admin_bp)
+            
+            # Safe Register for complex blueprints that might break on schema
             from routes.api_extension import api_ext
+            from routes.whatsapp import whatsapp_bp
+            from routes.clients import clients_bp
+            from routes.leads import leads_bp
+            from routes.leads_enrichment import enrichment_bp
+            from routes.contracts import contracts_bp
+            from routes.dashboard import dashboard_bp
+            from routes.tasks import tasks_bp
+            from routes.templates import templates_bp
+            from routes.checklists import checklists_bp
+            from routes.notifications import notifications_bp
+            from routes.roles import roles_bp
+            from routes.billing import billing_bp
+
             app.register_blueprint(api_ext)
             app.register_blueprint(whatsapp_bp)
             app.register_blueprint(clients_bp)
             app.register_blueprint(leads_bp)
-            from routes.leads_enrichment import enrichment_bp
             app.register_blueprint(enrichment_bp)
             app.register_blueprint(contracts_bp)
             app.register_blueprint(dashboard_bp)
@@ -218,13 +222,17 @@ def create_app():
             app.register_blueprint(templates_bp)
             app.register_blueprint(checklists_bp)
             app.register_blueprint(notifications_bp)
-            
-            from routes.roles import roles_bp
             app.register_blueprint(roles_bp)
             app.register_blueprint(billing_bp)
+            
         except Exception as bp_e:
-            print(f"Blueprint Registration Error: {bp_e}")
-            # We continue so the app launches and sys_admin works
+            print(f"Blueprint Registration/Import Error: {bp_e}")
+            import traceback
+            traceback.print_exc()
+            # We continue so the app launches and sys_admin works (or emergency mode catches if critical)
+            # Actually, if master fails, we might want to let it bubble up to the factory_e handler?
+            # Let's re-raise to see the error page!
+            raise bp_e
 
         # --- BILLING MIDDLEWARE ---
         @app.before_request
