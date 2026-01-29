@@ -236,18 +236,10 @@ def profile():
 @admin_bp.route('/admin/master/companies')
 @login_required
 def master_companies():
-    from models import Company, User
-    # Security Check: Only Super Admin
     if not current_user.is_super_admin:
-        abort(403)
-        
-    companies = Company.query.order_by(Company.created_at.desc()).all()
-    
-    # Simple stats
-    total_revenue = 0
-    # for c in companies: ... (calc revenue if needed)
-    
-    return render_template('admin/master_companies.html', companies=companies)
+        flash('Acesso negado.', 'error')
+        return redirect(url_for('dashboard.home'))
+    return redirect(url_for('master.dashboard'))
 
 @admin_bp.route('/admin/master/companies/<int:id>/toggle-courtesy', methods=['POST'])
 @login_required
