@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
-from app import db
+from models import db
 from models import Company, BillingEvent, FinancialEvent, User
 from services.asaas_service import create_customer, create_subscription, get_subscription_payments
 from datetime import datetime, timedelta
