@@ -276,7 +276,6 @@ def company_edit(company_id):
 
 @master.route('/master/company/<int:company_id>/details')
 @login_required
-@master_required
 def company_details(company_id):
     from datetime import datetime, date
     company = Company.query.get_or_404(company_id)
