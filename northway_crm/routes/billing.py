@@ -59,9 +59,9 @@ def process_checkout():
             company.plan_type = 'monthly'
             
         # 3. Create Asaas Customer
-        customer_id = create_customer(name, email, cpf_cnpj, phone, external_id=company.id)
+        customer_id, error = create_customer(name, email, cpf_cnpj, phone, external_id=company.id)
         if not customer_id:
-            flash("Erro ao conectar com gateway de pagamento. Tente novamente.", "error")
+            flash(f"Erro no gateway: {error}", "error")
             return redirect(url_for('dashboard.checkout'))
             
         company.asaas_customer_id = customer_id
