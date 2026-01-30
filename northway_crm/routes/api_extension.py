@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, redirect
 from models import db, User, Lead, Client, Pipeline, PipelineStage, Task, Interaction
+from flask_login import login_user
 import jwt
 import datetime
 from functools import wraps
@@ -55,7 +56,8 @@ def login():
                 'id': user.id,
                 'name': user.name,
                 'email': user.email,
-                'company_id': user.company_id
+                'company_id': user.company_id,
+                'avatar_url': f"{request.host_url.rstrip('/')}/static/uploads/profiles/{user.profile_image}" if user.profile_image else None
             }
         })
     
@@ -69,9 +71,31 @@ def verify_token(current_user):
         'user': {
             'id': current_user.id,
             'name': current_user.name,
-            'company_id': current_user.company_id
+            'email': current_user.email,
+            'company_id': current_user.company_id,
+            'avatar_url': f"{request.host_url.rstrip('/')}/static/uploads/profiles/{current_user.profile_image}" if current_user.profile_image else None
         }
     })
+
+@api_ext.route('/api/ext/sso-jump', methods=['GET'])
+def sso_jump():
+    token = request.args.get('token')
+    if not token:
+        return redirect('https://crm.northwaycompany.com.br/login')
+    
+    try:
+        data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+        user = User.query.get(data['user_id'])
+        
+        if user:
+            # Establish the browser session
+            login_user(user, remember=True)
+            return redirect('https://crm.northwaycompany.com.br/home')
+        
+    except Exception as e:
+        print(f"SSO Jump Error: {str(e)}")
+        
+    return redirect('https://crm.northwaycompany.com.br/login')
 
 # --- Contact Management ---
 
@@ -203,7 +227,8 @@ def create_lead(current_user):
         assigned_to_id=current_user.id,
         pipeline_id=pipeline_id,
         pipeline_stage_id=stage_id,
-        bant_need=data.get('bant_need')
+        bant_need=data.get('bant_need'),
+        profile_pic_url=data.get('avatar_url')
     )
     
     db.session.add(new_lead)
@@ -270,6 +295,9 @@ def update_lead(current_user, id):
         
     if 'bant_need' in data: # Using this for tags roughly
         lead.bant_need = data['bant_need']
+        
+    if 'avatar_url' in data:
+        lead.profile_pic_url = data['avatar_url']
         
     db.session.commit()
     
