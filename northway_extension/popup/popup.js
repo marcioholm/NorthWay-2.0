@@ -1,80 +1,132 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- TABS LOGIC ---
-    const tabLogin = document.getElementById('tab-login');
-    const tabSettings = document.getElementById('tab-settings');
-    const viewLogin = document.getElementById('view-login');
-    const viewSettings = document.getElementById('view-settings');
+    const getEl = (id) => document.getElementById(id);
 
-    tabLogin.addEventListener('click', () => {
-        viewLogin.classList.remove('hidden');
-        viewSettings.classList.add('hidden');
-        tabLogin.style.fontWeight = 'bold';
-        tabLogin.style.color = '#000';
-        tabSettings.style.fontWeight = 'normal';
-        tabSettings.style.color = '#666';
-    });
+    // --- NAVIGATION / VIEW LOGIC ---
+    const showState = (state) => {
+        const authView = getEl('nw-view-auth');
+        const settingsView = getEl('nw-view-settings');
 
-    tabSettings.addEventListener('click', () => {
-        viewLogin.classList.add('hidden');
-        viewSettings.classList.remove('hidden');
-        tabSettings.style.fontWeight = 'bold';
-        tabSettings.style.color = '#000';
-        tabLogin.style.fontWeight = 'normal';
-        tabLogin.style.color = '#666';
-    });
+        if (state === 'settings') {
+            settingsView.classList.remove('hidden');
+        } else {
+            settingsView.classList.add('hidden');
+            authView.classList.remove('hidden');
+        }
+    };
 
-    // --- AUTH & INIT ---
-    // Check Auth
-    const res = await chrome.runtime.sendMessage({ action: "CHECK_AUTH" });
-    if (res.token) {
-        chrome.storage.local.get('user', (data) => {
-            if (data.user) showProfile(data.user);
+    getEl('nw-btn-settings-toggle').addEventListener('click', () => showState('settings'));
+    getEl('nw-btn-settings-back').addEventListener('click', () => showState('auth'));
+
+    // --- SSO JUMP LOGIC ---
+    const adminLink = document.querySelector('a[href*="crm.northwaycompany.com.br/home"]');
+    if (adminLink) {
+        adminLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const storage = await chrome.storage.local.get('authToken');
+            if (storage.authToken) {
+                const ssoUrl = `https://crm.northwaycompany.com.br/api/ext/sso-jump?token=${storage.authToken}`;
+                window.open(ssoUrl, '_blank');
+            } else {
+                window.open('https://crm.northwaycompany.com.br/login', '_blank');
+            }
         });
     }
 
-    // Load Settings
+    // --- AUTH & INIT ---
+    const checkAuth = async () => {
+        const res = await chrome.runtime.sendMessage({ action: "CHECK_AUTH" });
+        if (res.token) {
+            chrome.storage.local.get('user', (data) => {
+                if (data.user) renderProfile(data.user);
+            });
+        } else {
+            getEl('nw-login-form').classList.remove('hidden');
+            getEl('nw-profile-view').classList.add('hidden');
+        }
+    };
+
+    const renderProfile = (user) => {
+        getEl('nw-login-form').classList.add('hidden');
+        getEl('nw-profile-view').classList.remove('hidden');
+
+        getEl('nw-user-name').textContent = user.name;
+        getEl('nw-user-email').textContent = user.email;
+
+        // Avatar Logic
+        const img = getEl('nw-user-img');
+        const initialsEl = getEl('nw-user-initials');
+
+        if (user.avatar_url) {
+            img.src = user.avatar_url;
+            img.classList.remove('hidden');
+            initialsEl.classList.add('hidden');
+
+            // Handle image load error
+            img.onerror = () => {
+                img.classList.add('hidden');
+                initialsEl.classList.remove('hidden');
+            };
+        } else {
+            const initials = user.name ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NW';
+            initialsEl.textContent = initials;
+            img.classList.add('hidden');
+            initialsEl.classList.remove('hidden');
+        }
+    };
+
+    // Load Live Settings
     chrome.storage.local.get(['minDelay', 'maxDelay', 'dailyLimit'], (data) => {
-        if (data.minDelay) document.getElementById('setting-min-delay').value = data.minDelay;
-        if (data.maxDelay) document.getElementById('setting-max-delay').value = data.maxDelay;
-        if (data.dailyLimit) document.getElementById('setting-daily-limit').value = data.dailyLimit;
+        if (data.minDelay) getEl('nw-setting-min').value = data.minDelay;
+        if (data.maxDelay) getEl('nw-setting-max').value = data.maxDelay;
+        if (data.dailyLimit) getEl('nw-setting-limit').value = data.dailyLimit;
     });
 
     // --- ACTIONS ---
-    document.getElementById('btn-login').addEventListener('click', async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const errorEl = document.getElementById('error-msg');
+    getEl('nw-btn-login').addEventListener('click', async () => {
+        const email = getEl('nw-email').value;
+        const password = getEl('nw-password').value;
+        const errorEl = getEl('nw-error-msg');
+        const btn = getEl('nw-btn-login');
 
         errorEl.classList.add('hidden');
-        document.getElementById('btn-login').textContent = "Entrando...";
+        btn.textContent = "Autenticando...";
+        btn.disabled = true;
 
-        const response = await chrome.runtime.sendMessage({
-            action: "LOGIN",
-            email,
-            password
-        });
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: "LOGIN",
+                email,
+                password
+            });
 
-        if (response.success) {
-            showProfile(response.user);
-        } else {
-            errorEl.textContent = response.error;
+            if (response.success) {
+                renderProfile(response.user);
+            } else {
+                errorEl.textContent = response.error || "Erro ao conectar";
+                errorEl.classList.remove('hidden');
+                btn.textContent = "Acessar Plataforma";
+                btn.disabled = false;
+            }
+        } catch (err) {
+            errorEl.textContent = "Servidor indisponível";
             errorEl.classList.remove('hidden');
-            document.getElementById('btn-login').textContent = "Entrar";
+            btn.textContent = "Acessar Plataforma";
+            btn.disabled = false;
         }
     });
 
-    document.getElementById('btn-logout').addEventListener('click', async () => {
+    getEl('nw-btn-logout').addEventListener('click', async () => {
         await chrome.runtime.sendMessage({ action: "LOGOUT" });
         location.reload();
     });
 
-    document.getElementById('btn-save-settings').addEventListener('click', () => {
-        const minDelay = parseInt(document.getElementById('setting-min-delay').value);
-        const maxDelay = parseInt(document.getElementById('setting-max-delay').value);
-        const dailyLimit = parseInt(document.getElementById('setting-daily-limit').value);
+    getEl('nw-btn-save-settings').addEventListener('click', () => {
+        const minDelay = parseInt(getEl('nw-setting-min').value);
+        const maxDelay = parseInt(getEl('nw-setting-max').value);
+        const dailyLimit = parseInt(getEl('nw-setting-limit').value);
 
-        if (minDelay < 1 || maxDelay < minDelay) {
-            alert("Intervalos inválidos!");
+        if (minDelay < 1 || maxDelay <= minDelay) {
+            alert("Intervalos de segurança inválidos!");
             return;
         }
 
@@ -83,19 +135,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             maxDelay,
             dailyLimit
         }, () => {
-            const msg = document.getElementById('settings-msg');
-            msg.style.display = 'block';
-            setTimeout(() => msg.style.display = 'none', 2000);
+            const msg = getEl('nw-settings-msg');
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 2500);
 
-            // Notify background to update live settings
+            // Notify background
             chrome.runtime.sendMessage({ action: "UPDATE_SETTINGS" });
         });
     });
-});
 
-function showProfile(user) {
-    document.getElementById('login-form').classList.add('hidden');
-    document.getElementById('profile-view').classList.remove('hidden');
-    document.getElementById('user-name').textContent = user.name;
-    document.getElementById('user-email').textContent = user.email;
-}
+    // Init
+    checkAuth();
+});

@@ -1,211 +1,300 @@
 <div class="nw-container">
-    <!-- Header -->
+    <!-- Premium Header -->
     <div class="nw-header">
         <div class="nw-logo">
-            <span>ZapWay</span>
+            <div class="nw-logo-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 3L21 11M21 11L13 19M21 11H3" stroke="white" stroke-width="3" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+            <span>NorthWay <b>CRM</b></span>
         </div>
-        <div class="nw-status">
+        <div class="nw-header-actions">
+            <div class="nw-status-badge">
+                <span id="nw-connection-status" class="status-dot connected"></span>
+                <span>Online</span>
+            </div>
             <button id="nw-btn-nav-broadcast" class="nw-icon-btn" title="Disparo Assistido">
-                <span class="icon-params">🚀</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.71-2.13.71-2.13l-1.58-1.58s-1.29 0-2.13.71Z" />
+                    <path d="m11 13 8-7" />
+                    <path d="m12 5 3 3" />
+                    <path d="m19 13-3-3" />
+                    <path
+                        d="M7.12 14.88c.18-.32.38-.63.58-.94a21.36 21.36 0 0 1 12.35-8.81A2.12 2.12 0 0 1 22 7.07a21.36 21.36 0 0 1-8.81 12.35c-.32.2-.62.4-.94.58l-5.13-5.12Z" />
+                </svg>
             </button>
-            <span id="nw-connection-status" class="status-dot disconnected"></span>
-        </div>
-    </div>
-
-    <!-- Content State: No Chat -->
-    <div id="nw-state-idle" class="nw-state">
-        <div class="nw-empty-state">
-            <p>Abra uma conversa para visualizar os dados.</p>
-        </div>
-    </div>
-
-    <!-- Content State: Loading -->
-    <div id="nw-state-loading" class="nw-state hidden">
-        <div class="skeleton-header"></div>
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line"></div>
-    </div>
-
-    <!-- Content State: New Lead -->
-    <div id="nw-state-new" class="nw-state hidden">
-        <div class="nw-card">
-            <h3>Novo Lead Detectado</h3>
-            <div class="nw-field">
-                <label>Nome</label>
-                <input type="text" id="nw-new-name">
-            </div>
-            <div class="nw-field">
-                <label>Telefone</label>
-                <input type="text" id="nw-new-phone" placeholder="Ex: 11999999999">
-            </div>
-
-            <div class="nw-field">
-                <label>Email</label>
-                <input type="email" id="nw-new-email" placeholder="email@exemplo.com">
-            </div>
-
-            <div class="nw-field">
-                <label>Interesse</label>
-                <input type="text" id="nw-new-interest" placeholder="Ex: Consultoria, Produto X">
-            </div>
-
-            <div class="nw-field">
-                <label>Etapa do Funil</label>
-                <select id="nw-new-stage">
-                    <option value="">Carregando...</option>
-                </select>
-            </div>
-
-            <div class="nw-field">
-                <label>Observações</label>
-                <textarea id="nw-new-notes" rows="3"></textarea>
-            </div>
-
-            <button id="nw-btn-create" class="nw-btn primary">Cadastrar no CRM</button>
-        </div>
-    </div>
-
-    <!-- Content State: Group Export -->
-    <div id="nw-state-group" class="nw-state hidden">
-        <div class="nw-card">
-            <h3>Grupo Detectado</h3>
-            <div class="nw-group-info">
-                <div class="nw-avatar-group">
-                    <span class="icon-params">👥</span>
-                </div>
-                <h2 id="nw-group-name">Nome do Grupo</h2>
-            </div>
-
-            <div class="nw-info-box">
-                <p>Extraia os contatos deste grupo para uma planilha compatível com o CRM.</p>
-            </div>
-
-            <div id="nw-export-progress" class="hidden">
-                <p id="nw-export-status">Extraindo... 0/0</p>
-                <div class="nw-progress-bar">
-                    <div id="nw-progress-fill" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <button id="nw-btn-export" class="nw-btn primary">
-                <span class="icon-params">📥</span> Exportar Participantes
+            <button id="nw-btn-settings" class="nw-icon-btn" title="Configurações">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
             </button>
-
-            <div class="nw-warning" style="margin-top: 15px; font-size: 10px; color: #9ca3af; text-align: center;">
-                <p>⚠ Uso responsável: não envie SPAM. <br>O WhatsApp pode bloquear números por comportamento
-                    abusivo.</p>
-            </div>
         </div>
     </div>
 
-    <!-- Content State: Existing Contact -->
-    <div id="nw-state-contact" class="nw-state hidden">
-        <div class="nw-profile">
-            <div class="nw-avatar" id="nw-contact-avatar"></div>
-            <h2 id="nw-contact-name">Nome do Contato</h2>
-            <p id="nw-contact-phone">+55 11 99999-9999</p>
-            <span id="nw-contact-status" class="badge">Novo</span>
+    <!-- Scrollable content area -->
+    <div class="nw-scroll-area">
+        <!-- Content State: Idle -->
+        <div id="nw-state-idle" class="nw-state">
+            <div class="nw-empty-state">
+                <div style="margin-bottom: 20px; opacity: 0.1;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                </div>
+                <p>Abra uma conversa para visualizar os dados.</p>
+            </div>
         </div>
 
-        <div class="nw-form">
-            <div class="nw-field">
-                <label>Etapa do Funil</label>
-                <select id="nw-input-stage">
-                    <option value="">Carregando...</option>
-                </select>
+        <!-- Content State: Loading -->
+        <div id="nw-state-loading" class="nw-state hidden">
+            <div class="skeleton-header"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line" style="width: 70%"></div>
+        </div>
+
+        <!-- Content State: New Lead -->
+        <div id="nw-state-new" class="nw-state hidden">
+            <div class="nw-card">
+                <h3>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" style="color: var(--nw-primary);">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <line x1="19" y1="8" x2="19" y2="14" />
+                        <line x1="22" y1="11" x2="16" y2="11" />
+                    </svg>
+                    Novo Lead Detectado
+                </h3>
+
+                <div class="nw-field">
+                    <label>Nome do Contato</label>
+                    <input type="text" id="nw-new-name" placeholder="Nome Completo">
+                </div>
+
+                <div class="nw-field-row">
+                    <div class="nw-field">
+                        <label>Telefone</label>
+                        <input type="text" id="nw-new-phone" placeholder="Digite o telefone">
+                    </div>
+                    <div class="nw-field">
+                        <label>Etapa</label>
+                        <select id="nw-new-stage">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="nw-field">
+                    <label>E-mail</label>
+                    <input type="email" id="nw-new-email" placeholder="cliente@exemplo.com">
+                </div>
+
+                <div class="nw-field">
+                    <label>Observações</label>
+                    <textarea id="nw-new-notes" rows="3" placeholder="Notas sobre o atendimento..."></textarea>
+                </div>
+
+                <button id="nw-btn-create" class="nw-btn primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    Cadastrar no CRM
+                </button>
+            </div>
+        </div>
+
+        <!-- Content State: Existing Contact -->
+        <div id="nw-state-contact" class="nw-state hidden">
+            <div class="nw-profile">
+                <div class="nw-avatar" id="nw-contact-avatar">
+                    <img id="nw-contact-img" src="" class="hidden" alt="Avatar">
+                    <span id="nw-contact-initials">NW</span>
+                </div>
+                <h2 id="nw-contact-name">Nome do Contato</h2>
+                <p id="nw-contact-phone">+55 11 99999-9999</p>
+                <span id="nw-contact-status" class="badge">Novo</span>
             </div>
 
-            <div class="nw-field">
-                <label>Tags / Interesse</label>
-                <input type="text" id="nw-input-tags" placeholder="Ex: Contabilidade, BPO...">
-            </div>
+            <div class="nw-card">
+                <div class="nw-field">
+                    <label>Etapa do Funil</label>
+                    <select id="nw-input-stage">
+                        <option value="">Carregando...</option>
+                    </select>
+                </div>
 
-            <div class="nw-field">
-                <label>Observações</label>
-                <textarea id="nw-input-notes" rows="4"></textarea>
-            </div>
+                <div class="nw-field">
+                    <label>Observações</label>
+                    <textarea id="nw-input-notes" rows="4"></textarea>
+                </div>
 
-            <div class="nw-actions">
                 <button id="nw-btn-save" class="nw-btn primary">Salvar Alterações</button>
-                <a href="#" id="nw-link-crm" target="_blank" class="nw-link">Ver no CRM ↗</a>
+                <a href="#" id="nw-link-crm" target="_blank" class="nw-btn"
+                    style="margin-top: 10px; background: rgba(255,255,255,0.05); color: #fff; text-transform: none; border: 1px solid var(--nw-border);">Ver
+                    no CRM ↗</a>
             </div>
         </div>
-    </div>
 
-    <!-- Content State: Broadcast Dashboard -->
-    <div id="nw-state-broadcast" class="nw-state hidden">
-        <div class="nw-broadcast-header">
-            <h3>Disparo Assistido</h3>
-            <button id="nw-btn-close-broadcast" class="nw-icon-btn">✕</button>
+        <!-- Content State: Group Export -->
+        <div id="nw-state-group" class="nw-state hidden">
+            <div class="nw-card">
+                <h3>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" style="color: var(--nw-primary);">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Grupo Detectado
+                </h3>
+                <h2 id="nw-group-name" style="font-size: 18px; font-weight: 800; margin: 10px 0 20px;">Nome do Grupo
+                </h2>
+
+                <div id="nw-export-progress" class="hidden" style="margin-bottom: 20px;">
+                    <p id="nw-export-status"
+                        style="font-size: 11px; color: var(--nw-text-secondary); margin-bottom: 8px;">
+                        Extraindo... 0/0
+                    </p>
+                    <div class="nw-progress-track">
+                        <div id="nw-progress-fill" style="width: 0%" class="nw-progress-fill"></div>
+                    </div>
+                </div>
+
+                <button id="nw-btn-export" class="nw-btn primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Exportar Participantes
+                </button>
+            </div>
         </div>
 
-        <!-- Section: Import -->
-        <div id="nw-broadcast-setup">
-            <div class="nw-card broadcast-card">
-                <label class="nw-label-caps">1. Importar Contatos</label>
-                <textarea id="nw-broadcast-import-text" rows="4"
-                    placeholder="Cole aqui: Nome;Telefone;Variavel&#10;Ex: Maria;5511999999999;Loja Centro"></textarea>
-                <div class="nw-file-input">
-                    <label for="nw-broadcast-import-file" class="nw-btn-outline">
-                        <span>📁 Carregar CSV</span>
+        <!-- Premium Templates Section (Unified) -->
+        <div id="nw-templates-container" class="hidden" style="padding: 0 20px; margin-bottom: 20px;">
+            <div class="nw-templates-section">
+                <div class="nw-section-header">
+                    <h4>Modelos de Mensagem</h4>
+                    <a href="#" class="nw-link-all">Ver Todos</a>
+                </div>
+
+                <div class="nw-template-card">
+                    <div class="nw-template-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                        </svg>
+                    </div>
+                    <div class="nw-template-info">
+                        <strong>Saudação Inicial Premium</strong>
+                        <p>Olá! Seja bem-vindo à NorthWay...</p>
+                    </div>
+                    <span class="nw-template-badge">12</span>
+                </div>
+
+                <div class="nw-template-card">
+                    <div class="nw-template-icon">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                    </div>
+                    <div class="nw-template-info">
+                        <strong>Envio de Orçamento</strong>
+                        <p>Segue anexo a proposta detalhada...</p>
+                    </div>
+                    <span class="nw-template-badge">8</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content State: Broadcast Dashboard -->
+        <div id="nw-state-broadcast" class="nw-state hidden">
+            <div class="nw-broadcast-header">
+                <h3>Disparo Assistido</h3>
+                <button id="nw-btn-close-broadcast" class="nw-icon-btn">✕</button>
+            </div>
+
+            <div id="nw-broadcast-setup">
+                <div class="nw-card">
+                    <label class="nw-label-caps">1. Importar Contatos</label>
+                    <textarea id="nw-broadcast-import-text" rows="4" style="margin-top: 10px"
+                        placeholder="Nome;Telefone;Variavel"></textarea>
+                    <label for="nw-broadcast-import-file" class="nw-btn"
+                        style="background: rgba(255,255,255,0.05); margin-top: 10px; border: 1px solid var(--nw-border); text-transform: none; cursor: pointer;">
+                        📁 Carregar CSV
                     </label>
                     <input type="file" id="nw-broadcast-import-file" accept=".csv" class="hidden">
                 </div>
-            </div>
 
-            <!-- Section: Templates -->
-            <div class="nw-card broadcast-card">
-                <label class="nw-label-caps">2. Template da Mensagem</label>
-                <div class="nw-tabs-mini">
-                    <button class="nw-tab-btn active" data-tab="A">A</button>
-                    <button class="nw-tab-btn" data-tab="B">B</button>
-                    <button class="nw-tab-btn" data-tab="C">C</button>
-                </div>
-                <textarea id="nw-broadcast-template" rows="5" placeholder="Olá {nome}, como vai?"></textarea>
-                <p class="nw-hint">Variáveis: {nome}, {cidade}, {variavel}</p>
-            </div>
+                <div class="nw-card">
+                    <label class="nw-label-caps">2. Template da Mensagem</label>
+                    <div class="nw-variable-chips" style="margin-top: 10px">
+                        <button class="nw-chip" data-var="{nome}">{nome}</button>
+                        <button class="nw-chip" data-var="{tel}">{tel}</button>
+                    </div>
+                    <textarea id="nw-broadcast-template" rows="5" placeholder="Olá {nome}..."
+                        style="margin-top: 10px"></textarea>
 
-            <button id="nw-btn-start-broadcast" class="nw-btn primary">Iniciar Fila de Disparo</button>
-        </div>
+                    <div class="nw-warning-box">
+                        <input type="checkbox" id="nw-broadcast-auto">
+                        <label for="nw-broadcast-auto">Envio Automático (Turbo)</label>
+                    </div>
 
-        <!-- Section: Active Queue -->
-        <div id="nw-broadcast-active" class="hidden">
-            <div class="nw-stats-grid">
-                <div class="nw-stat-item">
-                    <span id="nw-stat-pending">0</span>
-                    <label>Fila</label>
-                </div>
-                <div class="nw-stat-item green">
-                    <span id="nw-stat-sent">0</span>
-                    <label>Enviados</label>
-                </div>
-                <div class="nw-stat-item red">
-                    <span id="nw-stat-failed">0</span>
-                    <label>Falhas</label>
+                    <button id="nw-btn-start-broadcast" class="nw-btn primary">Iniciar Fila</button>
                 </div>
             </div>
 
-            <div class="nw-current-contact-card">
-                <div class="nw-contact-info-mini">
-                    <strong id="nw-bc-current-name">Aguardando...</strong>
-                    <span id="nw-bc-current-phone"></span>
+            <div id="nw-broadcast-active" class="hidden">
+                <div class="nw-stats-grid">
+                    <div class="nw-stat-item">
+                        <span id="nw-stat-pending">0</span>
+                        <label>Fila</label>
+                    </div>
+                    <div class="nw-stat-item green">
+                        <span id="nw-stat-sent">0</span>
+                        <label>Enviados</label>
+                    </div>
+                    <div class="nw-stat-item red">
+                        <span id="nw-stat-failed">0</span>
+                        <label>Falhas</label>
+                    </div>
                 </div>
-                <div class="nw-message-preview" id="nw-bc-message-preview">
-                    Toque em "Próximo" para carregar...
+
+                <div class="nw-card">
+                    <strong id="nw-bc-current-name">...</strong>
+                    <span id="nw-bc-current-phone"
+                        style="display: block; font-size: 11px; color: #6b7280; margin: 4px 0 12px;"></span>
+                    <div class="nw-message-preview" id="nw-bc-message-preview">Carregando...</div>
+                </div>
+
+                <div class="nw-broadcast-controls">
+                    <button id="nw-btn-bc-stop" class="nw-btn"
+                        style="background: rgba(255, 31, 75, 0.1); color: var(--nw-primary); border: 1px solid rgba(255, 31, 75, 0.2); text-transform: none; margin-bottom: 10px; width: 100%;">Parar
+                        Disparo</button>
+                    <div style="display: flex; gap: 10px; width: 100%;">
+                        <button id="nw-btn-bc-skip" class="nw-btn"
+                            style="flex: 1; background: rgba(255,255,255,0.05); text-transform: none;">Pular</button>
+                        <button id="nw-btn-bc-confirm" class="nw-btn primary" style="flex: 2;">Enviar Agora</button>
+                    </div>
                 </div>
             </div>
-
-            <div class="nw-broadcast-controls">
-                <button id="nw-btn-bc-skip" class="nw-btn-outline tiny">Pular</button>
-                <button id="nw-btn-bc-pause" class="nw-btn-outline tiny">Pausar</button>
-                <button id="nw-btn-bc-confirm" class="nw-btn primary">Confirmar Envio</button>
-            </div>
-
-            <div class="nw-queue-list-mini" id="nw-bc-queue-list">
-                <!-- Items added dynamically -->
-            </div>
-
-            <button id="nw-btn-bc-stop" class="nw-btn-link red">Interromper Disparo</button>
         </div>
     </div>
 </div>

@@ -3,88 +3,137 @@
 
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="popup.css">
-    <style>
-        body {
-            width: 300px;
-            padding: 16px;
-            font-family: sans-serif;
-        }
-
-        h1 {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            background: #000;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .error {
-            color: red;
-            font-size: 12px;
-            margin-bottom: 10px;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <h1>ZapWay</h1>
-
-    <!-- Tabs / Navigation -->
-    <div
-        style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #ddd; padding-bottom:5px;">
-        <span id="tab-login" style="cursor:pointer; font-weight:bold;">Login</span>
-        <span id="tab-settings" style="cursor:pointer; color:#666;">Configurações</span>
-    </div>
-
-    <!-- LOGIN AREA -->
-    <div id="view-login">
-        <div id="login-form">
-            <div id="error-msg" class="error hidden"></div>
-            <input type="email" id="email" placeholder="Email" value="admin@northway.com">
-            <input type="password" id="password" placeholder="Senha" value="123456">
-            <button id="btn-login">Entrar</button>
+    <div class="nw-popup">
+        <!-- Login Header -->
+        <div class="nw-popup-header">
+            <div class="nw-logo-main">
+                <div class="nw-logo-icon-large">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 3L21 11M21 11L13 19M21 11H3" stroke="white" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+            <h1>Acesse sua <span>Operação</span></h1>
+            <p class="nw-subtitle">NorthWay CRM Premium Extension</p>
         </div>
 
-        <div id="profile-view" class="hidden">
-            <p>Conectado como:</p>
-            <strong id="user-name">Usuário</strong>
-            <p id="user-email" style="font-size: 12px; color: #666"></p>
-            <div style="margin-top:20px; color: green; font-size: 12px;">● Extensão Ativa</div>
-            <button id="btn-logout" style="background:#555; margin-top:10px;">Sair</button>
+        <div id="nw-view-auth">
+            <!-- Login Form -->
+            <div id="nw-login-form" class="nw-auth-card">
+                <div id="nw-error-msg" class="nw-error-box hidden"></div>
+                <div class="nw-input-group">
+                    <label>E-mail Corporativo</label>
+                    <input type="email" id="nw-email" placeholder="nome@empresa.com" value="admin@northway.com">
+                </div>
+                <div class="nw-input-group">
+                    <label>Senha de Acesso</label>
+                    <input type="password" id="nw-password" placeholder="••••••••" value="123456">
+                </div>
+                <button id="nw-btn-login" class="nw-btn primary">Acessar Plataforma</button>
+            </div>
+
+            <!-- Profile View -->
+            <div id="nw-profile-view" class="hidden">
+                <div class="nw-user-card">
+                    <div class="nw-user-avatar">
+                        <img id="nw-user-img" src="" class="hidden" alt="Profile">
+                        <span id="nw-user-initials">AD</span>
+                        <div class="nw-status-dot online"></div>
+                    </div>
+                    <div class="nw-user-info">
+                        <strong id="nw-user-name">Carregando...</strong>
+                        <span id="nw-user-email">...</span>
+                        <span class="nw-status-text">● EXTENSÃO ATIVA</span>
+                    </div>
+                </div>
+
+                <div class="nw-action-menu">
+                    <a href="https://crm.northwaycompany.com.br/home" target="_blank" class="nw-btn primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                            style="margin-right: 8px;">
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        Painel Administrativo
+                    </a>
+                    <button id="nw-btn-logout" class="nw-btn logout">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                            style="margin-right: 8px;">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        Sair da Conta
+                    </button>
+                </div>
+
+                <div id="nw-btn-settings-toggle" class="nw-settings-trigger">
+                    <span>Configurações Avançadas</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- SETTINGS AREA (Control Panel) -->
-    <div id="view-settings" class="hidden">
-        <label style="font-size:12px; display:block; margin-top:10px;">Intervalo Mínimo (seg)</label>
-        <input type="number" id="setting-min-delay" value="5" min="1">
+        <!-- Settings Drawer (Overlays when active) -->
+        <div id="nw-view-settings" class="nw-settings-drawer hidden">
+            <div class="nw-drawer-header">
+                <button id="nw-btn-settings-back" class="nw-icon-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                </button>
+                <h2>Configurações</h2>
+            </div>
 
-        <label style="font-size:12px; display:block; margin-top:10px;">Intervalo Máximo (seg)</label>
-        <input type="number" id="setting-max-delay" value="15" min="2">
+            <div class="nw-settings-content">
+                <div class="nw-card-flat">
+                    <label class="nw-label-caps">Intervalo de Disparo (V2)</label>
+                    <div class="nw-field-row">
+                        <div class="nw-field">
+                            <label>Mínimo (s)</label>
+                            <input type="number" id="nw-setting-min" value="5">
+                        </div>
+                        <div class="nw-field">
+                            <label>Máximo (s)</label>
+                            <input type="number" id="nw-setting-max" value="15">
+                        </div>
+                    </div>
+                </div>
 
-        <label style="font-size:12px; display:block; margin-top:10px;">Limite Diário de Envios</label>
-        <input type="number" id="setting-daily-limit" value="100" min="10">
+                <div class="nw-card-flat">
+                    <label class="nw-label-caps">Limite de Segurança</label>
+                    <div class="nw-field">
+                        <label>Mensagens por Dia</label>
+                        <input type="number" id="nw-setting-limit" value="100">
+                    </div>
+                </div>
 
-        <button id="btn-save-settings" style="margin-top:15px; background:#25D366;">Salvar Configurações</button>
-        <div id="settings-msg" style="margin-top:5px; font-size:12px; color:green; display:none;">Salvo!</div>
+                <button id="nw-btn-save-settings" class="nw-btn primary">Salvar Alterações</button>
+                <div id="nw-settings-msg" class="nw-success-text hidden">Configurações aplicadas com sucesso!</div>
+            </div>
+        </div>
+
+        <div class="nw-popup-footer">
+            <span class="nw-version">V2.4.0</span>
+            <div class="nw-footer-links">
+                <a href="#">Suporte</a>
+                <a href="#">Termos</a>
+            </div>
+        </div>
     </div>
 
     <script src="popup.js"></script>

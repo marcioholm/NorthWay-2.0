@@ -2,7 +2,7 @@
 // Handles API requests to avoid CORS issues in content scripts if possible, 
 // and manages Auth Token.
 
-const API_BASE = "https://north-way-2-0.vercel.app/api/ext";
+const API_BASE = "https://crm.northwaycompany.com.br/api/ext";
 // const API_BASE = "http://127.0.0.1:5001/api/ext"; // Dev Mode
 
 // Queue & Rate Limit State
