@@ -62,7 +62,7 @@ def home():
         ]
         
         onboarding = {
-            'completed': all([s['done'] for s in steps]),
+            'completed': current_user.onboarding_dismissed or all([s['done'] for s in steps]),
             'steps': steps,
             'progress': int(sum([1 for s in steps if s['done']]) / len(steps) * 100)
         }
