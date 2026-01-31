@@ -45,52 +45,51 @@
     </div>
 
     <!-- Right Side: Register Form (Clean White & Red) -->
-    <div class="w-full lg:w-1/2 flex flex-col items-center bg-white relative overflow-y-auto px-8 py-6 lg:py-10">
-        <div class="w-full max-w-[420px] space-y-4 relative z-10">
+    <div class="w-full lg:w-1/2 flex flex-col items-center bg-white relative overflow-y-auto px-8 py-3 lg:py-6">
+        <div class="w-full max-w-[400px] space-y-3 relative z-10">
 
             <!-- Header -->
             <div class="text-center lg:text-left">
                 <!-- Mobile Logo -->
-                <div class="flex justify-center lg:justify-start lg:hidden mb-6">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-8 w-auto">
+                <div class="flex justify-center lg:justify-start lg:hidden mb-4">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-6 w-auto">
                 </div>
-
-                <h1 class="text-3xl font-bold tracking-tight text-gray-900 mb-1">Crie sua conta</h1>
-                <p class="text-sm text-gray-500 font-medium">Comece a gerenciar suas vendas hoje mesmo.</p>
+                <h1 class="text-2xl font-black tracking-tight text-gray-900 mb-0.5">Crie sua conta</h1>
+                <p class="text-xs text-gray-400 font-medium">Comece a gerenciar suas vendas hoje mesmo.</p>
             </div>
 
             <!-- Social Login -->
-            <div class="space-y-3">
+            <div class="space-y-2">
                 <a href="{{ url_for('auth.google_login') }}"
-                    class="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-bold text-gray-700 text-sm">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all font-bold text-gray-600 text-xs">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-3.5 h-3.5"
                         alt="Google">
                     Continuar com Google
                 </a>
 
                 <div class="relative flex items-center justify-center">
-                    <div class="flex-grow border-t border-gray-100"></div>
-                    <span class="px-4 text-[10px] font-bold text-gray-300 uppercase tracking-widest bg-white">Ou use seu
+                    <div class="flex-grow border-t border-gray-50"></div>
+                    <span class="px-3 text-[9px] font-black text-gray-200 uppercase tracking-widest bg-white">Ou use
                         email</span>
-                    <div class="flex-grow border-t border-gray-100"></div>
+                    <div class="flex-grow border-t border-gray-50"></div>
                 </div>
             </div>
 
-            <form class="space-y-4" action="{{ url_for('auth.register') }}" method="POST">
+            <form class="space-y-3" action="{{ url_for('auth.register') }}" method="POST">
 
-                <div class="space-y-3">
+                <div class="space-y-2">
                     <!-- Name -->
                     <div class="group">
                         <label for="name"
-                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">Seu
-                            Nome Completo</label>
-                        <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
+                            class="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1 group-focus-within:text-red-500 transition-colors">Nome
+                            Completo</label>
+                        <div class="relative transition-all duration-200 transform group-focus-within:-translate-y-0.5">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="user"
-                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
                             </div>
                             <input id="name" name="name" type="text" required
-                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
+                                class="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-300 transition-all font-medium text-xs"
                                 placeholder="Ex: João Silva">
                         </div>
                     </div>
@@ -98,15 +97,15 @@
                     <!-- Phone -->
                     <div class="group">
                         <label for="phone"
-                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">WhatsApp
+                            class="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1 group-focus-within:text-red-500 transition-colors">WhatsApp
                             / Celular</label>
-                        <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
+                        <div class="relative transition-all duration-200 transform group-focus-within:-translate-y-0.5">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="phone"
-                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
                             </div>
                             <input id="phone" name="phone" type="tel" required
-                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
+                                class="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-300 transition-all font-medium text-xs"
                                 placeholder="(11) 99999-9999">
                         </div>
                     </div>
@@ -114,15 +113,15 @@
                     <!-- Email -->
                     <div class="group">
                         <label for="email"
-                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">Email
+                            class="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1 group-focus-within:text-red-500 transition-colors">Email
                             Profissional</label>
-                        <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
+                        <div class="relative transition-all duration-200 transform group-focus-within:-translate-y-0.5">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="mail"
-                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
                             </div>
                             <input id="email" name="email" type="email" autocomplete="email" required
-                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
+                                class="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-300 transition-all font-medium text-xs"
                                 placeholder="seu@email.com">
                         </div>
                     </div>
@@ -130,15 +129,15 @@
                     <!-- CPF/CNPJ -->
                     <div class="group">
                         <label for="cpf_cnpj"
-                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">CPF
+                            class="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1 group-focus-within:text-red-500 transition-colors">CPF
                             ou CNPJ</label>
-                        <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
+                        <div class="relative transition-all duration-200 transform group-focus-within:-translate-y-0.5">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="hash"
-                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
                             </div>
                             <input id="cpf_cnpj" name="cpf_cnpj" type="text" required
-                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
+                                class="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-300 transition-all font-medium text-xs"
                                 placeholder="000.000.000-00 ou 00.000.000/0001-00">
                         </div>
                     </div>
@@ -146,39 +145,38 @@
                     <!-- Password -->
                     <div class="group">
                         <label for="password"
-                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">Senha
-                            de Acesso</label>
-                        <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
+                            class="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-1 group-focus-within:text-red-500 transition-colors">Senha</label>
+                        <div class="relative transition-all duration-200 transform group-focus-within:-translate-y-0.5">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="lock"
-                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors"></i>
                             </div>
                             <input id="password" name="password" type="password" autocomplete="new-password" required
-                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
+                                class="block w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-300 transition-all font-medium text-xs"
                                 placeholder="••••••••" minlength="6">
                         </div>
                     </div>
                 </div>
 
                 <button type="submit"
-                    class="w-full flex justify-center items-center py-3.5 px-4 rounded-xl shadow-[0_10px_30px_rgba(220,38,38,0.20)] text-sm font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all transform hover:-translate-y-1 active:scale-95">
+                    class="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-[0_8px_20px_rgba(220,38,38,0.15)] text-xs font-black uppercase tracking-widest text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-50 transition-all transform hover:-translate-y-0.5 active:scale-95">
                     Criar Minha Conta
-                    <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                    <i data-lucide="chevron-right" class="ml-2 w-4 h-4"></i>
                 </button>
 
-                <div class="mt-4 pt-4 text-center border-t border-gray-50">
-                    <p class="text-xs text-gray-400 font-medium">
+                <div class="mt-2 pt-2 text-center border-t border-gray-50">
+                    <p class="text-[11px] text-gray-400 font-medium">
                         Já tem uma conta?
                         <a href="{{ url_for('auth.login') }}"
-                            class="font-bold text-red-600 hover:text-red-800 transition-colors cursor-pointer ml-1 inline-flex items-center group">
-                            Faça login
+                            class="font-black text-red-600 hover:text-red-800 transition-colors cursor-pointer ml-1 inline-flex items-center group">
+                            Login
                         </a>
                     </p>
                 </div>
             </form>
 
-            <p class="text-center text-[10px] text-gray-200 uppercase tracking-widest mt-6 font-bold">
-                &copy; 2026 NorthWay Systems
+            <p class="text-center text-[9px] text-gray-200 uppercase tracking-widest mt-2 font-bold">
+                &copy; 2026 NorthWay
             </p>
         </div>
     </div>
