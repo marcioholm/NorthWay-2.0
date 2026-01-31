@@ -216,14 +216,13 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
         # 6. CREATE TASKS (For Home Dashboard)
         # Create a task due TODAY for this lead
         task = Task(
-            title=f"Ligar para {lname}",
+            title=f"[Ligação] Ligar para {lname}",
             description="Verificar interesse na proposta enviada.",
             company_id=cid,
             assigned_to_id=uid,
             lead_id=lead.id,
             due_date=datetime.now(), # TODAY/NOW
-            status='pendente',
-            type='call'
+            status='pendente'
         )
         db_session.add(task)
         
