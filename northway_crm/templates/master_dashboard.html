@@ -250,14 +250,21 @@
                                             </button>
                                         </form>
                                         {% else %}
-                                        {% if company.payment_status == 'overdue' %}
+                                        {% if company.payment_status == 'overdue' or company.platform_inoperante %}
                                         <form action="{{ url_for('master.company_unlock', company_id=company.id) }}"
-                                            method="POST" class="inline">
-                                            <input type="hidden" name="days" value="5">
+                                            method="POST" class="flex items-center gap-1">
+                                            <select name="days"
+                                                class="bg-gray-800 text-[10px] text-white border border-white/10 rounded px-1 py-0 h-6 outline-none focus:border-green-500"
+                                                title="Dias de Acesso">
+                                                <option value="3">3d</option>
+                                                <option value="7">7d</option>
+                                                <option value="15">15d</option>
+                                                <option value="30">30d</option>
+                                            </select>
                                             <button type="submit"
-                                                class="p-2 text-green-400 bg-green-500/10 hover:bg-green-500 hover:text-white rounded-lg transition-colors font-bold text-xs uppercase"
-                                                title="Liberar por 5 dias">
-                                                <i data-lucide="clock" class="w-4 h-4 inline mr-1"></i> +5 Dias
+                                                class="p-1.5 text-green-400 bg-green-500/10 hover:bg-green-500 hover:text-white rounded-md transition-colors font-bold text-xs uppercase flex items-center justify-center"
+                                                title="Liberar Acesso">
+                                                <i data-lucide="lock-open" class="w-3.5 h-3.5"></i>
                                             </button>
                                         </form>
                                         {% endif %}
@@ -287,10 +294,18 @@
                                         <!-- Manual Activation (Override) -->
                                         {% if company.payment_status != 'active' or company.platform_inoperante %}
                                         <form action="{{ url_for('master.manual_activate', company_id=company.id) }}"
-                                            method="POST" class="inline"
-                                            onsubmit="return confirm('Deseja ATIVAR MANUALMENTE esta empresa? Isso concederá 30 dias de acesso ignorando o pagamento.');">
+                                            method="POST" class="flex items-center gap-1"
+                                            onsubmit="return confirm('ATENÇÃO: Isso ativa o acesso e CANCELA qualquer boleto pendente. Continuar?');">
+                                            <select name="days"
+                                                class="bg-gray-800 text-[10px] text-white border border-white/10 rounded px-1 py-0 h-6 outline-none focus:border-purple-500"
+                                                title="Dias de Acesso">
+                                                <option value="7">7d</option>
+                                                <option value="15">15d</option>
+                                                <option value="30" selected>30d</option>
+                                                <option value="365">1 Ano</option>
+                                            </select>
                                             <button type="submit"
-                                                class="p-2 text-gray-400 hover:text-purple-400 hover:bg-purple-400/10 rounded-lg transition-colors"
+                                                class="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-400/10 rounded-lg transition-colors flex items-center justify-center h-8"
                                                 title="Ativação Manual (Ignorar Pagamento)">
                                                 <i data-lucide="check-check" class="w-4 h-4"></i>
                                             </button>

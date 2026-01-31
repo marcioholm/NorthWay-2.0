@@ -105,3 +105,20 @@ def get_subscription_payments(subscription_id, api_key=None):
         return []
     except Exception as e:
         return []
+
+def delete_subscription(subscription_id, api_key=None):
+    """
+    Cancels a subscription in Asaas (removes pending boletos).
+    """
+    try:
+        response = requests.delete(f"{ASAAS_API_URL}/subscriptions/{subscription_id}", headers=get_headers(api_key))
+        if response.status_code == 200:
+            print(f"✅ Subscription {subscription_id} deleted.")
+            return True, None
+        else:
+            error_data = response.json()
+            error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+            print(f"⚠️ Error deleting subscription: {error_msg}")
+            return False, error_msg
+    except Exception as e:
+        return False, str(e)

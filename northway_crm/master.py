@@ -635,17 +635,38 @@ def manual_activate(company_id):
     
     from datetime import date, timedelta
     
+    # 1. Handle Asaas Subscription Cancellation (if requested or automatic)
+    if company.subscription_id:
+        try:
+            from services.asaas_service import delete_subscription
+            deleted, error = delete_subscription(company.subscription_id)
+            if deleted:
+                company.subscription_id = None
+                company.payment_status = 'active'
+                flash(f"Boleto/Assinatura Asaas cancelada automaticamente.", "info")
+            else:
+                flash(f"Aviso: Não foi possível cancelar o boleto Asaas: {error}", "warning")
+        except Exception as e:
+            print(f"Auto-cancel error: {e}")
+
     company.platform_inoperante = False
     company.payment_status = 'active'
     company.subscription_status = 'active'
     company.overdue_since = None
     
-    # Set next due date to 30 days from now
-    company.next_due_date = date.today() + timedelta(days=30)
+    # 2. Set Trial/Next Due Date (Customizable)
+    days = 30 # Default
+    if request.form.get('days'):
+        try:
+            days = int(request.form.get('days'))
+        except:
+            pass
+            
+    company.next_due_date = date.today() + timedelta(days=days)
     
     try:
         db.session.commit()
-        flash(f"Empresa {company.name} ativada manualmente! Próximo vencimento: {company.next_due_date.strftime('%d/%m/%Y')}", "success")
+        flash(f"Empresa {company.name} ativada manualmente por {days} dias! Vencimento: {company.next_due_date.strftime('%d/%m/%Y')}", "success")
     except Exception as e:
         db.session.rollback()
         flash(f"Erro ao ativar manualmente: {e}", "error")
