@@ -1,78 +1,149 @@
 {% extends "base_minimal.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-black flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <div
-            class="mx-auto w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-red-900/40 mb-6">
-            N
+<div class="min-h-screen flex bg-white font-sans selection:bg-red-600 selection:text-white">
+    <!-- Left Side: Cinematic Image (Growth/Future Theme) -->
+    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gray-900">
+        <!-- Background Image -->
+        <div id="trial-bg-image"
+            class="absolute inset-0 bg-cover bg-center transition-transform duration-[40s] ease-out transform scale-100 hover:scale-110"
+            style="background-image: url('{{ url_for('static', filename='images/register-bg.png') }}');">
         </div>
-        <h2 class="text-center text-3xl font-extrabold text-white">
-            Ativar Teste Gratuito
-        </h2>
-        <p class="mt-2 text-center text-sm text-gray-400">
-            Você está a um passo de transformar sua gestão.
-        </p>
-    </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <!-- Elegant Overlay -->
         <div
-            class="bg-[#0A0A0A] py-8 px-4 shadow-2xl border border-white/10 sm:rounded-2xl sm:px-10 relative overflow-hidden">
+            class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent mix-blend-multiply opacity-90">
+        </div>
+        <div class="absolute inset-0 bg-red-900/20 mix-blend-overlay"></div>
 
-            <!-- Glow Effect -->
-            <div
-                class="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none">
-            </div>
-
-            <div class="mb-6">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-gray-300 font-medium">Plano Pro (Trial)</span>
-                    <span class="text-emerald-400 font-bold">R$ 0,00 / 7 dias</span>
+        <!-- Content -->
+        <div class="relative z-10 p-16 flex flex-col justify-between h-full w-full">
+            <div>
+                <!-- Glass Logo Container -->
+                <div
+                    class="inline-flex p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)]">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay"
+                        class="h-10 w-auto brightness-200 contrast-125 filter drop-shadow-sm">
                 </div>
-                <div class="h-px bg-white/10 w-full mb-4"></div>
-                <ul class="space-y-3">
-                    <li class="flex items-start">
-                        <svg class="h-5 w-5 text-emerald-500 mr-2" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                        </svg>
-                        <span class="text-sm text-gray-400">Acesso completo a todas as ferramentas</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="h-5 w-5 text-emerald-500 mr-2" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                        </svg>
-                        <span class="text-sm text-gray-400">Extensão WhatsApp Ilimitada</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="h-5 w-5 text-emerald-500 mr-2" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                        </svg>
-                        <span class="text-sm text-gray-400">Sem cobrança automática hoje</span>
-                    </li>
-                </ul>
             </div>
 
-            <form class="space-y-6" action="{{ url_for('auth.start_trial') }}" method="POST">
-                <button type="submit"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all transform hover:scale-[1.02]">
-                    Começar 7 Dias Grátis Agora
-                </button>
-            </form>
-
-            <div class="mt-6">
-                <p class="text-center text-xs text-gray-500">
-                    Ao clicar, você concorda com nossos <a href="#"
-                        class="font-medium text-red-500 hover:text-red-400">Termos de Uso</a>.
-                    O período de teste termina automaticamente em 7 dias.
+            <div class="max-w-xl">
+                <div class="flex gap-2 mb-8">
+                    <div class="h-1.5 w-12 bg-red-600 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.6)]"></div>
+                    <div class="h-1.5 w-2 bg-white/20 rounded-full"></div>
+                    <div class="h-1.5 w-2 bg-white/20 rounded-full"></div>
+                </div>
+                <blockquote
+                    class="text-4xl md:text-5xl font-bold leading-[1.1] mb-8 text-white tracking-tight drop-shadow-xl">
+                    "A inteligência é a <span class="text-red-500">vantagem competitiva</span> definitiva."
+                </blockquote>
+                <p class="text-white/80 font-semibold tracking-widest uppercase text-xs flex items-center gap-3">
+                    <span class="w-6 h-[2px] bg-red-600"></span> Comece Agora
                 </p>
             </div>
         </div>
     </div>
+
+    <!-- Right Side: Trial Offer -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-20 bg-white relative">
+        <div class="w-full max-w-[480px] space-y-10 relative z-10">
+
+            <!-- Mobile Logo -->
+            <div class="flex justify-center lg:justify-start lg:hidden mb-10">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-10 w-auto">
+            </div>
+
+            <!-- Header -->
+            <div class="text-center lg:text-left space-y-2">
+                <span
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-wider mb-2">
+                    <span class="relative flex h-2 w-2">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    Oferta Exclusiva
+                </span>
+                <h1 class="text-4xl font-bold tracking-tight text-gray-900">Ative seu Experimentar</h1>
+                <p class="text-base text-gray-500 font-medium">7 dias de acesso total. Sem compromisso.</p>
+            </div>
+
+            <!-- Validation/Value Props Card -->
+            <div
+                class="bg-gray-50 rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group hover:border-red-100 transition-colors">
+                <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <i data-lucide="award" class="w-24 h-24 text-red-600 transform rotate-12"></i>
+                </div>
+
+                <div class="flex justify-between items-end mb-6 relative z-10">
+                    <div>
+                        <p class="text-sm text-gray-500 font-semibold uppercase tracking-wider">Plano Selecionado</p>
+                        <p class="text-2xl font-black text-gray-900 mt-1">NorthWay Pro</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-400 line-through font-medium">R$ 297/mês</p>
+                        <p class="text-xl font-bold text-red-600">Grátis <span
+                                class="text-sm font-medium text-gray-500">/ 7 dias</span></p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 relative z-10">
+                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium">
+                        <div class="p-1 rounded-full bg-green-100 text-green-600"><i data-lucide="check"
+                                class="w-3 h-3"></i></div>
+                        Pipeline de Vendas Ilimitado
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium">
+                        <div class="p-1 rounded-full bg-green-100 text-green-600"><i data-lucide="check"
+                                class="w-3 h-3"></i></div>
+                        Extensão WhatsApp Oficial
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium">
+                        <div class="p-1 rounded-full bg-green-100 text-green-600"><i data-lucide="check"
+                                class="w-3 h-3"></i></div>
+                        Automação de Contratos
+                    </div>
+                </div>
+            </div>
+
+            <form class="space-y-6" action="{{ url_for('auth.start_trial') }}" method="POST">
+                <button type="submit"
+                    class="group w-full flex justify-center items-center py-5 px-4 rounded-xl shadow-[0_10px_30px_rgba(220,38,38,0.25)] text-lg font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all transform hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(220,38,38,0.35)] active:scale-95">
+                    <span class="mr-2">Iniciar Teste Gratuito</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+
+                <p class="text-center text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
+                    Ao continuar, você concorda com os <a href="#"
+                        class="text-gray-600 hover:text-red-600 underline decoration-gray-300 underline-offset-2">Termos
+                        de Uso</a>.
+                    Sem cobrança automática hoje.
+                </p>
+            </form>
+
+            <div
+                class="pt-8 border-t border-gray-100 flex items-center justify-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg"
+                    class="h-5 opacity-50">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Meta_Platforms_Inc._logo.svg"
+                    class="h-4 opacity-50">
+            </div>
+
+        </div>
+    </div>
 </div>
+
+<script>
+    (function () {
+        const bg = document.getElementById('trial-bg-image');
+        if (bg) {
+            // Subtle Parallax
+            document.addEventListener('mousemove', (e) => {
+                const x = (window.innerWidth - e.pageX * 2) / 100;
+                const y = (window.innerHeight - e.pageY * 2) / 100;
+                bg.style.transform = `scale(1.1) translate(${x}px, ${y}px)`;
+            });
+        }
+    })();
+</script>
 {% endblock %}
