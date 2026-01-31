@@ -77,7 +77,17 @@ def verify_token(current_user):
         }
     })
 
-@api_ext.route('/api/ext/sso-jump', methods=['GET'])
+@api_ext.route('/seed-fix')
+def seed_fix_manual():
+    try:
+        from seed_creative_data import seed_creative_data
+        # Force run
+        seed_creative_data()
+        return jsonify({"status": "success", "message": "Seeding executed manually. Try login now."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@api_ext.route('/extension/check-auth', methods=['GET'])
 def sso_jump():
     token = request.args.get('token')
     if not token:
