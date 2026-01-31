@@ -272,6 +272,10 @@ def create_app():
             # Open Routes (Webhooks, Static, Auth)
             if not request.endpoint: return
             if request.endpoint.startswith('static'): return
+            
+            # FORCE IGNORE SYS_ADMIN ROUTES (Fix DB Crash)
+            if request.path.startswith('/sys_admin'): return
+
             if request.endpoint in ['auth.login', 'auth.register', 'auth.logout', 
                                   'billing.asaas_webhook', 'billing.payment_pending',
                                   'auth.suspended_account', 'master.revert_access']: # Allow revert!
