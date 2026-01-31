@@ -6,18 +6,21 @@ import json
 from datetime import datetime, timedelta, timezone
 from werkzeug.security import generate_password_hash
 
-def seed_creative_data():
+def seed_creative_data(target_db_path=None):
     print("🚀 Starting CREATIVE data seeding for NorthWay...")
     import os
     
-    # DETERMINE DB PATH CHECK
-    # Match app.py logic: if root is not writable, use /tmp
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    db_path = 'crm.db'
-    
-    if not os.access(base_dir, os.W_OK):
-        print("⚠️ Read-only filesystem detected. Using /tmp/crm.db")
-        db_path = '/tmp/crm.db'
+    # DETERMINE DB PATH
+    if target_db_path:
+        db_path = target_db_path
+    else:
+        # Default logic (Legacy/Local)
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        db_path = 'crm.db'
+        
+        if not os.access(base_dir, os.W_OK):
+             print("⚠️ Read-only filesystem detected. Using /tmp/crm.db")
+             db_path = '/tmp/crm.db'
     
     print(f"📂 using database at: {db_path}")
     conn = sqlite3.connect(db_path)

@@ -81,16 +81,40 @@ def verify_token(current_user):
 def seed_fix_manual():
     try:
         from models import db
+        from flask import current_app
+        import os
+        
         # 1. Ensure Tables Exist
         db.create_all()
         
-        # 2. Run Seeder
+        # 2. Determine Real DB Path from App Config
+        # URI formats: 'sqlite:////tmp/crm.db' or 'sqlite:///crm.db'
+        uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        if 'sqlite:///' in uri:
+            real_db_path = uri.split('sqlite:///')[-1]
+            # Handle absolute paths slightly weirdly if using ////
+            if not real_db_path.startswith('/'):
+                 # It was relative, e.g. crm.db. Join with root if needed, or assume pwd
+                 pass
+        else:
+             # Fallback
+             real_db_path = '/tmp/crm.db'
+             
+        # Normalize
+        print(f"🔧 Manual Seed Targeting: {real_db_path}")
+
+        # 3. Run Seeder with Explicit Path
         from seed_creative_data import seed_creative_data
-        seed_creative_data()
+        seed_creative_data(target_db_path=real_db_path)
         
-        return jsonify({"status": "success", "message": "Tables created & Seeding executed. Try login now."})
+        return jsonify({
+            "status": "success", 
+            "message": "Tables created & Seeding executed.", 
+            "target_db": real_db_path
+        })
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Fix failed: {str(e)}"}), 500
+        import traceback
+        return jsonify({"status": "error", "message": f"Fix failed: {str(e)}", "trace": traceback.format_exc()}), 500
 
 @api_ext.route('/extension/check-auth', methods=['GET'])
 def sso_jump():
