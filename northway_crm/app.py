@@ -314,74 +314,55 @@ def create_app():
         # Critical for Vercel/Ephemeral environments
         with app.app_context():
             try:
-                # 1. Simple Table Creation (Crucial)
-                from sqlalchemy import inspect
-                inspector = inspect(db.engine)
-                # Always try to create all tables (idempotent-ish)
+                # 1. Simple Table Creation
                 db.create_all()
                 print("✅ Tables created (if missing).")
                 
-                # 2. Seed Admin if User table is empty
-                if not User.query.first():
-                    print("🌱 Seeding default Admin...")
-                    from models import Company
-                    from werkzeug.security import generate_password_hash
-                    
-                    if not Company.query.first():
-                        c = Company(name="NorthWay Default", plan="pro", status="active")
-                        db.session.add(c)
-                        db.session.commit()
-                        
-                        r = Role(name="Administrador", company_id=c.id, permissions=["admin_view"])
-                        db.session.add(r)
-                        db.session.commit()
-                        
-                        u = User(
-                            name="Admin", 
-                            email="admin@northway.com", 
-                            password_hash=generate_password_hash("123456"),
-                            company_id=c.id,
-                            role="admin",
-                            role_id=r.id
-                        )
-                        db.session.add(u)
-                        db.session.commit()
-                        print("✅ Default Admin created.")
+                # 2. Seed Admin (Safe Check)
+                try:
+                    if not User.query.first():
+                         print("🌱 Seeding default Admin...")
+                         from models import Company
+                         from werkzeug.security import generate_password_hash
+                         # ... (seeding logic simplified for brevity or robustness)
+                         if not Company.query.first():
+                             c = Company(name="NorthWay Default", plan="pro", status="active", payment_status="trial") # FIX: Ensure defaults
+                             db.session.add(c)
+                             db.session.commit()
+                             r = Role(name="Administrador", company_id=c.id, permissions=["admin_view"])
+                             db.session.add(r)
+                             db.session.commit()
+                             u = User(name="Admin", email="admin@northway.com", password_hash=generate_password_hash("123456"), company_id=c.id, role="admin", role_id=r.id)
+                             db.session.add(u)
+                             db.session.commit()
+                except Exception as seed_err:
+                     print(f"⚠️ Seeding Error: {seed_err}")
 
-                # 3. Add next_due_date if missing (Critical for Billing)
-                # MIGRATE: Add next_due_date (Date type)
-                # 3. Add next_due_date if missing (Critical for Billing)
-                if inspector.has_table("company"):
-                    with db.engine.connect() as conn:
-                        columns = [c['name'] for c in inspector.get_columns("company")]
-                        
-                        # next_due_date
-                        if 'next_due_date' not in columns:
-                            print("📦 MIGRATION: Adding next_due_date to company...")
-                            conn.execute(text("ALTER TABLE company ADD COLUMN next_due_date DATE"))
-                            print("✅ MIGRATION: next_due_date added.")
+                # 3. Add Columns (Critical for Billing) - GUARDED
+                try:
+                    from sqlalchemy import inspect
+                    inspector = inspect(db.engine)
+                    
+                    if inspector.has_table("company"):
+                        with db.engine.connect() as conn:
+                            columns = [c['name'] for c in inspector.get_columns("company")]
                             
-                        # trial_start_date
-                        if 'trial_start_date' not in columns:
-                            print("📦 MIGRATION: Adding trial_start_date to company...")
-                            conn.execute(text("ALTER TABLE company ADD COLUMN trial_start_date DATETIME"))
-                            print("✅ MIGRATION: trial_start_date added.")
+                            # Safely add columns
+                            for col, dtype in [('next_due_date', 'DATE'), ('trial_start_date', 'DATETIME'), ('trial_end_date', 'DATETIME')]:
+                                if col not in columns:
+                                    try:
+                                        print(f"📦 MIGRATION: Adding {col}...")
+                                        conn.execute(text(f"ALTER TABLE company ADD COLUMN {col} {dtype}"))
+                                    except Exception as alt_e:
+                                        print(f"FAILED TO ADD {col}: {alt_e}")
                             
-                        # trial_end_date
-                        if 'trial_end_date' not in columns:
-                            print("📦 MIGRATION: Adding trial_end_date to company...")
-                            conn.execute(text("ALTER TABLE company ADD COLUMN trial_end_date DATETIME"))
-                            print("✅ MIGRATION: trial_end_date added.")
-                        
-                        conn.commit()
-                # 3. Add next_due_date if missing (Critical for Billing)
-                # ... (Migration logic was here) ...
-            
-            except Exception as seed_e:
-                # Log but don't crash the factory
-                print(f"❌ Auto-migration failed: {seed_e}")
-                import traceback
-                traceback.print_exc()
+                            conn.commit()
+                            print("✅ MIGRATION: Schema checks completed.")
+                except Exception as mig_e:
+                    print(f"⚠️ Migration/Inspect Error: {mig_e}")
+
+            except Exception as context_e:
+                print(f"❌ Startup Context Error: {context_e}")
 
         # --- GLOBAL CONTEXT PROCESSOR ---
         @app.context_processor
