@@ -1,4 +1,4 @@
-from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN
+from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 import random
@@ -46,7 +46,10 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
     Contract.query.filter_by(company_id=cid).delete()
     Client.query.filter_by(company_id=cid).delete()
     Lead.query.filter_by(company_id=cid).delete()
-    # Note: We keep configs like pipelines usually, but let's ensure pipeline exists
+    Task.query.filter_by(company_id=cid).delete()
+    Interaction.query.filter_by(company_id=cid).delete()
+    
+    # 3. Ensure Pipeline
     
     # 3. Ensure Pipeline
     pipeline = Pipeline.query.filter_by(company_id=cid).first()
@@ -181,9 +184,36 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
             pipeline_stage_id=sid,
             assigned_to_id=uid,
             status='in_progress',
-            source='Google Ads'
+            source='Google Ads',
+            created_at=today - timedelta(days=random.randint(1, 10))
         )
         db_session.add(lead)
+        db_session.flush()
+        
+        # 6. CREATE TASKS (For Home Dashboard)
+        # Create a task due TODAY for this lead
+        task = Task(
+            title=f"Ligar para {lname}",
+            description="Verificar interesse na proposta enviada.",
+            company_id=cid,
+            assigned_to_id=uid,
+            lead_id=lead.id,
+            due_date=datetime.now(), # TODAY/NOW
+            status='pendente',
+            type='call'
+        )
+        db_session.add(task)
+        
+        # 7. CREATE TIMELINE INTERACTIONS
+        interaction = Interaction(
+             lead_id=lead.id,
+             user_id=uid,
+             company_id=cid,
+             type='note',
+             content="Cliente demonstrou interesse em plano anual.",
+             created_at=today - timedelta(days=1)
+        )
+        db_session.add(interaction)
     
     db_session.commit()
-    print("✅ Rich Data Seeding Complete!")
+    print("✅ Rich Data Seeding (Clients, Contracts, Leads, Tasks) Complete!")

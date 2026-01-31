@@ -91,13 +91,15 @@ def seed_fix_manual():
         seed_rich_data(db.session, user_email="admin@northway.com")
         
         # 3. Verify Data
-        from models import Client, Lead, Transaction, User
+        from models import Client, Lead, Transaction, User, Contract, Task
         u = User.query.filter_by(email="admin@northway.com").first()
         cid = u.company_id if u else "None"
         
         clients = Client.query.filter_by(company_id=cid).count()
         leads = Lead.query.filter_by(company_id=cid).count()
         transactions = Transaction.query.filter_by(company_id=cid).count()
+        contracts_count = Contract.query.filter_by(company_id=cid).count()
+        tasks_count = Task.query.filter_by(company_id=cid).count()
             
         return jsonify({
             "status": "success", 
@@ -108,6 +110,8 @@ def seed_fix_manual():
                 "clients_count": clients,
                 "leads_count": leads,
                 "transactions_count": transactions,
+                "contracts_count": contracts_count,
+                "tasks_count": tasks_count,
                 "db_url": str(db.engine.url)
             }
         })
