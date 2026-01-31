@@ -52,7 +52,7 @@ try:
                      # NOW run seed
                      seed_creative_data() 
                 else:
-                    cursor.execute("SELECT id FROM user WHERE email='Admin@northway.com.br'")
+                    cursor.execute("SELECT id FROM user WHERE email='admin@northway.com'")
                     if not cursor.fetchone():
                         print("⚠️ [STARTUP] Admin not found. Running Creative Seeding...")
                         seed_creative_data()

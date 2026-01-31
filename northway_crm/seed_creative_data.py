@@ -24,8 +24,8 @@ def seed_creative_data():
     cursor = conn.cursor()
 
     # --- 1. USER & COMPANY SETUP ---
-    # Target: Admin@northway.com.br
-    email = "Admin@northway.com.br"
+    # Target: admin@northway.com
+    email = "admin@northway.com"
     print(f"👤 target user: {email}")
 
     # Check/Create User
