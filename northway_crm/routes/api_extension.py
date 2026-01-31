@@ -80,51 +80,19 @@ def verify_token(current_user):
 @api_ext.route('/seed-fix')
 def seed_fix_manual():
     try:
-        from models import db, User, Company, Role, ROLE_ADMIN
-        from werkzeug.security import generate_password_hash
+        from models import db
         import traceback
         
-        # 1. Ensure Tables Exist (Using ORM Engine)
+        # 1. Ensure Tables Exist
         db.create_all()
         
-        # 2. Check/Create Company
-        # We use ORM so it definitely uses the same DB as create_all
-        company = Company.query.filter_by(document='00000000000191').first()
-        if not company:
-            company = Company(
-                name="NorthWay Demo",
-                document="00000000000191",
-                payment_status="active",
-                status="active"
-            )
-            db.session.add(company)
-            db.session.commit()
-            print("✅ Company Created via ORM")
-        
-        # 3. Check/Create User
-        email = "admin@northway.com"
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(
-                name="NorthWay Admin",
-                email=email,
-                password_hash=generate_password_hash("123456"),
-                role=ROLE_ADMIN,
-                company_id=company.id,
-                is_super_admin=True
-            )
-            db.session.add(user)
-            db.session.commit()
-            print("✅ User Created via ORM")
-        else:
-            # Reset password just in case
-            user.password_hash = generate_password_hash("123456")
-            db.session.commit()
-            print("✅ User Password Reset via ORM")
+        # 2. Run Rich Data Seeder using ORM
+        from seed_orm import seed_rich_data
+        seed_rich_data(db.session, user_email="admin@northway.com")
             
         return jsonify({
             "status": "success", 
-            "message": "ORM Seeding Complete. Login with admin@northway.com / 123456",
+            "message": "Rich Data Seeding Complete. Login with admin@northway.com / 123456",
             "db_url": str(db.engine.url)
         })
     except Exception as e:
