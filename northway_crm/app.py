@@ -87,8 +87,8 @@ def create_app():
                             database_url = 'sqlite:///:memory:'
                             print("💾 DATABASE: Read-only FS and copy failed. Using In-Memory.")
                 else:
-                    print("⚠️ DATABASE: No 'crm.db' found. Using In-Memory.")
-                    database_url = 'sqlite:///:memory:'
+                    print("⚠️ DATABASE: No 'crm.db' found. Using /tmp/crm.db (Fresh).")
+                    database_url = 'sqlite:////tmp/crm.db'
 
         except Exception as e:
             print(f"🔥 CRITICAL DB SETUP ERROR: {e}")
