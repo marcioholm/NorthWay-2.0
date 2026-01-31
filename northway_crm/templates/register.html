@@ -45,52 +45,52 @@
     </div>
 
     <!-- Right Side: Register Form (Clean White & Red) -->
-    <div class="w-full lg:w-1/2 flex flex-col items-center bg-white relative overflow-y-auto px-8 py-12 lg:py-20">
-        <div class="w-full max-w-[420px] space-y-10 relative z-10">
+    <div class="w-full lg:w-1/2 flex flex-col items-center bg-white relative overflow-y-auto px-8 py-6 lg:py-10">
+        <div class="w-full max-w-[420px] space-y-4 relative z-10">
 
             <!-- Header -->
             <div class="text-center lg:text-left">
                 <!-- Mobile Logo -->
-                <div class="flex justify-center lg:justify-start lg:hidden mb-10">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-10 w-auto">
+                <div class="flex justify-center lg:justify-start lg:hidden mb-6">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-8 w-auto">
                 </div>
 
-                <h1 class="text-4xl font-bold tracking-tight text-gray-900 mb-3">Crie sua conta</h1>
-                <p class="text-base text-gray-500 font-medium">Comece a gerenciar suas vendas hoje mesmo.</p>
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900 mb-1">Crie sua conta</h1>
+                <p class="text-sm text-gray-500 font-medium">Comece a gerenciar suas vendas hoje mesmo.</p>
             </div>
 
             <!-- Social Login -->
-            <div class="space-y-4">
+            <div class="space-y-3">
                 <a href="{{ url_for('auth.google_login') }}"
-                    class="w-full flex items-center justify-center gap-3 px-4 py-3.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-bold text-gray-700">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5"
+                    class="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-bold text-gray-700 text-sm">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-4 h-4"
                         alt="Google">
                     Continuar com Google
                 </a>
 
                 <div class="relative flex items-center justify-center">
-                    <div class="flex-grow border-t border-gray-200"></div>
-                    <span class="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest bg-white">Ou use seu
+                    <div class="flex-grow border-t border-gray-100"></div>
+                    <span class="px-4 text-[10px] font-bold text-gray-300 uppercase tracking-widest bg-white">Ou use seu
                         email</span>
-                    <div class="flex-grow border-t border-gray-200"></div>
+                    <div class="flex-grow border-t border-gray-100"></div>
                 </div>
             </div>
 
-            <form class="space-y-6" action="{{ url_for('auth.register') }}" method="POST">
+            <form class="space-y-4" action="{{ url_for('auth.register') }}" method="POST">
 
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <!-- Name -->
                     <div class="group">
                         <label for="name"
-                            class="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-red-600 transition-colors">Seu
+                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">Seu
                             Nome Completo</label>
                         <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="user"
-                                    class="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
                             </div>
                             <input id="name" name="name" type="text" required
-                                class="block w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium"
+                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
                                 placeholder="Ex: João Silva">
                         </div>
                     </div>
@@ -98,15 +98,15 @@
                     <!-- Phone -->
                     <div class="group">
                         <label for="phone"
-                            class="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-red-600 transition-colors">WhatsApp
+                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">WhatsApp
                             / Celular</label>
                         <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="phone"
-                                    class="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
                             </div>
                             <input id="phone" name="phone" type="tel" required
-                                class="block w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium"
+                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
                                 placeholder="(11) 99999-9999">
                         </div>
                     </div>
@@ -114,15 +114,15 @@
                     <!-- Email -->
                     <div class="group">
                         <label for="email"
-                            class="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-red-600 transition-colors">Email
+                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">Email
                             Profissional</label>
                         <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="mail"
-                                    class="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
                             </div>
                             <input id="email" name="email" type="email" autocomplete="email" required
-                                class="block w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium"
+                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
                                 placeholder="seu@email.com">
                         </div>
                     </div>
@@ -130,15 +130,15 @@
                     <!-- CPF/CNPJ -->
                     <div class="group">
                         <label for="cpf_cnpj"
-                            class="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-red-600 transition-colors">CPF
+                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">CPF
                             ou CNPJ</label>
                         <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="hash"
-                                    class="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
                             </div>
                             <input id="cpf_cnpj" name="cpf_cnpj" type="text" required
-                                class="block w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium"
+                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
                                 placeholder="000.000.000-00 ou 00.000.000/0001-00">
                         </div>
                     </div>
@@ -146,29 +146,28 @@
                     <!-- Password -->
                     <div class="group">
                         <label for="password"
-                            class="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-red-600 transition-colors">Senha
+                            class="block text-[13px] font-bold text-gray-700 mb-1.5 group-focus-within:text-red-600 transition-colors">Senha
                             de Acesso</label>
                         <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i data-lucide="lock"
-                                    class="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                                    class="h-4 w-4 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
                             </div>
                             <input id="password" name="password" type="password" autocomplete="new-password" required
-                                class="block w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium"
+                                class="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium text-sm"
                                 placeholder="••••••••" minlength="6">
                         </div>
-                        <p class="mt-2 text-xs text-gray-400 font-medium ml-1">Mínimo de 6 caracteres</p>
                     </div>
                 </div>
 
                 <button type="submit"
-                    class="w-full flex justify-center items-center py-4 px-4 rounded-xl shadow-[0_10px_30px_rgba(220,38,38,0.25)] text-base font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all transform hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(220,38,38,0.35)] active:scale-95">
+                    class="w-full flex justify-center items-center py-3.5 px-4 rounded-xl shadow-[0_10px_30px_rgba(220,38,38,0.20)] text-sm font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all transform hover:-translate-y-1 active:scale-95">
                     Criar Minha Conta
-                    <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+                    <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
                 </button>
 
-                <div class="mt-8 pt-8 text-center border-t border-gray-100">
-                    <p class="text-sm text-gray-500 font-medium">
+                <div class="mt-4 pt-4 text-center border-t border-gray-50">
+                    <p class="text-xs text-gray-400 font-medium">
                         Já tem uma conta?
                         <a href="{{ url_for('auth.login') }}"
                             class="font-bold text-red-600 hover:text-red-800 transition-colors cursor-pointer ml-1 inline-flex items-center group">
@@ -178,7 +177,7 @@
                 </div>
             </form>
 
-            <p class="text-center text-[11px] text-gray-300 uppercase tracking-widest mt-12 font-bold">
+            <p class="text-center text-[10px] text-gray-200 uppercase tracking-widest mt-6 font-bold">
                 &copy; 2026 NorthWay Systems
             </p>
         </div>
