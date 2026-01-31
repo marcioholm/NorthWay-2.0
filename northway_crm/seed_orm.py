@@ -1,4 +1,4 @@
-from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction, FinancialEvent
+from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction, FinancialEvent, ContractTemplate
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 import random
@@ -76,6 +76,18 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
     # Refetch stages
     stages_objs = PipelineStage.query.filter_by(pipeline_id=pipeline.id).all()
     stage_map = {s.name: s.id for s in stages_objs}
+    
+    # 3.5 Ensure Contract Template (Required for Contracts)
+    template = ContractTemplate.query.filter_by(company_id=cid).first()
+    if not template:
+        template = ContractTemplate(
+            name="Contrato Padrão de Consultoria",
+            company_id=cid,
+            content="<p>Contrato de prestação de serviços...</p>",
+            type='contract'
+        )
+        db_session.add(template)
+        db_session.flush()
     
     # 4. CREATE CLIENTS (Target: ~10k MRR, Ticket 1500)
     # We want 7 clients at 1500 = 10500.
@@ -161,9 +173,10 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
         # Financial dashboard logic: fetches MRR from Contract.form_data JSON
         import json
         contract = Contract(
-            title=f"Contrato - {name}",
+            # title removed (invalid)
             company_id=cid,
             client_id=client.id,
+            template_id=template.id, # Added required field
             status='signed',
             created_at=start_date,
             form_data=json.dumps({
