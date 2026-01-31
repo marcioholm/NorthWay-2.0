@@ -4,17 +4,34 @@ from datetime import datetime, timedelta
 import random
 
 def wipe_data(db_session, company_id):
-    """Wipes all business data for a specific company."""
+    """
+    Wipes all business data for a specific company safely.
+    Preserves: User, Company, Pipeline, ContractTemplate, ProcessTemplate, LibraryBook.
+    """
     print(f"🧹 Wiping data for company {company_id}...")
+    
+    # 1. Clear Dependencies (Leaf Nodes)
     FinancialEvent.query.filter_by(company_id=company_id).delete()
     Transaction.query.filter_by(company_id=company_id).delete()
+    Interaction.query.filter_by(company_id=company_id).delete()
+    Task.query.filter_by(company_id=company_id).delete()
     Contract.query.filter_by(company_id=company_id).delete()
+    
+    # 2. Break Circular Dependencies (Client <-> Lead)
+    # We must nullify the Foreign Keys before deletion to satisfy constraints
+    try:
+        db_session.query(Client).filter_by(company_id=company_id).update({Client.lead_id: None})
+        db_session.query(Lead).filter_by(company_id=company_id).update({Lead.client_id: None})
+        db_session.flush()
+    except Exception as e:
+        print(f"Warning during circular break: {e}")
+
+    # 3. Delete Core Entities
     Client.query.filter_by(company_id=company_id).delete()
     Lead.query.filter_by(company_id=company_id).delete()
-    Task.query.filter_by(company_id=company_id).delete()
-    Interaction.query.filter_by(company_id=company_id).delete()
+    
     db_session.commit()
-    print("✅ Data wiped.")
+    print("✅ Data wiped (Configuration & Users preserved).")
 
 def seed_rich_data(db_session, user_email="admin@northway.com"):
     print(f"🚀 Starting RICH data seeding for {user_email}...")
