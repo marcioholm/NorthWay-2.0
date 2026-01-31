@@ -5,6 +5,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NorthWay CRM - Organização e Processo para seu Negócio</title>
+
+    <!-- Meta Pixel Code -->
+    <script>
+        !function (f, b, e, v, n, t, s) {
+            if (f.fbq) return; n = f.fbq = function () {
+                n.callMethod ?
+                n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+            };
+            if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+            n.queue = []; t = b.createElement(e); t.async = !0;
+            t.src = v; s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s)
+        }(window, document, 'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '775641965566957');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+            src="https://www.facebook.com/tr?id=775641965566957&ev=PageView&noscript=1" /></noscript>
+    <!-- End Meta Pixel Code -->
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
@@ -51,10 +72,7 @@
     <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <div
-                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-northway-red to-red-900 flex items-center justify-center text-white font-black shadow-lg">
-                    N</div>
-                <span class="font-bold text-xl tracking-tight">NorthWay</span>
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="NorthWay Logo" class="h-10 w-auto">
             </div>
             <div class="hidden md:flex items-center gap-6">
                 <a href="#como-funciona"
@@ -94,7 +112,8 @@
             </h1>
 
             <p class="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Centralize clientes, contratos, tarefas e financeiro em um único CRM — com processo de verdade.
+                Recupere o controle da sua empresa. Centralize clientes, contratos e financeiro em um sistema feito por
+                quem entende a vida do empresário.
             </p>
 
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -124,22 +143,10 @@
     <!-- Video Section (Placeholder) -->
     <section id="video-section" class="py-12 bg-gray-50">
         <div class="max-w-5xl mx-auto px-4">
-            <div
-                class="aspect-video rounded-2xl bg-gray-900 shadow-2xl border border-gray-800 flex items-center justify-center relative overflow-hidden group">
-                <!-- Replace VIDEO_ID with actual YouTube ID -->
-                <iframe class="w-full h-full absolute inset-0 hidden" id="youtube-frame"
-                    src="https://www.youtube.com/embed/VIDEO_ID?rel=0" title="NorthWay CRM Demo" frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen></iframe>
-
-                <!-- Fallback/Placeholder if no video ID provided yet -->
-                <div class="text-center p-8 bg-black/80 absolute inset-0 flex flex-col items-center justify-center z-10"
-                    id="video-placeholder-overlay">
-                    <p class="text-gray-400 mb-2 font-medium">Vídeo de Apresentação</p>
-                    <i data-lucide="play" class="w-16 h-16 text-white opacity-80"></i>
-                    <p class="text-xs text-gray-500 mt-4">(Embed do YouTube aqui)</p>
-                </div>
-            </div>
+            <iframe class="w-full h-full absolute inset-0" id="youtube-frame"
+                src="https://www.youtube.com/embed/FPJD88l81Qo?rel=0" title="NorthWay CRM Demo" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
         </div>
     </section>
 
@@ -148,10 +155,11 @@
         <div class="max-w-3xl mx-auto px-4">
             <div class="text-center mb-16">
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                    Se você usa 5 lugares pra se organizar… <br>
-                    <span class="text-northway-red">você não tem um sistema.</span>
+                    Você sente que está sempre <br>
+                    <span class="text-northway-red">apagando incêndios?</span>
                 </h2>
-                <p class="text-gray-500 text-lg">Você não precisa de mais ferramentas. Você precisa de um processo.</p>
+                <p class="text-gray-500 text-lg">Crescer dói quando você não tem o controle na palma da mão. O NorthWay
+                    nasceu para te devolver a paz na gestão.</p>
             </div>
 
             <div class="space-y-4">
@@ -168,7 +176,8 @@
                 <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-red-50/50 transition-colors">
                     <div
                         class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-northway-red">
-                        <i data-lucide="x" class="w-5 h-5"></i></div>
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </div>
                     <div>
                         <h3 class="font-bold text-gray-900 text-lg">Contrato vira bagunça</h3>
                         <p class="text-gray-500">Cada cliente tem um doc diferente, difícil de achar e assinar.</p>
@@ -177,7 +186,8 @@
                 <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-red-50/50 transition-colors">
                     <div
                         class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-northway-red">
-                        <i data-lucide="x" class="w-5 h-5"></i></div>
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </div>
                     <div>
                         <h3 class="font-bold text-gray-900 text-lg">Financeiro não bate</h3>
                         <p class="text-gray-500">Você não sabe quem pagou, quem deve e qual a previsão do mês.</p>
@@ -186,7 +196,8 @@
                 <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-red-50/50 transition-colors">
                     <div
                         class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-northway-red">
-                        <i data-lucide="x" class="w-5 h-5"></i></div>
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </div>
                     <div>
                         <h3 class="font-bold text-gray-900 text-lg">Equipe faz do jeito dela</h3>
                         <p class="text-gray-500">Sem padrão, cada um atende de um jeito e o processo falha.</p>
@@ -222,14 +233,16 @@
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
                     <div
                         class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 mb-6">
-                        <i data-lucide="users" class="w-6 h-6"></i></div>
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Organização de Leads</h3>
                     <p class="text-gray-500 text-sm">Funil visual (Kanban) para nunca perder uma oportunidade de venda.
                     </p>
                 </div>
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
                     <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600 mb-6">
-                        <i data-lucide="search" class="w-6 h-6"></i></div>
+                        <i data-lucide="search" class="w-6 h-6"></i>
+                    </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Consulta de CNPJ</h3>
                     <p class="text-gray-500 text-sm">Enriquecimento de dados automático para qualificar seus leads.</p>
                 </div>
@@ -242,7 +255,8 @@
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all">
                     <div
                         class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600 mb-6">
-                        <i data-lucide="pie-chart" class="w-6 h-6"></i></div>
+                        <i data-lucide="pie-chart" class="w-6 h-6"></i>
+                    </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Financeiro Integrado</h3>
                     <p class="text-gray-500 text-sm">Controle de caixa, DRE simples e visão clara do mês.</p>
                 </div>
@@ -446,9 +460,8 @@
     <footer class="bg-gray-50 py-12 border-t border-gray-200">
         <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded bg-black text-white flex items-center justify-center font-bold text-xs">N
-                </div>
-                <span class="font-bold text-gray-900">NorthWay</span>
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="NorthWay Logo"
+                    class="h-8 w-auto opacity-80">
             </div>
             <div class="text-sm text-gray-500">
                 &copy; 2026 NorthWay CRM. Todos os direitos reservados.
