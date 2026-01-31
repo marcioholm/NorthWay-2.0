@@ -367,17 +367,26 @@ def create_app():
         # --- GLOBAL CONTEXT PROCESSOR ---
         @app.context_processor
         def inject_saas_metrics():
-            if not current_user.is_authenticated or not current_user.company_id:
+            try:
+                # SKIP FOR ADMIN ROUTES to avoid schema crashes during fix
+                if request.path.startswith('/sys_admin'):
+                    return {}
+
+                if not current_user.is_authenticated or not current_user.company_id:
+                    return {}
+                
+                # Days Remaining Calculation
+                days_remaining = None
+                # Use getattr safe access incase model validation fails
+                company = current_user.company
+                if company and getattr(company, 'next_due_date', None):
+                    from datetime import date
+                    delta = company.next_due_date - date.today()
+                    days_remaining = delta.days
+                
+                return dict(subscription_days_remaining=days_remaining)
+            except:
                 return {}
-            
-            # Days Remaining Calculation
-            days_remaining = None
-            if current_user.company and current_user.company.next_due_date:
-                from datetime import date
-                delta = current_user.company.next_due_date - date.today()
-                days_remaining = delta.days
-            
-            return dict(subscription_days_remaining=days_remaining)
 
         return app
 
