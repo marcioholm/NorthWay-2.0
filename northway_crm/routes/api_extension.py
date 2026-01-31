@@ -348,6 +348,7 @@ def update_lead(current_user, id):
 def debug_status():
     """Diagnostic route to check WHY the user sees nothing."""
     from flask_login import current_user
+    from models import db, User, Client, Lead, Contract, Task
     import os
     
     debug_info = {
