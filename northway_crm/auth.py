@@ -383,13 +383,102 @@ def google_login():
 
 @auth.route('/callback')
 def callback():
-    """Handles Supabase OAuth Callback"""
-    # Note: Supabase JS client usually handles hash fragment on client-side.
-    # For Flask, we might need to handle the session/token if passed, 
-    # but typically for OAuth it's better to use Supabase client-side JS 
-    # OR a dedicated flow. Here we assume we get a user after exchange.
-    flash('Login com Google em desenvolvimento. Favor usar email/senha por enquanto.', 'info')
-    return redirect(url_for('auth.login'))
+    """Renders bridge page to capture URL fragment"""
+    return render_template('auth/callback.html')
+
+@auth.route('/google-callback-server')
+def google_callback_server():
+    """Processes the access token from Supabase and performs login/sync"""
+    access_token = request.args.get('access_token')
+    
+    if not access_token:
+        flash('Falha ao obter token de acesso do Google.', 'error')
+        return redirect(url_for('auth.login'))
+        
+    try:
+        # 1. Get User Data from Supabase using the token
+        res = current_app.supabase.auth.get_user(access_token)
+        if not res or not res.user:
+             flash('Sessão do Google expirada ou inválida.', 'error')
+             return redirect(url_for('auth.login'))
+             
+        sb_user = res.user
+        email = sb_user.email
+        name = sb_user.user_metadata.get('full_name') or sb_user.user_metadata.get('name') or email.split('@')[0]
+        
+        # 2. Sync with Local DB
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            # First time login via Google - Create account
+            print(f"🌱 Google Login: Creating new account for {email}")
+            
+            # Create Company
+            company = Company(
+                name=f"Empresa de {name}",
+                subscription_status='inactive'
+            )
+            db.session.add(company)
+            db.session.flush()
+            
+            # Create User
+            user = User(
+                name=name,
+                email=email,
+                supabase_uid=sb_user.id,
+                company_id=company.id,
+                role='admin'
+            )
+            db.session.add(user)
+            db.session.flush()
+            
+            # Set Default Admin Role
+            admin_perms = [
+                'dashboard_view', 'financial_view', 'leads_view', 'pipeline_view', 
+                'goals_view', 'tasks_view', 'clients_view', 'whatsapp_view', 
+                'company_settings_view', 'processes_view', 'library_view', 
+                'prospecting_view', 'admin_view'
+            ]
+            admin_role = Role(
+                name='Administrador',
+                company_id=company.id,
+                is_default=True,
+                permissions=admin_perms
+            )
+            db.session.add(admin_role)
+            db.session.flush()
+            user.role_id = admin_role.id
+            
+            # Bootstrap Pipeline
+            pipeline = Pipeline(name='Funil de Vendas', company_id=company.id)
+            db.session.add(pipeline)
+            db.session.flush()
+            
+            stages = ['Novo', 'Qualificação', 'Proposta', 'Negociação', 'Fechado']
+            for i, s_name in enumerate(stages):
+                db.session.add(PipelineStage(name=s_name, order=i, pipeline_id=pipeline.id, company_id=company.id))
+            user.allowed_pipelines.append(pipeline)
+            
+            db.session.commit()
+            
+            login_user(user)
+            flash(f'Bem-vindo, {name}! Agora, ative seu período de teste.', 'success')
+            return redirect(url_for('auth.start_trial'))
+            
+        else:
+            # Existing User - Link UID if not set
+            if not user.supabase_uid:
+                user.supabase_uid = sb_user.id
+                db.session.commit()
+            
+            login_user(user)
+            print(f"✅ Google Login: {user.name} authenticated.")
+            return redirect(url_for('dashboard.home'))
+            
+    except Exception as e:
+        print(f"🔥 Error in Google Callback: {str(e)}")
+        flash(f'Erro ao processar login com Google: {str(e)}', 'error')
+        return redirect(url_for('auth.login'))
 
 @auth.route('/logout')
 @login_required

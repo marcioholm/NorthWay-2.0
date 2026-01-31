@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Sincronizando...</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #0f0518;
+            color: white;
+            margin: 0;
+        }
+
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #fa0102;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .container {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="loader"></div>
+        <p>Finalizando seu login...</p>
+    </div>
+
+    <script>
+        // Supabase returns tokens in the URL fragment (#)
+        // We capture it and send to the server to process the session
+        const hash = window.location.hash;
+        if (hash) {
+            // Redirect to a server route that can process the query string
+            // Replace '#' with '?' to make it a query string
+            window.location.href = "{{ url_for('auth.google_callback_server') }}?" + hash.substring(1);
+        } else {
+            // If no hash, maybe it was an error or already processed
+            window.location.href = "{{ url_for('auth.login') }}";
+        }
+    </script>
+</body>
+
+</html>
