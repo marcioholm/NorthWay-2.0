@@ -89,11 +89,27 @@ def seed_fix_manual():
         # 2. Run Rich Data Seeder using ORM
         from seed_orm import seed_rich_data
         seed_rich_data(db.session, user_email="admin@northway.com")
+        
+        # 3. Verify Data
+        from models import Client, Lead, Transaction, User
+        u = User.query.filter_by(email="admin@northway.com").first()
+        cid = u.company_id if u else "None"
+        
+        clients = Client.query.filter_by(company_id=cid).count()
+        leads = Lead.query.filter_by(company_id=cid).count()
+        transactions = Transaction.query.filter_by(company_id=cid).count()
             
         return jsonify({
             "status": "success", 
-            "message": "Rich Data Seeding Complete. Login with admin@northway.com / 123456",
-            "db_url": str(db.engine.url)
+            "message": "Rich Data Seeding Complete.",
+            "debug": {
+                "user_email": "admin@northway.com",
+                "company_id": cid,
+                "clients_count": clients,
+                "leads_count": leads,
+                "transactions_count": transactions,
+                "db_url": str(db.engine.url)
+            }
         })
     except Exception as e:
         return jsonify({"status": "error", "message": f"Fix failed: {str(e)}", "trace": traceback.format_exc()}), 500
