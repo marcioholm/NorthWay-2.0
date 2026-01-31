@@ -12,8 +12,17 @@ def wipe_data(db_session, company_id):
     
     # 1. Clear Dependencies (Leaf Nodes)
     # Financial & Usage
+    # Aggressively clean FinancialEvents (Dependents of Transaction)
+    # We fetch Transaction IDs to ensuring we catch any FinancialEvent referencing our transactions,
+    # even if the FinancialEvent.company_id is somehow mismatched/corrupted.
+    trx_ids = [t.id for t in Transaction.query.filter_by(company_id=company_id).all()]
+    if trx_ids:
+        FinancialEvent.query.filter(FinancialEvent.payment_id.in_(trx_ids)).delete(synchronize_session=False)
+
     FinancialEvent.query.filter_by(company_id=company_id).delete()
     BillingEvent.query.filter_by(company_id=company_id).delete()
+    
+    # Now safe to delete Transactions
     Transaction.query.filter_by(company_id=company_id).delete()
     Expense.query.filter_by(company_id=company_id).delete()
     
