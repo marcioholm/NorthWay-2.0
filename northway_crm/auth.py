@@ -23,6 +23,10 @@ def check_saas_status():
             # Explicitly allow setup_company, payment routes, and checkout
             return
             
+        # ALLOW SYSTEM ADMIN ROUTES (FORCE MIGRATIONS)
+        if request.path.startswith('/sys_admin'):
+            return
+            
         # 1. Enforce Company Setup
         if not current_user.company_id:
             return redirect(url_for('auth.setup_company'))
