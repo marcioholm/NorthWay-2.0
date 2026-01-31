@@ -48,6 +48,8 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
     Lead.query.filter_by(company_id=cid).delete()
     Task.query.filter_by(company_id=cid).delete()
     Interaction.query.filter_by(company_id=cid).delete()
+    db_session.commit() # Commit Wipe immediately to prevent timeout rollback
+    print("✅ Old data wiped.")
     
     # 3. Ensure Pipeline
     
