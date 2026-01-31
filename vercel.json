@@ -12,16 +12,8 @@
     ],
     "routes": [
         {
-            "src": "/",
-            "dest": "/lp-north-way/index.html"
-        },
-        {
-            "src": "/checkout",
-            "dest": "/lp-north-way/checkout.html"
-        },
-        {
-            "src": "/(.*\\.(html|css|js|png|jpg|jpeg|svg|ico|json))",
-            "dest": "/lp-north-way/$1"
+            "src": "/assets/(.*)",
+            "dest": "/lp-north-way/assets/$1"
         },
         {
             "src": "/assets/(.*)",

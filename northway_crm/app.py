@@ -350,18 +350,30 @@ def create_app():
 
                 # 3. Add next_due_date if missing (Critical for Billing)
                 # MIGRATE: Add next_due_date (Date type)
+                # 3. Add next_due_date if missing (Critical for Billing)
                 if inspector.has_table("company"):
-                    try:
-                        has_col = any(c['name'] == 'next_due_date' for c in inspector.get_columns("company"))
-                        if not has_col:
+                    with db.engine.connect() as conn:
+                        columns = [c['name'] for c in inspector.get_columns("company")]
+                        
+                        # next_due_date
+                        if 'next_due_date' not in columns:
                             print("📦 MIGRATION: Adding next_due_date to company...")
-                            with db.engine.connect() as conn:
-                                # Use safe DDL (Date type)
-                                conn.execute(text("ALTER TABLE company ADD COLUMN next_due_date DATE"))
-                                conn.commit()
+                            conn.execute(text("ALTER TABLE company ADD COLUMN next_due_date DATE"))
                             print("✅ MIGRATION: next_due_date added.")
-                    except Exception as next_due_mig_e:
-                        print(f"❌ MIGRATION ERROR on next_due_date: {next_due_mig_e}")
+                            
+                        # trial_start_date
+                        if 'trial_start_date' not in columns:
+                            print("📦 MIGRATION: Adding trial_start_date to company...")
+                            conn.execute(text("ALTER TABLE company ADD COLUMN trial_start_date DATETIME"))
+                            print("✅ MIGRATION: trial_start_date added.")
+                            
+                        # trial_end_date
+                        if 'trial_end_date' not in columns:
+                            print("📦 MIGRATION: Adding trial_end_date to company...")
+                            conn.execute(text("ALTER TABLE company ADD COLUMN trial_end_date DATETIME"))
+                            print("✅ MIGRATION: trial_end_date added.")
+                        
+                        conn.commit()
                 # 3. Add next_due_date if missing (Critical for Billing)
                 # ... (Migration logic was here) ...
             
