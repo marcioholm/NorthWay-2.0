@@ -411,19 +411,24 @@ app = create_app()
 # Ideally would be a CLI command.
 @app.route('/sys_admin/migrate_contacts_fix')
 def sys_migrate_contacts():
+    # ... existing ...
+    return jsonify({"status": "ignored"})
+
+@app.route('/sys_admin/force_trial_migration')
+def force_trial_migration():
     try:
-        from update_schema_contact import update_schema
-        from migrate_contacts import migrate_data
-        
-        # 1. Update Schema
-        update_schema()
-        
-        # 2. Migrate Data
-        migrate_data()
-        
-        return jsonify({"status": "success", "message": "Migration completed successfully."})
+        with db.engine.connect() as conn:
+            # Force add columns ignoring errors if they exist
+            try: conn.execute(text("ALTER TABLE company ADD COLUMN trial_start_date TIMESTAMP"))
+            except Exception as e: print(e)
+            
+            try: conn.execute(text("ALTER TABLE company ADD COLUMN trial_end_date TIMESTAMP"))
+            except Exception as e: print(e)
+            
+            conn.commit()
+        return "Migration Forced. Restart app."
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return str(e)
 
 @app.route('/checkout')
 def checkout_fallback():
