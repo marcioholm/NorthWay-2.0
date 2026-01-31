@@ -343,3 +343,39 @@ def update_lead(current_user, id):
     db.session.commit()
     
     return jsonify({'success': True})
+
+@api_ext.route('/debug-status')
+def debug_status():
+    """Diagnostic route to check WHY the user sees nothing."""
+    from flask_login import current_user
+    import os
+    
+    debug_info = {
+        "is_authenticated": current_user.is_authenticated,
+        "db_url_masked": str(db.engine.url).replace(str(db.engine.url).split('@')[0], '***') if '@' in str(db.engine.url) else str(db.engine.url),
+    }
+    
+    if current_user.is_authenticated:
+        debug_info.update({
+            "user_id": current_user.id,
+            "user_email": current_user.email,
+            "company_id": current_user.company_id,
+            # Count data SPECIFICALLY for this user's company
+            "my_clients": Client.query.filter_by(company_id=current_user.company_id).count(),
+            "my_leads": Lead.query.filter_by(company_id=current_user.company_id).count(),
+            "my_contracts": Contract.query.filter_by(company_id=current_user.company_id).count(),
+            "my_tasks": Task.query.filter_by(company_id=current_user.company_id).count(),
+        })
+        
+        # Check if Admin EXISTS in DB (Collision Check)
+        admin_user = User.query.filter_by(email="admin@northway.com").first()
+        if admin_user:
+             debug_info["admin_check"] = {
+                 "id": admin_user.id,
+                 "company_id": admin_user.company_id,
+                 "matches_current": (admin_user.id == current_user.id)
+             }
+    else:
+        debug_info["message"] = "Not logged in. Please log in and revisit this page."
+        
+    return jsonify(debug_info)
