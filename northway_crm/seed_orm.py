@@ -6,15 +6,25 @@ import random
 def wipe_data(db_session, company_id):
     """
     Wipes all business data for a specific company safely.
-    Preserves: User, Company, Pipeline, ContractTemplate, ProcessTemplate, LibraryBook.
+    Preserves: User, Company, Pipeline, ContractTemplate, ProcessTemplate, LibraryBook, QuickMessage, Integration, FinancialCategory, Goal.
     """
     print(f"🧹 Wiping data for company {company_id}...")
     
     # 1. Clear Dependencies (Leaf Nodes)
+    # Financial & Usage
     FinancialEvent.query.filter_by(company_id=company_id).delete()
+    BillingEvent.query.filter_by(company_id=company_id).delete()
     Transaction.query.filter_by(company_id=company_id).delete()
+    Expense.query.filter_by(company_id=company_id).delete()
+    
+    # Interactions & Communication
     Interaction.query.filter_by(company_id=company_id).delete()
+    WhatsAppMessage.query.filter_by(company_id=company_id).delete()
+    Notification.query.filter_by(company_id=company_id).delete()
+    
+    # Operations
     Task.query.filter_by(company_id=company_id).delete()
+    ClientChecklist.query.filter_by(company_id=company_id).delete()
     Contract.query.filter_by(company_id=company_id).delete()
     
     # 2. Break Circular Dependencies (Client <-> Lead)
@@ -29,6 +39,14 @@ def wipe_data(db_session, company_id):
     # 3. Delete Core Entities
     Client.query.filter_by(company_id=company_id).delete()
     Lead.query.filter_by(company_id=company_id).delete()
+    
+    # 4. Cleanup Contacts (Optional Identity Layer)
+    # Assuming contacts belong to company. If Contact has company_id, wipe them too.
+    try:
+        if hasattr(Contact, 'company_id'):
+            Contact.query.filter_by(company_id=company_id).delete()
+    except Exception as e:
+        print(f"Warning cleaning contacts: {e}")
     
     db_session.commit()
     print("✅ Data wiped (Configuration & Users preserved).")
