@@ -8,7 +8,19 @@ from werkzeug.security import generate_password_hash
 
 def seed_creative_data():
     print("🚀 Starting CREATIVE data seeding for NorthWay...")
-    conn = sqlite3.connect('crm.db')
+    import os
+    
+    # DETERMINE DB PATH CHECK
+    # Match app.py logic: if root is not writable, use /tmp
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = 'crm.db'
+    
+    if not os.access(base_dir, os.W_OK):
+        print("⚠️ Read-only filesystem detected. Using /tmp/crm.db")
+        db_path = '/tmp/crm.db'
+    
+    print(f"📂 using database at: {db_path}")
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     # --- 1. USER & COMPANY SETUP ---
