@@ -3,6 +3,19 @@ from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 import random
 
+def wipe_data(db_session, company_id):
+    """Wipes all business data for a specific company."""
+    print(f"🧹 Wiping data for company {company_id}...")
+    FinancialEvent.query.filter_by(company_id=company_id).delete()
+    Transaction.query.filter_by(company_id=company_id).delete()
+    Contract.query.filter_by(company_id=company_id).delete()
+    Client.query.filter_by(company_id=company_id).delete()
+    Lead.query.filter_by(company_id=company_id).delete()
+    Task.query.filter_by(company_id=company_id).delete()
+    Interaction.query.filter_by(company_id=company_id).delete()
+    db_session.commit()
+    print("✅ Data wiped.")
+
 def seed_rich_data(db_session, user_email="admin@northway.com"):
     print(f"🚀 Starting RICH data seeding for {user_email}...")
     
@@ -47,19 +60,8 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
     cid = company.id
     uid = user.id
     
-    # 2. WIPE EXISTING DATA for this company
-    print("🧹 Wiping old data...")
-    FinancialEvent.query.filter_by(company_id=cid).delete()
-    Transaction.query.filter_by(company_id=cid).delete()
-    Contract.query.filter_by(company_id=cid).delete()
-    Client.query.filter_by(company_id=cid).delete()
-    Lead.query.filter_by(company_id=cid).delete()
-    Task.query.filter_by(company_id=cid).delete()
-    Interaction.query.filter_by(company_id=cid).delete()
-    db_session.commit() # Commit Wipe immediately to prevent timeout rollback
-    print("✅ Old data wiped.")
-    
-    # 3. Ensure Pipeline
+    # 2. WIPE EXISTING DATA
+    wipe_data(db_session, cid)
     
     # 3. Ensure Pipeline
     pipeline = Pipeline.query.filter_by(company_id=cid).first()

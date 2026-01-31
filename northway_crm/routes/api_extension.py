@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app, redirect
 from models import db, User, Lead, Client, Pipeline, PipelineStage, Task, Interaction
-from flask_login import login_user
+from flask_login import login_user, login_required, current_user
 import jwt
 import datetime
 from functools import wraps
@@ -146,6 +146,28 @@ def sso_jump():
         print(f"SSO Jump Error: {str(e)}")
         
     return redirect('https://crm.northwaycompany.com.br/login')
+
+@api_ext.route('/api/ext/super-reset', methods=['GET'])
+@login_required
+def super_reset():
+    """Wipes all data for the current user's company (Production Ready Reset)."""
+    try:
+        from seed_orm import wipe_data
+        from models import db
+        if not current_user.company_id:
+            return jsonify({'error': 'No company associated'}), 400
+            
+        wipe_data(db.session, current_user.company_id)
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Super Reset Complete. All company data has been wiped.',
+            'company_id': current_user.company_id
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# --- Contact Management ---
 
 # --- Contact Management ---
 
