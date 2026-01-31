@@ -80,40 +80,54 @@ def verify_token(current_user):
 @api_ext.route('/seed-fix')
 def seed_fix_manual():
     try:
-        from models import db
-        from flask import current_app
-        import os
+        from models import db, User, Company, Role, ROLE_ADMIN
+        from werkzeug.security import generate_password_hash
+        import traceback
         
-        # 1. Ensure Tables Exist
+        # 1. Ensure Tables Exist (Using ORM Engine)
         db.create_all()
         
-        # 2. Determine Real DB Path from App Config
-        # URI formats: 'sqlite:////tmp/crm.db' or 'sqlite:///crm.db'
-        uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-        if 'sqlite:///' in uri:
-            real_db_path = uri.split('sqlite:///')[-1]
-            # Handle absolute paths slightly weirdly if using ////
-            if not real_db_path.startswith('/'):
-                 # It was relative, e.g. crm.db. Join with root if needed, or assume pwd
-                 pass
-        else:
-             # Fallback
-             real_db_path = '/tmp/crm.db'
-             
-        # Normalize
-        print(f"🔧 Manual Seed Targeting: {real_db_path}")
-
-        # 3. Run Seeder with Explicit Path
-        from seed_creative_data import seed_creative_data
-        seed_creative_data(target_db_path=real_db_path)
+        # 2. Check/Create Company
+        # We use ORM so it definitely uses the same DB as create_all
+        company = Company.query.filter_by(document='00000000000191').first()
+        if not company:
+            company = Company(
+                name="NorthWay Demo",
+                document="00000000000191",
+                payment_status="active",
+                status="active"
+            )
+            db.session.add(company)
+            db.session.commit()
+            print("✅ Company Created via ORM")
         
+        # 3. Check/Create User
+        email = "admin@northway.com"
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                name="NorthWay Admin",
+                email=email,
+                password_hash=generate_password_hash("123456"),
+                role=ROLE_ADMIN,
+                company_id=company.id,
+                is_super_admin=True
+            )
+            db.session.add(user)
+            db.session.commit()
+            print("✅ User Created via ORM")
+        else:
+            # Reset password just in case
+            user.password_hash = generate_password_hash("123456")
+            db.session.commit()
+            print("✅ User Password Reset via ORM")
+            
         return jsonify({
             "status": "success", 
-            "message": "Tables created & Seeding executed.", 
-            "target_db": real_db_path
+            "message": "ORM Seeding Complete. Login with admin@northway.com / 123456",
+            "db_url": str(db.engine.url)
         })
     except Exception as e:
-        import traceback
         return jsonify({"status": "error", "message": f"Fix failed: {str(e)}", "trace": traceback.format_exc()}), 500
 
 @api_ext.route('/extension/check-auth', methods=['GET'])
