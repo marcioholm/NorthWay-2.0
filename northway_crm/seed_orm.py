@@ -144,6 +144,24 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
             )
         db_session.add(t)
         
+        # 4.5 CREATE CONTRACT (CRITICAL FOR FINANCIAL DASHBOARD)
+        # Financial dashboard logic: fetches MRR from Contract.form_data JSON
+        import json
+        contract = Contract(
+            title=f"Contrato - {name}",
+            company_id=cid,
+            client_id=client.id,
+            status='signed',
+            created_at=start_date,
+            form_data=json.dumps({
+                "valor_parcela": "1.500,00", # Format expected by dashboard parser
+                "dia_vencimento": "10",
+                "vigencia_meses": "12",
+                "multa_rescisoria": "10%"
+            })
+        )
+        db_session.add(contract)
+        
     # 5. CREATE LEADS
     print("🚀 Creating Leads...")
     leads_data = [
