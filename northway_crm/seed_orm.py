@@ -1,4 +1,4 @@
-from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction, FinancialEvent, ContractTemplate
+from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction, FinancialEvent, ContractTemplate, BillingEvent, Expense, WhatsAppMessage, Notification, ClientChecklist
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 import random
