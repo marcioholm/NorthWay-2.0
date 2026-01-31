@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthWay CRM</title>
+    <!-- Google Fonts: Outfit (Display) & Inter (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            orange: '#fe422e',
+                            dark: '#0f0518',
+                            gray: '#f3f4f6',
+                            light: '#fdfdfd',
+                            paper: '#ffffff',
+                            subtle: '#f8fafc'
+                        }
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                        'glow': '0 0 15px rgba(250, 1, 2, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+
+    <style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+
+<body
+    class="bg-gray-50 text-gray-900 font-sans min-h-screen flex flex-col selection:bg-northway-red selection:text-white">
+
+    <!-- Flash Messages (Toast Style) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div id="toast-container" class="fixed top-6 right-6 z-[70] flex flex-col gap-3 pointer-events-none">
+        {% for category, message in messages %}
+        <div
+            class="toast-message pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl border-l-4 {{ 'bg-white border-northway-red' if 'success' in category else 'bg-red-50 border-red-800' }} min-w-[300px] max-w-sm animate-fade-in-down">
+            <div class="{{ 'text-northway-red' if 'success' in category else 'text-red-800' }}">
+                {% if 'success' in category %}
+                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                {% else %}
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <p
+                    class="text-xs font-bold uppercase tracking-wider {{ 'text-gray-900' if 'success' in category else 'text-red-900' }}">
+                    {{ "Sucesso" if 'success' in category else "Atenção" }}</p>
+                <p class="text-sm font-medium {{ 'text-gray-600' if 'success' in category else 'text-red-800' }}">{{
+                    message }}</p>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+
+            // Auto dismiss toasts
+            const toasts = document.querySelectorAll('.toast-message');
+            toasts.forEach(t => {
+                setTimeout(() => {
+                    t.style.opacity = '0';
+                    t.style.transform = 'translateY(-10px)';
+                    setTimeout(() => t.remove(), 300);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+
+</html>
