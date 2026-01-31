@@ -29,7 +29,22 @@ def check_saas_status():
             
         # 2. Enforce Subscription Active (Skip for Super Admin if needed)
         if current_user.company:
-             is_active = current_user.company.subscription_status == 'active' or current_user.company.payment_status == 'active'
+             company = current_user.company
+             
+             # TRIAL CHECK
+             if company.payment_status == 'trial':
+                 from datetime import datetime
+                 
+                 # If trial but no dates, force start page
+                 if not company.trial_start_date:
+                     return redirect(url_for('auth.start_trial'))
+                     
+                 if company.trial_end_date and datetime.utcnow() > company.trial_end_date:
+                     # Trial Expired
+                     return redirect('/checkout?reason=trial_expired')
+                 return # Allow access if in trial and valid
+                 
+             is_active = company.subscription_status == 'active' or company.payment_status == 'active' or company.payment_status == 'courtesy'
              
              if not is_active and not getattr(current_user, 'is_super_admin', False):
                  return redirect('/checkout')
@@ -247,10 +262,52 @@ def setup_company():
         
         db.session.commit()
         
-        flash('Empresa configurada! Escolha seu plano.', 'success')
-        return redirect('/checkout')
+        db.session.commit()
+        
+        flash('Empresa configurada! Ative seu período de teste.', 'success')
+        return redirect(url_for('auth.start_trial'))
         
     return render_template('setup_company.html', minimal=True)
+
+@auth.route('/start-trial', methods=['GET', 'POST'])
+@login_required
+def start_trial():
+    """
+    The 'Checkout' page for the 7-day free trial.
+    """
+    if not current_user.company_id:
+        return redirect(url_for('auth.setup_company'))
+        
+    if request.method == 'POST':
+        # ACTIVATE TRIAL logic
+        from datetime import datetime, timedelta
+        
+        company = Company.query.get(current_user.company_id)
+        
+        # Prevent re-activation if already active/paid
+        if company.payment_status == 'active' and not company.trial_start_date:
+             flash("Sua conta já está ativa.", "info")
+             return redirect(url_for('dashboard.home'))
+
+        now = datetime.utcnow()
+        company.trial_start_date = now
+        company.trial_end_date = now + timedelta(days=7)
+        company.payment_status = 'trial'
+        company.subscription_status = 'active' # Grant access
+        
+        # Also clean up any old flags
+        company.platform_inoperante = False
+        company.overdue_since = None
+        
+        db.session.commit()
+        
+        # Optional: Send Welcome Email (Mock)
+        print(f"📧 Sending Welcome & Trial Email to {current_user.email}")
+        
+        flash('Período de teste de 7 dias iniciado! Aproveite.', 'success')
+        return redirect(url_for('dashboard.home'))
+        
+    return render_template('auth/activate_trial.html')
 
 @auth.route('/payment-plan')
 @login_required

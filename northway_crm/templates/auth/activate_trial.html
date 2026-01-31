@@ -1,0 +1,78 @@
+{% extends "base_minimal.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-black flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div
+            class="mx-auto w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-red-900/40 mb-6">
+            N
+        </div>
+        <h2 class="text-center text-3xl font-extrabold text-white">
+            Ativar Teste Gratuito
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-400">
+            Você está a um passo de transformar sua gestão.
+        </p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div
+            class="bg-[#0A0A0A] py-8 px-4 shadow-2xl border border-white/10 sm:rounded-2xl sm:px-10 relative overflow-hidden">
+
+            <!-- Glow Effect -->
+            <div
+                class="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none">
+            </div>
+
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-gray-300 font-medium">Plano Pro (Trial)</span>
+                    <span class="text-emerald-400 font-bold">R$ 0,00 / 7 dias</span>
+                </div>
+                <div class="h-px bg-white/10 w-full mb-4"></div>
+                <ul class="space-y-3">
+                    <li class="flex items-start">
+                        <svg class="h-5 w-5 text-emerald-500 mr-2" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        <span class="text-sm text-gray-400">Acesso completo a todas as ferramentas</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="h-5 w-5 text-emerald-500 mr-2" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        <span class="text-sm text-gray-400">Extensão WhatsApp Ilimitada</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="h-5 w-5 text-emerald-500 mr-2" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        <span class="text-sm text-gray-400">Sem cobrança automática hoje</span>
+                    </li>
+                </ul>
+            </div>
+
+            <form class="space-y-6" action="{{ url_for('auth.start_trial') }}" method="POST">
+                <button type="submit"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all transform hover:scale-[1.02]">
+                    Começar 7 Dias Grátis Agora
+                </button>
+            </form>
+
+            <div class="mt-6">
+                <p class="text-center text-xs text-gray-500">
+                    Ao clicar, você concorda com nossos <a href="#"
+                        class="font-medium text-red-500 hover:text-red-400">Termos de Uso</a>.
+                    O período de teste termina automaticamente em 7 dias.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

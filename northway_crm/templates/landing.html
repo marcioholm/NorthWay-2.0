@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthWay CRM - Gestão Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #fa0102 0%, #fe422e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-900 overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-600 to-red-900 flex items-center justify-center text-white font-black shadow-lg shadow-red-900/20">
+                        N
+                    </div>
+                    <span class="font-bold text-xl tracking-tight">NorthWay</span>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <a href="{{ url_for('auth.login') }}"
+                        class="text-sm font-semibold text-gray-600 hover:text-gray-900 hidden sm:block">
+                        Entrar
+                    </a>
+                    <a href="{{ url_for('auth.register') }}"
+                        class="px-5 py-2.5 bg-black text-white rounded-lg font-bold text-sm hover:bg-gray-900 transition-all shadow-lg shadow-black/20">
+                        Testar por 7 dias
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+
+            <div
+                class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-full mb-8 animate-fade-in-up">
+                <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                <span class="text-xs font-bold text-red-600 uppercase tracking-wider">Novo: Inteligência Artificial no
+                    CRM</span>
+            </div>
+
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight text-gray-900 mb-6 leading-tight">
+                Organize seus clientes, <br>
+                <span class="gradient-text">contratos e financeiro</span> <br>
+                em um único sistema.
+            </h1>
+
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-gray-500 mb-10">
+                Pare de depender de planilhas complexas, Trello solto, Notion confuso e WhatsApp espalhado. Tenha
+                clareza total.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                <a href="{{ url_for('auth.register') }}"
+                    class="w-full sm:w-auto px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-lg shadow-xl shadow-red-600/30 transition-all hover:scale-105 flex items-center justify-center gap-2">
+                    Começar teste grátis por 7 dias
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </a>
+                <a href="#como-funciona"
+                    class="w-full sm:w-auto px-8 py-4 bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="play-circle" class="w-5 h-5"></i> Ver Demonstração
+                </a>
+            </div>
+
+            <p
+                class="text-xs text-gray-400 font-medium uppercase tracking-widest flex items-center justify-center gap-4 opacity-70">
+                <span><i data-lucide="check" class="w-3 h-3 inline text-green-500 mr-1"></i> Sem cartão de
+                    crédito</span>
+                <span><i data-lucide="check" class="w-3 h-3 inline text-green-500 mr-1"></i> Sem compromisso</span>
+                <span><i data-lucide="check" class="w-3 h-3 inline text-green-500 mr-1"></i> Cancele quando
+                    quiser</span>
+            </p>
+
+        </div>
+
+        <!-- Decoration -->
+        <div
+            class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] bg-gradient-to-tr from-red-50 to-transparent rounded-full blur-3xl -z-10 opacity-60">
+        </div>
+    </section>
+
+    <!-- UI Showcase (Mockup) -->
+    <section class="pb-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="relative rounded-2xl bg-gray-900 p-2 shadow-2xl border border-gray-800 ring-1 ring-gray-900/10">
+                <div class="rounded-xl overflow-hidden bg-gray-900">
+                    <!-- Placeholder UI or Screenshot -->
+                    <div
+                        class="bg-[#050505] aspect-[16/9] flex items-center justify-center relative overflow-hidden group">
+                        <div
+                            class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent">
+                        </div>
+
+                        <!-- Fake UI Structure for visual -->
+                        <div class="w-full h-full flex">
+                            <div class="w-64 border-r border-white/5 p-6 space-y-4 hidden md:block">
+                                <div class="h-8 w-8 bg-white/5 rounded-lg mb-8"></div>
+                                <div class="h-4 w-3/4 bg-white/5 rounded"></div>
+                                <div class="h-4 w-1/2 bg-white/5 rounded"></div>
+                                <div class="h-4 w-2/3 bg-white/5 rounded"></div>
+                            </div>
+                            <div class="flex-1 p-8">
+                                <div class="flex justify-between mb-8">
+                                    <div class="space-y-2">
+                                        <div class="h-8 w-48 bg-white/10 rounded"></div>
+                                        <div class="h-4 w-32 bg-white/5 rounded"></div>
+                                    </div>
+                                    <div class="h-10 w-10 bg-red-600 rounded-lg shadow-lg shadow-red-900/20"></div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-6">
+                                    <div class="bg-white/5 rounded-xl h-32 border border-white/5"></div>
+                                    <div class="bg-white/5 rounded-xl h-32 border border-white/5"></div>
+                                    <div class="bg-white/5 rounded-xl h-32 border border-white/5"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span
+                                class="px-4 py-2 bg-black/50 backdrop-blur border border-white/10 rounded-full text-white text-sm font-medium">Dashboard
+                                Interativa</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-24 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Tudo o que você precisa para escalar</h2>
+                <p class="text-gray-500">Ferramentas desconexas matam a produtividade. Centralizamos sua operação.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div
+                    class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all border border-gray-100 group">
+                    <div
+                        class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="search" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Consulta de CNPJ</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Enriqueça leads automaticamente. Descubra capital social, sócios e CNAE com apenas um clique.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div
+                    class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all border border-gray-100 group">
+                    <div
+                        class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Contratos Automáticos</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Gere contratos personalizados em PDF instantaneamente usando os dados do cadastro do cliente.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div
+                    class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all border border-gray-100 group">
+                    <div
+                        class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Financeiro Integrado</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Emita cobranças via Boleto/PIX (Asaas), gerencie inadimplência e visualize seu MRR.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div
+                    class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all border border-gray-100 group">
+                    <div
+                        class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">CRM & Funil</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Kanban drag-and-drop para gerenciar negociações. Nunca mais perca um lead por esquecimento.
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div
+                    class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all border border-gray-100 group">
+                    <div
+                        class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="message-circle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Extensão WhatsApp</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Dispara mensagens em massa com intervalos seguros, usando nosso plugin exclusivo para Chrome.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div
+                    class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all border border-gray-100 group">
+                    <div
+                        class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="shield" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Segurança Total</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">
+                        Dados isolados por tenant, backups diários e conformidade com LGPD.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Audience -->
+    <section class="py-24 bg-white border-t border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900">Perfeito para quem quer crescer</h2>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4">
+                <span
+                    class="px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-bold hover:bg-red-50 hover:text-red-600 transition-colors cursor-default border border-transparent hover:border-red-100">Agências
+                    de Marketing</span>
+                <span
+                    class="px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-bold hover:bg-red-50 hover:text-red-600 transition-colors cursor-default border border-transparent hover:border-red-100">Gestores
+                    de Tráfego</span>
+                <span
+                    class="px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-bold hover:bg-red-50 hover:text-red-600 transition-colors cursor-default border border-transparent hover:border-red-100">Social
+                    Media</span>
+                <span
+                    class="px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-bold hover:bg-red-50 hover:text-red-600 transition-colors cursor-default border border-transparent hover:border-red-100">Times
+                    Comerciais</span>
+                <span
+                    class="px-6 py-3 rounded-full bg-gray-100 text-gray-700 font-bold hover:bg-red-50 hover:text-red-600 transition-colors cursor-default border border-transparent hover:border-red-100">Empresas
+                    de Recorrência</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trial Banner -->
+    <section class="py-24 relative overflow-hidden bg-black">
+        <div class="absolute inset-0 bg-gradient-to-br from-gray-900 to-black z-0"></div>
+        <div class="absolute right-0 top-0 w-[500px] h-[500px] bg-red-900/20 rounded-full blur-[100px]"></div>
+
+        <div class="max-w-4xl mx-auto px-4 relative z-10 text-center">
+            <h2 class="text-4xl font-black text-white mb-6">Experimente gratuitamente por 7 dias.</h2>
+            <p class="text-gray-400 text-lg mb-12 max-w-2xl mx-auto">
+                Teste todas as funcionalidades sem restrições. Nossa equipe entrará em contato para te ajudar no setup
+                inicial.
+            </p>
+
+            <div
+                class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 text-left bg-white/5 p-8 rounded-2xl border border-white/10">
+                <div class="flex items-center gap-3 text-gray-300"><i data-lucide="check-circle"
+                        class="text-green-500 w-5 h-5"></i> Criar Clientes</div>
+                <div class="flex items-center gap-3 text-gray-300"><i data-lucide="check-circle"
+                        class="text-green-500 w-5 h-5"></i> Gerar Contratos</div>
+                <div class="flex items-center gap-3 text-gray-300"><i data-lucide="check-circle"
+                        class="text-green-500 w-5 h-5"></i> Consultar CNPJ</div>
+                <div class="flex items-center gap-3 text-gray-300"><i data-lucide="check-circle"
+                        class="text-green-500 w-5 h-5"></i> Dashboards</div>
+            </div>
+
+            <a href="{{ url_for('auth.register') }}"
+                class="inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-2xl transition-all transform hover:-translate-y-1">
+                Ativar meu teste grátis
+                <i data-lucide="chevron-right" class="ml-2 w-5 h-5"></i>
+            </a>
+            <p class="mt-4 text-sm text-gray-500">Nenhuma cobrança será feita agora.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-50 py-12 border-t border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-black text-white flex items-center justify-center font-bold text-xs">N
+                </div>
+                <span class="font-bold text-gray-900">NorthWay</span>
+            </div>
+            <div class="flex gap-6 text-sm text-gray-500">
+                <span class="flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> Ambiente Seguro</span>
+                <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> LGPD
+                    Ready</span>
+            </div>
+            <p class="text-xs text-gray-400">© 2026 NorthWay CRM. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

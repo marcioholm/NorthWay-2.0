@@ -106,6 +106,10 @@ class Company(db.Model):
     platform_inoperante = db.Column(db.Boolean, default=False) # MASTER SWITCH
     overdue_since = db.Column(db.DateTime, nullable=True) # D+0 reference
     next_due_date = db.Column(db.Date, nullable=True) # Next Invoice Date
+
+    # Trial Control
+    trial_start_date = db.Column(db.DateTime, nullable=True)
+    trial_end_date = db.Column(db.DateTime, nullable=True)
     
     # Legacy fields mapping (kept for compatibility)
     subscription_status = db.Column(db.String(20), default='inactive') 
