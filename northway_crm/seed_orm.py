@@ -7,24 +7,31 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
     print(f"🚀 Starting RICH data seeding for {user_email}...")
     
     # 1. Get/Create User & Company
+    import time
+    
+    # 1. Get/Create User & Company
     user = User.query.filter_by(email=user_email).first()
     company = None
     
     if user:
         company = Company.query.get(user.company_id)
+        # If user exists, we stick to existing logic (lookup/wipe)
         if not company:
-             # Should not happen if user exists properly, but safety net
              company = Company(name="NorthWay Demo", document="00000000000191", payment_status="active")
              db_session.add(company)
              db_session.flush()
              user.company_id = company.id
     else:
-        # Create from scratch
-        company = Company.query.filter_by(document="00000000000191").first()
-        if not company:
-            company = Company(name="NorthWay Demo", document="00000000000191", payment_status="active")
-            db_session.add(company)
-            db_session.flush()
+        # NEW USER -> NEW COMPANY (Avoid FK/Wipe conflicts)
+        # Generate unique document based on time
+        unique_doc = str(int(time.time()))
+        company = Company(
+            name=f"Demo Company {unique_doc[-4:]}", 
+            document=unique_doc, 
+            payment_status="active"
+        )
+        db_session.add(company)
+        db_session.flush()
             
         user = User(
             name="NorthWay Admin",

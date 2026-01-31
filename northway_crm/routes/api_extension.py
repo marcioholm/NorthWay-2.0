@@ -88,11 +88,18 @@ def seed_fix_manual():
         
         # 2. Run Rich Data Seeder using ORM
         from seed_orm import seed_rich_data
-        seed_rich_data(db.session, user_email="admin@northway.com")
+        import time
+        import random
+        
+        # GENERATE NEW RANDOM USER to avoid conflict
+        suffix = int(time.time()) % 10000 
+        new_email = f"admin_{suffix}@northway.com"
+        
+        seed_rich_data(db.session, user_email=new_email)
         
         # 3. Verify Data
         from models import Client, Lead, Transaction, User, Contract, Task
-        u = User.query.filter_by(email="admin@northway.com").first()
+        u = User.query.filter_by(email=new_email).first()
         cid = u.company_id if u else "None"
         
         clients = Client.query.filter_by(company_id=cid).count()
@@ -104,15 +111,17 @@ def seed_fix_manual():
         return jsonify({
             "status": "success", 
             "message": "Rich Data Seeding Complete.",
-            "debug": {
-                "user_email": "admin@northway.com",
-                "company_id": cid,
+            "login_details": {
+                "email": new_email,
+                "password": "123456" # Default from seed_orm
+            },
+            "db_url": str(db.engine.url),
+            "stats": {
                 "clients_count": clients,
                 "leads_count": leads,
-                "transactions_count": transactions,
-                "contracts_count": contracts_count,
-                "tasks_count": tasks_count,
-                "db_url": str(db.engine.url)
+                "transactions": transactions,
+                "contracts": contracts_count,
+                "tasks": tasks_count
             }
         })
     except Exception as e:
