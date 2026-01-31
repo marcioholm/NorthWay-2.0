@@ -1,4 +1,4 @@
-from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction
+from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction, FinancialEvent
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 import random
@@ -42,6 +42,7 @@ def seed_rich_data(db_session, user_email="admin@northway.com"):
     
     # 2. WIPE EXISTING DATA for this company
     print("🧹 Wiping old data...")
+    FinancialEvent.query.filter_by(company_id=cid).delete()
     Transaction.query.filter_by(company_id=cid).delete()
     Contract.query.filter_by(company_id=cid).delete()
     Client.query.filter_by(company_id=cid).delete()
