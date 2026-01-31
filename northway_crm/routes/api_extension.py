@@ -80,12 +80,17 @@ def verify_token(current_user):
 @api_ext.route('/seed-fix')
 def seed_fix_manual():
     try:
+        from models import db
+        # 1. Ensure Tables Exist
+        db.create_all()
+        
+        # 2. Run Seeder
         from seed_creative_data import seed_creative_data
-        # Force run
         seed_creative_data()
-        return jsonify({"status": "success", "message": "Seeding executed manually. Try login now."})
+        
+        return jsonify({"status": "success", "message": "Tables created & Seeding executed. Try login now."})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": f"Fix failed: {str(e)}"}), 500
 
 @api_ext.route('/extension/check-auth', methods=['GET'])
 def sso_jump():
