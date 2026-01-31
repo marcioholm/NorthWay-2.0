@@ -131,15 +131,20 @@ def register():
         return redirect(url_for('dashboard.home'))
         
     if request.method == 'POST':
-        # Step 1: User Info Only
+        # Step 1: User & Initial Company Info
         name = request.form.get('name')
         email = request.form.get('email')
-        phone = request.form.get('phone') # Captured but currently User model might not have strict column or we use it later
+        phone = request.form.get('phone')
+        cpf_cnpj = request.form.get('cpf_cnpj')
         password = request.form.get('password')
         
         # 1. Validation
         if User.query.filter_by(email=email).first():
             flash('Este email já está cadastrado.', 'error')
+            return redirect(url_for('auth.register'))
+            
+        if Company.query.filter_by(cpf_cnpj=cpf_cnpj).first():
+            flash('Este CPF/CNPJ já está cadastrado em outra conta.', 'error')
             return redirect(url_for('auth.register'))
             
         # 2. Supabase Signup
@@ -165,24 +170,64 @@ def register():
              flash('Erro desconhecido no cadastro.', 'error')
              return redirect(url_for('auth.register'))
             
-        # 3. Create User (Orphaned - No Company Yet)
+        # 3. Create User & Company (Direct Link)
+        # 3.1 Create Company First
+        company = Company(
+            name=f"Empresa de {name}",
+            cpf_cnpj=cpf_cnpj,
+            document=cpf_cnpj,
+            subscription_status='inactive'
+        )
+        db.session.add(company)
+        db.session.flush()
+
+        # 3.2 Create User
         user = User(
             name=name,
             email=email,
-            phone=phone, # Ensure User model has this field
+            phone=phone,
             password_hash=generate_password_hash(password),
             supabase_uid=supabase_uid,
-            company_id=None, # Explicitly None
-            role=None,
-            role_id=None
+            company_id=company.id,
+            role='admin'
         )
         db.session.add(user)
+        db.session.flush()
+
+        # 3.3 Create Default Admin Role
+        admin_perms = [
+            'dashboard_view', 'financial_view', 'leads_view', 'pipeline_view', 
+            'goals_view', 'tasks_view', 'clients_view', 'whatsapp_view', 
+            'company_settings_view', 'processes_view', 'library_view', 
+            'prospecting_view', 'admin_view'
+        ]
+        admin_role = Role(
+            name='Administrador',
+            company_id=company.id,
+            is_default=True,
+            permissions=admin_perms
+        )
+        db.session.add(admin_role)
+        db.session.flush()
+        user.role_id = admin_role.id
+
+        # 3.4 Bootstrap Minimals (Pipeline)
+        pipeline = Pipeline(name='Funil de Vendas', company_id=company.id)
+        db.session.add(pipeline)
+        db.session.flush()
+        
+        stages = ['Novo', 'Qualificação', 'Proposta', 'Negociação', 'Fechado']
+        for i, s_name in enumerate(stages):
+            stage = PipelineStage(name=s_name, order=i, pipeline_id=pipeline.id, company_id=company.id)
+            db.session.add(stage)
+        user.allowed_pipelines.append(pipeline)
+
         db.session.commit()
         
         # 4. Auto Login
         login_user(user)
-        flash('Conta criada! Agora configure sua empresa.', 'success')
-        return redirect(url_for('auth.setup_company'))
+        flash('Conta criada! Ative seu período de teste.', 'success')
+        return redirect(url_for('auth.start_trial'))
         
     return render_template('register.html', minimal=True)
 
@@ -318,6 +363,33 @@ def start_trial():
 def payment_plan():
     # Helper redirect to main checkout
     return redirect('/checkout')
+
+@auth.route('/google-login')
+def google_login():
+    """Redirects to Supabase Google OAuth"""
+    try:
+        # Construct redirect URL (needs to be configured in Supabase dashboard)
+        redirect_url = url_for('auth.callback', _external=True)
+        res = current_app.supabase.auth.sign_in_with_oauth({
+            "provider": "google",
+            "options": {
+                "redirect_to": redirect_url
+            }
+        })
+        return redirect(res.url)
+    except Exception as e:
+        flash(f'Erro ao iniciar login com Google: {str(e)}', 'error')
+        return redirect(url_for('auth.login'))
+
+@auth.route('/callback')
+def callback():
+    """Handles Supabase OAuth Callback"""
+    # Note: Supabase JS client usually handles hash fragment on client-side.
+    # For Flask, we might need to handle the session/token if passed, 
+    # but typically for OAuth it's better to use Supabase client-side JS 
+    # OR a dedicated flow. Here we assume we get a user after exchange.
+    flash('Login com Google em desenvolvimento. Favor usar email/senha por enquanto.', 'info')
+    return redirect(url_for('auth.login'))
 
 @auth.route('/logout')
 @login_required
