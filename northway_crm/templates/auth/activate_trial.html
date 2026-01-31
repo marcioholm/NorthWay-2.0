@@ -7,7 +7,7 @@
         <!-- Background Image -->
         <div id="trial-bg-image"
             class="absolute inset-0 bg-cover bg-center transition-transform duration-[40s] ease-out transform scale-100 hover:scale-110"
-            style="background-image: url('{{ url_for('static', filename='images/register-bg.png') }}');">
+            data-bg="{{ url_for('static', filename='images/crm-user-bg.png') }}">
         </div>
 
         <!-- Elegant Overlay -->
@@ -70,63 +70,91 @@
 
             <!-- Validation/Value Props Card -->
             <div
-                class="bg-gray-50 rounded-2xl p-6 border border-gray-100 shadow-sm relative overflow-hidden group hover:border-red-100 transition-colors">
+                class="bg-white rounded-2xl p-0 border border-gray-100 shadow-xl relative overflow-hidden group hover:border-red-100 transition-all duration-300 ring-4 ring-gray-50/50">
                 <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <i data-lucide="award" class="w-24 h-24 text-red-600 transform rotate-12"></i>
+                    <i data-lucide="award" class="w-32 h-32 text-red-600 transform rotate-12 -mr-6 -mt-6"></i>
                 </div>
 
-                <div class="flex justify-between items-end mb-6 relative z-10">
-                    <div>
-                        <p class="text-sm text-gray-500 font-semibold uppercase tracking-wider">Plano Selecionado</p>
-                        <p class="text-2xl font-black text-gray-900 mt-1">NorthWay Pro</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm text-gray-400 line-through font-medium">R$ 297/mês</p>
-                        <p class="text-xl font-bold text-red-600">Grátis <span
-                                class="text-sm font-medium text-gray-500">/ 7 dias</span></p>
+                <div class="p-6 pb-4 border-b border-gray-100 relative bg-gradient-to-br from-white to-gray-50/50">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Plano Selecionado
+                                </p>
+                                <span
+                                    class="bg-blue-50 text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-blue-100">BETA</span>
+                            </div>
+                            <p class="text-2xl font-black text-gray-900 leading-none">NorthWay Pro</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-400 line-through font-medium mb-0.5">R$ 297/mês</p>
+                            <div class="flex items-baseline justify-end gap-1">
+                                <span class="text-2xl font-black text-red-600">GRÁTIS</span>
+                                <span class="text-xs font-bold text-gray-400 uppercase">/ 7 dias</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="space-y-3 relative z-10">
-                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                        <div class="p-1 rounded-full bg-green-100 text-green-600"><i data-lucide="check"
-                                class="w-3 h-3"></i></div>
+                <div class="p-6 pt-4 space-y-3 relative z-10 bg-white">
+                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium group/item">
+                        <div
+                            class="p-1 rounded-full bg-green-100 text-green-600 group-hover/item:scale-110 transition-transform">
+                            <i data-lucide="check" class="w-3 h-3"></i></div>
                         Pipeline de Vendas Ilimitado
                     </div>
-                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                        <div class="p-1 rounded-full bg-green-100 text-green-600"><i data-lucide="check"
-                                class="w-3 h-3"></i></div>
-                        Extensão WhatsApp Oficial
+                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium group/item">
+                        <div
+                            class="p-1 rounded-full bg-green-100 text-green-600 group-hover/item:scale-110 transition-transform">
+                            <i data-lucide="check" class="w-3 h-3"></i></div>
+                        Extensão WhatsApp Oficial <span
+                            class="text-[10px] bg-gray-100 text-gray-500 px-1.5 rounded ml-auto">Popular</span>
                     </div>
-                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium">
-                        <div class="p-1 rounded-full bg-green-100 text-green-600"><i data-lucide="check"
-                                class="w-3 h-3"></i></div>
-                        Automação de Contratos
+                    <div class="flex items-center gap-3 text-sm text-gray-700 font-medium group/item">
+                        <div
+                            class="p-1 rounded-full bg-green-100 text-green-600 group-hover/item:scale-110 transition-transform">
+                            <i data-lucide="check" class="w-3 h-3"></i></div>
+                        Automação de Contratos e Propostas
                     </div>
                 </div>
             </div>
 
-            <form class="space-y-6" action="{{ url_for('auth.start_trial') }}" method="POST">
+            <form class="space-y-6" action="{{ url_for('auth.start_trial') }}" method="POST"
+                onsubmit="this.querySelector('button').classList.add('opacity-75', 'cursor-wait')">
                 <button type="submit"
-                    class="group w-full flex justify-center items-center py-5 px-4 rounded-xl shadow-[0_10px_30px_rgba(220,38,38,0.25)] text-lg font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all transform hover:-translate-y-1 hover:shadow-[0_15px_35px_rgba(220,38,38,0.35)] active:scale-95">
-                    <span class="mr-2">Iniciar Teste Gratuito</span>
-                    <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                    class="group w-full flex justify-center items-center py-5 px-4 rounded-xl shadow-[0_10px_30px_rgba(220,38,38,0.3)] text-lg font-bold text-white bg-gradient-to-r from-red-600 to-red-600 hover:to-red-500 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all transform hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(220,38,38,0.4)] active:scale-95 relative overflow-hidden">
+
+                    <!-- Shimmer Config -->
+                    <div
+                        class="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent z-10">
+                    </div>
+
+                    <span class="mr-2 relative z-20">Desbloquear Meu Acesso</span>
+                    <i data-lucide="unlock"
+                        class="w-5 h-5 group-hover:scale-110 transition-transform relative z-20"></i>
                 </button>
 
-                <p class="text-center text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">
-                    Ao continuar, você concorda com os <a href="#"
-                        class="text-gray-600 hover:text-red-600 underline decoration-gray-300 underline-offset-2">Termos
-                        de Uso</a>.
-                    Sem cobrança automática hoje.
-                </p>
+                <div class="flex items-center justify-center gap-4 text-xs text-gray-400">
+                    <div class="flex -space-x-2">
+                        <div class="w-6 h-6 rounded-full bg-gray-200 border-2 border-white"></div>
+                        <div class="w-6 h-6 rounded-full bg-gray-300 border-2 border-white"></div>
+                        <div
+                            class="w-6 h-6 rounded-full bg-gray-400 border-2 border-white flex items-center justify-center text-[8px] font-bold text-white">
+                            +500</div>
+                    </div>
+                    <p>Empresas já confiam na NorthWay</p>
+                </div>
             </form>
 
             <div
-                class="pt-8 border-t border-gray-100 flex items-center justify-center gap-6 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg"
-                    class="h-5 opacity-50">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Meta_Platforms_Inc._logo.svg"
-                    class="h-4 opacity-50">
+                class="pt-8 border-t border-gray-100 flex items-center justify-center gap-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
+                <!-- Simple SVG Placeholders for Tech/Trust -->
+                <svg class="h-6" viewBox="0 0 100 30" fill="currentColor">
+                    <path d="M10,15 L20,5 L30,15 L40,5 M50,15 circle r=5 M70,15 rect w=20 h=10" stroke="currentColor"
+                        stroke-width="2" fill="none" />
+                    <text x="50" y="25" font-size="8">TECH PARTNER</text>
+                </svg>
+                <span class="text-xs font-bold tracking-widest text-gray-300">SECURE SSL</span>
             </div>
 
         </div>
@@ -137,7 +165,7 @@
     (function () {
         const bg = document.getElementById('trial-bg-image');
         if (bg) {
-            // Subtle Parallax
+            bg.style.backgroundImage = `url('${bg.getAttribute('data-bg')}')`;
             document.addEventListener('mousemove', (e) => {
                 const x = (window.innerWidth - e.pageX * 2) / 100;
                 const y = (window.innerHeight - e.pageY * 2) / 100;
