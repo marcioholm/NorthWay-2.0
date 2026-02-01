@@ -2,6 +2,12 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES
+from services.supabase_service import init_supabase
+from datetime import datetime, timedelta
+
+def get_now_br():
+    """Returns the current time in Brasília (UTC-3)"""
+    return datetime.utcnow() - timedelta(hours=3)
 
 
 auth = Blueprint('auth', __name__)
@@ -223,9 +229,8 @@ def register():
         user.allowed_pipelines.append(pipeline)
 
         # 3.5 Initial Access Tracking
-        from datetime import datetime
-        user.last_login = datetime.utcnow()
-        company.last_active_at = datetime.utcnow()
+        user.last_login = get_now_br()
+        company.last_active_at = get_now_br()
 
         db.session.commit()
         
@@ -246,6 +251,7 @@ def setup_company():
     if request.method == 'POST':
         company_name = request.form.get('company_name')
         cpf_cnpj = request.form.get('cpf_cnpj')
+        phone = request.form.get('phone')
         person_type = request.form.get('person_type') # PF or PJ
         
         # Validation
@@ -289,6 +295,12 @@ def setup_company():
         current_user.company_id = company.id
         current_user.role_id = admin_role.id
         current_user.role = 'admin'
+        if phone:
+            current_user.phone = phone
+        
+        current_user.last_login = get_now_br()
+        company.last_active_at = get_now_br()
+        company.created_at = get_now_br()
         
         # 4. Bootstrap Defaults (Pipeline, Categories, etc)
         # Default Pipeline
@@ -427,8 +439,7 @@ def google_callback_server():
                 role='admin'
             )
             # Set Initial Access Tracking
-            from datetime import datetime
-            user.last_login = datetime.utcnow()
+            user.last_login = get_now_br()
             
             db.session.add(user)
             db.session.commit()

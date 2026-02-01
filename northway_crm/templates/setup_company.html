@@ -142,6 +142,22 @@
                                 placeholder="00.000.000/0000-00">
                         </div>
                     </div>
+
+                    <!-- Phone Number -->
+                    <div class="group">
+                        <label for="phone"
+                            class="block text-sm font-bold text-gray-700 mb-2 group-focus-within:text-red-600 transition-colors">Telefone
+                            / WhatsApp</label>
+                        <div class="relative transition-all duration-300 transform group-focus-within:-translate-y-1">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="phone"
+                                    class="h-5 w-5 text-gray-400 group-focus-within:text-red-600 transition-colors"></i>
+                            </div>
+                            <input id="phone" name="phone" type="text" required
+                                class="block w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-red-50 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all font-medium"
+                                placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
                 </div>
 
                 <button type="submit"
@@ -173,6 +189,26 @@
         } else {
             input.placeholder = '000.000.000-00';
         }
+    }
+
+    // Phone masking
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+
+            if (value.length > 10) {
+                value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+            } else if (value.length > 6) {
+                value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+            } else if (value.length > 2) {
+                value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+            } else {
+                value = value.replace(/^(\d*)/, '($1');
+            }
+            e.target.value = value;
+        });
     }
 
     (function () {

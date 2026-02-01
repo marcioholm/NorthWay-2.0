@@ -133,28 +133,24 @@ def create_app():
         def load_user(user_id):
             return User.query.get(int(user_id))
 
-        # --- CONTEXT PROCESSORS ---
         @app.context_processor
         def inject_globals():
+            # Brasília Time (UTC-3)
+            now_br = datetime.utcnow() - timedelta(hours=3)
+            
             # FAST FAIL: If DB isn't ready or schema is updating, don't crash
-            # This is critical for the migration route to work
             try:
-                 # Only try this if user object is fully loaded and valid
                  if current_user and current_user.is_authenticated:
-                     # Minimal check, avoid complex joins
                      from models import Task
-                     # Use a separate protected block for the query
                      try:
                          pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
-                         return dict(pending_tasks_count=pending_count, now=datetime.now())
+                         return dict(pending_tasks_count=pending_count, now=now_br)
                      except:
-                         # If table doesn't exist or connection failed, return 0
-                         return dict(pending_tasks_count=0, now=datetime.now())
+                         return dict(pending_tasks_count=0, now=now_br)
             except:
-                 # Absolute fallback
                  pass
 
-            return dict(pending_tasks_count=0, now=datetime.now())
+            return dict(pending_tasks_count=0, now=now_br)
 
         @app.template_filter('from_json')
         def from_json_filter(s):

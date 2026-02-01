@@ -1,6 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+
+def get_now_br():
+    return datetime.utcnow() - timedelta(hours=3)
 
 db = SQLAlchemy()
 
@@ -9,7 +12,7 @@ class Contact(db.Model):
     uuid = db.Column(db.String(36), unique=True, nullable=False) # UUID string
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     phone = db.Column(db.String(50), nullable=False) # Canonical E.164
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     # Relationships
     leads = db.relationship('Lead', backref='contact', lazy=True)
@@ -55,7 +58,7 @@ class LibraryBook(db.Model):
     route_name = db.Column(db.String(100), nullable=True) # For legacy static routes (e.g., 'docs.user_manual')
     content = db.Column(db.Text, nullable=True) # HTML content for new books
     active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     # Access Control Relationship
     allowed_companies = db.relationship('Company', secondary=library_book_company_association, backref=db.backref('accessible_books', lazy='dynamic'))
@@ -76,7 +79,7 @@ class Pipeline(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     stages = db.relationship('PipelineStage', backref='pipeline', lazy=True, cascade="all, delete-orphan")
     leads = db.relationship('Lead', backref='pipeline', lazy=True)
@@ -84,7 +87,7 @@ class Pipeline(db.Model):
 class Company(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     users = db.relationship('User', backref='company', lazy=True)
     # referrals to leads might be redundant if accessed via pipelines, but good for global stats
@@ -161,7 +164,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default=ROLE_SALES) # Legacy/Fallback
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=True) # New RBAC
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Nullable for Supabase Auth Triggers
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     last_login = db.Column(db.DateTime, nullable=True)
 
     # Profile Fields
@@ -243,7 +246,7 @@ class Lead(db.Model):
     pipeline_stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'))
     assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     interactions = db.relationship('Interaction', backref='lead', lazy=True)
     tasks = db.relationship('Task', backref='lead', lazy=True)
@@ -321,7 +324,7 @@ class Client(db.Model):
     niche = db.Column(db.String(100), nullable=True) # Added Niche field
     notes = db.Column(db.Text)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
 
     # Enhanced Contract Data
@@ -368,7 +371,7 @@ class ContractTemplate(db.Model):
     active = db.Column(db.Boolean, default=True)
     is_global = db.Column(db.Boolean, default=False)
     is_library = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     # Access Control Relationship
     allowed_companies = db.relationship('Company', secondary=template_company_association, backref=db.backref('accessible_templates', lazy='dynamic'))
@@ -385,7 +388,7 @@ class Contract(db.Model):
     form_data = db.Column(db.Text, nullable=True) # JSON store for draft inputs
     status = db.Column(db.String(20), default='draft') # draft, issued, signed
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     client = db.relationship('Client', backref='contracts')
     company = db.relationship('Company', backref='contracts')
@@ -417,7 +420,7 @@ class WhatsAppMessage(db.Model):
     profile_pic_url = db.Column(db.String(500), nullable=True) # URL from webhook
     attachment_url = db.Column(db.String(1000), nullable=True) # Media URL (image, audio, etc.)
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
 
 class QuickMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -426,7 +429,7 @@ class QuickMessage(db.Model):
     content = db.Column(db.Text, nullable=False)
     shortcut = db.Column(db.String(20)) # e.g. "/intro"
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
 
 class Interaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -437,7 +440,7 @@ class Interaction(db.Model):
     type = db.Column(db.String(50), nullable=True) # ligacao, reuniao, email, nota, tarefa_criada
     content = db.Column(db.Text, nullable=True)
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -447,7 +450,7 @@ class Notification(db.Model):
     title = db.Column(db.String(200), nullable=False)
     message = db.Column(db.String(500), nullable=True)
     read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     user = db.relationship('User', backref='notifications')
 
@@ -484,7 +487,7 @@ class Transaction(db.Model):
     status = db.Column(db.String(20), default='pending') # pending, paid, overdue, cancelled
     paid_date = db.Column(db.Date, nullable=True)
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     
     # ASAAS Integration Fields
     asaas_id = db.Column(db.String(50), nullable=True)
@@ -503,7 +506,7 @@ class BillingEvent(db.Model):
     payload = db.Column(db.JSON, nullable=True) # Full webhook payload
     processed_at = db.Column(db.DateTime, nullable=True)
     idempotency_key = db.Column(db.String(100), unique=True, nullable=True) # payment_id + event
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
 
 class FinancialEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -511,7 +514,7 @@ class FinancialEvent(db.Model):
     payment_id = db.Column(db.Integer, db.ForeignKey('transaction.id'), nullable=True) # Optional link
     event_type = db.Column(db.String(50), nullable=False) # PAYMENT_RECEIVED, PAYMENT_OVERDUE
     payload = db.Column(db.JSON, nullable=True) # Full webhook payload
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
 
 class FinancialCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -534,7 +537,7 @@ class Expense(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Who registered it
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
 
 class ProcessTemplate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -542,7 +545,7 @@ class ProcessTemplate(db.Model):
     description = db.Column(db.String(255))
     steps = db.Column(db.JSON, nullable=False) # List of sections: [{"title": "Checklist 1", "items": ["Item A"]}]
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
 
 class ClientChecklist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -552,7 +555,7 @@ class ClientChecklist(db.Model):
     name = db.Column(db.String(100), nullable=False)
     progress = db.Column(db.JSON, nullable=False) # Snapshot with status: [{"title": "...", "items": [{"text": "...", "done": True}]}]
     assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     client = db.relationship('Client', backref='checklists')
