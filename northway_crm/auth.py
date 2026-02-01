@@ -22,7 +22,7 @@ def check_saas_status():
         if not request.endpoint:
             return
             
-        if 'static' in request.endpoint or 'auth.' in request.endpoint or 'checkout' in request.endpoint:
+        if 'static' in request.endpoint or 'auth.' in request.endpoint or 'checkout' in request.endpoint or 'master.sync_schema' in request.endpoint:
             # Explicitly allow setup_company, payment routes, and checkout
             return
             
@@ -54,6 +54,11 @@ def check_saas_status():
              
              if not is_active and not getattr(current_user, 'is_super_admin', False):
                  return redirect('/checkout')
+
+@auth.route('/blocked', methods=['GET'])
+def blocked_account():
+    reason = request.args.get('reason', 'manual')
+    return render_template('auth/blocked_account.html', reason=reason)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():

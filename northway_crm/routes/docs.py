@@ -46,6 +46,26 @@ def presentation_offer_downsell():
 def presentation_consultancy():
     return render_template('docs/presentation_consultancy.html')
 
+@docs_bp.route('/diagnostic-aprofundado')
+@login_required
+def presentation_diagnostic():
+    return render_template('docs/presentation_diagnostic.html')
+
+@docs_bp.route('/playbook-bdr')
+@login_required
+def presentation_playbook_bdr():
+    return render_template('docs/playbook_bdr.html')
+
+@docs_bp.route('/onboarding-institucional')
+@login_required
+def presentation_onboarding():
+    return render_template('docs/presentation_onboarding.html')
+
+@docs_bp.route('/custo-da-inacao')
+@login_required
+def presentation_cost_of_inaction():
+    return render_template('docs/presentation_cost_of_inaction.html')
+
 @docs_bp.route('/library')
 @login_required
 def library():
@@ -61,7 +81,19 @@ def library():
 
     # 2. Fetch System Library Books (Granular Access)
     # Join with association table implicitly via relationship
-    system_books = current_user.company.accessible_books.filter_by(active=True).all()
+    system_books_raw = current_user.company.accessible_books.filter_by(active=True).all()
+    
+    # Validate route_names to prevent url_for crashes
+    from flask import current_app
+    system_books = []
+    for book in system_books_raw:
+        if book.route_name:
+            # Check if endpoint exists in the URL map
+            if book.route_name not in current_app.view_functions:
+                # If it doesn't exist, we nullify it temporarily for the template
+                # so it falls back to 'view_book' (or we just hide it)
+                book.route_name = None 
+        system_books.append(book)
     
     return render_template('docs/library.html', template_docs=template_docs, system_books=system_books)
 

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            background-color: #05010d;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header img {
+            max-height: 40px;
+        }
+
+        .content {
+            padding: 40px;
+            line-height: 1.6;
+        }
+
+        .footer {
+            background-color: #f1f1f1;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #fa0102;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .company-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .company-logo {
+            max-height: 30px;
+            margin-right: 10px;
+        }
+
+        .company-name {
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://northwaycompany.com.br/static/images/logo.png" alt="NorthWay CRM">
+        </div>
+
+        <div class="content">
+            {% if company %}
+            <div class="company-header">
+                {% if company.logo_filename %}
+                <img src="https://northwaycompany.com.br/static/uploads/logos/{{ company.logo_filename }}"
+                    class="company-logo">
+                {% endif %}
+                <span class="company-name">{{ company.name }}</span>
+            </div>
+            {% endif %}
+
+            {% block body %}{% endblock %}
+        </div>
+
+        <div class="footer">
+            <p>Você recebeu este e-mail através da plataforma <strong>NorthWay CRM</strong>.</p>
+            <p>&copy; {{ now.year }} NorthWay - Todos os direitos reservados.</p>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -108,6 +108,8 @@ class Company(db.Model):
     payment_status = db.Column(db.String(20), default='trial') 
     platform_inoperante = db.Column(db.Boolean, default=False) # MASTER SWITCH
     overdue_since = db.Column(db.DateTime, nullable=True) # D+0 reference
+    trial_ends_at = db.Column(db.DateTime, nullable=True)
+    last_payment_at = db.Column(db.DateTime, nullable=True)
     next_due_date = db.Column(db.Date, nullable=True) # Next Invoice Date
 
     # Trial Control
@@ -574,3 +576,36 @@ class Goal(db.Model):
     min_new_sales = db.Column(db.Float, default=0.0) # New Goal Condition
 
 
+class EmailLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    email_to = db.Column(db.String(255), nullable=False)
+    subject = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(50), default='sent') # sent, failed, delivered
+    provider = db.Column(db.String(50), default='resend')
+    error_message = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    company = db.relationship('Company', backref='email_logs')
+    user = db.relationship('User', backref='email_logs')
+
+    @classmethod
+    def create_log(cls, company_id, user_id, email_to, subject, status, provider='resend', error_message=None):
+        try:
+            log = cls(
+                company_id=company_id,
+                user_id=user_id,
+                email_to=email_to,
+                subject=subject,
+                status=status,
+                provider=provider,
+                error_message=error_message
+            )
+            db.session.add(log)
+            db.session.commit()
+            return log
+        except Exception as e:
+            print(f"Error saving email log: {e}")
+            db.session.rollback()
+            return None

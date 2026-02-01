@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding Institucional | Northway</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            dark: '#0f0f0f',
+                            gray: '#1a1a1a',
+                            light: '#f9fafb'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem 2rem;
+            position: relative;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .slide-dark {
+            background-color: #0d0d0d;
+            color: white;
+        }
+
+        .slide-content {
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .highlight {
+            color: #fa0102;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #333;
+            letter-spacing: 0.1em;
+        }
+
+        .grid-bg {
+            background-image: radial-gradient(#1a1a1a 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+
+<body class="bg-black text-white">
+
+    <!-- SLIDE 1: CAPA -->
+    <section class="slide slide-dark grid-bg">
+        <div class="slide-content text-center">
+            <div class="mb-12 inline-block">
+                <div class="w-20 h-2 bg-northway-red mb-4 mx-auto"></div>
+            </div>
+            <h1 class="text-7xl md:text-9xl font-black mb-6 tracking-tighter uppercase italic">
+                Northway
+            </h1>
+            <div class="h-px bg-white/10 w-full max-w-md mx-auto mb-8"></div>
+            <p class="text-xl md:text-2xl text-gray-400 font-light tracking-widest uppercase">
+                Marketing com <span class="text-white border-b-2 border-northway-red">direção</span>. <br>
+                Crescimento com <span class="text-white border-b-2 border-northway-red">processo</span>.
+            </p>
+        </div>
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce text-northway-red">
+            <i data-lucide="chevron-down" class="w-8 h-8"></i>
+        </div>
+        <span class="slide-number">01</span>
+    </section>
+
+    <!-- SLIDE 2: BOAS-VINDAS -->
+    <section class="slide slide-dark">
+        <div class="slide-content text-left md:text-center">
+            <h2 class="text-4xl md:text-6xl font-black mb-12 uppercase italic">Bem-vindo à <span
+                    class="highlight">Northway</span></h2>
+            <div class="max-w-2xl mx-auto space-y-6">
+                <p class="text-2xl md:text-4xl font-light leading-relaxed">
+                    Você não está entrando apenas em uma empresa.
+                </p>
+                <p class="text-3xl md:text-5xl font-black text-northway-red uppercase">
+                    Está entrando em uma missão.
+                </p>
+            </div>
+        </div>
+        <span class="slide-number">02</span>
+    </section>
+
+    <!-- SLIDE 3: ESSÊNCIA -->
+    <section class="slide slide-dark bg-[#0a0a0a]">
+        <div class="slide-content text-center px-4">
+            <div class="mb-12">
+                <i data-lucide="heart" class="w-16 h-16 text-northway-red mx-auto opacity-50"></i>
+            </div>
+            <h2 class="text-3xl md:text-5xl font-light italic leading-tight max-w-4xl mx-auto">
+                "Acreditamos que negócios são feitos de <span class="font-black italic uppercase">pessoas</span>.
+                E pessoas crescem quando são <span class="text-northway-red font-black italic uppercase">bem
+                    servidas</span>.
+                Por isso, servir com propósito é parte da nossa vocação."
+            </h2>
+        </div>
+        <span class="slide-number">03</span>
+    </section>
+
+    <!-- SLIDE 4: POR QUE EXISTIMOS -->
+    <section class="slide slide-dark grid-bg">
+        <div class="slide-content">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-12 h-1 bg-northway-red"></div>
+                <h2 class="text-2xl font-black uppercase tracking-widest">Por que a Northway existe?</h2>
+            </div>
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <p class="text-3xl md:text-4xl font-light leading-snug text-gray-400">
+                        Empresas boas quebram não por falta de esforço,
+                        mas por falta de <span class="text-white font-bold italic">direção, processo e
+                            organização.</span>
+                    </p>
+                </div>
+                <div class="bg-northway-red p-8 md:p-12 rounded-3xl shadow-2xl rotate-2">
+                    <p class="text-3xl md:text-4xl font-black uppercase text-black italic">
+                        Nós existimos para organizar o caminho.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <span class="slide-number">04</span>
+    </section>
+
+    <!-- SLIDE 5: PROPÓSITO -->
+    <section class="slide slide-dark">
+        <div class="slide-content text-center">
+            <span class="text-northway-red font-bold uppercase tracking-widest text-sm mb-4 block">Nosso
+                Propósito</span>
+            <div class="h-px bg-white/10 w-24 mx-auto mb-12"></div>
+            <h2 class="text-4xl md:text-6xl font-black leading-tight uppercase max-w-4xl mx-auto">
+                Servir empresas com <span class="highlight">estratégia, clareza e processo</span>,
+                transformando esforço em crescimento previsível.
+            </h2>
+        </div>
+        <span class="slide-number">05</span>
+    </section>
+
+    <!-- SLIDE 6: MISSÃO -->
+    <section class="slide slide-dark bg-[#0a0a0a]">
+        <div class="slide-content">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-6xl font-black uppercase italic mb-8">Missão</h2>
+                    <div class="w-20 h-2 bg-northway-red mb-12"></div>
+                </div>
+                <p class="text-2xl md:text-3xl font-light leading-relaxed border-l-4 border-northway-red pl-8">
+                    Ajudar negócios a crescerem com <span class="text-white font-bold">direção, estrutura e resultados
+                        reais</span> através do marketing estratégico.
+                </p>
+            </div>
+        </div>
+        <span class="slide-number">06</span>
+    </section>
+
+    <!-- SLIDE 7: VISÃO -->
+    <section class="slide slide-dark grid-bg">
+        <div class="slide-content text-right">
+            <div class="inline-block border-r-8 border-northway-red pr-8 text-right">
+                <h2 class="text-6xl font-black uppercase italic mb-8">Visão</h2>
+                <p class="text-2xl md:text-4xl font-light max-w-2xl leading-tight">
+                    Ser referência regional e nacional como a assessoria de marketing <span
+                        class="text-northway-red font-bold">mais confiável, estratégica e orientada a processo</span> do
+                    mercado.
+                </p>
+            </div>
+        </div>
+        <span class="slide-number">07</span>
+    </section>
+
+    <!-- SLIDE 8: VALORES -->
+    <section class="slide slide-dark">
+        <div class="slide-content">
+            <h2 class="text-4xl md:text-5xl font-black uppercase italic mb-12">Valores</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Valor 1 -->
+                <div
+                    class="p-8 border border-white/10 rounded-2xl hover:bg-northway-red hover:text-black transition-all group">
+                    <i data-lucide="crosshair" class="w-8 h-8 mb-6 group-hover:text-black text-northway-red"></i>
+                    <h3 class="text-xl font-black uppercase italic">Servir com propósito</h3>
+                </div>
+                <!-- Valor 2 -->
+                <div
+                    class="p-8 border border-white/10 rounded-2xl hover:bg-northway-red hover:text-black transition-all group">
+                    <i data-lucide="sun" class="w-8 h-8 mb-6 group-hover:text-black text-northway-red"></i>
+                    <h3 class="text-xl font-black uppercase italic">Clareza acima do caos</h3>
+                </div>
+                <!-- Valor 3 -->
+                <div
+                    class="p-8 border border-white/10 rounded-2xl hover:bg-northway-red hover:text-black transition-all group">
+                    <i data-lucide="layers" class="w-8 h-8 mb-6 group-hover:text-black text-northway-red"></i>
+                    <h3 class="text-xl font-black uppercase italic">Processo antes de improviso</h3>
+                </div>
+                <!-- Valor 4 -->
+                <div
+                    class="p-8 border border-white/10 rounded-2xl hover:bg-northway-red hover:text-black transition-all group">
+                    <i data-lucide="shield-check" class="w-8 h-8 mb-6 group-hover:text-black text-northway-red"></i>
+                    <h3 class="text-xl font-black uppercase italic">Ética e transparência sempre</h3>
+                </div>
+                <!-- Valor 5 -->
+                <div
+                    class="p-8 border border-white/10 rounded-2xl hover:bg-northway-red hover:text-black transition-all group">
+                    <i data-lucide="trending-up" class="w-8 h-8 mb-6 group-hover:text-black text-northway-red"></i>
+                    <h3 class="text-xl font-black uppercase italic">Crescimento sustentável</h3>
+                </div>
+                <!-- Valor 6 -->
+                <div
+                    class="p-8 border border-white/10 rounded-2xl hover:bg-northway-red hover:text-black transition-all group">
+                    <i data-lucide="award" class="w-8 h-8 mb-6 group-hover:text-black text-northway-red"></i>
+                    <h3 class="text-xl font-black uppercase italic">Compromisso com resultados</h3>
+                </div>
+            </div>
+        </div>
+        <span class="slide-number">08</span>
+    </section>
+
+    <!-- SLIDE 9: FILOSOFIA -->
+    <section class="slide slide-dark bg-northway-red text-black">
+        <div class="slide-content text-center">
+            <h2 class="text-4xl md:text-7xl font-black uppercase italic leading-tight">
+                Sem processo você não <br> tem <span class="bg-black text-white px-4">direção.</span> <br>
+                Sem direção, <br> qualquer lugar serve.
+            </h2>
+        </div>
+        <span class="slide-number">09</span>
+    </section>
+
+    <!-- SLIDE 10: O QUE FAZEMOS -->
+    <section class="slide slide-dark">
+        <div class="slide-content">
+            <h2 class="text-4xl md:text-5xl font-black uppercase italic mb-12">O que entregamos</h2>
+            <div class="space-y-4 mb-16">
+                <p
+                    class="text-3xl md:text-4xl text-gray-500 font-light line-through decoration-northway-red decoration-4">
+                    Não vendemos posts.</p>
+                <p
+                    class="text-3xl md:text-4xl text-gray-500 font-light line-through decoration-northway-red decoration-4">
+                    Não vendemos anúncios.</p>
+                <p
+                    class="text-3xl md:text-4xl text-gray-500 font-light line-through decoration-northway-red decoration-4">
+                    Não vendemos “marketing bonito”.</p>
+            </div>
+            <p class="text-4xl md:text-6xl font-black uppercase italic highlight">
+                Nós construímos processos de crescimento.
+            </p>
+        </div>
+        <span class="slide-number">10</span>
+    </section>
+
+    <!-- SLIDE 11: OS 4 PILARES -->
+    <section class="slide slide-dark grid-bg">
+        <div class="slide-content text-center">
+            <h2 class="text-4xl md:text-5xl font-black uppercase italic mb-16">Nosso Método</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+                <div class="space-y-4">
+                    <div class="text-5xl font-black text-white/20">01</div>
+                    <div class="h-2 bg-northway-red"></div>
+                    <h3 class="text-2xl font-black uppercase italic">Atrair</h3>
+                </div>
+                <div class="space-y-4">
+                    <div class="text-5xl font-black text-white/20">02</div>
+                    <div class="h-2 bg-northway-red"></div>
+                    <h3 class="text-2xl font-black uppercase italic">Engajar</h3>
+                </div>
+                <div class="space-y-4">
+                    <div class="text-5xl font-black text-white/20">03</div>
+                    <div class="h-2 bg-northway-red"></div>
+                    <h3 class="text-2xl font-black uppercase italic">Vender</h3>
+                </div>
+                <div class="space-y-4">
+                    <div class="text-5xl font-black text-white/20">04</div>
+                    <div class="h-2 bg-northway-red"></div>
+                    <h3 class="text-2xl font-black uppercase italic">Reter</h3>
+                </div>
+            </div>
+            <p class="text-gray-500 font-bold uppercase tracking-widest text-sm">Se um falha, o negócio não cresce.</p>
+        </div>
+        <span class="slide-number">11</span>
+    </section>
+
+    <!-- SLIDE 12: COMO TRABALHAMOS -->
+    <section class="slide slide-dark">
+        <div class="slide-content">
+            <h2 class="text-4xl md:text-5xl font-black uppercase italic mb-12">Nosso jeito <span
+                    class="highlight">Northway</span></h2>
+            <div class="space-y-8">
+                <div class="flex items-center gap-6 group">
+                    <div
+                        class="w-12 h-12 bg-white/5 flex items-center justify-center rounded-lg group-hover:bg-northway-red transition-colors">
+                        <i data-lucide="check" class="text-northway-red group-hover:text-black"></i>
+                    </div>
+                    <p class="text-2xl md:text-3xl font-light">Planejamento antes de execução</p>
+                </div>
+                <div class="flex items-center gap-6 group">
+                    <div
+                        class="w-12 h-12 bg-white/5 flex items-center justify-center rounded-lg group-hover:bg-northway-red transition-colors">
+                        <i data-lucide="check" class="text-northway-red group-hover:text-black"></i>
+                    </div>
+                    <p class="text-2xl md:text-3xl font-light">Decisão baseada em dados</p>
+                </div>
+                <div class="flex items-center gap-6 group">
+                    <div
+                        class="w-12 h-12 bg-white/5 flex items-center justify-center rounded-lg group-hover:bg-northway-red transition-colors">
+                        <i data-lucide="check" class="text-northway-red group-hover:text-black"></i>
+                    </div>
+                    <p class="text-2xl md:text-3xl font-light">Processos claros</p>
+                </div>
+                <div class="flex items-center gap-6 group">
+                    <div
+                        class="w-12 h-12 bg-white/5 flex items-center justify-center rounded-lg group-hover:bg-northway-red transition-colors">
+                        <i data-lucide="check" class="text-northway-red group-hover:text-black"></i>
+                    </div>
+                    <p class="text-2xl md:text-3xl font-light">Comunicação transparente</p>
+                </div>
+                <div class="flex items-center gap-6 group">
+                    <div
+                        class="w-12 h-12 bg-white/5 flex items-center justify-center rounded-lg group-hover:bg-northway-red transition-colors">
+                        <i data-lucide="check" class="text-northway-red group-hover:text-black"></i>
+                    </div>
+                    <p class="text-2xl md:text-3xl font-light">Foco em resultado, não vaidade</p>
+                </div>
+            </div>
+        </div>
+        <span class="slide-number">12</span>
+    </section>
+
+    <!-- SLIDE 13: O QUE ESPERAMOS -->
+    <section class="slide slide-dark bg-[#0a0a0a]">
+        <div class="slide-content">
+            <h2 class="text-4xl md:text-5xl font-black uppercase italic mb-12">O que esperamos <span
+                    class="highlight">de você</span></h2>
+            <div class="grid md:grid-cols-2 gap-12">
+                <ul class="space-y-6">
+                    <li class="flex items-center gap-4 text-2xl font-light">
+                        <span class="w-2 h-2 bg-northway-red rounded-full"></span> Proatividade
+                    </li>
+                    <li class="flex items-center gap-4 text-2xl font-light">
+                        <span class="w-2 h-2 bg-northway-red rounded-full"></span> Senso de dono
+                    </li>
+                    <li class="flex items-center gap-4 text-2xl font-light">
+                        <span class="w-2 h-2 bg-northway-red rounded-full"></span> Organização
+                    </li>
+                </ul>
+                <ul class="space-y-6">
+                    <li class="flex items-center gap-4 text-2xl font-light">
+                        <span class="w-2 h-2 bg-northway-red rounded-full"></span> Vontade de aprender
+                    </li>
+                    <li class="flex items-center gap-4 text-2xl font-light">
+                        <span class="w-2 h-2 bg-northway-red rounded-full"></span> Cuidado genuíno com o cliente
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <span class="slide-number">13</span>
+    </section>
+
+    <!-- SLIDE 14: CULTURA -->
+    <section class="slide slide-dark grid-bg">
+        <div class="slide-content text-center">
+            <h2
+                class="text-6xl font-black uppercase italic mb-16 underline decoration-northway-red decoration-8 underline-offset-8">
+                Aqui dentro</h2>
+            <div class="space-y-12">
+                <div class="p-4 border-l-8 border-white/10 group hover:border-northway-red transition-colors">
+                    <p class="text-3xl md:text-5xl font-light group-hover:translate-x-4 transition-transform">Errar
+                        <span class="font-black italic uppercase">faz parte.</span></p>
+                </div>
+                <div class="p-4 border-l-8 border-white/10 group hover:border-northway-red transition-colors">
+                    <p class="text-3xl md:text-5xl font-light group-hover:translate-x-4 transition-transform">Aprender é
+                        <span class="font-black italic uppercase">obrigatório.</span></p>
+                </div>
+                <div class="p-4 border-l-8 border-white/10 group hover:border-northway-red transition-colors">
+                    <p class="text-3xl md:text-5xl font-light group-hover:translate-x-4 transition-transform">Servir bem
+                        é <span class="font-black italic uppercase text-northway-red">inegociável.</span></p>
+                </div>
+            </div>
+        </div>
+        <span class="slide-number">14</span>
+    </section>
+
+    <!-- SLIDE 15: FECHAMENTO -->
+    <section class="slide slide-dark bg-black">
+        <div class="slide-content text-center">
+            <div class="mb-12">
+                <div class="w-24 h-2 bg-northway-red mx-auto mb-4"></div>
+                <h2 class="text-5xl md:text-8xl font-black uppercase italic mb-8">Seja bem-vindo <br> ao time.</h2>
+            </div>
+            <p class="text-2xl md:text-4xl font-light text-gray-400 max-w-3xl mx-auto mb-12">
+                Vamos construir negócios mais organizados, mais fortes e mais humanos.
+                <span class="text-white font-black italic uppercase italic">Juntos.</span>
+            </p>
+            <div class="mt-16 tracking-[0.3em] font-black uppercase italic text-northway-red opacity-30">
+                Northway
+            </div>
+        </div>
+        <span class="slide-number">15</span>
+    </section>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

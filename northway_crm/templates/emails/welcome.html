@@ -1,0 +1,26 @@
+{% extends "emails/base_email.html" %}
+
+{% block body %}
+<h2 style="color: #333; margin-bottom: 20px;">Bem-vindo à Revolução, {{ user_name }}!</h2>
+
+<p>É um prazer ter você no <strong>NorthWay CRM</strong>. Seu cadastro foi realizado com sucesso e sua conta está pronta
+    para uso.</p>
+
+<p>A partir de agora, você tem o controle total sobre seus processos, clientes e financeiro em uma única plataforma
+    profissional.</p>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="https://northwaycompany.com.br/login" class="btn">Acessar Meu Dashboard</a>
+</div>
+
+<p><strong>O que você pode fazer agora:</strong></p>
+<ul style="color: #666; font-size: 14px;">
+    <li>Configurar seu funil de vendas</li>
+    <li>Importar seus primeiros leads</li>
+    <li>Personalizar seus modelos de contrato</li>
+</ul>
+
+<p>Se tiver qualquer dúvida, basta responder a este e-mail ou chamar nosso suporte.</p>
+
+<p>Bons negócios!<br>Equipe NorthWay</p>
+{% endblock %}

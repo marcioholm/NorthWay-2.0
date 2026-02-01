@@ -22,7 +22,7 @@ def check_master_access():
         'master.user_debug', 'master.revert_access', 'master.super_helper', 
         'master.company_materials', # Added here to allow the internal check to handle it
         'master.run_library_migration', 'master.revoke_self', 'master.system_reset', 
-        'master.migrate_saas', 'master.refresh_roles'
+        'master.migrate_saas', 'master.refresh_roles', 'master.sync_schema'
     ]:
         return
 
@@ -43,41 +43,41 @@ def system_reset():
         
         try:
             from datetime import date, timedelta
-            # 1. Identify Master to preserve
-            master_user = current_user
+            from sqlalchemy import text
+            
+            # 1. Clear Activity Data with FORCE (SQL) to bypass circular refs
+            db.session.execute(text("UPDATE lead SET contact_uuid = NULL"))
+            db.session.execute(text("UPDATE client SET contact_uuid = NULL"))
+            db.session.execute(text("DELETE FROM whats_app_message"))
+            db.session.execute(text("DELETE FROM task"))
+            db.session.execute(text("DELETE FROM interaction"))
+            db.session.execute(text("DELETE FROM transaction"))
+            db.session.execute(text("DELETE FROM contract"))
+            db.session.execute(text("DELETE FROM notification"))
+            
+            # 2. Delete CRM Data
+            db.session.execute(text("DELETE FROM lead"))
+            db.session.execute(text("DELETE FROM client"))
+            db.session.execute(text("DELETE FROM contact"))
+            
+            # 3. Pipelines
+            db.session.execute(text(f"DELETE FROM pipeline_stage WHERE company_id != {current_user.company_id}"))
+            db.session.execute(text(f"DELETE FROM pipeline WHERE company_id != {current_user.company_id}"))
+            
+            # 4. Users & Companies (Safe check)
+            db.session.execute(text(f"DELETE FROM user WHERE id != {current_user.id}"))
+            db.session.execute(text(f"DELETE FROM company WHERE id != {current_user.company_id}"))
+            
+            # 5. Reset Master Company Status
             master_company = current_user.company
-            
-            # 2. Delete Activity Data
-            WhatsAppMessage.query.delete()
-            Task.query.delete()
-            Interaction.query.delete()
-            Transaction.query.delete()
-            Contract.query.delete()
-            
-            # 3. Delete CRM Data
-            Lead.query.delete()
-            Client.query.delete()
-            Contact.query.delete()
-            
-            # Delete stages for non-master companies first (to avoid orphan issues if not cascaded)
-            PipelineStage.query.filter(PipelineStage.company_id != master_company.id).delete()
-            Pipeline.query.filter(Pipeline.company_id != master_company.id).delete()
-            
-            # 4. Delete Users except Master
-            User.query.filter(User.id != master_user.id).delete()
-            
-            # 5. Delete Companies except Master
-            Company.query.filter(Company.id != master_company.id).delete()
-            
-            # 6. Reset Master Company Status
             master_company.payment_status = 'active'
             master_company.subscription_status = 'active'
             master_company.status = 'active'
             master_company.platform_inoperante = False
-            master_company.next_due_date = date.today() + timedelta(days=30)
+            master_company.next_due_date = date.today() + timedelta(days=365) # 1 year for master
             
             db.session.commit()
-            flash("SISTEMA RESETADO! A base de dados está limpa para operação oficial.", "success")
+            flash("SISTEMA RESETADO COM SUCESSO! A base está limpa para operação oficial.", "success")
             return redirect(url_for('master.dashboard'))
             
         except Exception as e:
@@ -114,9 +114,11 @@ def dashboard():
     except Exception:
         total_contracts = 0
     
-    # Mock MRR Calculation (Plan based)
+    # Mock MRR Calculation (Plan based) - Exclude Master Company
     mrr = 0
-    plan_prices = {'free': 0, 'starter': 149, 'pro': 297, 'enterprise': 997, 'courtesy_vip': 0}
+    # master_company_name = "NorthWay Master" # or just check if it's the current user's company if we assume only one master
+    
+    plan_prices = {'free': 0, 'starter': 149, 'pro': 197, 'enterprise': 997, 'courtesy_vip': 0}
     
     # Churn mock (companies with status='cancelled')
     cancelled_companies = sum(1 for c in companies if getattr(c, 'status', 'active') == 'cancelled')
@@ -129,7 +131,12 @@ def dashboard():
         plan_name = (getattr(comp, 'plan', 'pro') or 'pro').lower()
         if comp.payment_status == 'courtesy': plan_name = 'courtesy_vip'
         
-        mrr += plan_prices.get(plan_name, 0)
+        # EXCLUDE Master/Super Admin company from MRR
+        # ALSO EXCLUDE companies in trial
+        is_paying = comp.id != current_user.company_id and comp.payment_status != 'trial'
+        
+        if is_paying:
+            mrr += plan_prices.get(plan_name, 0)
         
         # Find an admin to login as
         admin_user = User.query.filter_by(company_id=comp.id, role=ROLE_ADMIN).first()
@@ -358,6 +365,30 @@ def edit_user(user_id):
             flash(f"Erro ao atualizar: {e}", "error")
         
     return render_template('master_user_form.html', user=user, company=user.company)
+
+@master.route('/master/user/<int:user_id>/delete', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    user = User.query.get_or_404(user_id)
+    company_id = user.company_id
+    
+    # Safety Check: Can't delete yourself
+    if user.id == current_user.id:
+        flash("Você não pode excluir a sua própria conta Master.", "error")
+        return redirect(url_for('master.company_users', company_id=company_id))
+        
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash(f"Usuário {user.name} excluído com sucesso.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao excluir usuário: {e}", "error")
+        
+    return redirect(url_for('master.company_users', company_id=company_id))
 
 @master.route('/master/companies')
 @login_required
@@ -749,6 +780,8 @@ def restore_production_docs():
         
         # 2. Define Initial Books (Private for Master)
         initial_books = [
+            {'title': 'PLAYBOOK DE BDR — NORTHWAY', 'description': 'Manual estratégico de prospecção para BDRs. Foco em autoridade e processo.', 'category': 'Estratégia & Vendas', 'route_name': 'docs.presentation_playbook_bdr'},
+            {'title': 'Onboarding Institucional', 'description': 'Valores, Missão e Cultura da Northway.', 'category': 'Institucional', 'route_name': 'docs.presentation_onboarding'},
             {'title': 'Diagnóstico Estratégico', 'description': 'Análise completa para Óticas 2026.', 'category': 'Vendas', 'route_name': 'docs.presentation_consultancy'},
             {'title': 'Apresentação Institucional', 'description': 'Marketing com Direção - Quem somos e o que fazemos.', 'category': 'Institucional', 'route_name': 'docs.presentation_institutional'},
             {'title': 'Oferta Principal', 'description': 'Estrutura Completa da Proposta Comercial.', 'category': 'Vendas', 'route_name': 'docs.presentation_offer_main'},
@@ -872,6 +905,14 @@ def run_library_migration():
                 'description': 'Training & Scripts area.',
                 'category': 'Treinamento',
                 'route_name': 'docs.playbook_treinamento',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Diagnóstico de Mercado',
+                'description': 'Análise profunda sobre a inação e perdas no mercado óptico.',
+                'category': 'Vendas',
+                'route_name': 'docs.presentation_diagnostic',
                 'cover_image': None,
                 'active': True
             }
@@ -1308,3 +1349,116 @@ def master_library_delete(id):
     db.session.commit()
     flash(f"Material '{title}' excluído.", "success")
     return redirect(url_for('docs.library'))
+
+@master.route('/master/test-email', methods=['POST'])
+@login_required
+def test_email():
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    from services.email_service import EmailService
+    
+    # Simple test email
+    to_email = current_user.email
+    subject = "Teste de Integração NorthWay - Resend"
+    html_content = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #fa0102; text-align: center;">Conexão Bem-sucedida! 🚀</h2>
+        <p>Olá, <strong>{current_user.name}</strong>,</p>
+        <p>Este é um e-mail de teste disparado pelo seu CRM para validar a integração com o <strong>Resend</strong>.</p>
+        <p>Se você está lendo isso, a chave de API e o domínio foram configurados corretamente.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #666; text-align: center;">Enviado por NorthWay Master Command Center.</p>
+    </div>
+    """
+    
+    success, result = EmailService.send_email(to_email, subject, html_content=html_content)
+    
+    if success:
+        flash(f"E-mail de teste enviado para {to_email}!", "success")
+    else:
+        flash(f"Erro ao enviar e-mail: {result}", "error")
+        
+    return redirect(url_for('master.dashboard'))
+
+@master.route('/master/sync-schema')
+@login_required
+def sync_schema():
+    """
+    Emergency route to synchronize database schema with existing models.
+    """
+    if current_user.email != 'master@northway.com':
+        abort(403)
+        
+    from sqlalchemy import text
+    try:
+        # 1. Add missing columns to 'company' table
+        # We use IF NOT EXISTS logic or just wrap in try/except for raw SQL
+        columns_to_add = [
+            ("trial_ends_at", "TIMESTAMP"),
+            ("last_payment_at", "TIMESTAMP"),
+            ("next_due_date", "DATE"),
+            ("overdue_since", "TIMESTAMP"),
+            ("cpf_cnpj", "VARCHAR(20)"),
+            ("plan_id", "VARCHAR(50)"),
+            ("document", "VARCHAR(20)")
+        ]
+        
+        for col_name, col_type in columns_to_add:
+            try:
+                # PostgreSQL specific check for column existence
+                check_sql = text(f"""
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name='company' AND column_name='{col_name}'
+                """)
+                exists = db.session.execute(check_sql).fetchone()
+                
+                if not exists:
+                    db.session.execute(text(f"ALTER TABLE company ADD COLUMN {col_name} {col_type}"))
+                    print(f"✅ Added column {col_name} to company table.")
+            except Exception as col_e:
+                print(f"⚠️ Error adding column {col_name}: {col_e}")
+
+        # 2. Add email_log table
+        try:
+            db.session.execute(text("""
+                CREATE TABLE IF NOT EXISTS email_log (
+                    id SERIAL PRIMARY KEY,
+                    company_id INTEGER REFERENCES company(id),
+                    user_id INTEGER REFERENCES "user"(id),
+                    email_to VARCHAR(255) NOT NULL,
+                    subject VARCHAR(255) NOT NULL,
+                    status VARCHAR(50) DEFAULT 'sent',
+                    provider VARCHAR(50) DEFAULT 'resend',
+                    error_message TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            print("✅ Ensured email_log table exists.")
+        except Exception as table_e:
+            print(f"⚠️ Error creating email_log table: {table_e}")
+
+        # 3. Add notification table (just in case)
+        try:
+            db.session.execute(text("""
+                CREATE TABLE IF NOT EXISTS notification (
+                    id SERIAL PRIMARY KEY,
+                    company_id INTEGER REFERENCES company(id),
+                    user_id INTEGER REFERENCES "user"(id),
+                    title VARCHAR(255),
+                    message TEXT,
+                    type VARCHAR(50),
+                    is_read BOOLEAN DEFAULT FALSE,
+                    link VARCHAR(255),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+        except: pass
+
+        db.session.commit()
+        flash("Banco de dados sincronizado com sucesso! O sistema deve voltar ao normal.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao sincronizar banco: {e}", "error")
+        
+    return redirect(url_for('master.dashboard'))

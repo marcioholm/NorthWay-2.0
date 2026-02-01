@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico do Mercado Óptico | NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            dark: '#0f0f0f',
+                            gray: '#1a1a1a',
+                            light: '#f9fafb'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 4rem 2rem;
+            position: relative;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .slide-dark {
+            background-color: #0f0f0f;
+            color: white;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .slide-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .highlight {
+            color: #fa0102;
+        }
+
+        .cta-button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 25px -5px rgba(250, 1, 2, 0.3);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+
+    <!-- SLIDE 1: ABERTURA -->
+    <section class="slide slide-dark text-center">
+        <div class="slide-content">
+            <div class="mb-8">
+                <span
+                    class="bg-northway-red/10 text-northway-red border border-northway-red/20 px-6 py-2 rounded-full text-sm font-bold tracking-widest uppercase">Diagnóstico
+                    Exclusivo</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tighter">
+                Diagnóstico do <br><span class="highlight text-white bg-northway-red px-4">Mercado Óptico Local</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-400 font-light max-w-3xl mx-auto mb-12">
+                O que as óticas da região estão vivendo na prática — sem achismo.
+            </p>
+        </div>
+        <div
+            class="absolute bottom-10 left-1/2 -translate-x-1/2 text-gray-500 text-xs uppercase tracking-widest font-bold">
+            Northway • Marketing com direção
+        </div>
+    </section>
+
+    <!-- SLIDE 2: CONTEXTO (HUMANO) -->
+    <section class="slide bg-white">
+        <div class="slide-content text-center max-w-3xl">
+            <h2 class="text-3xl font-bold mb-12 text-gray-400 uppercase tracking-widest">Essa pesquisa não foi feita
+                para vender nada.</h2>
+            <div class="space-y-8 text-2xl md:text-4xl font-medium text-gray-800 leading-tight">
+                <p>Foi feita para <span class="highlight italic">ouvir</span>.</p>
+                <p class="opacity-60">Ouvir quem está no balcão.</p>
+                <p class="opacity-80">Quem atende no WhatsApp.</p>
+                <p>Quem sente o peso do caixa no fim do mês.</p>
+            </div>
+            <p class="mt-16 text-xl text-gray-500">O que você vai ver aqui não é teoria.<br>São padrões que se repetem
+                entre óticas da própria região.</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: PRIMEIRA PERGUNTA -->
+    <section class="slide bg-gray-50">
+        <div class="slide-content">
+            <h2 class="text-4xl font-black mb-16 text-center">Antes de continuar, responda mentalmente:</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <i data-lucide="help-circle" class="text-northway-red mb-4"></i>
+                    <p class="text-xl font-bold leading-snug">Hoje, sua ótica recebe pedidos de orçamento?</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <i data-lucide="help-circle" class="text-northway-red mb-4"></i>
+                    <p class="text-xl font-bold leading-snug">Alguns clientes simplesmente somem depois?</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <i data-lucide="help-circle" class="text-northway-red mb-4"></i>
+                    <p class="text-xl font-bold leading-snug">Você sente que trabalha muito… mas o crescimento não
+                        acompanha?</p>
+                </div>
+            </div>
+            <p class="text-center mt-12 text-gray-500 font-bold uppercase tracking-widest">Se você respondeu “sim” para
+                alguma dessas perguntas, continue.</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: O PADRÃO DO MERCADO -->
+    <section class="slide bg-white">
+        <div class="slide-content grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-4xl font-black mb-8">A maioria das óticas apresenta o mesmo cenário:</h2>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-4 text-xl font-medium text-gray-700">
+                        <i data-lucide="check-circle" class="text-green-500 w-6 h-6"></i> Óculos de grau como principal
+                        faturamento
+                    </li>
+                    <li class="flex items-center gap-4 text-xl font-medium text-gray-700">
+                        <i data-lucide="check-circle" class="text-green-500 w-6 h-6"></i> Ticket médio saudável
+                    </li>
+                    <li class="flex items-center gap-4 text-xl font-medium text-gray-700">
+                        <i data-lucide="check-circle" class="text-green-500 w-6 h-6"></i> Volume razoável de vendas
+                        mensais
+                    </li>
+                    <li class="flex items-center gap-4 text-xl font-medium text-gray-700">
+                        <i data-lucide="check-circle" class="text-green-500 w-6 h-6"></i> Presença no Instagram e
+                        WhatsApp
+                    </li>
+                </ul>
+                <div class="mt-12 p-6 bg-northway-red/5 rounded-xl border-l-4 border-northway-red">
+                    <p class="text-xl font-bold text-gray-900">👉 Ou seja: o negócio funciona.</p>
+                    <p class="text-lg text-gray-600 font-medium">Mas não cresce na mesma proporção do esforço.</p>
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <i data-lucide="trending-up" class="w-64 h-64 text-gray-100"></i>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: SEGUNDA PERGUNTA (DOR REAL) -->
+    <section class="slide bg-northway-red text-white">
+        <div class="slide-content text-center">
+            <h2 class="text-5xl font-black mb-16">Onde a venda começa a escapar?</h2>
+            <div class="grid md:grid-cols-2 gap-8 text-left">
+                <div class="bg-white/10 p-8 rounded-2xl border border-white/20 backdrop-blur-sm">
+                    <p class="text-2xl font-bold mb-4">O cliente pede preço e some?</p>
+                    <p class="text-white/60">Falta tempo para acompanhar todos?</p>
+                </div>
+                <div class="bg-white/10 p-8 rounded-2xl border border-white/20 backdrop-blur-sm">
+                    <p class="text-2xl font-bold mb-4">Cada vendedor responde de um jeito?</p>
+                    <p class="text-white/60">O WhatsApp vira uma mistura de conversa e improviso?</p>
+                </div>
+            </div>
+            <div class="mt-16 max-w-2xl mx-auto border-t border-white/20 pt-8">
+                <p class="text-xl font-light italic">"Quando não existe processo, a venda depende da memória, do humor e
+                    da sorte."</p>
+                <p class="mt-4 font-bold tracking-widest uppercase text-sm">Northway</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: A DOR MAIS CITADA -->
+    <section class="slide bg-white">
+        <div class="slide-content text-center">
+            <span
+                class="text-northway-red font-black text-6xl md:text-8xl opacity-10 block mb-4 uppercase">Resultado</span>
+            <h2 class="text-4xl md:text-6xl font-black mb-8 leading-tight">❌ “O cliente pesquisa <br><span
+                    class="highlight">preço e some</span>”</h2>
+            <div class="max-w-2xl mx-auto space-y-4">
+                <p class="text-2xl text-gray-600">Essa foi, disparada, a resposta mais comum.</p>
+                <div class="flex flex-col md:flex-row justify-center gap-4 mt-8">
+                    <div class="px-6 py-4 bg-gray-100 rounded-full font-bold text-gray-500 line-through italic">Não é
+                        falta de cliente.</div>
+                    <div class="px-6 py-4 bg-gray-100 rounded-full font-bold text-gray-500 line-through italic">Não é
+                        falta de produto.</div>
+                </div>
+                <p class="text-3xl font-black mt-12 text-gray-900 leading-tight">É falta de <br><span
+                        class="highlight underline decoration-8 underline-offset-8">acompanhamento estruturado</span>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: WHATSAPP -->
+    <section class="slide bg-gray-50">
+        <div class="slide-content">
+            <h2 class="text-4xl font-black mb-12">WhatsApp: Perto do dinheiro,<br>Longe da direção</h2>
+            <p class="text-2xl mb-12 text-gray-600">Quase todas as óticas usam WhatsApp. Mas poucas têm:</p>
+            <div class="grid md:grid-cols-4 gap-4 mb-16">
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:border-northway-red transition-all group">
+                    <i data-lucide="message-square" class="text-gray-300 group-hover:text-northway-red mb-4"></i>
+                    <h3 class="font-bold">Mensagens padrão</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:border-northway-red transition-all group">
+                    <i data-lucide="repeat" class="text-gray-300 group-hover:text-northway-red mb-4"></i>
+                    <h3 class="font-bold">Follow-up definido</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:border-northway-red transition-all group">
+                    <i data-lucide="layout" class="text-gray-300 group-hover:text-northway-red mb-4"></i>
+                    <h3 class="font-bold">Organização por etapa</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:border-northway-red transition-all group">
+                    <i data-lucide="eye" class="text-gray-300 group-hover:text-northway-red mb-4"></i>
+                    <h3 class="font-bold">Clareza das negociações</h3>
+                </div>
+            </div>
+            <div class="text-center italic text-xl border-l-4 border-northway-red pl-8 py-4">
+                <p>"Marketing sem direção é esforço perdido.<br>Venda sem processo é dinheiro escapando."</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: TERCEIRA PERGUNTA (DINHEIRO) -->
+    <section class="slide slide-dark">
+        <div class="slide-content text-center">
+            <h2 class="text-3xl font-bold mb-12 text-northway-red uppercase tracking-[0.3em]">Agora, vamos falar de
+                dinheiro.</h2>
+            <div class="space-y-12">
+                <p class="text-4xl md:text-6xl font-black">Quantas vendas você acredita que perde por mês?</p>
+                <div class="flex justify-center gap-8 text-4xl font-black text-northway-red">
+                    <span class="animate-pulse">5?</span>
+                    <span class="animate-pulse opacity-50">10?</span>
+                    <span class="animate-pulse opacity-20">20?</span>
+                </div>
+                <p class="text-2xl text-gray-400">Quanto vale cada óculos vendido hoje?</p>
+            </div>
+            <p class="mt-16 text-xl text-gray-500 italic">A própria pesquisa mostrou um padrão claro.</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: O NÚMERO -->
+    <section class="slide bg-white">
+        <div class="slide-content">
+            <h2 class="text-4xl font-black mb-12 text-center text-gray-400">Com base nas respostas:</h2>
+            <div class="max-w-4xl mx-auto bg-gray-900 rounded-3xl p-12 text-white relative overflow-hidden shadow-2xl">
+                <div class="absolute top-0 right-0 p-8 opacity-10">
+                    <i data-lucide="dollar-sign" class="w-32 h-32"></i>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8 mb-12">
+                    <div>
+                        <p class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-2">Perda média</p>
+                        <p class="text-4xl font-black">10 vendas / mês</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-2">Ticket médio</p>
+                        <p class="text-4xl font-black">R$ 1.000</p>
+                    </div>
+                </div>
+                <div class="border-t border-white/10 pt-8">
+                    <p class="text-xl text-gray-400 mb-4">Isso representa cerca de:</p>
+                    <p class="text-6xl md:text-8xl font-black text-northway-red tracking-tighter shadow-red-500/50">R$
+                        120.000 <span class="text-2xl font-normal text-white italic">por ano</span></p>
+                </div>
+            </div>
+            <p class="text-center mt-12 text-2xl font-bold text-gray-900 italic">Não por erro. Mas por inação.</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: INAÇÃO -->
+    <section class="slide bg-northway-red text-white">
+        <div class="slide-content text-center max-w-3xl">
+            <h2 class="text-5xl font-black mb-12">O Conceito-Chave: Inação</h2>
+            <div class="text-2xl md:text-3xl font-light italic leading-relaxed mb-12">
+                "Inação não é falta de esforço. É continuar operando sem direção, mesmo sabendo que algo está errado."
+            </div>
+            <div class="grid md:grid-cols-3 gap-8 text-sm uppercase tracking-widest font-black opacity-60">
+                <div class="flex flex-col gap-2"><i data-lucide="battery-low" class="mx-auto mb-2"></i> Trabalha mais
+                </div>
+                <div class="flex flex-col gap-2"><i data-lucide="trending-down" class="mx-auto mb-2"></i> Investe mais
+                </div>
+                <div class="flex flex-col gap-2"><i data-lucide="refresh-cw" class="mx-auto mb-2"></i> Tenta mais</div>
+            </div>
+            <p class="mt-16 text-4xl font-black">Mas cresce <span
+                    class="underline underline-offset-8 decoration-8 decoration-white/30">menos</span>.</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 11: O PROBLEMA NÃO É MARKETING -->
+    <section class="slide bg-white">
+        <div class="slide-content text-center">
+            <h2 class="text-5xl font-black mb-16">O problema <span class="highlight">não</span> é marketing.</h2>
+            <div class="grid md:grid-cols-3 gap-12 text-gray-400 font-bold italic line-through text-xl">
+                <p>Postar pouco</p>
+                <p>Anunciar pouco</p>
+                <p>Falta de ferramenta</p>
+            </div>
+            <div class="mt-20 max-w-3xl mx-auto">
+                <h3 class="text-4xl font-black text-gray-900 mb-8">O problema é marketing sem <span
+                        class="highlight">processo</span>.</h3>
+                <div class="grid md:grid-cols-2 gap-8 text-left">
+                    <div class="p-8 bg-gray-50 rounded-2xl">
+                        <p class="text-lg text-gray-600 mb-2">Ação sem estratégia vira...</p>
+                        <p class="text-3xl font-black text-gray-900 italic">Ruído.</p>
+                    </div>
+                    <div class="p-8 bg-gray-50 rounded-2xl">
+                        <p class="text-lg text-gray-600 mb-2">Crescimento sem processo vira...</p>
+                        <p class="text-3xl font-black text-gray-900 italic">Caos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 12: VISÃO NORTHWAY -->
+    <section class="slide slide-dark">
+        <div class="slide-content grid md:grid-cols-2 gap-16 items-center">
+            <div>
+                <img src="/static/images/logo_northway.png" alt="Northway" class="w-48 mb-12 opacity-80">
+                <h2 class="text-4xl font-black mb-8 leading-tight">A Northway não nasceu para vender marketing.</h2>
+                <p class="text-2xl text-northway-red font-bold underline underline-offset-8">Nasceu para dar direção.
+                </p>
+            </div>
+            <div class="space-y-8 border-l border-white/10 pl-12">
+                <div class="group">
+                    <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Passo 1</p>
+                    <p class="text-2xl font-bold group-hover:text-northway-red transition-colors">Marketing em processo.
+                    </p>
+                </div>
+                <div class="group">
+                    <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Passo 2</p>
+                    <p class="text-2xl font-bold group-hover:text-northway-red transition-colors">Processo em
+                        previsibilidade.</p>
+                </div>
+                <div class="group">
+                    <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mb-1">Passo 3</p>
+                    <p class="text-2xl font-bold group-hover:text-northway-red transition-colors">Previsibilidade em
+                        crescimento sustentável.</p>
+                </div>
+                <p class="pt-8 text-sm text-gray-600 font-medium">Sem atalhos • Sem promessas • Sem improviso</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 13: REFLEXÃO FINAL -->
+    <section class="slide bg-white">
+        <div class="slide-content text-center">
+            <h2 class="text-4xl font-black mb-16 underline decoration-northway-red decoration-4">Convite à Reflexão
+                Final</h2>
+            <div class="space-y-12 max-w-3xl mx-auto text-left">
+                <div class="flex gap-6 items-start">
+                    <div
+                        class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 font-black text-gray-400 italic">
+                        ?</div>
+                    <p class="text-2xl font-bold text-gray-700">O que acontece se tudo continuar exatamente como está?
+                    </p>
+                </div>
+                <div class="flex gap-6 items-start">
+                    <div
+                        class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 font-black text-gray-400 italic">
+                        ?</div>
+                    <p class="text-2xl font-bold text-gray-700">Quanto custa, por ano, não ajustar esse processo?</p>
+                </div>
+                <div class="flex gap-6 items-start">
+                    <div
+                        class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 font-black text-gray-400 italic">
+                        ?</div>
+                    <p class="text-2xl font-bold text-gray-700 font-black tracking-tight">Se você recuperasse metade
+                        dessas vendas, o impacto valeria?</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 14: CTA FORTE -->
+    <section class="slide bg-gray-50 text-center">
+        <div class="slide-content">
+            <div class="mb-8 inline-block">
+                <span
+                    class="animate-bounce inline-block px-4 py-2 bg-northway-red text-white rounded-full text-xs font-black uppercase tracking-widest shadow-lg shadow-red-200">Convite
+                    Direto</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black mb-8 leading-tight">Talvez não falte esforço — <span
+                    class="highlight italic underline">falte caminho</span>.</h2>
+            <p class="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">Convidamos você para uma conversa rápida de 30
+                minutos para analisar sua realidade e identificar onde a venda está escapando.</p>
+
+            <div
+                class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-gray-100 max-w-4xl mx-auto text-left mb-16">
+                <div class="grid md:grid-cols-3 gap-8 mb-12">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="bar-chart-2" class="text-northway-red"></i>
+                        <span class="font-bold">Análise Real</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="target" class="text-northway-red"></i>
+                        <span class="font-bold">Identificar Gargalos</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="map-pin" class="text-northway-red"></i>
+                        <span class="font-bold">Caminho Claro</span>
+                    </div>
+                </div>
+                <a href="https://wa.me/seunumerodecontato"
+                    class="cta-button w-full block bg-northway-red text-white py-6 rounded-2xl text-2xl font-black uppercase tracking-widest text-center shadow-red-500/30">
+                    Agendar Conversa Estratégica
+                </a>
+                <p class="text-center mt-6 text-gray-400 font-bold uppercase tracking-widest text-xs italic">30 minutos
+                    • Direta ao ponto • Sem compromisso</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 15: ENCERRAMENTO -->
+    <section class="slide slide-dark text-center">
+        <div class="slide-content">
+            <img src="/static/images/logo_northway.png" alt="Northway" class="w-64 mx-auto mb-16">
+            <div class="space-y-4 text-2xl md:text-4xl font-black italic tracking-tighter text-gray-400">
+                <p>Resultado não vem de sorte.</p>
+                <p class="text-white">Vem de <span
+                        class="text-northway-red underline underline-offset-8">direção</span>.</p>
+            </div>
+            <div
+                class="mt-20 pt-20 border-t border-white/5 grid md:grid-cols-4 gap-4 text-[10px] uppercase font-bold tracking-[0.2em] text-gray-600">
+                <span>Marketing com direção</span>
+                <span>Negócios com propósito</span>
+                <span>Crescimento com processo</span>
+                <span>Northway • 2026</span>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

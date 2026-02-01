@@ -1,0 +1,59 @@
+{% extends "base_minimal.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-black flex items-center justify-center px-6">
+    <div class="max-w-md w-full text-center">
+        <div class="mb-10 animate-bounce">
+            <div
+                class="w-20 h-20 bg-red-600/20 rounded-full flex items-center justify-center mx-auto border border-red-500/30">
+                <i data-lucide="shield-alert" class="w-10 h-10 text-red-500"></i>
+            </div>
+        </div>
+
+        <h1 class="text-3xl font-display font-bold text-white mb-4">Acesso Restrito</h1>
+
+        <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 mb-8">
+            {% if reason == 'overdue' %}
+            <p class="text-gray-300 leading-relaxed mb-6">
+                Identificamos uma pendência financeira em sua conta que excedeu 30 dias.
+                Por motivos de segurança e política de uso, o acesso à plataforma foi pausado temporariamente.
+            </p>
+            <a href="/checkout"
+                class="block w-full py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all">
+                Regularizar Financeiro
+            </a>
+            {% elif reason == 'trial_expired' %}
+            <p class="text-gray-300 leading-relaxed mb-6">
+                Seu período de demonstração de 7 dias chegou ao fim. Esperamos que tenha tido uma ótima experiência!
+                Escolha um plano para continuar escalando seu negócio conosco.
+            </p>
+            <a href="/plans"
+                class="block w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-all">
+                Escolher um Plano
+            </a>
+            {% else %}
+            <p class="text-gray-300 leading-relaxed mb-6">
+                Sua conta está temporariamente suspensa por nossa equipe técnica.
+                Por favor, entre em contato com nosso suporte para mais detalhes.
+            </p>
+            <a href="mailto:suporte@northwaycompany.com.br"
+                class="block w-full py-4 border border-white/20 text-white font-bold rounded-xl hover:bg-white/5 transition-all">
+                Falar com Suporte
+            </a>
+            {% endif %}
+        </div>
+
+        <p class="text-gray-500 text-sm">
+            Dúvidas? <a href="mailto:suporte@northwaycompany.com.br"
+                class="text-red-400 hover:underline">suporte@northwaycompany.com.br</a>
+        </p>
+
+        <div class="mt-12">
+            <a href="{{ url_for('auth.logout') }}"
+                class="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest">
+                Sair da conta
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

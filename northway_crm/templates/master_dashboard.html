@@ -118,6 +118,21 @@
                         class="bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/20 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg flex items-center gap-2">
                         <i data-lucide="download" class="w-4 h-4"></i> Exportar Marketing
                     </a>
+                    <a href="{{ url_for('master.restore_production_docs') }}"
+                        class="bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/20 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg flex items-center gap-2"
+                        onclick="return confirm('Isso irá restaurar os materiais padrão para a empresa Master. Continuar?');">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar Materiais
+                    </a>
+                    <a href="{{ url_for('master.system_reset') }}"
+                        class="bg-red-600/10 text-red-400 hover:bg-red-600 hover:text-white border border-red-500/20 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg flex items-center gap-2">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Resetar Sistema
+                    </a>
+                    <form action="{{ url_for('master.test_email') }}" method="POST" class="inline">
+                        <button type="submit"
+                            class="bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/20 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg flex items-center gap-2">
+                            <i data-lucide="mail" class="w-4 h-4"></i> Testar E-mail
+                        </button>
+                    </form>
                     <a href="{{ url_for('master.company_new') }}"
                         class="bg-white text-black hover:bg-gray-100 px-5 py-2.5 rounded-lg font-bold text-sm transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
                         <i data-lucide="plus" class="w-4 h-4"></i> Novo Tenant

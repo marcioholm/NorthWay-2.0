@@ -152,6 +152,40 @@ def create_app():
 
             return dict(pending_tasks_count=0, now=now_br)
 
+        # --- BLOCKING LOGIC ---
+        @app.before_request
+        def check_company_status():
+            # Exclude statics and non-blocking routes
+            if not request.endpoint: return
+            
+            allowed_routes = ['static', 'auth.login', 'auth.logout', 'auth.blocked_account', 'master.dashboard', 'master.system_reset', 'master.test_email', 'master.sync_schema']
+            if request.endpoint in allowed_routes:
+                return
+
+            if current_user and current_user.is_authenticated:
+                # Super Admins are NEVER blocked
+                if getattr(current_user, 'is_super_admin', False):
+                    return
+                
+                company = current_user.company
+                if not company:
+                    return
+
+                # 1. Manual Block (MASTER SWITCH)
+                if company.platform_inoperante:
+                    return redirect(url_for('auth.blocked_account', reason='manual'))
+
+                # 2. Automated Block (30 Days Inadimplência)
+                if company.payment_status == 'overdue' and company.overdue_since:
+                    days_overdue = (datetime.utcnow() - company.overdue_since).days
+                    if days_overdue >= 30:
+                        return redirect(url_for('auth.blocked_account', reason='overdue'))
+                
+                # 3. Trial Expired
+                if company.payment_status == 'trial' and company.trial_ends_at:
+                    if datetime.utcnow() > company.trial_ends_at:
+                        return redirect(url_for('auth.blocked_account', reason='trial_expired'))
+
         @app.template_filter('from_json')
         def from_json_filter(s):
             if not s: return {}
@@ -274,7 +308,8 @@ def create_app():
 
             if request.endpoint in ['auth.login', 'auth.register', 'auth.logout', 
                                   'billing.asaas_webhook', 'billing.payment_pending',
-                                  'auth.suspended_account', 'master.revert_access']: # Allow revert!
+                                  'auth.suspended_account', 'master.revert_access',
+                                  'master.sync_schema']: # Allow sync!
                 return
 
             # Check Login & Inoperability
@@ -446,6 +481,77 @@ def checkout_fallback():
 # Health Check - Visible in Production (Moved to create_app)
 # @app.route('/ping')
 # def ping(): return "pong"
+
+@app.route('/sys_admin/seed_library')
+def sys_seed_library():
+    try:
+        from models import db, LibraryBook, Company, User
+        
+        # 1. Admin Company
+        company = Company.query.get(6)
+        if not company:
+            admin = User.query.filter_by(is_super_admin=True).first()
+            if admin and admin.company: company = admin.company
+            else: return "No Admin Company Found", 404
+            
+        print(f"Seed Library Context: {company.name}")
+        
+        # 2. Add 'O Custo da Inação'
+        book = LibraryBook.query.filter_by(title="O Custo da Inação").first()
+        if not book:
+            book = LibraryBook(
+                title="O Custo da Inação",
+                description="Apresentação estratégica para leads: como a falta de direção custa R$ 120k/ano.",
+                category="Apresentação",
+                cover_image="cover_inaction.jpg",
+                route_name="docs.presentation_cost_of_inaction",
+                active=True
+            )
+            db.session.add(book)
+        else:
+            book.cover_image = "cover_inaction.jpg"
+            book.route_name = "docs.presentation_cost_of_inaction"
+        
+        db.session.commit()
+        if company not in book.allowed_companies:
+            book.allowed_companies.append(company)
+
+        # 3. Update Covers for All
+        cover_map = {
+            "Diagnóstico do Mercado Óptico Local": "cover_diagnostic.jpg",
+            "Diagnóstico Estratégico": "cover_diagnostic_old.jpg", 
+            "Playbook Comercial": "cover_sales.jpg",
+            "Playbook de Processos": "cover_process.jpg",
+            "Playbook de Treinamento": "cover_training.jpg",
+            "Onboarding Institucional": "cover_onboarding.jpg",
+            "Manual do Usuário": "cover_manual.jpg",
+            "Apresentação Institucional": "cover_institutional.jpg",
+            "Playbook BDR": "cover_bdr.jpg",
+            "Oferta Principal": "cover_offer_main.jpg",
+            "Oferta Downsell": "cover_offer_downsell.jpg",
+            "Consultoria": "cover_consultancy.jpg",
+            "Plano Essencial": "cover_offer_downsell.jpg",
+            "Manual de Onboarding": "cover_manual.jpg",
+            "Scripts": "cover_sales_scripts.jpg",
+            "Objeções": "cover_objections.jpg",
+            "Academia": "cover_training.jpg"
+        }
+        
+        for b in LibraryBook.query.all():
+            updated = False
+            for k, v in cover_map.items():
+                if k in b.title: 
+                    b.cover_image = v
+                    updated = True
+                    break
+            if not updated:
+                if not b.cover_image or 'default' in b.cover_image:
+                     b.cover_image = "cover_general_playbook.jpg" if "playbook" in b.title.lower() else "cover_default.jpg"
+        
+        db.session.commit()
+        return f"Library Seeded. 'O Custo da Inação' ID: {book.id}, Covers Updated."
+    except Exception as e:
+        return str(e), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
