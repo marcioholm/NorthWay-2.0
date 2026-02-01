@@ -222,6 +222,11 @@ def register():
             db.session.add(stage)
         user.allowed_pipelines.append(pipeline)
 
+        # 3.5 Initial Access Tracking
+        from datetime import datetime
+        user.last_login = datetime.utcnow()
+        company.last_active_at = datetime.utcnow()
+
         db.session.commit()
         
         # 4. Auto Login
@@ -459,6 +464,11 @@ def google_callback_server():
                 db.session.add(PipelineStage(name=s_name, order=i, pipeline_id=pipeline.id, company_id=company.id))
             user.allowed_pipelines.append(pipeline)
             
+            # 2.5 Initial Access Tracking
+            from datetime import datetime
+            user.last_login = datetime.utcnow()
+            company.last_active_at = datetime.utcnow()
+
             db.session.commit()
             
             login_user(user)

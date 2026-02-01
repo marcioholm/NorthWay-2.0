@@ -159,6 +159,55 @@ def dashboard():
     from datetime import date
     return render_template('master_dashboard.html', stats=stats, kpis=global_kpis, now_date=date.today())
 
+@master.route('/master/export/marketing')
+@login_required
+def export_marketing():
+    """
+    Generates a CSV export of all companies and their primary admins for marketing.
+    """
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    import csv
+    from io import StringIO
+    from flask import Response
+    
+    companies = Company.query.order_by(Company.created_at.desc()).all()
+    
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow([
+        'ID Empresa', 'Nome Empresa', 'CNPJ/CPF', 'Status Pagamento', 'Plano',
+        'Data Criação', 'Nome Admin', 'Email Admin', 'WhatsApp Admin', 'Último Acesso'
+    ])
+    
+    for comp in companies:
+        admin = User.query.filter_by(company_id=comp.id, role=ROLE_ADMIN).first()
+        if not admin:
+            admin = User.query.filter_by(company_id=comp.id).first()
+            
+        cw.writerow([
+            comp.id,
+            comp.name,
+            comp.cpf_cnpj or comp.document or '---',
+            comp.payment_status,
+            comp.plan or 'pro',
+            comp.created_at.strftime('%d/%m/%Y %H:%M') if comp.created_at else '---',
+            admin.name if admin else '---',
+            admin.email if admin else '---',
+            admin.phone if admin else '---',
+            admin.last_login.strftime('%d/%m/%Y %H:%M') if admin and admin.last_login else 'Nunca'
+        ])
+        
+    output = si.getvalue()
+    si.close()
+    
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=northway_marketing_export.csv"}
+    )
+
 @master.route('/master/company/<int:company_id>/materials', methods=['GET', 'POST'])
 @login_required
 def company_materials(company_id):
