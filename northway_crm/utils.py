@@ -1,10 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import jsonify
 from flask_login import current_user
 from models import db, Notification, Interaction, Integration
 import time
 import functools
 import requests
+
+def get_now_br():
+    """Returns the current time in Brasília (UTC-3)"""
+    return datetime.utcnow() - timedelta(hours=3)
 
 def api_response(success=True, data=None, error=None, status=200):
     """Standardized JSON response for all API routes."""
@@ -50,7 +54,7 @@ def update_client_health(client):
     status = 'vermelho' # Default critical
     
     if last_interaction:
-        days_diff = (datetime.now() - last_interaction.created_at).days
+        days_diff = (get_now_br() - last_interaction.created_at).days
         
         if days_diff <= 3:
             status = 'verde'
@@ -95,6 +99,13 @@ def get_contract_replacements(client, form_data):
     else:
         foro_comarca = cidade_foro.strip()
         foro_estado = ''
+    
+    if len(foro_parts) >= 2:
+        foro_comarca = foro_parts[0].strip()
+        foro_estado = foro_parts[1].strip()
+    else:
+        foro_comarca = cidade_foro.strip()
+        foro_estado = ''
 
     def format_addr(obj):
         parts = []
@@ -105,6 +116,8 @@ def get_contract_replacements(client, form_data):
         elif obj.address_city: parts.append(f"- {obj.address_city}")
         if obj.address_zip: parts.append(f"CEP: {obj.address_zip}")
         return " ".join(parts) if parts else "Endereço não informado"
+
+    today_br = get_now_br().date()
 
     replacements = {
         # --- CONTRATANTE (CLIENTE) ---
@@ -159,7 +172,7 @@ def get_contract_replacements(client, form_data):
         '{{PERIODO_TRÁFEGO}}': form_data.get('periodo_trafego', '30 dias'),
 
         # --- DATAS E VIGÊNCIA ---
-        '{{DATA_INICIO}}': form_data.get('data_inicio', date.today().strftime('%d/%m/%Y')),
+        '{{DATA_INICIO}}': form_data.get('data_inicio', today_br.strftime('%d/%m/%Y')),
         '{{VIGENCIA_MESES}}': form_data.get('vigencia_meses', '12'),
         '{{DATA_FIM}}': form_data.get('data_fim', ''),
         '{{DATA_FINAL}}': form_data.get('data_fim', ''),
@@ -168,73 +181,21 @@ def get_contract_replacements(client, form_data):
         '{{ESTADO_FORO}}': foro_estado,
         '{{FORO_COMARCA}}': foro_comarca,
         '{{FORO_ESTADO}}': foro_estado,
-        '{{DATA_ATUAL}}': date.today().strftime('%d/%m/%Y'),
-        '{{CURRENT_DATE}}': date.today().strftime('%d/%m/%Y'),
+        '{{DATA_ATUAL}}': today_br.strftime('%d/%m/%Y'),
+        '{{CURRENT_DATE}}': today_br.strftime('%d/%m/%Y'),
         '{{CIDADE_ASSINATURA}}': form_data.get('cidade_assinatura', foro_comarca),
-        '{{DATA_ASSINATURA}}': form_data.get('data_assinatura', date.today().strftime('%d/%m/%Y')),
+        '{{DATA_ASSINATURA}}': form_data.get('data_assinatura', today_br.strftime('%d/%m/%Y')),
         '{{NUMERO_VIAS}}': form_data.get('numero_vias', '2'),
 
         # --- ASSINATURAS ---
         '{{CONTRATANTE_ASSINATURA_NOME}}': form_data.get('contratante_representante') or client.representative or (form_data.get('contratante_nome') or client.name),
         '{{CONTRATADA_ASSINATURA_NOME}}': getattr(client.company, 'representative', '') or current_user_name,
 
-        # --- LOWERCASE ALIASES (Fixing User Issue) ---
-        '{{nome_empresarial_contratante}}': form_data.get('contratante_nome') or client.name,
-        '{{cnpj_contratante}}': form_data.get('contratante_documento') or client.document or 'N/A',
-        '{{endereco_contratante}}': form_data.get('contratante_endereco') or format_addr(client),
-        '{{representante_legal_contratante}}': form_data.get('contratante_representante') or client.representative or '',
-        '{{cpf_representante_contratante}}': form_data.get('contratante_cpf') or client.representative_cpf or '',
-        '{{endereco_representante_contratante}}': form_data.get('contratante_endereco_representante') or '',
-
-        '{{nome_empresarial_contratada}}': client.company.name,
-        '{{cnpj_contratada}}': client.company.document,
-        '{{endereco_contratada}}': format_addr(client.company),
-        '{{representante_legal_contratada}}': getattr(client.company, 'representative', '') or current_user_name,
-        '{{cpf_representante_contratada}}': getattr(client.company, 'representative_cpf', '') or '',
-        '{{endereco_representante_contratada}}': '', 
-
-        '{{valor_total}}': form_data.get('valor_total', '0,00'),
-        '{{VALOR_TOTAL_CONTRATO}}': form_data.get('valor_total', '0,00'),
-        '{{valor_total_contrato}}': form_data.get('valor_total', '0,00'),
-        
-        '{{valor_mensal}}': form_data.get('valor_parcela', '0,00'),
-        '{{valor_parcela}}': form_data.get('valor_parcela', '0,00'),
-        
-        '{{valor_implantacao}}': form_data.get('valor_implantacao', '0,00'),
-        '{{VALOR_IMPLANTACAO}}': form_data.get('valor_implantacao', '0,00'),
-        
-        '{{dia_vencimento}}': form_data.get('dia_vencimento', '5'),
-        
-        '{{qtd_parcelas}}': form_data.get('qtd_parcelas', '12'),
-        '{{quantidade_parcelas}}': form_data.get('qtd_parcelas', '12'),
-        '{{NUMERO_PARCELAS}}': form_data.get('qtd_parcelas', '12'),
-
-        '{{data_inicio}}': form_data.get('data_inicio', date.today().strftime('%d/%m/%Y')),
-        '{{data_inicio_contrato}}': form_data.get('data_inicio', date.today().strftime('%d/%m/%Y')),
-        
-        '{{data_proposta}}': form_data.get('data_proposta', date.today().strftime('%d/%m/%Y')),
-        
-        '{{data_fim}}': form_data.get('data_fim', ''),
-        '{{data_fim_contrato}}': form_data.get('data_fim', ''),
-        
-        '{{foro_comarca}}': foro_comarca,
-        '{{foro_estado}}': foro_estado,
-        
-        '{{cidade_assinatura}}': form_data.get('cidade_assinatura', foro_comarca),
-        '{{data_assinatura}}': form_data.get('data_assinatura', date.today().strftime('%d/%m/%Y')),
-
-        '{{nome_assinante_contratante}}': form_data.get('contratante_representante') or client.representative or (form_data.get('contratante_nome') or client.name),
-        '{{nome_assinante_contratada}}': getattr(client.company, 'representative', '') or current_user_name,
-
-        # --- TESTEMUNHAS ---
-        '{{nome_testemunha_1}}': form_data.get('testemunha1_nome', '__________________________'),
-        '{{TESTEMUNHA1_NOME}}': form_data.get('testemunha1_nome', '__________________________'),
-        '{{cpf_testemunha_1}}': form_data.get('testemunha1_cpf', ''),
-        '{{TESTEMUNHA1_CPF}}': form_data.get('testemunha1_cpf', ''),
-        '{{nome_testemunha_2}}': form_data.get('testemunha2_nome', '__________________________'),
-        '{{TESTEMUNHA2_NOME}}': form_data.get('testemunha2_nome', '__________________________'),
-        '{{cpf_testemunha_2}}': form_data.get('testemunha2_cpf', ''),
-        '{{TESTEMUNHA2_CPF}}': form_data.get('testemunha2_cpf', ''),
+        # --- LOWERCASE ALIASES ---
+        '{{data_inicio}}': form_data.get('data_inicio', today_br.strftime('%d/%m/%Y')),
+        '{{data_proposta}}': form_data.get('data_proposta', today_br.strftime('%d/%m/%Y')),
+        '{{data_assinatura}}': form_data.get('data_assinatura', today_br.strftime('%d/%m/%Y')),
+        '{{data_atual}}': today_br.strftime('%d/%m/%Y'),
     }
     return replacements
 
@@ -277,7 +238,7 @@ def update_integration_health(company_id, service, error=None):
                 integration.last_error = str(error)
             else:
                 integration.last_error = None
-                integration.last_sync_at = datetime.now()
+                integration.last_sync_at = get_now_br()
             db.session.commit()
     except Exception as e:
         print(f"Error updating integration health: {e}")

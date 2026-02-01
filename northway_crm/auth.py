@@ -3,11 +3,8 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES
 from services.supabase_service import init_supabase
-from datetime import datetime, timedelta
-
-def get_now_br():
-    """Returns the current time in Brasília (UTC-3)"""
-    return datetime.utcnow() - timedelta(hours=3)
+from utils import get_now_br
+from datetime import timedelta, datetime, date
 
 
 auth = Blueprint('auth', __name__)
@@ -43,7 +40,6 @@ def check_saas_status():
              
              # TRIAL CHECK
              if company.payment_status == 'trial':
-                 from datetime import datetime
                  
                  # If trial but no dates, force start page
                  if not company.trial_start_date:
@@ -114,9 +110,9 @@ def login():
             
             # Track Activity
             try:
-                user.last_login = datetime.utcnow()
+                user.last_login = get_now_br()
                 if user.company:
-                    user.company.last_active_at = datetime.utcnow()
+                    user.company.last_active_at = get_now_br()
                 db.session.commit()
             except:
                 pass
@@ -346,7 +342,6 @@ def start_trial():
         
     if request.method == 'POST':
         # ACTIVATE TRIAL logic
-        from datetime import datetime, timedelta
         
         company = Company.query.get(current_user.company_id)
         
@@ -355,7 +350,7 @@ def start_trial():
              flash("Sua conta já está ativa.", "info")
              return redirect(url_for('dashboard.home'))
 
-        now = datetime.utcnow()
+        now = get_now_br()
         company.trial_start_date = now
         company.trial_end_date = now + timedelta(days=7)
         company.payment_status = 'trial'

@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, session, abort, flash, request
 from flask_login import login_required, current_user, login_user
 from models import db, User, Company, ROLE_ADMIN, ContractTemplate, template_company_association
+from utils import get_now_br
+from datetime import datetime, date, timedelta
 
 master = Blueprint('master', __name__)
 
@@ -482,10 +484,10 @@ def company_details(company_id):
             print(f"Error fetching sub details: {e}")
 
     # Fallback if DB has date but API failed or wasn't called
-    # if not days_remaining and company.next_due_date:
-    #     delta = company.next_due_date - date.today()
-    #     days_remaining = delta.days
-    #     next_due_fmt = company.next_due_date.strftime('%d/%m/%Y')
+    if not days_remaining and company.next_due_date:
+        delta = company.next_due_date - get_now_br().date()
+        days_remaining = delta.days
+        next_due_fmt = company.next_due_date.strftime('%d/%m/%Y')
 
     return render_template('master_company_details.html', 
                           company=company, 
@@ -711,7 +713,7 @@ def manual_activate(company_id):
         except:
             pass
             
-    company.next_due_date = date.today() + timedelta(days=days)
+    company.next_due_date = get_now_br().date() + timedelta(days=days)
     
     try:
         db.session.commit()
@@ -720,7 +722,7 @@ def manual_activate(company_id):
         db.session.rollback()
         flash(f"Erro ao ativar manualmente: {e}", "error")
         
-    return redirect(url_for('master.dashboard'))
+    return redirect(url_for('master.company_details', company_id=company_id))
 
 
 # --- Temporary Migration Route ---
