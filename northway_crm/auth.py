@@ -415,65 +415,27 @@ def google_callback_server():
         user = User.query.filter_by(email=email).first()
         
         if not user:
-            # First time login via Google - Create account
-            print(f"🌱 Google Login: Creating new account for {email}")
+            # First time login via Google - Create User only and force setup
+            print(f"🌱 Google Login: Creating new user body for {email}")
             
-            # Create Company
-            company = Company(
-                name=f"Empresa de {name}",
-                subscription_status='inactive'
-            )
-            db.session.add(company)
-            db.session.flush()
-            
-            # Create User
+            # Create User (Company will be linked in setup-company)
             user = User(
                 name=name,
                 email=email,
                 supabase_uid=sb_user.id,
-                company_id=company.id,
+                password_hash=generate_password_hash('google_oauth_placeholder_' + sb_user.id), # Secure placeholder
                 role='admin'
             )
-            db.session.add(user)
-            db.session.flush()
-            
-            # Set Default Admin Role
-            admin_perms = [
-                'dashboard_view', 'financial_view', 'leads_view', 'pipeline_view', 
-                'goals_view', 'tasks_view', 'clients_view', 'whatsapp_view', 
-                'company_settings_view', 'processes_view', 'library_view', 
-                'prospecting_view', 'admin_view'
-            ]
-            admin_role = Role(
-                name='Administrador',
-                company_id=company.id,
-                is_default=True,
-                permissions=admin_perms
-            )
-            db.session.add(admin_role)
-            db.session.flush()
-            user.role_id = admin_role.id
-            
-            # Bootstrap Pipeline
-            pipeline = Pipeline(name='Funil de Vendas', company_id=company.id)
-            db.session.add(pipeline)
-            db.session.flush()
-            
-            stages = ['Novo', 'Qualificação', 'Proposta', 'Negociação', 'Fechado']
-            for i, s_name in enumerate(stages):
-                db.session.add(PipelineStage(name=s_name, order=i, pipeline_id=pipeline.id, company_id=company.id))
-            user.allowed_pipelines.append(pipeline)
-            
-            # 2.5 Initial Access Tracking
+            # Set Initial Access Tracking
             from datetime import datetime
             user.last_login = datetime.utcnow()
-            company.last_active_at = datetime.utcnow()
-
+            
+            db.session.add(user)
             db.session.commit()
             
             login_user(user)
-            flash(f'Bem-vindo, {name}! Agora, ative seu período de teste.', 'success')
-            return redirect(url_for('auth.start_trial'))
+            flash(f'Bem-vindo, {name}! Para começar, configure os dados da sua empresa.', 'info')
+            return redirect(url_for('auth.setup_company'))
             
         else:
             # Existing User - Link UID if not set
@@ -482,6 +444,11 @@ def google_callback_server():
                 db.session.commit()
             
             login_user(user)
+            
+            # If exists but hasn't finished setup
+            if not user.company_id:
+                 return redirect(url_for('auth.setup_company'))
+
             print(f"✅ Google Login: {user.name} authenticated.")
             return redirect(url_for('dashboard.home'))
             
