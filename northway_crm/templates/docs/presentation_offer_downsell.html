@@ -128,7 +128,7 @@
             class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
             <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Voltar
         </a>
-        <button id="printBtn"
+        <button id="printBtn" onclick="window.print()"
             class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-yellow-900/40">
             Baixar PDF
         </button>
@@ -307,7 +307,32 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logotipo North"
                     class="h-10 w-auto mx-auto opacity-40 grayscale">
             </div>
-        </section>
+            <section class="slide bg-black border-t border-gray-900">
+                <div class="text-center px-6">
+                    <div class="flex flex-col items-center gap-6">
+                        <!-- Links -->
+                        <div
+                            class="flex flex-wrap justify-center gap-8 md:gap-12 text-sm font-bold tracking-widest uppercase text-gray-500">
+                            <a href="https://www.northwaycompany.com.br/" target="_blank"
+                                class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                                <i data-lucide="globe" class="w-4 h-4"></i> Site
+                            </a>
+                            <a href="https://www.instagram.com/northway.mkt/" target="_blank"
+                                class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                                <i data-lucide="instagram" class="w-4 h-4"></i> Instagram
+                            </a>
+                            <a href="https://www.youtube.com/@NorthWay.marketing" target="_blank"
+                                class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                                <i data-lucide="youtube" class="w-4 h-4"></i> YouTube
+                            </a>
+                        </div>
+
+                        <p class="text-xs text-center text-gray-800 mt-8 max-w-md mx-auto">
+                            © NorthWay Company. Todos os direitos reservados.
+                        </p>
+                    </div>
+                </div>
+            </section>
 
     </div>
 

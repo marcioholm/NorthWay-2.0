@@ -291,21 +291,28 @@
             </div>
 
             <footer class="mt-24 pt-12 border-t border-gray-800 text-center flex flex-col items-center">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-10 mx-auto mb-6 opacity-70">
+                <div class="flex flex-col items-center gap-6">
+                    <!-- Links -->
+                    <div
+                        class="flex flex-wrap justify-center gap-8 md:gap-12 text-sm font-bold tracking-widest uppercase text-gray-500">
+                        <a href="https://www.northwaycompany.com.br/" target="_blank"
+                            class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                            <i data-lucide="globe" class="w-4 h-4"></i> Site
+                        </a>
+                        <a href="https://www.instagram.com/northway.mkt/" target="_blank"
+                            class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                            <i data-lucide="instagram" class="w-4 h-4"></i> Instagram
+                        </a>
+                        <a href="https://www.youtube.com/@NorthWay.marketing" target="_blank"
+                            class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                            <i data-lucide="youtube" class="w-4 h-4"></i> YouTube
+                        </a>
+                    </div>
 
-                <div class="flex items-center gap-6 mb-6">
-                    <a href="https://wa.me/5542999896358" target="_blank"
-                        class="text-gray-500 hover:text-[#fa0102] transition">
-                        <i data-lucide="message-circle" class="w-6 h-6"></i>
-                    </a>
-                    <a href="https://www.instagram.com/northway.mkt/" target="_blank"
-                        class="text-gray-500 hover:text-[#fa0102] transition">
-                        <i data-lucide="instagram" class="w-6 h-6"></i>
-                    </a>
+                    <p class="text-xs text-center text-gray-800 mt-8 max-w-md mx-auto">
+                        © NorthWay Company. Todos os direitos reservados.
+                    </p>
                 </div>
-
-                <p class="text-gray-500 text-sm">&copy; 2026 NorthWay Systems. Todos os direitos reservados.</p>
-                <p class="text-gray-700 text-xs mt-2 uppercase tracking-widest">Marketing com Direção</p>
             </footer>
 
         </main>

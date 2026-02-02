@@ -19,7 +19,11 @@
                 </h1>
             </div>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 header-ui">
+            <button onclick="window.print()"
+                class="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg hover:shadow-xl">
+                <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+            </button>
             {% if current_user.is_super_admin %}
             <a href="{{ url_for('master.master_library_edit', id=book.id) }}"
                 class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all">
@@ -42,4 +46,61 @@
         </div>
     </div>
 </div>
+<style>
+    @media print {
+        @page {
+            margin: 1cm;
+            size: auto;
+        }
+
+        body {
+            background-color: white !important;
+        }
+
+        /* Hide UI elements */
+        nav,
+        aside,
+        .header-ui,
+        .no-print {
+            display: none !important;
+        }
+
+        /* Reset layout for printing */
+        .h-screen {
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        .overflow-hidden {
+            overflow: visible !important;
+        }
+
+        .overflow-y-auto {
+            overflow: visible !important;
+        }
+
+        .flex {
+            display: block !important;
+        }
+
+        /* Ensure content is visible */
+        .flex-1 {
+            flex: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .max-w-4xl {
+            max-width: none !important;
+            width: 100% !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+        }
+
+        /* Hide specific header in view_book */
+        .border-b.border-gray-200.px-8 {
+            display: none !important;
+        }
+    }
+</style>
 {% endblock %}

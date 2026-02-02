@@ -87,6 +87,7 @@
         .gradient-text {
             background: linear-gradient(to right, #ffffff, #fa0102);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -102,10 +103,45 @@
             border-color: rgba(250, 1, 2, 0.3);
             background: rgba(250, 1, 2, 0.02);
         }
+
+        @media print {
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+
+            body {
+                background-color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .slide {
+                height: 100vh !important;
+                break-after: page;
+                page-break-after: always;
+            }
+
+            #controls,
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-black">
+
+    <div id="controls" class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference">
+        <a href="{{ url_for('docs.library') }}"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Voltar
+        </a>
+        <button onclick="window.print()"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+        </button>
+    </div>
 
     <!-- SLIDE 1: CAPA -->
     <section class="slide grid-bg !p-0 overflow-hidden relative">
@@ -297,7 +333,8 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="card !p-10 border-l-8 border-l-northway-red">
                     <p class="text-2xl font-light leading-relaxed">“Ouvi dizer que vocês são referência no setor... <br>
-                        <span class="font-black uppercase italic text-white">é verdade ou marketing bom?</span>”</p>
+                        <span class="font-black uppercase italic text-white">é verdade ou marketing bom?</span>”
+                    </p>
                 </div>
                 <div class="card !p-10 border-l-8 border-l-northway-red">
                     <p class="text-2xl font-light leading-relaxed">“Vocês já têm processo ou <br> <span
@@ -527,6 +564,33 @@
             </p>
         </div>
         <span class="slide-number">#12</span>
+    </section>
+
+    <section class="slide bg-black border-t border-gray-900">
+        <div class="slide-content text-center">
+            <div class="flex flex-col items-center gap-6">
+                <!-- Links -->
+                <div
+                    class="flex flex-wrap justify-center gap-8 md:gap-12 text-sm font-bold tracking-widest uppercase text-gray-500">
+                    <a href="https://www.northwaycompany.com.br/" target="_blank"
+                        class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                        <i data-lucide="globe" class="w-4 h-4"></i> Site
+                    </a>
+                    <a href="https://www.instagram.com/northway.mkt/" target="_blank"
+                        class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                        <i data-lucide="instagram" class="w-4 h-4"></i> Instagram
+                    </a>
+                    <a href="https://www.youtube.com/@NorthWay.marketing" target="_blank"
+                        class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                        <i data-lucide="youtube" class="w-4 h-4"></i> YouTube
+                    </a>
+                </div>
+
+                <p class="text-xs text-center text-gray-800 mt-8 max-w-md mx-auto">
+                    © NorthWay Company. Todos os direitos reservados.
+                </p>
+            </div>
+        </div>
     </section>
 
     <script>
