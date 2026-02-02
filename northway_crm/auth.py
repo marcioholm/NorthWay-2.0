@@ -84,7 +84,15 @@ def reset_password(token):
         
         flash('Senha redefinida com sucesso! Faça login.', 'success')
         
-        # Optional: Send confirmation email
+        # Send confirmation email
+        EmailService.send_email(
+            to=user.email,
+            subject="Sua senha foi alterada - NorthWay",
+            template=EMAIL_TEMPLATES.password_changed,
+            context={'user': user, 'reset_url': url_for('auth.forgot_password', _external=True)},
+            company_id=user.company_id,
+            user_id=user.id
+        )
         
         return redirect(url_for('auth.login'))
         
@@ -198,6 +206,29 @@ def login():
             # Track Activity
             try:
                 user.last_login = get_now_br()
+                db.session.commit()
+                
+                # Send Login Alert (Optionally filter by internal IPs or cookies later)
+                # For now, always send as requested "receive all emails"
+                user_agent = request.headers.get('User-Agent', 'Unknown Alert')
+                ip_address = request.remote_addr
+                
+                # Simple Device Detection (could be better)
+                device_name = "Desktop"
+                if "Mobile" in user_agent:
+                    device_name = "Mobile"
+                
+                EmailService.send_email(
+                    to=user.email,
+                    subject="Alerta de Novo Login - NorthWay",
+                    template=EMAIL_TEMPLATES.new_login,
+                    context={'user': user, 'now': get_now_br(), 'device': device_name, 'location': ip_address},
+                    company_id=user.company_id,
+                    user_id=user.id
+                )
+                
+            except Exception as e:
+                print(f"Login tracking error: {e}")
                 if user.company:
                     user.company.last_active_at = get_now_br()
                 db.session.commit()

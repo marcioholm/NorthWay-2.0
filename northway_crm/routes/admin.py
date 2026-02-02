@@ -25,7 +25,7 @@ def check_admin_access():
 
 @admin_bp.route('/admin/users')
 def users():
-    from models import User, Role # Lazy Import
+    from models import User, Role, EMAIL_TEMPLATES # Lazy Import
     """
     List users ONLY for the current user's company.
     """
@@ -58,7 +58,40 @@ def new_user():
         
         db.session.add(new_user)
         db.session.commit()
-        flash('Usuário criado com sucesso!', 'success')
+        
+        # --- INVITE FLOW START ---
+        from models import PasswordResetToken, EMAIL_TEMPLATES
+        from services.email_service import EmailService
+        import secrets
+        import hashlib
+        from datetime import timedelta
+        from utils import get_now_br
+        
+        # Generate generic Invite Token (reusing Password Reset logic)
+        token_raw = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(token_raw.encode()).hexdigest()
+        
+        reset_token = PasswordResetToken(
+            user_id=new_user.id,
+            token_hash=token_hash,
+            expires_at=get_now_br() + timedelta(hours=48) # 48h for invite
+        )
+        db.session.add(reset_token)
+        db.session.commit()
+        
+        invite_url = url_for('auth.reset_password', token=token_raw, _external=True)
+        
+        EmailService.send_email(
+            to=new_user.email,
+            subject=f"Convite para entrar na {current_user.company.name}",
+            template=EMAIL_TEMPLATES.invite_user,
+            context={'user': new_user, 'company': current_user.company, 'invite_url': invite_url},
+            company_id=current_user.company_id,
+            user_id=new_user.id
+        )
+        # --- INVITE FLOW END ---
+
+        flash('Usuário criado e convite enviado por e-mail!', 'success')
         return redirect(url_for('admin.users'))
         
     return render_template('admin/user_form.html', user=None)
