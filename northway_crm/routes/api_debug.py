@@ -65,7 +65,7 @@ def preview_email_template(template_name):
             
         # Mock Data
         mock_user = User(name="Usuário Teste", email="teste@northway.com")
-        mock_company = Company(name="Empresa Exemplo Ltda", logo_filename="default_logo.png")
+        mock_company = Company(name="Empresa Exemplo Ltda", logo_filename=None) # Set to None to avoid broken image in preview
         mock_context = {
             'user': mock_user,
             'company': mock_company,
