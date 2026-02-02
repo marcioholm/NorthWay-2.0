@@ -219,11 +219,10 @@ def delete_integration(service):
 def profile():
     from models import db
     if request.method == 'POST':
-        current_user.name = request.form.get('name')
         current_user.phone = request.form.get('phone')
         current_user.status_message = request.form.get('status_message')
         
-        password = request.form.get('password')
+        password = request.form.get('new_password')
         if password:
             current_user.password_hash = generate_password_hash(password)
             

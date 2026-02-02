@@ -427,26 +427,10 @@ def google_callback_server():
         user = User.query.filter_by(email=email).first()
         
         if not user:
-            # First time login via Google - Create User only and force setup
-            print(f"🌱 Google Login: Creating new user body for {email}")
-            
-            # Create User (Company will be linked in setup-company)
-            user = User(
-                name=name,
-                email=email,
-                supabase_uid=sb_user.id,
-                password_hash=generate_password_hash('google_oauth_placeholder_' + sb_user.id), # Secure placeholder
-                role='admin'
-            )
-            # Set Initial Access Tracking
-            user.last_login = get_now_br()
-            
-            db.session.add(user)
-            db.session.commit()
-            
-            login_user(user)
-            flash(f'Bem-vindo, {name}! Para começar, configure os dados da sua empresa.', 'info')
-            return redirect(url_for('auth.setup_company'))
+            # First time login via Google - DENY ACCESS if not registered
+            print(f"🛑 Google Login Denied: {email} not found in DB.")
+            flash('Este email não possui conta. Por favor, registre-se primeiro.', 'error')
+            return redirect(url_for('auth.login'))
             
         else:
             # Existing User - Link UID if not set
