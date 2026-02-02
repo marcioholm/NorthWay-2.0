@@ -511,10 +511,27 @@ def sys_seed_library():
         else:
             book.cover_image = "cover_inaction.jpg"
             book.route_name = "docs.presentation_cost_of_inaction"
+            
+        # 2a. Add 'Diagnóstico do Mercado Óptico Local'
+        diag_book = LibraryBook.query.filter_by(title="Diagnóstico do Mercado Óptico Local").first()
+        if not diag_book:
+            diag_book = LibraryBook(
+                title="Diagnóstico do Mercado Óptico Local",
+                description="Uma análise exclusiva e completa sobre o mercado óptico local, gargalos e oportunidades.",
+                category="Apresentação",
+                cover_image="cover_diagnostic.jpg",
+                route_name="docs.presentation_diagnostic",
+                active=True
+            )
+            db.session.add(diag_book)
+        else:
+            diag_book.cover_image = "cover_diagnostic.jpg"
+            diag_book.route_name = "docs.presentation_diagnostic"
         
         db.session.commit()
-        if company not in book.allowed_companies:
-            book.allowed_companies.append(company)
+        
+        if company not in book.allowed_companies: book.allowed_companies.append(company)
+        if company not in diag_book.allowed_companies: diag_book.allowed_companies.append(company)
 
         # 3. Update Covers for All
         cover_map = {
