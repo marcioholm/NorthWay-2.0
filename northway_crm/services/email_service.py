@@ -65,6 +65,14 @@ class EmailService:
             
             response = resend.Emails.send(params)
             
+            # Extract Resend Message ID
+            # Resend SDK returns a dict like {'id': '...'} or an object
+            provider_id = None
+            if isinstance(response, dict):
+                 provider_id = response.get('id')
+            elif hasattr(response, 'id'):
+                 provider_id = response.id
+
             # 4. Log the success in Database
             EmailLog.create_log(
                 company_id=company_id,
@@ -72,7 +80,8 @@ class EmailService:
                 email_to=to[0] if to else "N/A",
                 subject=subject,
                 status='sent',
-                provider='resend'
+                provider='resend',
+                provider_message_id=provider_id
             )
             
             return True, response

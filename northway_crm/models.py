@@ -576,6 +576,16 @@ class Goal(db.Model):
     min_new_sales = db.Column(db.Float, default=0.0) # New Goal Condition
 
 
+class PasswordResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    token_hash = db.Column(db.String(128), nullable=False, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    user = db.relationship('User', backref=db.backref('reset_tokens', lazy=True))
+
 class EmailLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)
@@ -584,6 +594,7 @@ class EmailLog(db.Model):
     subject = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(50), default='sent') # sent, failed, delivered
     provider = db.Column(db.String(50), default='resend')
+    provider_message_id = db.Column(db.String(100), nullable=True) # Resend ID
     error_message = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
 
@@ -591,7 +602,7 @@ class EmailLog(db.Model):
     user = db.relationship('User', backref='email_logs')
 
     @classmethod
-    def create_log(cls, company_id, user_id, email_to, subject, status, provider='resend', error_message=None):
+    def create_log(cls, company_id, user_id, email_to, subject, status, provider='resend', error_message=None, provider_message_id=None):
         try:
             log = cls(
                 company_id=company_id,
@@ -600,7 +611,8 @@ class EmailLog(db.Model):
                 subject=subject,
                 status=status,
                 provider=provider,
-                error_message=error_message
+                error_message=error_message,
+                provider_message_id=provider_message_id
             )
             db.session.add(log)
             db.session.commit()

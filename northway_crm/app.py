@@ -248,6 +248,7 @@ def create_app():
             from routes.prospecting import prospecting_bp
             from routes.integrations import integrations_bp
             from routes.admin import admin_bp
+            from routes.api_debug import api_debug_bp
             
             app.register_blueprint(auth_blueprint)
             app.register_blueprint(master_blueprint)
@@ -257,6 +258,7 @@ def create_app():
             app.register_blueprint(prospecting_bp)
             app.register_blueprint(integrations_bp)
             app.register_blueprint(admin_bp)
+            app.register_blueprint(api_debug_bp)
             
             # Safe Register for complex blueprints that might break on schema
             from routes.api_extension import api_ext

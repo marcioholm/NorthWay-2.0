@@ -1,13 +1,95 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+import os
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES
+from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES, PasswordResetToken
 from services.supabase_service import init_supabase
+from services.email_service import EmailService
 from utils import get_now_br
 from datetime import timedelta, datetime, date
-
+import secrets
+import hashlib
 
 auth = Blueprint('auth', __name__)
+
+@auth.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        
+        # Always show generic message for security
+        flash('Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.', 'info')
+        
+        if user:
+            # Generate Secure Token
+            token_raw = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(token_raw.encode()).hexdigest()
+            
+            reset_token = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=get_now_br() + timedelta(hours=1)
+            )
+            db.session.add(reset_token)
+            db.session.commit()
+            
+            # Send Email
+            app_url = os.getenv('APP_URL', 'https://crm.northwaycompany.com.br') # Env fallback
+            reset_url = f"{app_url}/auth/reset_password/{token_raw}"
+            
+            EmailService.send_email(
+                to=user.email,
+                subject="Redefinição de Senha - NorthWay",
+                template="reset_password.html",
+                context={'user': user, 'reset_url': reset_url},
+                company_id=user.company_id,
+                user_id=user.id
+            )
+            # Log for debug dev (remove in prod if strict)
+            print(f"🔑 Reset Token sent to {email}")
+            
+        return redirect(url_for('auth.login'))
+        
+    return render_template('auth/forgot_password.html')
+
+@auth.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    # Hash token to compare
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    
+    reset_token = PasswordResetToken.query.filter_by(token_hash=token_hash, used=False).first()
+    
+    # Validation
+    if not reset_token or reset_token.expires_at < get_now_br():
+        flash('Link de redefinição inválido ou expirado.', 'error')
+        return redirect(url_for('auth.forgot_password'))
+        
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm = request.form.get('confirm_password')
+        
+        if password != confirm:
+            flash('As senhas não coincidem.', 'error')
+            return render_template('auth/reset_password.html', token=token)
+            
+        # Update User
+        user = User.query.get(reset_token.user_id)
+        user.password_hash = generate_password_hash(password)
+        
+        # Mark used
+        reset_token.used = True
+        
+        db.session.commit()
+        
+        flash('Senha redefinida com sucesso! Faça login.', 'success')
+        
+        # Optional: Send confirmation email
+        
+        return redirect(url_for('auth.login'))
+        
+    return render_template('auth/reset_password.html', token=token)
+
 
 @auth.before_app_request
 def check_saas_status():
