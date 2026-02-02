@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing com Resultado - NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            dark: '#0f0f0f',
+                            gray: '#1a1a1a',
+                            light: '#f9fafb'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Montserrat:wght@700;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #0f1115;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 20px auto;
+            background: #0f1115;
+            border: 1px solid #333;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .page-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .highlight-text {
+            color: #fa0102;
+        }
+
+        .icon-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fa0102;
+            margin-bottom: 2rem;
+        }
+
+        .page-footer {
+            position: absolute;
+            bottom: 20mm;
+            left: 20mm;
+            right: 20mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid #333;
+            padding-top: 1rem;
+        }
+
+        .page-number {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            color: #333;
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        /* Print Styles */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .page {
+                margin: 0;
+                border: none;
+                box-shadow: none;
+                background: white !important;
+                color: black !important;
+                break-after: page;
+                page-break-after: always;
+                min-height: 297mm;
+                height: 297mm;
+            }
+
+            .bg-\[\#0f1115\],
+            .bg-black {
+                background-color: white !important;
+            }
+
+            .text-white {
+                color: black !important;
+            }
+
+            .text-gray-400,
+            .text-gray-300,
+            .text-gray-500 {
+                color: #555 !important;
+            }
+
+            .icon-box {
+                border-color: #ddd !important;
+                background: #f5f5f5 !important;
+                color: #fa0102 !important;
+            }
+
+            .page-footer {
+                border-top-color: #ddd !important;
+            }
+
+            .highlight-text {
+                color: #fa0102 !important;
+            }
+
+            /* Invert logo for print if it's the black one */
+            .logo-header {
+                filter: none !important;
+            }
+
+            /* Remove UI */
+            .no-print {
+                display: none !important;
+            }
+
+            /* Optimizations */
+            *,
+            *::before,
+            *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="fixed top-6 right-6 z-50 flex gap-4 no-print">
+        <a href="{{ url_for('docs.library') }}"
+            class="bg-white/10 hover:bg-white/20 backdrop-blur text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+        </a>
+        <button onclick="window.print()"
+            class="bg-[#fa0102] hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-lg shadow-red-900/20 transition flex items-center gap-2">
+            <i data-lucide="printer" class="w-4 h-4"></i> Salvar PDF
+        </button>
+    </div>
+
+    <!-- PÁGINA 1: CAPA -->
+    <div class="page text-center">
+        <div class="page-content items-center">
+            <div class="mb-12">
+                <img src="{{ url_for('static', filename='images/logo-white.png') }}"
+                    class="h-12 logo-print-invert mx-auto">
+            </div>
+
+            <div class="w-24 h-2 bg-[#fa0102] mb-12"></div>
+
+            <h1 class="text-6xl font-black font-display uppercase leading-none mb-6">
+                Marketing só é<br>
+                marketing quando<br>
+                <span class="text-[#fa0102]">gera resultado</span>
+            </h1>
+
+            <p class="text-xl tracking-widest uppercase font-bold text-gray-400 mb-16">
+                Atrai. Engaja. Vende. E vende de novo.
+            </p>
+
+            <div class="border border-gray-700 p-8 max-w-lg mx-auto relative print:border-gray-300">
+                <div
+                    class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0f1115] px-4 text-gray-500 text-xs font-bold uppercase print:bg-white">
+                    Alerta</div>
+                <p class="text-lg italic font-light">"Se um desses pilares está quebrado, você não tem um problema de
+                    marketing. <strong class="text-white block mt-2 not-italic">Você tem um problema de
+                        crescimento.</strong>"</p>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 uppercase tracking-widest text-left">
+                Um guia simples para parar de fazer marketing por fazer<br>
+                e começar a vender com processo.
+            </div>
+            <div class="page-number">01</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 2: INTRODUÇÃO -->
+    <div class="page">
+        <div class="page-content">
+            <div class="icon-box">
+                <i data-lucide="layers" class="w-8 h-8"></i>
+            </div>
+
+            <h2 class="text-4xl font-black font-display mb-8">Introdução</h2>
+
+            <div class="space-y-6 text-lg text-gray-300">
+                <p>Hoje, quase toda empresa faz marketing. <strong class="text-white">Poucas crescem com ele.</strong>
+                </p>
+
+                <p>Posts são feitos. Anúncios são rodados. Ferramentas são contratadas. Mesmo assim, o resultado não
+                    vem.</p>
+
+                <p class="text-xl border-l-4 border-[#fa0102] pl-6 py-2 italic text-white my-8">
+                    A causa raramente é falta de esforço. Na maioria das vezes, é falta de estrutura.
+                </p>
+
+                <p>Marketing não é sobre ações isoladas. É sobre <strong>processo</strong>.</p>
+
+                <p>E esse processo só funciona quando quatro pilares estão de pé:</p>
+
+                <div
+                    class="flex items-center justify-between gap-4 mt-8 py-8 border-y border-gray-800 print:border-gray-200">
+                    <div class="text-center">
+                        <i data-lucide="target" class="w-6 h-6 mx-auto mb-2 text-[#fa0102]"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">Atrair</span>
+                    </div>
+                    <i data-lucide="arrow-right" class="text-gray-600 w-4 h-4"></i>
+                    <div class="text-center">
+                        <i data-lucide="message-circle" class="w-6 h-6 mx-auto mb-2 text-[#fa0102]"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">Engajar</span>
+                    </div>
+                    <i data-lucide="arrow-right" class="text-gray-600 w-4 h-4"></i>
+                    <div class="text-center">
+                        <i data-lucide="clipboard-check" class="w-6 h-6 mx-auto mb-2 text-[#fa0102]"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">Vender</span>
+                    </div>
+                    <i data-lucide="arrow-right" class="text-gray-600 w-4 h-4"></i>
+                    <div class="text-center">
+                        <i data-lucide="repeat" class="w-6 h-6 mx-auto mb-2 text-[#fa0102]"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">De Novo</span>
+                    </div>
+                </div>
+
+                <p class="mt-8">Se um deles quebra, todo o sistema perde eficiência.</p>
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">02</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 3: ALERTA -->
+    <div class="page">
+        <div class="page-content">
+            <div class="icon-box !border-[#fa0102] !bg-[#fa0102]/10 !text-[#fa0102]">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+
+            <h2 class="text-4xl font-black font-display mb-12 uppercase leading-tight">
+                O alerta que você <br><span class="text-[#fa0102]">precisa ouvir</span>
+            </h2>
+
+            <p class="text-2xl font-light mb-12">
+                Se um desses pilares está quebrado, <strong class="text-white font-bold">certamente você está deixando
+                    de vender mais.</strong>
+            </p>
+
+            <div class="grid grid-cols-1 gap-6 mb-12">
+                <div class="flex items-center gap-4">
+                    <i data-lucide="x-circle" class="text-[#fa0102] w-6 h-6"></i>
+                    <span class="text-gray-300 text-lg">Atraindo pessoas erradas</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <i data-lucide="x-circle" class="text-[#fa0102] w-6 h-6"></i>
+                    <span class="text-gray-300 text-lg">Engajando sem conduzir para a venda</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <i data-lucide="x-circle" class="text-[#fa0102] w-6 h-6"></i>
+                    <span class="text-gray-300 text-lg">Vendendo sem construir relacionamento</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <i data-lucide="x-circle" class="text-[#fa0102] w-6 h-6"></i>
+                    <span class="text-gray-300 text-lg">Ignorando quem já comprou</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-8 rounded-xl print:bg-gray-100 print:text-black">
+                <p class="font-bold text-lg mb-2 text-white">O resultado é sempre o mesmo:</p>
+                <p class="text-gray-400">Muito esforço. Pouca previsibilidade. Crescimento instável.</p>
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">03</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 4: PILAR 1 -->
+    <div class="page">
+        <div class="page-content">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="text-6xl font-black text-[#fa0102] opacity-20">01</div>
+                <div class="icon-box !mb-0">
+                    <i data-lucide="target" class="w-8 h-8"></i>
+                </div>
+            </div>
+
+            <h2 class="text-5xl font-black font-display mb-12">Atrair</h2>
+
+            <div class="space-y-8 text-xl text-gray-300">
+                <p class="text-2xl text-white font-bold">Sem atenção, nada acontece.</p>
+
+                <p>Atrair não é sobre alcançar todo mundo. É sobre alcançar <strong
+                        class="text-white decoration-[#fa0102] underline decoration-4 underline-offset-4">quem
+                        importa</strong>.</p>
+
+                <div class="space-y-4 pl-4 border-l border-gray-700">
+                    <p>Atrair de verdade significa:</p>
+                    <ul class="space-y-4 list-none">
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102] w-5 h-5"></i>
+                            Falar com quem tem o problema</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102] w-5 h-5"></i>
+                            Falar com quem pode pagar</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102] w-5 h-5"></i>
+                            Falar com quem está no momento certo</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800/50 p-6 border-l-4 border-gray-600 mt-8 print:bg-gray-100">
+                    <p class="text-sm font-bold uppercase text-gray-500 mb-2">O erro mais comum</p>
+                    <p class="text-white italic">Tentar agradar todo mundo. Quem faz isso não atrai. Só faz barulho.</p>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-12 text-center text-[#fa0102] font-black font-display text-2xl uppercase">
+                "Marketing começa quando a atenção certa chega até você."
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">04</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 5: PILAR 2 -->
+    <div class="page">
+        <div class="page-content">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="text-6xl font-black text-[#fa0102] opacity-20">02</div>
+                <div class="icon-box !mb-0">
+                    <i data-lucide="message-circle" class="w-8 h-8"></i>
+                </div>
+            </div>
+
+            <h2 class="text-5xl font-black font-display mb-12">Engajar</h2>
+
+            <div class="space-y-8 text-xl text-gray-300">
+                <p>Atrair faz alguém te ver. Engajar faz alguém <strong class="text-white">confiar</strong>.</p>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-800 p-6 rounded print:bg-gray-100">
+                        <span class="text-red-500 font-bold block mb-2 strike line-through">Não é Like</span>
+                        <span class="text-red-500 font-bold block mb-2 strike line-through">Não é View</span>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded print:bg-gray-100">
+                        <span class="text-white font-bold block mb-2"><i data-lucide="check"
+                                class="inline w-4 h-4 text-[#fa0102]"></i> Identificação</span>
+                        <span class="text-white font-bold block mb-2"><i data-lucide="check"
+                                class="inline w-4 h-4 text-[#fa0102]"></i> Clareza</span>
+                        <span class="text-white font-bold block mb-2"><i data-lucide="check"
+                                class="inline w-4 h-4 text-[#fa0102]"></i> Autoridade</span>
+                    </div>
+                </div>
+
+                <p class="italic">É quando o cliente pensa: <br><strong class="text-white text-2xl">“Eles entendem
+                        exatamente o meu problema.”</strong></p>
+
+                <div class="space-y-2 text-base text-gray-500 mt-4">
+                    <p>Sem engajamento:</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>A venda fica difícil</li>
+                        <li>O cliente pede desconto</li>
+                        <li>A decisão demora</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-12 text-center text-[#fa0102] font-black font-display text-2xl uppercase">
+                "Engajar é preparar o terreno para vender sem forçar."
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">05</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 6: PILAR 3 -->
+    <div class="page">
+        <div class="page-content">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="text-6xl font-black text-[#fa0102] opacity-20">03</div>
+                <div class="icon-box !mb-0">
+                    <i data-lucide="clipboard-check" class="w-8 h-8"></i>
+                </div>
+            </div>
+
+            <h2 class="text-5xl font-black font-display mb-12">Vender</h2>
+
+            <div class="space-y-8 text-xl text-gray-300">
+                <p class="text-2xl text-white font-black uppercase italic">"Marketing que não vende é entretenimento."
+                </p>
+
+                <p>Vender não é empurrar. É <strong class="text-white">conduzir</strong>.</p>
+
+                <div class="border-l-4 border-[#fa0102] pl-8 py-4 space-y-6">
+                    <div class="flex flex-col">
+                        <span class="text-sm uppercase text-gray-500 font-bold">Requisito 01</span>
+                        <span class="text-white font-bold text-lg">A dor está clara</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm uppercase text-gray-500 font-bold">Requisito 02</span>
+                        <span class="text-white font-bold text-lg">A solução é percebida como ideal</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm uppercase text-gray-500 font-bold">Requisito 03</span>
+                        <span class="text-white font-bold text-lg">O próximo passo é simples</span>
+                    </div>
+                </div>
+
+                <p>Se o cliente não sabe o que você vende, para quem é ou como comprar... <strong
+                        class="text-[#fa0102]">ele não compra.</strong></p>
+            </div>
+
+            <div class="mt-auto pt-12 text-center text-[#fa0102] font-black font-display text-2xl uppercase">
+                "Um bom marketing faz a venda parecer o caminho óbvio."
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">06</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 7: PILAR 4 -->
+    <div class="page">
+        <div class="page-content">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="text-6xl font-black text-[#fa0102] opacity-20">04</div>
+                <div class="icon-box !mb-0">
+                    <i data-lucide="repeat" class="w-8 h-8"></i>
+                </div>
+            </div>
+
+            <h2 class="text-5xl font-black font-display mb-12">Vender de Novo</h2>
+            <h3 class="text-xl font-bold text-gray-500 uppercase tracking-widest -mt-10 mb-12">Remarketing & LTV</h3>
+
+            <div class="space-y-8 text-xl text-gray-300">
+                <p>Aqui mora o <strong class="text-white">crescimento real</strong>.</p>
+                <p>Vender uma vez paga o custo. Vender de novo gera lucro.</p>
+
+                <div class="bg-white text-black p-8 rounded-xl shadow-xl print:border print:border-black">
+                    <p class="font-bold mb-4 uppercase text-xs tracking-widest text-[#fa0102]">Fato sobre quem já
+                        comprou:</p>
+                    <div class="space-y-2 font-bold text-lg">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <span>Confia mais</span>
+                            <i data-lucide="chevron-up" class="text-green-600"></i>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <span>Compra mais rápido</span>
+                            <i data-lucide="chevron-up" class="text-green-600"></i>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Compra mais caro</span>
+                            <i data-lucide="chevron-up" class="text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <p>Remarketing não é insistência. É relacionamento.</p>
+            </div>
+
+            <div class="mt-auto pt-12 text-center text-[#fa0102] font-black font-display text-2xl uppercase">
+                "Empresas que crescem olham para frente. Empresas que escalam cuidam de quem já está dentro."
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">07</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 8: PROBLEMAS -->
+    <div class="page">
+        <div class="page-content">
+            <div class="icon-box !border-red-500 !bg-red-900/20 !text-red-500">
+                <i data-lucide="broken-image" class="w-8 h-8"></i>
+            </div>
+
+            <h2 class="text-4xl font-black font-display mb-12 leading-tight">
+                Quando o marketing <br> <span class="text-[#fa0102]">não funciona</span>
+            </h2>
+
+            <p class="text-xl mb-12 text-gray-300">Nada disso é azar. É pilar quebrado.</p>
+
+            <div class="grid grid-cols-2 gap-6">
+                <div class="border border-gray-800 p-6 rounded-lg print:border-gray-300">
+                    <p class="text-gray-500 text-xs font-bold uppercase mb-2">Sintoma 01</p>
+                    <p class="text-white font-bold">Muito tráfego</p>
+                    <p class="text-[#fa0102] font-bold">Pouca venda</p>
+                </div>
+                <div class="border border-gray-800 p-6 rounded-lg print:border-gray-300">
+                    <p class="text-gray-500 text-xs font-bold uppercase mb-2">Sintoma 02</p>
+                    <p class="text-white font-bold">Muito engajamento</p>
+                    <p class="text-[#fa0102] font-bold">Pouca conversão</p>
+                </div>
+                <div class="border border-gray-800 p-6 rounded-lg print:border-gray-300">
+                    <p class="text-gray-500 text-xs font-bold uppercase mb-2">Sintoma 03</p>
+                    <p class="text-white font-bold">Muitas vendas</p>
+                    <p class="text-[#fa0102] font-bold">Pouco lucro</p>
+                </div>
+                <div class="border border-gray-800 p-6 rounded-lg print:border-gray-300">
+                    <p class="text-gray-500 text-xs font-bold uppercase mb-2">Sintoma 04</p>
+                    <p class="text-white font-bold">Muitos clientes</p>
+                    <p class="text-[#fa0102] font-bold">Pouca recorrência</p>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-12 text-center text-white font-black font-display text-2xl uppercase">
+                "Enquanto o marketing não vira processo, o crescimento vira tentativa."
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">08</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 9: PROCESSO -->
+    <div class="page">
+        <div class="page-content text-center">
+
+            <h2 class="text-6xl font-black font-display mb-16 leading-tight uppercase">
+                Marketing é Processo,<br><span class="text-gray-600">Não Campanha</span>
+            </h2>
+
+            <div class="max-w-xl mx-auto space-y-4 text-xl text-gray-400 mb-16">
+                <p>Campanhas passam.</p>
+                <p>Tendências mudam.</p>
+                <p>Ferramentas envelhecem.</p>
+                <p class="text-white font-bold text-3xl pt-4">Processos permanecem.</p>
+            </div>
+
+            <div class="bg-[#1a1a1a] p-10 rounded-2xl border border-gray-800 print:bg-gray-100 print:text-black">
+                <p class="text-lg mb-8">Quando o marketing:</p>
+                <div class="grid grid-cols-2 gap-y-4 text-left max-w-sm mx-auto">
+                    <div class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102]"></i> Atrai com
+                        clareza</div>
+                    <div class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102]"></i> Engaja com
+                        propósito</div>
+                    <div class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102]"></i> Vende com
+                        direção</div>
+                    <div class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102]"></i> Retém com
+                        inteligência</div>
+                </div>
+            </div>
+
+            <div class="mt-16">
+                <p class="text-3xl font-display font-black text-white">
+                    O crescimento deixa de ser sorte.<br>
+                    <span class="text-[#fa0102]">E vira previsibilidade.</span>
+                </p>
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">09</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 10: VISÃO -->
+    <div class="page bg-[#0a0a0a]">
+        <div class="page-content">
+            <div class="icon-box">
+                <i data-lucide="compass" class="w-8 h-8"></i>
+            </div>
+
+            <h2 class="text-5xl font-black font-display mb-12">A Visão Northway</h2>
+
+            <p class="text-2xl font-light text-gray-300 italic mb-12 max-w-3xl">
+                "Não nascemos para vender marketing. <strong
+                    class="text-white not-italic font-black bg-[#fa0102] px-2">Nascemos para dar direção.</strong>"
+            </p>
+
+            <div
+                class="space-y-6 text-xl text-gray-400 pl-6 border-l w-1 bg-gradient-to-b from-[#fa0102] to-transparent">
+                <p class="pl-6"><span class="text-white font-bold">Marketing sem direção</span> é esforço perdido.</p>
+                <p class="pl-6"><span class="text-white font-bold">Ação sem estratégia</span> é ruído.</p>
+                <p class="pl-6"><span class="text-white font-bold">Crescimento sem processo</span> vira caos.</p>
+            </div>
+
+            <div class="mt-16 pt-16 border-t border-gray-800">
+                <p class="text-2xl font-black font-display uppercase leading-tight">
+                    Transformamos marketing em processo.<br>
+                    Processo em previsibilidade.<br>
+                    <span class="text-[#fa0102]">E previsibilidade em crescimento sustentável.</span>
+                </p>
+            </div>
+        </div>
+        <div class="page-footer">
+            <div class="text-xs text-gray-500 font-bold uppercase tracking-widest">Northway Company</div>
+            <div class="page-number text-gray-800">10</div>
+        </div>
+    </div>
+
+    <!-- PÁGINA 11: CTA -->
+    <div class="page bg-black text-center justify-center">
+        <div class="page-content items-center">
+
+            <div class="mb-12">
+                <img src="{{ url_for('static', filename='images/logo-white.png') }}"
+                    class="h-10 logo-print-invert mx-auto opacity-70">
+            </div>
+
+            <h2 class="text-4xl font-bold mb-12 text-gray-300">Se hoje você sente que:</h2>
+
+            <div class="space-y-4 mb-16 text-xl text-gray-400">
+                <p>Está trabalhando muito e crescendo pouco</p>
+                <div class="w-1 h-4 bg-gray-800 mx-auto"></div>
+                <p>Está investindo sem clareza de retorno</p>
+                <div class="w-1 h-4 bg-gray-800 mx-auto"></div>
+                <p>Ou percebe que algum pilar está quebrado</p>
+            </div>
+
+            <p class="text-3xl font-black text-white mb-12">
+                O problema não é falta de esforço.<br>
+                <span class="text-[#fa0102]">É falta de caminho.</span>
+            </p>
+
+            <a href="https://wa.me/5542999896358"
+                class="print:hidden inline-flex items-center gap-3 bg-[#fa0102] text-white font-black uppercase tracking-wider px-8 py-4 rounded-full hover:bg-white hover:text-[#fa0102] transition-colors mb-8">
+                Agendar Conversa Estratégica
+                <i data-lucide="arrow-right"></i>
+            </a>
+
+            <div class="hidden print:block border-2 border-[#fa0102] p-6 rounded-xl mb-8">
+                <p class="text-[#fa0102] font-black uppercase text-xl">Agende uma conversa estratégica</p>
+                <p class="text-sm">Escaneie o QR Code ou acesse nosso site.</p>
+            </div>
+
+            <p class="text-sm text-gray-500 uppercase tracking-widest font-bold">Vamos identificar onde seu marketing
+                está quebrando.</p>
+
+        </div>
+        <div class="page-footer !border-gray-800">
+            <div class="text-xs text-gray-600 font-bold uppercase tracking-widest">Direção antes de execução</div>
+            <div class="text-xs text-gray-600 font-bold uppercase tracking-widest">Northway Company</div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <script>
+        // Adjust for print if using PDF generation tools causing issues with 100vh
+        window.onbeforeprint = function () {
+            // Optional: Expand details, etc.
+        };
+    </script>
+</body>
+
+</html>

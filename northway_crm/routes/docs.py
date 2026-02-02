@@ -66,6 +66,11 @@ def presentation_onboarding():
 def presentation_cost_of_inaction():
     return render_template('docs/presentation_cost_of_inaction.html')
 
+@docs_bp.route('/ebook-marketing-pilares')
+@login_required
+def ebook_marketing_pillars():
+    return render_template('docs/ebook_marketing_pillars.html')
+
 @docs_bp.route('/library')
 @login_required
 def library():
