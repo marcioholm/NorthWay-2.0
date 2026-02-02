@@ -55,24 +55,24 @@ def update_library():
         # 3. Update Covers for Existing Books
         # Mapping Title -> Cover Filename
         cover_map = {
-            "Diagnóstico do Mercado Óptico Local": "cover_diagnostic.jpg",
-            "Diagnóstico Estratégico": "cover_diagnostic_old.jpg", # Or same
-            "Playbook Comercial": "cover_sales.jpg",
-            "Playbook de Processos": "cover_process.jpg",
-            "Playbook de Treinamento": "cover_training.jpg",
-            "Onboarding Institucional": "cover_onboarding.jpg",
-            "Manual do Usuário": "cover_manual.jpg",
-            "Apresentação Institucional": "cover_institutional.jpg",
-            "Playbook BDR": "cover_bdr.jpg",
-            "Oferta Principal": "cover_offer_main.jpg",
-            "Oferta Downsell": "cover_offer_downsell.jpg",
-            "Consultoria": "cover_consultancy.jpg",
-            "O Custo da Inação": "cover_inaction.jpg",
-            "Plano Essencial": "cover_offer_downsell.jpg",
-            "Manual de Onboarding": "cover_manual.jpg",
-            "Scripts": "cover_sales_scripts.jpg",
-            "Objeções": "cover_objections.jpg",
-            "Academia": "cover_training.jpg"
+            "Diagnóstico do Mercado Óptico Local": "north_compass.png",
+            "Diagnóstico Estratégico": "north_meeting.png", 
+            "Playbook Comercial": "north_structure.png",
+            "Playbook de Processos": "north_structure.png",
+            "Playbook de Treinamento": "north_meeting.png",
+            "Onboarding Institucional": "north_compass.png",
+            "Manual do Usuário": "crm-user-bg.png",
+            "Apresentação Institucional": "north_compass.png",
+            "Playbook BDR": "north_growth.png",
+            "Oferta Principal": "north_structure.png",
+            "Oferta Downsell": "north_structure.png",
+            "Consultoria": "north_meeting.png",
+            "O Custo da Inação": "north_growth.png",
+            "Plano Essencial": "north_structure.png",
+            "Manual de Onboarding": "north_meeting.png",
+            "Scripts": "north_meeting.png",
+            "Objeções": "north_meeting.png",
+            "Academia": "north_growth.png"
         }
 
         all_books = LibraryBook.query.all()

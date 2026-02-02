@@ -6,465 +6,255 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>O Custo da Inação | NorthWay</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        northway: {
-                            red: '#fa0102',
-                            dark: '#0f0f0f',
-                            gray: '#1a1a1a',
-                            light: '#f9fafb'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;family=Montserrat:wght@400;600;700;800;900&amp;display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            background-color: #050505;
         }
 
         .slide {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 4rem 2rem;
-            border-bottom: 1px solid #e5e7eb;
-            position: relative;
-        }
-
-        .slide-dark {
-            background-color: #0f0f0f;
-            color: white;
-            border-bottom: 1px solid #1a1a1a;
-        }
-
-        .slide-content {
-            max-width: 1000px;
-            margin: 0 auto;
+            scroll-snap-align: start;
             width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: #050505;
+            color: white;
+            padding: 0;
         }
 
-        .highlight {
-            color: #fa0102;
+        .bg-pattern-chaos {
+            background-image: radial-gradient(circle at 20% 80%, rgba(250, 1, 2, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 40%);
+        }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .stack-bg {
+            background: radial-gradient(circle at center, #1a0505 0%, #050505 70%);
         }
     </style>
 </head>
 
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-black text-white font-sans selection:bg-[#fa0102] selection:text-white">
 
-    <!-- SLIDE 1: ABERTURA -->
-    <section class="slide slide-dark text-center">
-        <div class="slide-content">
-            <div class="mb-8">
-                <span
-                    class="bg-northway-red/10 text-northway-red border border-northway-red/20 px-6 py-2 rounded-full text-sm font-bold tracking-widest uppercase">Estratégia
-                    & Direção</span>
-            </div>
-            <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tighter">
-                🚨 O maior risco hoje <br><span class="text-gray-500">não é investir em marketing</span>
-            </h1>
-            <p class="text-2xl md:text-3xl text-white font-bold mt-8">
-                É continuar crescendo <span class="highlight underline underline-offset-8">sem direção</span>.
-            </p>
-        </div>
-        <div
-            class="absolute bottom-10 left-1/2 -translate-x-1/2 text-gray-500 text-xs uppercase tracking-widest font-bold">
-            Northway • Marketing com direção
-        </div>
-    </section>
+    <div id="controls" class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference">
+        <a href="{{ url_for('docs.library') }}"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Voltar
+        </a>
+    </div>
 
-    <!-- SLIDE 2: CONTEXTO (EMPATIA REAL) -->
-    <section class="slide bg-white">
-        <div class="slide-content text-center max-w-4xl">
-            <p class="text-2xl text-gray-500 mb-12 uppercase tracking-widest font-bold">Antes de qualquer coisa...</p>
-            <h2 class="text-4xl md:text-5xl font-black mb-12 leading-tight">Não existe má gestão aqui.</h2>
-            <div class="grid md:grid-cols-2 gap-8 text-left mb-16">
-                <div class="bg-gray-50 p-8 rounded-2xl">
-                    <p class="text-xl text-gray-700">O que existe são óticas:</p>
-                    <ul class="mt-6 space-y-4 font-bold text-lg">
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="text-northway-red"></i>
-                            Trabalhando muito</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="text-northway-red"></i>
-                            Tentando acertar</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="text-northway-red"></i>
-                            Investindo onde dá</li>
-                        <li class="flex items-center gap-3"><i data-lucide="check" class="text-northway-red"></i>
-                            Resolvendo problemas todo dia</li>
-                    </ul>
+    <div class="slide-container">
+
+        <!-- SLIDE 1: ABERTURA -->
+        <section class="slide bg-pattern-chaos">
+            <div class="relative z-10 text-center max-w-5xl px-6">
+                <div class="inline-block mb-8 px-6 py-2 rounded-full border border-red-900/40 bg-red-900/10">
+                    <span class="text-[#fa0102] text-xs font-bold uppercase tracking-[0.3em]">Alerta Estratégico</span>
                 </div>
-                <div
-                    class="flex items-center justify-center p-8 bg-northway-red/5 rounded-2xl border border-northway-red/10">
-                    <p class="text-2xl font-black text-center text-northway-red italic">"Se fosse falta de esforço,<br>o
-                        problema já estaria resolvido."</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- SLIDE 3: A REALIDADE DO DIA A DIA -->
-    <section class="slide bg-gray-50">
-        <div class="slide-content">
-            <h2 class="text-4xl font-black mb-16 text-center">A Realidade do Dia a Dia</h2>
-            <div class="grid md:grid-cols-2 gap-12">
-                <div class="space-y-8">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <i data-lucide="message-circle" class="text-green-500 mb-2"></i>
-                        <p class="text-lg font-bold">Quantas conversas você tem hoje abertas no WhatsApp?</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <i data-lucide="shopping-cart" class="text-green-500 mb-2"></i>
-                        <p class="text-lg font-bold">Quantas realmente viram venda?</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <i data-lucide="alert-circle" class="text-red-500 mb-2"></i>
-                        <p class="text-lg font-bold">Você sabe onde cada negociação travou?</p>
-                    </div>
-                </div>
-                <div class="flex flex-col justify-center border-l-4 border-northway-red pl-8">
-                    <p class="text-2xl font-light italic mb-8">"Quando o crescimento depende de pessoas, ele é frágil."
-                    </p>
-                    <p class="text-3xl font-black text-northway-red">"Quando depende de processo, ele é previsível."</p>
-                </div>
-            </div>
-        </div>
-    </section>
+                <h1 class="text-6xl md:text-8xl font-black font-display tracking-tighter mb-8 leading-tight">
+                    O Custo<br>da <span class="text-[#fa0102]">Inação</span>
+                </h1>
 
-    <!-- SLIDE 4: O ERRO MAIS COMUM -->
-    <section class="slide slide-dark">
-        <div class="slide-content text-center">
-            <h2 class="text-5xl font-black mb-4">Muito movimento.</h2>
-            <h2 class="text-5xl font-black mb-16 text-gray-500">Pouca clareza.</h2>
-
-            <div
-                class="flex justify-center gap-4 mb-12 flex-wrap text-gray-400 font-mono text-sm uppercase tracking-widest">
-                <span class="border border-white/20 px-4 py-2 rounded-full">De Post em Post</span>
-                <span class="border border-white/20 px-4 py-2 rounded-full">De Campanha em Campanha</span>
-                <span class="border border-white/20 px-4 py-2 rounded-full">De Agência em Agência</span>
-            </div>
-
-            <p class="text-2xl text-white mb-16 italic">Sempre tentando "dar um gás". <br> Mas sem organizar a base.</p>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
-                <div class="bg-red-900/20 p-6 rounded-xl border border-red-500/20">
-                    <p class="text-xl font-bold text-red-400">👉 Ação sem estratégia vira ruído.</p>
-                </div>
-                <div class="bg-red-900/20 p-6 rounded-xl border border-red-500/20">
-                    <p class="text-xl font-bold text-red-400">👉 Crescimento sem processo vira caos.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- SLIDE 5: ONDE A VENDA SE PERDE -->
-    <section class="slide bg-white">
-        <div class="slide-content">
-            <h2 class="text-4xl font-black mb-16 text-center">Onde a venda se perde?</h2>
-            <p class="text-center text-gray-500 mb-12 text-xl">Pelos dados e pelas conversas, a venda costuma se perder
-                em três pontos:</p>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <div
-                    class="bg-gray-50 p-8 rounded-2xl hover:bg-white hover:shadow-xl transition-all border border-gray-100 group">
-                    <div
-                        class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-6 group-hover:bg-northway-red group-hover:text-white transition-colors font-black">
-                        1</div>
-                    <h3 class="text-xl font-bold mb-4">Falta de Acompanhamento</h3>
-                    <p class="text-gray-600">O cliente pede preço e ninguém chama de novo.</p>
-                </div>
-                <div
-                    class="bg-gray-50 p-8 rounded-2xl hover:bg-white hover:shadow-xl transition-all border border-gray-100 group">
-                    <div
-                        class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-6 group-hover:bg-northway-red group-hover:text-white transition-colors font-black">
-                        2</div>
-                    <h3 class="text-xl font-bold mb-4">WhatsApp Desorganizado</h3>
-                    <p class="text-gray-600">Cada vendedor responde de um jeito. Sem padrão.</p>
-                </div>
-                <div
-                    class="bg-gray-50 p-8 rounded-2xl hover:bg-white hover:shadow-xl transition-all border border-gray-100 group">
-                    <div
-                        class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-6 group-hover:bg-northway-red group-hover:text-white transition-colors font-black">
-                        3</div>
-                    <h3 class="text-xl font-bold mb-4">Marketing Desconectado</h3>
-                    <p class="text-gray-600">Marketing traz leads, mas a venda não acontece.</p>
-                </div>
-            </div>
-            <p class="text-center mt-12 font-bold uppercase tracking-widest text-sm text-northway-red">Não é um problema
-                isolado. É estrutural.</p>
-        </div>
-    </section>
-
-    <!-- SLIDE 6: O CUSTO DA INAÇÃO -->
-    <section class="slide bg-northway-red text-white text-center">
-        <div class="slide-content">
-            <h2 class="text-5xl md:text-6xl font-black mb-12">💸 Quanto custa continuar exatamente como está?</h2>
-            <div class="bg-white/10 backdrop-blur-md rounded-3xl p-12 max-w-3xl mx-auto border border-white/20">
-                <div class="grid md:grid-cols-2 gap-8 text-left items-center">
-                    <div>
-                        <p class="text-lg opacity-80 mb-2">Perda média mensal</p>
-                        <p class="text-4xl font-black">10 vendas</p>
-                        <p class="text-sm opacity-60 mt-4">Ticket médio R$ 1.000</p>
-                    </div>
-                    <div class="border-t md:border-t-0 md:border-l border-white/20 pt-8 md:pt-0 md:pl-8">
-                        <p class="text-lg opacity-80 mb-2">Acumulado anual</p>
-                        <p class="text-6xl font-black text-white drop-shadow-lg">R$ 120k</p>
-                        <p class="text-sm opacity-60 mt-4">Deixados na mesa todo ano.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-16 text-xl font-medium max-w-2xl mx-auto italic">
-                "Inação não é não fazer nada.<br>
-                É continuar fazendo do mesmo jeito, mesmo sabendo que não está funcionando."
-            </div>
-        </div>
-    </section>
-
-    <!-- SLIDE 7: O PROBLEMA NÃO É MARKETING -->
-    <section class="slide bg-white">
-        <div class="slide-content text-center">
-            <h2 class="text-4xl font-black mb-16">O problema <span class="highlight">não</span> é:</h2>
-            <div class="flex flex-wrap justify-center gap-6 mb-16">
-                <span class="px-6 py-3 bg-gray-100 rounded-full text-gray-400 font-bold line-through">Instagram</span>
-                <span class="px-6 py-3 bg-gray-100 rounded-full text-gray-400 font-bold line-through">Anúncios</span>
-                <span class="px-6 py-3 bg-gray-100 rounded-full text-gray-400 font-bold line-through">Ferramenta</span>
-                <span class="px-6 py-3 bg-gray-100 rounded-full text-gray-400 font-bold line-through">Equipe</span>
-            </div>
-            <h2 class="text-5xl md:text-6xl font-black mb-8">O problema é falta de <span
-                    class="highlight underline decoration-8 underline-offset-8">direção</span>.</h2>
-            <p class="text-2xl text-gray-600">Marketing sem direção não constrói crescimento.<br>Só gera esforço.</p>
-        </div>
-    </section>
-
-    <!-- SLIDE 8: O QUE A NORTHWAY ACREDITA -->
-    <section class="slide slide-dark">
-        <div class="slide-content grid md:grid-cols-2 gap-16 items-center">
-            <div>
-                <img src="/static/logo-white.png" onerror="this.src='/static/images/logo_northway.png'" alt="Northway"
-                    class="w-48 mb-8 opacity-80">
-                <h2 class="text-4xl font-black mb-8 leading-tight">Não nascemos para vender marketing.</h2>
-                <p class="text-2xl text-northway-red font-bold underline underline-offset-8">Nascemos para dar direção.
+                <p class="text-2xl text-gray-400 font-light max-w-3xl mx-auto">
+                    O maior risco hoje não é investir em marketing.<br>
+                    <span class="text-white font-medium">É continuar crescendo sem direção.</span>
                 </p>
             </div>
-            <div class="text-right space-y-6 text-2xl font-light text-gray-300">
-                <p>Nosso papel não é fazer barulho.<br><strong class="text-white">É construir base.</strong></p>
-                <div class="h-px bg-white/10 w-full my-8"></div>
-                <p>Menos improviso. <strong class="text-white">Mais clareza.</strong></p>
-                <p>Menos promessa. <strong class="text-white">Mais processo.</strong></p>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- SLIDE 9: NOSSA VISÃO DE CRESCIMENTO -->
-    <section class="slide bg-gray-50">
-        <div class="slide-content text-center">
-            <h2 class="text-4xl font-black mb-16">Crescimento saudável acontece quando:</h2>
-            <div class="grid md:grid-cols-4 gap-4">
+        <!-- SLIDE 2: CONTEXTO -->
+        <section class="slide bg-white text-black">
+            <div class="max-w-4xl text-center px-6">
+                <p class="text-gray-500 uppercase tracking-widest font-bold text-sm mb-12">Antes de tudo</p>
+                <h2 class="text-5xl font-black font-display mb-12">Não existe má gestão aqui.</h2>
+
+                <div class="grid md:grid-cols-2 gap-8 text-left">
+                    <div class="bg-gray-100 p-8 rounded-2xl">
+                        <p class="text-xl font-medium text-gray-800 mb-6">O que existe são óticas:</p>
+                        <ul class="space-y-4 font-bold text-gray-600">
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102]"></i>
+                                Trabalhando muito</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102]"></i>
+                                Tentando acertar</li>
+                            <li class="flex items-center gap-3"><i data-lucide="check" class="text-[#fa0102]"></i>
+                                Resolvendo problemas</li>
+                        </ul>
+                    </div>
+                    <div
+                        class="flex items-center justify-center p-8 border border-red-200 bg-red-50 rounded-2xl text-center">
+                        <p class="text-2xl font-black text-[#fa0102] italic">
+                            "Se fosse falta de esforço,<br>já estaria resolvido."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: O ERRO MAIS COMUM -->
+        <section class="slide bg-[#050505]">
+            <div class="text-center max-w-4xl px-6">
+                <h2 class="text-5xl font-black font-display mb-4">Muito movimento.</h2>
+                <h2 class="text-5xl font-black font-display mb-16 text-gray-600">Pouca clareza.</h2>
+
                 <div
-                    class="bg-white p-6 rounded-xl border-b-4 border-gray-200 hover:border-northway-red transition-all">
-                    <i data-lucide="user-plus" class="mx-auto mb-4 text-gray-400"></i>
-                    <p class="font-bold text-gray-800">O cliente certo chega</p>
+                    class="flex flex-wrap justify-center gap-4 mb-16 text-gray-500 font-mono text-sm uppercase tracking-widest">
+                    <span class="border border-white/10 px-4 py-2 rounded-full">De Post em Post</span>
+                    <span class="border border-white/10 px-4 py-2 rounded-full">De Campanha em Campanha</span>
                 </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="glass-panel p-6 rounded-xl border-red-900/30">
+                        <p class="text-lg font-bold text-red-500">Ação sem estratégia vira ruído.</p>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl border-red-900/30">
+                        <p class="text-lg font-bold text-red-500">Crescimento sem processo vira caos.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: OS DADOS -->
+        <section class="slide stack-bg">
+            <div class="text-center px-6">
+                <p class="text-[#fa0102] font-bold uppercase tracking-widest mb-12">Matemática da Perda</p>
+                <h2 class="text-5xl md:text-7xl font-black font-display text-white mb-6">R$ 120.000,00</h2>
+                <p class="text-2xl text-gray-400 mb-16">Deixados na mesa todo ano.</p>
+
                 <div
-                    class="bg-white p-6 rounded-xl border-b-4 border-gray-200 hover:border-northway-red transition-all">
-                    <i data-lucide="git-commit" class="mx-auto mb-4 text-gray-400"></i>
-                    <p class="font-bold text-gray-800">É acompanhado do início ao fim</p>
-                </div>
-                <div
-                    class="bg-white p-6 rounded-xl border-b-4 border-gray-200 hover:border-northway-red transition-all">
-                    <i data-lucide="compass" class="mx-auto mb-4 text-gray-400"></i>
-                    <p class="font-bold text-gray-800">Recebe direção na decisão</p>
-                </div>
-                <div
-                    class="bg-white p-6 rounded-xl border-b-4 border-gray-200 hover:border-northway-red transition-all">
-                    <i data-lucide="repeat" class="mx-auto mb-4 text-gray-400"></i>
-                    <p class="font-bold text-gray-800">Volta a comprar</p>
-                </div>
-            </div>
-            <p class="mt-16 text-xl font-bold text-gray-600 block">Nada disso acontece por acaso.<br><span
-                    class="text-northway-red text-2xl">Acontece por método.</span></p>
-        </div>
-    </section>
-
-    <!-- SLIDE 10: O MÉTODO NORTHWAY -->
-    <section class="slide slide-dark bg-northway-dark">
-        <div class="slide-content">
-            <h2 class="text-4xl font-black mb-16 text-center">O crescimento com direção se apoia em 4 pilares</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-white/5 p-8 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                    <span class="text-4xl font-black text-northway-red mb-4 block">1</span>
-                    <h3 class="text-xl font-bold text-white mb-2">Atrair clientes certos</h3>
-                    <p class="text-gray-400">Não curiosos. Qualificação na entrada.</p>
-                </div>
-                <div class="bg-white/5 p-8 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                    <span class="text-4xl font-black text-northway-red mb-4 block">2</span>
-                    <h3 class="text-xl font-bold text-white mb-2">Reter e acompanhar</h3>
-                    <p class="text-gray-400">Nenhum contato é esquecido. Cadência definida.</p>
-                </div>
-                <div class="bg-white/5 p-8 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                    <span class="text-4xl font-black text-northway-red mb-4 block">3</span>
-                    <h3 class="text-xl font-bold text-white mb-2">Vender com processo</h3>
-                    <p class="text-gray-400">Fim do improviso. Script e técnica.</p>
-                </div>
-                <div class="bg-white/5 p-8 rounded-2xl border border-white/10 hover:bg-white/10 transition-colors">
-                    <span class="text-4xl font-black text-northway-red mb-4 block">4</span>
-                    <h3 class="text-xl font-bold text-white mb-2">Vender de novo (LTV)</h3>
-                    <p class="text-gray-400">Recuperando o que hoje se perde.</p>
+                    class="max-w-3xl mx-auto glass-panel p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between text-left gap-8">
+                    <div>
+                        <p class="text-sm text-gray-500 uppercase font-bold">Perda Mensal</p>
+                        <p class="text-3xl font-black text-white">10 Vendas</p>
+                    </div>
+                    <div class="hidden md:block w-px h-16 bg-white/10"></div>
+                    <div>
+                        <p class="text-sm text-gray-500 uppercase font-bold">Ticket</p>
+                        <p class="text-3xl font-black text-white">R$ 1.000</p>
+                    </div>
+                    <div class="hidden md:block w-px h-16 bg-white/10"></div>
+                    <div>
+                        <p class="text-sm text-gray-500 uppercase font-bold">Custo Anual</p>
+                        <p class="text-3xl font-black text-[#fa0102]">R$ 120k</p>
+                    </div>
                 </div>
             </div>
-            <p class="text-center mt-12 text-gray-500 font-mono text-sm uppercase tracking-widest">Tudo conectado. Nada
-                isolado.</p>
-        </div>
-    </section>
+        </section>
 
-    <!-- SLIDE 11: O QUE ISSO MUDA NA PRÁTICA -->
-    <section class="slide bg-white">
-        <div class="slide-content grid md:grid-cols-2 gap-12 items-center">
-            <div>
-                <h2 class="text-4xl font-black mb-8">O que isso muda na prática?</h2>
-                <ul class="space-y-6 text-xl text-gray-700">
-                    <li class="flex items-center gap-4"><i data-lucide="check-circle" class="text-green-500"></i>
-                        WhatsApp organizado e previsível</li>
-                    <li class="flex items-center gap-4"><i data-lucide="check-circle" class="text-green-500"></i>
-                        Marketing conectado à venda</li>
-                    <li class="flex items-center gap-4"><i data-lucide="check-circle" class="text-green-500"></i> Menos
-                        guerra de preço</li>
-                    <li class="flex items-center gap-4"><i data-lucide="check-circle" class="text-green-500"></i> Menos
-                        dependência de promoção</li>
-                    <li class="flex items-center gap-4"><i data-lucide="check-circle" class="text-green-500"></i> Mais
-                        clareza do que funciona</li>
-                </ul>
+        <!-- SLIDE 5: O PROBLEMA NÃO É INSTAGRAM -->
+        <section class="slide bg-white text-black">
+            <div class="text-center max-w-4xl px-6">
+                <h2 class="text-4xl font-black font-display mb-16">O problema <span class="text-[#fa0102]">não</span> é:
+                </h2>
+                <div class="flex flex-wrap justify-center gap-6 mb-16">
+                    <span
+                        class="px-6 py-3 bg-gray-100 rounded-full text-gray-400 font-bold line-through">Instagram</span>
+                    <span
+                        class="px-6 py-3 bg-gray-100 rounded-full text-gray-400 font-bold line-through">Anúncios</span>
+                    <span class="px-6 py-3 bg-gray-100 rounded-full text-gray-400 font-bold line-through">Equipe</span>
+                </div>
+                <h2 class="text-5xl font-black font-display mb-8">O problema é falta de <span
+                        class="text-[#fa0102] underline decoration-4 underline-offset-8">direção.</span></h2>
             </div>
-            <div class="p-8 bg-gray-50 rounded-2xl border-l-8 border-northway-red">
-                <p class="text-3xl font-black text-gray-900 italic leading-tight">"Resultado não vem de sorte.<br>Vem de
-                    direção."</p>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- SLIDE 12: POR QUE ISSO NÃO SE RESOLVE SOZINHO -->
-    <section class="slide bg-gray-100">
-        <div class="slide-content text-center">
-            <h2 class="text-4xl font-black mb-12">Por que isso não se resolve sozinho?</h2>
-            <div class="grid md:grid-cols-3 gap-8 mb-16">
-                <div class="bg-white p-8 rounded-xl shadow-sm">
-                    <i data-lucide="flame" class="text-orange-500 mx-auto mb-4 w-10 h-10"></i>
-                    <p class="font-bold text-gray-600">Apaga incêndio</p>
+        <!-- SLIDE 6: VISÃO NORTHWAY -->
+        <section class="slide bg-[#080808]">
+            <div class="max-w-5xl grid md:grid-cols-2 gap-16 items-center px-6">
+                <div>
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Northway"
+                        class="h-10 opacity-70 mb-8 invert">
+                    <h2 class="text-4xl font-black font-display text-white mb-6">
+                        Não vendemos marketing.<br>
+                        <span class="text-[#fa0102]">Entregamos direção.</span>
+                    </h2>
+                    <div class="h-1 w-20 bg-[#fa0102] mb-8"></div>
+                    <p class="text-gray-400 text-lg leading-relaxed">
+                        Menos improviso. Mais clareza.<br>
+                        Menos promessa. Mais processo.
+                    </p>
                 </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm">
-                    <i data-lucide="siren" class="text-red-500 mx-auto mb-4 w-10 h-10"></i>
-                    <p class="font-bold text-gray-600">Resolve urgência</p>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow-sm">
-                    <i data-lucide="settings" class="text-gray-500 mx-auto mb-4 w-10 h-10"></i>
-                    <p class="font-bold text-gray-600">Cuida do operacional</p>
-                </div>
-            </div>
-            <p class="text-2xl font-light text-gray-800 italic">É difícil enxergar o todo no meio do caos.</p>
-            <p class="text-xl font-bold text-northway-red mt-4">👉 Por isso, crescemos melhor quando caminhamos com
-                alguém de fora, com método.</p>
-        </div>
-    </section>
-
-    <!-- SLIDE 13: COMO ATUAMOS -->
-    <section class="slide bg-white">
-        <div class="slide-content text-center">
-            <h2 class="text-4xl font-black mb-8">Não atuamos como executores.</h2>
-            <h3 class="text-3xl font-bold text-northway-red mb-12">Atuamos como parceiros estratégicos.</h3>
-
-            <div class="flex justify-center gap-12 text-2xl font-bold text-gray-800">
-                <div class="flex flex-col items-center gap-2">
-                    <span class="w-16 h-1 bg-gray-200 block"></span>
-                    Pensamos junto
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                    <span class="w-16 h-1 bg-gray-200 block"></span>
-                    Decidimos junto
-                </div>
-                <div class="flex flex-col items-center gap-2">
-                    <span class="w-16 h-1 bg-gray-200 block"></span>
-                    Crescemos junto
+                <div class="grid grid-cols-2 gap-4">
+                    <div
+                        class="glass-panel p-6 rounded-xl aspect-square flex flex-col justify-center items-center text-center">
+                        <i data-lucide="compass" class="w-8 h-8 text-[#fa0102] mb-4"></i>
+                        <p class="font-bold text-white">Direção</p>
+                    </div>
+                    <div
+                        class="glass-panel p-6 rounded-xl aspect-square flex flex-col justify-center items-center text-center">
+                        <i data-lucide="layers" class="w-8 h-8 text-[#fa0102] mb-4"></i>
+                        <p class="font-bold text-white">Processo</p>
+                    </div>
+                    <div
+                        class="glass-panel p-6 rounded-xl aspect-square flex flex-col justify-center items-center text-center">
+                        <i data-lucide="trending-up" class="w-8 h-8 text-[#fa0102] mb-4"></i>
+                        <p class="font-bold text-white">Crescimento</p>
+                    </div>
+                    <div
+                        class="glass-panel p-6 rounded-xl aspect-square flex flex-col justify-center items-center text-center">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-[#fa0102] mb-4"></i>
+                        <p class="font-bold text-white">Segurança</p>
+                    </div>
                 </div>
             </div>
-            <p class="mt-16 text-gray-500 uppercase tracking-widest font-black text-sm">Cada cliente é uma missão
-                compartilhada.</p>
-        </div>
-    </section>
+        </section>
 
-    <!-- SLIDE 14: OS CAMINHOS POSSÍVEIS -->
-    <section class="slide slide-dark">
-        <div class="slide-content">
-            <h2 class="text-4xl font-black mb-16 text-center">Existem três caminhos claros:</h2>
-            <div class="space-y-6 max-w-2xl mx-auto">
-                <div
-                    class="bg-white/5 p-6 rounded-xl flex items-center gap-6 opacity-60 hover:opacity-100 transition-opacity">
-                    <span class="text-3xl font-black text-gray-600">1</span>
-                    <p class="text-xl">Continuar como está <span class="text-sm opacity-50 block">O custo da inação
-                            continua.</span></p>
-                </div>
-                <div
-                    class="bg-white/5 p-6 rounded-xl flex items-center gap-6 opacity-60 hover:opacity-100 transition-opacity">
-                    <span class="text-3xl font-black text-gray-600">2</span>
-                    <p class="text-xl">Ajustar pontualmente e torcer <span class="text-sm opacity-50 block">Melhra
-                            pouco, mas não resolve.</span></p>
-                </div>
-                <div
-                    class="bg-northway-red p-8 rounded-xl flex items-center gap-6 transform scale-105 shadow-2xl shadow-red-900/50">
-                    <span class="text-3xl font-black text-white">3</span>
-                    <p class="text-2xl font-bold">Estruturar um processo e crescer com previsibilidade.</p>
+        <!-- SLIDE 7: CTA -->
+        <section class="slide bg-white text-black">
+            <div class="text-center max-w-3xl px-6">
+                <h2 class="text-4xl font-black font-display mb-8">A pergunta não é se você pode crescer.</h2>
+                <p class="text-2xl text-gray-600 mb-12">É quanto custa continuar do mesmo jeito.</p>
+
+                <div class="bg-black text-white p-12 rounded-3xl shadow-2xl relative overflow-hidden group">
+                    <div
+                        class="absolute inset-0 bg-[#fa0102] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500">
+                    </div>
+                    <a href="https://wa.me/5542999896358"
+                        class="relative z-10 flex items-center justify-center gap-4 text-2xl font-black">
+                        Vamos estruturar esse caminho
+                        <i data-lucide="arrow-right"></i>
+                    </a>
                 </div>
             </div>
-            <p class="text-center mt-12 text-white font-bold italic">A escolha define o resultado.</p>
-        </div>
-    </section>
+        </section>
 
-    <!-- SLIDE 15: CTA (DECISÃO CONSCIENTE) -->
-    <section class="slide bg-white text-center">
-        <div class="slide-content">
-            <h2 class="text-4xl font-black mb-8">A pergunta não é se sua ótica pode crescer.</h2>
-            <p class="text-2xl text-gray-600 mb-12">É quanto custa continuar do mesmo jeito.</p>
-
-            <div class="max-w-3xl mx-auto bg-gray-50 p-12 rounded-3xl border border-gray-100 shadow-xl">
-                <p class="text-xl mb-8 font-medium">Se fizer sentido, a Northway está pronta para caminhar junto e
-                    transformar esforço em crescimento com direção.</p>
-
-                <a href="https://wa.me/5500000000000"
-                    class="inline-block bg-northway-red text-white text-2xl font-black py-6 px-12 rounded-full shadow-lg hover:bg-red-700 hover:scale-105 transition-all">
-                    📞 Vamos estruturar esse caminho juntos
-                </a>
+        <!-- SLIDE 8: FECHAMENTO -->
+        <section class="slide bg-black">
+            <div class="text-center">
+                <img src="{{ url_for('static', filename='images/logo.png') }}"
+                    class="h-12 mx-auto mb-8 opacity-50 grayscale">
+                <div class="text-lg font-light tracking-widest text-gray-500 uppercase">
+                    Northway • Marketing com Direção
+                </div>
             </div>
+        </section>
 
-        </div>
-    </section>
-
-    <!-- SLIDE 16: ENCERRAMENTO -->
-    <section class="slide slide-dark text-center">
-        <div class="slide-content">
-            <img src="/static/logo-white.png" onerror="this.src='/static/images/logo_northway.png'" alt="Northway"
-                class="w-64 mx-auto mb-12">
-            <div class="text-3xl font-black text-gray-400 italic mb-16">
-                Resultado não vem de sorte.<br>
-                <span class="text-white">Vem de direção.</span>
-            </div>
-
-            <div
-                class="grid md:grid-cols-3 gap-8 text-xs uppercase tracking-[0.2em] font-bold text-gray-600 border-t border-white/5 pt-12">
-                <span>Marketing com direção</span>
-                <span>Negócios com propósito</span>
-                <span>Crescimento com processo</span>
-            </div>
-        </div>
-    </section>
+    </div>
 
     <script>
         lucide.createIcons();
