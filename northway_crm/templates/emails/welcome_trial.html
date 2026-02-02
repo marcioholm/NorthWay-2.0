@@ -1,0 +1,30 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 20px 0;">
+    <h1 style="color: #111827; margin-bottom: 10px;">Bem-vindo à NorthWay, {{ user.name }}! 🚀</h1>
+    <p style="font-size: 16px; color: #4B5563; margin-bottom: 30px;">
+        Sua conta de <strong>Prospecção Gratuita</strong> foi ativada com sucesso.
+    </p>
+
+    <div
+        style="background-color: #FEF2F2; border: 1px solid #FEE2E2; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: left;">
+        <h3 style="color: #DC2626; margin-top: 0;">O que você pode fazer agora:</h3>
+        <ul style="color: #374151; padding-left: 20px; margin-bottom: 0;">
+            <li style="margin-bottom: 10px;">Acessar o módulo de <strong>Prospecção (Prospect Pro)</strong> para
+                encontrar leads.</li>
+            <li style="margin-bottom: 10px;">Gerenciar seu Pipeline de Vendas sem limites.</li>
+            <li>Configurar a extensão do WhatsApp para integração.</li>
+        </ul>
+    </div>
+
+    <a href="https://crm.northwaycompany.com.br/dashboard"
+        style="display: inline-block; background-color: #DC2626; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">
+        Acessar Meu Dashboard
+    </a>
+
+    <p style="font-size: 14px; color: #9CA3AF; margin-top: 30px;">
+        Seu período de teste expira em 7 dias. Aproveite para fechar novos negócios!
+    </p>
+</div>
+{% endblock %}

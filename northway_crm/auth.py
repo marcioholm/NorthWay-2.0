@@ -367,8 +367,16 @@ def start_trial():
         
         db.session.commit()
         
-        # Optional: Send Welcome Email (Mock)
-        print(f"📧 Sending Welcome & Trial Email to {current_user.email}")
+        # Send Welcome Email
+        from services.email_service import EmailService
+        EmailService.send_email(
+            to=current_user.email,
+            subject="Bem-vindo à NorthWay - Seus 7 Dias de Prospecção Grátis",
+            template="welcome_trial.html",
+            context={'user': current_user, 'company': company},
+            company_id=company.id,
+            user_id=current_user.id
+        )
         
         flash('Período de teste de 7 dias iniciado! Aproveite.', 'success')
         return redirect(url_for('dashboard.home'))
