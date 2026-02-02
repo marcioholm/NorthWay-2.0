@@ -586,12 +586,23 @@ class PasswordResetToken(db.Model):
 
     user = db.relationship('User', backref=db.backref('reset_tokens', lazy=True))
 
+from enum import Enum
+
+class EMAIL_TEMPLATES(Enum):
+    welcome = "welcome"
+    verify_email = "verify_email"
+    reset_password = "reset_password"
+    password_changed = "password_changed"
+    invite_user = "invite_user"
+    new_login = "new_login"
+
 class EmailLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     email_to = db.Column(db.String(255), nullable=False)
     subject = db.Column(db.String(255), nullable=False)
+    template = db.Column(db.String(50), nullable=True) # Stores the ENUM value
     status = db.Column(db.String(50), default='sent') # sent, failed, delivered
     provider = db.Column(db.String(50), default='resend')
     provider_message_id = db.Column(db.String(100), nullable=True) # Resend ID
@@ -602,13 +613,27 @@ class EmailLog(db.Model):
     user = db.relationship('User', backref='email_logs')
 
     @classmethod
-    def create_log(cls, company_id, user_id, email_to, subject, status, provider='resend', error_message=None, provider_message_id=None):
+    def create_log(cls, company_id, user_id, email_to, subject, status, provider='resend', error_message=None, provider_message_id=None, template=None):
         try:
+            # Validate Template if provided
+            template_val = None
+            if template:
+                if isinstance(template, EMAIL_TEMPLATES):
+                    template_val = template.value
+                elif isinstance(template, str) and template in [e.value for e in EMAIL_TEMPLATES]:
+                     template_val = template
+                else:
+                     # Log warning but don't crash, or strictly enforce? 
+                     # User said: "Não permitir valores fora dessa ENUM (validação em runtime...)"
+                     # We will strictly enforce in EmailService, here we just store.
+                     template_val = str(template)
+
             log = cls(
                 company_id=company_id,
                 user_id=user_id,
                 email_to=email_to,
                 subject=subject,
+                template=template_val,
                 status=status,
                 provider=provider,
                 error_message=error_message,

@@ -41,7 +41,7 @@ def forgot_password():
             EmailService.send_email(
                 to=user.email,
                 subject="Redefinição de Senha - NorthWay",
-                template="reset_password.html",
+                template=EMAIL_TEMPLATES.reset_password,
                 context={'user': user, 'reset_url': reset_url},
                 company_id=user.company_id,
                 user_id=user.id
@@ -454,7 +454,7 @@ def start_trial():
         EmailService.send_email(
             to=current_user.email,
             subject="Bem-vindo à NorthWay - Seus 7 Dias de Prospecção Grátis",
-            template="welcome_trial.html",
+            template=EMAIL_TEMPLATES.welcome,
             context={'user': current_user, 'company': company},
             company_id=company.id,
             user_id=current_user.id
