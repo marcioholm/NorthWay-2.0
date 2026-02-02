@@ -80,21 +80,23 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="https://northwaycompany.com.br/static/images/logo.png" alt="NorthWay CRM">
+            <!-- Logo pointing to CRM subdomain for better asset resolution if main site is different -->
+            <img src="https://crm.northwaycompany.com.br/static/images/logo.png" alt="NorthWay CRM" width="150"
+                style="display: block; margin: 0 auto;">
         </div>
 
         <div class="content">
             {% if company %}
             <div class="company-header">
                 {% if company.logo_filename %}
-                <img src="https://northwaycompany.com.br/static/uploads/logos/{{ company.logo_filename }}"
+                <img src="https://crm.northwaycompany.com.br/static/uploads/logos/{{ company.logo_filename }}"
                     class="company-logo">
                 {% endif %}
                 <span class="company-name">{{ company.name }}</span>
             </div>
             {% endif %}
 
-            {% block body %}{% endblock %}
+            {% block content %}{% endblock %}
         </div>
 
         <div class="footer">
