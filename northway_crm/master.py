@@ -60,7 +60,8 @@ def system_reset():
             db.session.execute(text("DELETE FROM client"))
             db.session.execute(text("DELETE FROM contact"))
             
-            # 3. Pipelines
+            # 3. Pipelines (Fix: Clear association first)
+            db.session.execute(text(f"DELETE FROM user_pipeline_association WHERE pipeline_id IN (SELECT id FROM pipeline WHERE company_id != {current_user.company_id})"))
             db.session.execute(text(f"DELETE FROM pipeline_stage WHERE company_id != {current_user.company_id}"))
             db.session.execute(text(f"DELETE FROM pipeline WHERE company_id != {current_user.company_id}"))
             
