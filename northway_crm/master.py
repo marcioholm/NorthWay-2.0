@@ -66,7 +66,7 @@ def system_reset():
             db.session.execute(text(f"DELETE FROM pipeline WHERE company_id != {current_user.company_id}"))
             
             # 4. Users & Companies (Safe check)
-            db.session.execute(text(f"DELETE FROM user WHERE id != {current_user.id}"))
+            db.session.execute(text(f'DELETE FROM "user" WHERE id != {current_user.id}'))
             db.session.execute(text(f"DELETE FROM company WHERE id != {current_user.company_id}"))
             
             # 5. Reset Master Company Status
