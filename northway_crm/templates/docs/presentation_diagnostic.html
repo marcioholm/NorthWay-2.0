@@ -340,26 +340,61 @@
             </div>
         </section>
 
-        <!-- SLIDE 8: DADOS FINANCEIROS -->
+        <!-- SLIDE 8: DADOS FINANCEIROS & BENCHMARK -->
         <section class="slide bg-black">
-            <div class="text-center max-w-4xl px-6">
-                <h2 class="text-4xl font-black font-display mb-16">Vamos falar de dinheiro?</h2>
+            <div class="text-center max-w-6xl w-full px-6">
+                <h2 class="text-4xl font-black font-display mb-12">A Realidade dos Números</h2>
 
-                <div class="grid grid-cols-2 gap-px bg-gray-800 rounded-2xl overflow-hidden border border-gray-800">
-                    <div class="bg-[#0a0a0a] p-12">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Vendas Perdidas/Mês
-                        </p>
-                        <p class="text-6xl font-black text-white">10</p>
-                        <p class="text-sm text-gray-600 mt-2">(Estimativa)</p>
+                <div class="grid md:grid-cols-2 gap-12">
+                    <!-- Coluna 1: O Custo -->
+                    <div class="p-8 rounded-2xl border border-gray-800 bg-[#0a0a0a]">
+                        <p class="text-gray-500 font-bold uppercase tracking-widest text-xs mb-6">Média de Perda
+                            (Mensal)</p>
+                        <div class="flex items-end justify-center gap-2 mb-2">
+                            <span class="text-6xl font-black text-white">10</span>
+                            <span class="text-xl text-gray-400 mb-2">Vendas</span>
+                        </div>
+                        <p class="text-sm text-gray-600">(Estimativa Conservadora)</p>
                     </div>
-                    <div class="bg-[#0a0a0a] p-12">
-                        <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4">Ticket Médio</p>
-                        <p class="text-6xl font-black text-white">R$ 1k</p>
-                        <p class="text-sm text-gray-600 mt-2">(Grau Completo)</p>
+
+                    <!-- Coluna 2: O Benchmark (NOVO) -->
+                    <div
+                        class="p-8 rounded-2xl border border-[#fa0102]/30 bg-gradient-to-br from-[#0a0a0a] to-red-900/10 relative overflow-hidden">
+                        <div class="absolute top-4 right-4 text-[#fa0102] animate-pulse">
+                            <i data-lucide="trending-up" class="w-6 h-6"></i>
+                        </div>
+                        <p class="text-[#fa0102] font-bold uppercase tracking-widest text-xs mb-6">Comparativo de Volume
+                        </p>
+
+                        <div class="space-y-6">
+                            <!-- Sem MKT -->
+                            <div class="flex items-center justify-between opacity-50">
+                                <span class="text-sm text-gray-400">Sem Marketing</span>
+                                <div class="text-right">
+                                    <span class="block text-2xl font-bold text-white">30</span>
+                                    <span class="text-[10px] uppercase text-gray-500">Óculos/mês</span>
+                                </div>
+                            </div>
+                            <!-- Com MKT -->
+                            <div class="relative">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-bold text-white">Com Estrutura</span>
+                                    <div class="text-right">
+                                        <span class="block text-4xl font-black text-[#fa0102]">50 a 130</span>
+                                        <span class="text-[10px] uppercase text-[#fa0102]">Óculos/mês</span>
+                                    </div>
+                                </div>
+                                <div class="w-full h-1 bg-gray-800 mt-2 rounded-full overflow-hidden">
+                                    <div class="h-full bg-[#fa0102] w-full animate-[shimmer_2s_infinite]"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <p class="mt-8 text-xl font-medium text-[#fa0102]">Isso gera um padrão assustador 👇</p>
+                <p class="mt-12 text-xl font-medium text-gray-400">
+                    A diferença não é o produto. É a <strong class="text-white">visibilidade.</strong>
+                </p>
             </div>
         </section>
 
