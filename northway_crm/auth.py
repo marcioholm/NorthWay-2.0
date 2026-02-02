@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, logout_user, login_required, current_user
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES, PasswordResetToken
+from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES, PasswordResetToken, EMAIL_TEMPLATES
 from services.supabase_service import init_supabase
 from services.email_service import EmailService
 from utils import get_now_br
