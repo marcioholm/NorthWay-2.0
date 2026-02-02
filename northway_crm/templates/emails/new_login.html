@@ -1,0 +1,23 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 20px 0;">
+    <h1 style="color: #111827; margin-bottom: 20px;">Novo Acesso Detectado 🔐</h1>
+    <p style="font-size: 16px; color: #4B5563; margin-bottom: 30px;">
+        Olá, {{ user.name }}.<br>
+        Detectamos um novo login na sua conta NorthWay.
+    </p>
+
+    <div
+        style="text-align: left; background-color: #F9FAFB; padding: 20px; border-radius: 8px; border: 1px solid #E5E7EB; display: inline-block; width: 100%; max-width: 400px; margin-bottom: 30px;">
+        <p style="margin: 5px 0;"><strong>📅 Quando:</strong> {{ now.strftime('%d/%m/%Y às %H:%M') }}</p>
+        <p style="margin: 5px 0;"><strong>💻 Dispositivo:</strong> {{ device|default('Navegador Web') }}</p>
+        <p style="margin: 5px 0;"><strong>📍 Localização:</strong> {{ location|default('Brasil') }}</p>
+    </div>
+
+    <p style="font-size: 14px; color: #6B7280; margin-top: 20px;">
+        Se foi você, não precisa fazer nada. <br>
+        Se não reconhece este acesso, recomendamos alterar sua senha imediatamente.
+    </p>
+</div>
+{% endblock %}

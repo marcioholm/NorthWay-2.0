@@ -1,0 +1,21 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 20px 0;">
+    <h1 style="color: #111827; margin-bottom: 20px;">Verifique seu E-mail</h1>
+    <p style="font-size: 16px; color: #4B5563; margin-bottom: 30px;">
+        Olá, {{ user.name }}.<br>
+        Para garantir a segurança da sua conta e acessar todos os recursos da NorthWay, por favor confirme seu endereço
+        de e-mail.
+    </p>
+
+    <a href="{{ verify_url }}" target="_blank"
+        style="display: inline-block; background-color: #DC2626; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; margin-bottom: 30px;">
+        Confirmar E-mail
+    </a>
+
+    <div style="margin-bottom: 30px; font-size: 12px; color: #9CA3AF;">
+        <p>Ou copie este link: <a href="{{ verify_url }}" style="color: #DC2626;">{{ verify_url }}</a></p>
+    </div>
+</div>
+{% endblock %}
