@@ -59,6 +59,22 @@ def system_reset():
             db.session.execute(text("DELETE FROM lead"))
             db.session.execute(text("DELETE FROM client"))
             db.session.execute(text("DELETE FROM contact"))
+            
+            # 2.1 Delete Secondary Data (Financial, Processes, Goals)
+            db.session.execute(text("DELETE FROM expense"))
+            db.session.execute(text("DELETE FROM financial_category"))
+            db.session.execute(text("DELETE FROM client_checklist"))
+            db.session.execute(text("DELETE FROM process_template"))
+            db.session.execute(text("DELETE FROM goal"))
+            
+            # 2.2 Delete System Data (Integrations, Messages, Templates)
+            db.session.execute(text("DELETE FROM integration"))
+            db.session.execute(text("DELETE FROM quick_message"))
+            db.session.execute(text("DELETE FROM template_company_association"))
+            db.session.execute(text("DELETE FROM library_book_company_association"))
+            db.session.execute(text("DELETE FROM contract_template"))
+            db.session.execute(text("DELETE FROM billing_event"))
+            db.session.execute(text("DELETE FROM financial_event"))
             db.session.execute(text("DELETE FROM password_reset_token")) # FK to User
             db.session.execute(text("DELETE FROM email_log")) # FK to User
             
@@ -69,6 +85,7 @@ def system_reset():
             
             # 4. Users & Companies (Safe check)
             db.session.execute(text(f'DELETE FROM "user" WHERE id != {current_user.id}'))
+            db.session.execute(text(f"DELETE FROM role WHERE company_id != {current_user.company_id}")) # Delete Roles after Users
             db.session.execute(text(f"DELETE FROM company WHERE id != {current_user.company_id}"))
             
             # 5. Reset Master Company Status
