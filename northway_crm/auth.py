@@ -548,10 +548,23 @@ def google_callback_server():
         user = User.query.filter_by(email=email).first()
         
         if not user:
-            # First time login via Google - DENY ACCESS if not registered
-            print(f"🛑 Google Login Denied: {email} not found in DB.")
-            flash('Este email não possui conta. Por favor, registre-se primeiro.', 'error')
-            return redirect(url_for('auth.login'))
+            # First time Google Login -> Auto Register
+            print(f"🆕 Google User New: {email} -> Creating Account...")
+            
+            # Create minimal User
+            temp_pass = secrets.token_urlsafe(16)
+            user = User(
+                name=name,
+                email=email,
+                supabase_uid=sb_user.id,
+                password_hash=generate_password_hash(temp_pass),
+                company_id=None # Will force setup_company
+            )
+            db.session.add(user)
+            db.session.commit()
+            
+            login_user(user)
+            return redirect(url_for('auth.setup_company'))
             
         else:
             # Existing User - Link UID if not set
