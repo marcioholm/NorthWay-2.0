@@ -59,6 +59,8 @@ def system_reset():
             db.session.execute(text("DELETE FROM lead"))
             db.session.execute(text("DELETE FROM client"))
             db.session.execute(text("DELETE FROM contact"))
+            db.session.execute(text("DELETE FROM password_reset_token")) # FK to User
+            db.session.execute(text("DELETE FROM email_log")) # FK to User
             
             # 3. Pipelines (Fix: Clear association first)
             db.session.execute(text(f"DELETE FROM user_pipeline_association WHERE pipeline_id IN (SELECT id FROM pipeline WHERE company_id != {current_user.company_id})"))
