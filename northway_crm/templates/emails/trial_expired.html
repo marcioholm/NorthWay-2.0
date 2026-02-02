@@ -1,0 +1,24 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 20px 0;">
+    <h1 style="color: #991B1B; margin-bottom: 20px;">Seu Período de Teste Acabou ⏳</h1>
+    <p style="font-size: 16px; color: #4B5563; margin-bottom: 30px;">
+        Olá, {{ user.name }}.<br>
+        Esperamos que tenha gostado dos seus 7 dias de NorthWay CRM.
+    </p>
+
+    <p style="font-size: 16px; color: #4B5563; margin-bottom: 30px;">
+        Para continuar fechando negócios e acessando seus dados, escolha um de nossos planos.
+    </p>
+
+    <a href="{{ plans_url }}" target="_blank"
+        style="display: inline-block; background-color: #DC2626; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; margin-bottom: 30px;">
+        Escolher Plano
+    </a>
+
+    <p style="font-size: 14px; color: #6B7280;">
+        Seus dados estão salvos e seguros, mas você precisa ativar sua conta para acessá-los novamente.
+    </p>
+</div>
+{% endblock %}

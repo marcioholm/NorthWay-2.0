@@ -16,6 +16,8 @@ class EmailService:
         EMAIL_TEMPLATES.password_changed: "password_changed.html",
         EMAIL_TEMPLATES.invite_user: "invite_user.html", 
         EMAIL_TEMPLATES.new_login: "new_login.html", 
+        EMAIL_TEMPLATES.subscription_active: "subscription_active.html",
+        EMAIL_TEMPLATES.trial_expired: "trial_expired.html",
     }
 
     @staticmethod

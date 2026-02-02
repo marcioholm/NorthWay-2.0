@@ -1,0 +1,27 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 20px 0;">
+    <h1 style="color: #111827; margin-bottom: 20px;">Pagamento Confirmado! 🚀</h1>
+    <p style="font-size: 16px; color: #4B5563; margin-bottom: 30px;">
+        Olá, {{ user.name }}.<br>
+        Obrigado por assinar o plano <strong>{{ plan_name }}</strong>.
+    </p>
+
+    <div
+        style="background-color: #ECFDF5; padding: 20px; border-radius: 8px; border: 1px solid #D1FAE5; display: inline-block; margin-bottom: 30px; width: 100%; max-width: 400px;">
+        <p style="margin: 5px 0; color: #065F46;"><strong>✅ Status:</strong> Ativo</p>
+        <p style="margin: 5px 0; color: #065F46;"><strong>📅 Validade:</strong> {{ next_billing_date }}</p>
+        <p style="margin: 5px 0; color: #065F46;"><strong>💰 Valor:</strong> {{ amount }}</p>
+    </div>
+
+    <p style="font-size: 14px; color: #6B7280; margin-top: 20px;">
+        Agora você tem acesso completo a todas as ferramentas da NorthWay para acelerar suas vendas.
+    </p>
+
+    <a href="{{ dashboard_url }}" target="_blank"
+        style="display: inline-block; background-color: #DC2626; color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 20px;">
+        Acessar CRM
+    </a>
+</div>
+{% endblock %}

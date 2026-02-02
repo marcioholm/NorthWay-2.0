@@ -595,6 +595,8 @@ class EMAIL_TEMPLATES(Enum):
     password_changed = "password_changed"
     invite_user = "invite_user"
     new_login = "new_login"
+    subscription_active = "subscription_active"
+    trial_expired = "trial_expired"
 
 class EmailLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)

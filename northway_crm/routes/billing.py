@@ -133,7 +133,33 @@ def asaas_webhook():
             company.platform_inoperante = False
             company.overdue_since = None
             company.subscription_status = 'active'
+            company.subscription_status = 'active'
             print(f"✅ Company {company.name} Activated!")
+            
+            # Send Email
+            from services.email_service import EmailService
+            from models import EMAIL_TEMPLATES
+            
+            admin_user = User.query.filter_by(company_id=company.id).first() # Notify first user/admin
+            if admin_user:
+                plan_name = 'Plano Anual' if company.plan_type == 'annual' else 'Plano Mensal'
+                try:
+                    EmailService.send_email(
+                        to=admin_user.email,
+                        subject="Pagamento Confirmado - NorthWay",
+                        template=EMAIL_TEMPLATES.subscription_active,
+                        context={
+                           'user': admin_user, 
+                           'plan_name': plan_name,
+                           'amount': f"R$ {payment.get('value', '')}",
+                           'next_billing_date': (datetime.now() + timedelta(days=365 if company.plan_type == 'annual' else 30)).strftime('%d/%m/%Y'),
+                           'dashboard_url': url_for('dashboard.home', _external=True)
+                        },
+                        company_id=company.id,
+                        user_id=admin_user.id
+                    )
+                except Exception as ex:
+                    print(f"Failed to send email: {ex}")
             
         elif event in ['PAYMENT_OVERDUE']:
             company.payment_status = 'overdue'
