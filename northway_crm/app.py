@@ -22,8 +22,11 @@ def create_app():
     # EMERGENCY WRAPPER
     try:
         app = Flask(__name__, instance_path='/tmp')
-        # Allow Chrome Extensions
-        CORS(app, resources={r"/api/ext/*": {"origins": "*"}})
+        # Allow Chrome Extensions (Defensive)
+        try:
+             CORS(app, resources={r"/api/ext/*": {"origins": "*"}})
+        except:
+             print("⚠️ CORS/Flask-Cors not available. Skipping.")
 
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
         
