@@ -36,6 +36,38 @@ body {
     display: none !important;
 }
 
+/* === TYPOGRAPHY RESET (FORCE VISIBILITY) === */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+div,
+strong,
+label,
+li {
+    color: var(--nw-text);
+}
+
+.nw-card h1,
+.nw-card h2,
+.nw-card h3,
+.nw-card h4,
+.nw-card h5,
+.nw-card h6 {
+    color: #ffffff !important;
+}
+
+.nw-card p,
+.nw-card span,
+.nw-card div {
+    color: var(--nw-text);
+}
+
+
 /* === MAIN CONTAINER === */
 .nw-container {
     width: 380px;

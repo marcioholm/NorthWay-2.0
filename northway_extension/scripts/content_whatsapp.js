@@ -256,7 +256,14 @@ function checkActiveChat() {
                 isGroup = true;
                 if (container) {
                     const h2 = container.querySelector('h2') || container.querySelector('span[dir="auto"]');
-                    if (h2) name = h2.innerText;
+                    if (h2) {
+                        let rawName = h2.innerText;
+                        // Safety: If name is too long, it's likely the participant list dump. Truncate it.
+                        if (rawName.length > 50) {
+                            rawName = rawName.substring(0, 47) + "...";
+                        }
+                        name = rawName;
+                    }
                 }
             } else {
                 // Contact Drawer - Try to recover phone
