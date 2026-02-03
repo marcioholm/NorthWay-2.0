@@ -102,7 +102,7 @@ async function init() {
 
         bindEvents();
         startObserver();
-        adjustLayout();
+        // adjustLayout();
 
         // --- BRIDGE CHECK ---
         setTimeout(() => {
@@ -115,7 +115,7 @@ async function init() {
         if (intervalLayout) clearInterval(intervalLayout);
 
         intervalChat = setInterval(checkActiveChat, 1000);
-        intervalLayout = setInterval(adjustLayout, 2000);
+        // intervalLayout = setInterval(adjustLayout, 2000);
 
     } catch (e) {
         console.log("NW: Init failed", e);
@@ -124,17 +124,17 @@ async function init() {
 
 // (Page Script is now injected via manifest.json with world: "MAIN")
 
-function adjustLayout() {
-    const appWrapper = document.getElementById('app');
-    if (appWrapper) {
-        const mainContent = appWrapper.firstElementChild;
-        if (mainContent) {
-            mainContent.style.width = 'calc(100% - 350px)';
-            mainContent.style.minWidth = 'auto';
-            mainContent.style.transition = 'width 0.3s ease';
-        }
-    }
-}
+// function adjustLayout() {
+//     const appWrapper = document.getElementById('app');
+//     if (appWrapper) {
+//         const mainContent = appWrapper.firstElementChild;
+//         if (mainContent) {
+//             mainContent.style.width = 'calc(100% - 350px)';
+//             mainContent.style.minWidth = 'auto';
+//             mainContent.style.transition = 'width 0.3s ease';
+//         }
+//     }
+// }
 
 function startObserver() {
     const observer = new MutationObserver(() => {
