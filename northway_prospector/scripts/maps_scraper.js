@@ -71,26 +71,41 @@ function safeScrape() {
             }
         }
 
-        // Strategy C: Fallback for Reviews (The Button Method)
+        // Strategy C: Button/Text Fallback (Enhanced for small numbers)
         if (reviews === 0) {
-            // Find button with EXACT format "(103)" which acts as the review count button in many views
             const buttons = Array.from(document.querySelectorAll('button'));
 
-            // Stricter finder: Text must fully match `(123)` or `(1.234)` or `(2)`
+            // 1. Strict "(123)" format
             const strictReviewBtn = buttons.find(b => /^\([\d.]+\)$/.test(b.textContent.trim()));
-
             if (strictReviewBtn) {
                 reviews = parseInt(strictReviewBtn.textContent.replace(/\D/g, ''));
-            } else {
-                // Looser fallback: Button containing "avaliações" or "reviews"
+            }
+
+            // 2. Looser "X avaliações" format (Common in "Resumo de avaliações" modal)
+            if (reviews === 0) {
                 const textBtn = buttons.find(b => {
                     const t = b.textContent.toLowerCase();
-                    return t.includes('avaliações') || (t.includes('reviews') && t.includes('('));
+                    // Matches "2 avaliações", "120 reviews"
+                    return /^\d{1,3}(?:\.\d{3})*\s+(avaliações|reviews|mensagens)/.test(t.trim());
                 });
 
                 if (textBtn) {
                     const match = textBtn.textContent.match(/(\d{1,3}(?:\.\d{3})*|\d+)/);
                     if (match) reviews = parseInt(match[0].replace(/\./g, ''));
+                }
+            }
+
+            // 3. Fallback: Search any visible text nodes near the rating
+            // Specifically for the "Resumo de avaliações" view in the screenshot
+            if (reviews === 0) {
+                const allDivs = Array.from(document.querySelectorAll('div, span'));
+                const reviewTextNode = allDivs.find(el => {
+                    const t = el.innerText?.trim();
+                    return t && /^\d+\s+avaliações$/.test(t); // "2 avaliações" exact
+                });
+                if (reviewTextNode) {
+                    const match = reviewTextNode.innerText.match(/(\d+)/);
+                    if (match) reviews = parseInt(match[0]);
                 }
             }
         }
