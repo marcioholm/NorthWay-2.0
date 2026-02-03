@@ -112,7 +112,8 @@
             }
 
             body {
-                background-color: #000 !important;
+                background-color: white !important;
+                color: black !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -121,6 +122,45 @@
                 height: 100vh !important;
                 page-break-after: always;
                 break-after: page;
+                background: white !important;
+                color: black !important;
+            }
+
+            .slide * {
+                color: black !important;
+            }
+
+            .text-white,
+            .text-gray-400,
+            .text-gray-500 {
+                color: black !important;
+            }
+
+            .text-accent,
+            .text-\[\#fa0102\],
+            .text-red-400 {
+                color: #fa0102 !important;
+            }
+
+            .bg-black,
+            .bg-\[\#050505\],
+            .bg-\[\#080808\],
+            .bg-pattern-grid,
+            .bg-pattern-chaos {
+                background: white !important;
+            }
+
+            .glass-panel {
+                background: #f9f9f9 !important;
+                border: 1px solid #ddd !important;
+            }
+
+            .logo-header {
+                filter: none !important;
+            }
+
+            .logo-print-invert {
+                filter: invert(1) brightness(0) !important;
             }
 
             #controls,

@@ -111,7 +111,8 @@ def lead_details(id):
         # If no pipeline assigned yet (orphan), treat as first stage (editable)
         is_first_stage = True
         
-    return render_template('lead_details.html', lead=lead, users=users, stages=stages, is_first_stage=is_first_stage)
+    today_date = datetime.now().strftime('%Y-%m-%d')
+    return render_template('lead_details.html', lead=lead, users=users, stages=stages, is_first_stage=is_first_stage, today_date=today_date)
 
 @leads_bp.route('/pipeline')
 @leads_bp.route('/pipeline/<int:pipeline_id>')
@@ -522,7 +523,6 @@ def create_pipeline():
         db.session.add(stage)
         
     db.session.commit()
-    flash('Pipeline criado com sucesso.', 'success')
     flash('Pipeline criado com sucesso.', 'success')
     return redirect(url_for('leads.pipeline', pipeline_id=pipeline.id))
 

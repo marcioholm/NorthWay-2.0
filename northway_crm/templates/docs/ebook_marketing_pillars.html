@@ -109,6 +109,20 @@
                 print-color-adjust: exact;
             }
 
+            .icon-box {
+                border-color: #ddd !important;
+                background: #f5f5f5 !important;
+                color: #fa0102 !important;
+            }
+
+            .logo-header {
+                filter: none !important;
+            }
+
+            .logo-print-invert {
+                filter: invert(1) brightness(0) !important;
+            }
+
             .page {
                 margin: 0;
                 border: none;
@@ -118,28 +132,8 @@
                 break-after: page;
                 page-break-after: always;
                 min-height: 297mm;
-                height: 297mm;
-            }
-
-            .bg-\[\#0f1115\],
-            .bg-black {
-                background-color: white !important;
-            }
-
-            .text-white {
-                color: black !important;
-            }
-
-            .text-gray-400,
-            .text-gray-300,
-            .text-gray-500 {
-                color: #555 !important;
-            }
-
-            .icon-box {
-                border-color: #ddd !important;
-                background: #f5f5f5 !important;
-                color: #fa0102 !important;
+                height: auto !important;
+                overflow: visible !important;
             }
 
             .page-footer {

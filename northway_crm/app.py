@@ -16,11 +16,15 @@ from models import db, User, Task, Role
 import json
 # Blueprint imports moved to create_app to prevent global import crashes
 from services.supabase_service import init_supabase
+from flask_cors import CORS
 
 def create_app():
     # EMERGENCY WRAPPER
     try:
         app = Flask(__name__, instance_path='/tmp')
+        # Allow Chrome Extensions
+        CORS(app, resources={r"/api/ext/*": {"origins": "*"}})
+
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
         
         print("🚀 APP STARTUP: VERSION VERCEL-FIX-V4 (Debug Enabled)")
@@ -475,6 +479,45 @@ def force_trial_migration():
         return "Migration Forced. Restart app."
     except Exception as e:
         return str(e)
+
+@app.route('/sys_admin/migrate_gmb')
+def sys_migrate_gmb():
+    try:
+        results = []
+        with db.engine.connect() as conn:
+            # 1. LEADS
+            for col, dtype in [
+                ('gmb_link', 'VARCHAR(500)'),
+                ('gmb_rating', 'FLOAT DEFAULT 0.0'),
+                ('gmb_reviews', 'INTEGER DEFAULT 0'),
+                ('gmb_photos', 'INTEGER DEFAULT 0'),
+                ('gmb_last_sync', 'DATETIME')
+            ]:
+                try:
+                    conn.execute(text(f"ALTER TABLE lead ADD COLUMN {col} {dtype}"))
+                    results.append(f"Added {col} to LEAD")
+                except Exception as e:
+                    results.append(f"Skipped {col} in LEAD (Exists?)")
+
+            # 2. CLIENTS
+            for col, dtype in [
+                ('gmb_link', 'VARCHAR(500)'),
+                ('gmb_rating', 'FLOAT DEFAULT 0.0'),
+                ('gmb_reviews', 'INTEGER DEFAULT 0'),
+                ('gmb_photos', 'INTEGER DEFAULT 0'),
+                ('gmb_last_sync', 'DATETIME')
+            ]:
+                try:
+                    conn.execute(text(f"ALTER TABLE client ADD COLUMN {col} {dtype}"))
+                    results.append(f"Added {col} to CLIENT")
+                except Exception as e:
+                    results.append(f"Skipped {col} in CLIENT (Exists?)")
+            
+            conn.commit()
+            
+        return jsonify({"status": "success", "log": results})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/checkout')
 def checkout_fallback():

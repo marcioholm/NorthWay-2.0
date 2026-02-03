@@ -263,10 +263,10 @@ def create_lead(current_user):
     data = request.get_json()
     
     name = data.get('name')
-    phone = data.get('phone')
+    phone = data.get('phone') # Can be just "0000" if unknown
     
-    if not name or not phone:
-        return jsonify({'error': 'Name and phone required'}), 400
+    if not name:
+        return jsonify({'error': 'Name required'}), 400
         
     # Get Metadata
     pipeline_id = data.get('pipeline_id')
@@ -292,7 +292,7 @@ def create_lead(current_user):
         name=name,
         phone=phone,
         email=data.get('email'),
-        source="WhatsApp Extension",
+        source=data.get('source', "WhatsApp Extension"),
         notes=data.get('notes'),
         company_id=current_user.company_id,
         status='new',
@@ -300,7 +300,18 @@ def create_lead(current_user):
         pipeline_id=pipeline_id,
         pipeline_stage_id=stage_id,
         bant_need=data.get('bant_need'),
-        profile_pic_url=data.get('avatar_url')
+        profile_pic_url=data.get('avatar_url'),
+        
+        # New Fields
+        address=data.get('address'),
+        website=data.get('website'),
+        
+        # GMB Data
+        gmb_link=data.get('gmb_link'),
+        gmb_rating=float(data.get('gmb_rating', 0.0)),
+        gmb_reviews=int(data.get('gmb_reviews', 0)),
+        gmb_photos=int(data.get('gmb_photos', 0)),
+        gmb_last_sync=datetime.datetime.utcnow()
     )
     
     db.session.add(new_lead)
@@ -344,33 +355,48 @@ def update_lead(current_user, id):
         
     data = request.get_json()
     
+    # Common Updates
     if 'notes' in data:
         old_notes = lead.notes
-        lead.notes = data['notes']
         
-        # Determine if we should create a timeline event
-        # Only if content changed and is not empty
-        if lead.notes and lead.notes != old_notes:
-            interaction = Interaction(
+        # If appending (flag)
+        if data.get('append_notes') and old_notes:
+            lead.notes = old_notes + "\n\n" + data['notes']
+        else:
+             lead.notes = data['notes']
+        
+        # Interaction log
+        if lead.notes != old_notes and data['notes']:
+             interaction = Interaction(
                 lead_id=lead.id,
                 user_id=current_user.id,
                 company_id=current_user.company_id,
                 type='note',
-                content=lead.notes, # Or f"Nota atualizada via extensão: {lead.notes}"
+                content=f"Nota atualizada via extensão: {data['notes']}", 
                 created_at=datetime.datetime.utcnow()
             )
-            db.session.add(interaction)
+             db.session.add(interaction)
         
     if 'pipeline_stage_id' in data:
         lead.pipeline_stage_id = data['pipeline_stage_id']
-        lead.status = 'in_progress' # Auto update status if stage moves
+        lead.status = 'in_progress' 
         
-    if 'bant_need' in data: # Using this for tags roughly
-        lead.bant_need = data['bant_need']
+    if 'bant_need' in data: lead.bant_need = data['bant_need']
+    if 'avatar_url' in data: lead.profile_pic_url = data['avatar_url']
+
+    # New Fields
+    if 'address' in data: lead.address = data['address']
+    if 'website' in data: lead.website = data['website']
+    if 'phone' in data: lead.phone = data['phone']
         
-    if 'avatar_url' in data:
-        lead.profile_pic_url = data['avatar_url']
-        
+    # GMB Sync
+    if 'gmb_rating' in data:
+        lead.gmb_rating = float(data['gmb_rating'])
+        lead.gmb_reviews = int(data.get('gmb_reviews', 0))
+        lead.gmb_photos = int(data.get('gmb_photos', 0))
+        lead.gmb_link = data.get('gmb_link')
+        lead.gmb_last_sync = datetime.datetime.utcnow()
+
     db.session.commit()
     
     return jsonify({'success': True})

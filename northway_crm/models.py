@@ -266,6 +266,13 @@ class Lead(db.Model):
     website = db.Column(db.String(200), nullable=True)
     address = db.Column(db.String(255), nullable=True)
     profile_pic_url = db.Column(db.String(500), nullable=True) # WhatsApp Profile Pic
+
+    # GMB / Maps Data
+    gmb_link = db.Column(db.String(500), nullable=True)
+    gmb_rating = db.Column(db.Float, default=0.0)
+    gmb_reviews = db.Column(db.Integer, default=0)
+    gmb_photos = db.Column(db.Integer, default=0)
+    gmb_last_sync = db.Column(db.DateTime, nullable=True)
     
     # CNPJ Enrichment
     legal_name = db.Column(db.String(200), nullable=True) # Razão Social
@@ -342,6 +349,13 @@ class Client(db.Model):
     email_contact = db.Column(db.String(120), nullable=True) # Specific contact email if diff from main
     profile_pic_url = db.Column(db.String(500), nullable=True) # WhatsApp Profile Pic
     
+    # GMB / Maps Data
+    gmb_link = db.Column(db.String(500), nullable=True)
+    gmb_rating = db.Column(db.Float, default=0.0)
+    gmb_reviews = db.Column(db.Integer, default=0)
+    gmb_photos = db.Column(db.Integer, default=0)
+    gmb_last_sync = db.Column(db.DateTime, nullable=True)
+
     # Relationships
     company = db.relationship('Company', backref='clients')
     account_manager = db.relationship('User', backref='managed_clients')

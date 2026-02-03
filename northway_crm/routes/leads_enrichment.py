@@ -17,10 +17,12 @@ def search_cnpj():
     
     # Get CNPJA Integration
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='cnpja').first()
-    if not integration or not integration.is_active:
-        return api_response(success=False, error="Integração CNPJA não configurada", status=400)
+    api_key = integration.api_key if integration and integration.is_active else None
+
+    if not api_key:
+        return api_response(success=False, error="A busca por nome requer API Key do CNPJA. Use a busca direta por CNPJ (Gratuita).", status=400)
     
-    results = CNPJAService.search_by_name(query, integration.api_key)
+    results = CNPJAService.search_by_name(query, api_key)
     
     if isinstance(results, dict) and "error" in results:
         return api_response(success=False, error=f"Erro na API CNPJA: {results.get('error')}", status=500)
@@ -39,14 +41,14 @@ def enrich_lead(lead_id):
     
     # Get CNPJA Integration
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='cnpja').first()
-    if not integration or not integration.is_active:
-        return api_response(success=False, error="Integração CNPJA não configurada", status=400)
+    api_key = integration.api_key if integration and integration.is_active else None
     
-    # Fetch full details to enrich
-    details = CNPJAService.get_by_cnpj(cnpj, integration.api_key)
+    # Fetch details (uses free API if api_key is None)
+    details = CNPJAService.get_by_cnpj(cnpj, api_key)
     
     if "error" in details:
-        return api_response(success=False, error=f"Erro na API CNPJA: {details.get('error')}", status=500)
+        source_label = "API Oficial" if api_key else "Open API (Gratuita)"
+        return api_response(success=False, error=f"Erro na {source_label}: {details.get('error')}", status=500)
     
     try:
         # Enrich basic info if not present or explicitly requested
@@ -112,7 +114,7 @@ def enrich_lead(lead_id):
         history.append({
             'date': datetime.now().isoformat(),
             'user': current_user.name,
-            'source': 'CNPJA',
+            'source': 'CNPJA (Paid)' if api_key else 'CNPJA (Free)',
             'cnpj': lead.cnpj
         })
         lead.enrichment_history = json.dumps(history)

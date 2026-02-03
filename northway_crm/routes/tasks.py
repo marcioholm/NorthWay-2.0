@@ -17,7 +17,7 @@ def tasks():
 
         if not title:
             flash('Título é obrigatório', 'error')
-            return redirect(url_for('tasks.tasks'))
+            return redirect(request.form.get('next') or request.referrer or url_for('tasks.tasks'))
 
         due_date = None
         if due_date_str:
@@ -59,7 +59,7 @@ def tasks():
             )
 
         flash('Tarefa criada com sucesso!', 'success')
-        return redirect(url_for('tasks.tasks'))
+        return redirect(request.form.get('next') or request.referrer or url_for('tasks.tasks'))
 
     # GET Logic (Existing)...
     page = request.args.get('page', 1, type=int)
@@ -135,7 +135,7 @@ def delete_task(id):
     db.session.delete(task)
     db.session.commit()
     flash('Tarefa excluída.', 'success')
-    return redirect(url_for('tasks.tasks'))
+    return redirect(request.referrer or url_for('tasks.tasks'))
 
 @tasks_bp.route('/onboarding/dismiss', methods=['POST'])
 @login_required

@@ -10,3 +10,4 @@ gunicorn==22.0.0
 Flask-Migrate==4.0.7
 python-dotenv==1.0.1
 resend==2.4.0
+flask-cors==4.0.0

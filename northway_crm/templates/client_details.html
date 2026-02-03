@@ -138,6 +138,43 @@
 
                     <!-- Details Content -->
                     <div id="content-client-details" class="p-8">
+
+                        <!-- GMB CARD -->
+                        {% if client.gmb_rating > 0 or client.gmb_link %}
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                            <h3
+                                class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/1200px-Google_Maps_icon_%282020%29.svg.png"
+                                    class="w-4 h-4" alt="GMaps">
+                                Dados do Google
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <div class="text-2xl font-black text-gray-900">{{ client.gmb_rating }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold">Nota Média</div>
+                                </div>
+                                <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <div class="text-xl font-bold text-gray-900">{{ client.gmb_reviews }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold">Avaliações</div>
+                                </div>
+                                <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100 col-span-2">
+                                    <div class="text-lg font-bold text-gray-900">{{ client.gmb_photos }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold">Fotos Publicadas</div>
+                                </div>
+                            </div>
+                            {% if client.gmb_link %}
+                            <a href="{{ client.gmb_link }}" target="_blank"
+                                class="block w-full text-center mt-3 bg-blue-50 text-blue-600 px-3 py-2 rounded text-xs font-bold hover:bg-blue-100 transition-colors">
+                                Ver no Google Maps <i data-lucide="external-link" class="w-3 h-3 inline ml-1"></i>
+                            </a>
+                            {% endif %}
+                            <div class="text-[10px] text-gray-400 text-center mt-2">
+                                Sincronizado: {{ client.gmb_last_sync.strftime('%d/%m %H:%M') if client.gmb_last_sync
+                                else 'N/A' }}
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <h3 class="hidden text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                             Dados Cadastrais
                         </h3>
