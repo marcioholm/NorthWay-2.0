@@ -37,18 +37,18 @@ body {
 }
 
 /* === TYPOGRAPHY RESET (FORCE VISIBILITY) === */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
-span,
-div,
-strong,
-label,
-li {
+.nw-container h1,
+.nw-container h2,
+.nw-container h3,
+.nw-container h4,
+.nw-container h5,
+.nw-container h6,
+.nw-container p,
+.nw-container span,
+.nw-container div,
+.nw-container strong,
+.nw-container label,
+.nw-container li {
     color: var(--nw-text);
 }
 
