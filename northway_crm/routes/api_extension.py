@@ -44,6 +44,23 @@ def login():
          return jsonify({'message': 'Could not verify', 'error': 'User not found'}), 401
 
     if check_password_hash(user.password_hash, data.get('password')):
+        # --- SUBSCRIPTION CHECK ---
+        company = user.company
+        if company:
+            # 1. Master Switch
+            if company.platform_inoperante:
+                 return jsonify({'message': 'Access Denied', 'error': 'PLAN_SUSPENDED: Contact support.'}), 403
+            
+            # 2. Status Check
+            if company.payment_status in ['blocked', 'canceled', 'churned', 'inactive']:
+                 return jsonify({'message': 'Access Denied', 'error': 'PLAN_EXPIRED: Please renew your subscription.'}), 403
+                 
+            # 3. Trial Expiry
+            if company.payment_status == 'trial' and company.trial_end_date:
+                if company.trial_end_date < datetime.datetime.now():
+                    return jsonify({'message': 'Access Denied', 'error': 'TRIAL_EXPIRED: Please upgrade to continue.'}), 403
+        # --------------------------
+
         token = jwt.encode({
             'user_id': user.id,
             'company_id': user.company_id,
@@ -66,6 +83,20 @@ def login():
 @api_ext.route('/api/ext/verify', methods=['GET'])
 @token_required
 def verify_token(current_user):
+    # --- SUBSCRIPTION CHECK ---
+    company = current_user.company
+    if company:
+        if company.platform_inoperante:
+             return jsonify({'valid': False, 'error': 'PLAN_SUSPENDED'}), 403
+        
+        if company.payment_status in ['blocked', 'canceled', 'churned', 'inactive']:
+             return jsonify({'valid': False, 'error': 'PLAN_EXPIRED'}), 403
+             
+        if company.payment_status == 'trial' and company.trial_end_date:
+             if company.trial_end_date < datetime.datetime.now():
+                  return jsonify({'valid': False, 'error': 'TRIAL_EXPIRED'}), 403
+    # --------------------------
+
     return jsonify({
         'valid': True,
         'user': {
