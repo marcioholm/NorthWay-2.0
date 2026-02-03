@@ -270,12 +270,17 @@
                         <i data-lucide="home" class="w-5 h-5 flex-shrink-0"></i>
                         <span class="sidebar-text transition-opacity duration-300">Início</span>
                     </div>
-                    {% if subscription_days_remaining is not none %}
-                    <span
-                        class="sidebar-text text-[10px] uppercase font-bold px-2 py-0.5 rounded-full {{ 'bg-green-500/20 text-green-400' if subscription_days_remaining > 5 else 'bg-red-500/20 text-red-400' }}">
-                        {{ subscription_days_remaining }}d
-                    </span>
-                    {% endif %}
+                </a>
+
+                {% if subscription_days_remaining is defined and subscription_days_remaining is not none %}
+                <a href="#" class="hidden"></a> <!-- Spacer -->
+                {% if subscription_days_remaining is not none %}
+                <span
+                    class="sidebar-text text-[10px] uppercase font-bold px-2 py-0.5 rounded-full {{ 'bg-green-500/20 text-green-400' if subscription_days_remaining > 5 else 'bg-red-500/20 text-red-400' }}">
+                    {{ subscription_days_remaining }}d
+                </span>
+                {% endif %}
+                {% endif %}
                 </a>
 
                 {% if current_user.has_permission('dashboard_view') %}
