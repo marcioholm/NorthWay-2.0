@@ -23,7 +23,7 @@ function safeScrape() {
         let reviews = 0;
 
         // Try getting via Aria Labels which are more stable
-        // Example aria-label: "4.8 estrelas de 120 avaliações"
+        // Example aria-label: "4.8 estrelas de 5 com base em 120 avaliações"
         const starElement = document.querySelector('[role="img"][aria-label*="estrelas"], [role="img"][aria-label*="stars"]');
 
         if (starElement) {
@@ -33,17 +33,37 @@ function safeScrape() {
             if (ratingMatch) rating = parseFloat(ratingMatch[0].replace(',', '.'));
 
             // Extract "120"
-            // Typically "4.8 stars 120 reviews" or "4,8 estrelas 120 avaliações"
-            // We look for integer numbers that are usually larger than the rating
-            const nums = label.match(/\d+/g);
-            if (nums) {
-                // Determine which number is reviews (usually the larger integer)
-                const candidates = nums.map(n => parseInt(n)).filter(n => n > 5);
-                if (candidates.length > 0) reviews = Math.max(...candidates);
+            // Look for number preceding "reviews", "avaliações", "avis"
+            // Matches: "120 avaliações", "1.200 reviews"
+            const reviewMatch = label.match(/(\d{1,3}(?:\.\d{3})*|\d+)\s+(avaliações|reviews|avis)/i);
+
+            if (reviewMatch) {
+                reviews = parseInt(reviewMatch[1].replace(/\./g, ''));
+            } else {
+                // Heuristic Fallback: 
+                // If regex fails (e.g. strange format), assume the largest integer in the string > 5 is the review count.
+                // UNLESS the rating count is small (like 2).
+                const nums = label.match(/\d+/g);
+                if (nums) {
+                    const integers = nums.map(n => parseInt(n));
+                    // If we have "5,0 stars" and "2 reviews", integers might be [5, 0, 5, 2]
+                    // If max is 5, it might be the stars. 
+                    // But if we have [4, 8, 5, 120], 120 is clearly reviews.
+
+                    // Safe logic: If we have a number > 5, take the max.
+                    const bigs = integers.filter(n => n > 5);
+                    if (bigs.length > 0) {
+                        reviews = Math.max(...bigs);
+                    } else {
+                        // If all numbers are <= 5 (e.g. [5, 0, 5, 2]), the non-5 one is likely reviews IF it's not the rating parts.
+                        // Ideally we stick to the specific Regex above.
+                        // If regex fails, we leave reviews as 0 to try the button fallback below.
+                    }
+                }
             }
         }
 
-        // Strategy B: Fallback to text content if aria fails
+        // Strategy B: Fallback to text content if aria fails for rating
         if (rating === 0) {
             const ratingSpan = document.querySelector('span.ceNzKf'); // Common class for rating
             if (ratingSpan && ratingSpan.getAttribute('aria-hidden') === "true") {
@@ -51,15 +71,27 @@ function safeScrape() {
             }
         }
 
+        // Strategy C: Fallback for Reviews (The Button Method)
         if (reviews === 0) {
-            // Find button with text "(103)" or "103 avaliações"
+            // Find button with EXACT format "(103)" which acts as the review count button in many views
             const buttons = Array.from(document.querySelectorAll('button'));
-            const reviewBtn = buttons.find(b => b.textContent.includes('(') && b.textContent.includes(')'));
-            if (reviewBtn) {
-                const txt = reviewBtn.textContent;
-                // Extract number inside parens
-                const match = txt.match(/\(([\d.]+)\)/);
-                if (match) reviews = parseInt(match[1].replace(/\./g, ''));
+
+            // Stricter finder: Text must fully match `(123)` or `(1.234)` or `(2)`
+            const strictReviewBtn = buttons.find(b => /^\([\d.]+\)$/.test(b.textContent.trim()));
+
+            if (strictReviewBtn) {
+                reviews = parseInt(strictReviewBtn.textContent.replace(/\D/g, ''));
+            } else {
+                // Looser fallback: Button containing "avaliações" or "reviews"
+                const textBtn = buttons.find(b => {
+                    const t = b.textContent.toLowerCase();
+                    return t.includes('avaliações') || (t.includes('reviews') && t.includes('('));
+                });
+
+                if (textBtn) {
+                    const match = textBtn.textContent.match(/(\d{1,3}(?:\.\d{3})*|\d+)/);
+                    if (match) reviews = parseInt(match[0].replace(/\./g, ''));
+                }
             }
         }
 
