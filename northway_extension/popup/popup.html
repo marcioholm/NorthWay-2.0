@@ -22,12 +22,7 @@
                 <div class="nw-connection-status offline" title="Desconectado"></div>
             </div>
 
-            <!-- Navbar (Only visible when logged in) -->
-            <div id="nw-navbar" class="nw-navbar hidden">
-                <button class="nw-nav-btn active" data-tab="broadcast">Disparo</button>
-                <button class="nw-nav-btn" data-tab="settings">Config</button>
-                <button class="nw-nav-btn" data-tab="profile">Perfil</button>
-            </div>
+            <!-- Navbar REMOVED (No navigation needed) -->
         </div>
 
         <!-- AUTH VIEW (Login) -->
@@ -40,124 +35,51 @@
             <div id="nw-login-form" class="nw-auth-card">
                 <div id="nw-error-msg" class="nw-error-box hidden"></div>
                 <div class="nw-input-group">
-                    <input type="email" id="nw-email" placeholder="E-mail Corporativo" value="admin@northway.com">
+                    <input type="email" id="nw-email" placeholder="E-mail Corporativo">
                 </div>
                 <div class="nw-input-group">
-                    <input type="password" id="nw-password" placeholder="Senha de Acesso" value="123456">
+                    <input type="password" id="nw-password" placeholder="Senha de Acesso">
                 </div>
                 <button id="nw-btn-login" class="nw-btn primary">Conectar</button>
             </div>
         </div>
 
-        <!-- BROADCAST VIEW (Main) -->
-        <div id="nw-view-broadcast" class="nw-view hidden">
-
-            <!-- Step 1: Target Selection -->
-            <div class="nw-section">
-                <label class="nw-label-caps">1. Selecionar Alvos</label>
-                <div class="nw-field-row">
-                    <select id="nw-funnel-select" class="nw-select">
-                        <option value="">Selecione um Funil...</option>
-                        <!-- Populated by JS -->
-                    </select>
+        <!-- ACTIVE VIEW (Logged In) -->
+        <div id="nw-view-active" class="nw-view hidden">
+            <div class="nw-hero">
+                <div class="nw-logo-icon-large" style="margin: 0 auto 20px;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
                 </div>
-                <div class="nw-field-row">
-                    <select id="nw-stage-select" class="nw-select" disabled>
-                        <option value="">Etapa...</option>
-                    </select>
-                </div>
-                <div class="nw-info-box hidden" id="nw-target-info">
-                    <span id="nw-target-count">0</span> contatos encontrados
-                </div>
+                <h1>Tudo <br><span>Pronto!</span></h1>
+                <p>Extensão Ativa e Conectada.</p>
             </div>
 
-            <!-- Step 2: Message -->
-            <div class="nw-section">
-                <div class="nw-row-between">
-                    <label class="nw-label-caps">2. Mensagem</label>
-                    <div class="nw-toggle-group">
-                        <label class="nw-toggle-label">Variações</label>
-                        <input type="checkbox" id="nw-use-variants" class="nw-toggle">
-                    </div>
-                </div>
-
-                <textarea id="nw-msg-input" class="nw-textarea"
-                    placeholder="Olá {{primeiro_nome}}, tudo bem?"></textarea>
-                <div class="nw-tags-list">
-                    <span class="nw-tag" data-var="{{primeiro_nome}}">Nome</span>
-                    <span class="nw-tag" data-var="{{empresa}}">Empresa</span>
-                </div>
-            </div>
-
-            <!-- Step 3: Attachments -->
-            <div class="nw-section">
-                <label class="nw-label-caps">3. Anexos (Opcional)</label>
-
-                <div id="nw-attachments-list" class="nw-attachments-list">
-                    <!-- Items injected here -->
-                </div>
-
-                <div class="nw-upload-area" id="nw-upload-area">
-                    <input type="file" id="nw-file-input" multiple style="display: none;">
-                    <span class="nw-upload-icon">+</span>
-                    <span>Adicionar Arquivo</span>
-                </div>
-            </div>
-
-            <!-- Step 4: Interval & Action -->
-            <div class="nw-section">
-                <div class="nw-field-row">
-                    <div class="nw-field">
-                        <label>Min (s)</label>
-                        <input type="number" id="nw-delay-min" value="20" class="nw-input-sm">
-                    </div>
-                    <div class="nw-field">
-                        <label>Máx (s)</label>
-                        <input type="number" id="nw-delay-max" value="60" class="nw-input-sm">
-                    </div>
-                </div>
-            </div>
-
-            <button id="nw-btn-start" class="nw-btn primary big">
-                INICIAR DISPARO ASSISTIDO 🚀
-            </button>
-        </div>
-
-        <!-- SETTINGS VIEW -->
-        <div id="nw-view-settings" class="nw-view hidden">
-            <div class="nw-card-flat">
-                <label class="nw-label-caps">Limites de Segurança</label>
-                <div class="nw-field">
-                    <label>Limite Diário</label>
-                    <input type="number" id="nw-setting-limit" value="100">
-                </div>
-                <div class="nw-info-text">
-                    O disparo assistido pausa automaticamente ao atingir este limite para proteger seu número.
-                </div>
-            </div>
-            <button id="nw-btn-save-settings" class="nw-btn secondary">Salvar Configurações</button>
-        </div>
-
-        <!-- PROFILE VIEW -->
-        <div id="nw-view-profile" class="nw-view hidden">
-            <div class="nw-user-card">
-                <div class="nw-user-avatar">
+            <div class="nw-auth-card" style="text-align: center;">
+                <div class="nw-user-avatar" style="margin: 0 auto 15px;">
                     <img id="nw-user-img" src="" class="hidden">
                     <span id="nw-user-initials">AD</span>
                 </div>
-                <div class="nw-user-info">
-                    <strong id="nw-user-name">Usuário</strong>
-                    <span id="nw-user-email">email@northway.com</span>
+                <strong id="nw-user-name" style="display: block; font-size: 16px; margin-bottom: 5px;">Usuário</strong>
+                <span id="nw-user-email"
+                    style="display: block; color: var(--nw-text-muted); font-size: 12px; margin-bottom: 20px;">email@northway.com</span>
+
+                <div
+                    style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; font-size: 11px; color: #ccc; margin-bottom: 20px;">
+                    🚀 Use a barra lateral no <b>WhatsApp Web</b> para realizar disparos.
                 </div>
+
+                <a href="https://web.whatsapp.com" target="_blank" class="nw-btn primary big"
+                    style="text-decoration: none;">
+                    Abrir WhatsApp Web
+                </a>
+
+                <button id="nw-btn-logout" class="nw-btn logout" style="margin-top: 15px;">
+                    Desconectar
+                </button>
             </div>
-
-            <a href="https://crm.northwaycompany.com.br/home" target="_blank" class="nw-btn secondary">
-                Ir para o CRM
-            </a>
-
-            <button id="nw-btn-logout" class="nw-btn logout">
-                Desconectar
-            </button>
         </div>
 
         <!-- FOOTER -->

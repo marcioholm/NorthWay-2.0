@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="pro-container">
+        <!-- HEADER -->
+        <div class="pro-header">
+            <div class="pro-logo">
+                <div class="pro-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                </div>
+                <span>NorthWay Compass</span>
+            </div>
+            <div class="pro-version" style="font-size: 10px; color: #666;">v1.0</div>
+        </div>
+
+        <!-- VIEW: AUTH -->
+        <div id="view-auth" class="hidden"
+            style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h3 style="margin-bottom: 8px;">Bem-vindo</h3>
+                <p style="font-size: 12px; color: var(--nw-text-muted);">Faça login para salvar seus diagnósticos.</p>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label class="nw-label-caps">Email</label>
+                <input type="email" id="nw-email" placeholder="seu@email.com">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label class="nw-label-caps">Senha</label>
+                <input type="password" id="nw-password" placeholder="••••••">
+            </div>
+
+            <button id="btn-login" class="nw-btn primary">Entrar no CRM</button>
+            <p id="auth-error" class="hidden"
+                style="color: #ff3333; font-size: 11px; text-align: center; margin-top: 12px;"></p>
+        </div>
+
+        <!-- LOADING -->
+        <div id="view-loading" class="loader-container">
+            <div class="loader"></div>
+            <span style="font-size: 11px; color: #888;">Analisando Perfil...</span>
+        </div>
+
+        <!-- ERROR -->
+        <div id="view-error" class="hidden" style="text-align: center; margin-top: 50px;">
+            <div style="font-size: 32px; margin-bottom: 10px;">😕</div>
+            <h3 style="margin-bottom: 10px;">Não Encontrado</h3>
+            <p style="font-size: 12px; color: #888; margin-bottom: 20px;">
+                Abra uma empresa no Google Maps para analisar.
+            </p>
+            <button id="btn-open-maps" class="nw-btn primary">Abrir Google Maps</button>
+        </div>
+
+        <!-- RESULT -->
+        <div id="view-result" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+
+            <!-- TABS -->
+            <div class="nw-tabs">
+                <button class="nw-tab-btn active" data-tab="tab-score">Diagnóstico</button>
+                <button class="nw-tab-btn" data-tab="tab-roi">ROI & Perda</button>
+                <button class="nw-tab-btn" data-tab="tab-details">Dados</button>
+            </div>
+
+            <!-- TAB: SCORE -->
+            <div id="tab-score" class="tab-content"
+                style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <div class="pro-score-card">
+                    <div id="score-circle" class="score-circle">--</div>
+                    <h2 id="company-name" class="pro-company-name">Nome da Empresa</h2>
+                    <div id="company-cat" class="pro-company-cat">Categoria</div>
+                </div>
+
+                <div class="pro-stat-row">
+                    <span>Nota: <strong id="val-rating" class="pro-stat-val">--</strong></span>
+                    <span>Reviews: <strong id="val-reviews" class="pro-stat-val">--</strong></span>
+                    <span>Fotos: <strong id="val-photos" class="pro-stat-val">--</strong></span>
+                </div>
+
+                <!-- DIAGNOSIS FILTER -->
+                <div class="nw-filter-switch">
+                    <button id="btn-filter-todo" class="filter-btn active">
+                        ⚠️ Melhorar <span id="count-todo" class="count-badge">0</span>
+                    </button>
+                    <button id="btn-filter-done" class="filter-btn">
+                        ✅ Corretos <span id="count-done" class="count-badge">0</span>
+                    </button>
+                </div>
+
+                <div id="problems-list" class="pro-problems" style="flex:1; overflow-y:auto; margin-bottom:10px;">
+                    <!-- Problems -->
+                </div>
+            </div>
+
+            <!-- TAB: ROI & LOSS (New v2.0) -->
+            <div id="tab-roi" class="tab-content hidden" style="flex: 1; overflow-y: auto; padding: 12px;">
+
+                <!-- 1. LOST OPPORTUNITY CARD -->
+                <div class="roi-card warning-bg">
+                    <div class="roi-card-title">📉 Oportunidade Perdida</div>
+                    <div class="roi-big-number" id="roi-lost-clicks">--</div>
+                    <p class="roi-text">Cliques estimados perdidos por mês para o Top 3 concorrentes.</p>
+                </div>
+
+                <!-- 2. BENCHMARK CARD -->
+                <div class="roi-card">
+                    <div class="roi-card-title">🆚 Benchmark (Reputação)</div>
+
+                    <div class="benchmark-row">
+                        <span>Você</span>
+                        <div class="bar-container">
+                            <div id="bar-you" class="bar-fill" style="width: 0%;"></div>
+                        </div>
+                        <span id="val-you" style="font-weight:bold;">0.0</span>
+                    </div>
+
+                    <div class="benchmark-row">
+                        <span>Concorrentes</span>
+                        <div class="bar-container">
+                            <div id="bar-comp" class="bar-fill comp" style="width: 0%;"></div>
+                        </div>
+                        <span id="val-comp" style="font-weight:bold;">0.0</span>
+                    </div>
+
+                    <!-- Competitor List Container -->
+                    <div id="competitor-list" style="margin-top: 10px; font-size: 10px; color: var(--nw-text-muted);">
+                        <!-- Items injected via JS -->
+                    </div>
+                </div>
+
+                <!-- 3. RESPONSE AUDIT CARD -->
+                <div class="roi-card">
+                    <div class="roi-card-title">💬 Taxa de Resposta (Últimos 5)</div>
+                    <div class="audit-row">
+                        <div class="audit-stat">
+                            <span id="audit-rate" class="audit-big">0%</span>
+                            <span class="audit-label">Respondidos</span>
+                        </div>
+                        <div class="audit-stat">
+                            <span id="audit-recency" class="audit-big">--</span>
+                            <span class="audit-label">Último Review</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div id="bar-response" class="progress-bar-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB: DETAILS -->
+            <div id="tab-details" class="tab-content hidden" style="flex: 1; overflow-y: auto; padding: 4px;">
+                <div class="field-group">
+                    <label class="nw-label-caps">Endereço</label>
+                    <div id="detail-address" class="pro-data-box">--</div>
+                </div>
+                <div class="field-group">
+                    <label class="nw-label-caps">Telefone</label>
+                    <div id="detail-phone" class="pro-data-box">--</div>
+                </div>
+                <div class="field-group">
+                    <label class="nw-label-caps">Site</label>
+                    <a id="detail-website" href="#" target="_blank" class="pro-data-box link">--</a>
+                </div>
+                <div class="field-group">
+                    <label class="nw-label-caps">Horário</label>
+                    <div id="detail-hours" class="pro-data-box">--</div>
+                </div>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="pro-actions">
+                <button id="btn-copy" class="nw-btn secondary">Copiar Dados</button>
+                <button id="btn-crm" class="nw-btn primary">Enviar p/ CRM</button>
+            </div>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+
+</html>

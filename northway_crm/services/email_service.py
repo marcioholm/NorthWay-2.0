@@ -1,5 +1,9 @@
 import os
-import resend
+try:
+    import resend
+except ImportError:
+    resend = None
+    print("⚠️ Warning: 'resend' module not found. Email service degraded.")
 from flask import render_template, current_app
 from models import db, EmailLog, Company, User
 from datetime import datetime

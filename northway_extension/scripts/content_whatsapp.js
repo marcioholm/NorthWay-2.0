@@ -2,6 +2,62 @@
 let shadowRoot = null;
 let currentPhone = null;
 let currentLeadId = null;
+let intervalChat = null;
+let intervalLayout = null;
+
+// --- INDEXEDDB HELPER FOR FILE PERSISTENCE ---
+const NWDB = {
+    name: "NorthWayDB",
+    version: 1,
+    store: "files",
+    db: null,
+    init: function () {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.name, this.version);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(this.store)) {
+                    db.createObjectStore(this.store);
+                }
+            };
+            request.onsuccess = (e) => {
+                this.db = e.target.result;
+                resolve(this.db);
+            };
+            request.onerror = (e) => reject(e);
+        });
+    },
+    saveFile: async function (key, file) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(this.store, "readwrite");
+            const store = tx.objectStore(this.store);
+            const request = store.put(file, key);
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(e);
+        });
+    },
+    getFile: async function (key) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(this.store, "readonly");
+            const store = tx.objectStore(this.store);
+            const request = store.get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = (e) => reject(e);
+        });
+    },
+    clear: async function () {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(this.store, "readwrite");
+            const store = tx.objectStore(this.store);
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(e);
+        });
+    }
+};
 
 // --- INITIALIZATION ---
 async function init() {
@@ -48,13 +104,25 @@ async function init() {
         startObserver();
         adjustLayout();
 
-        setInterval(checkActiveChat, 1000);
-        setInterval(adjustLayout, 2000);
+        // --- BRIDGE CHECK ---
+        setTimeout(() => {
+            console.log("NW: Sending PING to Main World...");
+            window.postMessage({ source: "NW_EXTENSION", type: "NW_PING" }, "*");
+        }, 3000);
+        // --------------------
+
+        if (intervalChat) clearInterval(intervalChat);
+        if (intervalLayout) clearInterval(intervalLayout);
+
+        intervalChat = setInterval(checkActiveChat, 1000);
+        intervalLayout = setInterval(adjustLayout, 2000);
 
     } catch (e) {
-        console.error("NW: Init failed", e);
+        console.log("NW: Init failed", e);
     }
 }
+
+// (Page Script is now injected via manifest.json with world: "MAIN")
 
 function adjustLayout() {
     const appWrapper = document.getElementById('app');
@@ -179,6 +247,9 @@ function checkActiveChat() {
             el.innerText.match(/Dados do|Contact info|Group info|Business info/i)
         );
 
+        // If a broadcast is active, don't reset to idle just because we switched contacts
+        const isBcActive = BroadcastEngine.currentIndex >= 0;
+
         if (drawerTitle) {
             const container = drawerTitle.closest('div._aigv') || drawerTitle.closest('section');
             if (drawerTitle.innerText.match(/group|grupo/i)) {
@@ -216,6 +287,11 @@ function checkActiveChat() {
         if (name === "WhatsApp") name = null;
 
         // --- DISPATCH ---
+        if (isBcActive) {
+            // During broadcast, we stay in the broadcast view
+            return;
+        }
+
         if (isGroup) {
             const key = `GROUP:${name}`;
             if (currentPhone !== key) {
@@ -230,14 +306,14 @@ function checkActiveChat() {
         } else if (name && name !== currentPhone && !name.includes("WhatsApp") && name !== "Contato") {
             currentPhone = name;
             updateSidebar(name, null, name, avatarUrl);
-        } else if (!name && !phone && currentPhone !== null) {
-            // Reset if no chat is active
+        } else if (!name && !phone && currentPhone !== null && !isBcActive) {
+            // Reset if no chat is active AND no broadcast is running
             currentPhone = null;
             showState('idle');
         }
 
     } catch (err) {
-        console.error("NW: Detection Error", err);
+        console.log("NW: Detection Error", err);
     }
 }
 
@@ -550,17 +626,27 @@ const BroadcastEngine = {
     currentTab: "A",
     autoSend: false,
     batchCount: 0,
+    media: null,
+    mediaCaption: "",
+    currentMessage: "",
+    currentMediaCaption: "",
+    currentStep: 1, // 1: Text, 2: Media
     config: { min: 10, max: 20, batchSize: 10, batchWait: 60 },
 
     init: async function () {
         // Load state from storage
-        const result = await chrome.storage.local.get(['bc_queue', 'bc_index', 'bc_active', 'bc_templates', 'bc_auto', 'bc_config', 'bc_batch_count']);
+        const result = await chrome.storage.local.get(['bc_queue', 'bc_index', 'bc_active', 'bc_templates', 'bc_auto', 'bc_config', 'bc_batch_count', 'bc_current_message', 'bc_media_caption', 'bc_current_step', 'bc_media_name', 'bc_media_type']);
         if (result.bc_queue) this.queue = result.bc_queue;
         if (result.bc_index !== undefined) this.currentIndex = result.bc_index;
         if (result.bc_templates) this.templates = result.bc_templates;
         this.autoSend = result.bc_auto || false;
         if (result.bc_config) this.config = result.bc_config;
         this.batchCount = result.bc_batch_count || 0;
+        if (result.bc_current_message) this.currentMessage = result.bc_current_message;
+        if (result.bc_media_caption) this.mediaCaption = result.bc_media_caption;
+        if (result.bc_current_step) this.currentStep = result.bc_current_step;
+        if (result.bc_media_name) this.mediaName = result.bc_media_name;
+        if (result.bc_media_type) this.mediaType = result.bc_media_type;
 
         // UI Sync
         const autoCheck = getEl('nw-broadcast-auto');
@@ -585,12 +671,66 @@ const BroadcastEngine = {
         getEl('nw-broadcast-template').value = this.templates[this.currentTab] || "";
 
         if (result.bc_active) {
+            // Restore Media from IndexedDB
+            // Restore Media from IndexedDB
+            const savedMedia = await NWDB.getFile("bc_media");
+            console.log("NW: [DEBUG] Init - Metadata from storage:", { name: result.bc_media_name, type: result.bc_media_type });
+            console.log("NW: [DEBUG] Init - Raw savedMedia from DB:", savedMedia);
+
+            if (savedMedia) {
+                // Re-wrap to ensure it's a valid File object with preserved metadata
+                const fileName = result.bc_media_name || savedMedia.name || "arquivo";
+
+                // MIME Map for robust fallback
+                const ext = fileName.split('.').pop().toLowerCase();
+                const MIME_MAP = {
+                    'pdf': 'application/pdf',
+                    'png': 'image/png',
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'webp': 'image/webp',
+                    'mp4': 'video/mp4',
+                    'doc': 'application/msword',
+                    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'xls': 'application/vnd.ms-excel',
+                    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'txt': 'text/plain'
+                };
+
+                // FORCE SANITIZATION: Rely on MIME_MAP for known extensions significantly more than stored type
+                // This fixes "corrupted" state from previous bad saves.
+                let fileType = MIME_MAP[ext];
+
+                if (!fileType) {
+                    fileType = result.bc_media_type || savedMedia.type || "application/octet-stream";
+                }
+
+                console.log(`NW: Restoring File. Name: ${fileName}, Ext: ${ext}, Forced Type: ${fileType}`);
+
+                this.media = new File([savedMedia], fileName, {
+                    type: fileType,
+                    lastModified: Date.now()
+                });
+                console.log("NW: [DEBUG] Init - Reconstructed File:", this.media, "Size:", this.media.size, "Type:", this.media.type);
+                const prev = getEl('nw-media-preview-container');
+                const pName = getEl('nw-media-filename');
+                const pCap = getEl('nw-media-caption');
+                if (prev) prev.classList.remove('hidden');
+                if (pName) pName.textContent = this.media.name;
+                if (pCap) pCap.value = this.mediaCaption;
+            }
+
             showState('broadcast');
             getEl('nw-broadcast-setup').classList.add('hidden');
             getEl('nw-broadcast-active').classList.remove('hidden');
             this.renderQueue();
             this.updateStats();
             this.renderCurrent();
+
+            // If we are on step 2 (Media), we need to attach it
+            if (this.media && this.currentStep === 2) {
+                await this.attachMedia();
+            }
 
             if (this.autoSend) this.attemptAutoSend();
         }
@@ -604,6 +744,90 @@ const BroadcastEngine = {
         this.save();
     },
 
+    attachMedia: async function () {
+        if (!this.media) return true;
+
+        console.log("NW: Starting attachment process for:", this.media.name);
+
+        // --- PAGE CONTEXT INJECTION BRIDGE ---
+        try {
+            // 1. Prepare Data
+            const arrayBuffer = await this.media.arrayBuffer();
+            const data = Array.from(new Uint8Array(arrayBuffer)); // Serialize for postMessage
+
+            // 2. Determine Kind
+            // kind: "document" or "media"
+            const isImageOrVideo = this.media.type.startsWith('image/') || this.media.type.startsWith('video/');
+            const kind = isImageOrVideo ? 'media' : 'document';
+
+            console.log(`NW: Sending Attach Request to Page. Kind: ${kind}, Type: ${this.media.type}`);
+
+            // 3. Send Message to Page Script
+            window.postMessage({
+                source: "NW_EXTENSION",
+                type: "NW_ATTACH_FILE",
+                payload: {
+                    kind: kind,
+                    name: this.media.name,
+                    mime: this.media.type,
+                    data: data
+                }
+            }, "*");
+
+            // 4. Wait for Preview (Standard Logic)
+            console.log("NW: Request sent. Waiting for page script to execute and preview to appear...");
+
+            // Wait for preview to appear (up to 30s)
+            for (let i = 0; i < 60; i++) {
+                await new Promise(r => setTimeout(r, 500));
+
+                const previewSend = this.findSendButton(true);
+
+                // Handle Caption if preview is visible
+                const allInputs = Array.from(document.querySelectorAll('div[contenteditable="true"]'));
+                const caption = allInputs.find(el => {
+                    const isSide = el.closest('#side');
+                    const isFooter = el.closest('footer');
+                    return !isSide && !isFooter && (el.innerText.trim() === "" || el.innerText.toLowerCase().includes("legenda") || el.innerText.toLowerCase().includes("caption"));
+                });
+
+                if (caption && this.currentMediaCaption) {
+                    const txt = caption.innerText.trim();
+                    if (txt === "" || txt.toLowerCase().includes("legenda") || txt.toLowerCase().includes("caption") || txt.toLowerCase().includes("digite")) {
+                        try {
+                            caption.focus();
+                            document.execCommand('selectAll', false, null);
+                            document.execCommand('insertText', false, this.currentMediaCaption);
+                            caption.dispatchEvent(new Event('input', { bubbles: true }));
+                        } catch (e) {
+                            console.warn("Caption error", e);
+                        }
+                    }
+                }
+
+                if (previewSend) {
+                    // Wait for Upload Completion (Loading Spinner or Disabled Send)
+                    const isDiasbled = previewSend.disabled || previewSend.getAttribute('aria-disabled') === 'true';
+                    const hasSpinner = document.querySelector('[data-icon="msg-status-sending"]') || document.querySelector('div[role="progressbar"]');
+
+                    if (!isDiasbled && !hasSpinner) {
+                        console.log("NW: Preview ready and upload complete.");
+                        return true;
+                    } else {
+                        console.log("NW: Waiting for upload...");
+                    }
+                }
+            }
+
+            console.log("NW: Timeout waiting for upload, proceeding anyway.");
+            return true;
+
+        } catch (e) {
+            console.log("NW: Injection failed", e);
+            return false;
+        }
+    },
+
     save: async function () {
         await chrome.storage.local.set({
             bc_queue: this.queue,
@@ -612,7 +836,10 @@ const BroadcastEngine = {
             bc_templates: this.templates,
             bc_auto: this.autoSend,
             bc_config: this.config,
-            bc_batch_count: this.batchCount
+            bc_batch_count: this.batchCount,
+            bc_current_message: this.currentMessage,
+            bc_media_caption: this.mediaCaption,
+            bc_current_step: this.currentStep
         });
     },
 
@@ -625,36 +852,30 @@ const BroadcastEngine = {
 
         const interval = setInterval(() => {
             attempts++;
-            // Enhanced Selector Strategy
-            const footer = document.querySelector('footer');
-            let sendBtn = null;
-
-            if (footer) {
-                // Try finding inside footer first (most reliable)
-                sendBtn = footer.querySelector('span[data-icon="send"]');
-                if (!sendBtn) sendBtn = footer.querySelector('span[data-icon="send-light"]');
-                if (!sendBtn) sendBtn = footer.querySelector('button[aria-label="Send"]');
-                if (!sendBtn) sendBtn = footer.querySelector('button[aria-label="Enviar"]');
-            }
-
-            if (!sendBtn) {
-                // Fallback to global search
-                sendBtn = document.querySelector('span[data-icon="send"]');
-            }
+            let sendBtn = this.findSendButton();
 
             if (sendBtn) {
-                const clickable = sendBtn.closest('button') || sendBtn;
+                const clickable = sendBtn.closest('div[role="button"]') || sendBtn.closest('button') || sendBtn;
                 console.log("NW: Send button found!", clickable);
                 clearInterval(interval);
 
-                // Forceful React Click Simulation
-                const eventOpts = { bubbles: true, cancelable: true, view: window };
+                // --- ULTRA-FORCEFUL REACT CLICK SIMULATION ---
+                clickable.focus();
+                const eventOpts = { bubbles: true, cancelable: true, view: window, isTrusted: true };
+
+                // Mouse Events
                 clickable.dispatchEvent(new MouseEvent('mousedown', eventOpts));
                 clickable.dispatchEvent(new MouseEvent('mouseup', eventOpts));
                 clickable.dispatchEvent(new MouseEvent('click', eventOpts));
 
+                // Pointer Events (Modern React)
+                clickable.dispatchEvent(new PointerEvent('pointerdown', eventOpts));
+                clickable.dispatchEvent(new PointerEvent('pointerup', eventOpts));
+
                 // Backup native click 
-                setTimeout(() => clickable.click(), 50);
+                setTimeout(() => {
+                    try { clickable.click(); } catch (e) { }
+                }, 50);
 
                 if (btnConfirm) btnConfirm.textContent = "✅ Auto: Disparado!";
 
@@ -676,6 +897,54 @@ const BroadcastEngine = {
                 }
             }
         }, 1000);
+    },
+
+    findSendButton: function (onlyOverlay = false) {
+        // Priority 1: Search for any element with "send" in data-icon OR aria-label
+        const allPossible = Array.from(document.querySelectorAll('span[data-icon*="send"], button[aria-label*="Send"], button[aria-label*="Enviar"], div[role="button"][aria-label*="Send"], div[role="button"][aria-label*="Enviar"], [data-testid="send"], [data-testid="compose-btn-send"]'));
+
+        // Priority 1.5: SVG Path detection (Fallback for buttons without clear attributes)
+        const svgs = Array.from(document.querySelectorAll('svg'));
+        svgs.forEach(svg => {
+            const inner = svg.innerHTML.toLowerCase();
+            // Paths for various WhatsApp send icons (normal, business, PDF preview)
+            if (inner.includes('m1.1,2.1') ||
+                inner.includes('m12 4l0 16') ||
+                inner.includes('m15.003 12') ||
+                inner.includes('m12 2l4.5 20.29')) {
+                const btn = svg.closest('button') || svg.closest('div[role="button"]');
+                if (btn && !allPossible.includes(btn)) allPossible.push(btn);
+            }
+        });
+
+        // Filter out sidebar and other irrelevant stuff
+        const candidates = allPossible.filter(el => {
+            const side = el.closest('#side');
+            if (side) return false;
+            return true;
+        });
+
+        // If we are looking for overlay (Media Preview)
+        if (onlyOverlay || document.querySelector('div[role="dialog"]') || document.querySelector('div[role="presentation"]') || document.querySelector('div[role="region"] canvas')) {
+            // Prefer buttons inside dialogs/regions/overlays/canvas-previews (PDFs)
+            const overlayBtn = candidates.find(el =>
+                el.closest('div[role="dialog"]') ||
+                el.closest('div[role="region"]') ||
+                el.closest('div[role="presentation"]') ||
+                el.closest('main') // Some PDF previews are in a main region
+            );
+            if (overlayBtn) return overlayBtn;
+
+            // If we MUST have an overlay but found none, return null
+            if (onlyOverlay) return null;
+        }
+
+        // Priority 2: Prefer footer button for regular chat
+        const footerBtn = candidates.find(el => el.closest('footer'));
+        if (footerBtn) return footerBtn;
+
+        // Final fallback: the first candidate that isn't in side
+        return candidates[0] || null;
     },
 
     importContacts: function (text) {
@@ -762,12 +1031,51 @@ const BroadcastEngine = {
     },
 
     updateStats: function () {
+        const pending = this.queue.filter(i => i.status === 'PENDENTE').length;
+        const sent = this.queue.filter(i => i.status === 'ENVIADO').length;
+        const failed = this.queue.filter(i => i.status === 'FALHOU').length;
+
         const p = getEl('nw-stat-pending');
-        if (p) p.textContent = this.queue.filter(i => i.status === 'PENDENTE').length;
+        if (p) p.textContent = pending;
         const s = getEl('nw-stat-sent');
-        if (s) s.textContent = this.queue.filter(i => i.status === 'ENVIADO').length;
+        if (s) s.textContent = sent;
         const f = getEl('nw-stat-failed');
-        if (f) f.textContent = this.queue.filter(i => i.status === 'FALHOU').length;
+        if (f) f.textContent = failed;
+
+        // --- ETA CALCULATION ---
+        const etaEl = getEl('nw-stat-eta');
+        if (etaEl && pending > 0) {
+            // Config values
+            const min = this.config.min || 10;
+            const max = this.config.max || 20;
+            const avgDelay = (min + max) / 2;
+
+            // Add extra buffer for attachments (roughly +10s per msg if media attached)
+            const attachmentBuffer = this.media ? 10 : 0;
+
+            // Add batch waiting time
+            const batchSize = this.config.batchSize || 10;
+            const batchWait = this.config.batchWait || 60;
+            const batchesLeft = Math.floor(pending / batchSize);
+            const totalBatchWait = batchesLeft * batchWait;
+
+            // Total Seconds
+            const totalSeconds = (pending * (avgDelay + attachmentBuffer)) + totalBatchWait;
+
+            // Format HH:MM:SS
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const sec = Math.floor(totalSeconds % 60);
+
+            const parts = [];
+            if (h > 0) parts.push(`${h}h`);
+            parts.push(`${m}m`);
+            parts.push(`${sec}s`);
+
+            etaEl.textContent = parts.join(' ');
+        } else if (etaEl) {
+            etaEl.textContent = pending === 0 ? "Finalizado" : "--:--";
+        }
     },
 
     start: function () {
@@ -808,8 +1116,21 @@ const BroadcastEngine = {
             .replace(/{observacao}/gi, item.observacao || "")
             .replace(/{variavel}/gi, item.variable || "");
 
+        const caption = this.mediaCaption
+            .replace(/{nome}/gi, item.name || "")
+            .replace(/{telefone}/gi, item.phone || "")
+            .replace(/{email}/gi, item.email || "")
+            .replace(/{origem}/gi, item.origem || "")
+            .replace(/{interesse}/gi, item.interesse || "")
+            .replace(/{observacao}/gi, item.observacao || "")
+            .replace(/{variavel}/gi, item.variable || "");
+
+        this.currentMessage = message;
+        this.currentMediaCaption = caption;
+
         const previewEl = getEl('nw-bc-message-preview');
-        if (previewEl) previewEl.textContent = `[Variação ${currentVariant}] ${message}`;
+        const mediaTag = this.media ? `\n\n📎 [ANEXO: ${this.media.name}]\n📝 [LEGENDA: ${caption}]` : "";
+        if (previewEl) previewEl.textContent = `[Variação ${currentVariant}] ${message}${mediaTag}`;
         return message;
     },
 
@@ -817,7 +1138,7 @@ const BroadcastEngine = {
         this.currentIndex++;
         if (this.currentIndex >= this.queue.length) {
             alert("✅ Disparo finalizado!");
-            this.stop();
+            await this.stop();
             return;
         }
 
@@ -825,29 +1146,45 @@ const BroadcastEngine = {
         if (item.status !== 'PENDENTE') return this.next();
 
         this.renderQueue();
-        const message = this.renderCurrent();
-        this.save();
+        this.renderCurrent(); // Updates this.currentMessage and this.currentMediaCaption
+        this.currentStep = 1; // Always start with text
+        await this.save();
 
         // Open Chat using a safer method that won't infinite loop
         const currentUrl = new URL(window.location.href);
-        const targetUrl = `https://web.whatsapp.com/send?phone=${item.phone}&text=${encodeURIComponent(message)}`;
+        const targetUrl = `https://web.whatsapp.com/send?phone=${item.phone}&text=${encodeURIComponent(this.currentMessage)}`;
 
         if (!currentUrl.search.includes(item.phone)) {
             window.location.href = targetUrl;
         }
     },
 
-    confirmSend: function () {
+    confirmSend: async function () {
         if (this.currentIndex < 0) return;
+
+        // --- STEP TRANSITION ---
+        if (this.media && this.currentStep === 1) {
+            console.log("NW: Text step confirmed, moving to media step in 1.5s...");
+            this.currentStep = 2;
+            await this.save();
+
+            setTimeout(async () => {
+                await this.attachMedia();
+                if (this.autoSend) this.attemptAutoSend();
+            }, 1500);
+            return;
+        }
+
         this.queue[this.currentIndex].status = 'ENVIADO';
         this.updateStats();
 
         // Batch Counting
         this.batchCount++;
-        this.save();
+        this.currentStep = 1; // Reset for next contact
+        await this.save();
 
         const btn = getEl('nw-btn-bc-confirm');
-        btn.disabled = true;
+        if (btn) btn.disabled = true;
 
         let delay = 0;
         let isBatchPause = false;
@@ -924,6 +1261,8 @@ const BroadcastEngine = {
         this.currentIndex = -1;
         this.queue = [];
         this.batchCount = 0;
+        this.media = null;
+        await NWDB.clear();
         await this.save();
 
         const btn = getEl('nw-btn-bc-confirm');
@@ -1016,6 +1355,114 @@ function bindEvents() {
     });
     if (getEl('nw-btn-bc-stop')) getEl('nw-btn-bc-stop').addEventListener('click', () => BroadcastEngine.stop());
 
+    // Media Attachments
+    const handleMediaSelect = async (e) => {
+        let file = e.target.files[0];
+        if (!file) return;
+
+        // --- WEBP CONVERSION FIX ---
+        // Convert WEBP to PNG to prevent it from becoming a Sticker automatically
+        if (file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp')) {
+            console.log("NW: WEBP detected. Converting to PNG...");
+            try {
+                const convertWebPToPNG = (webmFile) => {
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            canvas.getContext('2d').drawImage(img, 0, 0);
+                            canvas.toBlob((blob) => resolve(blob), 'image/png');
+                        };
+                        img.onerror = reject;
+                        img.src = URL.createObjectURL(webmFile);
+                    });
+                };
+
+                const pngBlob = await convertWebPToPNG(file);
+                const newName = file.name.replace(/\.webp$/i, '.png');
+                file = new File([pngBlob], newName, { type: 'image/png' });
+                console.log("NW: Conversion successful:", file);
+            } catch (err) {
+                console.log("NW: WEBP Conversion failed", err);
+            }
+        }
+        // ---------------------------
+
+        // --- MIME SANITIZATION ---
+        const MIME_MAP = {
+            'pdf': 'application/pdf',
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'webp': 'image/webp',
+            'mp4': 'video/mp4',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'txt': 'text/plain'
+        };
+        const ext = file.name.split('.').pop().toLowerCase();
+        const correctType = MIME_MAP[ext] || file.type || "application/octet-stream";
+
+        console.log(`NW: Selected file ${file.name}, Detected Type: ${file.type}, Corrected Type: ${correctType}`);
+
+        // --- FIX A: Reconstruct File with Correct MIME Type ---
+        // This ensures the blob saved to DB has the right type metadata
+        if (file.type !== correctType) {
+            try {
+                const buffer = await file.arrayBuffer();
+                file = new File([buffer], file.name, { type: correctType, lastModified: Date.now() });
+                console.log("NW: File reconstructed with forced MIME:", file.type);
+            } catch (e) {
+                console.error("NW: Failed to reconstruct file", e);
+            }
+        }
+        // -----------------------------------------------------
+
+        BroadcastEngine.media = file;
+        await NWDB.saveFile("bc_media", file);
+        // Save metadata separately to ensure recovery after reload
+        await chrome.storage.local.set({
+            bc_media_name: file.name,
+            bc_media_type: correctType
+        });
+
+        getEl('nw-media-preview-container').classList.remove('hidden');
+        getEl('nw-media-filename').textContent = file.name;
+    };
+
+    if (getEl('nw-btn-attach-img')) getEl('nw-btn-attach-img').addEventListener('click', () => getEl('nw-attach-img').click());
+    if (getEl('nw-btn-attach-video')) getEl('nw-btn-attach-video').addEventListener('click', () => getEl('nw-attach-video').click());
+    if (getEl('nw-btn-attach-doc')) getEl('nw-btn-attach-doc').addEventListener('click', () => getEl('nw-attach-doc').click());
+
+    if (getEl('nw-attach-img')) getEl('nw-attach-img').addEventListener('change', handleMediaSelect);
+    if (getEl('nw-attach-video')) getEl('nw-attach-video').addEventListener('change', handleMediaSelect);
+    if (getEl('nw-attach-doc')) getEl('nw-attach-doc').addEventListener('change', handleMediaSelect);
+
+    if (getEl('nw-media-clear')) {
+        getEl('nw-media-clear').addEventListener('click', async () => {
+            BroadcastEngine.media = null;
+            BroadcastEngine.mediaCaption = "";
+            await NWDB.clear();
+            getEl('nw-media-preview-container').classList.add('hidden');
+            getEl('nw-media-caption').value = '';
+            // Reset file inputs
+            getEl('nw-attach-img').value = '';
+            getEl('nw-attach-video').value = '';
+            getEl('nw-attach-doc').value = '';
+        });
+    }
+
+    if (getEl('nw-media-caption')) {
+        getEl('nw-media-caption').addEventListener('input', (e) => {
+            BroadcastEngine.mediaCaption = e.target.value;
+            BroadcastEngine.save();
+        });
+    }
+
     // Legacy Binds
     if (getEl('nw-btn-create')) {
         getEl('nw-btn-create').addEventListener('click', async () => {
@@ -1066,4 +1513,86 @@ function bindEvents() {
     }
 }
 
-setTimeout(init, 3000);
+
+// --- AUTH GATING & LIFECYCLE ---
+async function bootstrap() {
+    console.log("NW: Bootstrapping... Checking Auth.");
+
+    // 1. Check Initial State
+    // We send a message to background to check if we have a valid token
+    try {
+        const response = await chrome.runtime.sendMessage({ action: "CHECK_AUTH" });
+        if (response && response.token) {
+            console.log("NW: Authenticated. Initializing Sidebar.");
+            init();
+        } else {
+            console.log("NW: Not authenticated. Sidebar will not load.");
+            unmount();
+        }
+    } catch (e) {
+        console.warn("NW: Auth check failed (Background might be sleeping)", e);
+    }
+
+    // 2. Listen for Auth Changes (Login/Logout)
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'local') {
+            // Watch for 'authToken' used by ZapWay
+            if (changes.authToken) {
+                const newToken = changes.authToken.newValue;
+                if (newToken) {
+                    console.log("NW: Login detected! Mounting Sidebar...");
+                    // Only init if not already present
+                    if (!document.getElementById('northway-sidebar-host')) {
+                        init();
+                    }
+                } else {
+                    console.log("NW: Logout detected. Unmounting Sidebar...");
+                    unmount();
+                }
+            }
+        }
+    });
+
+    // 3. Listen for direct messages from Popup (optional backup)
+    chrome.runtime.onMessage.addListener((req) => {
+        if (req.action === "LOGIN_SUCCESS") {
+            if (!document.getElementById('northway-sidebar-host')) init();
+        }
+        if (req.action === "LOGOUT_SUCCESS") {
+            unmount();
+        }
+    });
+}
+
+function unmount() {
+    // 1. Remove Sidebar
+    const el = document.getElementById('northway-sidebar-host');
+    if (el) el.remove();
+
+    // 2. Stop Interval Loops
+    if (intervalChat) {
+        clearInterval(intervalChat);
+        intervalChat = null;
+    }
+    if (intervalLayout) {
+        clearInterval(intervalLayout);
+        intervalLayout = null;
+    }
+
+    // 3. Reset State
+    currentPhone = null;
+    currentLeadId = null;
+    shadowRoot = null;
+
+    // 4. Reset Layout
+    const appWrapper = document.getElementById('app');
+    if (appWrapper && appWrapper.firstElementChild) {
+        appWrapper.firstElementChild.style.width = '';
+        appWrapper.firstElementChild.style.minWidth = '';
+    }
+
+    console.log("NW: Unmounted successfully.");
+}
+
+// Start Lifecycle
+setTimeout(bootstrap, 2000);

@@ -18,13 +18,8 @@
             <button id="nw-btn-nav-broadcast" class="nw-icon-btn" title="Disparo Assistido">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.71-2.13.71-2.13l-1.58-1.58s-1.29 0-2.13.71Z" />
-                    <path d="m11 13 8-7" />
-                    <path d="m12 5 3 3" />
-                    <path d="m19 13-3-3" />
-                    <path
-                        d="M7.12 14.88c.18-.32.38-.63.58-.94a21.36 21.36 0 0 1 12.35-8.81A2.12 2.12 0 0 1 22 7.07a21.36 21.36 0 0 1-8.81 12.35c-.32.2-.62.4-.94.58l-5.13-5.12Z" />
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
             </button>
             <button id="nw-btn-settings" class="nw-icon-btn" title="Configurações">
@@ -232,32 +227,113 @@
             </div>
 
             <div id="nw-broadcast-setup">
+                <!-- Step 1: Import -->
                 <div class="nw-card">
                     <label class="nw-label-caps">1. Importar Contatos</label>
-                    <textarea id="nw-broadcast-import-text" rows="4" style="margin-top: 10px"
+                    <textarea id="nw-broadcast-import-text" rows="3" style="margin-top: 10px; font-size: 11px;"
                         placeholder="Nome;Telefone;Variavel"></textarea>
                     <label for="nw-broadcast-import-file" class="nw-btn"
-                        style="background: rgba(255,255,255,0.05); margin-top: 10px; border: 1px solid var(--nw-border); text-transform: none; cursor: pointer;">
-                        📁 Carregar CSV
+                        style="background: rgba(255,255,255,0.05); margin-top: 10px; border: 1px solid var(--nw-border); text-transform: none; cursor: pointer; padding: 10px; font-size: 11px;">
+                        📁 Carregar CSV (Importação em Massa)
                     </label>
                     <input type="file" id="nw-broadcast-import-file" accept=".csv" class="hidden">
                 </div>
 
+                <!-- Step 2: Message Models (A/B/C) -->
                 <div class="nw-card">
-                    <label class="nw-label-caps">2. Template da Mensagem</label>
-                    <div class="nw-variable-chips" style="margin-top: 10px">
-                        <button class="nw-chip" data-var="{nome}">{nome}</button>
-                        <button class="nw-chip" data-var="{tel}">{tel}</button>
-                    </div>
-                    <textarea id="nw-broadcast-template" rows="5" placeholder="Olá {nome}..."
-                        style="margin-top: 10px"></textarea>
+                    <label class="nw-label-caps" style="margin-bottom: 12px;">2. Modelos de Mensagem (Rotação)</label>
 
+                    <div class="nw-tabs">
+                        <button class="nw-tab-btn active" data-tab="A">Modelo A</button>
+                        <button class="nw-tab-btn" data-tab="B">Modelo B</button>
+                        <button class="nw-tab-btn" data-tab="C">Modelo C</button>
+                    </div>
+
+                    <div class="nw-variable-chips" style="margin-bottom: 10px">
+                        <button class="nw-chip" data-var="{nome}">{nome}</button>
+                        <button class="nw-chip" data-var="{telefone}">{tel}</button>
+                        <button class="nw-chip" data-var="{email}">{email}</button>
+                        <button class="nw-chip" data-var="{interesse}">{interesse}</button>
+                        <button class="nw-chip" data-var="{variavel}">{variavel}</button>
+                    </div>
+
+                    <textarea id="nw-broadcast-template" rows="5" placeholder="Olá {nome}, tudo bem?"
+                        style="margin-top: 5px; font-size: 12px; line-height: 1.5;"></textarea>
+
+                    <p class="nw-hint">A extensão irá rotacionar as mensagens (A -> B -> C) para cada contato da fila.
+                    </p>
+
+                    <!-- Media/Attachments Section -->
+                    <div class="nw-media-section">
+                        <label class="nw-label-caps">Anexar Mídia (Opcional)</label>
+                        <div class="nw-media-grid">
+                            <div class="nw-media-item" id="nw-btn-attach-img">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                                <span>Imagem</span>
+                                <input type="file" id="nw-attach-img" accept="image/*" class="hidden">
+                            </div>
+                            <div class="nw-media-item" id="nw-btn-attach-video">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="23 7 16 12 23 17 23 7" />
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                                </svg>
+                                <span>Vídeo</span>
+                                <input type="file" id="nw-attach-video" accept="video/*" class="hidden">
+                            </div>
+                            <div class="nw-media-item" id="nw-btn-attach-doc">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                </svg>
+                                <span>Documento</span>
+                                <input type="file" id="nw-attach-doc" accept=".pdf,.doc,.docx,.xls,.xlsx"
+                                    class="hidden">
+                            </div>
+                            <div class="nw-media-item" id="nw-media-clear"
+                                style="border-style: solid; color: var(--nw-danger); opacity: 0.5;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 6h18" />
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                </svg>
+                                <span>Limpar</span>
+                            </div>
+                        </div>
+                        <div id="nw-media-preview-container" class="nw-hint hidden"
+                            style="margin-top: 10px; color: var(--nw-accent);">
+                            📎 Arquivo selecionado: <span id="nw-media-filename">...</span>
+                            <div style="margin-top: 8px;">
+                                <label class="nw-label-caps"
+                                    style="font-size: 10px; opacity: 0.8; display: block; margin-bottom: 4px;">Legenda
+                                    do Anexo</label>
+                                <textarea id="nw-media-caption" class="nw-input"
+                                    placeholder="Opcional: Digite uma legenda exclusiva para o arquivo..."
+                                    style="height: 60px; font-size: 11px; width: 100%; box-sizing: border-box;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Final Actions -->
+                <div class="nw-card">
                     <div class="nw-warning-box">
                         <input type="checkbox" id="nw-broadcast-auto">
-                        <label for="nw-broadcast-auto">Envio Automático (Turbo)</label>
+                        <label for="nw-broadcast-auto">Envio Automático (Disparo em Massa)</label>
                     </div>
 
-                    <button id="nw-btn-start-broadcast" class="nw-btn primary">Iniciar Fila</button>
+                    <button id="nw-btn-start-broadcast" class="nw-btn primary">
+                        🚀 Iniciar Disparo
+                    </button>
+                    <p class="nw-hint" style="text-align: center; margin-top: 10px;">Lembre-se de não abusar da
+                        velocidade para evitar banimentos.</p>
                 </div>
             </div>
 
@@ -274,6 +350,14 @@
                     <div class="nw-stat-item red">
                         <span id="nw-stat-failed">0</span>
                         <label>Falhas</label>
+                    </div>
+                    <!-- ETA -->
+                    <!-- ETA -->
+                    <div class="nw-stat-item"
+                        style="grid-column: span 3; margin-top: 10px; background: rgba(255, 193, 7, 0.15); border: 1px solid rgba(255, 193, 7, 0.4); padding: 10px; flex-direction: row; gap: 10px; justify-content: center; border-radius: 8px;">
+                        <label style="font-size: 13px; margin: 0; color: #ffecb3;">⏱️ Tempo Estimado:</label>
+                        <span id="nw-stat-eta"
+                            style="font-size: 16px; font-weight: 800; color: #ffeb3b; text-shadow: 0 0 8px rgba(255, 193, 7, 0.3);">--:--</span>
                     </div>
                 </div>
 

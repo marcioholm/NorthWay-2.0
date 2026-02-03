@@ -36,48 +36,52 @@ def add_columns():
 
             # Check/Add gmb_last_sync
             try:
-                conn.execute(text("ALTER TABLE lead ADD COLUMN gmb_last_sync DATETIME"))
+                conn.execute(text("ALTER TABLE lead ADD COLUMN IF NOT EXISTS gmb_last_sync TIMESTAMP"))
                 print("Added gmb_last_sync to lead")
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error adding gmb_last_sync: {e}")
+            
+            conn.commit()
 
         # 2. Add columns to CLIENTS table
         print("\nChecking 'client' table...")
         with db.engine.connect() as conn:
             # Check/Add gmb_link
             try:
-                conn.execute(text("ALTER TABLE client ADD COLUMN gmb_link VARCHAR(500)"))
+                conn.execute(text("ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_link VARCHAR(500)"))
                 print("Added gmb_link to client")
             except Exception:
                 pass
 
             # Check/Add gmb_rating
             try:
-                conn.execute(text("ALTER TABLE client ADD COLUMN gmb_rating FLOAT DEFAULT 0.0"))
+                conn.execute(text("ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_rating FLOAT DEFAULT 0.0"))
                 print("Added gmb_rating to client")
             except Exception:
                 pass
 
             # Check/Add gmb_reviews
             try:
-                conn.execute(text("ALTER TABLE client ADD COLUMN gmb_reviews INTEGER DEFAULT 0"))
+                conn.execute(text("ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_reviews INTEGER DEFAULT 0"))
                 print("Added gmb_reviews to client")
             except Exception:
                 pass
                 
             # Check/Add gmb_photos
             try:
-                conn.execute(text("ALTER TABLE client ADD COLUMN gmb_photos INTEGER DEFAULT 0"))
+                conn.execute(text("ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_photos INTEGER DEFAULT 0"))
                 print("Added gmb_photos to client")
             except Exception:
                 pass
 
             # Check/Add gmb_last_sync
             try:
-                conn.execute(text("ALTER TABLE client ADD COLUMN gmb_last_sync DATETIME"))
+                conn.execute(text("ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_last_sync TIMESTAMP"))
                 print("Added gmb_last_sync to client")
             except Exception:
                 pass
+            
+            conn.commit()
         
         print("\nDone! Database updated.")
 

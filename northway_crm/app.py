@@ -494,10 +494,10 @@ def sys_migrate_gmb():
                 ('gmb_rating', 'FLOAT DEFAULT 0.0'),
                 ('gmb_reviews', 'INTEGER DEFAULT 0'),
                 ('gmb_photos', 'INTEGER DEFAULT 0'),
-                ('gmb_last_sync', 'DATETIME')
+                ('gmb_last_sync', 'TIMESTAMP')
             ]:
                 try:
-                    conn.execute(text(f"ALTER TABLE lead ADD COLUMN {col} {dtype}"))
+                    conn.execute(text(f"ALTER TABLE lead ADD COLUMN IF NOT EXISTS {col} {dtype}"))
                     results.append(f"Added {col} to LEAD")
                 except Exception as e:
                     results.append(f"Skipped {col} in LEAD (Exists?)")
@@ -508,7 +508,7 @@ def sys_migrate_gmb():
                 ('gmb_rating', 'FLOAT DEFAULT 0.0'),
                 ('gmb_reviews', 'INTEGER DEFAULT 0'),
                 ('gmb_photos', 'INTEGER DEFAULT 0'),
-                ('gmb_last_sync', 'DATETIME')
+                ('gmb_last_sync', 'TIMESTAMP')
             ]:
                 try:
                     conn.execute(text(f"ALTER TABLE client ADD COLUMN {col} {dtype}"))

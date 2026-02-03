@@ -342,7 +342,7 @@
         </div>
     </div>
 
-    <!-- WhatsApp Extension Download Card -->
+    <!-- WhatsApp Extension (ZapWay) Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div class="p-6 border-b border-gray-200 flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -350,71 +350,119 @@
                     <i data-lucide="puzzle" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h2 class="text-lg font-bold text-gray-900">Extensão Chrome</h2>
-                    <p class="text-xs text-gray-500">Ferramenta auxiliar para WhatsApp Web</p>
+                    <h2 class="text-lg font-bold text-gray-900">ZapWay CRM (Extension)</h2>
+                    <p class="text-xs text-gray-500">Ferramenta para WhatsApp Web</p>
                 </div>
             </div>
             <div>
                 <span
-                    class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Ferramenta</span>
+                    class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Ativo</span>
             </div>
         </div>
 
         <div class="p-6">
-            <!-- Extension Hero Banner -->
-            <div
-                class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-teal-600 to-cyan-900 p-6 text-white shadow-md border border-teal-500/20">
-                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div class="max-w-xl">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span
-                                class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Produtividade</span>
-                            <span
-                                class="bg-teal-400 text-teal-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">v1.2
-                                Disponível</span>
-                        </div>
-                        <h3 class="text-xl font-black mb-2 leading-tight">CRM dentro do seu WhatsApp 🚀</h3>
-                        <p class="text-sm text-teal-50 mb-0 leading-relaxed">
-                            Transforme seu WhatsApp Web em uma máquina de vendas.
-                            Cadastre leads, agende tarefas e salve históricos de conversa com <strong>apenas um
-                                clique</strong>, sem mudar de aba.
-                        </p>
-                    </div>
-                </div>
-                <!-- Abstract BG Decoration -->
-                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-                <div class="absolute right-6 top-6 opacity-20 transform rotate-12">
-                    <i data-lucide="puzzle" class="w-24 h-24 text-white"></i>
+            <!-- ZapWay Hero Banner -->
+            <div class="mb-8 relative overflow-hidden rounded-xl shadow-lg group">
+                <img src="{{ url_for('static', filename='images/zapway_banner.png') }}"
+                    class="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
+                    alt="ZapWay CRM">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <div class="absolute bottom-6 left-6 text-white">
+                    <h3 class="text-2xl font-black mb-1">CRM no WhatsApp 🚀</h3>
+                    <p class="text-sm text-gray-200 font-medium opacity-90">Agende, venda e organize sem sair do chat.
+                    </p>
                 </div>
             </div>
 
             <div class="flex flex-col md:flex-row gap-6 items-center">
                 <div class="flex-1">
-                    <h3 class="text-base font-bold text-gray-900 mb-2">NorthWay CRM Extension v1.2</h3>
-                    <p class="text-sm text-gray-600 mb-4">
-                        Adicione funcionalidades do CRM diretamente no seu WhatsApp Web.
-                        Crie leads, salve conversas e agende tarefas sem sair da conversa.
-                    </p>
-
+                    <h3 class="text-base font-bold text-gray-900 mb-2">Instalação</h3>
                     <div class="space-y-2">
                         <p class="text-xs text-gray-500 flex items-center gap-2">
-                            <i data-lucide="check" class="w-3 h-3 text-green-500"></i> Captura de Leads com 1 clique
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Extraia o arquivo ZIP.
                         </p>
                         <p class="text-xs text-gray-500 flex items-center gap-2">
-                            <i data-lucide="check" class="w-3 h-3 text-green-500"></i> Envio de Mensagens Rápidas
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Acesse
+                            <b>chrome://extensions</b>.
+                        </p>
+                        <p class="text-xs text-gray-500 flex items-center gap-2">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Ative o "Modo
+                            Desenvolvedor".
+                        </p>
+                        <p class="text-xs text-gray-500 flex items-center gap-2">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Clique em "Carregar sem
+                            compactação".
                         </p>
                     </div>
                 </div>
 
                 <div class="flex-shrink-0 flex flex-col gap-2 w-full md:w-auto">
                     <a href="{{ url_for('static', filename='downloads/northway_extension.zip') }}" download
-                        class="inline-flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-black transition-all shadow-sm w-full md:w-auto">
+                        class="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-3 rounded-lg font-black text-sm hover:bg-emerald-700 transition-all shadow-lg hover:shadow-emerald-500/30 w-full md:w-auto transform hover:-translate-y-1">
                         <i data-lucide="download" class="w-4 h-4"></i>
-                        BAIXAR EXTENSÃO (.ZIP)
+                        BAIXAR ZAPWAY
                     </a>
-                    <p class="text-[10px] text-gray-400 text-center">
-                        Para instalar: Extraia o ZIP > Chrome > Extensões > Carregar sem compactação.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NorthWay Compass Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
+                    <i data-lucide="compass" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">NorthWay Compass</h2>
+                    <p class="text-xs text-gray-500">Inteligência de Vendas (Maps & Insta)</p>
+                </div>
+            </div>
+            <div>
+                <span
+                    class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Beta</span>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <!-- Compass Hero Banner -->
+            <div class="mb-8 relative overflow-hidden rounded-xl shadow-lg group">
+                <img src="{{ url_for('static', filename='images/compass_banner.png') }}"
+                    class="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
+                    alt="NorthWay Compass">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                <div class="absolute bottom-6 left-6 text-white">
+                    <h3 class="text-2xl font-black mb-1">Domine seu Território 🗺️</h3>
+                    <p class="text-sm text-gray-200 font-medium opacity-90">Análise de concorrentes e extração de leads
+                        automática.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-6 items-center">
+                <div class="flex-1">
+                    <p class="text-sm text-gray-600 mb-4">
+                        O Compass é nossa ferramenta de inteligência externa. Ele varre o Google Maps e Instagram para
+                        encontrar leads, analisar concorrentes (ROI & Benchmarking) e identificar oportunidades ocultas.
                     </p>
+                    <div class="flex gap-2">
+                        <span
+                            class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">Google
+                            Maps</span>
+                        <span
+                            class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">Instagram</span>
+                        <span
+                            class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">ROI
+                            Calculator</span>
+                    </div>
+                </div>
+
+                <div class="flex-shrink-0 flex flex-col gap-2 w-full md:w-auto">
+                    <a href="{{ url_for('static', filename='downloads/northway_compass.zip') }}" download
+                        class="inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-lg font-black text-sm hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/30 w-full md:w-auto transform hover:-translate-y-1">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        BAIXAR COMPASS
+                    </a>
                 </div>
             </div>
         </div>
