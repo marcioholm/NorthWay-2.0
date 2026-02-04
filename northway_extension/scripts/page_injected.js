@@ -108,29 +108,58 @@ class WhatsAppAttachmentManager {
             // Step B: Wait for Menu (Either auto-opened or manually opened)
             this.log("Waiting for Menu to appear...");
             const menuSelector = 'ul, div[role="dialog"] ul, div[data-animate-modal-popup="true"] ul';
-
-            // Wait longer (15s) in case of manual lag
             const menu = await this.waitForElement([menuSelector], 15000);
 
             if (menu) {
                 const targetButton = this.findMenuItemInMenu(menu, kind);
 
                 if (targetButton) {
-                    // Capture inputs before clicking
-                    const existingInputs = Array.from(document.querySelectorAll('input[type="file"]'));
+                    // --- NEW STRATEGY: GLOBAL CAPTURE TRAP ---
+                    // WhatsApp likely creates and clicks the input synchronously.
+                    // MutationObserver is too slow (microtask).
+                    // We catch the click event in the CAPTURE PHASE at the window level.
 
-                    // --- PREPARE INPUT TRAP ---
-                    // We start the observer BEFORE clicking to catch the input instantly
+                    let trappedInput = null;
+                    const trapHandler = (e) => {
+                        if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
+                            this.log("TRAP: Caught click on input!", e.target);
+                            e.preventDefault(); // Stop System Picker
+                            e.stopPropagation();
+                            e.stopImmediatePropagation();
+                            trappedInput = e.target;
+                        }
+                    };
+
+                    // Activate Trap
+                    window.addEventListener('click', trapHandler, { capture: true });
+
+                    // Also set up Observer as backup (in case trap misses strange bubbling)
+                    const existingInputs = Array.from(document.querySelectorAll('input[type="file"]'));
                     const inputPromise = this.waitForNewInput(existingInputs, 3000);
 
+                    // Click the button
                     this.forceClick(targetButton);
                     this.log(`Clicked Menu Item: ${kind}`);
 
-                    // Wait for NEW input
-                    const newInput = await inputPromise;
-                    if (newInput) {
-                        this.injectFile(newInput, file);
+                    // Wait for trap or observer
+                    // We give the trap a tiny moment to fire
+                    await this.sleep(50);
+                    window.removeEventListener('click', trapHandler, { capture: true });
+
+                    let finalInput = trappedInput;
+                    if (!finalInput) {
+                        this.log("Trap missed. Checking observer...");
+                        finalInput = await inputPromise; // Fallback
+                    }
+
+                    if (finalInput) {
+                        this.injectFile(finalInput, file);
                         return; // Success!
+                    } else {
+                        this.error("Failed to capture any input (Trap & Observer both failed).");
+                        if (kind === 'document') {
+                            alert("NorthWay: Não consegui capturar o campo de arquivo. O WhatsApp mudou algo.");
+                        }
                     }
                 } else {
                     this.log(`Menu item for ${kind} not found.`);
@@ -138,7 +167,6 @@ class WhatsAppAttachmentManager {
                 }
             } else {
                 this.log("Attach menu did not open (timeout).");
-                // Only alert timeout if we actually ASKED for manual help
                 if (!mainButton) {
                     alert("NorthWay: Tempo esgotado. Você não abriu o menu a tempo.");
                 }
