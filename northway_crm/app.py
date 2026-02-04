@@ -581,9 +581,30 @@ def sys_seed_library():
         if company not in book.allowed_companies: book.allowed_companies.append(company)
         if company not in diag_book.allowed_companies: diag_book.allowed_companies.append(company)
 
+        # 2b. Add 'Diagnóstico Completo (Novo)'
+        # FIX: Ensure category is 'Apresentação' (singular) for template filter.
+        combined_book = LibraryBook.query.filter_by(title="Diagnóstico Completo (Novo)").first()
+        if not combined_book:
+            combined_book = LibraryBook(
+                title="Diagnóstico Completo (Novo)",
+                description="Apresentação unificada com diagnóstico de mercado e insights estratégicos.",
+                category="Apresentação", 
+                cover_image="cover_diagnostic_combined.jpg",
+                route_name="docs.presentation_diagnostic_combined",
+                active=True
+            )
+            db.session.add(combined_book)
+        else:
+            combined_book.category = "Apresentação"
+            combined_book.route_name = "docs.presentation_diagnostic_combined"
+        
+        db.session.commit()
+        if company not in combined_book.allowed_companies: combined_book.allowed_companies.append(company)
+
         # 3. Update Covers for All
         cover_map = {
             "Diagnóstico do Mercado Óptico Local": "cover_diagnostic.jpg",
+            "Diagnóstico Completo (Novo)": "cover_diagnostic_combined.jpg",
             "Diagnóstico Estratégico": "cover_diagnostic_old.jpg", 
             "Playbook Comercial": "cover_sales.jpg",
             "Playbook de Processos": "cover_process.jpg",
