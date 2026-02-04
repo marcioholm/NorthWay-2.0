@@ -114,51 +114,66 @@ class WhatsAppAttachmentManager {
                 const targetButton = this.findMenuItemInMenu(menu, kind);
 
                 if (targetButton) {
-                    // --- NEW STRATEGY: GLOBAL CAPTURE TRAP ---
-                    // WhatsApp likely creates and clicks the input synchronously.
-                    // MutationObserver is too slow (microtask).
-                    // We catch the click event in the CAPTURE PHASE at the window level.
+                    this.log(`Found Menu Item: ${kind}. Preparing Click Hijack...`);
 
-                    let trappedInput = null;
-                    const trapHandler = (e) => {
-                        if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'file') {
-                            this.log("TRAP: Caught click on input!", e.target);
-                            e.preventDefault(); // Stop System Picker
-                            e.stopPropagation();
-                            e.stopImmediatePropagation();
-                            trappedInput = e.target;
+                    // --- STRATEGY: PROTOTYPE HIJACK (Nuclear Option) ---
+                    // WhatsApp calls .click() on the input. We intercept that specific call.
+                    // This guarantees we catch it before the browser sees it.
+
+                    const originalClick = HTMLInputElement.prototype.click;
+                    let hijackedInput = null;
+                    let inputCapturedPromise = new Promise(resolve => {
+                        HTMLInputElement.prototype.click = function () {
+                            if (this.type === 'file') {
+                                console.log("[NW_HIJACK] Intercepted input.click()!", this);
+                                hijackedInput = this;
+                                resolve(this);
+                                // DO NOT call originalClick.apply(this) -> Prevents Picker
+                            } else {
+                                originalClick.apply(this);
+                            }
+                        };
+                    });
+
+                    // Failsafe: Restore after 2 seconds if nothing happens
+                    setTimeout(() => {
+                        if (HTMLInputElement.prototype.click !== originalClick) {
+                            HTMLInputElement.prototype.click = originalClick;
+                            console.log("[NW_HIJACK] Timed out. Restored original click.");
                         }
-                    };
+                    }, 2000);
 
-                    // Activate Trap
-                    window.addEventListener('click', trapHandler, { capture: true });
-
-                    // Also set up Observer as backup (in case trap misses strange bubbling)
-                    const existingInputs = Array.from(document.querySelectorAll('input[type="file"]'));
-                    const inputPromise = this.waitForNewInput(existingInputs, 3000);
-
-                    // Click the button
+                    // Click the menu button
                     this.forceClick(targetButton);
                     this.log(`Clicked Menu Item: ${kind}`);
 
-                    // Wait for trap or observer
-                    // We give the trap a tiny moment to fire
-                    await this.sleep(50);
-                    window.removeEventListener('click', trapHandler, { capture: true });
+                    // Wait for the hijack to fire
+                    const capturedInput = await Promise.race([
+                        inputCapturedPromise,
+                        this.sleep(1500).then(() => null)
+                    ]);
 
-                    let finalInput = trappedInput;
-                    if (!finalInput) {
-                        this.log("Trap missed. Checking observer...");
-                        finalInput = await inputPromise; // Fallback
-                    }
+                    // Restore immediately
+                    HTMLInputElement.prototype.click = originalClick;
 
-                    if (finalInput) {
-                        this.injectFile(finalInput, file);
+                    if (capturedInput) {
+                        this.log("Hijack Successful. Injecting file...");
+                        this.injectFile(capturedInput, file);
                         return; // Success!
                     } else {
-                        this.error("Failed to capture any input (Trap & Observer both failed).");
+                        // Fallback: Check if an input appeared but click() wasn't called (unlikely for WA)
+                        this.log("Hijack didn't catch a click. Checking DOM...");
+                        const existingInputs = Array.from(document.querySelectorAll('input[type="file"]'));
+                        const fallbackInput = existingInputs[existingInputs.length - 1]; // Last one
+                        if (fallbackInput) {
+                            // Try injecting anyway
+                            this.injectFile(fallbackInput, file);
+                            return;
+                        }
+
+                        this.error("Attachment Failed: Input not found via Hijack or DOM.");
                         if (kind === 'document') {
-                            alert("NorthWay: Não consegui capturar o campo de arquivo. O WhatsApp mudou algo.");
+                            alert("NorthWay Error: Não consegui interceptar o anexo. O WhatsApp pode ter mudado o código.");
                         }
                     }
                 } else {
