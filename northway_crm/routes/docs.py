@@ -51,6 +51,11 @@ def presentation_consultancy():
 def presentation_diagnostic():
     return render_template('docs/presentation_diagnostic.html')
 
+@docs_bp.route('/diagnostic-combined')
+@login_required
+def presentation_diagnostic_combined():
+    return render_template('docs/presentation_combined_diagnostic.html')
+
 @docs_bp.route('/playbook-bdr')
 @login_required
 def presentation_playbook_bdr():

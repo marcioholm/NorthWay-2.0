@@ -127,12 +127,12 @@ async function init() {
 function adjustLayout() {
     const appWrapper = document.getElementById('app');
     if (appWrapper) {
-        const mainContent = appWrapper.firstElementChild;
-        if (mainContent) {
-            mainContent.style.width = 'calc(100% - 350px)';
-            mainContent.style.minWidth = 'auto';
-            mainContent.style.transition = 'width 0.3s ease';
-        }
+        // FIX: Resize the ROOT container directly.
+        // This avoids breaking internal flex/grid layouts of WhatsApp.
+        appWrapper.style.width = 'calc(100% - 350px)';
+        appWrapper.style.minWidth = 'auto'; // Prevent min-width lockout
+        // appWrapper.style.boxSizing = 'border-box'; // Usually standard, but good safety
+        appWrapper.style.transition = 'width 0.3s ease';
     }
 }
 
