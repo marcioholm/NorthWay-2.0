@@ -147,17 +147,17 @@ def create_app():
             
             # FAST FAIL: If DB isn't ready or schema is updating, don't crash
             try:
-                 if current_user and current_user.is_authenticated:
+                if current_user and current_user.is_authenticated:
                      from models import Task
                      try:
                          pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
-                         return dict(pending_tasks_count=pending_count, now=now_br)
+                         return dict(pending_tasks_count=pending_count, now=now_br, dict=dict)
                      except:
-                         return dict(pending_tasks_count=0, now=now_br)
+                         return dict(pending_tasks_count=0, now=now_br, dict=dict)
             except:
                  pass
 
-            return dict(pending_tasks_count=0, now=now_br)
+            return dict(pending_tasks_count=0, now=now_br, dict=dict)
 
         # --- BLOCKING LOGIC ---
         @app.before_request

@@ -36,12 +36,12 @@
 <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 mt-4 rounded-b-xl">
     <div class="flex justify-between flex-1 sm:hidden">
         {% if pagination.has_prev %}
-        <a href="{{ url_for(endpoint, page=pagination.prev_num, **request.args) }}"
+        <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.prev_num)) }}"
             class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
             Anterior </a>
         {% endif %}
         {% if pagination.has_next %}
-        <a href="{{ url_for(endpoint, page=pagination.next_num, **request.args) }}"
+        <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.next_num)) }}"
             class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
             Próximo </a>
         {% endif %}
@@ -57,7 +57,7 @@
         <div>
             <nav class="relative z-0 inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
                 {% if pagination.has_prev %}
-                <a href="{{ url_for(endpoint, page=pagination.prev_num, **request.args) }}"
+                <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.prev_num)) }}"
                     class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
                     <span class="sr-only">Anterior</span>
                     <i data-lucide="chevron-left" class="w-5 h-5"></i>
@@ -67,7 +67,7 @@
                 {% for page in pagination.iter_pages() %}
                 {% if page %}
                 {% if page != pagination.page %}
-                <a href="{{ url_for(endpoint, page=page, **request.args) }}"
+                <a href="{{ url_for(endpoint, **dict(request.args, page=page)) }}"
                     class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
                     {{ page }} </a>
                 {% else %}
@@ -83,7 +83,7 @@
                 {% endfor %}
 
                 {% if pagination.has_next %}
-                <a href="{{ url_for(endpoint, page=pagination.next_num, **request.args) }}"
+                <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.next_num)) }}"
                     class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
                     <span class="sr-only">Próximo</span>
                     <i data-lucide="chevron-right" class="w-5 h-5"></i>
