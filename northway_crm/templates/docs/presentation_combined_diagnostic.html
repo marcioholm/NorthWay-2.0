@@ -88,80 +88,81 @@
                 margin: 0;
             }
 
-            /* Optimize for PDF/Print - Disable Animations */
+            /* FORCE BACKGROUNDS AND COLORS TO STAY (Dark Mode PDF) */
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                background-color: #050505 !important;
+                color: white !important;
+            }
+
+            /* DISABLE ALL ANIMATIONS & TRANSITIONS */
             *,
             *::before,
             *::after {
                 animation: none !important;
                 transition: none !important;
                 scroll-behavior: auto !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
+                /* Ensure all fade-ins are visible */
                 opacity: 1 !important;
+                transform: none !important;
             }
 
-            body {
-                background-color: white !important;
-                color: black !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+            /* RESET SCROLL CONTAINER */
+            .slide-container {
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                scroll-snap-type: none !important;
+                background-color: #050505 !important;
             }
 
+            /* ENSURE SLIDES TAKE FULL PAGE */
             .slide {
+                width: 100vw !important;
                 height: 100vh !important;
-                page-break-after: always;
-                break-after: page;
-                background: white !important;
-                color: black !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+
+                /* Reset positioning for print flow */
+                position: relative !important;
+                display: flex !important;
+
+                /* Force Backgrounds */
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
-            .slide * {
-                color: black !important;
-            }
-
-            .text-white,
-            .text-gray-400,
-            .text-gray-500 {
-                color: black !important;
-            }
-
-            .text-accent,
-            .text-\[\#fa0102\],
-            .text-red-400 {
-                color: #fa0102 !important;
-            }
-
-            .bg-black,
-            .bg-\[\#050505\],
-            .bg-\[\#080808\],
-            .bg-pattern-grid,
-            .bg-pattern-chaos,
-            .stack-bg {
-                background: white !important;
-            }
-
-            .glass-panel {
-                background: #f9f9f9 !important;
-                border: 1px solid #ddd !important;
-            }
-
-            .logo-header {
-                filter: none !important;
-            }
-
-            .logo-print-invert {
-                filter: invert(1) brightness(0) !important;
-            }
-
+            /* HIDE CONTROLS */
             #controls,
             .no-print {
                 display: none !important;
             }
 
-            .slide-container {
-                height: auto !important;
-                overflow: visible !important;
-                scroll-snap-type: none !important;
+            /* FIX GLASS PANELS IN PRINT (Simplify transparency) */
+            .glass-panel {
+                background: rgba(20, 20, 20, 0.9) !important;
+                /* Less transparent */
+                border: 1px solid #333 !important;
+                backdrop-filter: none !important;
+                /* Remove blur (causes artifacts) */
+            }
+
+            /* Safe Fallbacks for Complex Gradients */
+            .bg-pattern-chaos,
+            .bg-pattern-grid,
+            .stack-bg {
+                /* If gradients fail, fall back to dark */
+                background-color: #050505 !important;
+            }
+
+            /* Simplify Text Colors */
+            .text-transparent {
+                color: #ffffff !important;
+                background: none !important;
+                -webkit-text-fill-color: #ffffff !important;
             }
         }
     </style>
