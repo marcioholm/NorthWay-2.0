@@ -438,14 +438,8 @@ def delete_lead(id):
     if lead.company_id != current_user.company_id:
         abort(403)
         
-    # Validation: Only delete if in first stage (unless Admin)
-    is_admin = current_user.role == 'admin' or current_user.is_super_admin
-    
-    if lead.pipeline_id and not is_admin:
-        first_stage = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).first()
-        if first_stage and lead.pipeline_stage_id != first_stage.id:
-            flash('Só é possível excluir leads na primeira etapa do funil (Qualificação).', 'error')
-            return redirect(url_for('leads.lead_details', id=id))
+    # Validation: Allow deletion for everyone since we have cascade rules now
+    # is_admin warning removed as requested
             
     db.session.delete(lead)
     db.session.commit()

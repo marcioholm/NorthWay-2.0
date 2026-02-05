@@ -588,15 +588,11 @@
                             </div>
 
                             <div class="flex justify-between items-center pt-4">
-                                {% if is_first_stage or current_user.role == 'admin' or current_user.is_super_admin
-                                %}
+                                <!-- Delete Button Exposed -->
                                 <button type="button" onclick="document.getElementById('delete-lead-form').submit();"
                                     class="text-red-400 hover:text-red-600 text-xs font-bold underline decoration-red-200 underline-offset-2 transition-colors">
                                     Excluir Lead
                                 </button>
-                                {% else %}
-                                <span></span> <!-- Spacer -->
-                                {% endif %}
 
                                 <button type="submit"
                                     class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-northway-red hover:border-northway-red px-4 py-1.5 rounded text-xs font-bold transition-colors uppercase tracking-wide">
@@ -605,12 +601,10 @@
                             </div>
                         </form>
 
-                        {% if is_first_stage or current_user.role == 'admin' or current_user.is_super_admin %}
                         <form id="delete-lead-form" action="{{ url_for('leads.delete_lead', id=lead.id) }}"
                             method="POST" class="hidden"
                             onsubmit="return confirm('ATENÇÃO: Tem certeza que deseja excluir este lead permanentemente?');">
                         </form>
-                        {% endif %}
                     </div>
 
                     <!-- GMB CARD -->
