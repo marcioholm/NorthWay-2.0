@@ -364,7 +364,7 @@ class Client(db.Model):
     # Actually, for bidirectional access:
     origin_lead = db.relationship('Lead', backref=db.backref('converted_client', uselist=False), foreign_keys=[lead_id])
     
-    interactions = db.relationship('Interaction', backref=db.backref('client', cascade='all, delete-orphan'), lazy=True)
+    interactions = db.relationship('Interaction', backref='client', cascade='all, delete-orphan', lazy=True)
 
     @property
     def address(self):
