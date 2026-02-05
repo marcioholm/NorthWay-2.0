@@ -20,6 +20,16 @@
                     {{ lead.status }}
                 </span>
 
+                <!-- Delete Lead Button (Icon) -->
+                <form action="{{ url_for('leads.delete_lead', id=lead.id) }}" method="POST"
+                    onsubmit="return confirm('ATENÇÃO: Tem certeza que deseja excluir este lead e todo seu histórico (tarefas/notas)?\nEssa ação não pode ser desfeita.');">
+                    <button type="submit"
+                        class="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all shadow-sm"
+                        title="Excluir Lead Permanentemente">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </form>
+
                 {% if not lead.client_id %}
                 <button type="button" onclick="toggleModal('convertModal')"
                     class="bg-[#fa0102] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
@@ -587,13 +597,7 @@
                                 </div>
                             </div>
 
-                            <div class="flex justify-between items-center pt-4">
-                                <!-- Delete Button Exposed -->
-                                <button type="button" onclick="document.getElementById('delete-lead-form').submit();"
-                                    class="text-red-400 hover:text-red-600 text-xs font-bold underline decoration-red-200 underline-offset-2 transition-colors">
-                                    Excluir Lead
-                                </button>
-
+                            <div class="flex justify-end items-center pt-4">
                                 <button type="submit"
                                     class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-northway-red hover:border-northway-red px-4 py-1.5 rounded text-xs font-bold transition-colors uppercase tracking-wide">
                                     Salvar Alterações
@@ -601,331 +605,333 @@
                             </div>
                         </form>
 
-                        <form id="delete-lead-form" action="{{ url_for('leads.delete_lead', id=lead.id) }}"
-                            method="POST" class="hidden"
-                            onsubmit="return confirm('ATENÇÃO: Tem certeza que deseja excluir este lead permanentemente?');">
-                        </form>
-                    </div>
-
-                    <!-- GMB CARD -->
-                    {% if lead.gmb_rating > 0 or lead.gmb_link %}
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3
-                            class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/1200px-Google_Maps_icon_%282020%29.svg.png"
-                                class="w-4 h-4" alt="GMaps">
-                            Dados do Google
-                        </h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <div class="text-2xl font-black text-gray-900">{{ lead.gmb_rating }}</div>
-                                <div class="text-[10px] text-gray-500 uppercase font-bold">Nota Média</div>
-                            </div>
-                            <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <div class="text-xl font-bold text-gray-900">{{ lead.gmb_reviews }}</div>
-                                <div class="text-[10px] text-gray-500 uppercase font-bold">Avaliações</div>
-                            </div>
-                            <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100 col-span-2">
-                                <div class="text-lg font-bold text-gray-900">{{ lead.gmb_photos }}</div>
-                                <div class="text-[10px] text-gray-500 uppercase font-bold">Fotos Publicadas</div>
-                            </div>
-                        </div>
-                        {% if lead.gmb_link %}
-                        <a href="{{ lead.gmb_link }}" target="_blank"
-                            class="block w-full text-center mt-3 bg-blue-50 text-blue-600 px-3 py-2 rounded text-xs font-bold hover:bg-blue-100 transition-colors">
-                            Ver no Google Maps <i data-lucide="external-link" class="w-3 h-3 inline ml-1"></i>
-                        </a>
-                        {% endif %}
-                        <div class="text-[10px] text-gray-400 text-center mt-2">
-                            Sincronizado: {{ lead.gmb_last_sync.strftime('%d/%m %H:%M') if lead.gmb_last_sync else 'N/A'
-                            }}
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- BANT Qualification Card -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3
-                            class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
-                            <span class="bg-northway-red text-white text-[10px] px-1.5 py-0.5 rounded">BANT</span>
-                            Qualificação
-                        </h3>
-
-                        <form action="{{ url_for('leads.update_bant', id=lead.id) }}" method="POST" class="space-y-4">
-                            <!-- Budget -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Budget</label>
-                                <input type="text" name="bant_budget" value="{{ lead.bant_budget or '' }}"
-                                    placeholder="R$..."
-                                    class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red transition-colors">
-                            </div>
-
-                            <!-- Authority -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Authority</label>
-                                <select name="bant_authority"
-                                    class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red bg-white transition-colors">
-                                    <option value="" {{ 'selected' if not lead.bant_authority }}>Selecione...
-                                    </option>
-                                    <option value="Decisor" {{ 'selected' if lead.bant_authority=='Decisor' }}>
-                                        Decisor
-                                    </option>
-                                    <option value="Influenciador" {{ 'selected' if lead.bant_authority=='Influenciador'
-                                        }}>
-                                        Influenciador</option>
-                                    <option value="Usuário" {{ 'selected' if lead.bant_authority=='Usuário' }}>
-                                        Usuário
-                                    </option>
-                                    <option value="Sem poder" {{ 'selected' if lead.bant_authority=='Sem poder' }}>
-                                        Sem
-                                        poder
-                                    </option>
-                                </select>
-                            </div>
-
-                            <!-- Timeline -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Timeline</label>
-                                <select name="bant_timeline"
-                                    class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red bg-white transition-colors">
-                                    <option value="" {{ 'selected' if not lead.bant_timeline }}>Selecione...
-                                    </option>
-                                    <option value="Imediato" {{ 'selected' if lead.bant_timeline=='Imediato' }}>
-                                        Imediato
-                                    </option>
-                                    <option value="Curto Prazo" {{ 'selected' if lead.bant_timeline=='Curto Prazo' }}>
-                                        Curto
-                                        Prazo</option>
-                                    <option value="Médio Prazo" {{ 'selected' if lead.bant_timeline=='Médio Prazo' }}>
-                                        Médio
-                                        Prazo</option>
-                                    <option value="Longo Prazo" {{ 'selected' if lead.bant_timeline=='Longo Prazo' }}>
-                                        Longo
-                                        Prazo</option>
-                                </select>
-                            </div>
-
-                            <!-- Need -->
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Need</label>
-                                <textarea name="bant_need" rows="3" placeholder="Necessidade..."
-                                    class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red resize-none transition-colors">{{ lead.bant_need or '' }}</textarea>
-                            </div>
-
-                            <button type="submit"
-                                class="w-full bg-gray-50 text-gray-700 font-bold py-2 rounded hover:bg-northway-red hover:text-white transition-colors text-sm border border-gray-200 hover:border-northway-red">
-                                Salvar Qualificação
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Related Tasks -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
-                            <div>
-                                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Tarefas
-                                    Pendentes
-                                </h3>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <div class="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                        <div id="task-progress-bar" class="bg-green-500 h-1.5 rounded-full"
-                                            data-width="{{ lead.task_progress.percent }}"></div>
-                                        <script>
-                                            document.addEventListener("DOMContentLoaded", function () {
-                                                const bar = document.getElementById('task-progress-bar');
-                                                if (bar) bar.style.width = bar.dataset.width + '%';
-                                            });
-                                        </script>
+                        <!-- GMB CARD -->
+                        {% if lead.gmb_rating > 0 or lead.gmb_link %}
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3
+                                class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/1200px-Google_Maps_icon_%282020%29.svg.png"
+                                    class="w-4 h-4" alt="GMaps">
+                                Dados do Google
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <div class="text-2xl font-black text-gray-900">{{ lead.gmb_rating }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold">Nota Média</div>
+                                </div>
+                                <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <div class="text-xl font-bold text-gray-900">{{ lead.gmb_reviews }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold">Avaliações</div>
+                                </div>
+                                <div class="text-center p-3 bg-gray-50 rounded-lg border border-gray-100 col-span-2">
+                                    <div class="text-lg font-bold text-gray-900">{{ lead.gmb_photos }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold">Fotos Publicadas
                                     </div>
-                                    <span class="text-[10px] text-gray-500 font-medium">{{
-                                        lead.task_progress.completed
-                                        }}/{{ lead.task_progress.total }}</span>
                                 </div>
                             </div>
-                            <button type="button" onclick="toggleModal('createTaskModal')"
-                                class="text-northway-red hover:text-red-700 text-xs font-bold flex items-center gap-1">
-                                <i data-lucide="plus" class="w-3 h-3"></i> Nova
-                            </button>
+                            {% if lead.gmb_link %}
+                            <a href="{{ lead.gmb_link }}" target="_blank"
+                                class="block w-full text-center mt-3 bg-blue-50 text-blue-600 px-3 py-2 rounded text-xs font-bold hover:bg-blue-100 transition-colors">
+                                Ver no Google Maps <i data-lucide="external-link" class="w-3 h-3 inline ml-1"></i>
+                            </a>
+                            {% endif %}
+                            <div class="text-[10px] text-gray-400 text-center mt-2">
+                                Sincronizado: {{ lead.gmb_last_sync.strftime('%d/%m %H:%M') if lead.gmb_last_sync
+                                else 'N/A'
+                                }}
+                            </div>
                         </div>
-                        <ul class="divide-y divide-gray-100">
-                            {% for task in lead.tasks %}
-                            <li class="py-3 flex items-center gap-3 group">
-                                <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST">
-                                    <button type="submit"
-                                        class="w-4 h-4 border-2 border-gray-300 rounded hover:border-northway-red transition-colors flex items-center justify-center">
-                                        {% if task.status == 'concluida' %}
-                                        <span class="block w-2.5 h-2.5 bg-northway-red rounded-sm"></span>
-                                        {% endif %}
-                                    </button>
-                                </form>
+                        {% endif %}
 
-                                <span
-                                    class="text-sm flex-1 {{ 'line-through text-gray-400' if task.status == 'concluida' else 'text-gray-700' }}">
-                                    {{ task.title }}
-                                </span>
+                        <!-- BANT Qualification Card -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3
+                                class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                                <span class="bg-northway-red text-white text-[10px] px-1.5 py-0.5 rounded">BANT</span>
+                                Qualificação
+                            </h3>
 
-                                <span class="text-xs text-gray-400">
-                                    {{ task.due_date.strftime('%d/%m') if task.due_date else '' }}
-                                </span>
+                            <form action="{{ url_for('leads.update_bant', id=lead.id) }}" method="POST"
+                                class="space-y-4">
+                                <!-- Budget -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Budget</label>
+                                    <input type="text" name="bant_budget" value="{{ lead.bant_budget or '' }}"
+                                        placeholder="R$..."
+                                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red transition-colors">
+                                </div>
 
-                                {% if current_user.role == 'admin' %}
-                                <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST"
-                                    onsubmit="return confirm('Excluir tarefa?');">
-                                    <button type="submit"
-                                        class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </li>
-                            {% else %}
-                            <li class="text-xs text-gray-400 italic py-2">Nenhuma tarefa.</li>
-                            {% endfor %}
-                        </ul>
+                                <!-- Authority -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Authority</label>
+                                    <select name="bant_authority"
+                                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red bg-white transition-colors">
+                                        <option value="" {{ 'selected' if not lead.bant_authority }}>Selecione...
+                                        </option>
+                                        <option value="Decisor" {{ 'selected' if lead.bant_authority=='Decisor' }}>
+                                            Decisor
+                                        </option>
+                                        <option value="Influenciador" {{ 'selected' if
+                                            lead.bant_authority=='Influenciador' }}>
+                                            Influenciador</option>
+                                        <option value="Usuário" {{ 'selected' if lead.bant_authority=='Usuário' }}>
+                                            Usuário
+                                        </option>
+                                        <option value="Sem poder" {{ 'selected' if lead.bant_authority=='Sem poder' }}>
+                                            Sem
+                                            poder
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Timeline -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Timeline</label>
+                                    <select name="bant_timeline"
+                                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red bg-white transition-colors">
+                                        <option value="" {{ 'selected' if not lead.bant_timeline }}>Selecione...
+                                        </option>
+                                        <option value="Imediato" {{ 'selected' if lead.bant_timeline=='Imediato' }}>
+                                            Imediato
+                                        </option>
+                                        <option value="Curto Prazo" {{ 'selected' if lead.bant_timeline=='Curto Prazo'
+                                            }}>
+                                            Curto
+                                            Prazo</option>
+                                        <option value="Médio Prazo" {{ 'selected' if lead.bant_timeline=='Médio Prazo'
+                                            }}>
+                                            Médio
+                                            Prazo</option>
+                                        <option value="Longo Prazo" {{ 'selected' if lead.bant_timeline=='Longo Prazo'
+                                            }}>
+                                            Longo
+                                            Prazo</option>
+                                    </select>
+                                </div>
+
+                                <!-- Need -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Need</label>
+                                    <textarea name="bant_need" rows="3" placeholder="Necessidade..."
+                                        class="w-full px-3 py-2 border border-gray-200 rounded text-sm focus:outline-none focus:border-northway-red resize-none transition-colors">{{ lead.bant_need or '' }}</textarea>
+                                </div>
+
+                                <button type="submit"
+                                    class="w-full bg-gray-50 text-gray-700 font-bold py-2 rounded hover:bg-northway-red hover:text-white transition-colors text-sm border border-gray-200 hover:border-northway-red">
+                                    Salvar Qualificação
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Related Tasks -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
+                                <div>
+                                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Tarefas
+                                        Pendentes
+                                    </h3>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <div class="w-24 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                            <div id="task-progress-bar" class="bg-green-500 h-1.5 rounded-full"
+                                                data-width="{{ lead.task_progress.percent }}"></div>
+                                            <script>
+                                                document.addEventListener("DOMContentLoaded", function () {
+                                                    const bar = document.getElementById('task-progress-bar');
+                                                    if (bar) bar.style.width = bar.dataset.width + '%';
+                                                });
+                                            </script>
+                                        </div>
+                                        <span class="text-[10px] text-gray-500 font-medium">{{
+                                            lead.task_progress.completed
+                                            }}/{{ lead.task_progress.total }}</span>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="toggleModal('createTaskModal')"
+                                    class="text-northway-red hover:text-red-700 text-xs font-bold flex items-center gap-1">
+                                    <i data-lucide="plus" class="w-3 h-3"></i> Nova
+                                </button>
+                            </div>
+                            <ul class="divide-y divide-gray-100">
+                                {% for task in lead.tasks %}
+                                <li class="py-3 flex items-center gap-3 group">
+                                    <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST">
+                                        <button type="submit"
+                                            class="w-4 h-4 border-2 border-gray-300 rounded hover:border-northway-red transition-colors flex items-center justify-center">
+                                            {% if task.status == 'concluida' %}
+                                            <span class="block w-2.5 h-2.5 bg-northway-red rounded-sm"></span>
+                                            {% endif %}
+                                        </button>
+                                    </form>
+
+                                    <span
+                                        class="text-sm flex-1 {{ 'line-through text-gray-400' if task.status == 'concluida' else 'text-gray-700' }}">
+                                        {{ task.title }}
+                                    </span>
+
+                                    <span class="text-xs text-gray-400">
+                                        {{ task.due_date.strftime('%d/%m') if task.due_date else '' }}
+                                    </span>
+
+                                    {% if current_user.role == 'admin' %}
+                                    <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST"
+                                        onsubmit="return confirm('Excluir tarefa?');">
+                                        <button type="submit"
+                                            class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </li>
+                                {% else %}
+                                <li class="text-xs text-gray-400 italic py-2">Nenhuma tarefa.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Create Task Modal -->
-        <div id="createTaskModal"
-            class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-                <div class="flex justify-between items-center p-6 border-b border-gray-100">
-                    <h3 class="text-lg font-bold text-gray-900">Nova Tarefa</h3>
-                    <button type="button" onclick="toggleModal('createTaskModal')"
-                        class="text-gray-400 hover:text-gray-600">
-                        <i data-lucide="x" class="w-5 h-5"></i>
+            <!-- Create Task Modal -->
+            <div id="createTaskModal"
+                class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+                    <div class="flex justify-between items-center p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-900">Nova Tarefa</h3>
+                        <button type="button" onclick="toggleModal('createTaskModal')"
+                            class="text-gray-400 hover:text-gray-600">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <form action="{{ url_for('tasks.tasks') }}" method="POST" class="p-6 space-y-4">
+                        <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                        <input type="hidden" name="next" value="{{ url_for('leads.lead_details', id=lead.id) }}">
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                            <input type="text" name="title" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data e Hora de
+                                Vencimento</label>
+                            <input type="datetime-local" name="due_date"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                        </div>
+
+                        <div class="pt-4 flex gap-3">
+                            <button type="button" onclick="toggleModal('createTaskModal')"
+                                class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                                Salvar Tarefa
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Convert Lead Modal -->
+    <div id="convertModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900">Converter Lead em Cliente</h3>
+                <button type="button" onclick="toggleModal('convertModal')" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form action="{{ url_for('leads.convert_lead', id=lead.id) }}" method="POST" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Serviço Contratado</label>
+                    <input type="text" name="service" placeholder="Ex: Consultoria mensal, Projeto Website"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Valor Mensal (R$)</label>
+                        <input type="text" name="monthly_value" placeholder="R$ 0,00" oninput="formatCurrency(this)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Contrato</label>
+                        <select name="contract_type"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                            <option value="mensal">Mensal</option>
+                            <option value="trimestral">Trimestral</option>
+                            <option value="semestral">Semestral</option>
+                            <option value="anual">Anual</option>
+                            <option value="pontual">Pontual</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+                    <input type="date" name="start_date" value="{{ today_date }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="toggleModal('convertModal')"
+                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-[#fa0102] text-white rounded-lg hover:bg-red-700 transition-colors font-bold shadow-md">
+                        Confirmar Conversão
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Enrichment Search Modal -->
+    <div id="enrichmentModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+            <div class="flex justify-between items-center p-6 border-b border-gray-100">
+                <h3 class="text-lg font-bold text-gray-900">Buscar Empresa / CNPJ</h3>
+                <button type="button" onclick="toggleModal('enrichmentModal')"
+                    class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="flex gap-2">
+                    <input type="text" id="enrichmentSearchInput" placeholder="Nome da empresa ou CNPJ"
+                        value="{{ lead.name }}"
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600">
+                    <button type="button" onclick="handleEnrichmentSearch()" id="btnDoEnrichmentSearch"
+                        class="bg-purple-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-purple-700 transition-colors">
+                        Buscar
                     </button>
                 </div>
 
-                <form action="{{ url_for('tasks.tasks') }}" method="POST" class="p-6 space-y-4">
-                    <input type="hidden" name="lead_id" value="{{ lead.id }}">
-                    <input type="hidden" name="next" value="{{ url_for('leads.lead_details', id=lead.id) }}">
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                        <input type="text" name="title" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Data e Hora de
-                            Vencimento</label>
-                        <input type="datetime-local" name="due_date"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
-                    </div>
-
-                    <div class="pt-4 flex gap-3">
-                        <button type="button" onclick="toggleModal('createTaskModal')"
-                            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                            Cancelar
-                        </button>
-                        <button type="submit"
-                            class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
-                            Salvar Tarefa
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Convert Lead Modal -->
-<div id="convertModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div class="flex justify-between items-center p-6 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Converter Lead em Cliente</h3>
-            <button type="button" onclick="toggleModal('convertModal')" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-
-        <form action="{{ url_for('leads.convert_lead', id=lead.id) }}" method="POST" class="p-6 space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Serviço Contratado</label>
-                <input type="text" name="service" placeholder="Ex: Consultoria mensal, Projeto Website"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor Mensal (R$)</label>
-                    <input type="text" name="monthly_value" placeholder="R$ 0,00" oninput="formatCurrency(this)"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-bold">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Contrato</label>
-                    <select name="contract_type"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
-                        <option value="mensal">Mensal</option>
-                        <option value="trimestral">Trimestral</option>
-                        <option value="semestral">Semestral</option>
-                        <option value="anual">Anual</option>
-                        <option value="pontual">Pontual</option>
-                    </select>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
-                <input type="date" name="start_date" value="{{ today_date }}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
-            </div>
-
-            <div class="pt-4 flex gap-3">
-                <button type="button" onclick="toggleModal('convertModal')"
-                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancelar
-                </button>
-                <button type="submit"
-                    class="flex-1 px-4 py-2 bg-[#fa0102] text-white rounded-lg hover:bg-red-700 transition-colors font-bold shadow-md">
-                    Confirmar Conversão
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Enrichment Search Modal -->
-<div id="enrichmentModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
-        <div class="flex justify-between items-center p-6 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Buscar Empresa / CNPJ</h3>
-            <button type="button" onclick="toggleModal('enrichmentModal')" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-
-        <div class="p-6 space-y-4">
-            <div class="flex gap-2">
-                <input type="text" id="enrichmentSearchInput" placeholder="Nome da empresa ou CNPJ"
-                    value="{{ lead.name }}"
-                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600">
-                <button type="button" onclick="handleEnrichmentSearch()" id="btnDoEnrichmentSearch"
-                    class="bg-purple-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-purple-700 transition-colors">
-                    Buscar
-                </button>
-            </div>
-
-            <div id="enrichmentResults" class="max-h-64 overflow-y-auto space-y-2">
-                <!-- Results will appear here -->
-                <div class="text-center py-8">
-                    <p class="text-gray-400 text-sm mb-4">Digite o nome da empresa ou CNPJ acima para buscar.</p>
-                    <div class="p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                        <p class="text-xs text-gray-500 mb-2">💡 Dica: Se você não tem uma chave de API, pode fazer o
-                            enriquecimento direto pelo CNPJ.</p>
-                        <button onclick="confirmEnrichmentDirect()"
-                            class="text-purple-600 text-xs font-bold hover:underline">
-                            Tentar enriquecer direto pelo valor digitado
-                        </button>
+                <div id="enrichmentResults" class="max-h-64 overflow-y-auto space-y-2">
+                    <!-- Results will appear here -->
+                    <div class="text-center py-8">
+                        <p class="text-gray-400 text-sm mb-4">Digite o nome da empresa ou CNPJ acima para buscar.</p>
+                        <div class="p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                            <p class="text-xs text-gray-500 mb-2">💡 Dica: Se você não tem uma chave de API, pode fazer
+                                o
+                                enriquecimento direto pelo CNPJ.</p>
+                            <button onclick="confirmEnrichmentDirect()"
+                                class="text-purple-600 text-xs font-bold hover:underline">
+                                Tentar enriquecer direto pelo valor digitado
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 </div>
 {% endblock %}
 
