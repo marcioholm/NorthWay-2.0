@@ -281,6 +281,7 @@ def create_app():
             from routes.notifications import notifications_bp
             from routes.roles import roles_bp
             from routes.billing import billing_bp
+            from routes.service_orders import service_orders_bp
 
             app.register_blueprint(api_ext)
             app.register_blueprint(whatsapp_bp)
@@ -295,6 +296,7 @@ def create_app():
             app.register_blueprint(notifications_bp)
             app.register_blueprint(roles_bp)
             app.register_blueprint(billing_bp)
+            app.register_blueprint(service_orders_bp)
             
         except Exception as bp_e:
             print(f"Blueprint Registration/Import Error: {bp_e}")

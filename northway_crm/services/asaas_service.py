@@ -122,3 +122,20 @@ def delete_subscription(subscription_id, api_key=None):
             return False, error_msg
     except Exception as e:
         return False, str(e)
+
+def cancel_payment(payment_id, api_key=None):
+    """
+    Cancels a specific payment (Cobrança) in Asaas.
+    """
+    try:
+        response = requests.delete(f"{ASAAS_API_URL}/payments/{payment_id}", headers=get_headers(api_key))
+        if response.status_code == 200:
+            print(f"✅ Payment {payment_id} cancelled/deleted.")
+            return True, None
+        else:
+            error_data = response.json()
+            error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+            print(f"⚠️ Error cancelling payment: {error_msg}")
+            return False, error_msg
+    except Exception as e:
+        return False, str(e)

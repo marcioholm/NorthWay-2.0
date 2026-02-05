@@ -662,3 +662,32 @@ class EmailLog(db.Model):
             print(f"Error saving email log: {e}")
             db.session.rollback()
             return None
+
+class ServiceOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    value = db.Column(db.Float, default=0.0)
+    
+    # Status: SOLICITADA, AGUARDANDO_ACEITE, AGUARDANDO_PAGAMENTO, AUTORIZADA, EM_EXECUCAO, CONCLUIDA, CANCELADA
+    status = db.Column(db.String(50), default='SOLICITADA')
+    
+    # Asaas Integration
+    asaas_payment_id = db.Column(db.String(50), nullable=True)
+    asaas_invoice_url = db.Column(db.String(500), nullable=True)
+    
+    # Cancellation Audit
+    canceled_at = db.Column(db.DateTime, nullable=True)
+    canceled_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    # cancel_category: DESISTENCIA_CLIENTE, ERRO_CADASTRO, DUPLICIDADE, ALTERACAO_DE_ESCOPO, INADIMPLENCIA, OUTROS
+    cancel_category = db.Column(db.String(50), nullable=True)
+    cancel_reason = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    client = db.relationship('Client', backref=db.backref('service_orders', lazy=True))
+    canceled_by = db.relationship('User', foreign_keys=[canceled_by_user_id])
