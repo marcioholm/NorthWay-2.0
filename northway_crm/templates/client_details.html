@@ -1532,8 +1532,7 @@
         const form = e.target;
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        data.client_id = {{ client.id }
-    };
+        data.client_id = {{ client.id }};
 
     try {
         const res = await fetch('/api/service-orders/create', {
