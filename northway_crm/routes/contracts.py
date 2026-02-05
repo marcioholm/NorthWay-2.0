@@ -602,6 +602,12 @@ def sign_contract(id):
         qtd_p = int(data.get('qtd_parcelas', '12'))
         venc = int(data.get('dia_vencimento', '5'))
         start_d = datetime.strptime(data.get('data_inicio'), '%d/%m/%Y').date()
+        
+        # Financial / NFS-e Settings from Contract (if added to form) or defaults
+        contract.total_installments = qtd_p
+        contract.amount = val_p * qtd_p
+        # contract.emit_nfse = True/False (Usually from form, here defaulting to True for now based on context)
+        db.session.commit()
     
         # --- TENANT BILLING LOGIC ---
         from models import Integration
@@ -639,7 +645,9 @@ def sign_contract(id):
             
                 t = Transaction(
                     contract_id=contract.id, client_id=contract.client_id, company_id=contract.company_id,
-                    description=f"Parcela {i+1}/{qtd_p}", amount=val_p, due_date=due_d, status='pending'
+                    description=f"Parcela {i+1}/{qtd_p}", amount=val_p, due_date=due_d, status='pending',
+                    installment_number=i+1, total_installments=qtd_p,
+                    nfse_status='pending' if contract.emit_nfse else 'not_supported'
                 )
                 db.session.add(t)
                 db.session.flush() # Get ID
@@ -647,7 +655,7 @@ def sign_contract(id):
                 # Create Real Boleto if Tenant Configured
                 if tenant_api_key and asaas_customer_id:
                     try:
-                        payment = create_payment(
+                        payment, err = create_payment(
                             customer_id=asaas_customer_id,
                             value=val_p,
                             due_date=due_d.strftime('%Y-%m-%d'),
@@ -658,8 +666,11 @@ def sign_contract(id):
                         if payment:
                             t.asaas_id = payment.get('id')
                             t.asaas_invoice_url = payment.get('invoiceUrl') or payment.get('bankSlipUrl')
+                            print(f"✅ Created Asaas Payment {t.asaas_id} for Transaction {t.id}")
+                        else:
+                            print(f"❌ Failed to create Asaas Payment: {err}")
                     except Exception as bill_e:
-                        print(f"❌ Failed to generate boleto {i+1}: {bill_e}")
+                        print(f"❌ Exception generating boleto {i+1}: {bill_e}")
         
         contract.signed_at = datetime.now()
         contract.status = 'active'

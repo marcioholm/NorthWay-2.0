@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+from datetime import datetime
 from flask import current_app
 
 ASAAS_API_URL = os.environ.get('ASAAS_API_URL', 'https://www.asaas.com/api/v3') # Use 'https://sandbox.asaas.com/api/v3' for test
@@ -134,8 +135,80 @@ def cancel_payment(payment_id, api_key=None):
             return True, None
         else:
             error_data = response.json()
-            error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
             print(f"⚠️ Error cancelling payment: {error_msg}")
             return False, error_msg
     except Exception as e:
         return False, str(e)
+
+def create_payment(customer_id, value, due_date, description, external_ref=None, api_key=None):
+    """
+    Creates a single payment (cobranca avulsa) - BOLETO/PIX.
+    """
+    payload = {
+        "customer": customer_id,
+        "billingType": "BOLETO", # Defaults to Boleto/Pix
+        "value": value,
+        "dueDate": due_date,
+        "description": description,
+        "externalReference": str(external_ref) if external_ref else None
+    }
+    
+    try:
+        response = requests.post(f"{ASAAS_API_URL}/payments", json=payload, headers=get_headers(api_key))
+        if response.status_code == 200:
+            return response.json(), None
+        else:
+             error_data = response.json()
+             error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+             return None, error_msg
+    except Exception as e:
+        return None, str(e)
+
+# --- NFS-e Logic ---
+
+def issue_nfse(payment_id, service_code, iss_rate, description, api_key=None):
+    """
+    Triggers NFS-e emission for a specific payment in Asaas.
+    """
+    # NOTE: Asaas has specific endpoints or automations for this. 
+    # Usually "POST /api/v3/invoices" linked to a payment or subscription.
+    # Here we assume manual trigger linked to a payment.
+    
+    # Asaas API for NFS-e creation (Invoice)
+    # https://docs.asaas.com/reference/criar-uma-nota-fiscal
+    
+    payload = {
+        "payment": payment_id, # Link to the payment
+        "serviceDescription": description,
+        "observations": "Emitido via NorthWay CRM",
+        "serviceCode": service_code, # e.g. '1.03'
+        "issTax": iss_rate, # % rate
+        "effectiveDate": datetime.now().strftime('%Y-%m-%d') # Emit today
+    }
+    
+    try:
+        response = requests.post(f"{ASAAS_API_URL}/invoices", json=payload, headers=get_headers(api_key))
+        if response.status_code == 200:
+             return response.json(), None
+        else:
+             error_data = response.json()
+             error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+             return None, error_msg
+             
+    except Exception as e:
+        return None, str(e)
+
+def cancel_nfse(nfse_id, api_key=None):
+    """
+    Cancels an existing NFS-e.
+    """
+    try:
+        response = requests.post(f"{ASAAS_API_URL}/invoices/{nfse_id}/cancel", headers=get_headers(api_key))
+        if response.status_code == 200:
+             return response.json(), None
+        else:
+             error_data = response.json()
+             error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+             return None, error_msg
+    except Exception as e:
+        return None, str(e)

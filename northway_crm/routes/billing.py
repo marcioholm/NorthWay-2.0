@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
 from models import db
-from models import Company, BillingEvent, FinancialEvent, User
+from models import db, Company, BillingEvent, FinancialEvent, User, Transaction, Integration, NFSELog
 from services.asaas_service import create_customer, create_subscription, get_subscription_payments
 from datetime import datetime, timedelta
 import json
@@ -160,7 +160,80 @@ def asaas_webhook():
                     )
                 except Exception as ex:
                     print(f"Failed to send email: {ex}")
+                except Exception as ex:
+                    print(f"Failed to send email: {ex}")
+        
+        # --- NEW LOGIC: Look for Tenant Transactions (Client Payments) ---
+        transaction = Transaction.query.filter_by(asaas_id=payment.get('id')).first()
+        if transaction:
+            print(f"✅ Webhook matched Transaction {transaction.id} for Contract {transaction.contract_id}")
             
+            # Log for Transaction
+            nfse_log = NFSELog(
+                company_id=transaction.company_id,
+                transaction_id=transaction.id,
+                status=event,
+                payload=data
+            )
+            db.session.add(nfse_log)
+
+            if event in ['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED']:
+                transaction.status = 'paid'
+                transaction.paid_date = datetime.now().date()
+                
+                # NFS-e Emission Logic
+                if transaction.contract and transaction.contract.emit_nfse:
+                    # Check if already issued
+                    if transaction.nfse_status != 'issued':
+                        print(f"🚀 Triggering NFS-e for Transaction {transaction.id}")
+                        transaction.nfse_status = 'pending_emission'
+                        
+                        # Get Tenant API Key
+                        tenant_integration = Integration.query.filter_by(
+                            company_id=transaction.company_id, 
+                            service='asaas', 
+                            is_active=True
+                        ).first()
+                        
+                        if tenant_integration and tenant_integration.api_key:
+                            from services.asaas_service import issue_nfse
+                            nfse, err = issue_nfse(
+                                payment_id=transaction.asaas_id,
+                                service_code=transaction.contract.nfse_service_code or '1.03', # Default or from contract
+                                iss_rate=transaction.contract.nfse_iss_rate or 2.0,
+                                description=f"Serviços ref. {transaction.description}",
+                                api_key=tenant_integration.api_key
+                            )
+                            
+                            if nfse:
+                                transaction.nfse_status = 'issued'
+                                transaction.nfse_id = nfse.get('id')
+                                transaction.nfse_number = str(nfse.get('number', '')) or 'PENDING'
+                                print(f"✅ NFS-e Requested: {nfse.get('id')}")
+                                
+                                # Log Success
+                                db.session.add(NFSELog(
+                                    company_id=transaction.company_id, transaction_id=transaction.id,
+                                    status='NFSE_REQUESTED', message=f"ID: {nfse.get('id')}"
+                                ))
+                            else:
+                                transaction.nfse_status = 'error'
+                                print(f"❌ NFS-e Failed: {err}")
+                                db.session.add(NFSELog(
+                                    company_id=transaction.company_id, transaction_id=transaction.id,
+                                    status='NFSE_ERROR', message=str(err)
+                                ))
+            
+            elif event in ['PAYMENT_REFUNDED', 'PAYMENT_REVERSED']:
+                transaction.status = 'refunded'
+                # TODO: Cancel NFS-e logic (Asaas doesn't always allow auto-cancel via API for all cities)
+                # But we can try cancel_nfse if needed.
+            
+            elif event in ['PAYMENT_OVERDUE']:
+                transaction.status = 'overdue'
+
+        # --- END NEW LOGIC ---
+
         elif event in ['PAYMENT_OVERDUE']:
             company.payment_status = 'overdue'
             # Only set overdue_since if it's new

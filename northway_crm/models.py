@@ -412,6 +412,16 @@ class Contract(db.Model):
     company = db.relationship('Company', backref='contracts')
     template = db.relationship('ContractTemplate')
 
+    # Financial / NFS-e Settings
+    amount = db.Column(db.Float, default=0.0)
+    billing_type = db.Column(db.String(20), default='BOLETO') # BOLETO, PIX, CREDIT_CARD
+    total_installments = db.Column(db.Integer, default=12)
+    
+    emit_nfse = db.Column(db.Boolean, default=True) # If true, will try to emit NFS-e via Asaas
+    nfse_service_code = db.Column(db.String(20), nullable=True) # e.g '1.03'
+    nfse_iss_rate = db.Column(db.Float, nullable=True) # e.g 2.0 (%)
+    nfse_desc = db.Column(db.String(255), nullable=True) # Description for the invoice
+
 class Integration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
@@ -514,6 +524,14 @@ class Transaction(db.Model):
     total_installments = db.Column(db.Integer, nullable=True)
     cancellation_reason = db.Column(db.Text, nullable=True)
     
+    # NFS-e Details
+    nfse_status = db.Column(db.String(20), default='pending') # pending, issued, error, canceled, not_supported
+    nfse_number = db.Column(db.String(50), nullable=True)
+    nfse_id = db.Column(db.String(50), nullable=True) # Asaas ID for the fiscal note
+    nfse_pdf_url = db.Column(db.String(500), nullable=True)
+    nfse_xml_url = db.Column(db.String(500), nullable=True)
+    nfse_issued_at = db.Column(db.DateTime, nullable=True)
+    
     contract = db.relationship('Contract', backref=db.backref('transactions', cascade='all, delete-orphan'))
     client = db.relationship('Client', backref=db.backref('transactions', lazy=True, cascade='all, delete-orphan'))
 
@@ -524,6 +542,15 @@ class BillingEvent(db.Model):
     payload = db.Column(db.JSON, nullable=True) # Full webhook payload
     processed_at = db.Column(db.DateTime, nullable=True)
     idempotency_key = db.Column(db.String(100), unique=True, nullable=True) # payment_id + event
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+class NFSELog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    transaction_id = db.Column(db.Integer, db.ForeignKey('transaction.id'), nullable=True)
+    status = db.Column(db.String(20), nullable=False) # SUCCESS, ERROR
+    message = db.Column(db.Text, nullable=True) # Error message or response summary
+    payload = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
 
 class FinancialEvent(db.Model):
