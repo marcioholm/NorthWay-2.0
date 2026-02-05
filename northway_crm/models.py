@@ -250,8 +250,9 @@ class Lead(db.Model):
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
     
-    interactions = db.relationship('Interaction', backref='lead', lazy=True)
-    tasks = db.relationship('Task', backref='lead', lazy=True)
+    interactions = db.relationship('Interaction', backref='lead', cascade='all, delete-orphan', lazy=True)
+    tasks = db.relationship('Task', backref='lead', cascade='all, delete-orphan', lazy=True)
+    whatsapp_messages = db.relationship('WhatsAppMessage', backref='lead', lazy=True)
     pipeline_stage = db.relationship('PipelineStage', backref='stage_leads')
     # Link back to client if converted
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
