@@ -364,7 +364,7 @@ class Client(db.Model):
     # Actually, for bidirectional access:
     origin_lead = db.relationship('Lead', backref=db.backref('converted_client', uselist=False), foreign_keys=[lead_id])
     
-    interactions = db.relationship('Interaction', backref='client', lazy=True)
+    interactions = db.relationship('Interaction', backref=db.backref('client', cascade='all, delete-orphan'), lazy=True)
 
     @property
     def address(self):
@@ -406,7 +406,7 @@ class Contract(db.Model):
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
     
-    client = db.relationship('Client', backref='contracts')
+    client = db.relationship('Client', backref=db.backref('contracts', cascade='all, delete-orphan'))
     company = db.relationship('Company', backref='contracts')
     template = db.relationship('ContractTemplate')
 
@@ -513,7 +513,7 @@ class Transaction(db.Model):
     cancellation_reason = db.Column(db.Text, nullable=True)
     
     contract = db.relationship('Contract', backref=db.backref('transactions', cascade='all, delete-orphan'))
-    client = db.relationship('Client', backref=db.backref('transactions', lazy=True))
+    client = db.relationship('Client', backref=db.backref('transactions', lazy=True, cascade='all, delete-orphan'))
 
 class BillingEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -574,7 +574,7 @@ class ClientChecklist(db.Model):
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    client = db.relationship('Client', backref='checklists')
+    client = db.relationship('Client', backref=db.backref('checklists', cascade='all, delete-orphan'))
     template = db.relationship('ProcessTemplate')
     assigned_to = db.relationship('User', backref='assigned_checklists')
 
@@ -689,5 +689,5 @@ class ServiceOrder(db.Model):
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
 
-    client = db.relationship('Client', backref=db.backref('service_orders', lazy=True))
+    client = db.relationship('Client', backref=db.backref('service_orders', lazy=True, cascade='all, delete-orphan'))
     canceled_by = db.relationship('User', foreign_keys=[canceled_by_user_id])
