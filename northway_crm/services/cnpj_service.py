@@ -3,6 +3,8 @@ from flask import current_app
 import os
 
 class CNPJAService:
+    # URL Base for Paid/Commercial API
+    BASE_URL = "https://api.cnpja.com"
     OPEN_URL = "https://open.cnpja.com"
     
     @classmethod
