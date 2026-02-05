@@ -103,6 +103,8 @@ def lead_details(id):
     
     stages = []
     
+    is_first_stage = False
+    
     if lead.pipeline_id:
         stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).all()
         if stages and lead.pipeline_stage_id == stages[0].id:
