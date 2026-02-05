@@ -1532,7 +1532,8 @@
         const form = e.target;
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        data.client_id = {{ client.id }};
+        data.client_id = {{ client.id }
+    };
 
     try {
         const res = await fetch('/api/service-orders/create', {
@@ -1597,145 +1598,142 @@
         }
     }
 </script>
-function toggleModal(id) {
-const modal = document.getElementById(id);
-if (modal.classList.contains('hidden')) {
-modal.classList.remove('hidden');
-modal.classList.add('flex');
-} else {
-modal.classList.add('hidden');
-modal.classList.remove('flex');
-}
-}
+<script>
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        } else {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
 
-async function signContract(id) {
-if (!confirm("Confirmar que o contrato foi assinado? Isso irá gerar as parcelas financeiras automaticamente.")) return;
+    async function signContract(id) {
+        if (!confirm("Confirmar que o contrato foi assinado? Isso irá gerar as parcelas financeiras automaticamente.")) return;
 
-try {
-const res = await fetch(`/contracts/${id}/sign`, { method: 'POST' });
-let data;
-try {
-data = await res.json();
-} catch (err) {
-const text = await res.text();
-console.error("Failed to parse JSON response:", text);
-alert("Erro no servidor (Resposta inválida). Detalhes no console.");
-return;
-}
+        try {
+            const res = await fetch(`/contracts/${id}/sign`, { method: 'POST' });
+            let data;
+            try {
+                data = await res.json();
+            } catch (err) {
+                const text = await res.text();
+                console.error("Failed to parse JSON response:", text);
+                alert("Erro no servidor (Resposta inválida). Detalhes no console.");
+                return;
+            }
 
-if (data.success) {
-window.location.reload();
-} else {
-alert("Erro: " + (data.error || "Desconhecido"));
-}
-} catch (e) {
-alert("Erro de conexão ou execução. Verifique o console.");
-console.error(e);
-}
-}
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert("Erro: " + (data.error || "Desconhecido"));
+            }
+        } catch (e) {
+            alert("Erro de conexão ou execução. Verifique o console.");
+            console.error(e);
+        }
+    }
 
-// --- WhatsApp Logic (Client) ---
-const pageClientId = parseInt("{{ client.id }}");
+    // --- WhatsApp Logic (Client) ---
+    const pageClientId = parseInt("{{ client.id }}");
 
-function switchClientTab(tabName) {
-console.log("Switching to tab:", tabName);
-try {
-console.log("Switching to tab:", tabName);
-try {
-const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders'];
+    function switchClientTab(tabName) {
+        console.log("Switching to tab:", tabName);
+        try {
+            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders'];
 
-// Hide all contents
-tabs.forEach(t => {
-const content = document.getElementById(`content-client-${t}`);
-if (content) {
-content.classList.add('hidden');
-content.classList.remove('flex'); // Clear flex if it was there
-}
-});
+            // Hide all contents
+            tabs.forEach(t => {
+                const content = document.getElementById(`content-client-${t}`);
+                if (content) {
+                    content.classList.add('hidden');
+                    content.classList.remove('flex'); // Clear flex if it was there
+                }
+            });
 
-// Show selected content
-const selectedContent = document.getElementById(`content-client-${tabName}`);
-if (selectedContent) {
-selectedContent.classList.remove('hidden');
-if (tabName === 'whatsapp') selectedContent.classList.add('flex');
-}
+            // Show selected content
+            const selectedContent = document.getElementById(`content-client-${tabName}`);
+            if (selectedContent) {
+                selectedContent.classList.remove('hidden');
+                if (tabName === 'whatsapp') selectedContent.classList.add('flex');
+            }
 
-// Update Tab Styles
-tabs.forEach(t => {
-const btn = document.getElementById(`tab-client-${t}`);
-if (btn) {
-if (t === tabName) {
-btn.className = "px-5 py-2.5 text-xs font-bold text-gray-700 bg-white shadow-sm rounded-xl transition-all flex
-items-center gap-2 border border-gray-100/50 transform scale-105 shadow-md";
-} else {
-btn.className = "px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex
-items-center gap-2 hover:bg-white/60";
-}
-}
-});
+            // Update Tab Styles
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-client-${t}`);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.className = "px-5 py-2.5 text-xs font-bold text-gray-700 bg-white shadow-sm rounded-xl transition-all flex items-center gap-2 border border-gray-100/50 transform scale-105 shadow-md";
+                    } else {
+                        btn.className = "px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60";
+                    }
+                }
+            });
 
-// Load logic
-if (tabName === 'whatsapp') {
-loadClientWhatsAppMessages();
-}
+            // Load logic
+            if (tabName === 'whatsapp') {
+                loadClientWhatsAppMessages();
+            }
 
-// Re-run Lucide to ensure icons in new tab are rendered
-if (window.lucide) lucide.createIcons();
+            // Re-run Lucide to ensure icons in new tab are rendered
+            if (window.lucide) lucide.createIcons();
 
-} catch (e) {
-console.error("Error switching tab:", e);
-}
-}
+        } catch (e) {
+            console.error("Error switching tab:", e);
+        }
+    }
 
-// Initialize state on load
-document.addEventListener('DOMContentLoaded', () => {
-console.log("Client details JS initialized");
-if (window.lucide) lucide.createIcons();
+    // Initialize state on load
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("Client details JS initialized");
+        if (window.lucide) lucide.createIcons();
 
-// Ensure default tab is processed correctly
-switchClientTab('details');
-});
+        // Ensure default tab is processed correctly
+        switchClientTab('details');
+    });
 
-async function loadClientWhatsAppMessages(silent = false) {
-const container = document.getElementById('client-chat-messages');
-if (!silent) {
-container.innerHTML = `<div class="flex justify-center">
+    async function loadClientWhatsAppMessages(silent = false) {
+        const container = document.getElementById('client-chat-messages');
+        if (!silent) {
+            container.innerHTML = `<div class="flex justify-center">
     <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
 </div>`;
-}
+        }
 
-try {
-const response = await fetch(`/api/whatsapp/client/${pageClientId}/messages`);
-const data = await response.json();
+        try {
+            const response = await fetch(`/api/whatsapp/client/${pageClientId}/messages`);
+            const data = await response.json();
 
-if (data.error) throw new Error(data.error);
+            if (data.error) throw new Error(data.error);
 
-if (data.messages.length === 0) {
-container.innerHTML = `
+            if (data.messages.length === 0) {
+                container.innerHTML = `
 <div class="flex flex-col items-center justify-center h-full text-gray-400 py-10">
     <i data-lucide="message-square" class="w-10 h-10 mb-2 opacity-50"></i>
     <p class="text-sm">Nenhuma mensagem ainda.</p>
     <p class="text-xs">Inicie a conversa abaixo.</p>
 </div>
 `;
-} else {
-let lastDate = null;
-const messagesHtml = data.messages.map(msg => {
-const msgDate = new Date(msg.timestamp);
-const dateStr = msgDate.toLocaleDateString('pt-BR');
-let dateHeader = '';
+            } else {
+                let lastDate = null;
+                const messagesHtml = data.messages.map(msg => {
+                    const msgDate = new Date(msg.timestamp);
+                    const dateStr = msgDate.toLocaleDateString('pt-BR');
+                    let dateHeader = '';
 
-if (dateStr !== lastDate) {
-lastDate = dateStr;
-dateHeader = `
+                    if (dateStr !== lastDate) {
+                        lastDate = dateStr;
+                        dateHeader = `
 <div class="flex justify-center my-4">
     <span class="bg-gray-200 text-gray-600 text-[10px] px-2 py-1 rounded shadow-sm font-medium">
         ${dateStr}
     </span>
 </div>`;
-}
+                    }
 
-return `
+                    return `
 ${dateHeader}
 <div class="flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} mb-1 group">
     <div class="max-w-[75%] rounded-lg px-3 py-1.5 text-sm shadow-sm relative leading-relaxed ${msg.direction === 'out'
@@ -1744,253 +1742,255 @@ ${dateHeader}
                         }">
         <p>${msg.content}</p>
         <div class="flex justify-end items-center gap-1 -mt-0.5">
-            <span class="text-[10px] text-gray-500">${msgDate.toLocaleTimeString([], { hour: '2-digit', minute:
-                '2-digit' })}</span>
+            <span class="text-[10px] text-gray-500">${msgDate.toLocaleTimeString([], {
+                            hour: '2-digit', minute:
+                                '2-digit'
+                        })}</span>
             ${msg.direction === 'out' ?
-            (msg.status === 'read' ? '<i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>' :
-            msg.status === 'delivered' ? '<i data-lucide="check-check" class="w-3 h-3 text-gray-400"></i>' :
-            '<i data-lucide="check" class="w-3 h-3 text-gray-400"></i>')
-            : ''}
+                            (msg.status === 'read' ? '<i data-lucide="check-check" class="w-3 h-3 text-[#53bdeb]"></i>' :
+                                msg.status === 'delivered' ? '<i data-lucide="check-check" class="w-3 h-3 text-gray-400"></i>' :
+                                    '<i data-lucide="check" class="w-3 h-3 text-gray-400"></i>')
+                            : ''}
         </div>
 
     </div>
 </div>
 `}).join('');
-container.innerHTML = messagesHtml;
-container.scrollTop = container.scrollHeight;
-}
-if (window.lucide) lucide.createIcons();
-} catch (e) {
-container.innerHTML = `<p class="text-center text-red-500 text-xs">Erro ao carregar: ${e.message}</p>`;
-}
-}
+                container.innerHTML = messagesHtml;
+                container.scrollTop = container.scrollHeight;
+            }
+            if (window.lucide) lucide.createIcons();
+        } catch (e) {
+            container.innerHTML = `<p class="text-center text-red-500 text-xs">Erro ao carregar: ${e.message}</p>`;
+        }
+    }
 
-// --- MEDIA & PORTED LOGIC (Client) ---
-const activeChat = { type: 'client', id: pageClientId };
+    // --- MEDIA & PORTED LOGIC (Client) ---
+    const activeChat = { type: 'client', id: pageClientId };
 
-function loadMessages(type, id) {
-// Wrapper for existing loader
-return loadClientWhatsAppMessages(true);
-}
+    function loadMessages(type, id) {
+        // Wrapper for existing loader
+        return loadClientWhatsAppMessages(true);
+    }
 
-// Media Vars
-let mediaRecorder = null;
-let audioChunks = [];
-let recordingTimer = null;
-let selectedFile = null;
+    // Media Vars
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingTimer = null;
+    let selectedFile = null;
 
-// UI Toggles
-const inputArea = document.getElementById('message-input');
-const btnMic = document.getElementById('btn-mic');
-const btnSend = document.getElementById('btn-send');
+    // UI Toggles
+    const inputArea = document.getElementById('message-input');
+    const btnMic = document.getElementById('btn-mic');
+    const btnSend = document.getElementById('btn-send');
 
-// Auto-switch Mic/Send icon
-if (inputArea) {
-inputArea.addEventListener('input', (e) => {
-if (e.target.value.trim()) {
-btnMic.classList.add('hidden');
-btnSend.classList.remove('hidden');
-} else {
-btnMic.classList.remove('hidden');
-btnSend.classList.add('hidden');
-}
-});
+    // Auto-switch Mic/Send icon
+    if (inputArea) {
+        inputArea.addEventListener('input', (e) => {
+            if (e.target.value.trim()) {
+                btnMic.classList.add('hidden');
+                btnSend.classList.remove('hidden');
+            } else {
+                btnMic.classList.remove('hidden');
+                btnSend.classList.add('hidden');
+            }
+        });
 
-// Handle Enter
-inputArea.addEventListener('keypress', (e) => {
-if (e.key === 'Enter' && !e.shiftKey) {
-e.preventDefault();
-sendMessage();
-}
-});
-}
+        // Handle Enter
+        inputArea.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
 
-// Toggle Attach Menu
-function toggleAttachMenu() {
-const menu = document.getElementById('attach-menu');
-menu.classList.toggle('hidden');
-}
+    // Toggle Attach Menu
+    function toggleAttachMenu() {
+        const menu = document.getElementById('attach-menu');
+        menu.classList.toggle('hidden');
+    }
 
-// Recording Logic
-async function toggleRecording() {
-if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-return alert('Seu navegador não suporta gravação de áudio.');
-}
+    // Recording Logic
+    async function toggleRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            return alert('Seu navegador não suporta gravação de áudio.');
+        }
 
-try {
-const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-mediaRecorder = new MediaRecorder(stream);
-audioChunks = [];
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
 
-mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-mediaRecorder.start();
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            mediaRecorder.start();
 
-// UI Switch
-document.getElementById('toolbar-default').classList.add('hidden');
-document.getElementById('toolbar-default').classList.remove('flex'); // Important for flex layout
-document.getElementById('toolbar-recording').classList.remove('hidden');
-document.getElementById('toolbar-recording').classList.add('flex');
+            // UI Switch
+            document.getElementById('toolbar-default').classList.add('hidden');
+            document.getElementById('toolbar-default').classList.remove('flex'); // Important for flex layout
+            document.getElementById('toolbar-recording').classList.remove('hidden');
+            document.getElementById('toolbar-recording').classList.add('flex');
 
-// Timer
-let seconds = 0;
-const timerEl = document.getElementById('recording-time');
-timerEl.textContent = "0:00";
-if (recordingTimer) clearInterval(recordingTimer);
-recordingTimer = setInterval(() => {
-seconds++;
-const mins = Math.floor(seconds / 60);
-const secs = seconds % 60;
-timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-}, 1000);
+            // Timer
+            let seconds = 0;
+            const timerEl = document.getElementById('recording-time');
+            timerEl.textContent = "0:00";
+            if (recordingTimer) clearInterval(recordingTimer);
+            recordingTimer = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
 
-} catch (err) {
-console.error(err);
-alert('Permissão de microfone negada ou erro ao iniciar.');
-}
-}
+        } catch (err) {
+            console.error(err);
+            alert('Permissão de microfone negada ou erro ao iniciar.');
+        }
+    }
 
-function cancelRecording() {
-if (mediaRecorder) {
-mediaRecorder.stop();
-mediaRecorder.stream.getTracks().forEach(t => t.stop());
-}
-clearInterval(recordingTimer);
-resetToolbar();
-}
+    function cancelRecording() {
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        }
+        clearInterval(recordingTimer);
+        resetToolbar();
+    }
 
-function stopAndSendRecording() {
-if (!mediaRecorder) return;
+    function stopAndSendRecording() {
+        if (!mediaRecorder) return;
 
-mediaRecorder.onstop = async () => {
-const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-await uploadMedia(audioBlob, 'audio.webm', 'audio');
-resetToolbar();
-};
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            await uploadMedia(audioBlob, 'audio.webm', 'audio');
+            resetToolbar();
+        };
 
-mediaRecorder.stop();
-mediaRecorder.stream.getTracks().forEach(t => t.stop());
-clearInterval(recordingTimer);
-}
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        clearInterval(recordingTimer);
+    }
 
-// File Logic
-function triggerFile(accept) {
-const input = document.getElementById('file-input');
-input.accept = accept;
-input.click();
-document.getElementById('attach-menu').classList.add('hidden');
-}
+    // File Logic
+    function triggerFile(accept) {
+        const input = document.getElementById('file-input');
+        input.accept = accept;
+        input.click();
+        document.getElementById('attach-menu').classList.add('hidden');
+    }
 
-function handleFileSelect(input) {
-if (input.files && input.files[0]) {
-selectedFile = input.files[0];
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
 
-// UI Switch
-document.getElementById('toolbar-default').classList.add('hidden');
-document.getElementById('toolbar-default').classList.remove('flex');
-document.getElementById('toolbar-file').classList.remove('hidden');
-document.getElementById('toolbar-file').classList.add('flex');
-document.getElementById('file-name').textContent = selectedFile.name;
-}
-}
+            // UI Switch
+            document.getElementById('toolbar-default').classList.add('hidden');
+            document.getElementById('toolbar-default').classList.remove('flex');
+            document.getElementById('toolbar-file').classList.remove('hidden');
+            document.getElementById('toolbar-file').classList.add('flex');
+            document.getElementById('file-name').textContent = selectedFile.name;
+        }
+    }
 
-function cancelFile() {
-selectedFile = null;
-document.getElementById('file-input').value = '';
-resetToolbar();
-}
+    function cancelFile() {
+        selectedFile = null;
+        document.getElementById('file-input').value = '';
+        resetToolbar();
+    }
 
-async function sendFile() {
-if (!selectedFile) return;
-await uploadMedia(selectedFile, selectedFile.name, 'file');
-cancelFile();
-}
+    async function sendFile() {
+        if (!selectedFile) return;
+        await uploadMedia(selectedFile, selectedFile.name, 'file');
+        cancelFile();
+    }
 
-function resetToolbar() {
-document.getElementById('toolbar-default').classList.remove('hidden');
-document.getElementById('toolbar-default').classList.add('flex');
+    function resetToolbar() {
+        document.getElementById('toolbar-default').classList.remove('hidden');
+        document.getElementById('toolbar-default').classList.add('flex');
 
-document.getElementById('toolbar-recording').classList.add('hidden');
-document.getElementById('toolbar-recording').classList.remove('flex');
+        document.getElementById('toolbar-recording').classList.add('hidden');
+        document.getElementById('toolbar-recording').classList.remove('flex');
 
-document.getElementById('toolbar-file').classList.add('hidden');
-document.getElementById('toolbar-file').classList.remove('flex');
-}
+        document.getElementById('toolbar-file').classList.add('hidden');
+        document.getElementById('toolbar-file').classList.remove('flex');
+    }
 
-async function uploadMedia(file, filename, type) {
-// Optimistic Loading? Maybe later.
-const btn = document.getElementById('btn-attach'); // just a visual anchor
-const originalHtml = btn.innerHTML;
-btn.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>`;
+    async function uploadMedia(file, filename, type) {
+        // Optimistic Loading? Maybe later.
+        const btn = document.getElementById('btn-attach'); // just a visual anchor
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<div class="animate-spin h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>`;
 
-try {
-const formData = new FormData();
-formData.append('file', file, filename);
-formData.append('client_id', pageClientId); // Explicitly use pageClientId
-formData.append('type', type);
+        try {
+            const formData = new FormData();
+            formData.append('file', file, filename);
+            formData.append('client_id', pageClientId); // Explicitly use pageClientId
+            formData.append('type', type);
 
-const res = await fetch('/api/whatsapp/send-media', {
-method: 'POST',
-body: formData
-});
-const data = await res.json();
-if (data.error) throw new Error(data.error);
+            const res = await fetch('/api/whatsapp/send-media', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
 
-loadClientWhatsAppMessages();
-} catch (e) {
-alert('Erro ao enviar mídia: ' + e.message);
-} finally {
-btn.innerHTML = originalHtml;
-}
-}
+            loadClientWhatsAppMessages();
+        } catch (e) {
+            alert('Erro ao enviar mídia: ' + e.message);
+        } finally {
+            btn.innerHTML = originalHtml;
+        }
+    }
 
-async function sendMessage() {
-const input = document.getElementById('message-input');
-const content = input.value.trim();
-if (!content) return;
+    async function sendMessage() {
+        const input = document.getElementById('message-input');
+        const content = input.value.trim();
+        if (!content) return;
 
-input.value = '';
-input.focus();
+        input.value = '';
+        input.focus();
 
-// Reset toggle
-btnMic.classList.remove('hidden');
-btnSend.classList.add('hidden');
+        // Reset toggle
+        btnMic.classList.remove('hidden');
+        btnSend.classList.add('hidden');
 
-try {
-const response = await fetch('/api/whatsapp/send', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ client_id: pageClientId, content: content })
-});
-const data = await response.json();
-if (data.error) throw new Error(data.error);
+        try {
+            const response = await fetch('/api/whatsapp/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ client_id: pageClientId, content: content })
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
 
-loadClientWhatsAppMessages();
-} catch (e) {
-alert('Erro: ' + e.message);
-}
-}
+            loadClientWhatsAppMessages();
+        } catch (e) {
+            alert('Erro: ' + e.message);
+        }
+    }
 
-// Rich Text Helper (Standardized)
-function insertFormat(char) {
-const input = document.getElementById('message-input');
-const start = input.selectionStart;
-const end = input.selectionEnd;
-const txt = input.value;
+    // Rich Text Helper (Standardized)
+    function insertFormat(char) {
+        const input = document.getElementById('message-input');
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const txt = input.value;
 
-if (start === end) {
-input.value = txt.substring(0, start) + char + txt.substring(end);
-input.focus();
-input.selectionStart = input.selectionEnd = start + char.length;
-} else {
-const wrapped = char + txt.substring(start, end) + char;
-input.value = txt.substring(0, start) + wrapped + txt.substring(end);
-input.focus();
-input.selectionStart = input.selectionEnd = end + (char.length * 2);
-}
+        if (start === end) {
+            input.value = txt.substring(0, start) + char + txt.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = start + char.length;
+        } else {
+            const wrapped = char + txt.substring(start, end) + char;
+            input.value = txt.substring(0, start) + wrapped + txt.substring(end);
+            input.focus();
+            input.selectionStart = input.selectionEnd = end + (char.length * 2);
+        }
 
-// Trigger input event to update mic/send
-input.dispatchEvent(new Event('input'));
-}
+        // Trigger input event to update mic/send
+        input.dispatchEvent(new Event('input'));
+    }
 </script>
 <!-- Delegate Process Modal -->
 <div id="delegateProcessModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
