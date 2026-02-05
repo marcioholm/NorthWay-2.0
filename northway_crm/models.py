@@ -255,6 +255,7 @@ class Lead(db.Model):
     pipeline_stage = db.relationship('PipelineStage', backref='stage_leads')
     # Link back to client if converted
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
+    client_ref = db.relationship('Client', foreign_keys=[client_id], backref='leads_via_client_id')
 
     # BANT Methodology Fields
     bant_budget = db.Column(db.String(100), nullable=True) # Orbe/Faixa
