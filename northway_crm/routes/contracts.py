@@ -606,7 +606,7 @@ def sign_contract(id):
         # Financial / NFS-e Settings from Contract (if added to form) or defaults
         contract.total_installments = qtd_p
         contract.amount = val_p * qtd_p
-        # contract.emit_nfse = True/False (Usually from form, here defaulting to True for now based on context)
+        contract.emit_nfse = True if data.get('emit_nfse') == 'on' else False
         db.session.commit()
     
         # --- TENANT BILLING LOGIC ---
