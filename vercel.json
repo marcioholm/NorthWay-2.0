@@ -2,11 +2,11 @@
     "rewrites": [
         {
             "source": "/assets/(.*)",
-            "destination": "/lp-north-way/assets/$1"
+            "destination": "lp-north-way/assets/$1"
         },
         {
             "source": "/(.*)",
-            "destination": "/northway_crm/api/index.py"
+            "destination": "northway_crm/api/index.py"
         }
     ],
     "functions": {
