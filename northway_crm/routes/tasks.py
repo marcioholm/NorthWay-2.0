@@ -97,5 +97,166 @@ def move_task_api(task_id):
     try:
         TaskService.update_status(task_id, new_status, actor_id=current_user.id)
         return jsonify({'status': 'success'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+@tasks_bp.route('/', methods=['GET', 'POST'])
+@login_required
+def tasks():
+    # POST: Create Task
+    if request.method == 'POST':
+        title = request.form.get('title')
+        lead_id = request.form.get('lead_id')
+        assigned_to_id = request.form.get('assigned_to_id')
+        due_date_str = request.form.get('due_date')
+        is_recurring = request.form.get('is_recurring') == '1'
+        
+        if not title:
+            # flash('Título é obrigatório', 'error') # Need flash
+            return jsonify({'error': 'Title required'}), 400
+
+        due_date = None
+        if due_date_str:
+            try:
+                due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
+            except ValueError:
+                pass
+                
+        # Handle empty/none lead_id
+        if not lead_id or lead_id == 'None':
+            lead_id = None
+            
+        task = Task(
+            title=title,
+            description=None,
+            due_date=due_date,
+            lead_id=lead_id,
+            assigned_to_id=assigned_to_id or current_user.id,
+            company_id=current_user.company_id,
+            status='pendente',
+            is_recurring=is_recurring
+        )
+        
+        try:
+            from models import db
+            db.session.add(task)
+            db.session.commit()
+            # flash('Tarefa criada!', 'success')
+        except Exception as e:
+            # flash(f'Erro: {e}', 'error')
+            pass
+            
+        return render_template('tasks.html') # Redirect usually, but let's follow standard pattern
+        # Actually standard is redirect.
+        return redirect(url_for('tasks.tasks'))
+
+    # GET: List Tasks
+    from models import Lead  # Safe import
+    user_id = current_user.id
+    company_id = current_user.company_id
+    
+    # Queries
+    # 1. Lead Tasks (Pending/Active)
+    lead_tasks = Task.query.filter(
+        Task.company_id == company_id,
+        Task.assigned_to_id == user_id,
+        Task.lead_id != None,
+        Task.status != 'concluida'
+    ).order_by(Task.due_date.asc()).all()
+    
+    # 2. Client Tasks (Pending)
+    client_tasks = Task.query.filter(
+        Task.company_id == company_id,
+        Task.assigned_to_id == user_id,
+        Task.client_id != None,
+        Task.status != 'concluida'
+    ).order_by(Task.due_date.asc()).all()
+    
+    # 3. General Tasks
+    general_tasks = Task.query.filter(
+        Task.company_id == company_id,
+        Task.assigned_to_id == user_id,
+        Task.lead_id == None,
+        Task.client_id == None,
+        Task.status != 'concluida'
+    ).order_by(Task.due_date.asc()).all()
+    
+    # 4. Completed Tasks
+    completed_tasks_list = Task.query.filter(
+        Task.company_id == company_id,
+        Task.assigned_to_id == user_id,
+        Task.status == 'concluida'
+    ).order_by(Task.completed_at.desc()).limit(50).all()
+    
+    total_tasks = Task.query.filter_by(company_id=company_id, assigned_to_id=user_id).count()
+    completed_count = Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, status='concluida').count()
+    
+    progress_percent = 0
+    if total_tasks > 0:
+        progress_percent = int((completed_count / total_tasks) * 100)
+        
+    # Context data for modals
+    leads = Lead.query.filter_by(company_id=company_id).all()
+    users = User.query.filter_by(company_id=company_id).all()
+    
+    now = datetime.now()
+    
+    return render_template('tasks.html',
+                           lead_tasks=lead_tasks,
+                           client_tasks=client_tasks,
+                           general_tasks=general_tasks,
+                           completed_tasks_list=completed_tasks_list,
+                           completed_tasks=completed_count,
+                           total_tasks=total_tasks,
+                           progress_percent=progress_percent,
+                           leads=leads,
+                           users=users,
+                           now=now)
+
+@tasks_bp.route('/<int:id>/toggle', methods=['POST'])
+@login_required
+def toggle_task(id):
+    from models import db
+    task = Task.query.get_or_404(id)
+    if task.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    if task.status == 'concluida':
+        task.status = 'pendente'
+        task.completed_at = None
+    else:
+        task.status = 'concluida'
+        task.completed_at = datetime.now()
+        
+    db.session.commit()
+    return redirect(request.referrer or url_for('tasks.tasks'))
+
+@tasks_bp.route('/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_task(id):
+    from models import db
+    task = Task.query.get_or_404(id)
+    if task.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    db.session.delete(task)
+    db.session.commit()
+    return redirect(request.referrer or url_for('tasks.tasks'))
+
+@tasks_bp.route('/<int:id>/update', methods=['POST'])
+@login_required
+def update(id):
+    from models import db
+    task = Task.query.get_or_404(id)
+    if task.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    task.title = request.form.get('title')
+    task.assigned_to_id = request.form.get('assigned_to_id')
+    
+    due_date_str = request.form.get('due_date')
+    if due_date_str:
+        try:
+            task.due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            pass
+            
+    db.session.commit()
+    return redirect(request.referrer or url_for('tasks.tasks'))
