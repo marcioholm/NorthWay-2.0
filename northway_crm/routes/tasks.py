@@ -97,6 +97,9 @@ def move_task_api(task_id):
     try:
         TaskService.update_status(task_id, new_status, actor_id=current_user.id)
         return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 @tasks_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def tasks():
