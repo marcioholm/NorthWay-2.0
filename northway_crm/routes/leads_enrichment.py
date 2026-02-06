@@ -25,7 +25,10 @@ def search_cnpj():
     results = CNPJAService.search_by_name(query, api_key)
     
     if isinstance(results, dict) and "error" in results:
-        return api_response(success=False, error=f"Erro na API CNPJA: {results.get('error')}", status=500)
+        error_msg = str(results.get('error'))
+        if "credits" in error_msg or "quota" in error_msg or results.get('status') == 429:
+             return api_response(success=False, error="Limite de busca por NOME excedido. Por favor, busque pelo NÚMERO do CNPJ (busca gratuita).", status=429)
+        return api_response(success=False, error=f"Erro na API CNPJA: {error_msg}", status=500)
         
     return api_response(data=results)
 
