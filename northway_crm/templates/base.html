@@ -324,8 +324,8 @@
                 {% endif %}
 
                 {% if current_user.has_permission('tasks_view') %}
-                <a href="{{ url_for('tasks.tasks') }}"
-                    class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'tasks.tasks' else 'text-gray-400' }}">
+                <a href="{{ url_for('tasks.execution_kanban') }}"
+                    class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'tasks.execution_kanban' else 'text-gray-400' }}">
                     <div class="flex items-center gap-3">
                         <i data-lucide="check-square" class="w-5 h-5 flex-shrink-0"></i>
                         <span class="sidebar-text transition-opacity duration-300">Tarefas</span>
