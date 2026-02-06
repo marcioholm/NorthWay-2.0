@@ -1,51 +1,154 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="h-screen flex flex-col">
+<style>
+    .kanban-column {
+        min-width: 320px;
+        width: 320px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 10px;
+    }
+
+    .card-shadow {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .overdue-glow {
+        box-shadow: 0 0 15px rgba(227, 30, 36, 0.15);
+        border: 1px solid rgba(227, 30, 36, 0.3);
+    }
+</style>
+
+<div class="flex flex-col h-screen overflow-hidden bg-background-light dark:bg-board-dark">
     <!-- Header -->
-    <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-white">
+    <div
+        class="px-8 py-6 flex items-end justify-between shrink-0 bg-white dark:bg-sidebar-dark border-b border-slate-200 dark:border-slate-800">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Minha Execução</h1>
-            <p class="text-sm text-gray-500">Gerencie suas tarefas e atividades diárias</p>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Minha Execução</h1>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Gerencie suas tarefas e atividades diárias de
+                forma eficiente.</p>
         </div>
         <button onclick="openNewTaskModal()"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-            <i class="fas fa-plus"></i> Nova Tarefa
+            class="bg-primary hover:bg-red-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-all flex items-center shadow-lg shadow-primary/20">
+            <span class="material-icons-round text-lg mr-2">add</span>
+            Nova Tarefa
         </button>
     </div>
 
     <!-- Kanban Board -->
-    <div class="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50">
-        <div class="flex h-full gap-6 min-w-[1200px]">
-            <!-- Column: A Fazer -->
-            {% with status='a_fazer', title='A Fazer', color='bg-gray-200' %}
-            {% include 'tasks/kanban_column.html' %}
-            {% endwith %}
+    <div class="flex-1 overflow-x-auto custom-scrollbar p-8 bg-slate-50 dark:bg-board-dark">
+        <div class="flex h-full space-x-6 min-w-max">
 
-            <!-- Column: Em Andamento -->
-            {% with status='em_andamento', title='Em Andamento', color='bg-blue-100' %}
-            {% include 'tasks/kanban_column.html' %}
-            {% endwith %}
+            <!-- A FAZER -->
+            <div class="kanban-column flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4 px-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+                        <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 dark:text-slate-200">A Fazer
+                        </h3>
+                        <span
+                            class="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 dark:text-slate-400"
+                            id="count-a_fazer">0</span>
+                    </div>
+                </div>
+                <div class="flex-1 space-y-4" id="col-a_fazer" data-status="a_fazer">
+                    <!-- Tasks injected via JS -->
+                </div>
+            </div>
 
-            <!-- Column: Aguardando -->
-            {% with status='aguardando', title='Aguardando', color='bg-yellow-100' %}
-            {% include 'tasks/kanban_column.html' %}
-            {% endwith %}
+            <!-- EM ANDAMENTO -->
+            <div class="kanban-column flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4 px-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                        <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 dark:text-slate-200">Em
+                            Andamento</h3>
+                        <span
+                            class="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 dark:text-slate-400"
+                            id="count-em_andamento">0</span>
+                    </div>
+                </div>
+                <div class="flex-1 space-y-4" id="col-em_andamento" data-status="em_andamento">
+                </div>
+            </div>
 
-            <!-- Column: Validação -->
-            {% with status='validacao', title='Validação', color='bg-purple-100' %}
-            {% include 'tasks/kanban_column.html' %}
-            {% endwith %}
+            <!-- AGUARDANDO -->
+            <div class="kanban-column flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4 px-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                        <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 dark:text-slate-200">
+                            Aguardando Cliente</h3>
+                        <span
+                            class="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 dark:text-slate-400"
+                            id="count-aguardando">0</span>
+                    </div>
+                </div>
+                <div class="flex-1 space-y-4" id="col-aguardando" data-status="aguardando">
+                </div>
+            </div>
 
-            <!-- Column: Concluída -->
-            {% with status='concluida', title='Concluída', color='bg-green-100' %}
-            {% include 'tasks/kanban_column.html' %}
-            {% endwith %}
+            <!-- VALIDAÇÃO -->
+            <div class="kanban-column flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4 px-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                        <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 dark:text-slate-200">Em
+                            Validação</h3>
+                        <span
+                            class="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 dark:text-slate-400"
+                            id="count-validacao">0</span>
+                    </div>
+                </div>
+                <div class="flex-1 space-y-4" id="col-validacao" data-status="validacao">
+                </div>
+            </div>
+
+            <!-- CONCLUÍDO -->
+            <div class="kanban-column flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4 px-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                        <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 dark:text-slate-200">
+                            Concluído</h3>
+                        <span
+                            class="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 dark:text-slate-400"
+                            id="count-concluida">0</span>
+                    </div>
+                </div>
+                <div class="flex-1 space-y-4 opacity-70" id="col-concluida" data-status="concluida">
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
 
-<!-- Scripts for Drag & Drop -->
+<!-- Floating Notification (Hidden by default) -->
+<div id="overdue-notification"
+    class="fixed bottom-6 right-6 hidden items-center bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 rounded-lg p-3 shadow-2xl animate-bounce z-50">
+    <div class="w-2 h-2 rounded-full bg-primary mr-3"></div>
+    <p class="text-xs font-medium text-slate-700 dark:text-slate-200">Você tem <span id="overdue-count">0</span> tarefas
+        atrasadas hoje.</p>
+    <button onclick="document.getElementById('overdue-notification').classList.add('hidden')"
+        class="ml-4 text-slate-400 hover:text-slate-100">
+        <span class="material-icons-round text-sm">close</span>
+    </button>
+</div>
+
+<!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -58,40 +161,87 @@
             .then(data => {
                 renderKanban(data);
                 initSortable();
-            });
+                checkOverdue(data);
+            })
+            .catch(err => console.error("Error loading kanban:", err));
     }
 
     function renderKanban(data) {
         Object.keys(data).forEach(status => {
             const container = document.getElementById(`col-${status}`);
+            const counter = document.getElementById(`count-${status}`);
             if (!container) return;
 
-            container.innerHTML = data[status].map(task => `
-                <div class="bg-white p-4 rounded-lg shadow-sm mb-3 cursor-move hover:shadow-md transition-shadow border-l-4 border-${getPriorityColor(task.priority)}" data-id="${task.id}">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded ${getSourceBadge(task.source_type)}">${task.source_type || 'Manual'}</span>
-                        <div class="text-gray-400 text-xs text-right">
-                           ${task.due_date ? `<i class="far fa-clock"></i> ${formatDate(task.due_date)}` : ''}
-                        </div>
-                    </div>
-                    <h3 class="text-sm font-medium text-gray-800 mb-1 leading-snug">${task.title}</h3>
-                    ${task.client_name ? `<p class="text-xs text-gray-500 mb-2"><i class="far fa-building"></i> ${task.client_name}</p>` : ''}
-                </div>
-            `).join('');
+            // Update Count
+            if (counter) counter.innerText = data[status].length;
+
+            container.innerHTML = data[status].map(task => createTaskCard(task)).join('');
         });
+    }
+
+    function createTaskCard(task) {
+        const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'concluida';
+        const overdueClass = isOverdue ? 'overdue-glow' : 'hover:border-primary/50';
+        const badgeColor = getSourceBadgeColor(task.source_type);
+
+        let priorityIcon = '';
+        if (task.priority === 'urgente' || task.priority === 'alta') {
+            priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                                <span class="material-icons-round text-primary text-sm">priority_high</span>
+                                <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">ME</div>
+                            </div>`;
+        } else {
+            priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                                <span class="material-icons-round text-slate-300 dark:text-slate-700 text-sm">low_priority</span>
+                                <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">ME</div>
+                            </div>`;
+        }
+
+        return `
+        <div class="bg-white dark:bg-card-dark p-4 rounded-xl border border-slate-200 dark:border-slate-800 card-shadow cursor-pointer transition-all group flex flex-col ${overdueClass} mb-3" data-id="${task.id}">
+            <div class="flex justify-between items-start mb-3">
+                <span class="${badgeColor} text-[10px] font-bold px-2 py-1 rounded uppercase">${task.source_type || 'Manual'}</span>
+                <div class="flex items-center ${isOverdue ? 'text-primary font-bold animate-pulse' : 'text-slate-400'} text-[10px]">
+                    <span class="material-icons-round text-[14px] mr-1">${isOverdue ? 'report_problem' : 'calendar_today'}</span>
+                    ${task.due_date ? formatDate(task.due_date) : 'Sem data'}
+                </div>
+            </div>
+            <h4 class="font-semibold text-sm mb-1 text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">${task.title}</h4>
+            <p class="text-slate-400 text-xs mb-3 truncate">${task.client_name || task.description || 'Sem detalhes'}</p>
+            ${priorityIcon}
+        </div>
+        `;
+    }
+
+    function getSourceBadgeColor(type) {
+        const colors = {
+            'LEAD': 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+            'OS': 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+            'CONTRATO': 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+            'MANUAL': 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+        };
+        return colors[type] || colors['MANUAL'];
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}`;
     }
 
     function initSortable() {
         ['a_fazer', 'em_andamento', 'aguardando', 'validacao', 'concluida'].forEach(status => {
             const el = document.getElementById(`col-${status}`);
+            if (!el) return;
+
             new Sortable(el, {
                 group: 'kanban',
                 animation: 150,
+                ghostClass: 'opacity-50',
                 onEnd: function (evt) {
                     const itemEl = evt.item;
                     const taskId = itemEl.getAttribute('data-id');
                     const newStatus = evt.to.getAttribute('data-status');
-
                     updateTaskStatus(taskId, newStatus);
                 }
             });
@@ -104,28 +254,28 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: status })
         }).then(r => {
-            if (!r.ok) alert('Erro ao mover tarefa');
+            if (!r.ok) console.error('Erro ao mover');
         });
     }
 
-    function getPriorityColor(p) {
-        const map = { 'baixa': 'gray-400', 'media': 'blue-400', 'alta': 'orange-400', 'urgente': 'red-500' };
-        return map[p] || 'gray-400';
-    }
+    function checkOverdue(data) {
+        let count = 0;
+        Object.values(data).flat().forEach(t => {
+            if (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'concluida') count++;
+        });
 
-    function getSourceBadge(s) {
-        // Simple badge styling
-        return 'bg-gray-100 text-gray-600';
-    }
-
-    function formatDate(d) {
-        const date = new Date(d);
-        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        if (count > 0) {
+            document.getElementById('overdue-count').innerText = count;
+            document.getElementById('overdue-notification').classList.remove('hidden');
+            document.getElementById('overdue-notification').classList.add('flex');
+        }
     }
 
     function openNewTaskModal() {
-        // Implement Modal Logic (SweetAlert or custom)
-        alert('Implementar modal de criação');
+        // Simple SweetAlert2 implementation
+        // If SweetAlert is missing, fallback to prompt
+        // Assuming SweetAlert is not loaded in base, but let's try or alert
+        alert("Modal de criação de tarefa será implementado em breve.");
     }
 </script>
 {% endblock %}

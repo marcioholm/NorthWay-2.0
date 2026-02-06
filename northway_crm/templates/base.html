@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -12,10 +12,14 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&display=swap"
         rel="stylesheet">
 
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
     <script>
         tailwind.config = {
+            darkMode: "class",
             theme: {
                 extend: {
                     fontFamily: {
@@ -23,6 +27,12 @@
                         display: ['Outfit', 'sans-serif'],
                     },
                     colors: {
+                        primary: "#E31E24", // Northway Official Red
+                        "background-light": "#F8F9FA",
+                        "background-dark": "#0D0F12",
+                        "sidebar-dark": "#090A0C",
+                        "card-dark": "#1A1D23",
+                        "board-dark": "#121418",
                         northway: {
                             red: '#fa0102',
                             orange: '#fe422e',
@@ -36,7 +46,12 @@
                     boxShadow: {
                         'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
                         'glow': '0 0 15px rgba(250, 1, 2, 0.3)',
-                    }
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                    },
                 }
             }
         }
