@@ -3,9 +3,17 @@
         {
             "src": "api/index.py",
             "use": "@vercel/python"
+        },
+        {
+            "src": "api/probe.py",
+            "use": "@vercel/python"
         }
     ],
     "routes": [
+        {
+            "src": "/probe",
+            "dest": "/api/probe.py"
+        },
         {
             "src": "/assets/(.*)",
             "dest": "/lp-north-way/assets/$1"
