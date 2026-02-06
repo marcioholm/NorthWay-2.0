@@ -69,7 +69,6 @@ class CNPJAService:
                     "company": {
                         "name": data.get('razao_social'),
                         "equity": data.get('capital_social'),
-                        "equity": data.get('capital_social'),
                         "size": {'text': 'N/A'}, # BrasilAPI often doesn't give simple size text
                         "members": [
                             {
