@@ -19,18 +19,40 @@ def search_cnpj():
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='cnpja').first()
     api_key = integration.api_key if integration and integration.is_active else None
 
-    if not api_key:
-        return api_response(success=False, error="A busca por nome requer API Key do CNPJA. Use a busca direta por CNPJ (Gratuita).", status=400)
+    # Check if query is a CNPJ (14 digits)
+    clean_query = "".join(filter(str.isdigit, query))
     
-    results = CNPJAService.search_by_name(query, api_key)
-    
-    if isinstance(results, dict) and "error" in results:
-        error_msg = str(results.get('error'))
-        if "credits" in error_msg or "quota" in error_msg or results.get('status') == 429:
-             return api_response(success=False, error="Limite de busca por NOME excedido. Por favor, busque pelo NÚMERO do CNPJ (busca gratuita).", status=429)
-        return api_response(success=False, error=f"Erro na API CNPJA: {error_msg}", status=500)
+    if len(clean_query) == 14:
+        # Direct CNPJ Search (Free Fallback available)
+        result = CNPJAService.get_by_cnpj(clean_query, api_key)
         
-    return api_response(data=results)
+        if "error" in result:
+             return api_response(success=False, error=f"Erro ao buscar CNPJ: {result.get('error')}", status=500)
+        
+        # Normalize to match frontend expectations (snake_case from search_by_name)
+        normalized = {
+            'tax_id': result.get('taxId'),
+            'name': result.get('company', {}).get('name') or result.get('alias'),
+            'alias': result.get('alias'),
+            'status': result.get('status'),
+            'address': result.get('address')
+        }
+        return api_response(data=[normalized])
+
+    else:
+        # Name Search (Paid Only)
+        if not api_key:
+            return api_response(success=False, error="A busca por nome requer API Key do CNPJA. Use a busca direta por CNPJ (Gratuita).", status=400)
+        
+        results = CNPJAService.search_by_name(query, api_key)
+        
+        if isinstance(results, dict) and "error" in results:
+            error_msg = str(results.get('error'))
+            if "credits" in error_msg or "quota" in error_msg or results.get('status') == 429:
+                 return api_response(success=False, error="Limite de busca por NOME excedido. Por favor, busque pelo NÚMERO do CNPJ (busca gratuita).", status=429)
+            return api_response(success=False, error=f"Erro na API CNPJA: {error_msg}", status=500)
+            
+        return api_response(data=results)
 
 @enrichment_bp.route('/api/leads/<int:lead_id>/enrich', methods=['POST'])
 @login_required
