@@ -555,9 +555,83 @@ def sys_fix_transaction_schema():
                         results.append(f"❌ Failed {col}: {err_msg}")
             
             conn.commit()
-        return jsonify({"status": "completed", "log": results})
+         return jsonify({"status": "completed", "log": results})
     except Exception as e:
          return jsonify({"status": "critical_error", "error": str(e)}), 500
+
+@app.route('/sys_admin/fix_task_schema')
+def fix_task_schema():
+    """
+    Emergency route to fix Task table schema and create TaskEvent table.
+    Adds: source_type, auto_generated, contract_id, service_order_id, created_by_user_id
+    Creates: task_event table
+    """
+    try:
+        results = []
+        conn = db.engine.connect()
+        
+        # 1. Add Columns to Task
+        cols = [
+            ("source_type", "VARCHAR(50)"),
+            ("auto_generated", "BOOLEAN DEFAULT FALSE"),
+            ("contract_id", "INTEGER REFERENCES contract(id)"),
+            ("service_order_id", "INTEGER REFERENCES service_order(id)"),
+            ("created_by_user_id", "INTEGER REFERENCES \"user\"(id)")
+        ]
+        
+        for col, dtype in cols:
+            try:
+                # Generic SQL (Postgres supports IF NOT EXISTS for columns in newer versions, else try/catch)
+                # QUOTE "source_type" just in case, but "user" MUST be quoted in FK above
+                conn.execute(text(f"ALTER TABLE task ADD COLUMN {col} {dtype}"))
+                results.append(f"✅ Added task.{col}")
+                conn.commit()
+            except Exception as e:
+                if "duplicate column" in str(e).lower() or "already exists" in str(e).lower():
+                    results.append(f"⚠️ task.{col} already exists")
+                else:
+                    results.append(f"❌ Failed task.{col}: {str(e)}")
+        
+        # 2. Create TaskEvent Table
+        try:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS task_event (
+                    id SERIAL PRIMARY KEY,
+                    task_id INTEGER NOT NULL REFERENCES task(id),
+                    actor_id INTEGER REFERENCES "user"(id),
+                    actor_type VARCHAR(20) DEFAULT 'USER',
+                    event_type VARCHAR(50) NOT NULL,
+                    payload JSON,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            results.append("✅ Created/Verified table task_event")
+            conn.commit()
+        except Exception as e:
+            # SQLite fallback for SERIAL
+            if "syntax error" in str(e).lower() and "SERIAL" in str(e):
+                    results.append("⚠️ Retrying task_event for SQLite...")
+                    conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS task_event (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        task_id INTEGER NOT NULL REFERENCES task(id),
+                        actor_id INTEGER REFERENCES "user"(id),
+                        actor_type VARCHAR(20) DEFAULT 'USER',
+                        event_type VARCHAR(50) NOT NULL,
+                        payload JSON,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                    results.append("✅ Created table task_event (SQLite)")
+                    conn.commit()
+            else:
+                results.append(f"❌ Failed create task_event: {str(e)}")
+
+        conn.close()
+        return jsonify({"status": "completed", "log": results})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/checkout')
 def checkout_fallback():
