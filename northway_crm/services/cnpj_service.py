@@ -78,6 +78,7 @@ class CNPJAService:
                             }
                             for m in data.get("qsa", [])
                         ]
+                    },
                     "status": {
                         "text": data.get('descricao_situacao_cadastral')
                     },
