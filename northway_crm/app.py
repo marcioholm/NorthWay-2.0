@@ -524,6 +524,41 @@ def sys_migrate_gmb():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/sys_admin/fix_transaction_schema')
+def sys_fix_transaction_schema():
+    try:
+        results = []
+        with db.engine.connect() as conn:
+            # Transaction Columns
+            columns_to_add = [
+                ('nfse_status', 'VARCHAR(20) DEFAULT \'pending\''),
+                ('nfse_number', 'VARCHAR(50)'),
+                ('nfse_id', 'VARCHAR(50)'),
+                ('nfse_pdf_url', 'VARCHAR(500)'),
+                ('nfse_xml_url', 'VARCHAR(500)'),
+                ('nfse_issued_at', 'TIMESTAMP')
+            ]
+            
+            for col, dtype in columns_to_add:
+                try:
+                    # Generic SQL (Postgres supports IF NOT EXISTS, SQLite might not in old versions, but we assume PG forprod)
+                    # We use a try/catch block for safety across DBs
+                    # QUOTE "transaction" because it is a reserved keyword!
+                    conn.execute(text(f"ALTER TABLE \"transaction\" ADD COLUMN {col} {dtype}"))
+                    results.append(f"✅ Added {col}")
+                except Exception as e:
+                    # Check if error is because column exists
+                    err_msg = str(e).lower()
+                    if 'duplicate column' in err_msg or 'already exists' in err_msg:
+                        results.append(f"⚠️ Skipped {col} (Already exists)")
+                    else:
+                        results.append(f"❌ Failed {col}: {err_msg}")
+            
+            conn.commit()
+        return jsonify({"status": "completed", "log": results})
+    except Exception as e:
+         return jsonify({"status": "critical_error", "error": str(e)}), 500
+
 @app.route('/checkout')
 def checkout_fallback():
     return render_template('checkout_page.html')
