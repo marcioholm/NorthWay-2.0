@@ -555,9 +555,9 @@ def sys_fix_transaction_schema():
                         results.append(f"❌ Failed {col}: {err_msg}")
             
             conn.commit()
-         return jsonify({"status": "completed", "log": results})
+        return jsonify({"status": "completed", "log": results})
     except Exception as e:
-         return jsonify({"status": "critical_error", "error": str(e)}), 500
+        return jsonify({"status": "critical_error", "error": str(e)}), 500
 
 @app.route('/sys_admin/fix_task_schema')
 def fix_task_schema():
