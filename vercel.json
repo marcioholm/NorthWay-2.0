@@ -1,27 +1,19 @@
 {
-    "builds": [
+    "rewrites": [
         {
-            "src": "northway_crm/api/index.py",
-            "use": "@vercel/python",
-            "config": {
-                "runtime": "python3.9",
-                "memory": 1024,
-                "maxDuration": 10
-            }
+            "source": "/assets/(.*)",
+            "destination": "/lp-north-way/assets/$1"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/northway_crm/api/index.py"
         }
     ],
-    "routes": [
-        {
-            "src": "/assets/(.*)",
-            "dest": "/lp-north-way/assets/$1"
-        },
-        {
-            "src": "/assets/(.*)",
-            "dest": "/lp-north-way/assets/$1"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "northway_crm/api/index.py"
+    "functions": {
+        "northway_crm/api/index.py": {
+            "runtime": "python3.12",
+            "memory": 1024,
+            "maxDuration": 10
         }
-    ]
+    }
 }
