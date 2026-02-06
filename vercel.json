@@ -2,18 +2,11 @@
     "rewrites": [
         {
             "source": "/assets/(.*)",
-            "destination": "lp-north-way/assets/$1"
+            "destination": "/lp-north-way/assets/$1"
         },
         {
             "source": "/(.*)",
-            "destination": "northway_crm/api/index.py"
+            "destination": "/api/index.py"
         }
-    ],
-    "functions": {
-        "northway_crm/api/index.py": {
-            "runtime": "python3.12",
-            "memory": 1024,
-            "maxDuration": 10
-        }
-    }
+    ]
 }
