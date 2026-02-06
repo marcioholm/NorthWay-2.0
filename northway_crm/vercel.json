@@ -4,6 +4,8 @@
             "src": "api/index.py",
             "use": "@vercel/python",
             "config": {
+                "runtime": "python3.12",
+                "memory": 1024,
                 "maxDuration": 30
             }
         }
