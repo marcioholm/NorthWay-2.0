@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col">
+    <!-- Header -->
+    <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-white">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Minha Execução</h1>
+            <p class="text-sm text-gray-500">Gerencie suas tarefas e atividades diárias</p>
+        </div>
+        <button onclick="openNewTaskModal()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <i class="fas fa-plus"></i> Nova Tarefa
+        </button>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-gray-50">
+        <div class="flex h-full gap-6 min-w-[1200px]">
+            <!-- Column: A Fazer -->
+            {% with status='a_fazer', title='A Fazer', color='bg-gray-200' %}
+            {% include 'tasks/kanban_column.html' %}
+            {% endwith %}
+
+            <!-- Column: Em Andamento -->
+            {% with status='em_andamento', title='Em Andamento', color='bg-blue-100' %}
+            {% include 'tasks/kanban_column.html' %}
+            {% endwith %}
+
+            <!-- Column: Aguardando -->
+            {% with status='aguardando', title='Aguardando', color='bg-yellow-100' %}
+            {% include 'tasks/kanban_column.html' %}
+            {% endwith %}
+
+            <!-- Column: Validação -->
+            {% with status='validacao', title='Validação', color='bg-purple-100' %}
+            {% include 'tasks/kanban_column.html' %}
+            {% endwith %}
+
+            <!-- Column: Concluída -->
+            {% with status='concluida', title='Concluída', color='bg-green-100' %}
+            {% include 'tasks/kanban_column.html' %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+
+<!-- Scripts for Drag & Drop -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadKanbanTasks();
+    });
+
+    function loadKanbanTasks() {
+        fetch('/tasks/api/kanban')
+            .then(r => r.json())
+            .then(data => {
+                renderKanban(data);
+                initSortable();
+            });
+    }
+
+    function renderKanban(data) {
+        Object.keys(data).forEach(status => {
+            const container = document.getElementById(`col-${status}`);
+            if (!container) return;
+
+            container.innerHTML = data[status].map(task => `
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-3 cursor-move hover:shadow-md transition-shadow border-l-4 border-${getPriorityColor(task.priority)}" data-id="${task.id}">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded ${getSourceBadge(task.source_type)}">${task.source_type || 'Manual'}</span>
+                        <div class="text-gray-400 text-xs text-right">
+                           ${task.due_date ? `<i class="far fa-clock"></i> ${formatDate(task.due_date)}` : ''}
+                        </div>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-800 mb-1 leading-snug">${task.title}</h3>
+                    ${task.client_name ? `<p class="text-xs text-gray-500 mb-2"><i class="far fa-building"></i> ${task.client_name}</p>` : ''}
+                </div>
+            `).join('');
+        });
+    }
+
+    function initSortable() {
+        ['a_fazer', 'em_andamento', 'aguardando', 'validacao', 'concluida'].forEach(status => {
+            const el = document.getElementById(`col-${status}`);
+            new Sortable(el, {
+                group: 'kanban',
+                animation: 150,
+                onEnd: function (evt) {
+                    const itemEl = evt.item;
+                    const taskId = itemEl.getAttribute('data-id');
+                    const newStatus = evt.to.getAttribute('data-status');
+
+                    updateTaskStatus(taskId, newStatus);
+                }
+            });
+        });
+    }
+
+    function updateTaskStatus(id, status) {
+        fetch(`/tasks/api/move/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: status })
+        }).then(r => {
+            if (!r.ok) alert('Erro ao mover tarefa');
+        });
+    }
+
+    function getPriorityColor(p) {
+        const map = { 'baixa': 'gray-400', 'media': 'blue-400', 'alta': 'orange-400', 'urgente': 'red-500' };
+        return map[p] || 'gray-400';
+    }
+
+    function getSourceBadge(s) {
+        // Simple badge styling
+        return 'bg-gray-100 text-gray-600';
+    }
+
+    function formatDate(d) {
+        const date = new Date(d);
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    }
+
+    function openNewTaskModal() {
+        // Implement Modal Logic (SweetAlert or custom)
+        alert('Implementar modal de criação');
+    }
+</script>
+{% endblock %}

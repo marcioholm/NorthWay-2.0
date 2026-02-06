@@ -1,190 +1,101 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
+from flask import Blueprint, render_template, jsonify, request, current_app
 from flask_login import login_required, current_user
-from models import db, Task, User, Client, Lead
-from datetime import datetime
+from services.task_service import TaskService
+from models import Task, User
 
-tasks_bp = Blueprint('tasks', __name__)
+tasks_bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 
-@tasks_bp.route('/tasks', methods=['GET', 'POST'])
+# --- VIEWS ---
+
+@tasks_bp.route('/execution')
 @login_required
-def tasks():
-    if request.method == 'POST':
-        title = request.form.get('title')
-        due_date_str = request.form.get('due_date')
-        lead_id = request.form.get('lead_id')
-        assigned_to_id = request.form.get('assigned_to_id')
-        is_recurring = request.form.get('is_recurring') == '1'
+def execution_kanban():
+    """
+    Kanban Board View (My Execution)
+    """
+    return render_template('tasks/execution_kanban.html')
 
-        if not title:
-            flash('Título é obrigatório', 'error')
-            return redirect(request.form.get('next') or request.referrer or url_for('tasks.tasks'))
-
-        due_date = None
-        if due_date_str:
-            try:
-                due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
-            except ValueError:
-                pass
-        
-        # Determine correct assigned user (default to self if not provided or valid)
-        assigned_user_id = current_user.id
-        if assigned_to_id:
-            try:
-                assigned_user_id = int(assigned_to_id)
-            except ValueError:
-                pass
-
-        new_task = Task(
-            title=title,
-            due_date=due_date,
-            lead_id=lead_id if lead_id else None,
-            company_id=current_user.company_id,
-            assigned_to_id=assigned_user_id,
-            status='pendente',
-            is_recurring=is_recurring
-        )
-
-        db.session.add(new_task)
-        db.session.commit()
-        
-        # Notification Logic: If assigned to someone else
-        if assigned_user_id != current_user.id:
-            from utils import create_notification
-            create_notification(
-                user_id=assigned_user_id,
-                company_id=current_user.company_id,
-                type='task_assigned',
-                title='Nova Tarefa Atribuída',
-                message=f"{current_user.name} atribuiu uma nova tarefa a você: {title}"
-            )
-
-        flash('Tarefa criada com sucesso!', 'success')
-        return redirect(request.form.get('next') or request.referrer or url_for('tasks.tasks'))
-
-    # GET Logic (Existing)...
-    page = request.args.get('page', 1, type=int)
-    per_page = 30
-    
-    # Filter by company AND assignment (optional, for now show all company tasks or filtered?)
-    # NorthWay Logic: Sales see their own tasks. Managers/Admins see all?
-    # For now, keeping existing logic: Show ALL tasks for company to visibility, 
-    # but we might want to highlight assigned ones later.
-    tasks_query = Task.query.filter_by(company_id=current_user.company_id)
-    
-    # View filters could be added here later (e.g. ?view=me)
-    
-    tasks_list = tasks_query\
-        .options(db.joinedload(Task.responsible), db.joinedload(Task.client), db.joinedload(Task.lead))\
-        .order_by(Task.due_date.asc()).all()
-    
-    # Categorize for template tabs
-    lead_tasks = [t for t in tasks_list if t.lead_id and t.status != 'completa']
-    client_tasks = [t for t in tasks_list if t.client_id and t.status != 'completa']
-    general_tasks = [t for t in tasks_list if not t.lead_id and not t.client_id and t.status != 'completa']
-    completed_tasks_list = [t for t in tasks_list if t.status == 'completa']
-    
-    total_tasks = len(tasks_list)
-    completed_count = len(completed_tasks_list)
-    progress_percent = int((completed_count / total_tasks * 100)) if total_tasks > 0 else 0
-    
+@tasks_bp.route('/execution/team')
+@login_required
+def team_execution():
+    """
+    Manager View (Team Execution)
+    """
+    # Check permissions (manager/admin)
+    # MVP: Allow everyone for now or check role
+    if not current_user.role in ['admin', 'gestor']:
+         pass # Maybe restrict access later
+         
     users = User.query.filter_by(company_id=current_user.company_id).all()
-    leads = Lead.query.filter_by(company_id=current_user.company_id).order_by(Lead.name).all() # Fetch leads for dropdown
-    
-    return render_template('tasks.html', 
-                           lead_tasks=lead_tasks,
-                           client_tasks=client_tasks,
-                           general_tasks=general_tasks,
-                           completed_tasks_list=completed_tasks_list,
-                           completed_tasks=completed_count,
-                           total_tasks=total_tasks,
-                           progress_percent=progress_percent,
-                           users=users,
-                           leads=leads, # Pass leads to template
-                           current_user=current_user,
-                           now=datetime.now())
+    return render_template('tasks/team_execution.html', users=users)
 
-@tasks_bp.route('/tasks/<int:id>/toggle', methods=['POST'])
-@login_required
-def toggle_task(id):
-    task = Task.query.get_or_404(id)
-    if task.company_id != current_user.company_id:
-        abort(403)
-        
-    if task.status == 'completa':
-        task.status = 'pendente'
-        task.completed_at = None
-    else:
-        task.status = 'completa'
-        task.completed_at = datetime.now()
-        
-    db.session.commit()
-    
-    # Return JSON for AJAX or redirect as fallback
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({'success': True, 'status': task.status})
-    
-    return redirect(request.referrer or url_for('tasks.tasks'))
 
-@tasks_bp.route('/tasks/<int:id>/delete', methods=['POST'])
-@login_required
-def delete_task(id):
-    task = Task.query.get_or_404(id)
-    if task.company_id != current_user.company_id:
-        abort(403)
-        
-    db.session.delete(task)
-    db.session.commit()
-    flash('Tarefa excluída.', 'success')
-    return redirect(request.referrer or url_for('tasks.tasks'))
+# --- API ENDPOINTS ---
 
-@tasks_bp.route('/onboarding/dismiss', methods=['POST'])
+@tasks_bp.route('/api/kanban', methods=['GET'])
 @login_required
-def dismiss_onboarding():
-    current_user.onboarding_dismissed = True
-    db.session.commit()
-    return jsonify({'success': True})
-
-@tasks_bp.route('/tasks/<int:id>/update', methods=['POST'])
-@login_required
-def update_task(id):
-    task = Task.query.get_or_404(id)
-    if task.company_id != current_user.company_id:
-        abort(403)
-        
-    title = request.form.get('title')
-    due_date_str = request.form.get('due_date')
-    assigned_to_id = request.form.get('assigned_to_id')
+def get_kanban_data():
+    """
+    Returns filtered tasks for Kanban
+    """
+    user_id = request.args.get('user_id', current_user.id, type=int)
     
-    if title: 
-        task.title = title
-        
-    if due_date_str:
-        try:
-            task.due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
-        except ValueError:
-            pass
+    # Security: Only allow viewing other users if Admin/Manager
+    if user_id != current_user.id:
+         if current_user.role not in ['admin', 'gestor']:
+             return jsonify({'error': 'Unauthorized'}), 403
+
+    kanban_data = TaskService.get_kanban_tasks(user_id)
+    
+    # Serialize tasks
+    # We could do this in Service, but doing here for flexibility
+    serialized = {}
+    for status, tasks in kanban_data.items():
+        serialized[status] = []
+        for t in tasks:
+            serialized[status].append({
+                'id': t.id,
+                'title': t.title,
+                'description': t.description,
+                'priority': t.priority,
+                'due_date': t.due_date.strftime('%Y-%m-%d') if t.due_date else None,
+                'source_type': t.source_type,
+                'client_name': t.client.name if t.client else None,
+                'auto_generated': t.auto_generated
+            })
             
-    if assigned_to_id:
-        try:
-            new_assignee_id = int(assigned_to_id)
-            old_assignee_id = task.assigned_to_id
-            
-            if new_assignee_id != old_assignee_id:
-                task.assigned_to_id = new_assignee_id
-                
-                # Notify new assignee
-                if new_assignee_id != current_user.id:
-                    from utils import create_notification
-                    create_notification(
-                        user_id=new_assignee_id,
-                        company_id=current_user.company_id,
-                        type='task_assigned',
-                        title='Tarefa Delegada',
-                        message=f"{current_user.name} delegou a tarefa '{task.title}' para você."
-                    )
-        except ValueError:
-            pass
+    return jsonify(serialized)
 
-    db.session.commit()
-    flash('Tarefa atualizada com sucesso.', 'success')
-    return redirect(request.referrer or url_for('tasks.tasks'))
+@tasks_bp.route('/api/create', methods=['POST'])
+@login_required
+def create_task_api():
+    """
+    Creates a new manual task
+    """
+    data = request.json
+    try:
+        # Enforce company_id
+        data['company_id'] = current_user.company_id
+        
+        # Enforce created_by
+        # If assigning to someone else, check permissions? MVP: Allow.
+        
+        task = TaskService.create_task(data, user_id=current_user.id)
+        return jsonify({'status': 'success', 'task_id': task.id}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@tasks_bp.route('/api/move/<int:task_id>', methods=['PATCH'])
+@login_required
+def move_task_api(task_id):
+    """
+    Drag and Drop: Update Status
+    """
+    data = request.json
+    new_status = data.get('status')
+    
+    try:
+        TaskService.update_status(task_id, new_status, actor_id=current_user.id)
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400

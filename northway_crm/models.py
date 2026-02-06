@@ -488,21 +488,45 @@ class Task(db.Model):
     description = db.Column(db.Text, nullable=True) # Added for details
     due_date = db.Column(db.DateTime)
     priority = db.Column(db.String(20), default='media') # baixa, media, alta, urgente
-    status = db.Column(db.String(20), default='pendente') # pendente, concluida
+    status = db.Column(db.String(20), default='pendente') # pendente, a_fazer, em_andamento, aguardando, validacao, concluida
     reminder_sent = db.Column(db.Boolean, default=False)
     is_recurring = db.Column(db.Boolean, default=False)
     recurrence = db.Column(db.String(20)) # 'mensal'
     completed_at = db.Column(db.DateTime) # New column for sorting
     
+    # New Fields for My Execution Module
+    source_type = db.Column(db.String(50), nullable=True) # LEAD, CUSTOMER, SERVICE_ORDER, CONTRACT, SUPPORT, MANUAL
+    auto_generated = db.Column(db.Boolean, default=False)
+    
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Link to client
+    contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=True)
+    service_order_id = db.Column(db.Integer, db.ForeignKey('service_order.id'), nullable=True)
+    
     assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
 
     # Relationships are backref'd from Lead/Client usually, or here:
     # lead = db.relationship('Lead', backref='tasks') -- already in Lead
     client = db.relationship('Client', backref='tasks')
+    contract = db.relationship('Contract', backref='tasks')
+    service_order = db.relationship('ServiceOrder', backref='tasks')
+    
     responsible = db.relationship('User', foreign_keys=[assigned_to_id], backref='assigned_tasks')
+    created_by = db.relationship('User', foreign_keys=[created_by_user_id], backref='created_tasks')
+
+class TaskEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    actor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Null for system
+    actor_type = db.Column(db.String(20), default='USER') # USER, SYSTEM
+    event_type = db.Column(db.String(50), nullable=False) # CREATED, STATUS_CHANGED, REASSIGNED, COMPLETED
+    payload = db.Column(db.JSON, nullable=True) # detailed changes
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    task = db.relationship('Task', backref=db.backref('events', lazy=True, cascade='all, delete-orphan'))
+    actor = db.relationship('User')
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
