@@ -22,6 +22,8 @@ def create_app():
     # EMERGENCY WRAPPER
     try:
         app = Flask(__name__, instance_path='/tmp')
+        app.instance_path = '/tmp' # FORCE override for Vercel
+        
         # Allow Chrome Extensions (Defensive)
         try:
              CORS(app, resources={r"/api/ext/*": {"origins": "*"}})
@@ -30,7 +32,7 @@ def create_app():
 
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
         
-        print("🚀 APP STARTUP: VERSION VERCEL-FIX-V4 (Debug Enabled)")
+        print("🚀 APP STARTUP: VERSION VERCEL-FIX-V5 (Auto-Migrate Transaction)")
         
         # --- CONFIGURATION ---
         app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'northway-crm-secure-key')
@@ -115,8 +117,10 @@ def create_app():
         except OSError:
             app.config['UPLOAD_FOLDER'] = '/tmp/uploads/profiles'
             app.config['COMPANY_UPLOAD_FOLDER'] = '/tmp/uploads/company'
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
+            try:
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                os.makedirs(app.config['COMPANY_UPLOAD_FOLDER'], exist_ok=True)
+            except: pass
 
         # Supabase Setup
         app.config['SUPABASE_URL'] = os.environ.get('SUPABASE_URL')
@@ -404,6 +408,38 @@ def create_app():
                             
                             conn.commit()
                             print("✅ MIGRATION: Schema checks completed.")
+                            
+                    # 4. TRANSACTION MIGRATION (Fix Missing Columns)
+                    if inspector.has_table("transaction"):
+                        with db.engine.connect() as conn:
+                            # Note: inspector.get_columns("transaction") might fail if reserved word isn't quoted, but usually sqlalchemy handles it.
+                            # Just be safe and catch errors.
+                            try:
+                                t_columns = [c['name'] for c in inspector.get_columns("transaction")]
+                                
+                                # Setup columns to add
+                                tx_cols = [
+                                    ('nfse_status', 'VARCHAR(20) DEFAULT \'pending\''),
+                                    ('nfse_number', 'VARCHAR(50)'),
+                                    ('nfse_id', 'VARCHAR(50)'),
+                                    ('nfse_pdf_url', 'VARCHAR(500)'),
+                                    ('nfse_xml_url', 'VARCHAR(500)'),
+                                    ('nfse_issued_at', 'TIMESTAMP')
+                                ]
+                                
+                                for col, dtype in tx_cols:
+                                    if col not in t_columns:
+                                        try:
+                                            print(f"📦 MIGRATION: Adding transaction.{col}...")
+                                            conn.execute(text(f"ALTER TABLE \"transaction\" ADD COLUMN {col} {dtype}"))
+                                        except Exception as tx_e:
+                                            print(f"FAILED TO ADD transaction.{col}: {tx_e}")
+                                
+                                conn.commit()
+                                print("✅ MIGRATION: Transaction schema checks completed.")
+                            except Exception as insp_e:
+                                print(f"⚠️ Transaction Inspection Error: {insp_e}")
+                                
                 except Exception as mig_e:
                     print(f"⚠️ Migration/Inspect Error: {mig_e}")
 
