@@ -82,7 +82,7 @@ def presentation_growth_framework():
     return render_template('docs/presentation_growth_framework.html')
 
 @docs_bp.route('/ebook-institucional')
-@login_required
+# Public access for sharing via link
 def ebook_institutional():
     return render_template('docs/ebook_institutional.html')
 
