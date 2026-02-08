@@ -47,8 +47,11 @@ class FormService:
         q_map = {q['id']: q['pilar'] for q in schema['questions']}
         
         for q_id, val in answers.items():
-            val = int(val)
-            score_total += val
+            try:
+                val = int(val)
+                score_total += val
+            except (ValueError, TypeError):
+                continue
             # Handle int/str mismatch
             try:
                 q_id_int = int(q_id)
@@ -201,11 +204,12 @@ Reter: {pillars['Reter']} / 15
             title=task_title,
             description=f"{(target_type or 'Lead').capitalize()} preencheu diagnóstico com nota {stars}. Classificação: {classification}.",
             due_date=datetime.utcnow() - timedelta(hours=3) + due_delta,
-            user_id=form_instance.owner_user_id,
+            assigned_to_id=form_instance.owner_user_id, # Corrected from user_id
+            created_by_user_id=form_instance.owner_user_id, # Added for completeness
             company_id=form_instance.tenant_id,
             lead_id=note_target_lead_id,
-            client_id=target_client.id if target_client else None, # Add client_id if supported
-            status='pending'
+            client_id=target_client.id if target_client else None,
+            status='pendente' # Corrected from pending to match model default
         )
         db.session.add(task)
         
