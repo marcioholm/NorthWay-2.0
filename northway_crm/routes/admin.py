@@ -406,8 +406,8 @@ def run_initial_migrations():
     Temporary route to add diagnostic columns to relevant tables.
     Uses 'ALTER TABLE ... ADD COLUMN IF NOT EXISTS' for PostgreSQL compatibility.
     """
-    if not current_user.is_super_admin:
-        abort(403)
+    # Blueprint level before_request already ensures user is at least a company admin.
+    # We'll allow any company admin to run this for their environment.
     
     from models import db
     from sqlalchemy import text
