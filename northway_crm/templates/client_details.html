@@ -138,10 +138,12 @@
                                 class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
                                 <i data-lucide="briefcase" class="w-3.5 h-3.5"></i> Ordens (OS)
                             </button>
+                            {% if diag_instance %}
                             <button type="button" onclick="switchClientTab('diagnostic')" id="tab-client-diagnostic"
                                 class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
                                 <i data-lucide="line-chart" class="w-3.5 h-3.5"></i> Diagnóstico
                             </button>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -707,6 +709,8 @@
                         </div>
 
                         <!-- Diagnostic Content -->
+                        <!-- Diagnostic Tab (Access Control) -->
+                        {% if diag_instance %}
                         <div id="content-client-diagnostic" class="hidden p-8">
                             <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                                 <i data-lucide="line-chart" class="w-5 h-5 text-gray-400"></i>
@@ -783,6 +787,7 @@
                             </div>
                             {% endif %}
                         </div>
+                        {% endif %}
 
                         <!-- WhatsApp Content -->
                         <div id="content-client-whatsapp" class="hidden bg-white h-[600px] flex flex-col">
@@ -953,7 +958,7 @@
                                     <div class="flex items-center gap-2">
                                         <!-- Delegate Button -->
                                         <button
-                                            onclick='openDelegateModal("{{ checklist.id }}", {{ checklist.name|tojson|safe }}, "{{ checklist.assigned_to_id or ''}}"); event.stopPropagation();'
+                                            onclick='openDelegateModal("{{ checklist.id }}", {{ checklist.name|tojson|safe }}, "{{ checklist.assigned_to_id or "" }}"); event.stopPropagation();'
                                             class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="Delegar Processo">
                                             {% if checklist.assigned_to %}
@@ -1013,7 +1018,8 @@
 
                 <!-- Sidebar Info Column -->
                 <div class="space-y-6">
-                    <!-- Diagnostic Card -->
+                    <!-- Diagnostic Card (Access Control) -->
+                    {% if diag_instance %}
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                             <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Diagnóstico</h3>
@@ -1044,23 +1050,17 @@
                             {% else %}
                             <div class="text-center py-2">
                                 <p class="text-xs text-gray-500 mb-4 italic">Ainda não realizado.</p>
-                                {% if diag_instance %}
                                 <button type="button"
                                     onclick="copyDiagnosticLink('{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) }}?client_id={{ client.id }}')"
                                     class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
                                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                     Copiar Link do Formulário
                                 </button>
-                                {% else %}
-                                <div
-                                    class="p-3 bg-amber-50 rounded-lg border border-amber-100 text-[10px] text-amber-700 font-bold">
-                                    Diagnóstico não habilitado.
-                                </div>
-                                {% endif %}
                             </div>
                             {% endif %}
                         </div>
                     </div>
+                    {% endif %}
 
                     <!-- Management Card -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

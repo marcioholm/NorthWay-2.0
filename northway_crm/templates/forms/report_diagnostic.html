@@ -7,12 +7,14 @@
     <title>Relatório de Diagnóstico | {{ submission.lead.name if submission.lead else (submission.client.name if
         submission.client else 'Visitante') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: #F9FAFB;
-            color: #111827;
+            background-color: #F8FAFC;
+            color: #1E293B;
         }
 
         @media print {
@@ -20,176 +22,269 @@
                 display: none !important;
             }
 
+            body {
+                background: white;
+                padding: 0;
+            }
+
             .print-break {
                 page-break-after: always;
             }
 
-            body {
-                background: white;
+            .shadow-sm,
+            .shadow-md,
+            .shadow-lg {
+                box-shadow: none !important;
+                border: 1px solid #E2E8F0 !important;
             }
+        }
+
+        .text-northway-red {
+            color: #E11D48;
+        }
+
+        .bg-northway-red {
+            background-color: #E11D48;
+        }
+
+        .border-northway-red {
+            border-color: #E11D48;
+        }
+
+        .pillar-card {
+            transition: transform 0.2s ease;
+        }
+
+        @page {
+            size: A4;
+            margin: 1cm;
         }
     </style>
 </head>
 
-<body class="p-8">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-5xl mx-auto">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8 border-b border-gray-200 pb-6">
-            <div class="flex items-center gap-4">
-                <img src="{{ company_logo }}" alt="Logo" class="h-12">
-                <div>
-                    <h1 class="text-2xl font-black text-gray-900 leading-tight">Relatório Estratégico</h1>
-                    <p class="text-sm text-gray-500 font-medium">Diagnóstico de Crescimento NorthWay</p>
-                </div>
+        <div class="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
+            <div class="flex items-center gap-3">
+                <img src="{{ company_logo }}" alt="Logo" class="h-10 object-contain">
+                <div class="h-8 w-px bg-gray-200 hidden md:block"></div>
+                <span class="text-sm font-bold text-slate-400 uppercase tracking-[0.2em]">Advisory</span>
             </div>
-            <div class="text-right">
-                <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Referência</div>
-                <div class="text-sm font-bold text-gray-900">#{{ submission.id[:8] }}</div>
-                <div class="text-[10px] text-gray-500">{{ submission.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+            <div class="no-print">
+                <button onclick="window.print()"
+                    class="bg-[#0F172A] hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-slate-200">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    Imprimir / Salvar PDF
+                </button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Summary Card -->
-            <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <div class="flex items-start justify-between mb-6">
-                    <div>
-                        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Análise Geral</h2>
-                        <div class="text-3xl font-black text-gray-900 mb-1">{{ submission.classification }}</div>
-                    </div>
+        <!-- Hero Section: General Analysis & Contact -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+            <!-- Main Analysis Card -->
+            <div class="lg:col-span-2 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8 md:p-10">
+                <div class="mb-10">
+                    <h2 class="text-[10px] font-bold text-red-500 uppercase tracking-[0.3em] mb-3">Análise Geral</h2>
+                    <h1 class="text-3xl md:text-4xl font-black text-slate-900 leading-tight">
+                        Diagnóstico de Maturidade:<br>
+                        <span class="text-slate-800">Estrutura de Crescimento</span>
+                    </h1>
                 </div>
 
-                <div class="grid grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-12">
                     <div>
-                        <div class="text-xs font-bold text-gray-400 uppercase mb-2">Pontuação Total</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Pontuação Total
+                        </div>
                         <div class="flex items-baseline gap-2">
-                            <span class="text-5xl font-black text-red-600">{{ submission.stars }}</span>
-                            <span class="text-xl font-bold text-gray-300">/ 5.0</span>
+                            <span class="text-6xl font-black text-slate-900">{{ submission.stars }}</span>
+                            <span class="text-xl font-bold text-slate-300">/ 5.0</span>
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs font-bold text-gray-400 uppercase mb-2">Maturidade</div>
-                        <div class="flex text-yellow-500 text-3xl">
-                            {% for i in range(1, 6) %}
-                            <span>{{ '★' if i <= submission.stars|round|int else '☆' }}</span>
-                                    {% endfor %}
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Maturidade
                         </div>
+                        <div class="flex gap-1 mb-3">
+                            {% for i in range(1, 6) %}
+                            {% if i <= submission.stars|round|int %} <i data-lucide="star"
+                                class="w-6 h-6 fill-red-500 text-red-500"></i>
+                                {% else %}
+                                <i data-lucide="star" class="w-6 h-6 text-slate-200"></i>
+                                {% endif %}
+                                {% endfor %}
+                        </div>
+                        <div class="text-xs font-bold text-slate-600">
+                            {{ submission.classification }}
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Base frágil: Perda constante de vendas</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Target Card -->
-            <div class="bg-gray-900 text-white rounded-2xl shadow-lg p-6 flex flex-col justify-between">
-                <div>
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Informações do Contato
-                    </h3>
-                    <div class="space-y-4">
+            <!-- Contact Info Card -->
+            <div
+                class="bg-[#0F172A] text-white rounded-[2rem] shadow-xl p-8 flex flex-col justify-between relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-8">
+                        <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center">
+                            <i data-lucide="user" class="w-4 h-4 text-white"></i>
+                        </div>
+                        <h3 class="text-xs font-bold uppercase tracking-widest">Informações do Contato</h3>
+                    </div>
+
+                    <div class="space-y-6">
                         <div>
-                            <div class="text-[10px] text-gray-500 uppercase font-bold">Nome</div>
-                            <div class="text-sm font-bold">{{ submission.lead.name if submission.lead else
-                                (submission.client.name if submission.client else 'Desconhecido') }}</div>
+                            <div class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Nome</div>
+                            <div class="text-lg font-bold text-slate-100">
+                                {{ submission.lead.name if submission.lead else (submission.client.name if
+                                submission.client else 'Visitante') }}
+                            </div>
                         </div>
                         <div>
-                            <div class="text-[10px] text-gray-500 uppercase font-bold">WhatsApp</div>
-                            <div class="text-sm font-bold">{{ submission.lead.phone if submission.lead else
-                                (submission.client.phone if submission.client else 'N/A') }}</div>
+                            <div class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">WhatsApp
+                            </div>
+                            <div class="text-lg font-bold text-slate-100 italic">
+                                {{ submission.lead.phone if submission.lead else (submission.client.phone if
+                                submission.client else 'N/A') }}
+                            </div>
                         </div>
                         <div>
-                            <div class="text-[10px] text-gray-500 uppercase font-bold">Empresa</div>
-                            <div class="text-sm font-bold">{{ submission.payload.contact.business_name if
-                                submission.payload and submission.payload.contact else 'N/A' }}</div>
+                            <div class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Empresa
+                            </div>
+                            <div class="text-lg font-bold text-slate-100">
+                                {{ submission.payload.contact.business_name if submission.payload and
+                                submission.payload.contact else 'N/A' }}
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 pt-6 border-t border-white/10 no-print">
-                    <button onclick="window.print()"
-                        class="w-full bg-white/10 hover:bg-white/20 text-white py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
-                        Imprimir / Salvar PDF
-                    </button>
+
+                <div class="mt-10 pt-6 border-t border-slate-800 text-[10px] text-slate-500 italic relative z-10">
+                    Relatório gerado em {{ submission.created_at.strftime('%d de %B, %Y') }}
                 </div>
+
+                <!-- Decorative Element -->
+                <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-red-500/10 rounded-full blur-3xl"></div>
             </div>
         </div>
 
-        <!-- Pillars Detailed Analysis -->
-        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-            Detalhamento por Pilares
-        </h3>
+        <!-- Pillar Breakdown -->
+        <div class="mb-16">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="h-px bg-red-500 w-8"></div>
+                <h3 class="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Detalhamento por Pilares</h3>
+            </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-            {% set pillars = [
-            {'name': 'Atrair', 'score': submission.score_atrair, 'color': 'red'},
-            {'name': 'Engajar', 'score': submission.score_engajar, 'color': 'red'},
-            {'name': 'Vender', 'score': submission.score_vender, 'color': 'red'},
-            {'name': 'Reter', 'score': submission.score_reter, 'color': 'red'}
-            ] %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% set pillar_icons = {'Atrair': 'users', 'Engajar': 'message-circle', 'Vender': 'shopping-cart',
+                'Reter': 'refresh-cw'} %}
+                {% set pillars = [
+                {'name': 'Atrair', 'key': 'score_atrair', 'icon': 'target'},
+                {'name': 'Engajar', 'key': 'score_engajar', 'icon': 'message-square'},
+                {'name': 'Vender', 'key': 'score_vender', 'icon': 'trending-up'},
+                {'name': 'Reter', 'key': 'score_reter', 'icon': 'users'}
+                ] %}
 
-            {% for p in pillars %}
-            <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="text-sm font-black text-gray-900 uppercase tracking-widest">{{ p.name }}</div>
-                    <div class="text-xl font-black text-red-600">{{ p.score }}<span class="text-xs text-gray-300 ml-1">/
-                            15</span></div>
-                </div>
+                {% for p in pillars %}
+                {% set score = submission[p.key] %}
+                <div class="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm pillar-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-[10px] font-black text-slate-900 uppercase tracking-widest">{{ p.name }}</div>
+                        <div class="text-lg font-black text-red-500">{{ score }}<span
+                                class="text-[10px] text-slate-300 ml-0.5">/15</span></div>
+                    </div>
 
-                <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden mb-4">
-                    <div class="bg-red-600 h-full rounded-full transition-all"
-                        style="width: {{ (p.score / 15) * 100 }}%"></div>
-                </div>
+                    <div class="w-full bg-slate-50 h-2 rounded-full overflow-hidden mb-5">
+                        <div class="bg-red-500 h-full rounded-full transition-all duration-1000"
+                            style="width: {{ (score / 15) * 100 }}%"></div>
+                    </div>
 
-                <div class="text-xs text-gray-500 leading-relaxed italic">
-                    {% if p.score <= 5 %} Nível Crítico: O processo de {{ p.name.lower() }} é quase inexistente ou
-                        altamente instável. Risco alto de perda de oportunidades. {% elif p.score <=10 %} Nível
-                        Intermediário: Existem ações de {{ p.name.lower() }}, mas faltam processos claros e métricas
-                        para escala. {% else %} Nível Avançado: Excelente desempenho em {{ p.name.lower() }}. Foco agora
-                        em otimização fina e automação. {% endif %} </div>
+                    <div class="text-[10px] text-slate-500 leading-relaxed">
+                        {% if score <= 5 %} <span class="font-bold text-slate-800">Nível Crítico:</span> O processo de
+                            {{ p.name.lower() }} é quase inexistente ou altamente instável. Risco alto de perda de
+                            oportunidades.
+                            {% elif score <= 10 %} <span class="font-bold text-slate-800">Intermediário:</span> Existem
+                                ações de {{ p.name.lower() }}, mas faltam processos claros e métricas para escala.
+                                {% else %}
+                                <span class="font-bold text-slate-800">Avançado:</span> Excelente desempenho em {{
+                                p.name.lower() }}. Foco agora em otimização fina e automação.
+                                {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             </div>
-
-            <!-- Answers Section -->
-            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-                <div class="px-8 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Respostas Detalhadas</h3>
-                    <span class="text-[10px] font-bold text-gray-400">AUDITORIA DE DADOS</span>
-                </div>
-                <div class="p-0">
-                    <table class="w-full text-left text-sm">
-                        <thead
-                            class="bg-gray-50 text-gray-400 text-[10px] uppercase font-bold tracking-widest border-b border-gray-100">
-                            <tr>
-                                <th class="px-8 py-3">Pergunta / Pilar</th>
-                                <th class="px-8 py-3 text-right">Nota</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            {% set schema = instance.template.schema_json %}
-                            {% for q in schema.questions %}
-                            <tr>
-                                <td class="px-8 py-4">
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase block mb-1">{{ q.pilar
-                                        }}</span>
-                                    <span class="text-gray-900 font-medium line-clamp-2">{{ q.text }}</span>
-                                </td>
-                                <td class="px-8 py-4 text-right">
-                                    <div
-                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-50 font-bold text-gray-700">
-                                        {{ submission.payload.answers[q.id|string] }}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="mt-12 text-center text-gray-400 text-[10px] uppercase font-bold tracking-widest no-print">
-                Powered by NorthWay CRM &copy; 2026
-            </div>
-
         </div>
 
+        <!-- Detailed Answers Section -->
+        <div class="mb-12">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-4">
+                    <div class="h-px bg-red-500 w-8"></div>
+                    <h3 class="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Respostas Detalhadas</h3>
+                </div>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Auditoria de Dados</span>
+            </div>
+
+            <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50/50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-10 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                Pergunta / Pilar</th>
+                            <th
+                                class="px-10 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">
+                                Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        {% set schema = instance.template.schema_json %}
+
+                        {# Group by Pillar #}
+                        {% set last_pilar = '' %}
+                        {% for q in schema.questions %}
+                        {% set current_pilar = q.pilar %}
+                        <tr class="group hover:bg-slate-50/30 transition-colors">
+                            <td class="px-10 py-6">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-[9px] font-black text-red-500 uppercase tracking-widest">{{
+                                        q.pilar }}</span>
+                                </div>
+                                <p class="text-sm font-bold text-slate-800 max-w-2xl leading-snug">
+                                    {{ q.text }}
+                                </p>
+                            </td>
+                            <td class="px-10 py-6 text-right">
+                                <div
+                                    class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-50 group-hover:bg-white border border-slate-100 font-bold text-slate-900 shadow-sm transition-all">
+                                    {{ submission.payload.answers[q.id|string] }}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div
+            class="mt-20 pt-10 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6 pb-10">
+            <p class="text-[10px] text-slate-400 font-bold tracking-widest">
+                &copy; {{ submission.created_at.year }} NorthWay Marketing Advisory. Todos os direitos reservados.
+            </p>
+            <div class="flex items-center gap-6 text-[10px] text-slate-400 font-bold tracking-widest">
+                <a href="#" class="hover:text-red-500 transition-colors">Privacidade</a>
+                <a href="#" class="hover:text-red-500 transition-colors">Termos de Uso</a>
+                <a href="#" class="hover:text-red-500 transition-colors">Suporte</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
 </body>
 
 </html>

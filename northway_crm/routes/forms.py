@@ -281,7 +281,7 @@ def get_report(submission_id):
     company = Company.query.get(submission.tenant_id)
     if company:
         if company.logo_filename:
-             company_logo = url_for('static', filename='uploads/logos/' + company.logo_filename, _external=True)
+             company_logo = url_for('static', filename='uploads/company/' + company.logo_filename, _external=True)
         elif company.logo_base64:
              company_logo = company.logo_base64
              

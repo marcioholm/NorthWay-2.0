@@ -115,14 +115,22 @@ def lead_details(id):
         
     today_date = datetime.now().strftime('%Y-%m-%d')
     
-    # Diagnostic Form Instance for Link Generation
+    # Diagnostic Form Instance for Link Generation (Access Control)
+    from models import LibraryTemplate, LibraryTemplateGrant, FormInstance
     diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
     diag_instance = None
     if diag_template:
-        diag_instance = FormInstance.query.filter_by(
-            template_id=diag_template.id,
-            owner_user_id=current_user.id
+        has_grant = LibraryTemplateGrant.query.filter_by(
+            user_id=current_user.id, 
+            template_id=diag_template.id, 
+            status="active"
         ).first()
+        is_master = getattr(current_user, "is_super_admin", False) or current_user.email == "master@northway.com"
+        if has_grant or is_master:
+            diag_instance = FormInstance.query.filter_by(
+                template_id=diag_template.id,
+                owner_user_id=current_user.id
+            ).first()
 
     return render_template('lead_details.html', 
                          lead=lead, 
@@ -170,14 +178,22 @@ def pipeline(pipeline_id=None):
                         .options(db.joinedload(Lead.assigned_user))\
                         .all()
         
-    # Diagnostic Form Instance for Link Generation
+    # Diagnostic Form Instance for Link Generation (Access Control)
+    from models import LibraryTemplate, LibraryTemplateGrant, FormInstance
     diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
     diag_instance = None
     if diag_template:
-        diag_instance = FormInstance.query.filter_by(
-            template_id=diag_template.id,
-            owner_user_id=current_user.id
+        has_grant = LibraryTemplateGrant.query.filter_by(
+            user_id=current_user.id, 
+            template_id=diag_template.id, 
+            status="active"
         ).first()
+        is_master = getattr(current_user, "is_super_admin", False) or current_user.email == "master@northway.com"
+        if has_grant or is_master:
+            diag_instance = FormInstance.query.filter_by(
+                template_id=diag_template.id,
+                owner_user_id=current_user.id
+            ).first()
 
     return render_template('pipeline.html', 
                           pipelines=pipelines, 
