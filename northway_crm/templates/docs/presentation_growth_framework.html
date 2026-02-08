@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Northway Growth Framework | Official Brand Edition</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#E11D48", // Vibrant Red
+                        "brand-black": "#000000",
+                        "brand-dark": "#0A0A0A",
+                        "brand-gray": "#1A1A1A",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+        }
+        .flow-line::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 40px;
+            bottom: -40px;
+            width: 2px;
+            background: repeating-linear-gradient(to bottom, #E11D48, #E11D48 8px, transparent 8px, transparent 16px);
+            z-index: 0;
+        }
+        .last-step .flow-line::after {
+            display: none;
+        }
+        .premium-border {
+            border-image: linear-gradient(to bottom, #E11D48, transparent) 1;
+        }
+    </style>
+</head>
+<body class="bg-brand-dark font-display text-white transition-colors duration-300 antialiased">
+<div class="layout-container flex h-full grow flex-col max-w-[1400px] mx-auto">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-white/10 px-6 py-6 lg:px-12 bg-brand-black/50 backdrop-blur-md sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="size-10 bg-primary flex items-center justify-center rounded-sm shadow-lg shadow-primary/20">
+<svg class="size-7 text-white" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 19V5L14.5 14V5H18V19H9.5L1 10.5V19H6Z" fill="currentColor"></path>
+<path d="M18 5L22 5V9M22 5L17 10" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<h2 class="text-white text-2xl font-black leading-tight tracking-tighter uppercase">Northway</h2>
+</div>
+<div class="flex items-center gap-10">
+<nav class="hidden md:flex items-center gap-10">
+<a class="text-gray-400 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#">Framework</a>
+<a class="text-gray-400 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#">Serviços</a>
+<a class="text-gray-400 text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#">Sobre</a>
+</nav>
+<button class="bg-primary hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest px-8 py-3 rounded-none transition-all shadow-xl shadow-primary/20">
+                    Contact Us
+                </button>
+</div>
+</header>
+<main class="flex flex-1 flex-col items-center py-20 px-4 sm:px-10 lg:px-40">
+<div class="max-w-4xl text-center mb-32">
+<span class="inline-block px-4 py-1 mb-6 text-[10px] font-black tracking-[0.3em] uppercase bg-primary text-white">Official Brand Edition</span>
+<h1 class="text-white tracking-tighter text-5xl md:text-7xl font-black leading-[0.9] mb-8 uppercase">
+                    Northway <br/>
+<span class="text-primary">Growth Framework</span>
+</h1>
+<div class="w-24 h-1 bg-primary mx-auto mb-8"></div>
+<p class="text-gray-400 text-lg md:text-xl font-light leading-relaxed max-w-2xl mx-auto italic">
+                    The premium standard for visualizing the journey from high-intent acquisition to predictable retention.
+                </p>
+</div>
+<div class="w-full max-w-[900px] space-y-0 relative">
+<div class="relative flex flex-col md:flex-row gap-12 pb-24 group">
+<div class="relative z-10 flex flex-col items-center flow-line">
+<div class="flex items-center justify-center size-24 bg-brand-black border-2 border-primary text-primary shadow-[0_0_30px_rgba(225,29,72,0.2)]">
+<span class="material-symbols-outlined text-5xl">campaign</span>
+</div>
+</div>
+<div class="flex-1 pt-4">
+<div class="flex items-center gap-4 mb-4">
+<span class="text-primary font-black text-xs tracking-[0.2em] uppercase">Fase 01</span>
+<div class="h-px flex-1 bg-white/10"></div>
+</div>
+<h3 class="text-3xl font-black text-white mb-3 uppercase tracking-tight">Atrair</h3>
+<p class="text-gray-400 mb-8 text-lg font-light leading-snug">Canais de aquisição e vitrines que trazem o cliente certo.</p>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">ads_click</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Tráfego Pago</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">search</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">SEO</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">location_on</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">GMN</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">share</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Social Media</p>
+</div>
+</div>
+</div>
+</div>
+<div class="relative flex flex-col md:flex-row gap-12 pb-24 group">
+<div class="relative z-10 flex flex-col items-center flow-line">
+<div class="flex items-center justify-center size-24 bg-brand-black border-2 border-primary text-primary shadow-[0_0_30px_rgba(225,29,72,0.2)]">
+<span class="material-symbols-outlined text-5xl">chat_bubble</span>
+</div>
+</div>
+<div class="flex-1 pt-4">
+<div class="flex items-center gap-4 mb-4">
+<span class="text-primary font-black text-xs tracking-[0.2em] uppercase">Fase 02</span>
+<div class="h-px flex-1 bg-white/10"></div>
+</div>
+<h3 class="text-3xl font-black text-white mb-3 uppercase tracking-tight">Engajar</h3>
+<p class="text-gray-400 mb-8 text-lg font-light">Relacionamento que gera confiança.</p>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">article</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Conteúdo</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">send</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">WhatsApp</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">sync</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Follow-up</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">verified</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Prova Social</p>
+</div>
+</div>
+</div>
+</div>
+<div class="relative flex flex-col md:flex-row gap-12 pb-24 group">
+<div class="relative z-10 flex flex-col items-center flow-line">
+<div class="flex items-center justify-center size-24 bg-brand-black border-2 border-primary text-primary shadow-[0_0_30px_rgba(225,29,72,0.2)]">
+<span class="material-symbols-outlined text-5xl">handshake</span>
+</div>
+</div>
+<div class="flex-1 pt-4">
+<div class="flex items-center gap-4 mb-4">
+<span class="text-primary font-black text-xs tracking-[0.2em] uppercase">Fase 03</span>
+<div class="h-px flex-1 bg-white/10"></div>
+</div>
+<h3 class="text-3xl font-black text-white mb-3 uppercase tracking-tight">Vender</h3>
+<p class="text-gray-400 mb-8 text-lg font-light">Processo que transforma interesse em faturamento.</p>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">local_offer</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Oferta</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">description</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Proposta</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">filter_list</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Funil de Vendas</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">contact_page</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">CRM</p>
+</div>
+</div>
+</div>
+</div>
+<div class="relative flex flex-col md:flex-row gap-12 pb-12 group last-step">
+<div class="relative z-10 flex flex-col items-center flow-line">
+<div class="flex items-center justify-center size-24 bg-brand-black border-2 border-primary text-primary shadow-[0_0_30px_rgba(225,29,72,0.2)]">
+<span class="material-symbols-outlined text-5xl">autorenew</span>
+</div>
+</div>
+<div class="flex-1 pt-4">
+<div class="flex items-center gap-4 mb-4">
+<span class="text-primary font-black text-xs tracking-[0.2em] uppercase">Fase 04</span>
+<div class="h-px flex-1 bg-white/10"></div>
+</div>
+<h3 class="text-3xl font-black text-white mb-3 uppercase tracking-tight">Vender de novo</h3>
+<p class="text-gray-400 mb-8 text-lg font-light">Retenção, recompra e crescimento previsível.</p>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">target</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Remarketing</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">trending_up</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Upsell</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">featured_play_list</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Campanhas</p>
+</div>
+<div class="bg-brand-gray border border-white/5 p-6 flex flex-col items-center text-center hover:border-primary transition-all group/card">
+<span class="material-symbols-outlined text-primary mb-3 text-3xl group-hover/card:scale-110 transition-transform">loyalty</span>
+<p class="text-[10px] font-bold uppercase tracking-widest text-gray-300">Fidelização</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-32 w-full max-w-5xl">
+<div class="bg-brand-black border border-white/10 p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
+<div class="absolute -top-10 -right-10 opacity-5">
+<span class="material-symbols-outlined text-[300px] text-white">format_quote</span>
+</div>
+<h4 class="text-2xl md:text-4xl font-light leading-tight mb-10 relative z-10 text-gray-200">
+                        "Se um desses pilares está quebrado, você não tem um problema de marketing. Você tem um problema de <span class="text-primary font-black uppercase italic">crescimento</span>."
+                    </h4>
+<div class="flex flex-col justify-center items-center gap-6 pt-10 border-t border-white/10">
+<div class="flex items-center gap-4">
+<div class="size-10 bg-primary flex items-center justify-center rounded-sm">
+<svg class="size-6 text-white" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 19V5L14.5 14V5H18V19H9.5L1 10.5V19H6Z" fill="currentColor"></path>
+<path d="M18 5L22 5V9M22 5L17 10" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<p class="text-white text-base font-black tracking-[0.4em] uppercase">NORTHWAY ESTRATÉGIA</p>
+</div>
+<button class="bg-white text-brand-black hover:bg-primary hover:text-white transition-all font-black uppercase text-xs tracking-widest px-10 py-4">
+                            Agendar Consultoria de Growth
+                        </button>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-auto py-12 px-6 border-t border-white/5 text-center bg-brand-black">
+<p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">© 2024 Northway Growth Solutions. Todos os direitos reservados. Official Brand Identity.</p>
+</footer>
+</div>
+
+</body></html>

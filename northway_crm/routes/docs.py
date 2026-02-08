@@ -76,6 +76,11 @@ def presentation_cost_of_inaction():
 def ebook_marketing_pillars():
     return render_template('docs/ebook_marketing_pillars.html')
 
+@docs_bp.route('/growth-framework')
+@login_required
+def presentation_growth_framework():
+    return render_template('docs/presentation_growth_framework.html')
+
 @docs_bp.route('/library')
 @login_required
 def library():

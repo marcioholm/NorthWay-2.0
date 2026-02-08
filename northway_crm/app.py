@@ -778,10 +778,30 @@ def sys_seed_library():
         db.session.commit()
         if company not in combined_book.allowed_companies: combined_book.allowed_companies.append(company)
 
+        # 2c. Add 'Northway Growth Framework'
+        growth_book = LibraryBook.query.filter_by(title="Northway Growth Framework").first()
+        if not growth_book:
+            growth_book = LibraryBook(
+                title="Northway Growth Framework",
+                description="The premium standard for visualizing the journey from high-intent acquisition to predictable retention.",
+                category="Ebook",
+                cover_image="cover_growth_framework.jpg",
+                route_name="docs.presentation_growth_framework",
+                active=True
+            )
+            db.session.add(growth_book)
+        else:
+            growth_book.category = "Ebook"
+            growth_book.route_name = "docs.presentation_growth_framework"
+        
+        db.session.commit()
+        if company not in growth_book.allowed_companies: growth_book.allowed_companies.append(company)
+
         # 3. Update Covers for All
         cover_map = {
             "Diagnóstico do Mercado Óptico Local": "cover_diagnostic.jpg",
             "Diagnóstico Completo (Novo)": "cover_diagnostic_combined.jpg",
+            "Northway Growth Framework": "cover_growth_framework.jpg",
             "Diagnóstico Estratégico": "cover_diagnostic_old.jpg", 
             "Playbook Comercial": "cover_sales.jpg",
             "Playbook de Processos": "cover_process.jpg",
