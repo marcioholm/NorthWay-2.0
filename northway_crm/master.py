@@ -272,18 +272,71 @@ def company_materials(company_id):
                 if company in tmpl.allowed_companies:
                     tmpl.allowed_companies.remove(company)
                     
+        # 3. Update Diagnostic Access
+        diagnostic_enabled = request.form.get('diagnostic_enabled') == 'on'
+        from models import LibraryTemplate, LibraryTemplateGrant, User, ROLE_ADMIN
+        
+        # Get the Diagnostic Template
+        diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
+        
+        if diag_template:
+            # 3.1 Get Company Admins
+            company_admins = User.query.filter_by(company_id=company.id, role=ROLE_ADMIN).all()
+            
+            if diagnostic_enabled:
+                # Grant active access to all admins if not already granted
+                for admin in company_admins:
+                    grant = LibraryTemplateGrant.query.filter_by(
+                        user_id=admin.id,
+                        template_id=diag_template.id
+                    ).first()
+                    
+                    if not grant:
+                        # Create new grant
+                        grant = LibraryTemplateGrant(
+                            tenant_id=company.id,
+                            template_id=diag_template.id,
+                            user_id=admin.id,
+                            granted_by_user_id=current_user.id,
+                            status='active'
+                        )
+                        db.session.add(grant)
+                    elif grant.status != 'active':
+                        # Reactivate
+                        grant.status = 'active'
+            else:
+                # Revoke access for ALL users in this company (not just admins, to be safe)
+                all_company_grants = LibraryTemplateGrant.query.filter_by(
+                    tenant_id=company.id,
+                    template_id=diag_template.id
+                ).all()
+                
+                for grant in all_company_grants:
+                    grant.status = 'revoked'
+                    
         db.session.commit()
         flash(f"Permissões de materiais para {company.name} atualizadas!", "success")
         return redirect(url_for('master.dashboard'))
         
-    from models import LibraryBook, ContractTemplate
+    from models import LibraryBook, ContractTemplate, LibraryTemplate, LibraryTemplateGrant
     books = LibraryBook.query.filter_by(active=True).all()
     templates = ContractTemplate.query.filter_by(active=True).all()
+    
+    # Check if diagnostic is active for this company (at least one active grant)
+    diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
+    diagnostic_active = False
+    if diag_template:
+        diagnostic_active = LibraryTemplateGrant.query.filter_by(
+            tenant_id=company.id, 
+            template_id=diag_template.id, 
+            status='active'
+        ).count() > 0
     
     return render_template('master_company_materials.html', 
                            company=company, 
                            books=books, 
-                           templates=templates)
+                           templates=templates,
+                           diagnostic_active=diagnostic_active)
 
 @master.route('/master/impersonate/<int:user_id>')
 def impersonate(user_id):
