@@ -665,7 +665,7 @@
 
                             {% if diag_instance %}
                             <div class="pt-4 mt-2 border-t border-gray-100">
-                                <button onclick='copyDiagnosticLink("{{ url_for(' forms.get_form_schema',
+                                <button onclick='copyDiagnosticLink("{{ url_for("forms.get_form_schema",
                                     slug=diag_instance.public_slug, _external=True) }}?lead_id={{ lead.id }}")'
                                     class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
                                     <i data-lucide="copy" class="w-4 h-4"></i>
