@@ -317,9 +317,15 @@
                     segment: ''
                 },
                 answers: {},
+                target_id: "{{ target_id or '' }}",
+                target_type: "{{ target_type or '' }}",
                 result: null,
 
-                init() { },
+                init() {
+                    if (this.target_id) {
+                        this.step = 2;
+                    }
+                },
 
                 validateStep() {
                     if (this.step === 1) {
@@ -363,7 +369,9 @@
                             body: JSON.stringify({
                                 slug: this.slug,
                                 contact: this.contact,
-                                answers: this.answers
+                                answers: this.answers,
+                                target_id: this.target_id,
+                                target_type: this.target_type
                             })
                         });
 

@@ -295,6 +295,14 @@ class Lead(db.Model):
     cnae = db.Column(db.String(200), nullable=True) # Atividade Principal
     partners_json = db.Column(db.Text, nullable=True) # List of partners
     enrichment_history = db.Column(db.Text, nullable=True) # Log of updates
+    
+    # Diagnostic Data (New)
+    diagnostic_status = db.Column(db.String(20), default='pending') # pending, done
+    diagnostic_score = db.Column(db.Float, nullable=True)
+    diagnostic_stars = db.Column(db.Float, nullable=True)
+    diagnostic_classification = db.Column(db.String(50), nullable=True)
+    diagnostic_date = db.Column(db.DateTime, nullable=True)
+    diagnostic_pillars = db.Column(db.JSON, nullable=True) # Breakdown {"Atrair": 10, ...}
 
     @property
     def task_progress(self):
@@ -348,6 +356,14 @@ class Client(db.Model):
     # Enhanced Contract Data
     document = db.Column(db.String(20), nullable=True) # CPF/CNPJ
     address_street = db.Column(db.String(150), nullable=True)
+    
+    # Diagnostic Data (New)
+    diagnostic_status = db.Column(db.String(20), default='pending') # pending, done
+    diagnostic_score = db.Column(db.Float, nullable=True)
+    diagnostic_stars = db.Column(db.Float, nullable=True)
+    diagnostic_classification = db.Column(db.String(50), nullable=True)
+    diagnostic_date = db.Column(db.DateTime, nullable=True)
+    diagnostic_pillars = db.Column(db.JSON, nullable=True)
     address_number = db.Column(db.String(20), nullable=True)
     address_neighborhood = db.Column(db.String(100), nullable=True)
     address_city = db.Column(db.String(100), nullable=True)

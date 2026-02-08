@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
 from flask_login import login_required, current_user
-from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, ClientChecklist, Task, Interaction, WhatsAppMessage, LEAD_STATUS_WON, LEAD_STATUS_NEW, LEAD_STATUS_IN_PROGRESS, LEAD_STATUS_LOST, User
+from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, ClientChecklist, Task, Interaction, WhatsAppMessage, LEAD_STATUS_WON, LEAD_STATUS_NEW, LEAD_STATUS_IN_PROGRESS, LEAD_STATUS_LOST, User, LibraryTemplate, FormInstance
 from utils import create_notification
 from datetime import datetime, timedelta
 
@@ -114,7 +114,23 @@ def lead_details(id):
         is_first_stage = True
         
     today_date = datetime.now().strftime('%Y-%m-%d')
-    return render_template('lead_details.html', lead=lead, users=users, stages=stages, is_first_stage=is_first_stage, today_date=today_date)
+    
+    # Diagnostic Form Instance for Link Generation
+    diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
+    diag_instance = None
+    if diag_template:
+        diag_instance = FormInstance.query.filter_by(
+            template_id=diag_template.id,
+            owner_user_id=current_user.id
+        ).first()
+
+    return render_template('lead_details.html', 
+                         lead=lead, 
+                         users=users, 
+                         stages=stages, 
+                         is_first_stage=is_first_stage, 
+                         today_date=today_date,
+                         diag_instance=diag_instance)
 
 @leads_bp.route('/pipeline')
 @leads_bp.route('/pipeline/<int:pipeline_id>')
@@ -154,11 +170,21 @@ def pipeline(pipeline_id=None):
                         .options(db.joinedload(Lead.assigned_user))\
                         .all()
         
+    # Diagnostic Form Instance for Link Generation
+    diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
+    diag_instance = None
+    if diag_template:
+        diag_instance = FormInstance.query.filter_by(
+            template_id=diag_template.id,
+            owner_user_id=current_user.id
+        ).first()
+
     return render_template('pipeline.html', 
                           pipelines=pipelines, 
                           active_pipeline=current_pipeline, 
                           stages=stages, 
-                          leads=leads_list)
+                          leads=leads_list,
+                          diag_instance=diag_instance)
 
 @leads_bp.route('/leads/<int:id>/move/<direction>', methods=['POST'])
 @login_required

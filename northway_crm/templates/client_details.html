@@ -138,6 +138,10 @@
                                 class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
                                 <i data-lucide="briefcase" class="w-3.5 h-3.5"></i> Ordens (OS)
                             </button>
+                            <button type="button" onclick="switchClientTab('diagnostic')" id="tab-client-diagnostic"
+                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                <i data-lucide="line-chart" class="w-3.5 h-3.5"></i> Diagnóstico
+                            </button>
                         </div>
                     </div>
 
@@ -668,7 +672,7 @@
 
                                             {% if os.status not in ['CONCLUIDA', 'CANCELADA'] %}
                                             <button
-                                                onclick="openCancelOSModal('{{ os.id }}', '{{ os.title|replace("'", "\\'") }}')"
+                                                onclick='openCancelOSModal("{{ os.id }}", {{ os.title|tojson|safe }})'
                                                 class="text-xs font-bold text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors">
                                                 Cancelar OS
                                             </button>
@@ -700,6 +704,76 @@
                                 </div>
                                 {% endif %}
                             </div>
+                        </div>
+
+                        <!-- Diagnostic Content -->
+                        <div id="content-client-diagnostic" class="hidden p-8">
+                            <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                <i data-lucide="line-chart" class="w-5 h-5 text-gray-400"></i>
+                                Diagnóstico Estratégico
+                            </h3>
+
+                            {% if client.diagnostic_status == 'done' %}
+                            <div class="space-y-8">
+                                <!-- Results Summary -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div
+                                        class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
+                                        <div class="text-3xl font-black text-gray-900">{{ client.diagnostic_stars or 0
+                                            }}</div>
+                                        <div class="text-[10px] text-gray-500 uppercase font-bold">Nota Final (0-5)
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
+                                        <div class="text-xl font-bold text-northway-red">{{ client.diagnostic_score or 0
+                                            }}</div>
+                                        <div class="text-[10px] text-gray-500 uppercase font-bold">Score Total</div>
+                                    </div>
+                                    <div
+                                        class="bg-red-50 p-4 rounded-xl border border-red-100 flex flex-col items-center justify-center text-center">
+                                        <div class="text-xs font-bold text-red-800 uppercase mb-1">Classificação</div>
+                                        <div class="text-sm text-red-900 font-medium">{{
+                                            client.diagnostic_classification or 'Indefinido' }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Pillars Breakdown -->
+                                {% if client.diagnostic_pillars %}
+                                {% set pillars = client.diagnostic_pillars|from_json %}
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {% for pillar, data in pillars.items() %}
+                                    <div class="space-y-2">
+                                        <div class="flex justify-between items-end">
+                                            <span class="text-sm font-bold text-gray-700">{{ pillar }}</span>
+                                            <span class="text-xs font-bold text-northway-red">{{ data.score }}
+                                                pts</span>
+                                        </div>
+                                        <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                            <div class="bg-northway-red h-full rounded-full transition-all duration-1000"
+                                                style="width: {{ (data.score / data.max * 100)|round if data.max > 0 else 0 }}%">
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="flex justify-between text-[10px] text-gray-400 font-medium uppercase">
+                                            <span>Nível: {{ data.level }}</span>
+                                            <span>Máx: {{ data.max }}</span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div
+                                class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                                <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                    <i data-lucide="clipboard-list" class="w-8 h-8 opacity-40"></i>
+                                </div>
+                                <p class="text-sm italic font-medium">Nenhum diagnóstico realizado ainda.</p>
+                                <p class="text-xs mt-1">Envie o link de participação para o cliente.</p>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <!-- WhatsApp Content -->
@@ -871,7 +945,7 @@
                                     <div class="flex items-center gap-2">
                                         <!-- Delegate Button -->
                                         <button
-                                            onclick="openDelegateModal('{{ checklist.id }}', '{{ checklist.name|replace("'", "\\'") }}', '{{ checklist.assigned_to_id or ''}}'); event.stopPropagation();"
+                                            onclick='openDelegateModal("{{ checklist.id }}", {{ checklist.name|tojson|safe }}, "{{ checklist.assigned_to_id or ''}}"); event.stopPropagation();'
                                             class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="Delegar Processo">
                                             {% if checklist.assigned_to %}
@@ -931,6 +1005,55 @@
 
                 <!-- Sidebar Info Column -->
                 <div class="space-y-6">
+                    <!-- Diagnostic Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Diagnóstico</h3>
+                            <i data-lucide="line-chart"
+                                class="w-4 h-4 {{ 'text-northway-red' if client.diagnostic_status == 'done' else 'text-gray-400' }}"></i>
+                        </div>
+                        <div class="p-6">
+                            {% if client.diagnostic_status == 'done' %}
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-2xl font-black text-gray-900">{{ client.diagnostic_stars or 0 }}
+                                        <span class="text-xs text-gray-400 font-normal">/ 5</span>
+                                    </div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Nota
+                                        Final</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-northway-red">{{ client.diagnostic_score or 0 }}
+                                    </div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Score
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="switchClientTab('diagnostic')"
+                                class="w-full text-center py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-lg transition-colors border border-gray-100">
+                                Ver Detalhes do Diagnóstico
+                            </button>
+                            {% else %}
+                            <div class="text-center py-2">
+                                <p class="text-xs text-gray-500 mb-4 italic">Ainda não realizado.</p>
+                                {% if diag_instance %}
+                                <button type="button"
+                                    onclick="copyDiagnosticLink('{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) }}?client_id={{ client.id }}')"
+                                    class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                    Copiar Link do Formulário
+                                </button>
+                                {% else %}
+                                <div
+                                    class="p-3 bg-amber-50 rounded-lg border border-amber-100 text-[10px] text-amber-700 font-bold">
+                                    Diagnóstico não habilitado.
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
                     <!-- Management Card -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
@@ -1532,7 +1655,8 @@
         const form = e.target;
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        data.client_id = {{ client.id }};
+        data.client_id = {{ client.id }
+    };
 
     try {
         const res = await fetch('/api/service-orders/create', {
@@ -1641,7 +1765,7 @@
     function switchClientTab(tabName) {
         console.log("Switching to tab:", tabName);
         try {
-            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders'];
+            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic'];
 
             // Hide all contents
             tabs.forEach(t => {

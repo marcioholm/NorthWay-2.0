@@ -100,6 +100,10 @@
                     data-interest="{{ lead.interest or '' }}" data-bant-budget="{{ lead.bant_budget or '' }}"
                     data-bant-authority="{{ lead.bant_authority or '' }}" data-bant-need="{{ lead.bant_need or '' }}"
                     data-bant-timeline="{{ lead.bant_timeline or '' }}"
+                    data-diag-status="{{ lead.diagnostic_status or 'pending' }}"
+                    data-diag-stars="{{ lead.diagnostic_stars or 0 }}"
+                    data-diag-score="{{ lead.diagnostic_score or 0 }}"
+                    data-diag-class="{{ lead.diagnostic_classification or '' }}"
                     class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-l-red-500 animate-pulse' if lead.days_inactive > 5 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
 
                     {% if lead.days_inactive > 5 %}
@@ -110,7 +114,17 @@
                     {% endif %}
                     <h4 class="font-medium text-gray-900 group-hover:text-northway-red transition-colors">{{ lead.name
                         }}</h4>
-                    <p class="text-xs text-gray-500 mt-1">{{ lead.phone or 'Sem telefone' }}</p>
+                    <div class="flex items-center justify-between mt-1">
+                        <p class="text-xs text-gray-500">{{ lead.phone or 'Sem telefone' }}</p>
+                        {% if lead.diagnostic_status == 'done' %}
+                        <span
+                            class="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-50 text-northway-red font-bold text-[10px] border border-red-100"
+                            title="Diagnóstico Concluído">
+                            <i data-lucide="line-chart" class="w-3 h-3"></i>
+                            {{ lead.diagnostic_stars or 0 }}
+                        </span>
+                        {% endif %}
+                    </div>
 
                     <div class="mt-2 flex gap-2 text-xs text-gray-400">
                         {% if lead.website %}
@@ -205,6 +219,10 @@
             <button onclick="switchTab('whatsapp')" id="tab-whatsapp"
                 class="py-2 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
                 <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
+            </button>
+            <button onclick="switchTab('diagnostic')" id="tab-diagnostic"
+                class="py-2 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
+                <i data-lucide="line-chart" class="w-4 h-4"></i> Diagnóstico
             </button>
         </div>
 
@@ -383,6 +401,55 @@
                     <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas.
                 </p>
             </div>
+
+            <!-- Diagnostic Tab -->
+            <div id="content-diagnostic" class="hidden space-y-6">
+                <div id="diagnosticResults" class="hidden space-y-4">
+                    <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <div>
+                            <span class="text-3xl font-black text-gray-900" id="diagModalStars">0</span>
+                            <span class="text-[10px] text-gray-500 uppercase font-bold block">Nota Final (0-5)</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xl font-bold text-northway-red" id="diagModalScore">0</span>
+                            <span class="text-[10px] text-gray-500 block uppercase font-bold">Score Total</span>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-red-50 rounded-lg border border-red-100">
+                        <div class="text-xs font-bold text-red-800 uppercase mb-1">Classificação</div>
+                        <p class="text-sm text-red-900 font-medium" id="diagModalClass">Indefinido</p>
+                    </div>
+                </div>
+
+                <div id="diagnosticEmpty" class="text-center py-8">
+                    <div
+                        class="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="clipboard-list" class="w-8 h-8"></i>
+                    </div>
+                    <p class="text-gray-500 text-sm">Nenhum diagnóstico realizado ainda.</p>
+                </div>
+
+                <div class="pt-6 border-t border-gray-100">
+                    {% if diag_instance %}
+                    <button id="btnCopyDiagLink" onclick=""
+                        class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-sm">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        Copiar Link de Participação
+                    </button>
+                    <p class="text-xs text-gray-400 text-center mt-3 px-4">
+                        Envie este link para o lead preencher o formulário. O resultado será vinculado automaticamente.
+                    </p>
+                    <script>
+                        const DIAG_BASE_URL = "{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) if diag_instance else '' }}";
+                    </script>
+                    {% else %}
+                    <div
+                        class="p-4 bg-amber-50 rounded-lg border border-amber-100 text-center text-amber-700 text-xs font-bold">
+                        Diagnóstico não habilitado para seu usuário.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -511,27 +578,41 @@
         const contentDetails = document.getElementById('content-details');
         const contentWhatsapp = document.getElementById('content-whatsapp');
 
+        const diagTab = document.getElementById('tab-diagnostic');
+        const contentDiag = document.getElementById('content-diagnostic');
+
         if (tabName === 'details') {
             detailsTab.classList.add('text-northway-red', 'border-northway-red');
             detailsTab.classList.remove('text-gray-500', 'border-transparent');
-
             whatsappTab.classList.remove('text-green-600', 'border-green-600');
             whatsappTab.classList.add('text-gray-500', 'border-transparent');
-
+            diagTab.classList.remove('text-northway-red', 'border-northway-red');
+            diagTab.classList.add('text-gray-500', 'border-transparent');
             contentDetails.classList.remove('hidden');
             contentWhatsapp.classList.add('hidden');
+            contentDiag.classList.add('hidden');
         } else if (tabName === 'whatsapp') {
             detailsTab.classList.remove('text-northway-red', 'border-northway-red');
             detailsTab.classList.add('text-gray-500', 'border-transparent');
-
             whatsappTab.classList.add('text-green-600', 'border-green-600');
             whatsappTab.classList.remove('text-gray-500', 'border-transparent');
-
+            diagTab.classList.remove('text-northway-red', 'border-northway-red');
+            diagTab.classList.add('text-gray-500', 'border-transparent');
             contentDetails.classList.add('hidden');
             contentWhatsapp.classList.remove('hidden');
             contentWhatsapp.classList.add('flex');
-
+            contentDiag.classList.add('hidden');
             loadWhatsAppMessages(currentLeadId);
+        } else if (tabName === 'diagnostic') {
+            detailsTab.classList.remove('text-northway-red', 'border-northway-red');
+            detailsTab.classList.add('text-gray-500', 'border-transparent');
+            whatsappTab.classList.remove('text-green-600', 'border-green-600');
+            whatsappTab.classList.add('text-gray-500', 'border-transparent');
+            diagTab.classList.add('text-northway-red', 'border-northway-red');
+            diagTab.classList.remove('text-gray-500', 'border-transparent');
+            contentDetails.classList.add('hidden');
+            contentWhatsapp.classList.add('hidden');
+            contentDiag.classList.remove('hidden');
         }
     }
 
@@ -601,6 +682,13 @@
         }
     }
 
+    function copyDiagnosticLink(url) {
+        if (!url) return;
+        navigator.clipboard.writeText(url).then(() => {
+            alert("Link de diagnóstico copiado!");
+        });
+    }
+
     // ... Helpers ...
     function editStage(id, name) { document.getElementById(`edit-form-${id}`).classList.remove('hidden'); }
     function cancelEdit(id) { document.getElementById(`edit-form-${id}`).classList.add('hidden'); }
@@ -666,6 +754,28 @@
         document.getElementById('bantAuthority').value = lead.bant_authority || '';
         document.getElementById('bantTimeline').value = lead.bant_timeline || '';
         document.getElementById('bantNeed').value = lead.bant_need || '';
+
+        // Diagnostic Data
+        const diagStatus = input.dataset.diagStatus;
+        const diagStars = input.dataset.diagStars;
+        const diagScore = input.dataset.diagScore;
+        const diagClass = input.dataset.diagClass;
+
+        if (diagStatus === 'done') {
+            document.getElementById('diagnosticResults').classList.remove('hidden');
+            document.getElementById('diagnosticEmpty').classList.add('hidden');
+            document.getElementById('diagModalStars').textContent = diagStars;
+            document.getElementById('diagModalScore').textContent = diagScore;
+            document.getElementById('diagModalClass').textContent = diagClass;
+        } else {
+            document.getElementById('diagnosticResults').classList.add('hidden');
+            document.getElementById('diagnosticEmpty').classList.remove('hidden');
+        }
+
+        const btnCopy = document.getElementById('btnCopyDiagLink');
+        if (btnCopy) {
+            btnCopy.onclick = () => copyDiagnosticLink(`${DIAG_BASE_URL}?lead_id=${lead.id}`);
+        }
 
         document.getElementById('infoForm').action = `/leads/${lead.id}/update_info`;
         document.getElementById('bantForm').action = `/leads/${lead.id}/bant`;

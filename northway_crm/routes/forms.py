@@ -40,7 +40,9 @@ def get_form_schema(slug):
         instance=instance, 
         token=token, 
         schema=instance.template.schema_json,
-        company_logo=company_logo
+        company_logo=company_logo,
+        target_id=request.args.get('lead_id') or request.args.get('client_id'),
+        target_type='lead' if request.args.get('lead_id') else ('client' if request.args.get('client_id') else None)
     )
 
 @forms_bp.route('/public/submit', methods=['POST'])

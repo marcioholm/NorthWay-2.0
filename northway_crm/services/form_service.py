@@ -1,5 +1,5 @@
 
-from models import db, FormInstance, FormSubmission, Lead, Interaction, Task, User, Company
+from models import db, FormInstance, FormSubmission, Lead, Interaction, Task, User, Company, Client
 from datetime import datetime, timedelta
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
@@ -75,39 +75,69 @@ class FormService:
         elif stars <= 4.4: classification = "Boa estrutura, falta escala"
         else: classification = "Pronto para acelerar"
             
-        # 2. Upsert Lead
+        # 2. Identify Target (Lead or Client)
+        target_id = payload.get('target_id')
+        target_type = payload.get('target_type') # 'lead' or 'client'
+        
+        target_lead = None
+        target_client = None
+        
+        if target_type == 'client' and target_id:
+            target_client = Client.query.get(target_id)
+            if target_client:
+                # Update Client Diagnostic Info
+                target_client.diagnostic_status = 'done'
+                target_client.diagnostic_score = score_total
+                target_client.diagnostic_stars = stars
+                target_client.diagnostic_classification = classification
+                target_client.diagnostic_date = datetime.utcnow() - timedelta(hours=3)
+                target_client.diagnostic_pillars = pillars
+        
+        elif target_type == 'lead' and target_id:
+            target_lead = Lead.query.get(target_id)
+            
+        # Fallback to phone search if no specific target found
         lead_data = payload.get('contact', {})
         whatsapp = lead_data.get('whatsapp', '').strip()
         
-        # Search existing lead by phone in this tenant
-        lead = Lead.query.filter_by(company_id=form_instance.tenant_id, phone=whatsapp).first()
+        if not target_client and not target_lead:
+            target_lead = Lead.query.filter_by(company_id=form_instance.tenant_id, phone=whatsapp).first()
         
-        if not lead:
-            lead = Lead(
-                company_id=form_instance.tenant_id,
-                name=lead_data.get('full_name', '')[:100], # Truncate to match DB limit
-                phone=whatsapp[:50], # Truncate to match DB limit
-                email=lead_data.get('email')[:120] if lead_data.get('email') else None, 
-                pipeline_id=None, # Default or process later
-                stage_id=None,
-                user_id=form_instance.owner_user_id, # Assign to form owner
-                status='new',
-                source="Diagnóstico Northway"
-            )
-            db.session.add(lead)
-            db.session.flush()
-        else:
-            # Update missing info if needed
-            if not lead.name: lead.name = lead_data.get('full_name')
-            if not lead.email and lead_data.get('email'): lead.email = lead_data.get('email')
-            # Don't change owner if already exists
+        if not target_client:
+            if not target_lead:
+                target_lead = Lead(
+                    company_id=form_instance.tenant_id,
+                    name=lead_data.get('full_name', '')[:100],
+                    phone=whatsapp[:50],
+                    email=lead_data.get('email')[:120] if lead_data.get('email') else None, 
+                    pipeline_id=None,
+                    stage_id=None,
+                    user_id=form_instance.owner_user_id,
+                    status='new',
+                    source="Diagnóstico Northway"
+                )
+                db.session.add(target_lead)
+                db.session.flush()
+            else:
+                # Update existing lead
+                if not target_lead.name: target_lead.name = lead_data.get('full_name')
+                if not target_lead.email and lead_data.get('email'): target_lead.email = lead_data.get('email')
             
+            # Update Lead Diagnostic Info
+            target_lead.diagnostic_status = 'done'
+            target_lead.diagnostic_score = score_total
+            target_lead.diagnostic_stars = stars
+            target_lead.diagnostic_classification = classification
+            target_lead.diagnostic_date = datetime.utcnow() - timedelta(hours=3)
+            target_lead.diagnostic_pillars = pillars
+
         # 3. Save Submission
         submission = FormSubmission(
             form_instance_id=form_instance.id,
             tenant_id=form_instance.tenant_id,
             owner_user_id=form_instance.owner_user_id,
-            lead_id=lead.id,
+            lead_id=target_lead.id if target_lead else None,
+            client_id=target_client.id if target_client else None,
             payload=payload,
             score_total=score_total,
             score_atrair=pillars['Atrair'],
@@ -120,6 +150,10 @@ class FormService:
         db.session.add(submission)
         
         # 4. Create Note (Interaction)
+        note_target_lead_id = target_lead.id if target_lead else None
+        # If it's a client, we might want to attach interaction to client? 
+        # Checking Interaction model... usually it has lead_id. 
+        # If it's a client, we might need a client_id in Interaction or just skip interaction for now.
         note_body = f"""
 Score Total: {score_total} / 60
 Nota Final: {stars} / 5.0
@@ -140,7 +174,8 @@ Reter: {pillars['Reter']} / 15
         note_body += f"\nMetadados:\nInstance: {form_instance.public_slug}"
 
         interaction = Interaction(
-            lead_id=lead.id,
+            lead_id=note_target_lead_id,
+            client_id=target_client.id if target_client else None, # Add client_id if supported
             user_id=form_instance.owner_user_id,
             company_id=form_instance.tenant_id,
             type='nota',
@@ -164,11 +199,12 @@ Reter: {pillars['Reter']} / 15
             
         task = Task(
             title=task_title,
-            description=f"Lead preencheu diagnóstico com nota {stars}. Classificação: {classification}.",
+            description=f"{(target_type or 'Lead').capitalize()} preencheu diagnóstico com nota {stars}. Classificação: {classification}.",
             due_date=datetime.utcnow() - timedelta(hours=3) + due_delta,
             user_id=form_instance.owner_user_id,
             company_id=form_instance.tenant_id,
-            lead_id=lead.id,
+            lead_id=note_target_lead_id,
+            client_id=target_client.id if target_client else None, # Add client_id if supported
             status='pending'
         )
         db.session.add(task)

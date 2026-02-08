@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate
+from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate, LibraryTemplate, FormInstance
 from utils import update_client_health, create_notification
 from datetime import datetime, date
 
@@ -86,6 +86,15 @@ def client_details(id):
     # Get Users for Assignment
     users = User.query.filter_by(company_id=current_user.company_id).all()
     
+    # Diagnostic Form Instance for Link Generation
+    diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
+    diag_instance = None
+    if diag_template:
+        diag_instance = FormInstance.query.filter_by(
+            template_id=diag_template.id,
+            owner_user_id=current_user.id
+        ).first()
+
     return render_template('client_details.html', 
                           client=client, 
                           mrr=mrr, 
@@ -95,7 +104,8 @@ def client_details(id):
                           total_pending=total_pending,
                           total_overdue=total_overdue,
                           process_templates=process_templates,
-                          users=users)
+                          users=users,
+                          diag_instance=diag_instance)
 
 @clients_bp.route('/clients/<int:id>/update', methods=['POST'])
 @login_required
