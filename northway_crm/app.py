@@ -169,7 +169,7 @@ def create_app():
             # Exclude statics and non-blocking routes
             if not request.endpoint: return
             
-            allowed_routes = ['static', 'auth.login', 'auth.logout', 'auth.blocked_account', 'master.dashboard', 'master.system_reset', 'master.test_email', 'master.sync_schema']
+            allowed_routes = ['static', 'auth.login', 'auth.logout', 'auth.blocked_account', 'master.dashboard', 'master.system_reset', 'master.test_email', 'master.sync_schema', 'docs.ebook_institutional']
             if request.endpoint in allowed_routes:
                 return
 
