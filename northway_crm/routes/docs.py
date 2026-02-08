@@ -81,6 +81,11 @@ def ebook_marketing_pillars():
 def presentation_growth_framework():
     return render_template('docs/presentation_growth_framework.html')
 
+@docs_bp.route('/ebook-institucional')
+@login_required
+def ebook_institutional():
+    return render_template('docs/ebook_institutional.html')
+
 @docs_bp.route('/library')
 @login_required
 def library():

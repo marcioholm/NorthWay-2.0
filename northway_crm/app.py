@@ -797,11 +797,31 @@ def sys_seed_library():
         db.session.commit()
         if company not in growth_book.allowed_companies: growth_book.allowed_companies.append(company)
 
+        # 2d. Add 'Northway Institucional (Completo)'
+        inst_book = LibraryBook.query.filter_by(title="Northway Institucional (Completo)").first()
+        if not inst_book:
+            inst_book = LibraryBook(
+                title="Northway Institucional (Completo)",
+                description="Marketing que gera crescimento não é sorte. É processo. Guia completo.",
+                category="Ebook",
+                cover_image="cover_institutional_ebook.jpg",
+                route_name="docs.ebook_institutional",
+                active=True
+            )
+            db.session.add(inst_book)
+        else:
+            inst_book.category = "Ebook"
+            inst_book.route_name = "docs.ebook_institutional"
+
+        db.session.commit()
+        if company not in inst_book.allowed_companies: inst_book.allowed_companies.append(company)
+
         # 3. Update Covers for All
         cover_map = {
             "Diagnóstico do Mercado Óptico Local": "cover_diagnostic.jpg",
             "Diagnóstico Completo (Novo)": "cover_diagnostic_combined.jpg",
             "Northway Growth Framework": "cover_growth_framework.jpg",
+            "Northway Institucional (Completo)": "cover_institutional_ebook.jpg",
             "Diagnóstico Estratégico": "cover_diagnostic_old.jpg", 
             "Playbook Comercial": "cover_sales.jpg",
             "Playbook de Processos": "cover_process.jpg",
