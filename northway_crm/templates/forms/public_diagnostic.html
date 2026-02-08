@@ -498,6 +498,7 @@
                         if (res.ok && data.status === 'success') {
                             this.result = data.results;
                             this.step = 6;
+                            this.loading = false;
                         } else {
                             alert(data.error || "Erro ao processar diagnóstico.");
                             this.loading = false;
