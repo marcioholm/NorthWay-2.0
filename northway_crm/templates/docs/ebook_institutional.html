@@ -70,11 +70,18 @@
             Diagnóstico</span>
     </a>
 
+    <!-- DOWNLOAD BUTTON -->
+    <button onclick="window.print()"
+        class="no-print fixed top-6 right-6 z-50 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-full shadow-lg transition-all flex items-center gap-2 cursor-pointer group">
+        <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">download</span>
+        <span class="text-xs font-bold uppercase tracking-wider">Baixar PDF</span>
+    </button>
+
     <!-- PAGE 1: CAPA -->
     <section class="page-break flex flex-col justify-between p-8 md:p-12 relative slide-bg border-b border-white/5">
         <div class="flex items-center gap-3">
-            <div class="size-8 bg-primary rounded-sm shadow-[0_0_15px_rgba(225,29,72,0.6)]"></div>
-            <span class="font-bold tracking-[0.3em] uppercase text-xs">Northway Growth</span>
+            <img src="{{ url_for('static', filename='images/logo-white.png') }}" alt="Northway"
+                class="h-8 md:h-10 w-auto opacity-90">
         </div>
 
         <div class="max-w-2xl">
@@ -475,8 +482,8 @@
         </p>
 
         <div class="w-16 h-1 bg-primary mb-8"></div>
-
-        <h3 class="text-2xl font-black uppercase tracking-widest text-white">Northway</h3>
+        <img src="{{ url_for('static', filename='images/logo-white.png') }}" alt="Northway"
+            class="h-12 md:h-16 w-auto opacity-90 mx-auto">
         <p class="text-xs font-bold uppercase tracking-[0.3em] text-gray-500 mt-2">Direção para crescer</p>
 
         <p class="mt-32 text-[10px] text-gray-700 uppercase tracking-widest">© 2024 Northway Growth Solutions. Todos os
