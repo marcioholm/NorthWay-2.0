@@ -818,26 +818,26 @@ def sys_seed_library():
 
         # 3. Update Covers for All
         cover_map = {
-            "Diagnóstico do Mercado Óptico Local": "cover_diagnostic.jpg",
-            "Diagnóstico Completo (Novo)": "cover_diagnostic_combined.jpg",
-            "Northway Growth Framework": "cover_growth_framework.jpg",
-            "Northway Institucional (Completo)": "cover_institutional_ebook.jpg",
-            "Diagnóstico Estratégico": "cover_diagnostic_old.jpg", 
-            "Playbook Comercial": "cover_sales.jpg",
-            "Playbook de Processos": "cover_process.jpg",
-            "Playbook de Treinamento": "cover_training.jpg",
-            "Onboarding Institucional": "cover_onboarding.jpg",
-            "Manual do Usuário": "cover_manual.jpg",
-            "Apresentação Institucional": "cover_institutional.jpg",
-            "Playbook BDR": "cover_bdr.jpg",
-            "Oferta Principal": "cover_offer_main.jpg",
-            "Oferta Downsell": "cover_offer_downsell.jpg",
-            "Consultoria": "cover_consultancy.jpg",
-            "Plano Essencial": "cover_offer_downsell.jpg",
-            "Manual de Onboarding": "cover_manual.jpg",
-            "Scripts": "cover_sales_scripts.jpg",
-            "Objeções": "cover_objections.jpg",
-            "Academia": "cover_training.jpg"
+            "Diagnóstico do Mercado Óptico Local": "north_compass.png",
+            "Diagnóstico Completo (Novo)": "compass_banner.png",
+            "Northway Growth Framework": "north_growth.png",
+            "Northway Institucional (Completo)": "north_structure.png",
+            "Diagnóstico Estratégico": "north_compass.png", 
+            "Playbook Comercial": "north_growth.png",
+            "Playbook de Processos": "north_structure.png",
+            "Playbook de Treinamento": "north_meeting.png",
+            "Onboarding Institucional": "north_meeting.png",
+            "Manual do Usuário": "north_structure.png",
+            "Apresentação Institucional": "north_structure.png",
+            "Playbook BDR": "sdr-bg.png",
+            "Oferta Principal": "north_growth.png",
+            "Oferta Downsell": "north_growth.png",
+            "Consultoria": "north_meeting.png",
+            "Plano Essencial": "north_growth.png",
+            "Manual de Onboarding": "north_structure.png",
+            "Scripts": "north_growth.png",
+            "Objeções": "north_growth.png",
+            "Academia": "north_meeting.png"
         }
         
         for b in LibraryBook.query.all():
