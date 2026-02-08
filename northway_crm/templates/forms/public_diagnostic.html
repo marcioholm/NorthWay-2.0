@@ -95,7 +95,8 @@
                     <div class="text-right hidden sm:block">
                         <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Progresso</p>
                         <p class="text-sm font-bold"><span class="text-white">Etapa <span x-text="step"></span></span>
-                            <span class="text-gray-600">de 6</span></p>
+                            <span class="text-gray-600">de 6</span>
+                        </p>
                     </div>
                     <!-- Progress Bar -->
                     <div class="w-32 sm:w-48 h-1.5 bg-gray-800 rounded-full overflow-hidden">
@@ -377,6 +378,9 @@
 
     <!-- Data Injection & Logic -->
     <script>
+        // Pre-load schema to avoid Jinja/JS syntax conflicts in x-data object
+        const FORM_SCHEMA = {{ schema | tojson | safe }};
+
         function diagnosticForm() {
             return {
                 step: 1,
@@ -395,117 +399,116 @@
                 result: null,
 
                 // Schema Data
-                schema: {{ schema | tojson }
-        },
+                schema: FORM_SCHEMA,
 
-        // Static Pillar Data for UI
-        pillars: [
-            { name: 'Atrair', icon: 'target', title: 'Pilar: Atrair', description: 'Como sua empresa gera novas oportunidades de negócio?' },
-            { name: 'Engajar', icon: 'message-square', title: 'Pilar: Engajar', description: 'Como você constrói relacionamento e confiança?' },
-            { name: 'Vender', icon: 'trending-up', title: 'Pilar: Vender', description: 'Como você converte oportunidades em receita?' },
-            { name: 'Reter', icon: 'users', title: 'Pilar: Reter', description: 'Como você maximiza o valor e a lealdade dos clientes?' }
-        ],
+                // Static Pillar Data for UI
+                pillars: [
+                    { name: 'Atrair', icon: 'target', title: 'Pilar: Atrair', description: 'Como sua empresa gera novas oportunidades de negócio?' },
+                    { name: 'Engajar', icon: 'message-square', title: 'Pilar: Engajar', description: 'Como você constrói relacionamento e confiança?' },
+                    { name: 'Vender', icon: 'trending-up', title: 'Pilar: Vender', description: 'Como você converte oportunidades em receita?' },
+                    { name: 'Reter', icon: 'users', title: 'Pilar: Reter', description: 'Como você maximiza o valor e a lealdade dos clientes?' }
+                ],
 
-            init() {
-            // Initialize Lucide icons after Alpine renders
-            this.$watch('step', () => {
-                this.$nextTick(() => {
-                    lucide.createIcons();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-            });
+                init() {
+                    // Initialize Lucide icons after Alpine renders
+                    this.$watch('step', () => {
+                        this.$nextTick(() => {
+                            lucide.createIcons();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        });
+                    });
 
-            // Initial load icons
-            this.$nextTick(() => {
-                lucide.createIcons();
-            });
+                    // Initial load icons
+                    this.$nextTick(() => {
+                        lucide.createIcons();
+                    });
 
-            if (this.target_id) {
-                this.step = 2;
-            }
-        },
-
-        getQuestionsForPillar(pillarName) {
-            return this.schema.questions.filter(q => q.pilar === pillarName);
-        },
-
-        validateStep() {
-            if (this.step === 1) {
-                const valid = this.contact.full_name && this.contact.whatsapp && this.contact.business_name && this.contact.segment;
-                if (!valid) alert("Por favor, preencha todos os campos de identificação.");
-                return valid;
-            }
-            if (this.step >= 2 && this.step <= 5) {
-                // Check if all questions in current pillar are answered
-                const currentPillar = this.pillars[this.step - 2].name;
-                const questions = this.getQuestionsForPillar(currentPillar);
-
-                for (let q of questions) {
-                    if (this.answers[q.id] === undefined || this.answers[q.id] === null) {
-                        alert("Por favor, responda todas as perguntas desta etapa.");
-                        return false;
+                    if (this.target_id) {
+                        this.step = 2;
                     }
-                }
-                return true;
-            }
-            return true;
-        },
+                },
 
-        next() {
-            if (this.step === 5) {
-                this.submit();
-            } else {
-                if (this.validateStep()) {
-                    this.step++;
-                }
-            }
-        },
+                getQuestionsForPillar(pillarName) {
+                    return this.schema.questions.filter(q => q.pilar === pillarName);
+                },
 
-        prev() {
-            if (this.step > 1) this.step--;
-        },
+                validateStep() {
+                    if (this.step === 1) {
+                        const valid = this.contact.full_name && this.contact.whatsapp && this.contact.business_name && this.contact.segment;
+                        if (!valid) alert("Por favor, preencha todos os campos de identificação.");
+                        return valid;
+                    }
+                    if (this.step >= 2 && this.step <= 5) {
+                        // Check if all questions in current pillar are answered
+                        const currentPillar = this.pillars[this.step - 2].name;
+                        const questions = this.getQuestionsForPillar(currentPillar);
+
+                        for (let q of questions) {
+                            if (this.answers[q.id] === undefined || this.answers[q.id] === null) {
+                                alert("Por favor, responda todas as perguntas desta etapa.");
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+                    return true;
+                },
+
+                next() {
+                    if (this.step === 5) {
+                        this.submit();
+                    } else {
+                        if (this.validateStep()) {
+                            this.step++;
+                        }
+                    }
+                },
+
+                prev() {
+                    if (this.step > 1) this.step--;
+                },
 
                 async submit() {
-            if (this.loading) return;
-            if (!this.validateStep()) return;
+                    if (this.loading) return;
+                    if (!this.validateStep()) return;
 
-            this.loading = true;
+                    this.loading = true;
 
-            try {
-                // Simulate delay for UX (feeling of analysis)
-                await new Promise(r => setTimeout(r, 1500));
+                    try {
+                        // Simulate delay for UX (feeling of analysis)
+                        await new Promise(r => setTimeout(r, 1500));
 
-                const res = await fetch('/forms/public/submit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + this.token
-                    },
-                    body: JSON.stringify({
-                        slug: this.slug,
-                        contact: this.contact,
-                        answers: this.answers,
-                        target_id: this.target_id,
-                        target_type: this.target_type
-                    })
-                });
+                        const res = await fetch('/forms/public/submit', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + this.token
+                            },
+                            body: JSON.stringify({
+                                slug: this.slug,
+                                contact: this.contact,
+                                answers: this.answers,
+                                target_id: this.target_id,
+                                target_type: this.target_type
+                            })
+                        });
 
-                const data = await res.json();
+                        const data = await res.json();
 
-                if (res.ok && data.status === 'success') {
-                    this.result = data.results;
-                    this.step = 6;
-                } else {
-                    alert(data.error || "Erro ao processar diagnóstico.");
-                    this.loading = false;
+                        if (res.ok && data.status === 'success') {
+                            this.result = data.results;
+                            this.step = 6;
+                        } else {
+                            alert(data.error || "Erro ao processar diagnóstico.");
+                            this.loading = false;
+                        }
+
+                    } catch (e) {
+                        alert("Erro de conexão.");
+                        console.error(e);
+                        this.loading = false;
+                    }
                 }
-
-            } catch (e) {
-                alert("Erro de conexão.");
-                console.error(e);
-                this.loading = false;
-            }
-        }
             }
         }
     </script>
