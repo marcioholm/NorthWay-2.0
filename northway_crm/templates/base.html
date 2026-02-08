@@ -433,11 +433,13 @@
                 {% endif %}
 
                 <!-- Diagnostic Form -->
+                {% if current_user.is_super_admin or current_user.has_diagnostic_access %}
                 <a href="{{ url_for('forms.my_diagnostic') }}"
                     class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint and 'forms' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="clipboard-list" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Diagnóstico</span>
                 </a>
+                {% endif %}
 
                 {% if current_user.has_permission('admin_view') %}
                 <div class="border-t border-white/10 my-2 pt-2">

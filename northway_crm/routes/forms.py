@@ -143,13 +143,93 @@ def my_diagnostic():
     # Get Submissions
     submissions = FormSubmission.query.filter_by(form_instance_id=instance.id).order_by(FormSubmission.created_at.desc()).all()
     
+    
     # Calculate Stats
     total_leads = len(set(s.lead_id for s in submissions if s.lead_id))
     avg_stars = 0
     if submissions:
         avg_stars = sum(s.stars for s in submissions) / len(submissions)
+
+    # Admin Context Data
+    company_users = []
+    grants_map = {}
+    if current_user.is_super_admin or current_user.role == 'admin':
+        company_users = User.query.filter_by(company_id=current_user.company_id).all()
+        active_grants = LibraryTemplateGrant.query.filter(
+            LibraryTemplateGrant.user_id.in_([u.id for u in company_users]),
+            LibraryTemplateGrant.template_id == template.id,
+            LibraryTemplateGrant.status == 'active'
+        ).all()
+        grants_map = {g.user_id: True for g in active_grants}
     
-    return render_template('forms/my_diagnostic.html', 
+    return render_template('forms/my_diagnostic.html',  
                          instance=instance, 
                          submissions=submissions,
-                         stats={'total': len(submissions), 'leads': total_leads, 'avg_stars': round(avg_stars, 1)})
+                         stats={'total': len(submissions), 'leads': total_leads, 'avg_stars': round(avg_stars, 1)},
+                         company_users=company_users,
+                         grants_map=grants_map)
+
+# ==========================================
+# ADMIN ACCESS MANAGEMENT
+# ==========================================
+
+@forms_bp.route('/access/grant', methods=['POST'])
+@login_required
+def grant_access():
+    if not (current_user.is_super_admin or current_user.role == 'admin'):
+        return jsonify({"error": "Unauthorized"}), 403
+        
+    user_id = request.form.get('user_id')
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+        
+    # Get Template
+    key = "diagnostico_northway_v1"
+    template = LibraryTemplate.query.filter_by(key=key).first()
+    if not template:
+        return jsonify({"error": "Template not initialized"}), 500
+        
+    # Check existing
+    grant = LibraryTemplateGrant.query.filter_by(
+        user_id=user_id, 
+        template_id=template.id
+    ).first()
+    
+    if grant:
+        grant.status = 'active'
+    else:
+        grant = LibraryTemplateGrant(
+             tenant_id=current_user.company_id,
+             template_id=template.id,
+             user_id=user_id,
+             granted_by_user_id=current_user.id,
+             status='active'
+         )
+        db.session.add(grant)
+        
+    db.session.commit()
+    flash('Acesso liberado com sucesso!', 'success')
+    return redirect(url_for('forms.my_diagnostic'))
+
+@forms_bp.route('/access/revoke', methods=['POST'])
+@login_required
+def revoke_access():
+    if not (current_user.is_super_admin or current_user.role == 'admin'):
+        return jsonify({"error": "Unauthorized"}), 403
+        
+    user_id = request.form.get('user_id')
+    # Get Template
+    key = "diagnostico_northway_v1"
+    template = LibraryTemplate.query.filter_by(key=key).first()
+    
+    grant = LibraryTemplateGrant.query.filter_by(
+        user_id=user_id, 
+        template_id=template.id
+    ).first()
+    
+    if grant:
+        grant.status = 'revoked'
+        db.session.commit()
+        
+    flash('Acesso revogado.', 'warning')
+    return redirect(url_for('forms.my_diagnostic'))

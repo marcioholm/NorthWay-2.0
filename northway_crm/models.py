@@ -224,6 +224,12 @@ class User(UserMixin, db.Model):
         user_role_key = self.role.lower() if self.role else ROLE_SALES
         return permission in legacy_permissions.get(user_role_key, [])
 
+    @property
+    def has_diagnostic_access(self):
+        # Check for active grant
+        # Note: LibraryTemplateGrant is defined later in this file, but available at runtime
+        return LibraryTemplateGrant.query.filter_by(user_id=self.id, status='active').count() > 0
+
 class PipelineStage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
