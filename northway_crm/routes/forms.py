@@ -34,7 +34,7 @@ def get_form_schema(slug):
              else:
                  company_logo = url_for('static', filename='uploads/company/' + company.logo_filename, _external=True)
         elif company.logo_base64:
-             company_logo = company.logo_base64
+             company_logo = f"data:image/png;base64,{company.logo_base64}"
              
     # Default fallback
     if not company_logo:
@@ -292,7 +292,7 @@ def get_report(submission_id):
              else:
                  company_logo = url_for('static', filename='uploads/company/' + company.logo_filename, _external=True)
         elif company.logo_base64:
-             company_logo = company.logo_base64
+             company_logo = f"data:image/png;base64,{company.logo_base64}"
              
     # Default fallback
     if not company_logo:
