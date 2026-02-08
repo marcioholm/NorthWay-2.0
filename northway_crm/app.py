@@ -32,7 +32,7 @@ def create_app():
 
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
         
-        print("🚀 APP STARTUP: VERSION VERCEL-FIX-V5 (Auto-Migrate Transaction)")
+        print("🚀 APP STARTUP: VERSION VERCEL-FIX-V6 (Auto-Migrate Contract)")
         
         # --- CONFIGURATION ---
         app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'northway-crm-secure-key')
@@ -439,6 +439,36 @@ def create_app():
                                 print("✅ MIGRATION: Transaction schema checks completed.")
                             except Exception as insp_e:
                                 print(f"⚠️ Transaction Inspection Error: {insp_e}")
+
+                    # 5. CONTRACT MIGRATION (Fix Missing Columns)
+                    if inspector.has_table("contract"):
+                        with db.engine.connect() as conn:
+                            try:
+                                c_columns = [c['name'] for c in inspector.get_columns("contract")]
+                                
+                                # Setup columns to add
+                                ctr_cols = [
+                                    ('amount', 'FLOAT DEFAULT 0.0'),
+                                    ('billing_type', 'VARCHAR(20) DEFAULT \'BOLETO\''),
+                                    ('total_installments', 'INTEGER DEFAULT 12'),
+                                    ('emit_nfse', 'BOOLEAN DEFAULT TRUE'),
+                                    ('nfse_service_code', 'VARCHAR(20)'),
+                                    ('nfse_iss_rate', 'FLOAT'),
+                                    ('nfse_desc', 'VARCHAR(255)')
+                                ]
+                                
+                                for col, dtype in ctr_cols:
+                                    if col not in c_columns:
+                                        try:
+                                            print(f"📦 MIGRATION: Adding contract.{col}...")
+                                            conn.execute(text(f"ALTER TABLE contract ADD COLUMN {col} {dtype}"))
+                                        except Exception as ctr_e:
+                                            print(f"FAILED TO ADD contract.{col}: {ctr_e}")
+                                
+                                conn.commit()
+                                print("✅ MIGRATION: Contract schema checks completed.")
+                            except Exception as insp_e:
+                                print(f"⚠️ Contract Inspection Error: {insp_e}")
                                 
                 except Exception as mig_e:
                     print(f"⚠️ Migration/Inspect Error: {mig_e}")
