@@ -117,7 +117,7 @@ def check_saas_status():
             return
             
         # ALLOW SYSTEM ADMIN ROUTES (FORCE MIGRATIONS)
-        if request.path.startswith('/sys_admin'):
+        if request.path.startswith('/sys_admin') or request.path.startswith('/forms/public'):
             return
             
         # 1. Enforce Company Setup

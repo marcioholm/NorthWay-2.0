@@ -260,6 +260,7 @@ def create_app():
             from routes.integrations import integrations_bp
             from routes.admin import admin_bp
             from routes.api_debug import api_debug_bp
+            from routes.forms import forms_bp
             
             app.register_blueprint(auth_blueprint)
             app.register_blueprint(master_blueprint)
@@ -270,6 +271,7 @@ def create_app():
             app.register_blueprint(integrations_bp)
             app.register_blueprint(admin_bp)
             app.register_blueprint(api_debug_bp)
+            app.register_blueprint(forms_bp, url_prefix='/forms')
             
             # Safe Register for complex blueprints that might break on schema
             from routes.api_extension import api_ext
@@ -319,7 +321,7 @@ def create_app():
             if request.endpoint.startswith('static'): return
             
             # FORCE IGNORE SYS_ADMIN ROUTES (Fix DB Crash)
-            if request.path.startswith('/sys_admin'): return
+            if request.path.startswith('/sys_admin') or request.path.startswith('/forms/public'): return
 
             if request.endpoint in ['auth.login', 'auth.register', 'auth.logout', 
                                   'billing.asaas_webhook', 'billing.payment_pending',
@@ -855,6 +857,85 @@ def sys_seed_library():
         return f"Library Seeded. 'O Custo da Inação' ID: {book.id}, Covers Updated."
     except Exception as e:
         return str(e), 500
+
+
+@app.route('/sys_admin/migrate_forms')
+def sys_migrate_forms():
+    try:
+        from models import LibraryTemplate, LibraryTemplateGrant, FormInstance, FormSubmission
+        
+        # 1. Create Tables
+        with app.app_context():
+            db.create_all()
+            
+        # 2. Seed Template "diagnostico_northway_v1"
+        key = "diagnostico_northway_v1"
+        template = LibraryTemplate.query.filter_by(key=key).first()
+        
+        schema = {
+            "title": "Diagnóstico de Crescimento – Framework Northway",
+            "description": "Atrair, Engajar, Vender, Vender de Novo",
+            "pillars": ["Atrair", "Engajar", "Vender", "Reter"],
+            "max_score": 60,
+            "questions": [
+                # ATRAIR (1-5)
+                {"id": "q1", "text": "Tenho um canal previsível de geração de leads (tráfego, SEO, etc.)", "pilar": "Atrair"},
+                {"id": "q2", "text": "Sei exatamente de onde vêm meus leads hoje", "pilar": "Atrair"},
+                {"id": "q3", "text": "Tenho uma landing page ou vitrine clara de oferta", "pilar": "Atrair"},
+                {"id": "q4", "text": "Meu Google Meu Negócio é atualizado com frequência", "pilar": "Atrair"},
+                {"id": "q5", "text": "Já testei anúncios de forma estruturada", "pilar": "Atrair"},
+                
+                # ENGAJAR (6-10)
+                {"id": "q6", "text": "Respondo leads em até 15 minutos", "pilar": "Engajar"},
+                {"id": "q7", "text": "Tenho um processo de follow-up definido", "pilar": "Engajar"},
+                {"id": "q8", "text": "Uso WhatsApp ou CRM de forma organizada", "pilar": "Engajar"},
+                {"id": "q9", "text": "Produzo conteúdo para educar meu cliente", "pilar": "Engajar"},
+                {"id": "q10", "text": "Uso provas sociais (depoimentos, avaliações, cases)", "pilar": "Engajar"},
+                
+                # VENDER (11-15)
+                {"id": "q11", "text": "Tenho um funil de vendas claro", "pilar": "Vender"},
+                {"id": "q12", "text": "Uso CRM ou pipeline para acompanhar oportunidades", "pilar": "Vender"},
+                {"id": "q13", "text": "Tenho proposta padrão e oferta clara", "pilar": "Vender"},
+                {"id": "q14", "text": "Tenho script/processo comercial definido", "pilar": "Vender"},
+                {"id": "q15", "text": "Acompanho métricas de conversão", "pilar": "Vender"},
+                
+                # RETER (16-20)
+                {"id": "q16", "text": "Tenho campanhas de remarketing ativas", "pilar": "Reter"},
+                {"id": "q17", "text": "Faço ações de pós-venda", "pilar": "Reter"},
+                {"id": "q18", "text": "Trabalho recompra, upsell ou cross-sell", "pilar": "Reter"},
+                {"id": "q19", "text": "Tenho base de clientes organizada", "pilar": "Reter"},
+                {"id": "q20", "text": "Me comunico com clientes ativos e inativos", "pilar": "Reter"}
+            ],
+            "options": [
+                {"value": 0, "label": "Não faço"},
+                {"value": 1, "label": "Faço de forma improvisada"},
+                {"value": 2, "label": "Faço com processo básico"},
+                {"value": 3, "label": "Faço com processo + métricas"}
+            ]
+        }
+        
+        if not template:
+            template = LibraryTemplate(
+                key=key,
+                name="Diagnóstico de Crescimento – Framework Northway",
+                description="Descubra onde estão os gargalos do seu crescimento: Atrair, Engajar, Vender ou Vender de Novo.",
+                schema_json=schema,
+                version=1,
+                active=True
+            )
+            db.session.add(template)
+            db.session.commit()
+            msg = "Template Created and Tables Synced."
+        else:
+            # Update schema if needed
+            template.schema_json = schema
+            db.session.commit()
+            msg = "Template Updated."
+            
+        return jsonify({"status": "success", "message": msg})
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
