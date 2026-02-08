@@ -27,10 +27,14 @@ def get_form_schema(slug):
     # Get Company Logo
     company_logo = None
     if instance.owner.company:
-        if instance.owner.company.logo_filename:
-             company_logo = url_for('static', filename='uploads/logos/' + instance.owner.company.logo_filename, _external=True)
-        elif instance.owner.company.logo_base64:
-             company_logo = instance.owner.company.logo_base64
+        company = instance.owner.company
+        if company.logo_filename:
+             if company.logo_filename.startswith('http'):
+                 company_logo = company.logo_filename
+             else:
+                 company_logo = url_for('static', filename='uploads/company/' + company.logo_filename, _external=True)
+        elif company.logo_base64:
+             company_logo = company.logo_base64
              
     # Default fallback
     if not company_logo:
@@ -281,13 +285,12 @@ def get_report(submission_id):
     company_logo = None
     
     if company:
-        # Check priority: logo_filename in uploads/company, then uploads/logos, then base64
+        # Check priority: logo_filename (cloud or local), then base64
         if company.logo_filename:
-             # Try first in 'company' directory
-             company_logo = url_for('static', filename='uploads/company/' + company.logo_filename, _external=True)
-             # Note: We assume the frontend/backend sync handles the actual existence. 
-             # If it fails, the fallback below (url-white) will kick in via JS or CSS if needed, 
-             # but here we provide the most likely valid URL.
+             if company.logo_filename.startswith('http'):
+                 company_logo = company.logo_filename
+             else:
+                 company_logo = url_for('static', filename='uploads/company/' + company.logo_filename, _external=True)
         elif company.logo_base64:
              company_logo = company.logo_base64
              
