@@ -7,11 +7,13 @@
     <title>Diagnóstico de Crescimento | NorthWay</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: #0A0A0A;
+            background-color: #050505;
             color: white;
         }
 
@@ -20,19 +22,37 @@
         }
 
         .slide-in {
-            animation: slideIn 0.3s ease-out forwards;
+            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(20px);
             }
 
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0A0A0A;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
     <script>
@@ -41,8 +61,13 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#E11D48',
-                        brand: { black: '#050505', dark: '#0A0A0A', gray: '#141414' }
+                        primary: '#E11D48', // NorthWay Red
+                        brand: {
+                            black: '#050505',
+                            dark: '#0A0A0A',
+                            gray: '#141414',
+                            surface: '#1A1A1A'
+                        }
                     }
                 }
             }
@@ -50,259 +75,307 @@
     </script>
 </head>
 
-<body class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+<body class="min-h-screen bg-[#050505] text-white selection:bg-primary/30 selection:text-white">
 
-    <div x-data="diagnosticForm()" x-cloak
-        class="w-full max-w-3xl bg-brand-gray border border-white/10 rounded-xl shadow-2xl overflow-hidden relative min-h-[600px] flex flex-col">
+    <div x-data="diagnosticForm()" x-cloak class="min-h-screen flex flex-col">
 
-        <!-- Header -->
-        <div class="px-8 py-6 border-b border-white/10 flex justify-between items-center bg-brand-black/50">
-            <div class="flex items-center gap-3">
-                <img src="{{ company_logo }}" alt="Company Logo" class="h-8">
-                <span class="text-sm text-gray-400 border-l border-gray-700 pl-3">Diagnóstico de Crescimento</span>
-            </div>
-            <div class="text-xs text-gray-500 font-mono" x-text="'Etapa ' + step + '/6'"></div>
-        </div>
+        <!-- Fixed Header -->
+        <header class="fixed top-0 left-0 right-0 z-50 bg-[#050505]/80 backdrop-blur-md border-b border-white/5 h-20">
+            <div class="container mx-auto px-4 h-full flex items-center justify-between">
+                <!-- Branding -->
+                <div class="flex items-center gap-4">
+                    <img src="{{ company_logo }}" alt="Northway" class="h-8 w-auto object-contain">
+                    <div class="hidden md:block h-6 w-px bg-white/10"></div>
+                    <span class="hidden md:block text-xs uppercase tracking-[0.2em] text-gray-500 font-bold">Growth
+                        Diagnostic</span>
+                </div>
 
-        <!-- Progress -->
-        <div class="w-full bg-gray-800 h-1">
-            <div class="bg-primary h-1 transition-all duration-500 ease-out" :style="'width: ' + ((step/6)*100) + '%'">
-            </div>
-        </div>
-
-        <!-- Form Content -->
-        <form @submit.prevent="submit" class="flex-1 p-8 flex flex-col relative"
-            :class="{'opacity-50 pointer-events-none': loading}">
-
-            <!-- STEP 1: Identification -->
-            <div x-show="step === 1" class="slide-in flex-1">
-                <h2 class="text-2xl font-bold text-white mb-2">Vamos começar</h2>
-                <p class="text-gray-400 mb-8">Para gerar seu diagnóstico personalizado, precisamos saber quem é você.
-                </p>
-
-                <div class="space-y-5">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Nome Completo</label>
-                        <input type="text" x-model="contact.full_name" required
-                            class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition"
-                            placeholder="Seu nome">
+                <!-- Progress Tracker -->
+                <div class="flex items-center gap-6" x-show="step <= 5">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Progresso</p>
+                        <p class="text-sm font-bold"><span class="text-white">Etapa <span x-text="step"></span></span>
+                            <span class="text-gray-600">de 6</span></p>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">WhatsApp</label>
-                        <input type="tel" x-model="contact.whatsapp" required
-                            class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition"
-                            placeholder="(00) 00000-0000">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Nome da Empresa</label>
-                        <input type="text" x-model="contact.business_name" required
-                            class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition"
-                            placeholder="Sua empresa">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Segmento</label>
-                        <select x-model="contact.segment" required
-                            class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition">
-                            <option value="">Selecione...</option>
-                            <option value="Serviços">Serviços</option>
-                            <option value="Varejo">Varejo</option>
-                            <option value="Indústria">Indústria</option>
-                            <option value="Tecnologia">Tecnologia/SaaS</option>
-                            <option value="Infoproduto">Infoproduto</option>
-                            <option value="Outro">Outro</option>
-                        </select>
+                    <!-- Progress Bar -->
+                    <div class="w-32 sm:w-48 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-primary transition-all duration-700 ease-out"
+                            :style="'width: ' + ((step/6)*100) + '%'"></div>
                     </div>
                 </div>
             </div>
+        </header>
 
-            <!-- STEP 2: Atrair -->
-            <div x-show="step === 2" class="slide-in flex-1">
-                <h2 class="text-2xl font-bold text-white mb-2">Pilar 1: Atrair</h2>
-                <p class="text-gray-400 mb-6">Como sua empresa gera novas oportunidades?</p>
-                <div class="space-y-6">
-                    {% for q in schema.questions if q.pilar == 'Atrair' %}
-                    <div>
-                        <p class="text-sm font-medium text-gray-200 mb-3">{{loop.index}}. {{ q.text }}</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                            {% for opt in schema.options %}
-                            <label
-                                class="cursor-pointer border border-gray-700 rounded-lg p-3 hover:border-primary/50 hover:bg-white/5 transition flex items-center gap-2"
-                                :class="{'bg-primary/20 border-primary': answers['{{q.id}}'] == {{opt.value}}}">
-                                <input type="radio" value="{{opt.value}}" x-model.number="answers['{{q.id}}']"
-                                    class="hidden">
-                                <div class="w-4 h-4 rounded-full border border-gray-500 flex items-center justify-center"
-                                    :class="{'border-primary bg-primary': answers['{{q.id}}'] == {{opt.value}}}"></div>
-                                <span class="text-xs text-gray-300">{{ opt.label }}</span>
-                            </label>
-                            {% endfor %}
+        <!-- Main Content Area -->
+        <main class="flex-1 pt-32 pb-20 container mx-auto px-4 max-w-4xl">
+
+            <form @submit.prevent="submit" class="relative">
+
+                <!-- LOADIND STATE -->
+                <div x-show="loading"
+                    class="fixed inset-0 z-[60] bg-[#050505]/90 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300">
+                    <div class="relative w-24 h-24 mb-6">
+                        <div class="absolute inset-0 border-t-2 border-primary rounded-full animate-spin"></div>
+                        <div class="absolute inset-2 border-t-2 border-primary/30 rounded-full animate-spin"
+                            style="animation-direction: reverse;"></div>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Analisando Respostas...</h3>
+                    <p class="text-gray-400 text-sm">Gerando seu diagnóstico personalizado</p>
+                </div>
+
+                <!-- STEP 1: Identification -->
+                <div x-show="step === 1" class="slide-in">
+                    <div class="text-center mb-12">
+                        <div
+                            class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 border border-white/10 mb-6 shadow-2xl shadow-primary/10">
+                            <i data-lucide="user" class="w-8 h-8 text-primary"></i>
                         </div>
+                        <h1 class="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">Vamos começar</h1>
+                        <p class="text-lg text-gray-400 max-w-lg mx-auto leading-relaxed">
+                            Para gerar seu diagnóstico personalizado e plano de ação, precisamos saber quem é você.
+                        </p>
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
 
-            <!-- STEP 3: Engajar -->
-            <div x-show="step === 3" class="slide-in flex-1">
-                <h2 class="text-2xl font-bold text-white mb-2">Pilar 2: Engajar</h2>
-                <p class="text-gray-400 mb-6">Como você se relaciona com quem chega?</p>
-                <div class="space-y-6">
-                    {% for q in schema.questions if q.pilar == 'Engajar' %}
-                    <div>
-                        <p class="text-sm font-medium text-gray-200 mb-3">{{loop.index}}. {{ q.text }}</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                            {% for opt in schema.options %}
+                    <div class="max-w-xl mx-auto space-y-6">
+                        <div class="group">
                             <label
-                                class="cursor-pointer border border-gray-700 rounded-lg p-3 hover:border-primary/50 hover:bg-white/5 transition flex items-center gap-2"
-                                :class="{'bg-primary/20 border-primary': answers['{{q.id}}'] == {{opt.value}}}">
-                                <input type="radio" value="{{opt.value}}" x-model.number="answers['{{q.id}}']"
-                                    class="hidden">
-                                <div class="w-4 h-4 rounded-full border border-gray-500 flex items-center justify-center"
-                                    :class="{'border-primary bg-primary': answers['{{q.id}}'] == {{opt.value}}}"></div>
-                                <span class="text-xs text-gray-300">{{ opt.label }}</span>
-                            </label>
-                            {% endfor %}
+                                class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Nome
+                                Completo</label>
+                            <input type="text" x-model="contact.full_name" required
+                                class="w-full bg-[#0A0A0A] border border-gray-800 rounded-xl px-4 py-4 text-white placeholder-gray-600 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-300 text-lg group-hover:border-gray-700"
+                                placeholder="Seu nome">
                         </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
 
-            <!-- STEP 4: Vender -->
-            <div x-show="step === 4" class="slide-in flex-1">
-                <h2 class="text-2xl font-bold text-white mb-2">Pilar 3: Vender</h2>
-                <p class="text-gray-400 mb-6">Como você converte oportunidades em clientes?</p>
-                <div class="space-y-6">
-                    {% for q in schema.questions if q.pilar == 'Vender' %}
-                    <div>
-                        <p class="text-sm font-medium text-gray-200 mb-3">{{loop.index}}. {{ q.text }}</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                            {% for opt in schema.options %}
+                        <div class="group">
                             <label
-                                class="cursor-pointer border border-gray-700 rounded-lg p-3 hover:border-primary/50 hover:bg-white/5 transition flex items-center gap-2"
-                                :class="{'bg-primary/20 border-primary': answers['{{q.id}}'] == {{opt.value}}}">
-                                <input type="radio" value="{{opt.value}}" x-model.number="answers['{{q.id}}']"
-                                    class="hidden">
-                                <div class="w-4 h-4 rounded-full border border-gray-500 flex items-center justify-center"
-                                    :class="{'border-primary bg-primary': answers['{{q.id}}'] == {{opt.value}}}"></div>
-                                <span class="text-xs text-gray-300">{{ opt.label }}</span>
-                            </label>
-                            {% endfor %}
+                                class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">WhatsApp</label>
+                            <input type="tel" x-model="contact.whatsapp" required
+                                class="w-full bg-[#0A0A0A] border border-gray-800 rounded-xl px-4 py-4 text-white placeholder-gray-600 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-300 text-lg group-hover:border-gray-700"
+                                placeholder="(DDD) 99999-9999">
                         </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
 
-            <!-- STEP 5: Reter -->
-            <div x-show="step === 5" class="slide-in flex-1">
-                <h2 class="text-2xl font-bold text-white mb-2">Pilar 4: Vender de Novo</h2>
-                <p class="text-gray-400 mb-6">Você maximiza o valor de cada cliente?</p>
-                <div class="space-y-6">
-                    {% for q in schema.questions if q.pilar == 'Reter' %}
-                    <div>
-                        <p class="text-sm font-medium text-gray-200 mb-3">{{loop.index}}. {{ q.text }}</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                            {% for opt in schema.options %}
+                        <div class="group">
                             <label
-                                class="cursor-pointer border border-gray-700 rounded-lg p-3 hover:border-primary/50 hover:bg-white/5 transition flex items-center gap-2"
-                                :class="{'bg-primary/20 border-primary': answers['{{q.id}}'] == {{opt.value}}}">
-                                <input type="radio" value="{{opt.value}}" x-model.number="answers['{{q.id}}']"
-                                    class="hidden">
-                                <div class="w-4 h-4 rounded-full border border-gray-500 flex items-center justify-center"
-                                    :class="{'border-primary bg-primary': answers['{{q.id}}'] == {{opt.value}}}"></div>
-                                <span class="text-xs text-gray-300">{{ opt.label }}</span>
-                            </label>
-                            {% endfor %}
+                                class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Nome
+                                da Empresa</label>
+                            <input type="text" x-model="contact.business_name" required
+                                class="w-full bg-[#0A0A0A] border border-gray-800 rounded-xl px-4 py-4 text-white placeholder-gray-600 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-300 text-lg group-hover:border-gray-700"
+                                placeholder="Sua empresa">
                         </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
 
-            <!-- STEP 6: Results -->
-            <div x-show="step === 6" class="slide-in flex-1 text-center" x-ref="results">
-                <template x-if="result">
-                    <div>
-                        <h2 class="text-3xl font-bold text-white mb-2">Seu Diagnóstico</h2>
-                        <div class="text-primary text-lg font-medium mb-8" x-text="result.classification"></div>
-
-                        <!-- Stars -->
-                        <div class="flex justify-center items-center gap-2 mb-8">
-                            <span class="text-6xl text-yellow-500 font-bold" x-text="result.stars"></span>
-                            <div class="flex flex-col items-start">
-                                <div class="flex text-yellow-500 text-2xl">
-                                    <template x-for="i in 5">
-                                        <span x-text="i <= Math.round(result.stars) ? '★' : '☆'"></span>
-                                    </template>
+                        <div class="group">
+                            <label
+                                class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Segmento</label>
+                            <div class="relative">
+                                <select x-model="contact.segment" required
+                                    class="w-full bg-[#0A0A0A] border border-gray-800 rounded-xl px-4 py-4 text-white appearance-none focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all duration-300 text-lg group-hover:border-gray-700 cursor-pointer">
+                                    <option value="">Selecione...</option>
+                                    <option value="Serviços">Serviços</option>
+                                    <option value="Varejo">Varejo</option>
+                                    <option value="Indústria">Indústria</option>
+                                    <option value="Tecnologia">Tecnologia/SaaS</option>
+                                    <option value="Infoproduto">Infoproduto</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+                                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-500"></i>
                                 </div>
-                                <span class="text-xs text-gray-400">de 5.0</span>
                             </div>
                         </div>
 
-                        <!-- Pillars Chart -->
-                        <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto mb-10">
-                            <template x-for="(score, name) in result.pillars">
-                                <div class="bg-brand-black p-4 rounded-lg border border-white/5">
-                                    <div class="text-xs text-gray-400 uppercase tracking-widest mb-1" x-text="name">
+                        <div class="pt-8 flex justify-center">
+                            <button type="button" @click="next()"
+                                class="group relative inline-flex items-center justify-center px-8 py-4 text-sm font-bold text-white transition-all duration-200 bg-primary rounded-xl hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary shadow-lg shadow-primary/20 hover:shadow-primary/30">
+                                <span>Começar Diagnóstico</span>
+                                <i data-lucide="arrow-right"
+                                    class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PILARS LAYOUT (Steps 2-5) -->
+                <template x-for="(pillar, index) in pillars" :key="index">
+                    <div x-show="step === (index + 2)" class="slide-in">
+
+                        <!-- Header Section -->
+                        <div class="mb-12 border-b border-white/5 pb-8">
+                            <div class="flex items-start gap-6">
+                                <div
+                                    class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                    <i :data-lucide="pillar.icon" class="w-8 h-8 text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <span
+                                            class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20"
+                                            x-text="'Pilar ' + (index + 1)"></span>
                                     </div>
-                                    <div class="text-xl font-bold text-white mb-2" x-text="score + '/15'"></div>
-                                    <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                                        <div class="bg-primary h-full" :style="'width: ' + ((score/15)*100) + '%'">
-                                        </div>
+                                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-2" x-text="pillar.title">
+                                    </h2>
+                                    <p class="text-gray-400 text-lg" x-text="pillar.description"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Questions Loop -->
+                        <div class="space-y-16">
+                            <template x-for="(q, qIndex) in getQuestionsForPillar(pillar.name)" :key="q.id">
+                                <div class="relative pl-0 md:pl-12">
+                                    <!-- Question Number -->
+                                    <div class="hidden md:flex absolute left-0 top-0 w-8 h-8 rounded-lg bg-white/5 border border-white/10 items-center justify-center text-sm font-bold text-gray-500"
+                                        x-text="qIndex + 1"></div>
+
+                                    <h3 class="text-xl font-semibold text-white mb-6 leading-relaxed" x-text="q.text">
+                                    </h3>
+
+                                    <!-- Options Grid -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <template x-for="opt in schema.options" :key="opt.value">
+                                            <label class="group cursor-pointer relative">
+                                                <input type="radio" :name="'q_' + q.id" :value="opt.value"
+                                                    x-model.number="answers[q.id]" class="peer hidden">
+
+                                                <!-- Card -->
+                                                <div class="h-full p-5 rounded-xl border bg-[#0A0A0A] transition-all duration-300 relative overflow-hidden"
+                                                    :class="answers[q.id] === opt.value ? 'border-primary bg-primary/5 shadow-[0_0_20px_rgba(225,29,72,0.1)]' : 'border-white/10 hover:border-white/20 hover:bg-white/5'">
+
+                                                    <!-- Level Badge -->
+                                                    <div class="flex justify-between items-center mb-3">
+                                                        <span
+                                                            class="text-[10px] font-bold uppercase tracking-widest text-gray-500"
+                                                            x-text="'NÍVEL ' + opt.value"></span>
+
+                                                        <!-- Check Indicator -->
+                                                        <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-colors duration-300"
+                                                            :class="answers[q.id] === opt.value ? 'bg-primary border-primary' : 'border-gray-600 group-hover:border-gray-400'">
+                                                            <i data-lucide="check" class="w-3 h-3 text-white"
+                                                                x-show="answers[q.id] === opt.value"></i>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Label -->
+                                                    <p class="text-sm font-medium text-gray-300 leading-snug group-hover:text-white transition-colors"
+                                                        x-text="opt.label"></p>
+                                                </div>
+                                            </label>
+                                        </template>
                                     </div>
                                 </div>
                             </template>
                         </div>
 
-                        <div class="bg-primary/10 border border-primary/20 rounded-lg p-6 max-w-lg mx-auto">
-                            <h3 class="text-lg font-bold text-white mb-2">Próximo Passo</h3>
-                            <p class="text-gray-300 text-sm mb-4">
-                                Com base na sua nota <span x-text="result.stars"></span>, preparamos um plano de ação
-                                para você.
-                            </p>
-                            <!-- Fake CTA that would link to owner -->
-                            {% if instance.owner.phone %}
-                            <a href="https://wa.me/{{ instance.owner.phone|replace(' ','')|replace('-','')|replace('(','')|replace(')','') }}?text=Ol%C3%A1%2C%20fiz%20o%20diagn%C3%B3stico%20e%20tive%20nota%20"
-                                class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition shadow-lg shadow-green-900/20">
-                                Falar com um Especialista
-                            </a>
-                            {% else %}
-                            <button disabled
-                                class="bg-gray-700 text-gray-400 py-3 px-8 rounded-full cursor-not-allowed">
-                                Aguarde nosso contato
+                        <!-- Navigation Footer -->
+                        <div class="mt-20 pt-8 border-t border-white/10 flex justify-between items-center">
+                            <button type="button" @click="prev()"
+                                class="text-gray-500 hover:text-white text-sm font-bold uppercase tracking-widest transition-colors flex items-center gap-2 group">
+                                <i data-lucide="arrow-left"
+                                    class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
+                                Anterior
                             </button>
-                            {% endif %}
+
+                            <button type="button" @click="next()"
+                                class="group relative inline-flex items-center justify-center px-8 py-4 text-sm font-bold text-white transition-all duration-200 bg-primary rounded-xl hover:bg-red-600 shadow-lg shadow-primary/20 hover:shadow-primary/30">
+                                <span x-text="step === 5 ? 'Ver Resultado' : 'Próximo Passo'"></span>
+                                <i data-lucide="arrow-right"
+                                    class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                            </button>
                         </div>
+
                     </div>
                 </template>
-            </div>
 
-            <!-- Footer / Navigation -->
-            <div class="mt-8 pt-6 border-t border-white/10 flex justify-between items-center" x-show="step < 6">
+                <!-- STEP 6: Results -->
+                <div x-show="step === 6" class="slide-in" x-ref="results">
+                    <template x-if="result">
+                        <div class="max-w-2xl mx-auto text-center pt-8">
 
-                <button type="button" @click="prev()" x-show="step > 1"
-                    class="text-gray-400 hover:text-white transition flex items-center gap-2">
-                    ← Voltar
-                </button>
-                <div x-show="step === 1"></div> <!-- Spacer -->
+                            <div class="mb-4">
+                                <span
+                                    class="px-3 py-1 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 text-xs font-bold uppercase tracking-widest">Diagnóstico
+                                    Concluído</span>
+                            </div>
 
-                <button type="button" @click="next()" x-show="step < 5"
-                    class="bg-white text-black hover:bg-gray-200 font-medium py-2 px-6 rounded-lg transition ml-auto">
-                    Próximo →
-                </button>
+                            <h2 class="text-4xl md:text-5xl font-black text-white mb-2">Performance Global</h2>
+                            <p class="text-xl text-gray-400 mb-12">Aqui está o resumo da maturidade da sua operação.</p>
 
-                <button type="submit" x-show="step === 5"
-                    class="bg-primary hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg transition ml-auto flex items-center gap-2"
-                    :disabled="loading">
-                    <span x-show="!loading">Ver Resultado</span>
-                    <span x-show="loading">Analisando...</span>
-                </button>
-            </div>
+                            <!-- Big Score Card -->
+                            <div
+                                class="bg-[#0A0A0A] border border-white/10 rounded-2xl p-8 mb-12 shadow-2xl relative overflow-hidden group hover:border-white/20 transition-all">
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                </div>
 
-        </form>
+                                <div class="relative z-10 flex flex-col items-center">
+                                    <div class="text-6xl md:text-8xl font-black text-white mb-2" x-text="result.stars">
+                                    </div>
+                                    <div class="flex gap-1 text-primary text-2xl mb-4">
+                                        <template x-for="i in 5">
+                                            <i :data-lucide="i <= Math.round(result.stars) ? 'star' : 'star'"
+                                                :class="i <= Math.round(result.stars) ? 'fill-primary text-primary' : 'text-gray-800'"></i>
+                                        </template>
+                                    </div>
+                                    <div class="text-xl font-bold text-primary" x-text="result.classification"></div>
+                                </div>
+                            </div>
+
+                            <!-- Pillars Grid -->
+                            <div class="grid grid-cols-2 gap-4 mb-12">
+                                <template x-for="(score, name) in result.pillars">
+                                    <div class="bg-[#0A0A0A] p-6 rounded-xl border border-white/10 text-left">
+                                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2"
+                                            x-text="name"></p>
+                                        <div class="flex items-end gap-2 mb-3">
+                                            <span class="text-2xl font-bold text-white" x-text="score"></span>
+                                            <span class="text-sm text-gray-600 mb-1">/ 15</span>
+                                        </div>
+                                        <div class="w-full bg-gray-800 h-1 rounded-full overflow-hidden">
+                                            <div class="bg-primary h-full rounded-full transition-all duration-1000"
+                                                :style="'width: ' + ((score/15)*100) + '%'"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- CTA Box -->
+                            <div
+                                class="bg-gradient-to-br from-primary to-red-700 rounded-2xl p-8 shadow-2xl shadow-primary/20 text-center text-white relative overflow-hidden">
+                                <div class="relative z-10">
+                                    <h3 class="text-2xl font-bold mb-3">Próximo Passo Estratégico</h3>
+                                    <p class="text-white/80 mb-8 max-w-md mx-auto text-sm leading-relaxed">
+                                        Com base na sua nota <span x-text="result.stars"></span>, preparamos um plano de
+                                        ação exclusivo para destravar o próximo nível de crescimento da sua empresa.
+                                    </p>
+
+                                    {% if instance.owner.phone %}
+                                    <a :href="'https://wa.me/{{ instance.owner.phone|replace(' ','')|replace('-','')|replace('(','')|replace(')','') }}?text=Ol%C3%A1%2C%20fiz%20o%20diagn%C3%B3stico%20e%20minha%20nota%20foi%20' + result.stars"
+                                        class="inline-flex items-center gap-3 bg-white text-primary font-bold py-4 px-8 rounded-xl hover:bg-gray-100 transition shadow-lg hover:translate-y-px">
+                                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                                        <span>Falar com Consultor</span>
+                                    </a>
+                                    {% else %}
+                                    <button disabled
+                                        class="bg-black/20 text-white/50 py-3 px-8 rounded-xl cursor-not-allowed text-sm">
+                                        Aguarde nosso contato
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <!-- Background Decoration -->
+                                <div
+                                    class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white/10 rounded-full blur-3xl">
+                                </div>
+                            </div>
+
+                        </div>
+                    </template>
+                </div>
+
+            </form>
+        </main>
+
     </div>
 
-    <!-- Data Injection -->
+    <!-- Data Injection & Logic -->
     <script>
         function diagnosticForm() {
             return {
@@ -321,76 +394,118 @@
                 target_type: "{{ target_type or '' }}",
                 result: null,
 
-                init() {
-                    if (this.target_id) {
-                        this.step = 2;
-                    }
-                },
+                // Schema Data
+                schema: {{ schema | tojson }
+        },
 
-                validateStep() {
-                    if (this.step === 1) {
-                        return this.contact.full_name && this.contact.whatsapp && this.contact.business_name && this.contact.segment;
-                    }
-                    // For steps 2-5, check if all questions on this page are answered
-                    // Ideally we'd map pilar to questions, but simple check:
-                    // Just check if we have enough keys? No.
-                    // Let's just allow proceeding for MVP, or strict check?
-                    // Strict check:
-                    // Need to know which Q IDs are in this step.
-                    // Doing a loose check for now to avoid JS complexity with Jinja loop extraction.
-                    return true;
-                },
+        // Static Pillar Data for UI
+        pillars: [
+            { name: 'Atrair', icon: 'target', title: 'Pilar: Atrair', description: 'Como sua empresa gera novas oportunidades de negócio?' },
+            { name: 'Engajar', icon: 'message-square', title: 'Pilar: Engajar', description: 'Como você constrói relacionamento e confiança?' },
+            { name: 'Vender', icon: 'trending-up', title: 'Pilar: Vender', description: 'Como você converte oportunidades em receita?' },
+            { name: 'Reter', icon: 'users', title: 'Pilar: Reter', description: 'Como você maximiza o valor e a lealdade dos clientes?' }
+        ],
 
-                next() {
-                    if (!this.validateStep()) {
-                        alert("Por favor, preencha todos os campos obrigatórios.");
-                        return;
-                    }
-                    this.step++;
-                    window.scrollTo(0, 0);
-                },
+            init() {
+            // Initialize Lucide icons after Alpine renders
+            this.$watch('step', () => {
+                this.$nextTick(() => {
+                    lucide.createIcons();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
 
-                prev() {
-                    this.step--;
-                    window.scrollTo(0, 0);
-                },
+            // Initial load icons
+            this.$nextTick(() => {
+                lucide.createIcons();
+            });
 
-                async submit() {
-                    if (this.loading) return;
-                    this.loading = true;
+            if (this.target_id) {
+                this.step = 2;
+            }
+        },
 
-                    try {
-                        const res = await fetch('/forms/public/submit', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer ' + this.token
-                            },
-                            body: JSON.stringify({
-                                slug: this.slug,
-                                contact: this.contact,
-                                answers: this.answers,
-                                target_id: this.target_id,
-                                target_type: this.target_type
-                            })
-                        });
+        getQuestionsForPillar(pillarName) {
+            return this.schema.questions.filter(q => q.pilar === pillarName);
+        },
 
-                        const data = await res.json();
+        validateStep() {
+            if (this.step === 1) {
+                const valid = this.contact.full_name && this.contact.whatsapp && this.contact.business_name && this.contact.segment;
+                if (!valid) alert("Por favor, preencha todos os campos de identificação.");
+                return valid;
+            }
+            if (this.step >= 2 && this.step <= 5) {
+                // Check if all questions in current pillar are answered
+                const currentPillar = this.pillars[this.step - 2].name;
+                const questions = this.getQuestionsForPillar(currentPillar);
 
-                        if (res.ok && data.status === 'success') {
-                            this.result = data.results;
-                            this.step = 6;
-                        } else {
-                            alert(data.error || "Erro ao processar diagnóstico.");
-                        }
-
-                    } catch (e) {
-                        alert("Erro de conexão.");
-                        console.error(e);
-                    } finally {
-                        this.loading = false;
+                for (let q of questions) {
+                    if (this.answers[q.id] === undefined || this.answers[q.id] === null) {
+                        alert("Por favor, responda todas as perguntas desta etapa.");
+                        return false;
                     }
                 }
+                return true;
+            }
+            return true;
+        },
+
+        next() {
+            if (this.step === 5) {
+                this.submit();
+            } else {
+                if (this.validateStep()) {
+                    this.step++;
+                }
+            }
+        },
+
+        prev() {
+            if (this.step > 1) this.step--;
+        },
+
+                async submit() {
+            if (this.loading) return;
+            if (!this.validateStep()) return;
+
+            this.loading = true;
+
+            try {
+                // Simulate delay for UX (feeling of analysis)
+                await new Promise(r => setTimeout(r, 1500));
+
+                const res = await fetch('/forms/public/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + this.token
+                    },
+                    body: JSON.stringify({
+                        slug: this.slug,
+                        contact: this.contact,
+                        answers: this.answers,
+                        target_id: this.target_id,
+                        target_type: this.target_type
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === 'success') {
+                    this.result = data.results;
+                    this.step = 6;
+                } else {
+                    alert(data.error || "Erro ao processar diagnóstico.");
+                    this.loading = false;
+                }
+
+            } catch (e) {
+                alert("Erro de conexão.");
+                console.error(e);
+                this.loading = false;
+            }
+        }
             }
         }
     </script>
