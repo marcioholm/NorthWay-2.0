@@ -399,3 +399,52 @@ def generate_self_payment():
         print(f"Self Payment Error: {e}")
         flash(f"Erro interno: {e}", "error")
         return redirect(url_for('admin.company_settings'))
+@admin_bp.route('/admin/run-initial-migrations', methods=['GET'])
+@login_required
+def run_initial_migrations():
+    """
+    Temporary route to add diagnostic columns to relevant tables.
+    Uses 'ALTER TABLE ... ADD COLUMN IF NOT EXISTS' for PostgreSQL compatibility.
+    """
+    if not current_user.is_super_admin:
+        abort(403)
+    
+    from models import db
+    from sqlalchemy import text
+    
+    queries = [
+        # Lead table
+        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
+        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
+        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
+        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
+        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
+        
+        # Client table
+        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
+        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
+        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
+        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
+        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
+        
+        # FormSubmission table (Missing client_id column)
+        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);"
+    ]
+    
+    results = []
+    for q in queries:
+        try:
+            db.session.execute(text(q))
+            results.append(f"SUCCESS: {q}")
+        except Exception as e:
+            results.append(f"ERROR: {q} -> {str(e)}")
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return f"Final Commit Failed: {str(e)}<br><pre>" + "\n".join(results) + "</pre>"
+        
+    return "Migration attempt finished.<br><pre>" + "\n".join(results) + "</pre>"

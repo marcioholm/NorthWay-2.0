@@ -822,6 +822,7 @@ class FormSubmission(db.Model):
     tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     owner_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     
     payload = db.Column(db.JSON, nullable=False) # Answers
     
@@ -840,3 +841,4 @@ class FormSubmission(db.Model):
     # Relations
     instance = db.relationship('FormInstance', backref='submissions')
     lead = db.relationship('Lead', backref='submissions')
+    client = db.relationship('Client', backref='submissions')
