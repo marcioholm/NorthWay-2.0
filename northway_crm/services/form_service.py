@@ -159,23 +159,27 @@ class FormService:
         # Checking Interaction model... usually it has lead_id. 
         # If it's a client, we might need a client_id in Interaction or just skip interaction for now.
         note_body = f"""
-Score Total: {score_total} / 60
-Nota Final: {stars} / 5.0
-Classificação: {classification}
+🚀 DIAGNÓSTICO DE CRESCIMENTO NORTHWAY
+━━━━━━━━━━━━━━━━━━━━━
 
---- Pilares ---
-Atrair: {pillars['Atrair']} / 15
-Engajar: {pillars['Engajar']} / 15
-Vender: {pillars['Vender']} / 15
-Reter: {pillars['Reter']} / 15
+📊 RESUMO GERAL
+• Score Total: {score_total} / 60
+• Nota Final: {stars} / 5.0
+• Classificação: {classification}
 
---- Respostas ---
+📈 DESEMPENHO POR PILAR
+• Atrair: {pillars['Atrair']} / 15
+• Engajar: {pillars['Engajar']} / 15
+• Vender: {pillars['Vender']} / 15
+• Reter: {pillars['Reter']} / 15
+
+📝 RESPOSTAS DETALHADAS
 """
         for q in schema['questions']:
             ans = answers.get(q['id'], 0)
-            note_body += f"{q['id']}) {q['text']}: {ans}\n"
+            note_body += f"- {q['text']}: {ans}/3\n"
             
-        note_body += f"\nMetadados:\nInstance: {form_instance.public_slug}"
+        note_body += f"\n━━━━━━━━━━━━━━━━━━━━━\nInstance: {form_instance.public_slug}"
 
         interaction = Interaction(
             lead_id=note_target_lead_id,

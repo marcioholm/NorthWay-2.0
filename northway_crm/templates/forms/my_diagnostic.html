@@ -179,7 +179,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             {% if sub.lead_id %}
-                            <a href="{{ url_for('leads.lead_details', lead_id=sub.lead_id) }}"
+                            <a href="{{ url_for('leads.lead_details', id=sub.lead_id) }}"
                                 class="text-primary hover:text-red-900">Ver Lead</a>
                             {% else %}
                             <span class="text-gray-400">-</span>

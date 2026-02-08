@@ -276,12 +276,14 @@ def get_report(submission_id):
              return render_template('error.html', message="Acesso negado."), 403
 
     # Get Company Logo for Report
+    from models import Company
     company_logo = None
-    if submission.instance.owner.company:
-        if submission.instance.owner.company.logo_filename:
-             company_logo = url_for('static', filename='uploads/logos/' + submission.instance.owner.company.logo_filename, _external=True)
-        elif submission.instance.owner.company.logo_base64:
-             company_logo = submission.instance.owner.company.logo_base64
+    company = Company.query.get(submission.tenant_id)
+    if company:
+        if company.logo_filename:
+             company_logo = url_for('static', filename='uploads/logos/' + company.logo_filename, _external=True)
+        elif company.logo_base64:
+             company_logo = company.logo_base64
              
     # Default fallback
     if not company_logo:
