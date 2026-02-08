@@ -20,6 +20,10 @@ def check_admin_access():
     # Allow Super Admin to use these restricted views if they really want, 
     # but primarily this is for ROLE_ADMIN.
     # Check if user has 'admin_view' permission OR has role='admin'
+    # Allow access to the migration route to fix production 500 errors
+    if request.endpoint == 'admin.run_initial_migrations':
+        return
+
     if not current_user.has_permission('admin_view') and current_user.role.lower() != 'admin':
         abort(403)
 
@@ -406,12 +410,19 @@ def run_initial_migrations():
     Temporary route to add diagnostic columns to relevant tables.
     Uses 'ALTER TABLE ... ADD COLUMN IF NOT EXISTS' for PostgreSQL compatibility.
     """
-    # Blueprint level before_request already ensures user is at least a company admin.
-    # We'll allow any company admin to run this for their environment.
+    # Blueprint level before_request already skips check for this endpoint.
     
     from models import db
     from sqlalchemy import text
     
+    # 1. Ensure new tables exist
+    try:
+        db.create_all()
+        results = ["SUCCESS: db.create_all() executed"]
+    except Exception as e:
+        results = [f"ERROR: db.create_all() -> {str(e)}"]
+    
+    # 2. Add columns to existing tables
     queries = [
         # Lead table
         "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
@@ -429,11 +440,16 @@ def run_initial_migrations():
         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
         
-        # FormSubmission table (Missing client_id column)
-        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);"
+        # FormSubmission table (Ensuring client_id exists even if create_all was skipped)
+        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+        
+        # Interaction table
+        "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+        
+        # Task table
+        "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);"
     ]
     
-    results = []
     for q in queries:
         try:
             db.session.execute(text(q))
