@@ -49,11 +49,22 @@ class FormService:
         for q_id, val in answers.items():
             val = int(val)
             score_total += val
-            pilar = q_map.get(q_id)
-            if pilar in pillars:
+            # Handle int/str mismatch
+            try:
+                q_id_int = int(q_id)
+            except:
+                q_id_int = q_id
+            
+            pilar = q_map.get(q_id_int)
+            # Fallback if key is string in q_map
+            if not pilar:
+                 pilar = q_map.get(str(q_id))
+                 
+            if pilar and pilar in pillars:
                 pillars[pilar] += val
                 
         # Stars (0-60 -> 0-5)
+        if score_total > 60: score_total = 60 # Cap just in case
         stars = round((score_total / 60) * 5, 1)
         
         # Classification
@@ -74,9 +85,9 @@ class FormService:
         if not lead:
             lead = Lead(
                 company_id=form_instance.tenant_id,
-                name=lead_data.get('full_name'),
-                phone=whatsapp,
-                email=lead_data.get('email'), # Optional capture
+                name=lead_data.get('full_name', '')[:100], # Truncate to match DB limit
+                phone=whatsapp[:50], # Truncate to match DB limit
+                email=lead_data.get('email')[:120] if lead_data.get('email') else None, 
                 pipeline_id=None, # Default or process later
                 stage_id=None,
                 user_id=form_instance.owner_user_id, # Assign to form owner

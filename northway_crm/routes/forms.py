@@ -24,10 +24,23 @@ def get_form_schema(slug):
     # Generate Token
     token = FormService.generate_public_token(instance.id)
     
+    # Get Company Logo
+    company_logo = None
+    if instance.owner.company:
+        if instance.owner.company.logo_filename:
+             company_logo = url_for('static', filename='uploads/logos/' + instance.owner.company.logo_filename, _external=True)
+        elif instance.owner.company.logo_base64:
+             company_logo = instance.owner.company.logo_base64
+             
+    # Default fallback
+    if not company_logo:
+        company_logo = "https://crm.northwaycompany.com.br/static/img/logo-white.png?v=2"
+
     return render_template('forms/public_diagnostic.html', 
         instance=instance, 
         token=token, 
-        schema=instance.template.schema_json
+        schema=instance.template.schema_json,
+        company_logo=company_logo
     )
 
 @forms_bp.route('/public/submit', methods=['POST'])
@@ -153,7 +166,19 @@ def my_diagnostic():
     # Admin Context Data
     company_users = []
     grants_map = {}
-    if current_user.is_super_admin or current_user.role == 'admin':
+    
+    if current_user.is_super_admin:
+        # Super Admin sees ALL users
+        company_users = User.query.order_by(User.company_id, User.name).all()
+        # Fetch active grants for ALL users
+        active_grants = LibraryTemplateGrant.query.filter(
+            LibraryTemplateGrant.template_id == template.id,
+            LibraryTemplateGrant.status == 'active'
+        ).all()
+        grants_map = {g.user_id: True for g in active_grants}
+        
+    elif current_user.role == 'admin':
+        # Company Admin sees users in their company
         company_users = User.query.filter_by(company_id=current_user.company_id).all()
         active_grants = LibraryTemplateGrant.query.filter(
             LibraryTemplateGrant.user_id.in_([u.id for u in company_users]),
