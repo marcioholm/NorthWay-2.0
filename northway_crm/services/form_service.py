@@ -36,6 +36,7 @@ class FormService:
         4. Create Task
         5. Save Submission
         """
+        current_app.logger.info(f"Processing submission for instance {form_instance.id}")
         # 1. Calc Scores
         schema = form_instance.template.schema_json
         answers = payload.get('answers', {})
@@ -110,12 +111,12 @@ class FormService:
             if not target_lead:
                 target_lead = Lead(
                     company_id=form_instance.tenant_id,
-                    name=lead_data.get('full_name', '')[:100],
+                    name=lead_data.get('full_name', 'Lead Diagnóstico')[:100],
                     phone=whatsapp[:50],
-                    email=lead_data.get('email')[:120] if lead_data.get('email') else None, 
+                    email=lead_data.get('email', '')[:120] if lead_data.get('email') else None, 
                     pipeline_id=None,
-                    stage_id=None,
-                    user_id=form_instance.owner_user_id,
+                    pipeline_stage_id=None, # Corrected from stage_id
+                    assigned_to_id=form_instance.owner_user_id, # Corrected from user_id
                     status='new',
                     source="Diagnóstico Northway"
                 )
@@ -213,6 +214,12 @@ Reter: {pillars['Reter']} / 15
         )
         db.session.add(task)
         
-        db.session.commit()
-        return submission
+        try:
+            db.session.commit()
+            current_app.logger.info(f"Form submission committed successfully: {submission.id}")
+            return submission
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error committing form submission: {e}")
+            raise e
 

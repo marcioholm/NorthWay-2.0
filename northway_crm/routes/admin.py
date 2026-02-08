@@ -415,10 +415,10 @@ def run_initial_migrations():
     from models import db
     from sqlalchemy import text
     
-    # 1. Ensure new tables exist
+    # 1. Ensure all models are created (especially FormSubmission, FormInstance, LibraryTemplate)
     try:
         db.create_all()
-        results = ["SUCCESS: db.create_all() executed"]
+        results = ["SUCCESS: db.create_all() executed (checks for table existence)"]
     except Exception as e:
         results = [f"ERROR: db.create_all() -> {str(e)}"]
     
@@ -440,8 +440,10 @@ def run_initial_migrations():
         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
         
-        # FormSubmission table (Ensuring client_id exists even if create_all was skipped)
+        # FormSubmission table
         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS stars FLOAT;",
+        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS classification VARCHAR(100);",
         
         # Interaction table
         "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
