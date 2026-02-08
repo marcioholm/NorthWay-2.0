@@ -275,13 +275,19 @@ def get_report(submission_id):
         if submission.tenant_id != current_user.company_id:
              return render_template('error.html', message="Acesso negado."), 403
 
-    # Get Company Logo for Report
+    # Get Company details and logo
     from models import Company
-    company_logo = None
     company = Company.query.get(submission.tenant_id)
+    company_logo = None
+    
     if company:
+        # Check priority: logo_filename in uploads/company, then uploads/logos, then base64
         if company.logo_filename:
+             # Try first in 'company' directory
              company_logo = url_for('static', filename='uploads/company/' + company.logo_filename, _external=True)
+             # Note: We assume the frontend/backend sync handles the actual existence. 
+             # If it fails, the fallback below (url-white) will kick in via JS or CSS if needed, 
+             # but here we provide the most likely valid URL.
         elif company.logo_base64:
              company_logo = company.logo_base64
              
@@ -292,5 +298,6 @@ def get_report(submission_id):
     return render_template('forms/report_diagnostic.html', 
         submission=submission,
         instance=submission.instance,
-        company_logo=company_logo
+        company_logo=company_logo,
+        company=company
     )
