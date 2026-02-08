@@ -216,54 +216,58 @@
             </div>
         </div>
 
-        <!-- Detailed Answers Section -->
+        <!-- Detailed Answers Section By Pillar -->
         <div class="mb-12">
             <div class="flex items-center justify-between mb-8">
                 <div class="flex items-center gap-4">
                     <div class="h-px bg-red-500 w-8"></div>
-                    <h3 class="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Respostas Detalhadas</h3>
+                    <h3 class="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">Auditoria de Respostas</h3>
                 </div>
-                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Auditoria de Dados</span>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Detalhamento Técnico</span>
             </div>
 
-            <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50/50 border-b border-slate-100">
-                        <tr>
-                            <th class="px-10 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                Pergunta / Pilar</th>
-                            <th
-                                class="px-10 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">
-                                Nota</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        {% set schema = instance.template.schema_json %}
+            {% set pillar_definitions = [
+            {'name': 'Atrair', 'icon': 'target', 'color': 'red'},
+            {'name': 'Engajar', 'icon': 'message-square', 'color': 'red'},
+            {'name': 'Vender', 'icon': 'trending-up', 'color': 'red'},
+            {'name': 'Reter', 'icon': 'users', 'color': 'red'}
+            ] %}
 
-                        {# Group by Pillar #}
-                        {% set last_pilar = '' %}
-                        {% for q in schema.questions %}
-                        {% set current_pilar = q.pilar %}
-                        <tr class="group hover:bg-slate-50/30 transition-colors">
-                            <td class="px-10 py-6">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="text-[9px] font-black text-red-500 uppercase tracking-widest">{{
-                                        q.pilar }}</span>
-                                </div>
-                                <p class="text-sm font-bold text-slate-800 max-w-2xl leading-snug">
+            <div class="space-y-8">
+                {% for pdef in pillar_definitions %}
+                <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="px-8 py-5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center">
+                                <i data-lucide="{{ pdef.icon }}" class="w-4 h-4 text-white"></i>
+                            </div>
+                            <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest">{{ pdef.name }}</h4>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pilar {{ loop.index
+                            }}</span>
+                    </div>
+
+                    <div class="divide-y divide-slate-50">
+                        {% set schema = instance.template.schema_json %}
+                        {% for q in schema.questions if q.pilar == pdef.name %}
+                        <div
+                            class="flex items-center justify-between px-8 py-6 hover:bg-slate-50/30 transition-colors group">
+                            <div class="flex-1 pr-10">
+                                <p class="text-sm font-bold text-slate-800 leading-snug">
                                     {{ q.text }}
                                 </p>
-                            </td>
-                            <td class="px-10 py-6 text-right">
+                            </div>
+                            <div class="flex-shrink-0">
                                 <div
                                     class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-slate-50 group-hover:bg-white border border-slate-100 font-bold text-slate-900 shadow-sm transition-all">
                                     {{ submission.payload.answers[q.id|string] }}
                                 </div>
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
 
