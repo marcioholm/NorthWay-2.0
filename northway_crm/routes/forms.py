@@ -260,3 +260,35 @@ def revoke_access():
         
     flash('Acesso revogado.', 'warning')
     return redirect(url_for('forms.my_diagnostic'))
+@forms_bp.route('/report/<submission_id>')
+@login_required
+def get_report(submission_id):
+    """
+    Internal Endpoint: View Detailed Diagnostic Report
+    """
+    submission = FormSubmission.query.get(submission_id)
+    if not submission:
+        return render_template('error.html', message="Relatório não encontrado."), 404
+        
+    # Check permission (must own the form or be admin)
+    if not current_user.is_super_admin:
+        if submission.tenant_id != current_user.company_id:
+             return render_template('error.html', message="Acesso negado."), 403
+
+    # Get Company Logo for Report
+    company_logo = None
+    if submission.instance.owner.company:
+        if submission.instance.owner.company.logo_filename:
+             company_logo = url_for('static', filename='uploads/logos/' + submission.instance.owner.company.logo_filename, _external=True)
+        elif submission.instance.owner.company.logo_base64:
+             company_logo = submission.instance.owner.company.logo_base64
+             
+    # Default fallback
+    if not company_logo:
+        company_logo = "https://crm.northwaycompany.com.br/static/img/logo-white.png?v=2"
+
+    return render_template('forms/report_diagnostic.html', 
+        submission=submission,
+        instance=submission.instance,
+        company_logo=company_logo
+    )

@@ -631,7 +631,16 @@
                                 </div>
 
                                 <div class="p-3 bg-red-50 rounded-lg border border-red-100">
-                                    <div class="text-xs font-bold text-red-800 uppercase mb-1">Classificação</div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="text-xs font-bold text-red-800 uppercase">Classificação</div>
+                                        {% if lead.submissions %}
+                                        <a href="{{ url_for('forms.get_report', submission_id=lead.submissions|selectattr('stars', 'defined')|sort(attribute='created_at', reverse=True)|first|attr('id')) }}"
+                                            target="_blank"
+                                            class="text-[10px] font-bold text-red-600 hover:text-red-800 underline">
+                                            Ver Relatório Completo
+                                        </a>
+                                        {% endif %}
+                                    </div>
                                     <div class="text-sm text-red-900 leading-tight font-medium">{{
                                         lead.diagnostic_classification or 'N/A' }}</div>
                                 </div>
@@ -665,8 +674,8 @@
 
                             {% if diag_instance %}
                             <div class="pt-4 mt-2 border-t border-gray-100">
-                                <button onclick='copyDiagnosticLink("{{ url_for("forms.get_form_schema",
-                                    slug=diag_instance.public_slug, _external=True) }}?lead_id={{ lead.id }}")'
+                                <button
+                                    onclick="copyDiagnosticLink('{{ url_for(\'forms.get_form_schema\', slug=diag_instance.public_slug, _external=True) }}?lead_id={{ lead.id }}')"
                                     class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
                                     <i data-lucide="copy" class="w-4 h-4"></i>
                                     Copiar Link de Participação

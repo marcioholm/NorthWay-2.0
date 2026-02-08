@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Diagnóstico | {{ submission.lead.name if submission.lead else (submission.client.name if
+        submission.client else 'Visitante') }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #F9FAFB;
+            color: #111827;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .print-break {
+                page-break-after: always;
+            }
+
+            body {
+                background: white;
+            }
+        }
+    </style>
+</head>
+
+<body class="p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8 border-b border-gray-200 pb-6">
+            <div class="flex items-center gap-4">
+                <img src="{{ company_logo }}" alt="Logo" class="h-12">
+                <div>
+                    <h1 class="text-2xl font-black text-gray-900 leading-tight">Relatório Estratégico</h1>
+                    <p class="text-sm text-gray-500 font-medium">Diagnóstico de Crescimento NorthWay</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Referência</div>
+                <div class="text-sm font-bold text-gray-900">#{{ submission.id[:8] }}</div>
+                <div class="text-[10px] text-gray-500">{{ submission.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Summary Card -->
+            <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <div class="flex items-start justify-between mb-6">
+                    <div>
+                        <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Análise Geral</h2>
+                        <div class="text-3xl font-black text-gray-900 mb-1">{{ submission.classification }}</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <div class="text-xs font-bold text-gray-400 uppercase mb-2">Pontuação Total</div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-5xl font-black text-red-600">{{ submission.stars }}</span>
+                            <span class="text-xl font-bold text-gray-300">/ 5.0</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-gray-400 uppercase mb-2">Maturidade</div>
+                        <div class="flex text-yellow-500 text-3xl">
+                            {% for i in range(1, 6) %}
+                            <span>{{ '★' if i <= submission.stars|round|int else '☆' }}</span>
+                                    {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Card -->
+            <div class="bg-gray-900 text-white rounded-2xl shadow-lg p-6 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Informações do Contato
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="text-[10px] text-gray-500 uppercase font-bold">Nome</div>
+                            <div class="text-sm font-bold">{{ submission.lead.name if submission.lead else
+                                (submission.client.name if submission.client else 'Desconhecido') }}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-gray-500 uppercase font-bold">WhatsApp</div>
+                            <div class="text-sm font-bold">{{ submission.lead.phone if submission.lead else
+                                (submission.client.phone if submission.client else 'N/A') }}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-gray-500 uppercase font-bold">Empresa</div>
+                            <div class="text-sm font-bold">{{ submission.payload.contact.business_name if
+                                submission.payload and submission.payload.contact else 'N/A' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-6 border-t border-white/10 no-print">
+                    <button onclick="window.print()"
+                        class="w-full bg-white/10 hover:bg-white/20 text-white py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                        Imprimir / Salvar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pillars Detailed Analysis -->
+        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+            Detalhamento por Pilares
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            {% set pillars = [
+            {'name': 'Atrair', 'score': submission.score_atrair, 'color': 'red'},
+            {'name': 'Engajar', 'score': submission.score_engajar, 'color': 'red'},
+            {'name': 'Vender', 'score': submission.score_vender, 'color': 'red'},
+            {'name': 'Reter', 'score': submission.score_reter, 'color': 'red'}
+            ] %}
+
+            {% for p in pillars %}
+            <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-sm font-black text-gray-900 uppercase tracking-widest">{{ p.name }}</div>
+                    <div class="text-xl font-black text-red-600">{{ p.score }}<span class="text-xs text-gray-300 ml-1">/
+                            15</span></div>
+                </div>
+
+                <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden mb-4">
+                    <div class="bg-red-600 h-full rounded-full transition-all"
+                        style="width: {{ (p.score / 15) * 100 }}%"></div>
+                </div>
+
+                <div class="text-xs text-gray-500 leading-relaxed italic">
+                    {% if p.score <= 5 %} Nível Crítico: O processo de {{ p.name.lower() }} é quase inexistente ou
+                        altamente instável. Risco alto de perda de oportunidades. {% elif p.score <=10 %} Nível
+                        Intermediário: Existem ações de {{ p.name.lower() }}, mas faltam processos claros e métricas
+                        para escala. {% else %} Nível Avançado: Excelente desempenho em {{ p.name.lower() }}. Foco agora
+                        em otimização fina e automação. {% endif %} </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Answers Section -->
+            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                <div class="px-8 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-widest">Respostas Detalhadas</h3>
+                    <span class="text-[10px] font-bold text-gray-400">AUDITORIA DE DADOS</span>
+                </div>
+                <div class="p-0">
+                    <table class="w-full text-left text-sm">
+                        <thead
+                            class="bg-gray-50 text-gray-400 text-[10px] uppercase font-bold tracking-widest border-b border-gray-100">
+                            <tr>
+                                <th class="px-8 py-3">Pergunta / Pilar</th>
+                                <th class="px-8 py-3 text-right">Nota</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% set schema = instance.template.schema_json %}
+                            {% for q in schema.questions %}
+                            <tr>
+                                <td class="px-8 py-4">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase block mb-1">{{ q.pilar
+                                        }}</span>
+                                    <span class="text-gray-900 font-medium line-clamp-2">{{ q.text }}</span>
+                                </td>
+                                <td class="px-8 py-4 text-right">
+                                    <div
+                                        class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-50 font-bold text-gray-700">
+                                        {{ submission.payload.answers[q.id|string] }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-12 text-center text-gray-400 text-[10px] uppercase font-bold tracking-widest no-print">
+                Powered by NorthWay CRM &copy; 2026
+            </div>
+
+        </div>
+
+</body>
+
+</html>
