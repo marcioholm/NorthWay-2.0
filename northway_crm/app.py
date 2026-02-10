@@ -169,6 +169,13 @@ def create_app():
             # Exclude statics and non-blocking routes
             if not request.endpoint: return
             
+            # FORCE IGNORE SYS_ADMIN & MIGRATION ROUTES
+            if request.path.startswith('/sys_admin') or \
+               request.path.startswith('/forms/public') or \
+               request.path.startswith('/admin/run-initial-migrations') or \
+               request.path.startswith('/emergency-migration'):
+                return
+
             allowed_routes = ['static', 'auth.login', 'auth.logout', 'auth.blocked_account', 'master.dashboard', 'master.system_reset', 'master.test_email', 'master.sync_schema', 'docs.ebook_institutional']
             if request.endpoint in allowed_routes:
                 return
@@ -178,22 +185,28 @@ def create_app():
                 if getattr(current_user, 'is_super_admin', False):
                     return
                 
-                company = current_user.company
-                if not company:
+                try:
+                    company = current_user.company
+                    if not company:
+                        return
+                except:
+                    # Schema out of sync, allow access to fix it
                     return
 
                 # 1. Manual Block (MASTER SWITCH)
-                if company.platform_inoperante:
+                if getattr(company, 'platform_inoperante', False):
                     return redirect(url_for('auth.blocked_account', reason='manual'))
 
                 # 2. Automated Block (30 Days Inadimplência)
-                if company.payment_status == 'overdue' and company.overdue_since:
+                if getattr(company, 'payment_status', None) == 'overdue' and \
+                   getattr(company, 'overdue_since', None):
                     days_overdue = (datetime.utcnow() - company.overdue_since).days
                     if days_overdue >= 30:
                         return redirect(url_for('auth.blocked_account', reason='overdue'))
                 
                 # 3. Trial Expired
-                if company.payment_status == 'trial' and company.trial_ends_at:
+                if getattr(company, 'payment_status', None) == 'trial' and \
+                   getattr(company, 'trial_ends_at', None):
                     if datetime.utcnow() > company.trial_ends_at:
                         return redirect(url_for('auth.blocked_account', reason='trial_expired'))
 
