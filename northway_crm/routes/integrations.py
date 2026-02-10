@@ -161,13 +161,13 @@ def asaas_webhook(company_id):
     return api_response(data={'received': True})
 
 # --- GOOGLE DRIVE INTEGRATION ---
-from services.google_drive_service import GoogleDriveService
 from models import TenantIntegration
 
 @integrations_bp.route('/api/integrations/google-drive/connect')
 @login_required
 def connect_google_drive():
     try:
+        from services.google_drive_service import GoogleDriveService
         service = GoogleDriveService(company_id=current_user.company_id)
         auth_url, state = service.get_auth_url()
         # Save state in session if needed for CSRF protection
@@ -188,6 +188,7 @@ def google_drive_callback():
         return render_template('integrations/drive_error.html', error="No code received")
         
     try:
+        from services.google_drive_service import GoogleDriveService
         service = GoogleDriveService(company_id=current_user.company_id)
         tokens = service.fetch_token(code)
         

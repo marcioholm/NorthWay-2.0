@@ -385,71 +385,46 @@ def create_app():
                 return f"FATAL ERROR: {str(e)}", 200
 
         # --- REGISTER BLUEPRINTS ---
-            # --- REGISTER BLUEPRINTS ---
-        try:
-            from auth import auth as auth_blueprint
-            from master import master as master_blueprint
-            from routes.financial import financial_bp
-            from routes.docs import docs_bp
-            from routes.goals import goals_bp
-            from routes.prospecting import prospecting_bp
-            from routes.integrations import integrations_bp
-            from routes.admin import admin_bp
-            from routes.api_debug import api_debug_bp
-            from routes.forms import forms_bp
-            from routes.jobs import jobs_bp
-            
-            app.register_blueprint(auth_blueprint)
-            app.register_blueprint(master_blueprint)
-            app.register_blueprint(financial_bp)
-            app.register_blueprint(docs_bp)
-            app.register_blueprint(goals_bp)
-            app.register_blueprint(prospecting_bp)
-            app.register_blueprint(integrations_bp)
-            app.register_blueprint(admin_bp)
-            app.register_blueprint(api_debug_bp)
-            app.register_blueprint(forms_bp, url_prefix='/forms')
-            app.register_blueprint(jobs_bp)
-            
-            # Safe Register for complex blueprints that might break on schema
-            from routes.api_extension import api_ext
-            from routes.whatsapp import whatsapp_bp
-            from routes.clients import clients_bp
-            from routes.leads import leads_bp
-            from routes.leads_enrichment import enrichment_bp
-            from routes.contracts import contracts_bp
-            from routes.dashboard import dashboard_bp
-            from routes.tasks import tasks_bp
-            from routes.templates import templates_bp
-            from routes.checklists import checklists_bp
-            from routes.notifications import notifications_bp
-            from routes.roles import roles_bp
-            from routes.billing import billing_bp
-            from routes.service_orders import service_orders_bp
+        # Defensive loading: one failing blueprint won't crash the whole app
+        blueprints = [
+            ('auth', 'auth', 'auth_blueprint', None),
+            ('master', 'master', 'master_blueprint', None),
+            ('routes.financial', 'financial_bp', 'financial_bp', None),
+            ('routes.docs', 'docs_bp', 'docs_bp', None),
+            ('routes.goals', 'goals_bp', 'goals_bp', None),
+            ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None),
+            ('routes.integrations', 'integrations_bp', 'integrations_bp', None),
+            ('routes.admin', 'admin_bp', 'admin_bp', None),
+            ('routes.api_debug', 'api_debug_bp', 'api_debug_bp', None),
+            ('routes.forms', 'forms_bp', 'forms_bp', '/forms'),
+            ('routes.jobs', 'jobs_bp', 'jobs_bp', None),
+            ('routes.api_extension', 'api_ext', 'api_ext', None),
+            ('routes.whatsapp', 'whatsapp_bp', 'whatsapp_bp', None),
+            ('routes.clients', 'clients_bp', 'clients_bp', None),
+            ('routes.leads', 'leads_bp', 'leads_bp', None),
+            ('routes.leads_enrichment', 'enrichment_bp', 'enrichment_bp', None),
+            ('routes.contracts', 'contracts_bp', 'contracts_bp', None),
+            ('routes.dashboard', 'dashboard_bp', 'dashboard_bp', None),
+            ('routes.tasks', 'tasks_bp', 'tasks_bp', None),
+            ('routes.templates', 'templates_bp', 'templates_bp', None),
+            ('routes.checklists', 'checklists_bp', 'checklists_bp', None),
+            ('routes.notifications', 'notifications_bp', 'notifications_bp', None),
+            ('routes.roles', 'roles_bp', 'roles_bp', None),
+            ('routes.billing', 'billing_bp', 'billing_bp', None),
+            ('routes.service_orders', 'service_orders_bp', 'service_orders_bp', None)
+        ]
 
-            app.register_blueprint(api_ext)
-            app.register_blueprint(whatsapp_bp)
-            app.register_blueprint(clients_bp)
-            app.register_blueprint(leads_bp)
-            app.register_blueprint(enrichment_bp)
-            app.register_blueprint(contracts_bp)
-            app.register_blueprint(dashboard_bp)
-            app.register_blueprint(tasks_bp)
-            app.register_blueprint(templates_bp)
-            app.register_blueprint(checklists_bp)
-            app.register_blueprint(notifications_bp)
-            app.register_blueprint(roles_bp)
-            app.register_blueprint(billing_bp)
-            app.register_blueprint(service_orders_bp)
-            
-        except Exception as bp_e:
-            print(f"Blueprint Registration/Import Error: {bp_e}")
-            import traceback
-            traceback.print_exc()
-            # We continue so the app launches and sys_admin works (or emergency mode catches if critical)
-            # Actually, if master fails, we might want to let it bubble up to the factory_e handler?
-            # Let's re-raise to see the error page!
-            raise bp_e
+        import importlib
+        for module_path, attr_name, var_name, prefix in blueprints:
+            try:
+                mod = importlib.import_module(module_path)
+                bp = getattr(mod, attr_name)
+                if prefix:
+                    app.register_blueprint(bp, url_prefix=prefix)
+                else:
+                    app.register_blueprint(bp)
+            except Exception as e:
+                print(f"❌ Failed to load blueprint {var_name}: {e}")
 
         # --- BILLING MIDDLEWARE ---
         @app.before_request
