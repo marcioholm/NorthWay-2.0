@@ -128,8 +128,9 @@
                             <i data-lucide="folder-tree" class="w-5 h-5"></i>
                         </div>
                         <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                                onclick='editTemplate({{ template.id }}, {{ template.name|tojson }}, {{ template.structure_json|tojson }})'
+                            <button data-id="{{ template.id }}" data-name="{{ template.name }}"
+                                data-structure="{{ template.structure_json|tojson }}"
+                                onclick="editTemplateFromBtn(this)"
                                 class="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50">
                                 <i data-lucide="pencil" class="w-4 h-4"></i>
                             </button>
@@ -146,7 +147,7 @@
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 pointer-events-none">
                         </div>
                         <pre class="text-[10px] leading-relaxed folder-structure-preview"
-                            data-json='{{ template.structure_json|tojson }}'></pre>
+                            data-json="{{ template.structure_json|tojson }}"></pre>
                     </div>
                 </div>
                 {% else %}
@@ -209,19 +210,26 @@
 <script>
     // JSON to Text helper for editing
     function jsonToText(json, level = 0) {
-        let text = '';
-        if (!json) return text;
+        if (!json) return '';
 
-        // Se o JSON for uma string (caso venha encodado), tenta parsear
         let data = json;
-        if (typeof json === 'string') {
-            try { data = JSON.parse(json); } catch (e) { return json; }
+        // Se for string, tenta parsear (pode precisar de mais de um parse se estiver double-encoded)
+        if (typeof data === 'string') {
+            try {
+                data = JSON.parse(data);
+                if (typeof data === 'string') {
+                    data = JSON.parse(data);
+                }
+            } catch (e) {
+                return data; // Se falhar mas for string, retorna ela mesma
+            }
         }
 
-        if (!Array.isArray(data)) return text;
+        if (!Array.isArray(data)) return '';
 
-        for (let item of data) {
-            const name = typeof item === 'string' ? item : (item.name || '');
+        let text = '';
+        for (const item of data) {
+            const name = typeof item === 'string' ? item : (item.name || 'Personalizado');
             text += '    '.repeat(level) + name + '\n';
             if (item.children && Array.isArray(item.children)) {
                 text += jsonToText(item.children, level + 1);
@@ -231,13 +239,15 @@
     }
 
     // Render preview in cards
-    document.querySelectorAll('.folder-structure-preview').forEach(el => {
-        try {
-            const raw = el.dataset.json;
-            const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            el.textContent = jsonToText(data);
-        } catch (e) { console.error('Preview error', e); }
-    });
+    function renderPreviews() {
+        document.querySelectorAll('.folder-structure-preview').forEach(el => {
+            try {
+                const raw = el.dataset.json;
+                el.textContent = jsonToText(raw);
+            } catch (e) { console.error('Preview error', e); }
+        });
+    }
+    renderPreviews();
 
     function openTemplateModal() {
         document.getElementById('templateId').value = '';
@@ -247,10 +257,14 @@
         document.getElementById('templateModal').classList.remove('hidden');
     }
 
-    function editTemplate(id, name, structureJson) {
+    function editTemplateFromBtn(btn) {
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+        const structure = btn.dataset.structure;
+
         document.getElementById('templateId').value = id;
         document.getElementById('templateName').value = name;
-        document.getElementById('templateStructure').value = jsonToText(structureJson); // Convert back to text
+        document.getElementById('templateStructure').value = jsonToText(structure);
         document.getElementById('modalTitle').innerText = 'Editar Template';
         document.getElementById('templateModal').classList.remove('hidden');
     }
