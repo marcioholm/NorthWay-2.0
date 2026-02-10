@@ -10,6 +10,16 @@ def get_now_br():
     """Returns the current time in Brasília (UTC-3)"""
     return datetime.utcnow() - timedelta(hours=3)
 
+def get_date_extenso_br():
+    """Returns current date in format: 10 de Fevereiro de 2026"""
+    now = get_now_br()
+    months = {
+        1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
+        5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
+        9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+    }
+    return f"{now.day} de {months[now.month]} de {now.year}"
+
 def api_response(success=True, data=None, error=None, status=200):
     """Standardized JSON response for all API routes."""
     response = {

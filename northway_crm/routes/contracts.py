@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
 from flask_login import login_required, current_user
 from models import db, Client, Contract, ContractTemplate, Transaction, Task, WhatsAppMessage
-from utils import create_notification, get_contract_replacements
+from utils import create_notification, get_contract_replacements, get_date_extenso_br
 from datetime import datetime, date, timedelta
 import json
 import uuid
@@ -195,7 +195,7 @@ def preview_contract():
             <div style="text-align: right;">
                 <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: {second_col}; text-transform: uppercase; letter-spacing: 2px;">{client.company.name}</h2>
                 <p style="margin: 4px 0 0; color: #6b7280; font-size: 13px; font-weight: 500;">CNPJ: {client.company.document or 'N/A'}</p>
-                <div style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">{datetime.now().strftime('%d de %B de %Y')}</div>
+                <div style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">{get_date_extenso_br()}</div>
             </div>
         </div>
     """
@@ -378,6 +378,7 @@ def create_contract(id):
                         <td align="right" valign="middle">
                             <h2 style="margin: 0; font-size: 24px; color: {second_col}; text-transform: uppercase; letter-spacing: 1px;">{current_user.company.name}</h2>
                             <p style="margin: 5px 0 0; color: #666; font-size: 14px;">CNPJ: {current_user.company.document}</p>
+                            <div style="margin-top: 8px; font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 1px;">{get_date_extenso_br()}</div>
                         </td>
                     </tr>
                 </table>
