@@ -233,6 +233,15 @@ def get_contract_replacements(client, form_data):
 
         '{{foro_comarca}}': foro_comarca,
         '{{foro_estado}}': foro_estado,
+
+        # --- COMPATIBILITY ALIASES (Summary Sheet & Lowercase) ---
+        '{{nome_empresarial_contratante}}': form_data.get('contratante_nome') or client.name,
+        '{{cnpj_contratante}}': form_data.get('contratante_documento') or client.document or 'N/A',
+        '{{representante_legal_contratante}}': form_data.get('contratante_representante') or client.representative or '',
+        '{{vigencia_meses}}': form_data.get('vigencia_meses', '12'),
+        '{{valor_total}}': form_data.get('valor_total', '0,00'),
+        '{{valor_mensal}}': form_data.get('valor_parcela', '0,00'),
+        '{{dia_vencimento}}': form_data.get('dia_vencimento', '5'),
     }
     return replacements
 
