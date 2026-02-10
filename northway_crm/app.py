@@ -556,7 +556,10 @@ def create_app():
                                 ('next_due_date', 'DATE'), 
                                 ('trial_start_date', 'DATETIME'), 
                                 ('trial_end_date', 'DATETIME'),
-                                ('features', 'JSONB DEFAULT \'{}\'')
+                                ('features', 'JSONB DEFAULT \'{}\''),
+                                ('allowed_global_template_ids', 'JSONB DEFAULT \'[]\''),
+                                ('default_template_id', 'INTEGER'),
+                                ('auto_create_subfolders', 'BOOLEAN DEFAULT TRUE')
                             ]:
                                 if col not in columns:
                                     try:
@@ -564,7 +567,7 @@ def create_app():
                                     except: pass
                             
                             conn.commit()
-                            
+
                     # 4. LEAD REPAIR (Fix drive folders, gmb, cnpj)
                     if inspector.has_table("lead"):
                         with db.engine.connect() as conn:
@@ -663,6 +666,21 @@ def create_app():
                                 if col not in ctr_cols:
                                     try: conn.execute(text(f"ALTER TABLE contract ADD COLUMN {col} {dtype}"))
                                     except: pass
+                            conn.commit()
+
+                    # 7. DRIVE TEMPLATE REPAIR
+                    if inspector.has_table("drive_folder_template"):
+                        with db.engine.connect() as conn:
+                            tmpl_cols = [c['name'] for c in inspector.get_columns("drive_folder_template")]
+                            
+                            if 'scope' not in tmpl_cols:
+                                try: conn.execute(text("ALTER TABLE drive_folder_template ADD COLUMN scope VARCHAR(20) DEFAULT 'tenant'"))
+                                except: pass
+                            
+                            # Try to make company_id nullable
+                            try: conn.execute(text("ALTER TABLE drive_folder_template ALTER COLUMN company_id DROP NOT NULL"))
+                            except: pass
+                            
                             conn.commit()
                                 
                 except Exception as mig_e:
