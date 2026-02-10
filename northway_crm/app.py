@@ -620,19 +620,31 @@ def create_app():
         return app
     except Exception as factory_e:
         import traceback
-        traceback.print_exc()
+        tb_str = traceback.format_exc()
+        print(f"🔥 FATAL FACTORY EXPLOSION:\n{tb_str}")
+        
         # Capture error for closure
         error_msg = str(factory_e)
-        print(f"🔥 FATAL FACTORY EXPLOSION: {error_msg}")
-        
         
         # EMERGENCY APP
-        # from flask import Flask, render_template (Already imported globally)
         fallback = Flask(__name__)
-        @fallback.route('/')
+        @fallback.route('/', defaults={'path': ''})
         @fallback.route('/<path:path>')
-        def emergency_catch_all(path=''):
-            return f"<h1>EMERGENCY MODE</h1><p>The app failed to start.</p><pre>{error_msg}</pre>", 503
+        def emergency_catch_all(path, **kwargs):
+            return f"""
+            <html>
+            <head><title>Emergency Mode</title></head>
+            <body style="font-family: monospace; padding: 20px; background: #fff5f5;">
+                <h1 style="color: #c53030;">EMERGENCY MODE</h1>
+                <p>The application factory failed to start.</p>
+                <div style="background: #eee; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                    <strong>Error:</strong> {error_msg}
+                </div>
+                <h3>Stack Trace:</h3>
+                <pre style="background: #2d3748; color: #fff; padding: 15px; border-radius: 5px; overflow: auto;">{tb_str}</pre>
+            </body>
+            </html>
+            """, 503
             
         @fallback.route('/ping')
         def ping(): return "pong_emergency"
