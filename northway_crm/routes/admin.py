@@ -415,14 +415,19 @@ def run_initial_migrations():
     try:
         from models import db
         from sqlalchemy import text
+        from flask import current_app
         
         results = []
-        dialect = db.engine.dialect.name
-        results.append(f"INFO: Database Dialect is '{dialect}'")
+        
+        # Avoid accessing db.engine.dialect.name if possible to prevent connection hang
+        db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        is_postgres = 'postgres' in db_uri or 'psycopg' in db_uri
+        
+        results.append(f"INFO: Detected DB Type via Config: {'Postgres' if is_postgres else 'SQLite/Other'}")
         
         queries = []
         
-        if dialect == 'postgresql':
+        if is_postgres:
             # POSTGRESQL QUERIES
             queries = [
                 # Drive Folder Template
@@ -478,6 +483,7 @@ def run_initial_migrations():
             # SQLITE (Simple Fallback - Warning: ALTER TABLE ADD COLUMN IF NOT EXISTS not supported in all sqlite versions directly same as PG)
             # SQLite ignores 'IF NOT EXISTS' in add column in older versions, but 'ADD COLUMN' works. 
             # We will use simple ADD COLUMN and catch 'duplicate column' errors silently.
+            results.append("WARNING: Using SQLite fallback mode. Some operations might complain if columns exist.")
             results.append("WARNING: Using SQLite fallback mode. Some operations might complain if columns exist.")
             
             queries = [
