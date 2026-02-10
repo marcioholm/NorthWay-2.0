@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex h-screen bg-gray-100 overflow-hidden">
+<div id="layout-wrapper" class="flex h-screen bg-gray-100 overflow-hidden">
     <!-- Top Bar actions -->
     <div
         class="fixed top-0 left-0 w-full h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-8 print:hidden">
@@ -114,7 +114,7 @@
 
 
     <!-- Main Content Area (Scrollable) -->
-    <div
+    <div id="scroll-container"
         class="flex-1 h-full overflow-y-auto bg-slate-200 relative pt-24 pb-20 flex flex-col items-center justify-start min-h-screen custom-scrollbar">
 
         <!-- Source Content (Hidden) -->
@@ -234,13 +234,17 @@
 
         /* CRITICAL: Reset all layout containers to prevent "scroll traps" */
         html,
-        body {
+        body,
+        #layout-wrapper,
+        #scroll-container {
             height: auto !important;
             width: 100%;
             margin: 0 !important;
             padding: 0 !important;
             background: white !important;
             overflow: visible !important;
+            display: block !important;
+            position: static !important;
         }
 
         /* Reset transform for print */
