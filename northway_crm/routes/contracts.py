@@ -536,10 +536,20 @@ def terminate_contract(id):
         abort(403)
     
     try:
-        data = request.json
-        reason = data.get('reason')
-        penalty = float(data.get('penalty', 0))
-        due_date_str = data.get('due_date')
+        # Handle both JSON (API) and Form (UI) requests
+        if request.is_json:
+            data = request.json
+        else:
+            data = request.form
+
+        reason = data.get('reason', 'Cancelado pelo usuário')
+        penalty_str = data.get('fee_amount', '0').replace('R$', '').replace('.', '').replace(',', '.')
+        try:
+            penalty = float(penalty_str) if penalty_str else 0.0
+        except:
+            penalty = 0.0
+            
+        due_date_str = data.get('fee_due_date')
     
         contract.status = 'cancelled'
         contract.cancellation_reason = reason
@@ -575,10 +585,19 @@ def terminate_contract(id):
             #     db.session.commit()
             # except: pass
     
-        return jsonify({'message': 'Contrato encerrado com sucesso.'})
+        if request.is_json:
+            return jsonify({'message': 'Contrato encerrado com sucesso.'})
+        else:
+            flash('Contrato encerrado com sucesso.', 'success')
+            return redirect(url_for('contracts.view_contract', id=contract.id))
+            
     except Exception as e:
         db.session.rollback()
-        return jsonify({'message': f'Erro: {str(e)}'}), 500
+        if request.is_json:
+            return jsonify({'message': f'Erro: {str(e)}'}), 500
+        else:
+            flash(f"Erro ao cancelar contrato: {str(e)}", 'error')
+            return redirect(url_for('contracts.view_contract', id=id))
 
 @contracts_bp.route('/contracts/<int:id>/sign', methods=['POST'])
 @login_required
