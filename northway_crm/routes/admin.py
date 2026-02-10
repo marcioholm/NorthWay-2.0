@@ -415,15 +415,21 @@ def run_initial_migrations():
     from models import db
     from sqlalchemy import text
     
-    # 1. Ensure all models are created (especially FormSubmission, FormInstance, LibraryTemplate, DriveFolderTemplate, TenantIntegration)
-    try:
-        db.create_all()
-        results = ["SUCCESS: db.create_all() executed (checks for table existence)"]
-    except Exception as e:
-        results = [f"ERROR: db.create_all() -> {str(e)}"]
+    results = []
     
     # 2. Add columns to existing tables
     queries = [
+        # Drive Folder Template (Manual Create to avoid db.create_all timeout)
+        """CREATE TABLE IF NOT EXISTS drive_folder_template (
+            id SERIAL PRIMARY KEY,
+            company_id INTEGER NOT NULL REFERENCES company(id),
+            name VARCHAR(100) NOT NULL,
+            structure_json TEXT NOT NULL,
+            is_default BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );""",
+        
         # Lead table
         "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
         "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
@@ -452,21 +458,30 @@ def run_initial_migrations():
         "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
         
         # Company Features
-        "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSON DEFAULT '{}';",
+        "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '{}';",
         
-        # Drive Folder Templates (Ensure table exists - covered by db.create_all but good to be explicit just in case)
-        # Note: If DriveFolderTemplate is new, db.create_all() above handles it.
-        # But we can add columns if we modified it.
-        
-        # Ensure TenantIntegration table exists (covered by db.create_all)
+        # Tenant Integration (If missing)
+        """CREATE TABLE IF NOT EXISTS tenant_integration (
+            id SERIAL PRIMARY KEY,
+            company_id INTEGER NOT NULL REFERENCES company(id),
+            service VARCHAR(50) NOT NULL,
+            access_token TEXT,
+            refresh_token_encrypted TEXT,
+            token_expiry_at TIMESTAMP,
+            status VARCHAR(20) DEFAULT 'connected',
+            last_error TEXT,
+            config_json JSONB,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );"""
     ]
     
     for q in queries:
         try:
             db.session.execute(text(q))
-            results.append(f"SUCCESS: {q}")
+            results.append(f"SUCCESS: {q[:50]}...")
         except Exception as e:
-            results.append(f"ERROR: {q} -> {str(e)}")
+            results.append(f"ERROR: {q[:50]}... -> {str(e)}")
     
     try:
         db.session.commit()
