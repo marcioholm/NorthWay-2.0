@@ -1,0 +1,123 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Templates Globais de Pastas (Google Drive)</h1>
+            <p class="text-muted">Gerencie as estruturas de pastas que podem ser disponibilizadas para os tenants.</p>
+        </div>
+        <button class="btn btn-primary" data-toggle="modal" data-target="#templateModal">
+            <i class="fas fa-plus mr-2"></i>Novo Template Global
+        </button>
+    </div>
+
+    <!-- Templates List -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Templates Ativos</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>Estrutura (JSON)</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in templates %}
+                        <tr>
+                            <td>{{ t.id }}</td>
+                            <td><strong>{{ t.name }}</strong></td>
+                            <td>
+                                <pre class="mb-0"
+                                    style="max-height: 100px; overflow-y: auto;"><code class="small">{{ t.structure_json }}</code></pre>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-info edit-btn" data-id="{{ t.id }}"
+                                        data-name="{{ t.name }}" data-json='{{ t.structure_json }}' data-toggle="modal"
+                                        data-target="#templateModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ url_for('master.delete_global_template', id=t.id) }}" method="POST"
+                                        onsubmit="return confirm('Excluir este template global?')">
+                                        <button type="submit" class="btn btn-sm btn-danger ml-1">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Modal -->
+<div class="modal fade" id="templateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form action="{{ url_for('master.global_templates') }}" method="POST">
+                <input type="hidden" name="template_id" id="modal_template_id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Novo Template Global</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nome do Template</label>
+                        <input type="text" name="name" id="modal_name" class="form-control" required
+                            placeholder="Ex: TEMPLATE 01 — Padrão NorthWay">
+                    </div>
+                    <div class="form-group">
+                        <label>Estrutura das Pastas (JSON)</label>
+                        <textarea name="structure_json" id="modal_json" class="form-control" rows="15" required
+                            placeholder='[{"name": "Pasta 1", "children": [{"name": "Subpasta"}]}]'></textarea>
+                        <small class="form-text text-muted">Use o formato JSON: uma lista de objetos com "name" e
+                            opcionalmente "children" (recursivo).</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('.edit-btn').click(function () {
+            const id = $(this).data('id');
+            const name = $(this).data('name');
+            const json = $(this).data('json');
+
+            $('#modal_template_id').val(id);
+            $('#modal_name').val(name);
+            $('#modal_json').val(typeof json === 'string' ? json : JSON.stringify(json, null, 2));
+            $('#modalTitle').text('Editar Template Global');
+        });
+
+        $('#templateModal').on('hidden.bs.modal', function () {
+            $('#modal_template_id').val('');
+            $('#modal_name').val('');
+            $('#modal_json').val('');
+            $('#modalTitle').text('Novo Template Global');
+        });
+    });
+</script>
+{% endblock %}

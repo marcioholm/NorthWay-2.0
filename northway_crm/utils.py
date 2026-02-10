@@ -138,6 +138,14 @@ def get_contract_replacements(client, form_data):
         '{{CONTRATANTE_CPF_REPRESENTANTE}}': form_data.get('contratante_cpf') or client.representative_cpf or '',
         '{{CONTRATANTE_ENDERECO_REPRESENTANTE}}': form_data.get('contratante_endereco_representante') or '',
 
+        # --- LOWERCASE ALIASES (Compatibility) ---
+        '{{contratante_razao_social}}': form_data.get('contratante_nome') or client.name,
+        '{{contratante_cnpj}}': form_data.get('contratante_documento') or client.document or 'N/A',
+        '{{contratante_endereco}}': form_data.get('contratante_endereco') or format_addr(client),
+        '{{contratante_representante_nome}}': form_data.get('contratante_representante') or client.representative or '',
+        '{{contratante_representante_cpf}}': form_data.get('contratante_cpf') or client.representative_cpf or '',
+        '{{contratante_email}}': client.email,
+
         # --- English Aliases ---
         '{{COMPANY_NAME}}': client.company.name,
         '{{CLIENT_NAME}}': form_data.get('contratante_nome') or client.name,
@@ -154,6 +162,13 @@ def get_contract_replacements(client, form_data):
         '{{CONTRATADA_REPRESENTANTE}}': getattr(client.company, 'representative', '') or current_user_name,
         '{{CONTRATADA_REPRESENTANTE_LEGAL}}': getattr(client.company, 'representative', '') or current_user_name,
         '{{CONTRATADA_CPF}}': getattr(client.company, 'representative_cpf', '') or '', 
+
+        # --- LOWERCASE ALIASES (Compatibility: Contratada) ---
+        '{{contratada_razao_social}}': client.company.name,
+        '{{contratada_cnpj}}': client.company.document,
+        '{{contratada_endereco}}': format_addr(client.company),
+        '{{contratada_representante_nome}}': getattr(client.company, 'representative', '') or current_user_name,
+        '{{contratada_representante_cpf}}': getattr(client.company, 'representative_cpf', '') or '',
 
         # --- VALORES E PAGAMENTO ---
         '{{VALOR_TOTAL_CONTRATO}}': form_data.get('valor_total', '0,00'),

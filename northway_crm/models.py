@@ -146,6 +146,11 @@ class Company(db.Model):
     # Feature Flags (Master Control)
     # JSON: {'whatsapp': True, 'prospecting': False, ...}
     features = db.Column(db.JSON, default={})
+
+    # Global Templates Control
+    allowed_global_template_ids = db.Column(db.JSON, default=[]) # List of IDs [1, 2, 3]
+    default_template_id = db.Column(db.Integer, nullable=True)
+    auto_create_subfolders = db.Column(db.Boolean, default=True)
     
     # Timestamps
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -361,7 +366,8 @@ class Lead(db.Model):
 
 class DriveFolderTemplate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Null for Global
+    scope = db.Column(db.String(20), default='tenant') # 'global', 'tenant'
     name = db.Column(db.String(100), nullable=False)
     structure_json = db.Column(db.Text, nullable=False) # JSON list of dicts: [{'name': 'Folder', 'children': []}]
     is_default = db.Column(db.Boolean, default=False)

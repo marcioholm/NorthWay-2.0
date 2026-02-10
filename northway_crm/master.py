@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, session, abort, flash, request
 from flask_login import login_required, current_user, login_user
-from models import db, User, Company, ROLE_ADMIN, ContractTemplate, template_company_association
+from models import db, User, Company, ROLE_ADMIN, ContractTemplate, template_company_association, DriveFolderTemplate
 from utils import get_now_br
 from datetime import datetime, date, timedelta
 
@@ -314,15 +314,28 @@ def company_materials(company_id):
                 for grant in all_company_grants:
                     grant.status = 'revoked'
                     
+        # 4. Update Global Drive Templates
+        allowed_global_ids = request.form.getlist('allowed_global_templates')
+        default_global_id = request.form.get('default_template_id')
+        auto_create = request.form.get('auto_create_subfolders') == 'on'
+        
+        try:
+            company.allowed_global_template_ids = [int(i) for i in allowed_global_ids]
+            company.default_template_id = int(default_global_id) if default_global_id else None
+            company.auto_create_subfolders = auto_create
+        except Exception as e:
+            print(f"Error updating global templates for company: {e}")
+
         db.session.commit()
         flash(f"Permissões de materiais para {company.name} atualizadas!", "success")
         return redirect(url_for('master.dashboard'))
         
-    from models import LibraryBook, ContractTemplate, LibraryTemplate, LibraryTemplateGrant
+    from models import LibraryBook, ContractTemplate, LibraryTemplate, LibraryTemplateGrant, DriveFolderTemplate
     books = LibraryBook.query.filter_by(active=True).all()
     templates = ContractTemplate.query.filter_by(active=True).all()
+    global_drive_templates = DriveFolderTemplate.query.filter_by(scope='global').all()
     
-    # Check if diagnostic is active for this company (at least one active grant)
+    # Check if diagnostic is active...
     diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
     diagnostic_active = False
     if diag_template:
@@ -336,7 +349,93 @@ def company_materials(company_id):
                            company=company, 
                            books=books, 
                            templates=templates,
+                           global_drive_templates=global_drive_templates,
                            diagnostic_active=diagnostic_active)
+
+@master.route('/master/templates/global', methods=['GET', 'POST'])
+@login_required
+def global_templates():
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    if request.method == 'POST':
+        import json
+        name = request.form.get('name')
+        structure_json = request.form.get('structure_json')
+        template_id = request.form.get('template_id')
+        
+        try:
+            # Validate JSON
+            json.loads(structure_json)
+            
+            if template_id:
+                template = DriveFolderTemplate.query.get_or_404(template_id)
+                template.name = name
+                template.structure_json = structure_json
+                flash(f"Template '{name}' atualizado com sucesso.", "success")
+            else:
+                new_template = DriveFolderTemplate(
+                    name=name,
+                    structure_json=structure_json,
+                    scope='global',
+                    company_id=None
+                )
+                db.session.add(new_template)
+                flash(f"Template '{name}' criado com sucesso.", "success")
+            
+            db.session.commit()
+        except json.JSONDecodeError:
+            flash("Erro: Estrutura JSON inválida.", "error")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Erro ao salvar template: {e}", "error")
+            
+        return redirect(url_for('master.global_templates'))
+        
+    templates = DriveFolderTemplate.query.filter_by(scope='global').all()
+    return render_template('master_global_templates.html', templates=templates)
+
+@master.route('/master/templates/global/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_global_template(id):
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    template = DriveFolderTemplate.query.get_or_404(id)
+    try:
+        db.session.delete(template)
+        db.session.commit()
+        flash(f"Template '{template.name}' excluído.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao excluir template: {e}", "error")
+        
+    return redirect(url_for('master.global_templates'))
+
+@master.route('/master/company/<int:company_id>/templates/global', methods=['POST'])
+@login_required
+def update_company_global_templates(company_id):
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
+        
+    company = Company.query.get_or_404(company_id)
+    allowed_ids = request.form.getlist('allowed_global_templates')
+    default_id = request.form.get('default_template_id')
+    auto_create = request.form.get('auto_create_subfolders') == 'on'
+    
+    try:
+        # Convert IDs to integers
+        company.allowed_global_template_ids = [int(i) for i in allowed_ids]
+        company.default_template_id = int(default_id) if default_id else None
+        company.auto_create_subfolders = auto_create
+        
+        db.session.commit()
+        flash(f"Permissões de templates para {company.name} atualizadas!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao atualizar permissões: {e}", "error")
+        
+    return redirect(url_for('master.company_materials', company_id=company.id))
 
 @master.route('/master/impersonate/<int:user_id>')
 def impersonate(user_id):

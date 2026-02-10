@@ -377,20 +377,56 @@ def convert_lead(id):
                 client.drive_folder_name = folder_name
                 
                 # Create Folder Structure from Template
-                drive_template_id = request.form.get('drive_template_id')
-                
-                if drive_template_id:
-                    template = DriveFolderTemplate.query.get(drive_template_id)
-                    if template and template.company_id == current_user.company_id:
-                        # Use selected template
-                        drive_service.create_folder_structure(drive_integration, folder.get('id'), template.structure_json)
-                else:
-                    # Fallback or Default Structure (e.g., Contratos, Briefing)
-                    subfolders = ['Contratos', 'Briefing', 'Midia']
-                    for sub in subfolders:
+                # Check if auto creation is enabled
+                if current_user.company.auto_create_subfolders:
+                    drive_template_id = request.form.get('drive_template_id')
+                    selected_template = None
+                    
+                    # 1. Try selected template
+                    if drive_template_id:
+                         t = DriveFolderTemplate.query.get(drive_template_id)
+                         if t:
+                             # Check permissions
+                             is_own = t.company_id == current_user.company_id
+                             is_global_allowed = t.scope == 'global' and \
+                                 current_user.company.allowed_global_template_ids and \
+                                 t.id in current_user.company.allowed_global_template_ids
+                             
+                             if is_own or is_global_allowed or current_user.is_super_admin:
+                                 selected_template = t
+                    
+                    # 2. Try default template if none selected or valid
+                    if not selected_template and current_user.company.default_template_id:
+                         t = DriveFolderTemplate.query.get(current_user.company.default_template_id)
+                         if t:
+                             # Re-check permissions
+                             is_own = t.company_id == current_user.company_id
+                             is_global_allowed = t.scope == 'global' and \
+                                 current_user.company.allowed_global_template_ids and \
+                                 t.id in current_user.company.allowed_global_template_ids
+                                 
+                             if is_own or is_global_allowed or current_user.is_super_admin:
+                                 selected_template = t
+                                 
+                    if selected_template:
                         try:
-                            drive_service.create_folder(drive_integration, sub, parent_id=folder.get('id'))
-                        except: pass
+                            # Parse if string (legacy safely)
+                            import json
+                            structure = selected_template.structure_json
+                            if isinstance(structure, str):
+                                structure = json.loads(structure)
+                                
+                            drive_service.create_folder_structure(drive_integration, folder.get('id'), structure)
+                        except Exception as e:
+                             print(f"Error applying template structure: {e}")
+                             # Fallback to simple structure on error?
+                    else:
+                        # Legacy Fallback
+                        subfolders = ['01 - Contratos', '02 - Briefing', '03 - Mídia', '04 - Relatórios']
+                        for sub in subfolders:
+                            try:
+                                drive_service.create_folder(drive_integration, sub, parent_id=folder.get('id'))
+                            except: pass
                 
                 flash(f'Pasta criada no Google Drive: {folder_name}', 'success')
 

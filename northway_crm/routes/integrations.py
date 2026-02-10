@@ -231,12 +231,50 @@ def drive_settings_page():
         provider='google_drive'
     ).first()
     
-    templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+    templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id, scope='tenant').all()
     if not templates and integration: # Seed if connected but no templates
         seed_drive_templates()
-        templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+        templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id, scope='tenant').all()
+    
+    # Allowed Global Templates
+    global_templates = []
+    if current_user.company and current_user.company.allowed_global_template_ids:
+        global_templates = DriveFolderTemplate.query.filter(
+            DriveFolderTemplate.id.in_(current_user.company.allowed_global_template_ids),
+            DriveFolderTemplate.scope == 'global'
+        ).all()
         
-    return render_template('settings_drive.html', integration=integration, templates=templates)
+    return render_template('settings_drive.html', 
+                          integration=integration, 
+                          templates=templates,
+                          global_templates=global_templates)
+
+@integrations_bp.route('/api/integrations/drive/templates/duplicate/<int:id>', methods=['POST'])
+@login_required
+def duplicate_global_template(id):
+    if not current_user.company_id:
+        return api_response(success=False, error='Usuário sem empresa vinculada', status=403)
+        
+    global_template = DriveFolderTemplate.query.get_or_404(id)
+    
+    # Security: Check if allowed
+    allowed_ids = current_user.company.allowed_global_template_ids or []
+    if id not in allowed_ids and not current_user.is_super_admin:
+        return api_response(success=False, error='Acesso negado a este template global', status=403)
+        
+    try:
+        new_template = DriveFolderTemplate(
+            company_id=current_user.company_id,
+            name=f"{global_template.name} (Cópia)",
+            structure_json=global_template.structure_json,
+            scope='tenant'
+        )
+        db.session.add(new_template)
+        db.session.commit()
+        return api_response(success=True, data={'id': new_template.id})
+    except Exception as e:
+        db.session.rollback()
+        return api_response(success=False, error=str(e))
 
 @integrations_bp.route('/api/integrations/google-drive/root-folder', methods=['POST'])
 @login_required
