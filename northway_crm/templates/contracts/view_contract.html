@@ -232,70 +232,59 @@
 
     @media print {
 
-        /* 1. Hide global UI elements that might exist in base.html or siblings */
+        /* 1. Aggressively hide ALL potential global UI elements */
+        body>*:not(#layout-wrapper),
+        #splash-screen,
+        #mobile-sidebar-overlay,
+        #toast-container,
         nav,
         aside,
         header,
         footer,
         .no-print,
-        .print\:hidden {
+        .print\:hidden,
+        .fixed {
             display: none !important;
         }
 
-        /* 2. Hide specific siblings in our view */
-        /* Top bar inside layout-wrapper */
-        #layout-wrapper>div.fixed {
-            display: none !important;
-        }
-
-        /* Any fixed overlays */
-        #cancelModal {
-            display: none !important;
-        }
-
-        /* Mobile/Preview helpers */
-        #scroll-container>p.fixed {
-            display: none !important;
-        }
-
-        /* 3. Unwrap the layout containers to allow full document flow */
+        /* 2. Reset Layout Wrapper to be a transparent pass-through */
         html,
         body,
         #layout-wrapper,
         #scroll-container {
             height: auto !important;
-            width: auto !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: transparent !important;
-            overflow: visible !important;
-            position: static !important;
-            display: block !important;
-        }
-
-        /* 4. Ensure pages container is visible and flows naturally */
-        #pages-container {
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+            background: white !important;
+            overflow: visible !important;
             display: block !important;
             position: static !important;
         }
 
-        /* 5. Page styling for print */
+        /* 3. Ensure Pages Container is the ONLY visible block */
+        #pages-container {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* 4. Strict A4 Page Definition */
         .a4-page {
-            box-shadow: none !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            /* Strict height to match JS pagination */
+            background: white !important;
             margin: 0 auto !important;
+            padding: 0 !important;
+            box-shadow: none !important;
             page-break-after: always;
             break-after: page;
-            width: 210mm !important;
-            min-height: 297mm !important;
-            /* Ensure min height */
-            height: auto !important;
-            overflow: visible !important;
-            transform: none !important;
-            /* Ensure background is white for the page itself */
-            background-color: white !important;
+            overflow: hidden !important;
+            position: relative !important;
+            left: 0 !important;
+            top: 0 !important;
         }
 
         .a4-page:last-child {
@@ -303,11 +292,11 @@
             break-after: auto;
         }
 
-        /* Content styling */
+        /* 5. Ensure Content Visibility */
         .a4-content {
+            visibility: visible !important;
             color: black !important;
             height: auto !important;
-            /* Allow expansion */
         }
     }
 </style>
@@ -367,6 +356,7 @@
 
                     while (currentWordIndex < words.length) {
                         const pChunk = document.createElement('p');
+
                         // Copy attributes (styles etc)
                         for (let attr of node.attributes) {
                             pChunk.setAttribute(attr.name, attr.value);
@@ -408,7 +398,9 @@
 
                         if (!overflowDetected) {
                             currentWordIndex = words.length;
-                        } else {
+                        }
+
+                        else {
                             if (chunkWords.length > 0) {
                                 pageNum++;
                                 currentPage = createA4Page(pageNum);
@@ -417,7 +409,9 @@
                             }
                         }
                     }
-                } else {
+                }
+
+                else {
                     // Non-splittable block (e.g. Header div, Table, or Image)
                     // Move entire block to next page
                     pageNum++;
@@ -429,5 +423,7 @@
             }
         });
     }
-</script>
-{% endblock %}
+
+</script> {
+% endblock %
+}
