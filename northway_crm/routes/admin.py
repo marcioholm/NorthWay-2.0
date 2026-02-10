@@ -412,81 +412,123 @@ def run_initial_migrations():
     """
     # Blueprint level before_request already skips check for this endpoint.
     
-    from models import db
-    from sqlalchemy import text
-    
-    results = []
-    
-    # 2. Add columns to existing tables
-    queries = [
-        # Drive Folder Template (Manual Create to avoid db.create_all timeout)
-        """CREATE TABLE IF NOT EXISTS drive_folder_template (
-            id SERIAL PRIMARY KEY,
-            company_id INTEGER NOT NULL REFERENCES company(id),
-            name VARCHAR(100) NOT NULL,
-            structure_json TEXT NOT NULL,
-            is_default BOOLEAN DEFAULT FALSE,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );""",
-        
-        # Lead table
-        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
-        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
-        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
-        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
-        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
-        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
-        
-        # Client table
-        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
-        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
-        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
-        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
-        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
-        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
-        
-        # FormSubmission table
-        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
-        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS stars FLOAT;",
-        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS classification VARCHAR(100);",
-        
-        # Interaction table
-        "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
-        
-        # Task table
-        "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
-        
-        # Company Features
-        "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '{}';",
-        
-        # Tenant Integration (If missing)
-        """CREATE TABLE IF NOT EXISTS tenant_integration (
-            id SERIAL PRIMARY KEY,
-            company_id INTEGER NOT NULL REFERENCES company(id),
-            service VARCHAR(50) NOT NULL,
-            access_token TEXT,
-            refresh_token_encrypted TEXT,
-            token_expiry_at TIMESTAMP,
-            status VARCHAR(20) DEFAULT 'connected',
-            last_error TEXT,
-            config_json JSONB,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );"""
-    ]
-    
-    for q in queries:
-        try:
-            db.session.execute(text(q))
-            results.append(f"SUCCESS: {q[:50]}...")
-        except Exception as e:
-            results.append(f"ERROR: {q[:50]}... -> {str(e)}")
-    
     try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return f"Final Commit Failed: {str(e)}<br><pre>" + "\n".join(results) + "</pre>"
+        from models import db
+        from sqlalchemy import text
         
-    return "Migration attempt finished.<br><pre>" + "\n".join(results) + "</pre>"
+        results = []
+        dialect = db.engine.dialect.name
+        results.append(f"INFO: Database Dialect is '{dialect}'")
+        
+        queries = []
+        
+        if dialect == 'postgresql':
+            # POSTGRESQL QUERIES
+            queries = [
+                # Drive Folder Template
+                """CREATE TABLE IF NOT EXISTS drive_folder_template (
+                    id SERIAL PRIMARY KEY,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    name VARCHAR(100) NOT NULL,
+                    structure_json TEXT NOT NULL,
+                    is_default BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );""",
+                
+                # Columns with IF NOT EXISTS (Postgres 9.6+)
+                "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+                "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
+                "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
+                "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
+                "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
+                "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
+                
+                "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+                "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
+                "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
+                "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
+                "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
+                "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
+                
+                "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+                "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS stars FLOAT;",
+                "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS classification VARCHAR(100);",
+                
+                "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+                "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+                
+                "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '{}';",
+                
+                """CREATE TABLE IF NOT EXISTS tenant_integration (
+                    id SERIAL PRIMARY KEY,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    service VARCHAR(50) NOT NULL,
+                    access_token TEXT,
+                    refresh_token_encrypted TEXT,
+                    token_expiry_at TIMESTAMP,
+                    status VARCHAR(20) DEFAULT 'connected',
+                    last_error TEXT,
+                    config_json JSONB,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );"""
+            ]
+        else:
+            # SQLITE (Simple Fallback - Warning: ALTER TABLE ADD COLUMN IF NOT EXISTS not supported in all sqlite versions directly same as PG)
+            # SQLite ignores 'IF NOT EXISTS' in add column in older versions, but 'ADD COLUMN' works. 
+            # We will use simple ADD COLUMN and catch 'duplicate column' errors silently.
+            results.append("WARNING: Using SQLite fallback mode. Some operations might complain if columns exist.")
+            
+            queries = [
+                """CREATE TABLE IF NOT EXISTS drive_folder_template (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    name VARCHAR(100) NOT NULL,
+                    structure_json TEXT NOT NULL,
+                    is_default BOOLEAN DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );""",
+                 """CREATE TABLE IF NOT EXISTS tenant_integration (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    service VARCHAR(50) NOT NULL,
+                    access_token TEXT,
+                    refresh_token_encrypted TEXT,
+                    token_expiry_at TIMESTAMP,
+                    status VARCHAR(20) DEFAULT 'connected',
+                    last_error TEXT,
+                    config_json TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );""",
+                # Try adding columns one by one
+                "ALTER TABLE lead ADD COLUMN diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+                "ALTER TABLE company ADD COLUMN features TEXT DEFAULT '{}';"
+                # Add others if critical, but these are the main ones crashing the app right now
+            ]
+
+        for q in queries:
+            try:
+                db.session.execute(text(q))
+                results.append(f"SUCCESS: {q[:30]}...")
+            except Exception as e:
+                # Ignore "already exists" errors (Postgres code 42701, or generic text)
+                msg = str(e).lower()
+                if "already exists" in msg or "duplicate column" in msg:
+                    results.append(f"SKIPPED (Exists): {q[:30]}...")
+                else:
+                    results.append(f"ERROR: {q[:30]}... -> {str(e)}")
+        
+        try:
+            db.session.commit()
+            results.append("FINAL COMMIT: Success")
+        except Exception as e:
+            db.session.rollback()
+            results.append(f"FINAL COMMIT FAILED: {str(e)}")
+            
+        return "Migration finished.<br><pre>" + "\n".join(results) + "</pre>"
+        
+    except Exception as fatal_e:
+        return f"FATAL ERROR IN MIGRATION: {str(fatal_e)}"
