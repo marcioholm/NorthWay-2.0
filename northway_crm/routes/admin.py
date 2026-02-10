@@ -404,12 +404,79 @@ def generate_self_payment():
         flash(f"Erro interno: {e}", "error")
         return redirect(url_for('admin.company_settings'))
 @admin_bp.route('/admin/run-initial-migrations', methods=['GET'])
-# @login_required
+@login_required
 def run_initial_migrations():
     """
     Temporary route to add diagnostic columns to relevant tables.
     Uses 'ALTER TABLE ... ADD COLUMN IF NOT EXISTS' for PostgreSQL compatibility.
     """
-    # Blueprint level before_request already skips check for this endpoint.
+    from flask import request
     
-    return "<h1>Migration Route Reachable</h1><p>If you see this, the route is working. Database connectivity test blocked temporarily.</p>", 200
+    action = request.args.get('action', 'status') # 'status' or 'execute'
+    results = []
+    
+    try:
+        # 1. Infer Dialect
+        # Read from config to be safe
+        db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        is_postgres = 'postgresql' in db_uri.lower()
+        is_sqlite = 'sqlite' in db_uri.lower()
+        
+        results.append(f"DB Dialect Detected: {'PostgreSQL' if is_postgres else 'SQLite' if is_sqlite else 'Unknown'}")
+        
+        if action == 'status':
+            results.append("<b>Status Mode:</b> Checking connectivity...")
+            with db.engine.connect() as conn:
+                res = conn.execute(text("SELECT 1"))
+                results.append(f"✅ Connection successful: {res.fetchone()}")
+            results.append("<hr>")
+            results.append("To execute migrations, add <b>?action=execute</b> to the URL.")
+            return f"<h1>Migration Diagnostics</h1><pre>" + "\n".join(results) + "</pre>", 200
+
+        # EXECUTION MODE
+        results.append("<b>Execution Mode:</b> Starting DDL updates...")
+        with db.engine.connect() as conn:
+            # 1. Add company.features
+            try:
+                if is_postgres:
+                    conn.execute(text("ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '{}'"))
+                else:
+                    conn.execute(text("ALTER TABLE company ADD COLUMN features TEXT DEFAULT '{}'"))
+                results.append("✅ Added/Verified company.features")
+            except Exception as e:
+                results.append(f"❌ Error company.features: {e}")
+
+            # 2. Create DriveFolderTemplate
+            try:
+                if is_postgres:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS drive_folder_template (
+                            id SERIAL PRIMARY KEY,
+                            name VARCHAR(100) NOT NULL,
+                            structure JSONB NOT NULL,
+                            is_default BOOLEAN DEFAULT FALSE,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """))
+                else:
+                    conn.execute(text("""
+                        CREATE TABLE IF NOT EXISTS drive_folder_template (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            name VARCHAR(100) NOT NULL,
+                            structure TEXT NOT NULL,
+                            is_default BOOLEAN DEFAULT FALSE,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """))
+                results.append("✅ Created/Verified drive_folder_template table")
+            except Exception as e:
+                results.append(f"❌ Error drive_folder_template: {e}")
+
+            conn.commit()
+            
+        return f"<h1>Migration Results</h1><pre>" + "\n".join(results) + "</pre><p><a href='/admin/dashboard'>Back to Dashboard</a></p>", 200
+
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        return f"<h1>FATAL MIGRATION ERROR</h1><pre>{str(e)}\n\n{tb}</pre>", 200

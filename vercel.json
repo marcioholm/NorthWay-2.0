@@ -1,12 +1,8 @@
 {
     "routes": [
         {
-            "src": "/probe",
-            "dest": "/api/probe.py"
-        },
-        {
-            "src": "/migrate-standalone",
-            "dest": "/api/migrate_standalone.py"
+            "src": "/assets/(.*)",
+            "dest": "/lp-north-way/assets/$1"
         },
         {
             "src": "/(.*)",

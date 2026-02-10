@@ -835,6 +835,8 @@ def fix_task_schema():
 
         conn.close()
         return jsonify({"status": "completed", "log": results})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
         
 @app.route('/sys_admin/migrate_drive')
 def sys_migrate_drive():
