@@ -1,0 +1,19 @@
+# Northway CRM Dependencies
+flask==3.0.3
+flask-sqlalchemy==3.1.1
+flask-login==0.6.3
+werkzeug==3.0.3
+supabase==2.4.5
+psycopg2-binary==2.9.9
+requests==2.31.0
+markdown==3.6
+gunicorn==22.0.0
+Flask-Migrate==4.0.7
+python-dotenv==1.0.1
+resend==2.4.0
+flask-cors==4.0.0
+
+# Google APIs
+google-auth==2.29.0
+google-auth-oauthlib==1.2.0
+google-api-python-client==2.127.0
