@@ -248,6 +248,142 @@ def create_app():
                 import traceback
                 return jsonify({'error': str(e), 'traceback': traceback.format_exc(), 'partial_info': debug_info}), 500
 
+        @app.route('/emergency-migration')
+        def emergency_migration():
+            try:
+                from models import db
+                from sqlalchemy import text
+                import time
+                
+                action = request.args.get('action', 'status')
+                results = []
+                
+                # 1. DIAGNOSTICS
+                db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+                is_postgres = 'postgres' in db_uri or 'psycopg' in db_uri
+                
+                results.append(f"<b>--- EMERGENCY MODE ---</b>")
+                results.append(f"Detected Type for SQL: {'Postgres' if is_postgres else 'SQLite/Other'}")
+                
+                # Test Connection
+                try:
+                    start_time = time.time()
+                    db.session.execute(text("SELECT 1"))
+                    elapsed = time.time() - start_time
+                    results.append(f"Connection Test: SUCCESS ({elapsed:.4f}s)")
+                except Exception as conn_e:
+                    results.append(f"Connection Test: FAILED ({str(conn_e)})")
+                    return f"DB Connection Failed: {str(conn_e)}<br><pre>" + "\n".join(results) + "</pre>", 200
+
+                if action == 'status':
+                    results.append("<br><b>--- INSTRUCTIONS ---</b>")
+                    results.append(f"To run the migration, add <b>?action=execute</b> to the URL.")
+                    results.append(f"<a href='{url_for('emergency_migration', action='execute')}'>Click here to RUN MIGRATION</a>")
+                    return "<br>".join(results)
+
+                # 2. EXECUTION
+                results.append(f"<br><b>--- EXECUTION ---</b>")
+                queries = []
+                
+                if is_postgres:
+                    # POSTGRESQL QUERIES
+                    queries = [
+                        # Drive Folder Template
+                        """CREATE TABLE IF NOT EXISTS drive_folder_template (
+                            id SERIAL PRIMARY KEY,
+                            company_id INTEGER NOT NULL REFERENCES company(id),
+                            name VARCHAR(100) NOT NULL,
+                            structure_json TEXT NOT NULL,
+                            is_default BOOLEAN DEFAULT FALSE,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );""",
+                        
+                        # Columns with IF NOT EXISTS (Postgres 9.6+)
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
+                        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+                        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS stars FLOAT;",
+                        "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS classification VARCHAR(100);",
+                        "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+                        "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '{}';",
+                        """CREATE TABLE IF NOT EXISTS tenant_integration (
+                            id SERIAL PRIMARY KEY,
+                            company_id INTEGER NOT NULL REFERENCES company(id),
+                            service VARCHAR(50) NOT NULL,
+                            access_token TEXT,
+                            refresh_token_encrypted TEXT,
+                            token_expiry_at TIMESTAMP,
+                            status VARCHAR(20) DEFAULT 'connected',
+                            last_error TEXT,
+                            config_json JSONB,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );"""
+                    ]
+                else:
+                    # SQLITE
+                    results.append("WARNING: Using SQLite fallback.")
+                    queries = [
+                        """CREATE TABLE IF NOT EXISTS drive_folder_template (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            company_id INTEGER NOT NULL REFERENCES company(id),
+                            name VARCHAR(100) NOT NULL,
+                            structure_json TEXT NOT NULL,
+                            is_default BOOLEAN DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );""",
+                         """CREATE TABLE IF NOT EXISTS tenant_integration (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            company_id INTEGER NOT NULL REFERENCES company(id),
+                            service VARCHAR(50) NOT NULL,
+                            access_token TEXT,
+                            refresh_token_encrypted TEXT,
+                            token_expiry_at TIMESTAMP,
+                            status VARCHAR(20) DEFAULT 'connected',
+                            last_error TEXT,
+                            config_json TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );""",
+                        "ALTER TABLE lead ADD COLUMN diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+                        "ALTER TABLE company ADD COLUMN features TEXT DEFAULT '{}';"
+                    ]
+
+                for q in queries:
+                    try:
+                        db.session.execute(text(q))
+                        results.append(f"SUCCESS: {q[:30]}...")
+                    except Exception as e:
+                        msg = str(e).lower()
+                        if "already exists" in msg or "duplicate column" in msg:
+                            results.append(f"SKIPPED (Exists): {q[:30]}...")
+                        else:
+                            results.append(f"ERROR: {q[:30]}... -> {str(e)}")
+                
+                try:
+                    db.session.commit()
+                    results.append("FINAL COMMIT: Success")
+                except Exception as e:
+                    db.session.rollback()
+                    results.append(f"FINAL COMMIT FAILED: {str(e)}")
+                    
+                return "Migration finished.<br><pre>" + "\n".join(results) + "</pre>"
+            except Exception as e:
+                return f"FATAL ERROR: {str(e)}", 200
+
         # --- REGISTER BLUEPRINTS ---
             # --- REGISTER BLUEPRINTS ---
         try:
