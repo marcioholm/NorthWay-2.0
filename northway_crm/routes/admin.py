@@ -415,7 +415,7 @@ def run_initial_migrations():
     from models import db
     from sqlalchemy import text
     
-    # 1. Ensure all models are created (especially FormSubmission, FormInstance, LibraryTemplate)
+    # 1. Ensure all models are created (especially FormSubmission, FormInstance, LibraryTemplate, DriveFolderTemplate, TenantIntegration)
     try:
         db.create_all()
         results = ["SUCCESS: db.create_all() executed (checks for table existence)"]
@@ -449,7 +449,16 @@ def run_initial_migrations():
         "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
         
         # Task table
-        "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);"
+        "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+        
+        # Company Features
+        "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSON DEFAULT '{}';",
+        
+        # Drive Folder Templates (Ensure table exists - covered by db.create_all but good to be explicit just in case)
+        # Note: If DriveFolderTemplate is new, db.create_all() above handles it.
+        # But we can add columns if we modified it.
+        
+        # Ensure TenantIntegration table exists (covered by db.create_all)
     ]
     
     for q in queries:
