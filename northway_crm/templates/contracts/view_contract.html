@@ -246,24 +246,22 @@
             display: none !important;
         }
 
-        /* View-specific UI */
-        #layout-wrapper>div.fixed,
-        /* The top bar with buttons */
-        #cancelModal,
-        #scroll-container>p.fixed {
-            /* Bottom right hint */
+        /* View-specific UI: Hide everything in layout-wrapper except the scroll container */
+        #layout-wrapper>*:not(#scroll-container) {
+            display: none !important;
+        }
+
+        /* Also hide the "Visualizar Impressão" badge */
+        #scroll-container>p {
             display: none !important;
         }
 
         /* 2. Unwrap Structural Parents */
-        /* Target the chain of containers from body to our content */
         html,
         body,
         body>div,
-        /* The flex wrapper in base.html */
         main,
         main>div,
-        /* The scroll wrapper in base.html */
         #layout-wrapper,
         #scroll-container {
             height: auto !important;
@@ -273,8 +271,8 @@
             background: white !important;
             overflow: visible !important;
             display: block !important;
-            position: static !important;
-            transform: none !important;
+            position: relative !important;
+            /* Changed from static to relative */
         }
 
         /* 3. Ensure Pages Container Flows Naturally */
@@ -289,25 +287,26 @@
         /* 4. Strict A4 Page Definition */
         .a4-page {
             width: 210mm !important;
-            /* Allow height to be determined by content if needed, but min-height to push pages */
-            min-height: 297mm !important;
-            height: auto !important;
+            height: 297mm !important;
+            /* Keep strict height for pagination accuracy */
             background: white !important;
-            margin: 0 auto !important;
+            margin: 0 !important;
             padding: 0 !important;
+            /* Padding is handled by .a4-page non-print styles or internal content */
             box-shadow: none !important;
             page-break-after: always;
             break-after: page;
-            /* overflow: visible allows annexes or extra content to show even if strict height is exceeded 
-               BUT we need to be careful of spilling. JS manages pagination, so strict height is usually safer 
-               unless the JS missed something. Let's try visible to catch the annexes. */
-            overflow: visible !important;
+            overflow: hidden !important;
             position: relative !important;
+            border: none !important;
         }
 
         .a4-page:last-child {
             page-break-after: auto;
             break-after: auto;
+            height: auto !important;
+            /* Allow last page to be shorter to avoid blank page after it */
+            min-height: 0 !important;
         }
 
         /* 5. Ensure Content */
@@ -315,6 +314,8 @@
             visibility: visible !important;
             color: black !important;
             height: auto !important;
+            padding: 0 !important;
+            /* Remove internal padding for print to let @page margin handle it? No, keep it consistent with view */
         }
     }
 </style>
