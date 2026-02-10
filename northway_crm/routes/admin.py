@@ -416,15 +416,39 @@ def run_initial_migrations():
         from models import db
         from sqlalchemy import text
         from flask import current_app
+        import time
         
+        action = request.args.get('action', 'status')
         results = []
         
-        # Avoid accessing db.engine.dialect.name if possible to prevent connection hang
+        # 1. DIAGNOSTICS
         db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
         is_postgres = 'postgres' in db_uri or 'psycopg' in db_uri
+        sanitized_uri = db_uri.split('@')[-1] if '@' in db_uri else 'sqlite_local'
         
-        results.append(f"INFO: Detected DB Type via Config: {'Postgres' if is_postgres else 'SQLite/Other'}")
+        results.append(f"<b>--- DIAGNOSTICS ---</b>")
+        results.append(f"DB config: {sanitized_uri}")
+        results.append(f"Detected Type: {'Postgres' if is_postgres else 'SQLite/Other'}")
         
+        # Test Connection Time
+        start_time = time.time()
+        try:
+            db.session.execute(text("SELECT 1"))
+            elapsed = time.time() - start_time
+            results.append(f"Connection Test: SUCCESS ({elapsed:.4f}s)")
+        except Exception as conn_e:
+            results.append(f"Connection Test: FAILED ({str(conn_e)})")
+            return f"DB Connection Failed: {str(conn_e)}<br><pre>" + "\n".join(results) + "</pre>", 500
+
+        if action == 'status':
+            results.append("<br><b>--- INSTRUCTIONS ---</b>")
+            results.append("Database connection is working.")
+            results.append(f"To run the migration, add <b>?action=execute</b> to the URL.")
+            results.append(f"<a href='{url_for('admin.run_initial_migrations', action='execute')}'>Click here to RUN MIGRATION</a>")
+            return "<br>".join(results)
+
+        # 2. EXECUTION
+        results.append(f"<br><b>--- MIGRATION EXECUTION ---</b>")
         queries = []
         
         if is_postgres:
@@ -480,12 +504,8 @@ def run_initial_migrations():
                 );"""
             ]
         else:
-            # SQLITE (Simple Fallback - Warning: ALTER TABLE ADD COLUMN IF NOT EXISTS not supported in all sqlite versions directly same as PG)
-            # SQLite ignores 'IF NOT EXISTS' in add column in older versions, but 'ADD COLUMN' works. 
-            # We will use simple ADD COLUMN and catch 'duplicate column' errors silently.
-            results.append("WARNING: Using SQLite fallback mode. Some operations might complain if columns exist.")
-            results.append("WARNING: Using SQLite fallback mode. Some operations might complain if columns exist.")
-            
+            # SQLITE (Simple Fallback)
+            results.append("WARNING: Using SQLite fallback queries.")
             queries = [
                 """CREATE TABLE IF NOT EXISTS drive_folder_template (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -509,10 +529,8 @@ def run_initial_migrations():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );""",
-                # Try adding columns one by one
                 "ALTER TABLE lead ADD COLUMN diagnostic_status VARCHAR(20) DEFAULT 'pending';",
                 "ALTER TABLE company ADD COLUMN features TEXT DEFAULT '{}';"
-                # Add others if critical, but these are the main ones crashing the app right now
             ]
 
         for q in queries:
@@ -520,7 +538,7 @@ def run_initial_migrations():
                 db.session.execute(text(q))
                 results.append(f"SUCCESS: {q[:30]}...")
             except Exception as e:
-                # Ignore "already exists" errors (Postgres code 42701, or generic text)
+                # Ignore "already exists" errors
                 msg = str(e).lower()
                 if "already exists" in msg or "duplicate column" in msg:
                     results.append(f"SKIPPED (Exists): {q[:30]}...")
@@ -537,4 +555,4 @@ def run_initial_migrations():
         return "Migration finished.<br><pre>" + "\n".join(results) + "</pre>"
         
     except Exception as fatal_e:
-        return f"FATAL ERROR IN MIGRATION: {str(fatal_e)}"
+        return f"FATAL ERROR IN MIGRATION ROUTE: {str(fatal_e)}", 200 # Return 200 to see error on screen
