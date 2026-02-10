@@ -232,24 +232,38 @@
 
     @media print {
 
-        /* 1. Aggressively hide ALL potential global UI elements */
-        body>*:not(#layout-wrapper),
+        /* 1. Hide Specific UI Elements */
+        /* Global UI from base.html */
+        aside,
+        header,
+        nav,
+        footer,
         #splash-screen,
         #mobile-sidebar-overlay,
         #toast-container,
-        nav,
-        aside,
-        header,
-        footer,
         .no-print,
-        .print\:hidden,
-        .fixed {
+        .print\:hidden {
             display: none !important;
         }
 
-        /* 2. Reset Layout Wrapper to be a transparent pass-through */
+        /* View-specific UI */
+        #layout-wrapper>div.fixed,
+        /* The top bar with buttons */
+        #cancelModal,
+        #scroll-container>p.fixed {
+            /* Bottom right hint */
+            display: none !important;
+        }
+
+        /* 2. Unwrap Structural Parents */
+        /* Target the chain of containers from body to our content */
         html,
         body,
+        body>div,
+        /* The flex wrapper in base.html */
+        main,
+        main>div,
+        /* The scroll wrapper in base.html */
         #layout-wrapper,
         #scroll-container {
             height: auto !important;
@@ -260,31 +274,35 @@
             overflow: visible !important;
             display: block !important;
             position: static !important;
+            transform: none !important;
         }
 
-        /* 3. Ensure Pages Container is the ONLY visible block */
+        /* 3. Ensure Pages Container Flows Naturally */
         #pages-container {
             display: block !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+            overflow: visible !important;
         }
 
         /* 4. Strict A4 Page Definition */
         .a4-page {
             width: 210mm !important;
-            height: 297mm !important;
-            /* Strict height to match JS pagination */
+            /* Allow height to be determined by content if needed, but min-height to push pages */
+            min-height: 297mm !important;
+            height: auto !important;
             background: white !important;
             margin: 0 auto !important;
             padding: 0 !important;
             box-shadow: none !important;
             page-break-after: always;
             break-after: page;
-            overflow: hidden !important;
+            /* overflow: visible allows annexes or extra content to show even if strict height is exceeded 
+               BUT we need to be careful of spilling. JS manages pagination, so strict height is usually safer 
+               unless the JS missed something. Let's try visible to catch the annexes. */
+            overflow: visible !important;
             position: relative !important;
-            left: 0 !important;
-            top: 0 !important;
         }
 
         .a4-page:last-child {
@@ -292,7 +310,7 @@
             break-after: auto;
         }
 
-        /* 5. Ensure Content Visibility */
+        /* 5. Ensure Content */
         .a4-content {
             visibility: visible !important;
             color: black !important;
