@@ -550,20 +550,27 @@ def company_edit(company_id):
         company.max_leads = int(request.form['max_leads'])
         company.document = request.form.get('document')
         
-        # Features Handling
-        feats = company.features or {}
-        if isinstance(feats, str):
-            import json
-            try: feats = json.loads(feats)
-            except: feats = {}
+        # Features Handling - Force reassignment for SQLAlchemy tracking
+        new_feats = {}
+        # Preservar chaves existentes que não estão no form
+        if company.features:
+            if isinstance(company.features, str):
+                import json
+                try: new_feats = json.loads(company.features)
+                except: new_feats = {}
+            else:
+                new_feats = dict(company.features)
             
-        feats['whatsapp'] = request.form.get('feature_whatsapp') == 'on'
-        feats['prospecting'] = request.form.get('feature_prospecting') == 'on'
-        feats['google_drive'] = request.form.get('feature_drive') == 'on'
-        feats['cnpja'] = request.form.get('feature_cnpja') == 'on'
-        feats['asaas'] = request.form.get('feature_asaas') == 'on'
-        feats['compass'] = request.form.get('feature_compass') == 'on'
-        company.features = feats
+        new_feats['whatsapp'] = request.form.get('feature_whatsapp') == 'on'
+        new_feats['prospecting'] = request.form.get('feature_prospecting') == 'on'
+        new_feats['google_drive'] = request.form.get('feature_drive') == 'on'
+        new_feats['drive'] = request.form.get('feature_drive') == 'on' # Alias de compatibilidade
+        new_feats['cnpja'] = request.form.get('feature_cnpja') == 'on'
+        new_feats['asaas'] = request.form.get('feature_asaas') == 'on'
+        new_feats['compass'] = request.form.get('feature_compass') == 'on'
+        
+        company.features = new_feats
+        db.session.add(company) # Mark as dirty explicitly
         
         try:
             db.session.commit()
