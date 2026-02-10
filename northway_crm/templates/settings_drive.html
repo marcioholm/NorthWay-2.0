@@ -212,10 +212,18 @@
         let text = '';
         if (!json) return text;
 
-        // Handle list of dicts
-        for (let item of json) {
-            text += '    '.repeat(level) + item.name + '\n';
-            if (item.children && item.children.length > 0) {
+        // Se o JSON for uma string (caso venha encodado), tenta parsear
+        let data = json;
+        if (typeof json === 'string') {
+            try { data = JSON.parse(json); } catch (e) { return json; }
+        }
+
+        if (!Array.isArray(data)) return text;
+
+        for (let item of data) {
+            const name = typeof item === 'string' ? item : (item.name || '');
+            text += '    '.repeat(level) + name + '\n';
+            if (item.children && Array.isArray(item.children)) {
                 text += jsonToText(item.children, level + 1);
             }
         }
@@ -225,7 +233,8 @@
     // Render preview in cards
     document.querySelectorAll('.folder-structure-preview').forEach(el => {
         try {
-            const data = JSON.parse(el.dataset.json);
+            const raw = el.dataset.json;
+            const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
             el.textContent = jsonToText(data);
         } catch (e) { console.error('Preview error', e); }
     });
