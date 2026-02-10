@@ -4,6 +4,37 @@
 <div class="max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Configurações</h1>
 
+    <!-- Google Drive Integration Card -->
+    {% if company.has_feature('google_drive') %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
+                        alt="G" class="w-5 h-5">
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">Google Drive</h2>
+                    <p class="text-xs text-gray-500">Gestão de arquivos e pastas automáticas</p>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('integrations_bp.drive_settings_page') }}"
+                    class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg font-bold uppercase tracking-wide hover:bg-blue-700 transition-colors shadow-sm">
+                    Configurar
+                </a>
+            </div>
+        </div>
+        <div class="p-6 bg-gray-50/50">
+            <p class="text-sm text-gray-600">
+                Conecte seu Google Drive para que o NorthWay crie automaticamente pastas organizadas para cada novo
+                cliente
+                e centralize os arquivos no CRM.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Google Maps Integration Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div class="p-6 border-b border-gray-200 flex justify-between items-center">
@@ -123,633 +154,634 @@
             {% endif %}
         </div>
     </div>
+</div>
 
-    <!-- WhatsApp Z-API Integration Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 relative overflow-hidden">
+<!-- WhatsApp Z-API Integration Card -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 relative overflow-hidden">
 
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
-                    <i data-lucide="message-circle" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900">WhatsApp (Z-API)</h2>
-                    <p class="text-xs text-gray-500">Envio e recebimento de mensagens</p>
-                </div>
+    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
             </div>
             <div>
-                {% set zapi = integrations_map.get('z_api') %}
-                {% if zapi and zapi.is_active %}
-                <span
-                    class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Conectado</span>
-                {% else %}
-                <span
-                    class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Desconectado</span>
-                {% endif %}
+                <h2 class="text-lg font-bold text-gray-900">WhatsApp (Z-API)</h2>
+                <p class="text-xs text-gray-500">Envio e recebimento de mensagens</p>
             </div>
         </div>
-
-        <div class="p-6">
-            <!-- Z-API Promo Banner (Partnership) -->
-            <div
-                class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 to-green-800 p-6 text-white shadow-md border border-green-500/20">
-                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div class="max-w-xl">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span
-                                class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Parceria
-                                Oficial</span>
-                            <span
-                                class="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Desconto
-                                Exclusivo</span>
-                        </div>
-                        <h3 class="text-xl font-black mb-2 leading-tight">Potencialize seu WhatsApp com Desconto! ⚡</h3>
-                        <p class="text-sm text-green-50 mb-0 leading-relaxed">
-                            Ainda não tem uma instância Z-API ou quer reduzir seus custos mensais?
-                            Fale com nosso suporte agora e consiga <strong>condições especiais e descontos
-                                exclusivos</strong> na sua assinatura.
-                        </p>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <a href="https://wa.me/5542999896358" target="_blank"
-                            class="inline-flex items-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-lg font-black text-sm hover:bg-green-50 transition-all shadow-lg hover:scale-[1.05] active:scale-95">
-                            <i data-lucide="message-square" class="w-4 h-4"></i>
-                            FALAR COM SUPORTE
-                        </a>
-                    </div>
-                </div>
-                <!-- Abstract BG Decoration -->
-                <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
-                <div class="absolute -left-4 -bottom-4 opacity-10">
-                    <i data-lucide="zap" class="w-32 h-32 text-white"></i>
-                </div>
-            </div>
-
+        <div>
+            {% set zapi = integrations_map.get('z_api') %}
             {% if zapi and zapi.is_active %}
-            <!-- Active State -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase mb-1">Instance ID</p>
-                    <p class="text-sm font-mono text-gray-700 text-ellipsis overflow-hidden">{{ (zapi.config_json |
-                        from_json).get('instance_id', 'N/A') }}</p>
-                </div>
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase mb-1">Token</p>
-                    <p
-                        class="text-sm font-mono text-gray-700 blur-sm hover:blur-none transition-all cursor-pointer truncate">
-                        {{ zapi.api_key }}</p>
-                </div>
-            </div>
-
-            <div class="mt-6 flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
-                <div class="flex-1">
-                    <h3 class="text-sm font-bold text-gray-900">Webhook URL</h3>
-                    <p class="text-xs text-gray-500 mb-2">Configure esta URL na Z-API para receber mensagens.</p>
-                    <div class="flex items-center gap-2">
-                        <code
-                            class="bg-white px-2 py-1 rounded border border-gray-200 text-xs font-mono text-gray-600 w-full truncate"
-                            id="webhookUrl">
-                                     {{ request.url_root }}api/webhooks/zapi/{{ company.id }}
-                                 </code>
-                        <button
-                            onclick="navigator.clipboard.writeText(document.getElementById('webhookUrl').innerText.trim())"
-                            class="text-gray-400 hover:text-gray-600">
-                            <i data-lucide="copy" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-end gap-2">
-                <div class="flex items-center gap-3">
-                    <span id="whatsapp-status" class="text-sm font-bold"></span>
-                    <span id="whatsapp-phone-display"
-                        class="hidden bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold font-mono"></span>
-
-                    <button type="button" onclick="testZapiConnection(this)"
-                        class="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
-                        <i data-lucide="wifi" class="w-4 h-4"></i> Testar Conexão
-                    </button>
-                </div>
-
-                <form action="{{ url_for('admin.delete_integration', service='z_api') }}" method="POST"
-                    onsubmit="return confirm('Isso irá interromper o funcionamento do WhatsApp. Tem certeza?')">
-                    <button type="submit"
-                        class="text-red-600 hover:text-red-700 text-sm font-medium px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
-                        Desconectar
-                    </button>
-                </form>
-            </div>
-
-            <!-- Health & Automation -->
-            <div class="mt-6 border-t border-gray-100 pt-6">
-                <h4 class="text-xs font-bold text-gray-900 uppercase mb-3 flex items-center gap-2">
-                    <i data-lucide="activity" class="w-4 h-4"></i> Status da Integração
-                </h4>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Last Sync -->
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <span class="text-xs text-gray-500 block mb-1">Última Sincronização</span>
-                        {% if zapi.last_sync_at %}
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                            <span class="text-sm font-mono font-bold text-gray-800">{{
-                                zapi.last_sync_at.strftime('%d/%m/%Y %H:%M') }}</span>
-                        </div>
-                        {% else %}
-                        <span class="text-sm text-gray-400 italic">Nunca sincronizado</span>
-                        {% endif %}
-                    </div>
-
-                    <!-- Webhook Automation -->
-                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
-                        onclick="setupZapiWebhook()">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="text-xs font-bold text-blue-800 block mb-1">Configuração Automática</span>
-                                <p class="text-[10px] text-blue-600 leading-tight">Configura as URLs de webhook na Z-API
-                                    automaticamente.</p>
-                            </div>
-                            <i data-lucide="wand" class="w-4 h-4 text-blue-500"></i>
-                        </div>
-                    </div>
-                </div>
-
-                {% if zapi.last_error %}
-                <div
-                    class="mt-3 bg-red-50 text-red-800 p-3 rounded-lg text-xs border border-red-100 flex gap-2 items-start">
-                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
-                    <div>
-                        <strong class="block mb-0.5">Erro Recente:</strong>
-                        {{ zapi.last_error }}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
+            <span
+                class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Conectado</span>
             {% else %}
-            <!-- Setup Form -->
-            <form action="{{ url_for('whatsapp.configure') }}" method="POST" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Link da API (Opcional)</label>
-                    <input type="text" name="api_url" value="{{ zapi_config.api_url or 'https://api.z-api.io' }}"
-                        placeholder="https://api.z-api.io"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-50 text-sm">
-                    <p class="text-xs text-gray-500 mt-1">Deixe padrão ou altere se utilizar uma instância privada.
-                    </p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Instance ID</label>
-                        <input type="text" name="instance_id" value="{{ zapi_config.instance_id or '' }}" required
-                            placeholder="3B2D..."
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Z-API Token (Security
-                            Token)</label>
-                        <input type="password" name="token" required placeholder="Security Token da URL"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Client Token (Opcional)</label>
-                        <input type="password" name="client_token" value="{{ zapi_config.client_token or '' }}"
-                            placeholder="Client Token (Header)"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
-                        <p class="text-[10px] text-gray-500 mt-1">Preencha apenas se "Client Token" estiver ativado
-                            na Z-API.</p>
-                    </div>
-                </div>
-                <div class="flex justify-end">
-                    <button type="submit"
-                        class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-sm flex items-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> Salvar e Conectar
-                    </button>
-                </div>
-            </form>
-            <div class="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-xs">
-                <p class="font-bold mb-1">Passo a passo:</p>
-                <ol class="list-decimal pl-4 space-y-1">
-                    <li>Crie uma conta na Z-API.</li>
-                    <li>Crie uma instância e copie o ID e Token.</li>
-                    <li>Cole acima e salve.</li>
-                    <li>Use o botão "Testar Conexão" para ler o QR Code se necessário.</li>
-                </ol>
-            </div>
+            <span
+                class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Desconectado</span>
             {% endif %}
         </div>
     </div>
 
-    <!-- WhatsApp Extension (ZapWay) Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center">
-                    <i data-lucide="puzzle" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900">ZapWay CRM (Extension)</h2>
-                    <p class="text-xs text-gray-500">Ferramenta para WhatsApp Web</p>
-                </div>
-            </div>
-            <div>
-                <span
-                    class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Ativo</span>
-            </div>
-        </div>
-
-        <div class="p-6">
-            <!-- ZapWay Hero Banner -->
-            <div class="mb-8 relative overflow-hidden rounded-xl shadow-lg group">
-                <img src="{{ url_for('static', filename='images/zapway_banner.png') }}"
-                    class="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
-                    alt="ZapWay CRM">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                <div class="absolute bottom-6 left-6 text-white">
-                    <h3 class="text-2xl font-black mb-1">CRM no WhatsApp 🚀</h3>
-                    <p class="text-sm text-gray-200 font-medium opacity-90">Agende, venda e organize sem sair do chat.
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex flex-col md:flex-row gap-6 items-center">
-                <div class="flex-1">
-                    <h3 class="text-base font-bold text-gray-900 mb-2">Instalação</h3>
-                    <div class="space-y-2">
-                        <p class="text-xs text-gray-500 flex items-center gap-2">
-                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Extraia o arquivo ZIP.
-                        </p>
-                        <p class="text-xs text-gray-500 flex items-center gap-2">
-                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Acesse
-                            <b>chrome://extensions</b>.
-                        </p>
-                        <p class="text-xs text-gray-500 flex items-center gap-2">
-                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Ative o "Modo
-                            Desenvolvedor".
-                        </p>
-                        <p class="text-xs text-gray-500 flex items-center gap-2">
-                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Clique em "Carregar sem
-                            compactação".
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex-shrink-0 flex flex-col gap-2 w-full md:w-auto">
-                    <a href="{{ url_for('static', filename='downloads/zapway_extension_v2.4.zip') }}" download
-                        class="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-3 rounded-lg font-black text-sm hover:bg-emerald-700 transition-all shadow-lg hover:shadow-emerald-500/30 w-full md:w-auto transform hover:-translate-y-1">
-                        <i data-lucide="download" class="w-4 h-4"></i>
-                        BAIXAR ZAPWAY (v2.4)
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- NorthWay Compass Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
-                    <i data-lucide="compass" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900">NorthWay Compass</h2>
-                    <p class="text-xs text-gray-500">Inteligência de Vendas (Maps & Insta)</p>
-                </div>
-            </div>
-            <div>
-                <span
-                    class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Beta</span>
-            </div>
-        </div>
-
-        <div class="p-6">
-            <!-- Compass Hero Banner -->
-            <div class="mb-8 relative overflow-hidden rounded-xl shadow-lg group">
-                <img src="{{ url_for('static', filename='images/compass_banner.png') }}"
-                    class="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
-                    alt="NorthWay Compass">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                <div class="absolute bottom-6 left-6 text-white">
-                    <h3 class="text-2xl font-black mb-1">Domine seu Território 🗺️</h3>
-                    <p class="text-sm text-gray-200 font-medium opacity-90">Análise de concorrentes e extração de leads
-                        automática.</p>
-                </div>
-            </div>
-
-            <div class="flex flex-col md:flex-row gap-6 items-center">
-                <div class="flex-1">
-                    <p class="text-sm text-gray-600 mb-4">
-                        O Compass é nossa ferramenta de inteligência externa. Ele varre o Google Maps e Instagram para
-                        encontrar leads, analisar concorrentes (ROI & Benchmarking) e identificar oportunidades ocultas.
-                    </p>
-                    <div class="flex gap-2">
-                        <span
-                            class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">Google
-                            Maps</span>
-                        <span
-                            class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">Instagram</span>
-                        <span
-                            class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">ROI
-                            Calculator</span>
-                    </div>
-                </div>
-
-                <div class="flex-shrink-0 flex flex-col gap-2 w-full md:w-auto">
-                    <a href="{{ url_for('static', filename='downloads/northway_compass.zip') }}" download
-                        class="inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-lg font-black text-sm hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/30 w-full md:w-auto transform hover:-translate-y-1">
-                        <i data-lucide="download" class="w-4 h-4"></i>
-                        BAIXAR COMPASS (v1.0)
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CNPJA Integration Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center">
-                    <i data-lucide="building-2" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900">CNPJA (Enriquecimento)</h2>
-                    <p class="text-xs text-gray-500">Dados corporativos e enriquecimento de leads</p>
-                </div>
-            </div>
-            <div>
-                {% set cnpja = integrations_map.get('cnpja') %}
-                {% if cnpja and cnpja.is_active %}
-                <span
-                    class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Ativo</span>
-                {% else %}
-                <span
-                    class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Inativo</span>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="p-6">
-            <!-- CNPJA Promo Banner (Enrichment) -->
-            <div
-                class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-700 to-indigo-900 p-6 text-white shadow-md border border-purple-500/20">
-                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div class="max-w-xl">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span
-                                class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Inteligência
-                                de Dados</span>
-                            <span
-                                class="bg-purple-400 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Enriquecimento
-                                Automático</span>
-                        </div>
-                        <h3 class="text-xl font-black mb-2 leading-tight">Dados Precisos em Segundos 🏢</h3>
-                        <p class="text-sm text-purple-50 mb-0 leading-relaxed">
-                            Economize horas de preenchimento manual. Capture Razão Social, Sócios, Capital Social e
-                            contatos direto da Receita Federal.
-                            <br><span class="text-xs opacity-75">* Esta é uma API externa e possui custo por consulta
-                                realizada.</span>
-                        </p>
-                    </div>
-                    <div class="flex-shrink-0">
-                        <a href="https://cnpja.com.br" target="_blank"
-                            class="inline-flex items-center gap-2 bg-white text-purple-700 px-6 py-3 rounded-lg font-black text-sm hover:bg-purple-50 transition-all shadow-lg hover:scale-[1.05] active:scale-95">
-                            <i data-lucide="external-link" class="w-4 h-4"></i>
-                            VER PLANOS CNPJA
-                        </a>
-                    </div>
-                </div>
-                <!-- Abstract BG Decoration -->
-                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-                <div class="absolute right-6 top-6 opacity-10">
-                    <i data-lucide="database" class="w-24 h-24 text-white"></i>
-                </div>
-            </div>
-
-            {% if cnpja and cnpja.is_active %}
-            <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div class="truncate mr-4">
-                    <p class="text-xs font-bold text-gray-400 uppercase mb-1">API Key Configurada</p>
-                    <p class="text-sm font-mono text-gray-700 truncate max-w-md">
-                        {{ cnpja.api_key[:8] }}*************************
-                    </p>
-                </div>
-                <form action="{{ url_for('admin.delete_integration', service='cnpja') }}" method="POST"
-                    onsubmit="return confirm('Tem certeza? O enriquecimento de leads vai parar de funcionar.')">
-                    <button type="submit"
-                        class="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-2 hover:bg-red-50 px-3 py-2 rounded transition-colors">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i> Remover
-                    </button>
-                </form>
-            </div>
-            <p class="text-xs text-gray-400 mt-2">Para alterar a chave, remova a atual e adicione uma nova.</p>
-            {% else %}
-            <form action="{{ url_for('admin.settings_integrations') }}" method="POST">
-                <input type="hidden" name="service" value="cnpja">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">API Key (CNPJA)</label>
-                        <input type="password" name="api_key" required placeholder="Insira seu token CNPJA..."
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 font-mono text-sm">
-                        <p class="text-xs text-gray-500 mt-1">
-                            Obtenha sua chave em <a href="https://cnpja.com.br" target="_blank"
-                                class="text-purple-600 hover:underline">cnpja.com.br</a>
-                        </p>
-                    </div>
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            class="bg-gray-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-black transition-colors shadow-sm">
-                            Salvar Integração
-                        </button>
-                    </div>
-                </div>
-            </form>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- ASAAS Integration Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
-                    <i data-lucide="credit-card" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900">ASAAS (Pagamentos)</h2>
-                    <p class="text-xs text-gray-500">Cobranças automáticas via Boleto/Pix</p>
-                </div>
-            </div>
-            <div>
-                {% set asaas = integrations_map.get('asaas') %}
-                {% if asaas and asaas.is_active %}
-                <span
-                    class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Conectado</span>
-                {% else %}
-                <span
-                    class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Desconectado</span>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="p-6">
-            <!-- Asaas Promo Banner (Affiliate) -->
-            <div
-                class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 p-6 text-white shadow-md">
-                <div class="relative z-10">
+    <div class="p-6">
+        <!-- Z-API Promo Banner (Partnership) -->
+        <div
+            class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 to-green-800 p-6 text-white shadow-md border border-green-500/20">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="max-w-xl">
                     <div class="flex items-center gap-2 mb-2">
                         <span
-                            class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Oportunidade</span>
+                            class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Parceria
+                            Oficial</span>
                         <span
-                            class="bg-green-400 text-green-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">+
-                            R$ 50,00</span>
+                            class="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Desconto
+                            Exclusivo</span>
                     </div>
-                    <h3 class="text-xl font-black mb-2 leading-tight">Automatize suas cobranças com o Asaas 🚀</h3>
-                    <p class="text-sm text-blue-100 mb-6 max-w-lg leading-relaxed">
-                        Crie sua conta pelo nosso link e configure boletos, Pix e cartão em segundos.
-                        <strong>Ganhe R$ 50,00</strong> de desconto nas suas primeiras taxas ao ativar sua conta pelo
-                        botão abaixo.
+                    <h3 class="text-xl font-black mb-2 leading-tight">Potencialize seu WhatsApp com Desconto! ⚡</h3>
+                    <p class="text-sm text-green-50 mb-0 leading-relaxed">
+                        Ainda não tem uma instância Z-API ou quer reduzir seus custos mensais?
+                        Fale com nosso suporte agora e consiga <strong>condições especiais e descontos
+                            exclusivos</strong> na sua assinatura.
                     </p>
-                    <a href="https://www.asaas.com/r/ec2b4375-159e-4203-81f4-93750c836d73" target="_blank"
-                        class="inline-flex items-center gap-2 bg-white text-blue-700 px-6 py-3 rounded-lg font-black text-sm hover:bg-blue-50 transition-all shadow-lg hover:scale-[1.02] active:scale-95">
-                        <i data-lucide="external-link" class="w-4 h-4"></i>
-                        CRIAR MINHA CONTA AGORA
+                </div>
+                <div class="flex-shrink-0">
+                    <a href="https://wa.me/5542999896358" target="_blank"
+                        class="inline-flex items-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-lg font-black text-sm hover:bg-green-50 transition-all shadow-lg hover:scale-[1.05] active:scale-95">
+                        <i data-lucide="message-square" class="w-4 h-4"></i>
+                        FALAR COM SUPORTE
                     </a>
                 </div>
-                <!-- Abstract BG Decoration -->
-                <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
-                <div class="absolute right-4 top-4 opacity-20 transform rotate-12">
-                    <i data-lucide="sparkles" class="w-24 h-24"></i>
-                </div>
             </div>
-
-            {% if asaas and asaas.is_active %}
-            <!-- Active State -->
-            <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase mb-1">API Key</p>
-                    <p class="text-sm font-mono text-gray-700 text-ellipsis overflow-hidden">
-                        {{ asaas.api_key[:8] }}*************************
-                    </p>
-                    <p class="text-xs text-gray-500 mt-1">Ambiente: <span class="font-bold">{{ (asaas.config_json |
-                            from_json).get('environment', 'sandbox') | title }}</span></p>
-                </div>
-                <div class="flex gap-2">
-                    <button data-key="{{ asaas.api_key }}"
-                        data-env="{{ (asaas.config_json | from_json).get('environment', 'sandbox') }}"
-                        onclick="testAsaas(this.dataset.key, this.dataset.env)"
-                        class="text-blue-600 hover:text-blue-700 text-sm font-medium border border-blue-200 px-3 py-1 rounded hover:bg-blue-50 transition-colors">
-                        Testar
-                    </button>
-                    <!-- Reuse delete route or add specific disconnect if needed, for MVP using main delete -->
-                    <form action="{{ url_for('admin.delete_integration', service='asaas') }}" method="POST"
-                        onsubmit="return confirm('As cobranças automáticas pararão. Tem certeza?')">
-                        <button type="submit"
-                            class="text-red-600 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1 rounded hover:bg-red-50 transition-colors">
-                            Desconectar
-                        </button>
-                    </form>
-                </div>
+            <!-- Abstract BG Decoration -->
+            <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+            <div class="absolute -left-4 -bottom-4 opacity-10">
+                <i data-lucide="zap" class="w-32 h-32 text-white"></i>
             </div>
+        </div>
 
-            <div class="bg-gray-50 p-4 rounded-lg">
-                <h3 class="text-sm font-bold text-gray-900 mb-1">Webhook URL</h3>
+        {% if zapi and zapi.is_active %}
+        <!-- Active State -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Instance ID</p>
+                <p class="text-sm font-mono text-gray-700 text-ellipsis overflow-hidden">{{ (zapi.config_json |
+                    from_json).get('instance_id', 'N/A') }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Token</p>
+                <p
+                    class="text-sm font-mono text-gray-700 blur-sm hover:blur-none transition-all cursor-pointer truncate">
+                    {{ zapi.api_key }}</p>
+            </div>
+        </div>
+
+        <div class="mt-6 flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
+            <div class="flex-1">
+                <h3 class="text-sm font-bold text-gray-900">Webhook URL</h3>
+                <p class="text-xs text-gray-500 mb-2">Configure esta URL na Z-API para receber mensagens.</p>
                 <div class="flex items-center gap-2">
                     <code
                         class="bg-white px-2 py-1 rounded border border-gray-200 text-xs font-mono text-gray-600 w-full truncate"
-                        id="asaasWebhookUrl">
-                        {{ request.url_root }}api/webhooks/asaas/{{ company.id }}
-                    </code>
+                        id="webhookUrl">
+                                     {{ request.url_root }}api/webhooks/zapi/{{ company.id }}
+                                 </code>
                     <button
-                        onclick="navigator.clipboard.writeText(document.getElementById('asaasWebhookUrl').innerText.trim())"
+                        onclick="navigator.clipboard.writeText(document.getElementById('webhookUrl').innerText.trim())"
                         class="text-gray-400 hover:text-gray-600">
                         <i data-lucide="copy" class="w-4 h-4"></i>
                     </button>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">Configure na área de Integrações do ASAAS para receber status de
-                    pagamentos.</p>
+            </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2">
+            <div class="flex items-center gap-3">
+                <span id="whatsapp-status" class="text-sm font-bold"></span>
+                <span id="whatsapp-phone-display"
+                    class="hidden bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold font-mono"></span>
+
+                <button type="button" onclick="testZapiConnection(this)"
+                    class="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    <i data-lucide="wifi" class="w-4 h-4"></i> Testar Conexão
+                </button>
             </div>
 
-            <!-- Health & Automation -->
-            <div class="mt-6 border-t border-gray-100 pt-6">
-                <h4 class="text-xs font-bold text-gray-900 uppercase mb-3 flex items-center gap-2">
-                    <i data-lucide="activity" class="w-4 h-4"></i> Status da Integração
-                </h4>
+            <form action="{{ url_for('admin.delete_integration', service='z_api') }}" method="POST"
+                onsubmit="return confirm('Isso irá interromper o funcionamento do WhatsApp. Tem certeza?')">
+                <button type="submit"
+                    class="text-red-600 hover:text-red-700 text-sm font-medium px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+                    Desconectar
+                </button>
+            </form>
+        </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Last Sync -->
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <span class="text-xs text-gray-500 block mb-1">Última Sincronização</span>
-                        {% if asaas.last_sync_at %}
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                            <span class="text-sm font-mono font-bold text-gray-800">{{
-                                asaas.last_sync_at.strftime('%d/%m/%Y %H:%M') }}</span>
-                        </div>
-                        {% else %}
-                        <span class="text-sm text-gray-400 italic">Nunca sincronizado</span>
-                        {% endif %}
-                    </div>
+        <!-- Health & Automation -->
+        <div class="mt-6 border-t border-gray-100 pt-6">
+            <h4 class="text-xs font-bold text-gray-900 uppercase mb-3 flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4"></i> Status da Integração
+            </h4>
 
-                    <!-- Webhook Automation -->
-                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
-                        onclick="setupAsaasWebhook()">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="text-xs font-bold text-blue-800 block mb-1">Auto-Configurar Webhook</span>
-                                <p class="text-[10px] text-blue-600 leading-tight">Define a URL do webhook no painel do
-                                    Asaas via API.</p>
-                            </div>
-                            <i data-lucide="wand" class="w-4 h-4 text-blue-500"></i>
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Last Sync -->
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <span class="text-xs text-gray-500 block mb-1">Última Sincronização</span>
+                    {% if zapi.last_sync_at %}
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span class="text-sm font-mono font-bold text-gray-800">{{
+                            zapi.last_sync_at.strftime('%d/%m/%Y %H:%M') }}</span>
                     </div>
+                    {% else %}
+                    <span class="text-sm text-gray-400 italic">Nunca sincronizado</span>
+                    {% endif %}
                 </div>
 
-                {% if asaas.last_error %}
-                <div
-                    class="mt-3 bg-red-50 text-red-800 p-3 rounded-lg text-xs border border-red-100 flex gap-2 items-start">
-                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
-                    <div>
-                        <strong class="block mb-0.5">Erro Recente:</strong>
-                        {{ asaas.last_error }}
+                <!-- Webhook Automation -->
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
+                    onclick="setupZapiWebhook()">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-bold text-blue-800 block mb-1">Configuração Automática</span>
+                            <p class="text-[10px] text-blue-600 leading-tight">Configura as URLs de webhook na Z-API
+                                automaticamente.</p>
+                        </div>
+                        <i data-lucide="wand" class="w-4 h-4 text-blue-500"></i>
                     </div>
                 </div>
-                {% endif %}
             </div>
 
-            {% else %}
-            <!-- Setup Form -->
-            <div class="space-y-4">
+            {% if zapi.last_error %}
+            <div
+                class="mt-3 bg-red-50 text-red-800 p-3 rounded-lg text-xs border border-red-100 flex gap-2 items-start">
+                <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">API Key</label>
-                    <input type="password" id="asaas_api_key" placeholder="$aact_..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono text-sm">
+                    <strong class="block mb-0.5">Erro Recente:</strong>
+                    {{ zapi.last_error }}
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Ambiente</label>
-                    <select id="asaas_env"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm">
-                        <option value="sandbox">Sandbox (Teste)</option>
-                        <option value="production">Produção</option>
-                    </select>
-                </div>
-                <div class="flex justify-between items-center">
-                    <button onclick="testAsaasInput()" class="text-gray-600 hover:text-gray-800 text-sm font-medium">
-                        Testar Conexão
-                    </button>
-                    <button onclick="saveAsaas()"
-                        class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> Salvar Integração
-                    </button>
-                </div>
-                <div id="asaas-feedback" class="hidden p-3 rounded text-sm font-medium"></div>
             </div>
             {% endif %}
         </div>
+
+        {% else %}
+        <!-- Setup Form -->
+        <form action="{{ url_for('whatsapp.configure') }}" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Link da API (Opcional)</label>
+                <input type="text" name="api_url" value="{{ zapi_config.api_url or 'https://api.z-api.io' }}"
+                    placeholder="https://api.z-api.io"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-50 text-sm">
+                <p class="text-xs text-gray-500 mt-1">Deixe padrão ou altere se utilizar uma instância privada.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Instance ID</label>
+                    <input type="text" name="instance_id" value="{{ zapi_config.instance_id or '' }}" required
+                        placeholder="3B2D..."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Z-API Token (Security
+                        Token)</label>
+                    <input type="password" name="token" required placeholder="Security Token da URL"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Client Token (Opcional)</label>
+                    <input type="password" name="client_token" value="{{ zapi_config.client_token or '' }}"
+                        placeholder="Client Token (Header)"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
+                    <p class="text-[10px] text-gray-500 mt-1">Preencha apenas se "Client Token" estiver ativado
+                        na Z-API.</p>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit"
+                    class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-sm flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Salvar e Conectar
+                </button>
+            </div>
+        </form>
+        <div class="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-xs">
+            <p class="font-bold mb-1">Passo a passo:</p>
+            <ol class="list-decimal pl-4 space-y-1">
+                <li>Crie uma conta na Z-API.</li>
+                <li>Crie uma instância e copie o ID e Token.</li>
+                <li>Cole acima e salve.</li>
+                <li>Use o botão "Testar Conexão" para ler o QR Code se necessário.</li>
+            </ol>
+        </div>
+        {% endif %}
     </div>
+</div>
+
+<!-- WhatsApp Extension (ZapWay) Card -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center">
+                <i data-lucide="puzzle" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">ZapWay CRM (Extension)</h2>
+                <p class="text-xs text-gray-500">Ferramenta para WhatsApp Web</p>
+            </div>
+        </div>
+        <div>
+            <span
+                class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Ativo</span>
+        </div>
+    </div>
+
+    <div class="p-6">
+        <!-- ZapWay Hero Banner -->
+        <div class="mb-8 relative overflow-hidden rounded-xl shadow-lg group">
+            <img src="{{ url_for('static', filename='images/zapway_banner.png') }}"
+                class="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
+                alt="ZapWay CRM">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+            <div class="absolute bottom-6 left-6 text-white">
+                <h3 class="text-2xl font-black mb-1">CRM no WhatsApp 🚀</h3>
+                <p class="text-sm text-gray-200 font-medium opacity-90">Agende, venda e organize sem sair do chat.
+                </p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-6 items-center">
+            <div class="flex-1">
+                <h3 class="text-base font-bold text-gray-900 mb-2">Instalação</h3>
+                <div class="space-y-2">
+                    <p class="text-xs text-gray-500 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Extraia o arquivo ZIP.
+                    </p>
+                    <p class="text-xs text-gray-500 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Acesse
+                        <b>chrome://extensions</b>.
+                    </p>
+                    <p class="text-xs text-gray-500 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Ative o "Modo
+                        Desenvolvedor".
+                    </p>
+                    <p class="text-xs text-gray-500 flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i> Clique em "Carregar sem
+                        compactação".
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex-shrink-0 flex flex-col gap-2 w-full md:w-auto">
+                <a href="{{ url_for('static', filename='downloads/zapway_extension_v2.4.zip') }}" download
+                    class="inline-flex items-center justify-center gap-2 bg-emerald-600 text-white px-8 py-3 rounded-lg font-black text-sm hover:bg-emerald-700 transition-all shadow-lg hover:shadow-emerald-500/30 w-full md:w-auto transform hover:-translate-y-1">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    BAIXAR ZAPWAY (v2.4)
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NorthWay Compass Card -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center">
+                <i data-lucide="compass" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">NorthWay Compass</h2>
+                <p class="text-xs text-gray-500">Inteligência de Vendas (Maps & Insta)</p>
+            </div>
+        </div>
+        <div>
+            <span
+                class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Beta</span>
+        </div>
+    </div>
+
+    <div class="p-6">
+        <!-- Compass Hero Banner -->
+        <div class="mb-8 relative overflow-hidden rounded-xl shadow-lg group">
+            <img src="{{ url_for('static', filename='images/compass_banner.png') }}"
+                class="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
+                alt="NorthWay Compass">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+            <div class="absolute bottom-6 left-6 text-white">
+                <h3 class="text-2xl font-black mb-1">Domine seu Território 🗺️</h3>
+                <p class="text-sm text-gray-200 font-medium opacity-90">Análise de concorrentes e extração de leads
+                    automática.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-6 items-center">
+            <div class="flex-1">
+                <p class="text-sm text-gray-600 mb-4">
+                    O Compass é nossa ferramenta de inteligência externa. Ele varre o Google Maps e Instagram para
+                    encontrar leads, analisar concorrentes (ROI & Benchmarking) e identificar oportunidades ocultas.
+                </p>
+                <div class="flex gap-2">
+                    <span
+                        class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">Google
+                        Maps</span>
+                    <span
+                        class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">Instagram</span>
+                    <span
+                        class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded border border-gray-200">ROI
+                        Calculator</span>
+                </div>
+            </div>
+
+            <div class="flex-shrink-0 flex flex-col gap-2 w-full md:w-auto">
+                <a href="{{ url_for('static', filename='downloads/northway_compass.zip') }}" download
+                    class="inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-lg font-black text-sm hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/30 w-full md:w-auto transform hover:-translate-y-1">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    BAIXAR COMPASS (v1.0)
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CNPJA Integration Card -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center">
+                <i data-lucide="building-2" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">CNPJA (Enriquecimento)</h2>
+                <p class="text-xs text-gray-500">Dados corporativos e enriquecimento de leads</p>
+            </div>
+        </div>
+        <div>
+            {% set cnpja = integrations_map.get('cnpja') %}
+            {% if cnpja and cnpja.is_active %}
+            <span
+                class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Ativo</span>
+            {% else %}
+            <span
+                class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Inativo</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="p-6">
+        <!-- CNPJA Promo Banner (Enrichment) -->
+        <div
+            class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-700 to-indigo-900 p-6 text-white shadow-md border border-purple-500/20">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="max-w-xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span
+                            class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Inteligência
+                            de Dados</span>
+                        <span
+                            class="bg-purple-400 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Enriquecimento
+                            Automático</span>
+                    </div>
+                    <h3 class="text-xl font-black mb-2 leading-tight">Dados Precisos em Segundos 🏢</h3>
+                    <p class="text-sm text-purple-50 mb-0 leading-relaxed">
+                        Economize horas de preenchimento manual. Capture Razão Social, Sócios, Capital Social e
+                        contatos direto da Receita Federal.
+                        <br><span class="text-xs opacity-75">* Esta é uma API externa e possui custo por consulta
+                            realizada.</span>
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <a href="https://cnpja.com.br" target="_blank"
+                        class="inline-flex items-center gap-2 bg-white text-purple-700 px-6 py-3 rounded-lg font-black text-sm hover:bg-purple-50 transition-all shadow-lg hover:scale-[1.05] active:scale-95">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        VER PLANOS CNPJA
+                    </a>
+                </div>
+            </div>
+            <!-- Abstract BG Decoration -->
+            <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute right-6 top-6 opacity-10">
+                <i data-lucide="database" class="w-24 h-24 text-white"></i>
+            </div>
+        </div>
+
+        {% if cnpja and cnpja.is_active %}
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div class="truncate mr-4">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">API Key Configurada</p>
+                <p class="text-sm font-mono text-gray-700 truncate max-w-md">
+                    {{ cnpja.api_key[:8] }}*************************
+                </p>
+            </div>
+            <form action="{{ url_for('admin.delete_integration', service='cnpja') }}" method="POST"
+                onsubmit="return confirm('Tem certeza? O enriquecimento de leads vai parar de funcionar.')">
+                <button type="submit"
+                    class="text-red-600 hover:text-red-700 text-sm font-medium flex items-center gap-2 hover:bg-red-50 px-3 py-2 rounded transition-colors">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Remover
+                </button>
+            </form>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">Para alterar a chave, remova a atual e adicione uma nova.</p>
+        {% else %}
+        <form action="{{ url_for('admin.settings_integrations') }}" method="POST">
+            <input type="hidden" name="service" value="cnpja">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">API Key (CNPJA)</label>
+                    <input type="password" name="api_key" required placeholder="Insira seu token CNPJA..."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 font-mono text-sm">
+                    <p class="text-xs text-gray-500 mt-1">
+                        Obtenha sua chave em <a href="https://cnpja.com.br" target="_blank"
+                            class="text-purple-600 hover:underline">cnpja.com.br</a>
+                    </p>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit"
+                        class="bg-gray-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-black transition-colors shadow-sm">
+                        Salvar Integração
+                    </button>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ASAAS Integration Card -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                <i data-lucide="credit-card" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">ASAAS (Pagamentos)</h2>
+                <p class="text-xs text-gray-500">Cobranças automáticas via Boleto/Pix</p>
+            </div>
+        </div>
+        <div>
+            {% set asaas = integrations_map.get('asaas') %}
+            {% if asaas and asaas.is_active %}
+            <span
+                class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Conectado</span>
+            {% else %}
+            <span
+                class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Desconectado</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="p-6">
+        <!-- Asaas Promo Banner (Affiliate) -->
+        <div
+            class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-600 to-indigo-800 p-6 text-white shadow-md">
+            <div class="relative z-10">
+                <div class="flex items-center gap-2 mb-2">
+                    <span
+                        class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Oportunidade</span>
+                    <span
+                        class="bg-green-400 text-green-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">+
+                        R$ 50,00</span>
+                </div>
+                <h3 class="text-xl font-black mb-2 leading-tight">Automatize suas cobranças com o Asaas 🚀</h3>
+                <p class="text-sm text-blue-100 mb-6 max-w-lg leading-relaxed">
+                    Crie sua conta pelo nosso link e configure boletos, Pix e cartão em segundos.
+                    <strong>Ganhe R$ 50,00</strong> de desconto nas suas primeiras taxas ao ativar sua conta pelo
+                    botão abaixo.
+                </p>
+                <a href="https://www.asaas.com/r/ec2b4375-159e-4203-81f4-93750c836d73" target="_blank"
+                    class="inline-flex items-center gap-2 bg-white text-blue-700 px-6 py-3 rounded-lg font-black text-sm hover:bg-blue-50 transition-all shadow-lg hover:scale-[1.02] active:scale-95">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    CRIAR MINHA CONTA AGORA
+                </a>
+            </div>
+            <!-- Abstract BG Decoration -->
+            <div class="absolute -right-8 -bottom-8 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+            <div class="absolute right-4 top-4 opacity-20 transform rotate-12">
+                <i data-lucide="sparkles" class="w-24 h-24"></i>
+            </div>
+        </div>
+
+        {% if asaas and asaas.is_active %}
+        <!-- Active State -->
+        <div class="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">API Key</p>
+                <p class="text-sm font-mono text-gray-700 text-ellipsis overflow-hidden">
+                    {{ asaas.api_key[:8] }}*************************
+                </p>
+                <p class="text-xs text-gray-500 mt-1">Ambiente: <span class="font-bold">{{ (asaas.config_json |
+                        from_json).get('environment', 'sandbox') | title }}</span></p>
+            </div>
+            <div class="flex gap-2">
+                <button data-key="{{ asaas.api_key }}"
+                    data-env="{{ (asaas.config_json | from_json).get('environment', 'sandbox') }}"
+                    onclick="testAsaas(this.dataset.key, this.dataset.env)"
+                    class="text-blue-600 hover:text-blue-700 text-sm font-medium border border-blue-200 px-3 py-1 rounded hover:bg-blue-50 transition-colors">
+                    Testar
+                </button>
+                <!-- Reuse delete route or add specific disconnect if needed, for MVP using main delete -->
+                <form action="{{ url_for('admin.delete_integration', service='asaas') }}" method="POST"
+                    onsubmit="return confirm('As cobranças automáticas pararão. Tem certeza?')">
+                    <button type="submit"
+                        class="text-red-600 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1 rounded hover:bg-red-50 transition-colors">
+                        Desconectar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="text-sm font-bold text-gray-900 mb-1">Webhook URL</h3>
+            <div class="flex items-center gap-2">
+                <code
+                    class="bg-white px-2 py-1 rounded border border-gray-200 text-xs font-mono text-gray-600 w-full truncate"
+                    id="asaasWebhookUrl">
+                        {{ request.url_root }}api/webhooks/asaas/{{ company.id }}
+                    </code>
+                <button
+                    onclick="navigator.clipboard.writeText(document.getElementById('asaasWebhookUrl').innerText.trim())"
+                    class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Configure na área de Integrações do ASAAS para receber status de
+                pagamentos.</p>
+        </div>
+
+        <!-- Health & Automation -->
+        <div class="mt-6 border-t border-gray-100 pt-6">
+            <h4 class="text-xs font-bold text-gray-900 uppercase mb-3 flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4"></i> Status da Integração
+            </h4>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Last Sync -->
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <span class="text-xs text-gray-500 block mb-1">Última Sincronização</span>
+                    {% if asaas.last_sync_at %}
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span class="text-sm font-mono font-bold text-gray-800">{{
+                            asaas.last_sync_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                    </div>
+                    {% else %}
+                    <span class="text-sm text-gray-400 italic">Nunca sincronizado</span>
+                    {% endif %}
+                </div>
+
+                <!-- Webhook Automation -->
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
+                    onclick="setupAsaasWebhook()">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-xs font-bold text-blue-800 block mb-1">Auto-Configurar Webhook</span>
+                            <p class="text-[10px] text-blue-600 leading-tight">Define a URL do webhook no painel do
+                                Asaas via API.</p>
+                        </div>
+                        <i data-lucide="wand" class="w-4 h-4 text-blue-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            {% if asaas.last_error %}
+            <div
+                class="mt-3 bg-red-50 text-red-800 p-3 rounded-lg text-xs border border-red-100 flex gap-2 items-start">
+                <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <strong class="block mb-0.5">Erro Recente:</strong>
+                    {{ asaas.last_error }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <!-- Setup Form -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">API Key</label>
+                <input type="password" id="asaas_api_key" placeholder="$aact_..."
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Ambiente</label>
+                <select id="asaas_env"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm">
+                    <option value="sandbox">Sandbox (Teste)</option>
+                    <option value="production">Produção</option>
+                </select>
+            </div>
+            <div class="flex justify-between items-center">
+                <button onclick="testAsaasInput()" class="text-gray-600 hover:text-gray-800 text-sm font-medium">
+                    Testar Conexão
+                </button>
+                <button onclick="saveAsaas()"
+                    class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Salvar Integração
+                </button>
+            </div>
+            <div id="asaas-feedback" class="hidden p-3 rounded text-sm font-medium"></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
 
 </div>
 

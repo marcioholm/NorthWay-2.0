@@ -495,6 +495,17 @@ def company_new():
                 new_comp.max_users = 2
                 new_comp.max_leads = 500
                 
+            # Features Handling
+            feats = {
+                'whatsapp': request.form.get('feature_whatsapp') == 'on',
+                'prospecting': request.form.get('feature_prospecting') == 'on',
+                'google_drive': request.form.get('feature_drive') == 'on',
+                'cnpja': request.form.get('feature_cnpja') == 'on',
+                'asaas': request.form.get('feature_asaas') == 'on',
+                'compass': request.form.get('feature_compass') == 'on'
+            }
+            new_comp.features = feats
+
             db.session.add(new_comp)
             db.session.commit()
 
@@ -548,6 +559,10 @@ def company_edit(company_id):
             
         feats['whatsapp'] = request.form.get('feature_whatsapp') == 'on'
         feats['prospecting'] = request.form.get('feature_prospecting') == 'on'
+        feats['google_drive'] = request.form.get('feature_drive') == 'on'
+        feats['cnpja'] = request.form.get('feature_cnpja') == 'on'
+        feats['asaas'] = request.form.get('feature_asaas') == 'on'
+        feats['compass'] = request.form.get('feature_compass') == 'on'
         company.features = feats
         
         try:
