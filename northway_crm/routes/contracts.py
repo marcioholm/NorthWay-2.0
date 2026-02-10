@@ -729,3 +729,40 @@ def view_contract(id):
     if contract.company_id != current_user.company_id:
         abort(403)
     return render_template('contracts/view_contract.html', contract=contract)
+
+@contracts_bp.route('/contracts/<int:id>/edit')
+@login_required
+def edit_contract(id):
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    contract = Contract.query.get_or_404(id)
+    if contract.company_id != current_user.company_id:
+        abort(403)
+        
+    return render_template('contracts/edit_contract.html', contract=contract)
+
+@contracts_bp.route('/contracts/<int:id>/save', methods=['POST'])
+@login_required
+def save_contract(id):
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    contract = Contract.query.get_or_404(id)
+    if contract.company_id != current_user.company_id:
+        abort(403)
+        
+    try:
+        data = request.json
+        new_content = data.get('content')
+        
+        if not new_content:
+            return jsonify({'error': 'Content is required'}), 400
+            
+        contract.generated_content = new_content
+        db.session.commit()
+        
+        return jsonify({'message': 'Contrato salvo com sucesso.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500

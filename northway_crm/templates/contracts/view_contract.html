@@ -21,6 +21,12 @@
         </div>
         <div class="flex gap-2">
             {% if contract.status != 'cancelled' %}
+            <a href="{{ url_for('contracts.edit_contract', id=contract.id) }}"
+                class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                Editar
+            </a>
+
             <button onclick="document.getElementById('cancelModal').classList.remove('hidden')"
                 class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
                 <i data-lucide="x-circle" class="w-4 h-4"></i>
