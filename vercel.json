@@ -2,15 +2,15 @@
     "routes": [
         {
             "src": "/probe",
-            "dest": "api/probe.py"
+            "dest": "/api/probe.py"
         },
         {
             "src": "/migrate-standalone",
-            "dest": "api/migrate_standalone.py"
+            "dest": "/api/migrate_standalone.py"
         },
         {
             "src": "/(.*)",
-            "dest": "api/index.py"
+            "dest": "/api/index.py"
         }
     ]
 }
