@@ -433,8 +433,13 @@ def create_app():
             if not request.endpoint: return
             if request.endpoint.startswith('static'): return
             
-            # FORCE IGNORE SYS_ADMIN ROUTES (Fix DB Crash)
-            if request.path.startswith('/sys_admin') or request.path.startswith('/forms/public'): return
+            # FORCE IGNORE SYS_ADMIN & MIGRATION ROUTES (Fix DB Crash)
+            # This allows running migrations even if the schema is broken
+            if request.path.startswith('/sys_admin') or \
+               request.path.startswith('/forms/public') or \
+               request.path.startswith('/admin/run-initial-migrations') or \
+               request.path.startswith('/emergency-migration'):
+                return
 
             if request.endpoint in ['auth.login', 'auth.register', 'auth.logout', 
                                   'billing.asaas_webhook', 'billing.payment_pending',
@@ -443,21 +448,27 @@ def create_app():
                 return
 
             # Check Login & Inoperability
-            if current_user.is_authenticated and current_user.company:
-                company = current_user.company
-                
-                # 1. STRICT SUSPENSION CHECK (Overrides everything)
-                # If status is suspended or cancelled, BLOCK ACCESS immediately.
-                # Except for Super Admin (real one, not impersonating) - actually, if impersonating we might want to see it?
-                # Let's block everyone including impersonators, BUT allow revert_access (added above).
+            if current_user.is_authenticated and hasattr(current_user, 'company'):
+                # Safe access to company to prevent schema-related crash at boot
+                try:
+                    company = current_user.company
+                    if not company: return
+                except:
+                    # If fetching company fails (e.g. column missing), we allow access 
+                    # so the admin can fix the DB
+                    return
+
+                # 1. STRICT SUSPENSION CHECK (Safe getattr for new columns)
                 if getattr(company, 'status', 'active') in ['suspended', 'cancelled']:
-                    # If it's a super admin viewing, maybe we show a flash? 
-                    # For now, strict block to ensure security.
                     return render_template('suspended.html', company_name=company.name, company_id=company.id)
 
                 # --- LAZY BLOCK ENGINE (D+30) ---
-                # If Overdue > 30 days, force block immediately on next request
-                # EXEMPTION: 'courtesy' status is immune to blocks
+                # Using getattr for all potential new/missing columns
+                if getattr(company, 'payment_status', None) == 'overdue' and \
+                   getattr(company, 'overdue_since', None):
+                    # Immunity Check
+                    if getattr(company, 'status', None) == 'courtesy':
+                        return
                 if company.payment_status == 'overdue' and company.overdue_since and company.payment_status != 'courtesy':
                     days_late = (datetime.utcnow() - company.overdue_since).days
                     if days_late >= 30 and not company.platform_inoperante:
