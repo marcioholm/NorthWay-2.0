@@ -7,12 +7,20 @@
         {
             "src": "api/probe.py",
             "use": "@vercel/python"
+        },
+        {
+            "src": "api/migrate_standalone.py",
+            "use": "@vercel/python"
         }
     ],
     "routes": [
         {
             "src": "/probe",
             "dest": "/api/probe.py"
+        },
+        {
+            "src": "/migrate-standalone",
+            "dest": "/api/migrate_standalone.py"
         },
         {
             "src": "/assets/(.*)",
