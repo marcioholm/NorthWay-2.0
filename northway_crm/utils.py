@@ -231,6 +231,7 @@ def get_contract_replacements(client, form_data):
         '{{nome_testemunha_2}}': form_data.get('testemunha2_nome', ''),
         '{{cpf_testemunha_2}}': form_data.get('testemunha2_cpf', ''),
 
+        '{{foro_completo}}': f"{foro_comarca} - {foro_estado}" if foro_estado else foro_comarca,
         '{{foro_comarca}}': foro_comarca,
         '{{foro_estado}}': foro_estado,
 

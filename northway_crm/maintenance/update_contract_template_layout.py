@@ -225,20 +225,26 @@ with app.app_context():
     
     for company in companies:
         # Check duplicates
-        template = ContractTemplate.query.filter_by(company_id=company.id, name="contrato - teste").first()
+        # Matches against the generic name usually created by seeds, OR simply updates any template that looks like the default one
+        # For safety, we typically target by name.
+        template = ContractTemplate.query.filter(
+            ContractTemplate.company_id == company.id,
+            ContractTemplate.name.ilike('%MODELO 1%')
+        ).first()
+        
         if not template:
-            template = ContractTemplate(
-                company_id=company.id,
-                name="contrato - teste",
-                type="contract",
-                content=html_content,
-                active=True
-            )
-            db.session.add(template)
-            print(f"Created 'contrato - teste' for {company.name}")
-        else:
+             # Try fallback name
+            template = ContractTemplate.query.filter(
+                ContractTemplate.company_id == company.id,
+                ContractTemplate.name.ilike('%contrato - teste%')
+            ).first()
+
+        if template:
             # Update content
             template.content = html_content
-            print(f"Updated 'contrato - teste' for {company.name}")
+            print(f"Updated Template '{template.name}' for Company: {company.name}")
+        else:
+            print(f"No matching template found for Company: {company.name}")
             
     db.session.commit()
+    print("Migration complete.")
