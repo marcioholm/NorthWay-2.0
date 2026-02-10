@@ -259,11 +259,17 @@ def get_chart_data():
 
     from models import Lead, Client # Local import
     leads = Lead.query.filter(Lead.company_id == company_id, Lead.created_at >= start_date).all()
-    clients = Client.query.filter(Client.company_id == company_id, Client.created_at >= start_date).all()
+    # Use start_date for clients to reflect historical entry correctly
+    clients = Client.query.filter(Client.company_id == company_id, Client.start_date >= start_date.date()).all()
 
     data_buckets = {}
 
     def get_bucket_key(date_obj, period):
+        if isinstance(date_obj, date) and not isinstance(date_obj, datetime):
+             # Convert date to datetime at midnight for formatting consistency if needed, 
+             # or just format directly. strftime works on date too.
+             pass
+        
         if period == 'today': return date_obj.strftime('%Y-%m-%d-%H'), date_obj.strftime('%H:00')
         if period == 'daily': return date_obj.strftime('%Y-%m-%d'), date_obj.strftime('%d/%m')
         if period == 'weekly': return date_obj.strftime('%Y-%W'), f"Sem {date_obj.strftime('%W')}"
@@ -276,7 +282,8 @@ def get_chart_data():
         data_buckets[sort_key]['leads'] += 1
     
     for c in clients:
-        sort_key, label = get_bucket_key(c.created_at, period)
+        # Use start_date
+        sort_key, label = get_bucket_key(c.start_date, period)
         if sort_key not in data_buckets: data_buckets[sort_key] = {'label': label, 'leads': 0, 'sales': 0}
         data_buckets[sort_key]['sales'] += 1
     

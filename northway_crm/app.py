@@ -261,6 +261,7 @@ def create_app():
             from routes.admin import admin_bp
             from routes.api_debug import api_debug_bp
             from routes.forms import forms_bp
+            from routes.jobs import jobs_bp
             
             app.register_blueprint(auth_blueprint)
             app.register_blueprint(master_blueprint)
@@ -272,6 +273,7 @@ def create_app():
             app.register_blueprint(admin_bp)
             app.register_blueprint(api_debug_bp)
             app.register_blueprint(forms_bp, url_prefix='/forms')
+            app.register_blueprint(jobs_bp)
             
             # Safe Register for complex blueprints that might break on schema
             from routes.api_extension import api_ext
@@ -695,6 +697,130 @@ def fix_task_schema():
             else:
                 results.append(f"❌ Failed create task_event: {str(e)}")
 
+        conn.close()
+        return jsonify({"status": "completed", "log": results})
+        
+@app.route('/sys_admin/migrate_drive')
+def sys_migrate_drive():
+    try:
+        results = []
+        conn = db.engine.connect()
+        
+        # 1. Create TenantIntegration
+        try:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS tenant_integration (
+                    id SERIAL PRIMARY KEY,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    provider VARCHAR(50) NOT NULL,
+                    status VARCHAR(20) DEFAULT 'disconnected',
+                    google_account_email VARCHAR(120),
+                    google_account_id VARCHAR(100),
+                    refresh_token_encrypted TEXT,
+                    access_token TEXT,
+                    token_expiry_at TIMESTAMP,
+                    root_folder_id VARCHAR(100),
+                    root_folder_url VARCHAR(500),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_error TEXT
+                )
+            """))
+            results.append("✅ Created table tenant_integration")
+        except Exception as e:
+            if "syntax error" in str(e).lower() and "SERIAL" in str(e):
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS tenant_integration (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        company_id INTEGER NOT NULL REFERENCES company(id),
+                        provider VARCHAR(50) NOT NULL,
+                        status VARCHAR(20) DEFAULT 'disconnected',
+                        google_account_email VARCHAR(120),
+                        google_account_id VARCHAR(100),
+                        refresh_token_encrypted TEXT,
+                        access_token TEXT,
+                        token_expiry_at TIMESTAMP,
+                        root_folder_id VARCHAR(100),
+                        root_folder_url VARCHAR(500),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        last_error TEXT
+                    )
+                """))
+                results.append("✅ Created table tenant_integration (SQLite)")
+            else:
+                results.append(f"❌ Failed tenant_integration: {e}")
+
+        # 2. Create DriveFileEvent
+        try:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS drive_file_event (
+                    id SERIAL PRIMARY KEY,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    lead_id INTEGER REFERENCES lead(id),
+                    client_id INTEGER REFERENCES client(id),
+                    file_id VARCHAR(100) NOT NULL,
+                    file_name VARCHAR(255) NOT NULL,
+                    mime_type VARCHAR(100),
+                    web_view_link VARCHAR(500),
+                    created_time TIMESTAMP,
+                    modified_time TIMESTAMP,
+                    detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            results.append("✅ Created table drive_file_event")
+        except Exception as e:
+            if "syntax error" in str(e).lower() and "SERIAL" in str(e):
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS drive_file_event (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        company_id INTEGER NOT NULL REFERENCES company(id),
+                        lead_id INTEGER REFERENCES lead(id),
+                        client_id INTEGER REFERENCES client(id),
+                        file_id VARCHAR(100) NOT NULL,
+                        file_name VARCHAR(255) NOT NULL,
+                        mime_type VARCHAR(100),
+                        web_view_link VARCHAR(500),
+                        created_time TIMESTAMP,
+                        modified_time TIMESTAMP,
+                        detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                results.append("✅ Created table drive_file_event (SQLite)")
+            else:
+                results.append(f"❌ Failed drive_file_event: {e}")
+
+        # 3. Add Columns to Lead
+        lead_cols = [
+            ("drive_folder_id", "VARCHAR(100)"),
+            ("drive_folder_url", "VARCHAR(500)"),
+            ("drive_folder_name", "VARCHAR(255)"),
+            ("drive_last_scan_at", "TIMESTAMP"),
+            ("drive_unread_files_count", "INTEGER DEFAULT 0")
+        ]
+        for col, dtype in lead_cols:
+            try:
+                conn.execute(text(f"ALTER TABLE lead ADD COLUMN {col} {dtype}"))
+                results.append(f"✅ Added lead.{col}")
+            except Exception as e:
+                results.append(f"⚠️ lead.{col}: {e}")
+
+        # 4. Add Columns to Client
+        client_cols = [
+            ("drive_folder_id", "VARCHAR(100)"),
+            ("drive_folder_url", "VARCHAR(500)"),
+            ("drive_folder_name", "VARCHAR(255)"),
+            ("drive_last_scan_at", "TIMESTAMP"),
+            ("drive_unread_files_count", "INTEGER DEFAULT 0")
+        ]
+        for col, dtype in client_cols:
+            try:
+                conn.execute(text(f"ALTER TABLE client ADD COLUMN {col} {dtype}"))
+                results.append(f"✅ Added client.{col}")
+            except Exception as e:
+                results.append(f"⚠️ client.{col}: {e}")
+
+        conn.commit()
         conn.close()
         return jsonify({"status": "completed", "log": results})
         

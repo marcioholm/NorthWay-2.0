@@ -37,13 +37,11 @@ def settings_permissions():
         'sales': {
             'leads_view': 'Gerenciar Leads',
             'pipeline_view': 'Acessar Pipeline',
-            'prospecting_view': 'Prospecção',
             'clients_view': 'Gerenciar Clientes',
             'contracts_view': 'Gerenciar Contratos'
         },
         'operations': {
             'tasks_view': 'Gerenciar Tarefas',
-            'whatsapp_view': 'Acessar WhatsApp',
             'goals_view': 'Visualizar Metas',
             'processes_view': 'Gerenciar Processos',
             'library_view': 'Acessar Biblioteca'
@@ -54,6 +52,13 @@ def settings_permissions():
             'admin_view': 'Administração Total'
         }
     }
+    
+    # Feature Conditional Permissions
+    if current_user.company.has_feature('prospecting'):
+        available_permissions['sales']['prospecting_view'] = 'Prospecção'
+        
+    if current_user.company.has_feature('whatsapp'):
+        available_permissions['operations']['whatsapp_view'] = 'Acessar WhatsApp'
     
     category_labels = {
         'dashboard': 'Visão Geral',

@@ -6,6 +6,23 @@ import json
 
 whatsapp_bp = Blueprint('whatsapp', __name__)
 
+@whatsapp_bp.before_request
+def check_feature_access():
+    if request.method == 'OPTIONS': return
+    
+    # Allow Webhook (Public)
+    if 'webhooks' in request.path:
+        return
+        
+    # Check Feature Flag
+    if current_user.is_authenticated:
+        if not current_user.company.has_feature('whatsapp'):
+            if request.is_json: # API
+                return jsonify({'error': 'Feature Disabled for this Company'}), 403
+            else: # UI
+                flash('Módulo WhatsApp desativado pela administração.', 'error')
+                return redirect(url_for('dashboard.home'))
+
 # --- TEMPLATE FILTERS ---
 @whatsapp_bp.app_template_filter('from_json')
 def from_json_filter(value):

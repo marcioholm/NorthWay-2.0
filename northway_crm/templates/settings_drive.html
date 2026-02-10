@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 overflow-y-auto bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Integração Google Drive</h1>
+                <p class="text-gray-500 mt-1">Gerencie a conexão e pastas automáticas.</p>
+            </div>
+            <a href="{{ url_for('master.integrations') }}" class="text-gray-500 hover:text-gray-900">
+                &larr; Voltar
+            </a>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-8">
+                <div class="flex items-start gap-6">
+                    <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
+                            alt="Google Drive" class="w-10 h-10">
+                    </div>
+
+                    <div class="flex-1">
+                        <h2 class="text-xl font-bold text-gray-900 mb-1">Status da Conexão</h2>
+
+                        {% if integration and integration.status == 'connected' %}
+                        <div class="flex items-center gap-2 mb-4">
+                            <span
+                                class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                Conectado
+                            </span>
+                            {% if integration.tokens_expiry_at %}
+                            <span class="text-xs text-gray-400">Expira em: {{
+                                integration.token_expiry_at.strftime('%d/%m/%Y') }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-6">
+                            <form action="{{ url_for('integrations_bp.save_drive_root_folder') }}" method="POST">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Pasta Raiz dos
+                                    Clientes</label>
+                                <div class="flex gap-2">
+                                    <input type="text" name="root_folder_url"
+                                        value="{{ integration.root_folder_url or '' }}"
+                                        placeholder="Cole a URL da pasta do Google Drive aqui..."
+                                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <button type="submit"
+                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                        Salvar
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    Todas as pastas de novos clientes serão criadas dentro desta pasta.
+                                    {% if integration.root_folder_id %}
+                                    <span class="text-green-600 font-medium ml-1">✓ Configurado (ID: {{
+                                        integration.root_folder_id }})</span>
+                                    {% else %}
+                                    <span class="text-amber-600 font-medium ml-1">⚠ Necessário configurar para automação
+                                        funcionar.</span>
+                                    {% endif %}
+                                </p>
+                            </form>
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-6">
+                            <h3 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wider">Ações</h3>
+                            <form action="{{ url_for('integrations_bp.disconnect_google_drive') }}" method="POST"
+                                onsubmit="return confirm('Tem certeza? A automação de pastas irá parar.')">
+                                <button type="submit"
+                                    class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-2">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                    Desconectar Google Drive
+                                </button>
+                            </form>
+                        </div>
+
+                        {% else %}
+                        <p class="text-gray-500 mb-6">
+                            Conecte seu Google Drive para que o NorthWay crie automaticamente pastas organizadas para
+                            cada novo cliente e centralize os arquivos no CRM.
+                        </p>
+
+                        <a href="{{ url_for('integrations_bp.connect_google_drive') }}"
+                            class="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-xl hover:bg-gray-50 transition-all font-medium shadow-sm">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+                                alt="G" class="w-5 h-5">
+                            Conectar com Google
+                        </a>
+
+                        {% if integration and integration.last_error %}
+                        <div class="mt-6 bg-red-50 text-red-700 p-4 rounded-lg text-sm">
+                            <strong>Último Erro:</strong> {{ integration.last_error }}
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Templates de Pastas Inteligentes</h2>
+                <button onclick="openTemplateModal()"
+                    class="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-50 flex items-center gap-2 text-sm shadow-sm transition-all hover:shadow-md">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Novo Template
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for template in templates %}
+                <div
+                    class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm relative group hover:border-blue-200 transition-all">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                            <i data-lucide="folder-tree" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                onclick='editTemplate({{ template.id }}, {{ template.name|tojson }}, {{ template.structure_json|safe }})'
+                                class="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick='deleteTemplate({{ template.id }})'
+                                class="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-red-50">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-1 truncate" title="{{ template.name }}">{{ template.name }}
+                    </h3>
+                    <div
+                        class="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg font-mono h-32 overflow-hidden relative">
+                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 pointer-events-none">
+                        </div>
+                        <pre class="text-[10px] leading-relaxed folder-structure-preview"
+                            data-json='{{ template.structure_json|safe }}'></pre>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-span-3 text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <p class="text-gray-500">Nenhum template encontrado.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Template Modal -->
+<div id="templateModal"
+    class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full transform transition-all scale-100">
+        <form id="templateForm" onsubmit="saveTemplate(event)">
+            <input type="hidden" name="id" id="templateId">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900" id="modalTitle">Novo Template de Pastas</h3>
+                <button type="button" onclick="closeTemplateModal()" class="text-gray-400 hover:text-gray-500">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Template</label>
+                    <input type="text" name="name" id="templateName" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Ex: Agência de Marketing">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-sm font-bold text-gray-700">Estrutura de Pastas</label>
+                        <span class="text-xs text-gray-500">Use indentação para subpastas</span>
+                    </div>
+                    <textarea name="structure_text" id="templateStructure" rows="12" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="01 - Contratos
+02 - Projetos
+    Briefing
+    Assets
+        Logos
+        Fotos
+03 - Entregas"></textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end gap-3">
+                <button type="button" onclick="closeTemplateModal()"
+                    class="px-4 py-2 text-gray-700 font-bold hover:bg-gray-200 rounded-lg transition-colors">Cancelar</button>
+                <button type="submit"
+                    class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition-all transform hover:scale-105">Salvar
+                    Template</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // JSON to Text helper for editing
+    function jsonToText(json, level = 0) {
+        let text = '';
+        if (!json) return text;
+
+        // Handle list of dicts
+        for (let item of json) {
+            text += '    '.repeat(level) + item.name + '\n';
+            if (item.children && item.children.length > 0) {
+                text += jsonToText(item.children, level + 1);
+            }
+        }
+        return text;
+    }
+
+    // Render preview in cards
+    document.querySelectorAll('.folder-structure-preview').forEach(el => {
+        try {
+            const data = JSON.parse(el.dataset.json);
+            el.textContent = jsonToText(data);
+        } catch (e) { console.error('Preview error', e); }
+    });
+
+    function openTemplateModal() {
+        document.getElementById('templateId').value = '';
+        document.getElementById('templateName').value = '';
+        document.getElementById('templateStructure').value = '';
+        document.getElementById('modalTitle').innerText = 'Novo Template de Pastas';
+        document.getElementById('templateModal').classList.remove('hidden');
+    }
+
+    function editTemplate(id, name, structureJson) {
+        document.getElementById('templateId').value = id;
+        document.getElementById('templateName').value = name;
+        document.getElementById('templateStructure').value = jsonToText(structureJson); // Convert back to text
+        document.getElementById('modalTitle').innerText = 'Editar Template';
+        document.getElementById('templateModal').classList.remove('hidden');
+    }
+
+    function closeTemplateModal() {
+        document.getElementById('templateModal').classList.add('hidden');
+    }
+
+    async function saveTemplate(e) {
+        e.preventDefault();
+        const id = document.getElementById('templateId').value;
+        const name = document.getElementById('templateName').value;
+        const structure_text = document.getElementById('templateStructure').value;
+
+        try {
+            const res = await fetch('/api/integrations/drive/templates/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, name, structure_text })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        } catch (err) {
+            alert('Erro ao salvar template');
+        }
+    }
+
+    async function deleteTemplate(id) {
+        if (!confirm('Tem certeza que deseja excluir este template?')) return;
+        try {
+            const res = await fetch(`/api/integrations/drive/templates/${id}/delete`, { method: 'POST' });
+            if (res.ok) window.location.reload();
+        } catch (err) {
+            alert('Erro ao excluir');
+        }
+    }
+</script>{% endblock %}

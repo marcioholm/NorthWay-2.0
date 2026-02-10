@@ -11,6 +11,9 @@ prospecting_bp = Blueprint('prospecting', __name__)
 @prospecting_bp.route('/prospecting')
 @login_required
 def index():
+    if not current_user.company.has_feature('prospecting'):
+        flash('Sua empresa não possui acesso a este módulo.', 'error')
+        return redirect(url_for('dashboard.home'))
     return render_template('prospecting.html')
 
 @prospecting_bp.route('/api/prospecting/search')

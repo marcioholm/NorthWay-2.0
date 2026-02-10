@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate, LibraryTemplate, FormInstance
+from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate, LibraryTemplate, FormInstance, TenantIntegration, DriveFolderTemplate
 from utils import update_client_health, create_notification
 from datetime import datetime, date
+import csv
+import io
 
 clients_bp = Blueprint('clients', __name__)
 
@@ -103,6 +105,9 @@ def client_details(id):
                 owner_user_id=current_user.id
             ).first()
 
+    # Fetch Drive Templates
+    drive_templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+
     return render_template('client_details.html', 
                           client=client, 
                           mrr=mrr, 
@@ -113,7 +118,8 @@ def client_details(id):
                           total_overdue=total_overdue,
                           process_templates=process_templates,
                           users=users,
-                          diag_instance=diag_instance)
+                          diag_instance=diag_instance,
+                          drive_templates=drive_templates)
 
 @clients_bp.route('/clients/<int:id>/update', methods=['POST'])
 @login_required
@@ -237,4 +243,234 @@ def add_client_task(id):
     db.session.add(task)
     db.session.commit()
     flash('Tarefa adicionada.', 'success')
+    return redirect(url_for('clients.client_details', id=client.id))
+
+@clients_bp.route('/clients/create', methods=['POST'])
+@login_required
+def create_client():
+    try:
+        name = request.form.get('name')
+        if not name:
+            flash('Nome é obrigatório.', 'error')
+            return redirect(url_for('clients.clients'))
+            
+        email = request.form.get('email')
+        # Check for existing email if provided
+        if email:
+            existing = Client.query.filter_by(company_id=current_user.company_id, email=email).first()
+            if existing:
+                flash(f'Cliente já existe com este email: {existing.name}', 'error')
+                return redirect(url_for('clients.clients'))
+
+        # Prepare data
+        monthly_value = 0.0
+        try:
+            val = request.form.get('monthly_value')
+            if val: monthly_value = float(val)
+        except:
+            pass
+            
+        start_date = date.today()
+        sd_str = request.form.get('start_date')
+        if sd_str:
+            try:
+                start_date = datetime.strptime(sd_str, '%Y-%m-%d').date()
+            except:
+                pass
+
+        new_client = Client(
+            name=name,
+            email=email,
+            phone=request.form.get('phone'),
+            company_id=current_user.company_id,
+            account_manager_id=int(request.form.get('account_manager_id') or current_user.id),
+            status=request.form.get('status', 'ativo'),
+            service=request.form.get('service'),
+            monthly_value=monthly_value,
+            start_date=start_date,
+            created_at=datetime.utcnow()
+        )
+        
+        db.session.add(new_client)
+        db.session.commit()
+        
+        flash(f'Cliente {name} criado com sucesso!', 'success')
+        return redirect(url_for('clients.client_details', id=new_client.id))
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating client: {e}")
+        flash(f'Erro ao criar cliente: {e}', 'error')
+        return redirect(url_for('clients.clients'))
+
+@clients_bp.route('/clients/import', methods=['POST'])
+@login_required
+def import_clients():
+    if 'file' not in request.files:
+        flash('Nenhum arquivo enviado.', 'error')
+        return redirect(url_for('clients.clients'))
+        
+    file = request.files['file']
+    if file.filename == '':
+        flash('Nenhum arquivo selecionado.', 'error')
+        return redirect(url_for('clients.clients'))
+        
+    if not file.filename.endswith('.csv'):
+        flash('O arquivo deve ser um CSV.', 'error')
+        return redirect(url_for('clients.clients'))
+
+    try:
+        stream = io.TextIOWrapper(file.stream._file, "utf-8", newline="")
+        # Simple dialect sniffing or just assume standard
+        csv_input = csv.DictReader(stream)
+        
+        # Normalize headers (remove BOM, strip spaces, lower case)
+        # But DictReader uses the first line. Let's hope for standard format.
+        # User instruction said: Name, Email, Phone...
+        # Let's try to map common names.
+        
+        # We can't easily change headers of DictReader after init effectively without reading first.
+        # Let's map dynamically per row.
+        
+        success_count = 0
+        skipped_count = 0
+        
+        for row in csv_input:
+            # Flexible key getting
+            name = row.get('Nome') or row.get('name') or row.get('NOME')
+            if not name: 
+                continue # name required
+                
+            email = row.get('Email') or row.get('email') or row.get('EMAIL')
+            phone = row.get('Telefone') or row.get('Phone') or row.get('phone') or row.get('TELEFONE')
+            status_raw = row.get('Status') or row.get('status') or row.get('STATUS')
+            value_raw = row.get('Valor') or row.get('Value') or row.get('valor') or row.get('VALOR')
+            service = row.get('Servico') or row.get('Service') or row.get('servico') or row.get('SERVICO')
+            start_date_raw = row.get('Data Inicio') or row.get('Start Date')
+            
+            # Check duplication
+            if email:
+                exists = Client.query.filter_by(company_id=current_user.company_id, email=email).first()
+                if exists:
+                    skipped_count += 1
+                    continue
+            
+            # Status mapping
+            status = 'ativo'
+            if status_raw:
+                s = status_raw.lower().strip()
+                if 'cancel' in s: status = 'cancelado'
+                elif 'inat' in s: status = 'cancelado'
+                elif 'ex' in s: status = 'cancelado'
+                elif 'encerr' in s: status = 'cancelado'
+                elif 'paus' in s: status = 'pausado'
+                elif 'board' in s: status = 'onboarding'
+                elif 'ativ' in s: status = 'ativo'
+            
+            # Value parsing
+            monthly_value = 0.0
+            if value_raw:
+                try:
+                    # Clean currency symbols
+                    v_str = str(value_raw).replace('R$', '').replace(' ', '').replace(',', '.')
+                    monthly_value = float(v_str)
+                except:
+                    pass
+            
+            # Date parsing
+            start_date = date.today()
+            if start_date_raw:
+                try:
+                    # Try common formats
+                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']:
+                        try:
+                            start_date = datetime.strptime(start_date_raw, fmt).date()
+                            break
+                        except:
+                            continue
+                except:
+                    pass
+
+            new_client = Client(
+                name=name,
+                email=email,
+                phone=phone,
+                company_id=current_user.company_id,
+                account_manager_id=current_user.id, # Default to uploader
+                status=status,
+                service=service,
+                monthly_value=monthly_value,
+                start_date=start_date,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(new_client)
+            success_count += 1
+            
+        db.session.commit()
+        
+        msg_type = 'success' if success_count > 0 else 'warning'
+        flash(f'Importação concluída: {success_count} importados, {skipped_count} pulados (email duplicado).', msg_type)
+        return redirect(url_for('clients.clients'))
+
+
+    except Exception as e:
+        print(f"CSV Import Error: {e}")
+        flash(f'Erro ao processar arquivo: {e}', 'error')
+        return redirect(url_for('clients.clients'))
+
+@clients_bp.route('/clients/<int:id>/create_drive_folder', methods=['POST'])
+@login_required
+def create_drive_folder(id):
+    client = Client.query.get_or_404(id)
+    if client.company_id != current_user.company_id:
+        abort(403)
+
+    drive_template_id = request.form.get('drive_template_id')
+    
+    try:
+        from services.google_drive_service import GoogleDriveService
+        drive_integration = TenantIntegration.query.filter_by(
+            company_id=current_user.company_id, 
+            provider='google_drive', 
+            status='connected'
+        ).first()
+
+        if not drive_integration:
+            flash('Integração com Google Drive não encontrada.', 'error')
+            return redirect(url_for('clients.client_details', id=client.id))
+
+        drive_service = GoogleDriveService(company_id=current_user.company_id)
+        
+        # 1. Ensure Main Folder Exists
+        folder_id = client.drive_folder_id
+        if not folder_id:
+            root_id = drive_integration.root_folder_id
+            folder_name = f"{client.name} - {client.id}"
+            folder = drive_service.create_folder(drive_integration, folder_name, parent_id=root_id)
+            if folder:
+                client.drive_folder_id = folder.get('id')
+                client.drive_folder_url = folder.get('webViewLink')
+                client.drive_folder_name = folder_name
+                folder_id = folder.get('id')
+                db.session.commit()
+            else:
+                 flash('Falha ao criar pasta principal.', 'error')
+                 return redirect(url_for('clients.client_details', id=client.id))
+        
+        # 2. Create Structure from Template
+        if drive_template_id:
+            template = DriveFolderTemplate.query.get(drive_template_id)
+            if template and template.company_id == current_user.company_id:
+                drive_service.create_folder_structure(drive_integration, folder_id, template.structure_json)
+                flash(f'Estrutura de pastas "{template.name}" criada com sucesso!', 'success')
+            else:
+                flash('Template inválido.', 'error')
+        else:
+             flash('Nenhum template selecionado.', 'warning')
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f'Erro ao criar pastas: {str(e)}', 'error')
+
     return redirect(url_for('clients.client_details', id=client.id))

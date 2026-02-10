@@ -129,7 +129,7 @@ def tasks():
             
         task = Task(
             title=title,
-            description=None,
+            description=request.form.get('description'), # Added description
             due_date=due_date,
             lead_id=lead_id,
             assigned_to_id=assigned_to_id or current_user.id,
@@ -253,6 +253,7 @@ def update(id):
         return jsonify({'error': 'Unauthorized'}), 403
         
     task.title = request.form.get('title')
+    task.description = request.form.get('description') # Update description
     task.assigned_to_id = request.form.get('assigned_to_id')
     
     due_date_str = request.form.get('due_date')

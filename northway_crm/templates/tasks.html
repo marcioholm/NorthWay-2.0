@@ -119,6 +119,10 @@
 
                 <div>
                     <div class="font-medium text-gray-900">{{ task.title }}</div>
+                    {% if task.description %}
+                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-1" title="{{ task.description }}">{{
+                        task.description }}</p>
+                    {% endif %}
                     <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         {% if task.due_date %}
                         <div
@@ -148,7 +152,8 @@
             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
                     data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
-                    data-assigned-to="{{ task.assigned_to_id or '' }}" onclick="openEditTaskModal(this)"
+                    data-assigned-to="{{ task.assigned_to_id or '' }}" data-description="{{ task.description or '' }}"
+                    onclick="openEditTaskModal(this)"
                     class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="Editar">
                     <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
@@ -195,6 +200,10 @@
                             aria-hidden="true"></i>
                         {% endif %}
                     </div>
+                    {% if task.description %}
+                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-1" title="{{ task.description }}">{{
+                        task.description }}</p>
+                    {% endif %}
                     <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         {% if task.due_date %}
                         <div
@@ -218,7 +227,8 @@
             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
                     data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
-                    data-assigned-to="{{ task.assigned_to_id or '' }}" onclick="openEditTaskModal(this)"
+                    data-assigned-to="{{ task.assigned_to_id or '' }}" data-description="{{ task.description or '' }}"
+                    onclick="openEditTaskModal(this)"
                     class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="Editar">
                     <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
@@ -259,6 +269,10 @@
                 </form>
                 <div>
                     <div class="font-medium text-gray-900">{{ task.title }}</div>
+                    {% if task.description %}
+                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-1" title="{{ task.description }}">{{
+                        task.description }}</p>
+                    {% endif %}
                     <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         {% if task.due_date %}
                         <div
@@ -273,7 +287,8 @@
             <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
                     data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
-                    data-assigned-to="{{ task.assigned_to_id or '' }}" onclick="openEditTaskModal(this)"
+                    data-assigned-to="{{ task.assigned_to_id or '' }}" data-description="{{ task.description or '' }}"
+                    onclick="openEditTaskModal(this)"
                     class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="Editar">
                     <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
@@ -371,6 +386,12 @@
             </div>
 
             <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição / Instruções</label>
+                <textarea name="description" rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none"></textarea>
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Vincular a Lead (Opcional)</label>
                 <select name="lead_id"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
@@ -439,6 +460,12 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
                 <input type="text" name="title" id="edit_task_title" required
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição / Instruções</label>
+                <textarea name="description" id="edit_task_description" rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none"></textarea>
             </div>
 
             <div>
@@ -588,6 +615,7 @@
         document.getElementById('edit_task_title').value = title;
         document.getElementById('edit_task_due_date').value = dueDate;
         document.getElementById('edit_task_assigned_to').value = assignedToId;
+        document.getElementById('edit_task_description').value = btn.dataset.description || ''; // Populate description
 
         // Set action URL
         form.action = `/tasks/${id}/update`;

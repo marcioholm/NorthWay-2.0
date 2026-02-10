@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
 from flask_login import login_required, current_user
-from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, ClientChecklist, Task, Interaction, WhatsAppMessage, LEAD_STATUS_WON, LEAD_STATUS_NEW, LEAD_STATUS_IN_PROGRESS, LEAD_STATUS_LOST, User, LibraryTemplate, FormInstance
+from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, ClientChecklist, Task, Interaction, WhatsAppMessage, LEAD_STATUS_WON, LEAD_STATUS_NEW, LEAD_STATUS_IN_PROGRESS, LEAD_STATUS_LOST, User, LibraryTemplate, FormInstance, DriveFolderTemplate
 from utils import create_notification
 from datetime import datetime, timedelta
 
@@ -132,12 +132,16 @@ def lead_details(id):
                 owner_user_id=current_user.id
             ).first()
 
+    # Fetch Drive Templates
+    drive_templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+
     return render_template('lead_details.html', 
                          lead=lead, 
                          users=users, 
                          stages=stages, 
                          is_first_stage=is_first_stage, 
                          today_date=today_date,
+                         drive_templates=drive_templates,
                          diag_instance=diag_instance)
 
 @leads_bp.route('/pipeline')
@@ -283,7 +287,17 @@ def convert_lead(id):
         start_date=start_date,
         renewal_date=renewal_date,
         notes=f"Convertido de Lead em {start_date.strftime('%d/%m/%Y')}. \n{lead.notes or ''}",
-        niche=lead.bant_need
+        niche=lead.bant_need,
+        
+        # Enriched Data Mapping
+        document=lead.cnpj,
+        address_street=lead.address,
+        profile_pic_url=lead.profile_pic_url,
+        gmb_link=lead.gmb_link,
+        gmb_rating=lead.gmb_rating,
+        gmb_reviews=lead.gmb_reviews,
+        gmb_photos=lead.gmb_photos,
+        gmb_last_sync=lead.gmb_last_sync
     )
     
     db.session.add(client)
@@ -337,6 +351,66 @@ def convert_lead(id):
         company_id=client.company_id
     )
     db.session.add(task_create)
+
+    # --- GOOGLE DRIVE AUTOMATION ---
+    try:
+        from services.google_drive_service import GoogleDriveService
+        from models import TenantIntegration
+
+        drive_integration = TenantIntegration.query.filter_by(
+            company_id=current_user.company_id, 
+            provider='google_drive', 
+            status='connected'
+        ).first()
+
+        if drive_integration:
+            drive_service = GoogleDriveService(company_id=current_user.company_id)
+            root_id = drive_integration.root_folder_id
+
+            # Create Client Folder
+            folder_name = f"{client.name} - {client.id}"
+            folder = drive_service.create_folder(drive_integration, folder_name, parent_id=root_id)
+            
+            if folder:
+                client.drive_folder_id = folder.get('id')
+                client.drive_folder_url = folder.get('webViewLink')
+                client.drive_folder_name = folder_name
+                
+                # Create Folder Structure from Template
+                drive_template_id = request.form.get('drive_template_id')
+                
+                if drive_template_id:
+                    template = DriveFolderTemplate.query.get(drive_template_id)
+                    if template and template.company_id == current_user.company_id:
+                        # Use selected template
+                        drive_service.create_folder_structure(drive_integration, folder.get('id'), template.structure_json)
+                else:
+                    # Fallback or Default Structure (e.g., Contratos, Briefing)
+                    subfolders = ['Contratos', 'Briefing', 'Midia']
+                    for sub in subfolders:
+                        try:
+                            drive_service.create_folder(drive_integration, sub, parent_id=folder.get('id'))
+                        except: pass
+                
+                flash(f'Pasta criada no Google Drive: {folder_name}', 'success')
+
+    except Exception as drive_e:
+        import traceback
+        traceback.print_exc()
+        flash(f'Erro ao criar pasta no Drive: {str(drive_e)}', 'warning')
+    # -------------------------------
+
+    db.session.commit()
+    
+    # Notify
+    create_notification(
+        user_id=client.account_manager_id,
+        message=f"Novo cliente convertido: {client.name}",
+        link=url_for('clients.client_details', id=client.id),
+        type="success"
+    )
+    
+    return redirect(url_for('clients.client_details', id=client.id))
 
     # Notify
     if client.account_manager_id and client.account_manager_id != current_user.id:

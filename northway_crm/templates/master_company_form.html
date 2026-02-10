@@ -123,6 +123,36 @@
                             <p class="text-[10px] text-gray-500 mt-2 italic">* Estes valores sobrescrevem o padrão do
                                 plano selecionado.</p>
                         </div>
+
+                        <!-- Features -->
+                        <div class="border-t border-gray-700 pt-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <label class="text-xs font-bold text-gray-400 uppercase">Funcionalidades Extras
+                                    (Master)</label>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label
+                                    class="flex items-center gap-3 p-3 rounded-lg border border-gray-700 bg-gray-900/30 cursor-pointer hover:border-gray-600 transition-colors">
+                                    <input type="checkbox" name="feature_whatsapp"
+                                        class="rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500/50"
+                                        {% if company and company.has_feature('whatsapp') %}checked{% endif %}>
+                                    <div>
+                                        <span class="block text-sm font-bold text-gray-200">WhatsApp</span>
+                                        <span class="block text-[10px] text-gray-500">Módulo de mensagens e CRM</span>
+                                    </div>
+                                </label>
+                                <label
+                                    class="flex items-center gap-3 p-3 rounded-lg border border-gray-700 bg-gray-900/30 cursor-pointer hover:border-gray-600 transition-colors">
+                                    <input type="checkbox" name="feature_prospecting"
+                                        class="rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500/50"
+                                        {% if company and company.has_feature('prospecting') %}checked{% endif %}>
+                                    <div>
+                                        <span class="block text-sm font-bold text-gray-200">Prospecção</span>
+                                        <span class="block text-[10px] text-gray-500">Busca de leads e mapas</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

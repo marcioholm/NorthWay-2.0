@@ -1,4 +1,5 @@
-from flask import Blueprint, request, current_app, url_for
+from flask import Blueprint, request, current_app, url_for, redirect, render_template, flash, jsonify
+from datetime import datetime
 from flask_login import login_required, current_user
 from models import db, Integration, FinancialEvent, Transaction, Contract
 
@@ -156,4 +157,299 @@ def asaas_webhook(company_id):
         current_app.logger.error(f"Asaas Webhook Error: {e}")
         return api_response(success=False, error=str(e), status=500)
     
+    
     return api_response(data={'received': True})
+
+# --- GOOGLE DRIVE INTEGRATION ---
+from services.google_drive_service import GoogleDriveService
+from models import TenantIntegration
+
+@integrations_bp.route('/api/integrations/google-drive/connect')
+@login_required
+def connect_google_drive():
+    try:
+        service = GoogleDriveService(company_id=current_user.company_id)
+        auth_url, state = service.get_auth_url()
+        # Save state in session if needed for CSRF protection
+        return redirect(auth_url)
+    except Exception as e:
+        return api_response(success=False, error=str(e), status=500)
+
+@integrations_bp.route('/api/integrations/google-drive/callback')
+@login_required
+def google_drive_callback():
+    code = request.args.get('code')
+    error = request.args.get('error')
+    
+    if error:
+        return render_template('integrations/drive_error.html', error=error)
+        
+    if not code:
+        return render_template('integrations/drive_error.html', error="No code received")
+        
+    try:
+        service = GoogleDriveService(company_id=current_user.company_id)
+        tokens = service.fetch_token(code)
+        
+        # Save to DB
+        integration = TenantIntegration.query.filter_by(
+            company_id=current_user.company_id, 
+            provider='google_drive'
+        ).first()
+        
+        if not integration:
+            integration = TenantIntegration(
+                company_id=current_user.company_id,
+                provider='google_drive'
+            )
+            db.session.add(integration)
+            
+        integration.status = 'connected'
+        integration.access_token = tokens['token']
+        integration.refresh_token_encrypted = tokens['refresh_token']
+        integration.token_expiry_at = datetime.fromisoformat(tokens['expiry'].replace('Z', '')) if tokens['expiry'] else None
+        integration.updated_at = datetime.utcnow()
+        # We could fetch email too using googleapis/oauth2/v2/userinfo
+        
+        db.session.commit()
+        
+        # Redirect to settings to configure root folder
+        flash('Google Drive conectado com sucesso! Configure a pasta raiz.', 'success')
+        return redirect(url_for('integrations_bp.drive_settings_page'))
+        
+    except Exception as e:
+        current_app.logger.error(f"Drive Callback Error: {e}")
+        return render_template('integrations/drive_error.html', error=str(e))
+
+@integrations_bp.route('/start/settings/drive')
+@login_required
+def drive_settings_page():
+    # Render settings page
+    integration = TenantIntegration.query.filter_by(
+        company_id=current_user.company_id, 
+        provider='google_drive'
+    ).first()
+    
+    templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+    if not templates and integration: # Seed if connected but no templates
+        seed_drive_templates()
+        templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+        
+    return render_template('settings_drive.html', integration=integration, templates=templates)
+
+@integrations_bp.route('/api/integrations/google-drive/root-folder', methods=['POST'])
+@login_required
+def save_drive_root_folder():
+    folder_url = request.form.get('root_folder_url')
+    # Simple extraction of ID from URL
+    # https://drive.google.com/drive/folders/1234567890abcdef
+    folder_id = None
+    if 'folders/' in folder_url:
+        folder_id = folder_url.split('folders/')[-1].split('?')[0] # Basic parsing
+    else:
+        folder_id = folder_url # Assume ID was pasted
+        
+    if not folder_id:
+        flash('ID da pasta inválido', 'error')
+        return redirect(url_for('integrations_bp.drive_settings_page'))
+        
+    integration = TenantIntegration.query.filter_by(
+        company_id=current_user.company_id, 
+        provider='google_drive'
+    ).first()
+    
+    if integration:
+        integration.root_folder_id = folder_id
+        integration.root_folder_url = folder_url
+        db.session.commit()
+        flash('Pasta raiz configurada!', 'success')
+        
+    return redirect(url_for('integrations_bp.drive_settings_page'))
+
+@integrations_bp.route('/api/integrations/google-drive/disconnect', methods=['POST'])
+@login_required
+def disconnect_google_drive():
+    integration = TenantIntegration.query.filter_by(
+        company_id=current_user.company_id, 
+        provider='google_drive'
+    ).first()
+    
+    if integration:
+        db.session.delete(integration)
+        db.session.commit()
+        flash('Google Drive desconectado.', 'info')
+        
+    return redirect(url_for('integrations_bp.drive_settings_page'))
+    return redirect(url_for('integrations_bp.drive_settings_page'))
+
+# --- DRIVE TEMPLATES ---
+from models import DriveFolderTemplate
+
+@integrations_bp.route('/api/integrations/drive/templates', methods=['GET'])
+@login_required
+def list_drive_templates():
+    templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+    
+    # If no templates, seed defaults
+    if not templates:
+        seed_drive_templates()
+        templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+        
+    return jsonify([{
+        'id': t.id,
+        'name': t.name,
+        'structure': t.structure_json,
+        'is_default': t.is_default
+    } for t in templates])
+
+@integrations_bp.route('/api/integrations/drive/templates/save', methods=['POST'])
+@login_required
+def save_drive_template():
+    data = request.json
+    template_id = data.get('id')
+    name = data.get('name')
+    structure_text = data.get('structure_text') # Indentation-based text
+    
+    if not name or not structure_text:
+        return api_response(success=False, error='Nome e Estrutura são obrigatórios')
+        
+    # Parse Structure
+    try:
+        from services.google_drive_service import GoogleDriveService
+        structure_list = GoogleDriveService.parse_structure_text(structure_text)
+        structure_json = json.dumps(structure_list)
+    except Exception as e:
+        return api_response(success=False, error=f'Erro ao processar estrutura: {str(e)}')
+        
+    if template_id:
+        template = DriveFolderTemplate.query.filter_by(id=template_id, company_id=current_user.company_id).first()
+        if not template:
+            return api_response(success=False, error='Template não encontrado')
+        template.name = name
+        template.structure_json = structure_json
+    else:
+        template = DriveFolderTemplate(
+            company_id=current_user.company_id,
+            name=name,
+            structure_json=structure_json
+        )
+        db.session.add(template)
+        
+    db.session.commit()
+    return api_response(success=True)
+
+@integrations_bp.route('/api/integrations/drive/templates/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_drive_template(id):
+    template = DriveFolderTemplate.query.filter_by(id=id, company_id=current_user.company_id).first()
+    if template:
+        db.session.delete(template)
+        db.session.commit()
+    return api_response(success=True)
+
+def seed_drive_templates():
+    """Seeds the 7 default templates for the current user's company."""
+    defaults = [
+        ("Universal / Simples", """
+01 - Contratos & Financeiro
+02 - Onboarding
+03 - Materiais do Cliente
+04 - Entregas
+05 - Relatórios
+        """),
+        ("Agência de Marketing", """
+01 - Contrato & Briefing
+02 - Branding
+    Logo
+    Identidade Visual
+    Manual de Marca
+03 - Social Media
+    Planejamento
+    Criativos
+        Feed
+        Stories
+        Reels
+    Copies
+    Aprovados
+04 - Tráfego Pago
+    Criativos
+    Copies
+    Relatórios
+05 - Relatórios
+06 - Arquivos Finais
+        """),
+        ("Consultoria / Estratégia", """
+01 - Contrato & Escopo
+02 - Diagnóstico
+    Questionários
+    Análises
+    Insights
+03 - Planejamento
+    Estratégia
+    Roadmap
+    KPIs
+04 - Execução
+05 - Relatórios
+06 - Reuniões & Atas
+        """),
+        ("TI / Software", """
+01 - Contrato & Proposta
+02 - Levantamento de Requisitos
+03 - Documentação Técnica
+    APIs
+    Diagramas
+    Credenciais
+04 - Desenvolvimento
+05 - Homologação
+06 - Produção
+07 - Relatórios & Logs
+        """),
+        ("Jurídico / Contábil", """
+01 - Contrato & Procuração
+02 - Documentos do Cliente
+03 - Processos
+04 - Petições & Protocolos
+05 - Pareceres
+06 - Financeiro
+        """),
+        ("Obras / Engenharia", """
+01 - Contrato & Escopo
+02 - Projeto
+    Plantas
+    3D / Render
+    Aprovações
+03 - Execução
+    Cronograma
+    Fotos de Obra
+    Medições
+04 - Fornecedores
+05 - Relatórios
+06 - Entrega Final
+        """),
+        ("Educação / Mentoria", """
+01 - Contrato & Inscrição
+02 - Materiais
+    Aulas
+    Slides
+    Apostilas
+03 - Exercícios
+04 - Certificados
+05 - Feedback & Avaliações
+        """)
+    ]
+    
+    from services.google_drive_service import GoogleDriveService
+    
+    for name, text in defaults:
+        try:
+            structure = GoogleDriveService.parse_structure_text(text)
+            t = DriveFolderTemplate(
+                company_id=current_user.company_id,
+                name=name,
+                structure_json=json.dumps(structure),
+                is_default=False # User can edit, so treat as copies
+            )
+            db.session.add(t)
+        except: pass
+        
+    db.session.commit()

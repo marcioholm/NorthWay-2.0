@@ -375,6 +375,7 @@
                 </a>
                 {% endif %}
 
+                {% if current_user.company.has_feature('whatsapp') %}
                 <a href="{{ url_for('whatsapp.inbox') }}"
                     class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'whatsapp.inbox' else 'text-gray-400' }}">
                     <div class="flex items-center gap-3">
@@ -384,6 +385,7 @@
                     <span id="whatsapp-unread-badge"
                         class="hidden sidebar-badge bg-northway-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">0</span>
                 </a>
+                {% endif %}
 
                 <!-- Divider -->
                 {% if current_user.has_permission('company_settings_view') or
@@ -424,7 +426,8 @@
 
                 <!-- Prospecting -->
                 <!-- Prospecting -->
-                {% if current_user.has_permission('prospecting_view') %}
+                {% if current_user.company.has_feature('prospecting') and
+                current_user.has_permission('prospecting_view') %}
                 <a href="{{ url_for('prospecting.index') }}"
                     class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint and 'prospecting' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
                     <i data-lucide="globe" class="w-5 h-5 flex-shrink-0"></i>

@@ -143,6 +143,10 @@ class Company(db.Model):
     max_leads = db.Column(db.Integer, default=1000)
     max_storage_gb = db.Column(db.Float, default=1.0)
     
+    # Feature Flags (Master Control)
+    # JSON: {'whatsapp': True, 'prospecting': False, ...}
+    features = db.Column(db.JSON, default={})
+    
     # Timestamps
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     last_active_at = db.Column(db.DateTime, nullable=True)
@@ -157,6 +161,25 @@ class Company(db.Model):
         elif self.address_city: parts.append(f"- {self.address_city}")
         if self.address_zip: parts.append(f"CEP: {self.address_zip}")
         return " ".join(parts) if parts else ""
+
+    def has_feature(self, feature_key):
+        """
+        Checks if the company has a specific feature enabled by Master Admin.
+        Defaults to False if key not present.
+        """
+        if not self.features:
+            return False
+            
+        # Handle string JSON if SQLite/Legacy didn't cast
+        import json
+        feats = self.features
+        if isinstance(feats, str):
+            try:
+                feats = json.loads(feats)
+            except:
+                return False
+                
+        return feats.get(feature_key, False)
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -304,6 +327,13 @@ class Lead(db.Model):
     diagnostic_date = db.Column(db.DateTime, nullable=True)
     diagnostic_pillars = db.Column(db.JSON, nullable=True) # Breakdown {"Atrair": 10, ...}
 
+    # Google Drive Fields
+    drive_folder_id = db.Column(db.String(100), nullable=True)
+    drive_folder_url = db.Column(db.String(500), nullable=True)
+    drive_folder_name = db.Column(db.String(255), nullable=True)
+    drive_last_scan_at = db.Column(db.DateTime, nullable=True)
+    drive_unread_files_count = db.Column(db.Integer, default=0)
+
     @property
     def task_progress(self):
         total = len(self.tasks)
@@ -328,6 +358,15 @@ class Lead(db.Model):
         delta = datetime.utcnow() - last_activity
         return delta.days
 
+
+class DriveFolderTemplate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    structure_json = db.Column(db.Text, nullable=False) # JSON list of dicts: [{'name': 'Folder', 'children': []}]
+    is_default = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -381,6 +420,13 @@ class Client(db.Model):
     gmb_photos = db.Column(db.Integer, default=0)
     gmb_last_sync = db.Column(db.DateTime, nullable=True)
 
+    # Google Drive Fields
+    drive_folder_id = db.Column(db.String(100), nullable=True)
+    drive_folder_url = db.Column(db.String(500), nullable=True)
+    drive_folder_name = db.Column(db.String(255), nullable=True)
+    drive_last_scan_at = db.Column(db.DateTime, nullable=True)
+    drive_unread_files_count = db.Column(db.Integer, default=0)
+
     # Relationships
     company = db.relationship('Company', backref='clients')
     account_manager = db.relationship('User', backref='managed_clients')
@@ -390,6 +436,7 @@ class Client(db.Model):
     origin_lead = db.relationship('Lead', backref=db.backref('converted_client', uselist=False), foreign_keys=[lead_id])
     
     interactions = db.relationship('Interaction', backref='client', cascade='all, delete-orphan', lazy=True)
+    drive_files_events = db.relationship('DriveFileEvent', backref='client', cascade='all, delete-orphan', lazy=True)
 
     @property
     def address(self):
@@ -455,6 +502,47 @@ class Integration(db.Model):
     last_error = db.Column(db.Text, nullable=True)
     last_sync_at = db.Column(db.DateTime, nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class TenantIntegration(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    provider = db.Column(db.String(50), nullable=False) # 'google_drive'
+    status = db.Column(db.String(20), default='disconnected') # connected, disconnected, error
+    
+    google_account_email = db.Column(db.String(120), nullable=True)
+    google_account_id = db.Column(db.String(100), nullable=True)
+    
+    # Security: Encrypted tokens (In MVP we might store plain or base64 if encryption helper missing, but aiming for best practice)
+    # Storing as Text for now, app logic handles encryption
+    refresh_token_encrypted = db.Column(db.Text, nullable=True) 
+    access_token = db.Column(db.Text, nullable=True) # Short lived
+    token_expiry_at = db.Column(db.DateTime, nullable=True)
+    
+    root_folder_id = db.Column(db.String(100), nullable=True)
+    root_folder_url = db.Column(db.String(500), nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+    last_error = db.Column(db.Text, nullable=True)
+    
+class DriveFileEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True) # Optional link
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Optional link
+    
+    file_id = db.Column(db.String(100), nullable=False)
+    file_name = db.Column(db.String(255), nullable=False)
+    mime_type = db.Column(db.String(100), nullable=True)
+    web_view_link = db.Column(db.String(500), nullable=True)
+    
+    created_time = db.Column(db.DateTime, nullable=True) # Drive file creation
+    modified_time = db.Column(db.DateTime, nullable=True) # Drive file mod
+    
+    detected_at = db.Column(db.DateTime, default=get_now_br)
+    
+    # Unique constraint handled in migration or app logic ideally
+    # __table_args__ = (db.UniqueConstraint('company_id', 'file_id', name='_company_file_uc'),)
 
 class WhatsAppMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)

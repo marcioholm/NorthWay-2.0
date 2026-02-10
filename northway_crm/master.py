@@ -536,7 +536,19 @@ def company_edit(company_id):
         company.status = request.form['status']
         company.max_users = int(request.form['max_users'])
         company.max_leads = int(request.form['max_leads'])
+        company.max_leads = int(request.form['max_leads'])
         company.document = request.form.get('document')
+        
+        # Features Handling
+        feats = company.features or {}
+        if isinstance(feats, str):
+            import json
+            try: feats = json.loads(feats)
+            except: feats = {}
+            
+        feats['whatsapp'] = request.form.get('feature_whatsapp') == 'on'
+        feats['prospecting'] = request.form.get('feature_prospecting') == 'on'
+        company.features = feats
         
         try:
             db.session.commit()

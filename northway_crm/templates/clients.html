@@ -9,8 +9,18 @@
                 <h1 class="text-3xl font-bold text-gray-900">Clientes</h1>
                 <p class="text-gray-500 mt-1">Gestão da base de clientes ativos.</p>
             </div>
-            <!-- Future: Add client manually -->
-            <!-- <button class="...">Novo Cliente</button> -->
+            <div class="flex gap-2">
+                <button onclick="openImportModal()"
+                    class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded hover:bg-gray-50 transition-colors font-bold shadow-sm flex items-center gap-2">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    Importar
+                </button>
+                <button onclick="openNewClientModal()"
+                    class="bg-northway-red text-white px-4 py-2 rounded hover:bg-red-700 transition-colors font-bold shadow-sm flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Novo Cliente
+                </button>
+            </div>
         </header>
 
         <!-- NorthWay Manifesto Banner: Clients -->
@@ -404,6 +414,143 @@
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         lucide.createIcons();
         document.getElementById('quickTaskModal').classList.remove('hidden');
+    }
+
+
+    function openNewClientModal() {
+        // Modal for creating a new client manually
+        const modalHtml = `
+            <div id="newClientModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center">
+                <div class="bg-white rounded-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Novo Cliente</h3>
+                        <div class="flex items-center gap-2">
+                            <button onclick="document.getElementById('newClientModal').remove()" class="text-gray-500 hover:text-gray-700">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <form action="{{ url_for('clients.create_client') }}" method="POST">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="col-span-2">
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Cliente *</label>
+                                <input type="text" name="name" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red" placeholder="Nome da Empresa ou Pessoa">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                                <input type="email" name="email" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red" placeholder="email@exemplo.com">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Telefone</label>
+                                <input type="text" name="phone" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red" placeholder="(11) 99999-9999">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Status</label>
+                                <select name="status" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red">
+                                    <option value="ativo" selected>Ativo</option>
+                                    <option value="onboarding">Onboarding</option>
+                                    <option value="pausado">Pausado</option>
+                                    <option value="cancelado">Cancelado</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Gerente de Conta</label>
+                                <select name="account_manager_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red">
+                                    {% for user in users %}
+                                    <option value="{{ user.id }}" {% if user.id == current_user.id %}selected{% endif %}>{{ user.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Serviço Contratado</label>
+                                <input type="text" name="service" placeholder="Ex: Gestão de Tráfego" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Valor Mensal (R$)</label>
+                                <input type="number" step="0.01" name="monthly_value" placeholder="0.00" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">Início do Contrato</label>
+                                <input type="date" name="start_date" value="{{ today }}" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-northway-red">
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button type="button" onclick="document.getElementById('newClientModal').remove()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded font-medium">Cancelar</button>
+                            <button type="submit" class="bg-northway-red text-white px-6 py-2 rounded font-bold hover:bg-red-700 shadow-lg shadow-red-200 transition-all">
+                                <i data-lucide="check" class="w-4 h-4 inline mr-1"></i> Criar Cliente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        lucide.createIcons();
+    }
+
+    function openImportModal() {
+        // Modal for importing clients via CSV
+        const modalHtml = `
+            <div id="importClientsModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center">
+                <div class="bg-white rounded-lg w-full max-w-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Importar Clientes</h3>
+                        <button onclick="document.getElementById('importClientsModal').remove()" class="text-gray-500 hover:text-gray-700">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-lg text-sm text-blue-700">
+                        <div class="flex items-start gap-2">
+                             <i data-lucide="info" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
+                             <div>
+                                <p class="font-bold mb-1">Instruções:</p>
+                                <ul class="list-disc list-inside space-y-1 text-xs">
+                                    <li>O arquivo deve ser <strong>.CSV</strong>.</li>
+                                    <li>Colunas necessárias: <strong>Nome, Email, Telefone</strong>.</li>
+                                    <li>Colunas opcionais: <strong>Status</strong> (Ativo, Cancelado, Inativo, Ex-Cliente), <strong>Valor</strong>, <strong>Servico</strong>, <strong>Data Inicio</strong>.</li>
+                                </ul>
+                             </div>
+                        </div>
+                    </div>
+
+                    <form action="{{ url_for('clients.import_clients') }}" method="POST" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Selecione o arquivo CSV</label>
+                            <div class="relative">
+                                <input type="file" name="file" accept=".csv" required 
+                                       class="block w-full text-sm text-gray-500
+                                              file:mr-4 file:py-2 file:px-4
+                                              file:rounded-full file:border-0
+                                              file:text-sm file:font-semibold
+                                              file:bg-northway-red file:text-white
+                                              hover:file:bg-red-700 cursor-pointer
+                                              border border-gray-300 rounded-lg p-1"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                            <button type="button" onclick="document.getElementById('importClientsModal').remove()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded font-medium">Cancelar</button>
+                            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700 shadow-lg shadow-green-200 flex items-center gap-2 transition-all">
+                                <i data-lucide="upload" class="w-4 h-4"></i> Importar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        lucide.createIcons();
     }
 </script>
 {% endblock %}
