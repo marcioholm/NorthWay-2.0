@@ -5,7 +5,7 @@
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Configurações</h1>
 
     <!-- Google Drive Integration Card -->
-    {% if company.has_feature('google_drive') %}
+    {% if company.has_feature('google_drive') or company.has_feature('drive') %}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
         <div class="p-6 border-b border-gray-200 flex justify-between items-center">
             <div class="flex items-center gap-3">
