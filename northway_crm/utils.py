@@ -211,6 +211,28 @@ def get_contract_replacements(client, form_data):
         '{{data_proposta}}': form_data.get('data_proposta', today_br.strftime('%d/%m/%Y')),
         '{{data_assinatura}}': form_data.get('data_assinatura', today_br.strftime('%d/%m/%Y')),
         '{{data_atual}}': today_br.strftime('%d/%m/%Y'),
+
+        # --- SPECIFIC USER ALIASES ---
+        '{{data_inicio_contrato}}': form_data.get('data_inicio', today_br.strftime('%d/%m/%Y')),
+        '{{prazo_meses}}': form_data.get('vigencia_meses', '12'),
+        '{{valor_contrato}}': form_data.get('valor_total', '0,00'),
+        
+        '{{nome_assinante_contratante}}': form_data.get('contratante_representante') or client.representative or (form_data.get('contratante_nome') or client.name),
+        '{{nome_assinante_contratada}}': getattr(client.company, 'representative', '') or current_user_name,
+        '{{cnpj_contratada}}': client.company.document,
+
+        '{{testemunha1_nome}}': form_data.get('testemunha1_nome', ''),
+        '{{testemunha1_cpf}}': form_data.get('testemunha1_cpf', ''),
+        '{{testemunha2_nome}}': form_data.get('testemunha2_nome', ''),
+        '{{testemunha2_cpf}}': form_data.get('testemunha2_cpf', ''),
+
+        '{{nome_testemunha_1}}': form_data.get('testemunha1_nome', ''),
+        '{{cpf_testemunha_1}}': form_data.get('testemunha1_cpf', ''),
+        '{{nome_testemunha_2}}': form_data.get('testemunha2_nome', ''),
+        '{{cpf_testemunha_2}}': form_data.get('testemunha2_cpf', ''),
+
+        '{{foro_comarca}}': foro_comarca,
+        '{{foro_estado}}': foro_estado,
     }
     return replacements
 
