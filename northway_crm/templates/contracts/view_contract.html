@@ -235,11 +235,12 @@
         /* CRITICAL: Reset all layout containers to prevent "scroll traps" */
         html,
         body {
-            height: 100%;
+            height: auto !important;
             width: 100%;
             margin: 0 !important;
             padding: 0 !important;
             background: white !important;
+            overflow: visible !important;
         }
 
         /* Reset transform for print */
