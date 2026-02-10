@@ -14,17 +14,43 @@
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-            <div class="relative h-48 overflow-hidden group">
+            <div class="relative h-64 overflow-hidden group bg-slate-900 flex items-center justify-center">
                 <img src="{{ url_for('static', filename='images/google_drive_banner.png') }}"
-                    class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
+                    class="w-full h-full object-cover object-center transform transition-transform duration-700 group-hover:scale-105"
                     alt="Google Drive Banner">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                <div class="absolute bottom-6 left-8 text-white">
-                    <h2 class="text-2xl font-black mb-1">Integração Google Drive 🚀</h2>
-                    <p class="text-sm text-gray-200 font-medium opacity-90">Sincronize arquivos e automatize pastas
-                        dos seus clientes.</p>
+                <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent"></div>
+            </div>
+        </div>
+
+        <!-- Google Drive Guidance Banner -->
+        <div
+            class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-slate-800 to-slate-950 p-6 text-white shadow-md border border-slate-700">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="max-w-xl">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span
+                            class="bg-white/10 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-blue-300 border border-white/5">Infraestrutura
+                            Externa</span>
+                        <span
+                            class="bg-blue-500/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-blue-500/20">Google
+                            Cloud Console</span>
+                    </div>
+                    <h3 class="text-xl font-black mb-2 leading-tight">Configure sua Integração Google ☁️</h3>
+                    <p class="text-sm text-slate-300 mb-0 leading-relaxed">
+                        Para ativar o Google Drive em produção, você precisa configurar o <strong>Client ID</strong> e
+                        <strong>Secret</strong> no Vercel. Isso garante a segurança dos seus dados.
+                    </p>
+                </div>
+                <div class="flex-shrink-0">
+                    <a href="https://console.cloud.google.com/" target="_blank"
+                        class="inline-flex items-center gap-2 bg-white text-slate-900 px-6 py-3 rounded-lg font-black text-sm hover:bg-blue-50 transition-all shadow-lg hover:scale-[1.05] active:scale-95">
+                        <i data-lucide="external-link" class="w-4 h-4 text-blue-600"></i>
+                        ABRIR GOOGLE CLOUD
+                    </a>
                 </div>
             </div>
+            <!-- Abstract BG Decoration -->
+            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -134,7 +160,7 @@
                         </div>
                         <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                                onclick='editTemplate({{ template.id }}, {{ template.name|tojson }}, {{ template.structure_json|safe }})'
+                                onclick='editTemplate({{ template.id }}, {{ template.name|tojson }}, {{ template.structure_json|tojson }})'
                                 class="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-blue-50">
                                 <i data-lucide="pencil" class="w-4 h-4"></i>
                             </button>
@@ -151,7 +177,7 @@
                         <div class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50 pointer-events-none">
                         </div>
                         <pre class="text-[10px] leading-relaxed folder-structure-preview"
-                            data-json='{{ template.structure_json|safe }}'></pre>
+                            data-json='{{ template.structure_json|tojson }}'></pre>
                     </div>
                 </div>
                 {% else %}
