@@ -163,52 +163,68 @@ def create_app():
 
             return dict(pending_tasks_count=0, now=now_br, dict=dict)
 
-        # --- BLOCKING LOGIC ---
+        # --- UNIFIED RESILIENT MIDDLEWARE ---
         @app.before_request
-        def check_company_status():
-            # Exclude statics and non-blocking routes
+        def unified_before_request():
             if not request.endpoint: return
+            if request.endpoint.startswith('static'): return
             
-            # FORCE IGNORE SYS_ADMIN & MIGRATION ROUTES
-            if request.path.startswith('/sys_admin') or \
-               request.path.startswith('/forms/public') or \
-               request.path.startswith('/admin/run-initial-migrations') or \
-               request.path.startswith('/emergency-migration'):
+            # EXEMPTIONS: Always allow access to maintenance and auth routes
+            # This is critical to recover from DB errors
+            exempt_paths = ['/sys_admin', '/forms/public', '/admin/run-initial-migrations', '/emergency-migration', '/debug_schema']
+            if any(request.path.startswith(p) for p in exempt_paths):
                 return
 
-            allowed_routes = ['static', 'auth.login', 'auth.logout', 'auth.blocked_account', 'master.dashboard', 'master.system_reset', 'master.test_email', 'master.sync_schema', 'docs.ebook_institutional']
-            if request.endpoint in allowed_routes:
+            exempt_endpoints = ['auth.login', 'auth.register', 'auth.logout', 
+                                'billing.asaas_webhook', 'billing.payment_pending',
+                                'auth.suspended_account', 'master.revert_access',
+                                'master.sync_schema']
+            if request.endpoint in exempt_endpoints:
                 return
 
+            # Protected DB logic wrapped in global try-except
             if current_user and current_user.is_authenticated:
-                # Super Admins are NEVER blocked
-                if getattr(current_user, 'is_super_admin', False):
-                    return
-                
                 try:
-                    company = current_user.company
+                    # Super Admins are NEVER blocked
+                    if getattr(current_user, 'is_super_admin', False):
+                        return
+                        
+                    # Fetching company can trigger UndefinedColumn error
+                    company = getattr(current_user, 'company', None)
                     if not company:
                         return
-                except:
-                    # Schema out of sync, allow access to fix it
-                    return
 
-                # 1. Manual Block (MASTER SWITCH)
-                if getattr(company, 'platform_inoperante', False):
-                    return redirect(url_for('auth.blocked_account', reason='manual'))
+                    # 1. Manual Block
+                    if getattr(company, 'platform_inoperante', False):
+                        if not request.endpoint.startswith('billing.'):
+                            return redirect(url_for('billing.payment_pending'))
 
-                # 2. Automated Block (30 Days Inadimplência)
-                if getattr(company, 'payment_status', None) == 'overdue' and \
-                   getattr(company, 'overdue_since', None):
-                    days_overdue = (datetime.utcnow() - company.overdue_since).days
-                    if days_overdue >= 30:
-                        return redirect(url_for('auth.blocked_account', reason='overdue'))
-                
-                # 3. Trial Expired
-                if getattr(company, 'payment_status', None) == 'trial' and \
-                   getattr(company, 'trial_ends_at', None):
-                    if datetime.utcnow() > company.trial_ends_at:
-                        return redirect(url_for('auth.blocked_account', reason='trial_expired'))
+                    # 2. Automated Block (D+30)
+                    payment_status = getattr(company, 'payment_status', None)
+                    overdue_since = getattr(company, 'overdue_since', None)
+                    
+                    if payment_status == 'overdue' and overdue_since:
+                        # Courtesy exemption
+                        if getattr(company, 'status', None) != 'courtesy':
+                            days_late = (datetime.utcnow() - overdue_since).days
+                            if days_late >= 30:
+                                return render_template('suspended.html', company_name=company.name, reason='overdue')
+                    
+                    # 3. Trial Expired
+                    trial_ends = getattr(company, 'trial_ends_at', None)
+                    if payment_status == 'trial' and trial_ends:
+                        if datetime.utcnow() > trial_ends:
+                            return render_template('suspended.html', company_name=company.name, reason='trial_expired')
+
+                    # 4. Status Check
+                    if getattr(company, 'status', 'active') in ['suspended', 'cancelled']:
+                        return render_template('suspended.html', company_name=company.name, reason='manual')
+
+                except Exception as e:
+                    # SILENT FAIL: If anything fails here (likely DB schema mismatch), 
+                    # we let the request proceed so the user can reach repair routes.
+                    print(f"📡 Middleware Safety Trip: {e}")
+                    pass
 
         @app.template_filter('from_json')
         def from_json_filter(s):
@@ -440,64 +456,6 @@ def create_app():
                 print(f"❌ Failed to load blueprint {var_name}: {e}")
 
         # --- BILLING MIDDLEWARE ---
-        @app.before_request
-        def check_platform_access():
-            # Open Routes (Webhooks, Static, Auth)
-            if not request.endpoint: return
-            if request.endpoint.startswith('static'): return
-            
-            # FORCE IGNORE SYS_ADMIN & MIGRATION ROUTES (Fix DB Crash)
-            # This allows running migrations even if the schema is broken
-            if request.path.startswith('/sys_admin') or \
-               request.path.startswith('/forms/public') or \
-               request.path.startswith('/admin/run-initial-migrations') or \
-               request.path.startswith('/emergency-migration'):
-                return
-
-            if request.endpoint in ['auth.login', 'auth.register', 'auth.logout', 
-                                  'billing.asaas_webhook', 'billing.payment_pending',
-                                  'auth.suspended_account', 'master.revert_access',
-                                  'master.sync_schema']: # Allow sync!
-                return
-
-            # Check Login & Inoperability
-            if current_user.is_authenticated and hasattr(current_user, 'company'):
-                # Safe access to company to prevent schema-related crash at boot
-                try:
-                    company = current_user.company
-                    if not company: return
-                except:
-                    # If fetching company fails (e.g. column missing), we allow access 
-                    # so the admin can fix the DB
-                    return
-
-                # 1. STRICT SUSPENSION CHECK (Safe getattr for new columns)
-                if getattr(company, 'status', 'active') in ['suspended', 'cancelled']:
-                    return render_template('suspended.html', company_name=company.name, company_id=company.id)
-
-                # --- LAZY BLOCK ENGINE (D+30) ---
-                # Using getattr for all potential new/missing columns
-                if getattr(company, 'payment_status', None) == 'overdue' and \
-                   getattr(company, 'overdue_since', None):
-                    # Immunity Check
-                    if getattr(company, 'status', None) == 'courtesy':
-                        return
-                if company.payment_status == 'overdue' and company.overdue_since and company.payment_status != 'courtesy':
-                    days_late = (datetime.utcnow() - company.overdue_since).days
-                    if days_late >= 30 and not company.platform_inoperante:
-                        print(f"🚫 BLOCKING COMPANY {company.name} due to {days_late} days overdue.")
-                        company.platform_inoperante = True
-                        company.payment_status = 'blocked'
-                        # Ideally we would send email here, but for laziness we skip or trigger async
-                        db.session.commit()
-
-                # --- ACCESS CONTROL ---
-                if getattr(company, 'platform_inoperante', False):
-                    # Allow access to specific routes needed for billing
-                    if request.endpoint.startswith('billing.'):
-                        return
-                    # Redirect everything else to payment pending
-                    return redirect(url_for('billing.payment_pending'))
             
         # --- AUTO-MIGRATION / TABLE CREATION ---
         # Critical for Vercel/Ephemeral environments
@@ -537,7 +495,12 @@ def create_app():
                             columns = [c['name'] for c in inspector.get_columns("company")]
                             
                             # Safely add columns
-                            for col, dtype in [('next_due_date', 'DATE'), ('trial_start_date', 'DATETIME'), ('trial_end_date', 'DATETIME')]:
+                            for col, dtype in [
+                                ('next_due_date', 'DATE'), 
+                                ('trial_start_date', 'DATETIME'), 
+                                ('trial_end_date', 'DATETIME'),
+                                ('features', 'JSONB DEFAULT \'{}\'') # ADDED: Fix UndefinedColumn crash
+                            ]:
                                 if col not in columns:
                                     try:
                                         print(f"📦 MIGRATION: Adding {col}...")
