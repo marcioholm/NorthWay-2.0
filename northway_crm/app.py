@@ -335,30 +335,87 @@ def create_app():
                         "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
                         "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
                         "ALTER TABLE lead ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS drive_folder_id VARCHAR(100);",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS drive_folder_url VARCHAR(500);",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS drive_folder_name VARCHAR(255);",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS drive_last_scan_at TIMESTAMP WITH TIME ZONE;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS drive_unread_files_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS gmb_link VARCHAR(500);",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS gmb_rating FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS gmb_reviews INTEGER DEFAULT 0;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS gmb_photos INTEGER DEFAULT 0;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS gmb_last_sync TIMESTAMP WITH TIME ZONE;",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS profile_pic_url VARCHAR(500);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_status VARCHAR(20) DEFAULT 'pending';",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_score FLOAT;",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_stars FLOAT;",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_classification VARCHAR(50);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_date TIMESTAMP WITH TIME ZONE;",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS diagnostic_pillars JSONB;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS drive_folder_id VARCHAR(100);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS drive_folder_url VARCHAR(500);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS drive_folder_name VARCHAR(255);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS drive_last_scan_at TIMESTAMP WITH TIME ZONE;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS drive_unread_files_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_link VARCHAR(500);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_rating FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_reviews INTEGER DEFAULT 0;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_photos INTEGER DEFAULT 0;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_last_sync TIMESTAMP WITH TIME ZONE;",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS profile_pic_url VARCHAR(500);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS health_status VARCHAR(20) DEFAULT 'verde';",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS niche VARCHAR(100);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS document VARCHAR(20);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_street VARCHAR(150);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_number VARCHAR(20);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_neighborhood VARCHAR(100);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_city VARCHAR(100);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_state VARCHAR(2);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_zip VARCHAR(10);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS representative VARCHAR(100);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS representative_cpf VARCHAR(20);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS email_contact VARCHAR(120);",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS stars FLOAT;",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS classification VARCHAR(100);",
                         "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
                         "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
                         "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '{}';",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS amount FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS billing_type VARCHAR(20) DEFAULT 'BOLETO';",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS total_installments INTEGER DEFAULT 12;",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS emit_nfse BOOLEAN DEFAULT TRUE;",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_service_code VARCHAR(20);",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_iss_rate FLOAT;",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_desc VARCHAR(255);",
                         """CREATE TABLE IF NOT EXISTS tenant_integration (
                             id SERIAL PRIMARY KEY,
                             company_id INTEGER NOT NULL REFERENCES company(id),
-                            service VARCHAR(50) NOT NULL,
+                            provider VARCHAR(50) NOT NULL,
+                            status VARCHAR(20) DEFAULT 'disconnected',
+                            google_account_email VARCHAR(120),
+                            google_account_id VARCHAR(100),
                             access_token TEXT,
                             refresh_token_encrypted TEXT,
                             token_expiry_at TIMESTAMP,
-                            status VARCHAR(20) DEFAULT 'connected',
+                            root_folder_id VARCHAR(100),
+                            root_folder_url VARCHAR(500),
                             last_error TEXT,
-                            config_json JSONB,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );""",
+                        """CREATE TABLE IF NOT EXISTS drive_file_event (
+                            id SERIAL PRIMARY KEY,
+                            company_id INTEGER NOT NULL REFERENCES company(id),
+                            lead_id INTEGER REFERENCES lead(id),
+                            client_id INTEGER REFERENCES client(id),
+                            file_id VARCHAR(100) NOT NULL,
+                            file_name VARCHAR(255) NOT NULL,
+                            mime_type VARCHAR(100),
+                            web_view_link VARCHAR(500),
+                            created_time TIMESTAMP,
+                            modified_time TIMESTAMP,
+                            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         );"""
                     ]
                 else:
@@ -499,78 +556,114 @@ def create_app():
                                 ('next_due_date', 'DATE'), 
                                 ('trial_start_date', 'DATETIME'), 
                                 ('trial_end_date', 'DATETIME'),
-                                ('features', 'JSONB DEFAULT \'{}\'') # ADDED: Fix UndefinedColumn crash
+                                ('features', 'JSONB DEFAULT \'{}\'')
                             ]:
                                 if col not in columns:
                                     try:
-                                        print(f"📦 MIGRATION: Adding {col}...")
                                         conn.execute(text(f"ALTER TABLE company ADD COLUMN {col} {dtype}"))
-                                    except Exception as alt_e:
-                                        print(f"FAILED TO ADD {col}: {alt_e}")
+                                    except: pass
                             
                             conn.commit()
-                            print("✅ MIGRATION: Schema checks completed.")
                             
-                    # 4. TRANSACTION MIGRATION (Fix Missing Columns)
-                    if inspector.has_table("transaction"):
+                    # 4. LEAD REPAIR (Fix drive folders, gmb, cnpj)
+                    if inspector.has_table("lead"):
                         with db.engine.connect() as conn:
-                            # Note: inspector.get_columns("transaction") might fail if reserved word isn't quoted, but usually sqlalchemy handles it.
-                            # Just be safe and catch errors.
-                            try:
-                                t_columns = [c['name'] for c in inspector.get_columns("transaction")]
-                                
-                                # Setup columns to add
-                                tx_cols = [
-                                    ('nfse_status', 'VARCHAR(20) DEFAULT \'pending\''),
-                                    ('nfse_number', 'VARCHAR(50)'),
-                                    ('nfse_id', 'VARCHAR(50)'),
-                                    ('nfse_pdf_url', 'VARCHAR(500)'),
-                                    ('nfse_xml_url', 'VARCHAR(500)'),
-                                    ('nfse_issued_at', 'TIMESTAMP')
-                                ]
-                                
-                                for col, dtype in tx_cols:
-                                    if col not in t_columns:
-                                        try:
-                                            print(f"📦 MIGRATION: Adding transaction.{col}...")
-                                            conn.execute(text(f"ALTER TABLE \"transaction\" ADD COLUMN {col} {dtype}"))
-                                        except Exception as tx_e:
-                                            print(f"FAILED TO ADD transaction.{col}: {tx_e}")
-                                
-                                conn.commit()
-                                print("✅ MIGRATION: Transaction schema checks completed.")
-                            except Exception as insp_e:
-                                print(f"⚠️ Transaction Inspection Error: {insp_e}")
+                            lead_cols = [c['name'] for c in inspector.get_columns("lead")]
+                            repairs = [
+                                ('diagnostic_status', "VARCHAR(20) DEFAULT 'pending'"),
+                                ('diagnostic_score', "FLOAT"),
+                                ('diagnostic_stars', "FLOAT"),
+                                ('diagnostic_classification', "VARCHAR(50)"),
+                                ('diagnostic_date', "TIMESTAMP"),
+                                ('diagnostic_pillars', "JSONB"),
+                                ('drive_folder_id', "VARCHAR(100)"),
+                                ('drive_folder_url', "VARCHAR(500)"),
+                                ('drive_folder_name', "VARCHAR(255)"),
+                                ('drive_last_scan_at', "TIMESTAMP"),
+                                ('drive_unread_files_count', "INTEGER DEFAULT 0"),
+                                ('gmb_link', "VARCHAR(500)"),
+                                ('gmb_rating', "FLOAT DEFAULT 0.0"),
+                                ('gmb_reviews', "INTEGER DEFAULT 0"),
+                                ('gmb_photos', "INTEGER DEFAULT 0"),
+                                ('gmb_last_sync', "TIMESTAMP"),
+                                ('profile_pic_url', "VARCHAR(500)"),
+                                ('legal_name', "VARCHAR(200)"),
+                                ('cnpj', "VARCHAR(20)"),
+                                ('registration_status', "VARCHAR(50)"),
+                                ('company_size', "VARCHAR(50)"),
+                                ('equity', "FLOAT"),
+                                ('foundation_date', "VARCHAR(20)"),
+                                ('legal_email', "VARCHAR(120)"),
+                                ('legal_phone', "VARCHAR(50)"),
+                                ('cnae', "VARCHAR(200)"),
+                                ('partners_json', "TEXT"),
+                                ('enrichment_history', "TEXT")
+                            ]
+                            for col, dtype in repairs:
+                                if col not in lead_cols:
+                                    try: conn.execute(text(f"ALTER TABLE lead ADD COLUMN {col} {dtype}"))
+                                    except: pass
+                            conn.commit()
 
-                    # 5. CONTRACT MIGRATION (Fix Missing Columns)
+                    # 5. CLIENT REPAIR
+                    if inspector.has_table("client"):
+                        with db.engine.connect() as conn:
+                            client_cols = [c['name'] for c in inspector.get_columns("client")]
+                            repairs = [
+                                ('health_status', "VARCHAR(20) DEFAULT 'verde'"),
+                                ('niche', "VARCHAR(100)"),
+                                ('document', "VARCHAR(20)"),
+                                ('address_street', "VARCHAR(150)"),
+                                ('address_number', "VARCHAR(20)"),
+                                ('address_neighborhood', "VARCHAR(100)"),
+                                ('address_city', "VARCHAR(100)"),
+                                ('address_state', "VARCHAR(2)"),
+                                ('address_zip', "VARCHAR(10)"),
+                                ('representative', "VARCHAR(100)"),
+                                ('representative_cpf', "VARCHAR(20)"),
+                                ('email_contact', "VARCHAR(120)"),
+                                ('profile_pic_url', "VARCHAR(500)"),
+                                ('diagnostic_status', "VARCHAR(20) DEFAULT 'pending'"),
+                                ('diagnostic_score', "FLOAT"),
+                                ('diagnostic_stars', "FLOAT"),
+                                ('diagnostic_classification', "VARCHAR(50)"),
+                                ('diagnostic_date', "TIMESTAMP"),
+                                ('diagnostic_pillars', "JSONB"),
+                                ('drive_folder_id', "VARCHAR(100)"),
+                                ('drive_folder_url', "VARCHAR(500)"),
+                                ('drive_folder_name', "VARCHAR(255)"),
+                                ('drive_last_scan_at', "TIMESTAMP"),
+                                ('drive_unread_files_count', "INTEGER DEFAULT 0"),
+                                ('gmb_link', "VARCHAR(500)"),
+                                ('gmb_rating', "FLOAT DEFAULT 0.0"),
+                                ('gmb_reviews', "INTEGER DEFAULT 0"),
+                                ('gmb_photos', "INTEGER DEFAULT 0"),
+                                ('gmb_last_sync', "TIMESTAMP")
+                            ]
+                            for col, dtype in repairs:
+                                if col not in client_cols:
+                                    try: conn.execute(text(f"ALTER TABLE client ADD COLUMN {col} {dtype}"))
+                                    except: pass
+                            conn.commit()
+                    
+                    # 6. CONTRACT REPAIR
                     if inspector.has_table("contract"):
                         with db.engine.connect() as conn:
-                            try:
-                                c_columns = [c['name'] for c in inspector.get_columns("contract")]
-                                
-                                # Setup columns to add
-                                ctr_cols = [
-                                    ('amount', 'FLOAT DEFAULT 0.0'),
-                                    ('billing_type', 'VARCHAR(20) DEFAULT \'BOLETO\''),
-                                    ('total_installments', 'INTEGER DEFAULT 12'),
-                                    ('emit_nfse', 'BOOLEAN DEFAULT TRUE'),
-                                    ('nfse_service_code', 'VARCHAR(20)'),
-                                    ('nfse_iss_rate', 'FLOAT'),
-                                    ('nfse_desc', 'VARCHAR(255)')
-                                ]
-                                
-                                for col, dtype in ctr_cols:
-                                    if col not in c_columns:
-                                        try:
-                                            print(f"📦 MIGRATION: Adding contract.{col}...")
-                                            conn.execute(text(f"ALTER TABLE contract ADD COLUMN {col} {dtype}"))
-                                        except Exception as ctr_e:
-                                            print(f"FAILED TO ADD contract.{col}: {ctr_e}")
-                                
-                                conn.commit()
-                                print("✅ MIGRATION: Contract schema checks completed.")
-                            except Exception as insp_e:
-                                print(f"⚠️ Contract Inspection Error: {insp_e}")
+                            ctr_cols = [c['name'] for c in inspector.get_columns("contract")]
+                            repairs = [
+                                ('amount', "FLOAT DEFAULT 0.0"),
+                                ('billing_type', "VARCHAR(20) DEFAULT 'BOLETO'"),
+                                ('total_installments', "INTEGER DEFAULT 12"),
+                                ('emit_nfse', "BOOLEAN DEFAULT TRUE"),
+                                ('nfse_service_code', "VARCHAR(20)"),
+                                ('nfse_iss_rate', "FLOAT"),
+                                ('nfse_desc', "VARCHAR(255)")
+                            ]
+                            for col, dtype in repairs:
+                                if col not in ctr_cols:
+                                    try: conn.execute(text(f"ALTER TABLE contract ADD COLUMN {col} {dtype}"))
+                                    except: pass
+                            conn.commit()
                                 
                 except Exception as mig_e:
                     print(f"⚠️ Migration/Inspect Error: {mig_e}")
