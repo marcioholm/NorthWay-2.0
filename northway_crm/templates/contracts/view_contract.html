@@ -27,6 +27,16 @@
                 Editar
             </a>
 
+            <form action="{{ url_for('contracts.regenerate_billing', id=contract.id) }}" method="POST"
+                class="inline-block"
+                onsubmit="return confirm('Deseja tentar gerar boletos para as parcelas pendentes deste contrato?');">
+                <button type="submit"
+                    class="bg-blue-50 text-blue-600 border border-blue-200 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Regerar Boletos
+                </button>
+            </form>
+
             <button onclick="document.getElementById('cancelModal').classList.remove('hidden')"
                 class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
                 <i data-lucide="x-circle" class="w-4 h-4"></i>

@@ -769,4 +769,91 @@ def save_contract(id):
         return jsonify({'message': 'Contrato salvo com sucesso.'})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+@contracts_bp.route('/contracts/<int:id>/regenerate_billing', methods=['POST'])
+@login_required
+def regenerate_billing(id):
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    contract = Contract.query.get_or_404(id)
+    if contract.company_id != current_user.company_id:
+        abort(403)
+        
+    try:
+        # --- TENANT BILLING LOGIC ---
+        from models import Integration
+        from services.asaas_service import create_customer, create_payment
+        
+        # 1. Check if Tenant has Asaas Configured
+        tenant_integration = Integration.query.filter_by(
+            company_id=current_user.company_id, 
+            service='asaas', 
+            is_active=True
+        ).first()
+        
+        if not tenant_integration or not tenant_integration.api_key:
+             flash('Integração Asaas não configurada. Configure em Integrações.', 'error')
+             return redirect(url_for('contracts.view_contract', id=id))
+        
+        tenant_api_key = tenant_integration.api_key
+        
+        # 2. Get/Create Customer
+        asaas_customer_id = None
+        try:
+            asaas_customer_id, err = create_customer(
+                name=contract.client.name,
+                email=contract.client.email,
+                cpf_cnpj=contract.client.document,
+                phone=contract.client.phone,
+                external_id=contract.client.id,
+                api_key=tenant_api_key
+            )
+            if err: raise Exception(err)
+        except Exception as e:
+            flash(f"Erro ao criar cliente no Asaas: {e}", 'error')
+            return redirect(url_for('contracts.view_contract', id=id))
+
+        # 3. Iterate Transactions and Generate Boletos
+        transactions = Transaction.query.filter_by(contract_id=contract.id).all()
+        count = 0
+        
+        for t in transactions:
+            # Skip if already has Asaas ID or is paid/cancelled
+            if t.asaas_id or t.status in ['paid', 'cancelled']:
+                continue
+                
+            # FIX: Ensure due date is not in the past
+            if t.due_date < date.today():
+                t.due_date = date.today()
+                
+            try:
+                payment, err = create_payment(
+                    customer_id=asaas_customer_id,
+                    value=t.amount,
+                    due_date=t.due_date.strftime('%Y-%m-%d'),
+                    description=f"Contrato #{contract.id} - {t.description}",
+                    external_ref=t.id,
+                    api_key=tenant_api_key
+                )
+                if payment:
+                    t.asaas_id = payment.get('id')
+                    t.asaas_invoice_url = payment.get('invoiceUrl') or payment.get('bankSlipUrl')
+                    count += 1
+                else:
+                    print(f"❌ Failed to regen Asaas Payment: {err}")
+            except Exception as bill_e:
+                print(f"❌ Exception regen boleto: {bill_e}")
+        
+        db.session.commit()
+        
+        if count > 0:
+            flash(f'{count} boletos gerados com sucesso!', 'success')
+        else:
+            flash('Nenhum boleto precisou ser gerado (todos já existem ou erro).', 'info')
+            
+        return redirect(url_for('contracts.view_contract', id=id))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao regerar boletos: {str(e)}", 'error')
+        return redirect(url_for('contracts.view_contract', id=id))
