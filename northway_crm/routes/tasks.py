@@ -74,12 +74,28 @@ def get_kanban_data():
          if current_user.role not in ['admin', 'gestor']:
              return jsonify({'error': 'Unauthorized'}), 403
 
-    # Apply strategic auto-urgency rules before fetching
-    try:
-        TaskService.apply_auto_rules(user_id, current_user.company_id)
-    except Exception as e:
-        current_app.logger.error(f"Auto-rules failed: {e}")
-        # Continue loading tasks even if rules fail
+    # Apply strategic auto-urgency rules (Debounced - 5 mins)
+    from flask import session
+    from datetime import datetime, timedelta
+    
+    last_run_str = session.get(f'last_auto_rules_{user_id}')
+    should_run = True
+    
+    if last_run_str:
+        try:
+            last_run = datetime.fromisoformat(last_run_str)
+            if datetime.now() - last_run < timedelta(minutes=5):
+                should_run = False
+        except:
+             pass # If parse fail, run it
+             
+    if should_run:
+        try:
+            TaskService.apply_auto_rules(user_id, current_user.company_id)
+            session[f'last_auto_rules_{user_id}'] = datetime.now().isoformat()
+        except Exception as e:
+            current_app.logger.error(f"Auto-rules failed: {e}")
+            # Continue loading tasks even if rules fail
 
     # Process filters from query params
     filters = {

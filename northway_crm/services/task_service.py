@@ -8,7 +8,12 @@ class TaskService:
         Returns tasks for a user organized by status for Kanban view.
         Supported filters: client_id, lead_id, pipeline_stage_id, date_start, date_end
         """
-        query = Task.query.filter((Task.assigned_to_id == user_id) | (Task.created_by_user_id == user_id))
+        from sqlalchemy.orm import joinedload
+        query = Task.query.options(
+            joinedload(Task.client),
+            joinedload(Task.lead),
+            joinedload(Task.responsible)
+        ).filter((Task.assigned_to_id == user_id) | (Task.created_by_user_id == user_id))
         
         if filters:
             if filters.get('client_id'):
