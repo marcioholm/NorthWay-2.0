@@ -291,14 +291,23 @@
             /* Keep strict height for pagination accuracy */
             background: white !important;
             margin: 0 !important;
-            padding: 0 !important;
-            /* Padding is handled by .a4-page non-print styles or internal content */
+
+            /* Restore details from screen style */
+            padding-top: 30mm !important;
+            padding-bottom: 20mm !important;
+            padding-left: 30mm !important;
+            padding-right: 20mm !important;
+
             box-shadow: none !important;
             page-break-after: always;
             break-after: page;
             overflow: hidden !important;
             position: relative !important;
             border: none !important;
+
+            /* Ensure colors print correctly */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
 
         .a4-page:last-child {
@@ -314,8 +323,7 @@
             visibility: visible !important;
             color: black !important;
             height: auto !important;
-            padding: 0 !important;
-            /* Remove internal padding for print to let @page margin handle it? No, keep it consistent with view */
+            /* Padding already handled by .a4-page wrapper */
         }
     }
 </style>
