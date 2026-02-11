@@ -687,6 +687,29 @@ def create_app():
                 except Exception as mig_e:
                     print(f"⚠️ Migration/Inspect Error: {mig_e}")
 
+                # 8. TASK REPAIR (Critical for Matrix)
+                try:
+                    if inspector.has_table("task"):
+                        with db.engine.connect() as conn:
+                            task_cols = [c['name'] for c in inspector.get_columns("task")]
+                            repairs = [
+                                ('is_urgent', "BOOLEAN DEFAULT FALSE"),
+                                ('is_important', "BOOLEAN DEFAULT FALSE"),
+                                ('completed_at', "TIMESTAMP"),
+                                ('source_type', "VARCHAR(50)"),
+                                ('auto_generated', "BOOLEAN DEFAULT FALSE"),
+                                ('contract_id', "INTEGER"),
+                                ('service_order_id', "INTEGER"),
+                                ('created_by_user_id', "INTEGER")
+                            ]
+                            for col, dtype in repairs:
+                                if col not in task_cols:
+                                    try: conn.execute(text(f"ALTER TABLE task ADD COLUMN {col} {dtype}"))
+                                    except: pass
+                            conn.commit()
+                except Exception as task_mig_e:
+                    print(f"⚠️ Task Migration Error: {task_mig_e}")
+
             except Exception as context_e:
                 print(f"❌ Startup Context Error: {context_e}")
 
@@ -868,7 +891,10 @@ def fix_task_schema():
             ("auto_generated", "BOOLEAN DEFAULT FALSE"),
             ("contract_id", "INTEGER REFERENCES contract(id)"),
             ("service_order_id", "INTEGER REFERENCES service_order(id)"),
-            ("created_by_user_id", "INTEGER REFERENCES \"user\"(id)")
+            ("created_by_user_id", "INTEGER REFERENCES \"user\"(id)"),
+            ("is_urgent", "BOOLEAN DEFAULT FALSE"),
+            ("is_important", "BOOLEAN DEFAULT FALSE"),
+            ("completed_at", "TIMESTAMP")
         ]
         
         for col, dtype in cols:
