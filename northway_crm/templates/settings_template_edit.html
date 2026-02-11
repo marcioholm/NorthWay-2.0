@@ -83,20 +83,40 @@
                             </div>
                         </div>
 
-                        <!-- Quill Wrapper (A4 Simulation) -->
+                        <!-- Quill Wrapper (A4 Simulation - Word Style) -->
                         <div
-                            class="bg-gray-200/50 p-4 rounded-lg overflow-x-auto flex justify-center border border-gray-200 shadow-inner">
-                            <div class="relative bg-white shadow-xl pointer-events-auto shrink-0"
-                                style="width: 210mm; min-height: 297mm; background-image: repeating-linear-gradient(to bottom, transparent, transparent calc(297mm - 2px), #EF4444 calc(297mm - 2px), #EF4444 297mm); background-size: 100% 297mm;">
+                            class="bg-gray-100 p-8 rounded-lg overflow-x-auto flex justify-center border border-gray-200 shadow-inner h-[800px] custom-scrollbar">
+                            <div class="relative pointer-events-auto shrink-0 transition-transform"
+                                style="width: 210mm; min-height: 297mm; 
+                                        padding-bottom: 50px; 
+                                        background-image: repeating-linear-gradient(
+                                            to bottom,
+                                            #ffffff 0px,
+                                            #ffffff 297mm,
+                                            #e5e7eb 297mm, 
+                                            #e5e7eb calc(297mm + 20px)
+                                        );
+                                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
 
-                                <!-- Visual Guides (Editor) -->
-                                <div class="margin-guide pointer-events-none z-10">
-                                    <div class="guide-top"><span class="guide-label">Margem Superior (3.5cm)</span>
-                                    </div>
-                                    <div class="guide-bottom"><span class="guide-label">Margem Inferior (2.5cm)</span>
-                                    </div>
-                                    <div class="guide-left"></div>
-                                    <div class="guide-right"></div>
+                                <!-- Visual Guides (Repeating) -->
+                                <div class="margin-guide pointer-events-none z-10" style="height: 100%; width: 100%;
+                                            background-image: repeating-linear-gradient(
+                                                to bottom,
+                                                transparent 0px,
+                                                /* Top Margin Guide Start */
+                                                rgba(239, 68, 68, 0.03) 0px,
+                                                rgba(239, 68, 68, 0.03) 35mm,
+                                                transparent 35mm,
+                                                
+                                                /* Bottom Margin Guide */
+                                                transparent calc(297mm - 25mm),
+                                                rgba(239, 68, 68, 0.03) calc(297mm - 25mm),
+                                                rgba(239, 68, 68, 0.03) 297mm,
+                                                
+                                                /* Gap - Hide Guide */
+                                                transparent 297mm,
+                                                transparent calc(297mm + 20px)
+                                            );">
                                 </div>
 
                                 <!-- Editor Target -->
@@ -239,6 +259,11 @@
         inset: 0;
         pointer-events: none;
         z-index: 1;
+    }
+
+    /* PREVIEW PANE: Hide Top Guide on Page 1 if needed, valid for distinct pages */
+    .a4-page:first-child .guide-top {
+        display: none;
     }
 
     .guide-top {
