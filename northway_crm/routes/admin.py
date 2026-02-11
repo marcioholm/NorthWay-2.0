@@ -479,4 +479,30 @@ def run_initial_migrations():
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
-        return f"<h1>FATAL MIGRATION ERROR</h1><pre>{str(e)}\n\n{tb}</pre>", 200
+
+@admin_bp.route('/admin/fix-task-schema')
+def fix_task_schema():
+    from models import db
+    from sqlalchemy import text
+    try:
+        # 1. Add is_urgent
+        try:
+            db.session.execute(text("ALTER TABLE task ADD COLUMN is_urgent BOOLEAN DEFAULT FALSE;"))
+            db.session.commit()
+            msg1 = "Added is_urgent."
+        except Exception as e:
+            db.session.rollback()
+            msg1 = f"is_urgent skipped: {e}"
+
+        # 2. Add is_important
+        try:
+            db.session.execute(text("ALTER TABLE task ADD COLUMN is_important BOOLEAN DEFAULT FALSE;"))
+            db.session.commit()
+            msg2 = "Added is_important."
+        except Exception as e:
+            db.session.rollback()
+            msg2 = f"is_important skipped: {e}"
+            
+        return f"<h1>Task Schema Fix</h1><p>{msg1}</p><p>{msg2}</p><p><a href='/'>Go Home</a></p>"
+    except Exception as e:
+        return f"<h1>Error</h1><p>{str(e)}</p>", 500
