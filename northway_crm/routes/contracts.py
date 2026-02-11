@@ -814,17 +814,31 @@ def regenerate_billing(id):
             return redirect(url_for('contracts.view_contract', id=id))
 
         # 3. Iterate Transactions and Generate Boletos
-        transactions = Transaction.query.filter_by(contract_id=contract.id).all()
+        # Get optional new due date from form
+        new_due_date_str = request.form.get('new_due_date')
+        new_due_date = None
+        if new_due_date_str:
+            try:
+                new_due_date = datetime.strptime(new_due_date_str, '%Y-%m-%d').date()
+                # Ensure we don't set a date in the past again
+                if new_due_date < date.today():
+                    new_due_date = date.today()
+            except ValueError:
+                pass
+
+        transactions = Transaction.query.filter_by(contract_id=contract.id).order_by(Transaction.due_date).all()
         count = 0
         
         for t in transactions:
             # Skip if already has Asaas ID or is paid/cancelled
             if t.asaas_id or t.status in ['paid', 'cancelled']:
                 continue
-                
+            
             # FIX: Ensure due date is not in the past
             if t.due_date < date.today():
-                t.due_date = date.today()
+                t.due_date = new_due_date if new_due_date else date.today()
+                
+
                 
             try:
                 payment, err = create_payment(
