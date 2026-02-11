@@ -71,6 +71,16 @@ class PdfService:
             if contract.generated_content:
                 # Basic cleanup if needed
                 html = contract.generated_content
+                
+                # FPDF2 write_html choke on 'auto' values for width/height/margin
+                # We replace them with valid values or remove them
+                import re
+                html = re.sub(r'width:\s*auto;?', '', html, flags=re.IGNORECASE)
+                html = re.sub(r'height:\s*auto;?', '', html, flags=re.IGNORECASE)
+                html = re.sub(r'margin:\s*auto;?', '', html, flags=re.IGNORECASE)
+                html = re.sub(r'width="auto"', '', html, flags=re.IGNORECASE)
+                html = re.sub(r'height="auto"', '', html, flags=re.IGNORECASE)
+                
                 pdf.write_html(html)
             else:
                 pdf.write(5, "Conteúdo do contrato não disponível.")
