@@ -218,6 +218,7 @@ def create_webhook(webhook_url, email, api_key=None):
     Configures the webhook URL in Asaas.
     """
     payload = {
+        "name": "NorthWay CRM Integration",
         "url": webhook_url,
         "email": email,
         "enabled": True,
