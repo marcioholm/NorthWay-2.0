@@ -1,7 +1,7 @@
 from flask import Blueprint, send_file, render_template, current_app, abort
 from flask_login import login_required, current_user
-from northway_crm.models.contracts import Contract
-from northway_crm.services.pdf_service import PdfService
+from models import Contract
+from services.pdf_service import PdfService
 import io
 
 pdf_bp = Blueprint('pdf', __name__)
