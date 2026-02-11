@@ -11,6 +11,8 @@ def download_contract_pdf(id):
     """
     Generates and downloads a PDF for a specific contract.
     """
+    try:
+        from services.pdf_service import PdfService
     except ImportError as e:
         import subprocess
         try:
