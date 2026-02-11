@@ -473,7 +473,10 @@ class HTML2FPDF(HTMLParser):
                     # We need to import Cell or check type name, but Cell is internal to table module.
                     # We can check if it has 'text' attribute.
                     if hasattr(last_cell, 'text'):
-                        last_cell.text += data
+                        # Cell is Frozen, so we must replace it
+                        from dataclasses import replace
+                        new_cell = replace(last_cell, text=last_cell.text + data)
+                        self.table_row.cells[-1] = new_cell
                         return
 
                 # If we couldn't append, THEN raise error (or just log/pass)
