@@ -590,6 +590,51 @@
                     }
                 }
 
+                function updateProductivityScore(data) {
+                    const allTasks = Object.values(data).flat();
+                    if (allTasks.length === 0) {
+                        document.getElementById('productivity-score').innerText = '0';
+                        document.getElementById('productivity-bar').style.width = '0%';
+                        return;
+                    }
+
+                    // 1. Completion Rate (50%)
+                    const completed = allTasks.filter(t => t.status === 'concluida');
+                    const compRate = (completed.length / allTasks.length) * 50;
+
+                    // 2. Strategic Focus (Q2) (50%)
+                    // Q2 = Not Urgent, Important
+                    const totalQ2 = allTasks.filter(t => !t.is_urgent && t.is_important);
+                    const completedQ2 = totalQ2.filter(t => t.status === 'concluida');
+
+                    // If no Q2 tasks at all, give full points for this metric? Or 0?
+                    // User psychology: If I have no strategic tasks, am I productive? Maybe not.
+                    // But if I only have junk tasks and do them all, I shouldn't get 100.
+                    // Let's say if Total Q2 is 0, we can't judge strategy, so we scale Completion Rate to 100%?
+                    // Or we just give 0 for strategy. Let's give 0 to encourage creating Q2 tasks.
+                    let q2Rate = 0;
+                    if (totalQ2.length > 0) {
+                        q2Rate = (completedQ2.length / totalQ2.length) * 50;
+                    } else if (completed.length > 0) {
+                        // Bonus: If no Q2 tasks but clear queue, give distinct bonus
+                        q2Rate = 10;
+                    }
+
+                    const score = Math.round(compRate + q2Rate);
+
+                    // Update UI
+                    const scoreEl = document.getElementById('productivity-score');
+                    const barEl = document.getElementById('productivity-bar');
+
+                    if (scoreEl) scoreEl.innerText = score;
+                    if (barEl) {
+                        barEl.style.width = `${score}%`;
+                        // Color coding
+                        barEl.className = 'h-full rounded-full transition-all duration-500 ' +
+                            (score < 40 ? 'bg-red-500' : score < 70 ? 'bg-yellow-500' : 'bg-green-500');
+                    }
+                }
+
                 function formatDate(dateStr) {
                     if (!dateStr) return '';
                     const date = new Date(dateStr);
