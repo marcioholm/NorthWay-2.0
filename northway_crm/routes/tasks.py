@@ -75,7 +75,11 @@ def get_kanban_data():
              return jsonify({'error': 'Unauthorized'}), 403
 
     # Apply strategic auto-urgency rules before fetching
-    TaskService.apply_auto_rules(user_id, current_user.company_id)
+    try:
+        TaskService.apply_auto_rules(user_id, current_user.company_id)
+    except Exception as e:
+        current_app.logger.error(f"Auto-rules failed: {e}")
+        # Continue loading tasks even if rules fail
 
     # Process filters from query params
     filters = {

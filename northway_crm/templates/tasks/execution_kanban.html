@@ -60,8 +60,13 @@
 
     .task-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
         border-color: var(--northway-red);
+    }
+
+    .task-card {
+        border: 1px solid #e2e8f0;
+        background: white;
     }
 
     .matrix-grid-line {
@@ -92,10 +97,41 @@
         background: linear-gradient(90deg, var(--northway-red), transparent);
         width: 100px;
         margin-top: 4px;
+        margin-bottom: 8px;
+    }
+
+    .bg-board {
+        background-color: #f1f5f9;
+    }
+
+    .task-card {
+        border: 1px solid #cbd5e1 !important;
+        background: white !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 10px -1px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease;
+    }
+
+    .task-card:hover {
+        border-color: var(--northway-red) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* Force Expansion */
+    #view-kanban,
+    #view-matrix {
+        height: 100% !important;
+        min-height: 500px;
+    }
+
+    .main-board-viewport {
+        height: calc(100vh - 220px) !important;
+        min-height: 500px;
+        position: relative;
     }
 </style>
 
-<div class="flex flex-col h-screen overflow-hidden bg-[#f8fafc]">
+<div class="flex flex-col h-full bg-[#f8fafc]">
     <!-- Integrated Header (No white box) -->
     <div class="px-8 py-6 flex items-end justify-between shrink-0 bg-transparent border-b border-slate-200">
         <div>
@@ -127,25 +163,33 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <!-- View Toggle -->
-                    <div class="bg-white/40 p-1.5 rounded-xl flex items-center border border-slate-200">
-                        <button onclick="switchView('kanban')" id="btn-view-kanban"
-                            class="px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-white shadow-sm text-slate-800 transition-all border border-transparent">
-                            Kanban
-                        </button>
-                        <button onclick="switchView('matrix')" id="btn-view-matrix"
-                            class="px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all">
-                            Matriz
-                        </button>
-                    </div>
+                    <div class="flex items-center gap-3">
+                        <!-- View Toggle -->
+                        <div class="bg-white/40 p-1.5 rounded-xl flex items-center border border-slate-200">
+                            <button onclick="switchView('kanban')" id="btn-view-kanban"
+                                class="px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-white shadow-sm text-slate-800 transition-all border border-transparent">
+                                Kanban
+                            </button>
+                            <button onclick="switchView('matrix')" id="btn-view-matrix"
+                                class="px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all">
+                                Matriz
+                            </button>
+                        </div>
 
-                    <button onclick="openNewTaskModal()"
-                        class="bg-red-600 hover:bg-red-700 text-white font-black py-3 px-6 rounded-xl transition-all flex items-center shadow-lg shadow-red-600/20 text-xs uppercase tracking-widest transform hover:-translate-y-0.5 active:scale-95 border border-red-500">
-                        <span class="material-icons-round text-lg mr-2">add</span>
-                        Nova Tarefa
-                    </button>
+                        <button onclick="openNewTaskModal()"
+                            class="bg-red-600 hover:bg-red-700 text-white font-black py-3 px-6 rounded-xl transition-all flex items-center shadow-lg shadow-red-600/20 text-xs uppercase tracking-widest transform hover:-translate-y-0.5 active:scale-95 border border-red-500">
+                            <span class="material-icons-round text-lg mr-2">add</span>
+                            Nova Tarefa
+                        </button>
+
+                        {% if current_user.role in ['admin', 'gestor', 'admin_master'] %}
+                        <a href="{{ url_for('tasks.team_execution') }}"
+                            class="bg-slate-800 hover:bg-slate-900 text-white font-black py-3 px-6 rounded-xl transition-all flex items-center shadow-lg shadow-slate-900/20 text-xs uppercase tracking-widest transform hover:-translate-y-0.5 active:scale-95 border border-slate-700 ml-2">
+                            <span class="material-icons-round text-lg mr-2">leaderboard</span>
+                            Visão de Time
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -153,7 +197,7 @@
 
     <!-- Filter Bar -->
     <div
-        class="px-8 py-4 bg-white/30 border-b border-slate-200/50 backdrop-blur-sm flex items-center gap-4 overflow-x-auto no-scrollbar">
+        class="px-8 py-4 bg-white/30 border-b border-slate-200/50 backdrop-blur-sm flex items-center gap-4 overflow-x-auto no-scrollbar shrink-0">
         <div class="flex items-center gap-2 group">
             <span class="material-icons-round text-slate-400 text-sm">filter_list</span>
             <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Filtros</span>
@@ -161,7 +205,7 @@
 
         <!-- Client Filter -->
         <select id="filter-client" onchange="loadKanbanTasks()"
-            class="bg-white  border border-slate-200  rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600  focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all">
+            class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600 focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all">
             <option value="">Todos os Clientes</option>
             {% for client in clients %}
             <option value="{{ client.id }}">{{ client.name }}</option>
@@ -197,10 +241,10 @@
     </div>
 
     <!-- Main Content Area -->
-    <div class="flex-1 relative overflow-hidden">
+    <div class="flex-1 main-board-viewport overflow-hidden">
         <!-- Kanban Board -->
         <div id="view-kanban"
-            class="absolute inset-0 bg-[#f8fafc] overflow-x-auto custom-scrollbar p-8 transition-opacity duration-300">
+            class="absolute inset-0 bg-board overflow-x-auto custom-scrollbar p-8 transition-opacity duration-300">
             <div class="flex h-full space-x-8 min-w-max">
                 <!-- A FAZER -->
                 <div class="kanban-column flex flex-col h-full">
@@ -277,7 +321,7 @@
 
         <!-- Matrix View -->
         <div id="view-matrix"
-            class="absolute inset-0 bg-[#f8fafc] hidden p-8 overflow-y-auto transition-opacity duration-300">
+            class="absolute inset-0 bg-board hidden p-8 overflow-y-auto transition-opacity duration-300">
             <div class="grid grid-cols-2 grid-rows-2 gap-6 h-full min-h-[600px]">
                 <!-- Q1-Q4 -->
                 <div
@@ -567,18 +611,43 @@
                     });
 
                     fetch(`/tasks/api/kanban?${params.toString()}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            allTasksData = data; // Keep this for other functions that might use it
-                            renderKanban(data);
-                            renderMatrix(data);
-                            updateStats(data);
-                            initSortable();
-                            initMatrixSortable();
-                            checkOverdue(data);
-                            updateProductivityScore(data);
+                        .then(r => {
+                            if (!r.ok) throw new Error(`HTTP Error ${r.status}`);
+                            return r.text().then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    console.error("Server returned non-JSON:", text.substring(0, 100)); // Log for debug
+                                    throw new Error("Invalid Server Response");
+                                }
+                            });
                         })
-                        .catch(err => console.error("Error loading kanban:", err));
+                        .then(data => {
+                            if (data.error) {
+                                alert("Erro ao carregar tarefas: " + data.error);
+                                return;
+                            }
+                            allTasksData = data;
+                            try {
+                                renderKanban(data);
+                                renderMatrix(data);
+                                updateStats(data);
+                                initSortable();
+                                initMatrixSortable();
+                                checkOverdue(data);
+                                updateProductivityScore(data);
+                            } catch (renderErr) {
+                                console.error("Render Error:", renderErr);
+                                alert("Erro ao renderizar quadro. Tente recarregar.");
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Error loading kanban:", err);
+                            // Show error in UI
+                            const kanban = document.getElementById('view-kanban');
+                            if (kanban) kanban.innerHTML = `<div class='p-8 text-red-600 font-bold'>Erro de conexão: ${err.message}. Tente recarregar a página.</div>`;
+                        });
+
                 }
 
                 let allTasksGlobal = {};
