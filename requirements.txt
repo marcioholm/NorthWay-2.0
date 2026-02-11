@@ -18,5 +18,6 @@ google-auth==2.29.0
 google-auth-oauthlib==1.2.0
 google-api-python-client==2.127.0
 # Pure Python PDF generation (Force reinstall)
-fpdf2==2.7.9
+# fpdf2==2.7.9 (Vendored)
+Pillow==10.3.0
 
