@@ -113,6 +113,26 @@
     </script>
 
 
+    <!-- Header/Footer Templates -->
+    <div id="print-header-template" class="hidden">
+        <div
+            class="print-header w-full flex items-center justify-between border-b-2 border-red-600 pb-2 mb-4 absolute top-0 left-0 right-0 px-[15mm] pt-[10mm]">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-8 w-auto">
+            <div class="text-xs text-gray-500 font-medium text-right">
+                <p>NORTHWAY COMPANY</p>
+                <p>CNPJ: 56.106.629/0001-75</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-footer-template" class="hidden">
+        <div
+            class="print-footer w-full flex items-center justify-between border-t border-gray-300 pt-2 mt-4 absolute bottom-0 left-0 right-0 px-[15mm] pb-[10mm]">
+            <p class="text-[10px] text-gray-400">Gerado via NorthWay CRM</p>
+            <p class="text-[10px] text-gray-400 page-number">Página <span class="current-page"></span></p>
+        </div>
+    </div>
+
     <!-- Main Content Area (Scrollable) -->
     <div id="scroll-container"
         class="flex-1 h-full overflow-y-auto bg-slate-200 relative pt-24 pb-20 flex flex-col items-center justify-start min-h-screen custom-scrollbar">
@@ -153,10 +173,15 @@
         background: white;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         position: relative;
-        padding-top: 30mm;
-        padding-bottom: 20mm;
-        padding-left: 30mm;
-        padding-right: 20mm;
+
+        /* Adjusted Padding for Header/Footer Space */
+        padding-top: 35mm;
+        /* Space for Header */
+        padding-bottom: 25mm;
+        /* Space for Footer */
+        padding-left: 15mm;
+        padding-right: 15mm;
+
         overflow: hidden;
         flex-shrink: 0;
     }
@@ -298,9 +323,12 @@
             min-height: 290mm !important;
 
             margin: 0 !important;
-            padding: 15mm 15mm 15mm 15mm !important;
-            /* Reduced padding for print fit */
-            /* Standard A4 margins */
+
+            /* PRINT PADDING: Matches Screen Padding for Consistency */
+            padding-top: 35mm !important;
+            padding-bottom: 25mm !important;
+            padding-left: 15mm !important;
+            padding-right: 15mm !important;
 
             page-break-after: always;
             break-after: page;
@@ -318,6 +346,12 @@
             /* Ensure colors print correctly */
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+        }
+
+        /* Header/Footer Visibility in Print */
+        .print-header,
+        .print-footer {
+            display: flex !important;
         }
 
         /* Remove break from last page */
@@ -348,9 +382,32 @@
         page.className = 'a4-page';
         page.id = 'page-' + pageNum;
 
+        // 1. Inject Header
+        const headerTemplate = document.getElementById('print-header-template');
+        if (headerTemplate) {
+            const header = headerTemplate.cloneNode(true);
+            header.id = '';
+            header.classList.remove('hidden');
+            page.appendChild(header.firstElementChild); // Append the inner div
+        }
+
+        // 2. Content Area
         const content = document.createElement('div');
         content.className = 'a4-content ql-editor'; // ql-editor class keeps Quill styles if needed
         page.appendChild(content);
+
+        // 3. Inject Footer
+        const footerTemplate = document.getElementById('print-footer-template');
+        if (footerTemplate) {
+            const footer = footerTemplate.cloneNode(true);
+            footer.id = '';
+            footer.classList.remove('hidden');
+            // Update Page Number
+            const pageNumSpan = footer.querySelector('.current-page');
+            if (pageNumSpan) pageNumSpan.textContent = pageNum;
+
+            page.appendChild(footer.firstElementChild);
+        }
 
         return page;
     }
