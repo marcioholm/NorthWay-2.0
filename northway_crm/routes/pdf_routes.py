@@ -37,3 +37,14 @@ def download_contract_pdf(id):
         current_app.logger.error(f"Failed to generate PDF for contract {id}: {str(e)}")
         # Return the actual error to the user for debugging
         return f"Erro ao gerar PDF: {str(e)}", 500
+
+@pdf_bp.route('/debug-pillow')
+def debug_pillow():
+    try:
+        import PIL
+        from PIL import Image
+        return f"Pillow is installed! Version: {PIL.__version__}, file: {PIL.__file__}"
+    except ImportError as e:
+        return f"Pillow Import Error: {str(e)}"
+    except Exception as e:
+        return f"Generic Error: {str(e)}"
