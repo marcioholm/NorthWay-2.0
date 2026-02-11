@@ -115,6 +115,14 @@ class PdfService:
                 # We actively remove <img> tags to prevent "Pillow not available" crashes.
                 html = re.sub(r'<img[^>]*>', '', html, flags=re.IGNORECASE)
 
+                # Fix "Invalid .col_widths specified" error
+                # FPDF2 crashes if some columns have widths and others don't, or if they don't sum up.
+                # We strip ALL width attributes/styles from tables to force auto-layout.
+                html = re.sub(r'(<table[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
+                html = re.sub(r'(<td[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
+                html = re.sub(r'(<th[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
+                html = re.sub(r'width:\s*[^;"\']+[;"\']?', '', html, flags=re.IGNORECASE) # css width removal (aggressive)
+
                 # Replace standard font incompatible characters (Unicode -> Latin-1 safe)
                 replacements = {
                     '\u2013': '-',  # En-dash
