@@ -131,6 +131,7 @@ def get_kanban_data():
                 'due_date': t.due_date.strftime('%Y-%m-%d') if t.due_date else None,
                 'source_type': t.source_type,
                 'client_name': t.client.name if t.client else None,
+                'lead_name': t.lead.name if t.lead else None,
                 'auto_generated': t.auto_generated,
                 'is_urgent': t.is_urgent,
                 'is_important': t.is_important,
