@@ -4,28 +4,32 @@ from fpdf import FPDF
 from flask import current_app
 
 class ContractPDF(FPDF):
-    def __init__(self, contract_code):
+    def __init__(self, contract_code, company_name="NORTHWAY", company_subtext=""):
         super().__init__()
         self.contract_code = contract_code
+        self.company_name = company_name
+        self.company_subtext = company_subtext
         self.set_auto_page_break(auto=True, margin=20)
 
     def header(self):
-        # Premium Typographic Header (No Images required)
+        # Premium Typographic Header (Dynamic)
         
-        # 1. Main Brand
+        # 1. Main Brand (Company Name)
         self.set_font('Helvetica', 'B', 20)
         self.set_text_color(0, 0, 0) # Black
-        self.cell(0, 10, 'NORTHWAY', 0, 1, 'L')
+        # Fallback if empty
+        display_name = self.company_name if self.company_name else "NORTHWAY"
+        self.cell(0, 10, display_name, 0, 1, 'L')
         
         # 2. Sub-brand / CNPJ
         self.set_font('Helvetica', '', 9)
         self.set_text_color(100, 100, 100) # Gray
-        self.cell(0, 5, 'NorthWay Company | CNPJ: 56.106.629/0001-75', 0, 1, 'L')
+        if self.company_subtext:
+            self.cell(0, 5, self.company_subtext, 0, 1, 'L')
+        else:
+            self.cell(0, 5, "Documento Oficial", 0, 1, 'L')
         
-        # 3. Document Title (Right Aligned, but moved up via Y adjustment if needed, 
-        #    or just placed on next line for clean layout)
-        #    Let's keep it simple: Line break then Title centered or right
-        
+        # 3. Document Title
         self.set_y(15) # Back to top area for right side
         self.set_font('Helvetica', 'B', 12)
         self.set_text_color(0)
@@ -37,7 +41,7 @@ class ContractPDF(FPDF):
         self.set_line_width(0.5)
         self.line(10, 32, 200, 32)
         
-        # 5. Reference Code (Small, Right, below line)
+        # 5. Reference Code
         if self.contract_code:
             self.set_xy(10, 33)
             self.set_font('Helvetica', 'I', 8)
@@ -51,7 +55,8 @@ class ContractPDF(FPDF):
         self.set_y(-15)
         self.set_font('Helvetica', 'I', 8)
         self.set_text_color(128)
-        self.cell(0, 10, 'NorthWay Company - Documento Confidencial | Página ' + str(self.page_no()) + ' de {nb}', 0, 0, 'C')
+        footer_text = f"{self.company_name} - Documento Confidencial | Página " + str(self.page_no()) + " de {nb}"
+        self.cell(0, 10, footer_text, 0, 0, 'C')
 
 class PdfService:
     @staticmethod
@@ -61,8 +66,25 @@ class PdfService:
         """
         current_app.logger.info(f"Generating PDF for Contract ID: {contract.id}")
         try:
+            # 1. Prepare Dynamic Company Info
+            company_name = "NORTHWAY"
+            company_subtext = ""
+            
+            if contract.company:
+                company_name = contract.company.name.upper()
+                # Try to get CNPJ/Document
+                doc = getattr(contract.company, 'document', None) or getattr(contract.company, 'cpf_cnpj', None)
+                if doc:
+                     company_subtext = f"{contract.company.name} | CNPJ: {doc}"
+                else:
+                     company_subtext = contract.company.name
+
             current_app.logger.info("Initializing ContractPDF...")
-            pdf = ContractPDF(contract_code=contract.code or str(contract.id))
+            pdf = ContractPDF(
+                contract_code=contract.code or str(contract.id),
+                company_name=company_name,
+                company_subtext=company_subtext
+            )
             
             pdf.alias_nb_pages()
             pdf.add_page()
