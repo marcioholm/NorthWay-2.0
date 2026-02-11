@@ -37,8 +37,24 @@
         class="px-8 py-6 flex items-end justify-between shrink-0 bg-white dark:bg-sidebar-dark border-b border-slate-200 dark:border-slate-800">
         <div>
             <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Minha Execução</h1>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Gerencie suas tarefas e atividades diárias de
-                forma eficiente.</p>
+            <div class="flex items-center gap-4 mt-1">
+                <p class="text-slate-500 dark:text-slate-400 text-sm">Gerencie suas tarefas e atividades diárias de
+                    forma eficiente.</p>
+                <!-- Progress Stats -->
+                <div
+                    class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">{{ completed_tasks }}/{{
+                            total_tasks }}</span>
+                        <div class="w-20 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-green-500 rounded-full transition-all duration-500"
+                                style="width: {{ progress_percent }}%"></div>
+                        </div>
+                        <span class="text-xs font-bold text-green-600 dark:text-green-400">{{ progress_percent
+                            }}%</span>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="flex items-center gap-3">
             <!-- View Toggle -->

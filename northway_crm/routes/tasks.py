@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, request, current_app
+from flask import Blueprint, render_template, jsonify, request, current_app, redirect, url_for
 from flask_login import login_required, current_user
 from services.task_service import TaskService
 from models import Task, User
@@ -15,7 +15,28 @@ def execution_kanban():
     Kanban Board View (My Execution)
     """
     users = User.query.filter_by(company_id=current_user.company_id).all()
-    return render_template('tasks/execution_kanban.html', users=users)
+    
+    # Calculate Stats for "My Execution"
+    total_tasks = Task.query.filter_by(
+        company_id=current_user.company_id, 
+        assigned_to_id=current_user.id
+    ).count()
+    
+    completed_tasks = Task.query.filter_by(
+        company_id=current_user.company_id, 
+        assigned_to_id=current_user.id, 
+        status='concluida'
+    ).count()
+    
+    progress_percent = 0
+    if total_tasks > 0:
+        progress_percent = int((completed_tasks / total_tasks) * 100)
+
+    return render_template('tasks/execution_kanban.html', 
+                           users=users,
+                           total_tasks=total_tasks,
+                           completed_tasks=completed_tasks,
+                           progress_percent=progress_percent)
 
 @tasks_bp.route('/execution/team')
 @login_required
@@ -268,20 +289,21 @@ def tasks():
 @tasks_bp.route('/<int:id>/toggle', methods=['POST'])
 @login_required
 def toggle_task(id):
-    from models import db
-    task = Task.query.get_or_404(id)
-    if task.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        task = Task.query.get_or_404(id)
+        if task.company_id != current_user.company_id:
+            return jsonify({'error': 'Unauthorized'}), 403
+            
+        # Toggle logic: if concluded -> pending (or a_fazer), else -> concluded
+        new_status = 'a_fazer' if task.status == 'concluida' else 'concluida'
         
-    if task.status == 'concluida':
-        task.status = 'pendente'
-        task.completed_at = None
-    else:
-        task.status = 'concluida'
-        task.completed_at = datetime.now()
+        # Use Service to ensure logs and events are created and consistency is maintained
+        TaskService.update_status(id, new_status, actor_id=current_user.id)
         
-    db.session.commit()
-    return redirect(request.referrer or url_for('tasks.tasks'))
+        return redirect(request.referrer or url_for('tasks.tasks'))
+    except Exception as e:
+        current_app.logger.error(f"Error toggling task {id}: {e}")
+        return redirect(request.referrer or url_for('tasks.tasks'))
 
 @tasks_bp.route('/<int:id>/delete', methods=['POST'])
 @login_required
