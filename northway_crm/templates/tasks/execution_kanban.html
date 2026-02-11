@@ -40,16 +40,114 @@
             <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Gerencie suas tarefas e atividades diárias de
                 forma eficiente.</p>
         </div>
-        <button onclick="openNewTaskModal()"
-            class="bg-primary hover:bg-red-700 text-white font-semibold py-2.5 px-6 rounded-lg transition-all flex items-center shadow-lg shadow-primary/20">
-            <span class="material-icons-round text-lg mr-2">add</span>
-            Nova Tarefa
-        </button>
+        <div class="flex items-center gap-3">
+            <!-- View Toggle -->
+            <div class="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex items-center">
+                <button onclick="switchView('kanban')" id="btn-view-kanban"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium bg-white dark:bg-slate-700 shadow-sm text-slate-700 dark:text-slate-200 transition-all">
+                    Kanban
+                </button>
+                <button onclick="switchView('matrix')" id="btn-view-matrix"
+                    class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-all">
+                    Matriz
+                </button>
+            </div>
+
+            <button onclick="openNewTaskModal()"
+                class="bg-primary hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all flex items-center shadow-lg shadow-primary/20 text-sm">
+                <span class="material-icons-round text-lg mr-2">add</span>
+                Nova Tarefa
+            </button>
+        </div>
     </div>
 
     <!-- Kanban Board -->
-    <div class="flex-1 overflow-x-auto custom-scrollbar p-8 bg-slate-50 dark:bg-board-dark">
+    <div id="view-kanban" class="flex-1 overflow-x-auto custom-scrollbar p-8 bg-slate-50 dark:bg-board-dark">
         <div class="flex h-full space-x-6 min-w-max">
+            <!-- ... kanban columns ... -->
+
+            <!-- Matrix View (Hidden by Default) -->
+            <div id="view-matrix" class="hidden flex-1 p-8 bg-slate-50 dark:bg-board-dark overflow-y-auto">
+                <div class="grid grid-cols-2 grid-rows-2 gap-6 h-full min-h-[600px]">
+
+                    <!-- Q1: URGENTE + IMPORTANTE (Do First) -->
+                    <div
+                        class="bg-red-50/50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-2xl p-4 flex flex-col relative group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-red-500 rounded-t-2xl"></div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
+                                <span class="material-icons-round">gpp_good</span>
+                                Faça Agora (Q1)
+                            </h3>
+                            <span
+                                class="text-xs font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-1 rounded">Urgente
+                                + Importante</span>
+                        </div>
+                        <div id="matrix-q1" data-urgent="true" data-important="true"
+                            class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px]">
+                            <!-- Tasks Q1 -->
+                        </div>
+                    </div>
+
+                    <!-- Q2: NÃO URGENTE + IMPORTANTE (Schedule) -->
+                    <div
+                        class="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-2xl p-4 flex flex-col relative group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-blue-500 rounded-t-2xl"></div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                                <span class="material-icons-round">event</span>
+                                Agende (Q2)
+                            </h3>
+                            <span
+                                class="text-xs font-semibold bg-blue-100 dark:bg-blue-900/30 text-blue-600 px-2 py-1 rounded">Não
+                                Urgente + Importante</span>
+                        </div>
+                        <div id="matrix-q2" data-urgent="false" data-important="true"
+                            class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px]">
+                            <!-- Tasks Q2 -->
+                        </div>
+                    </div>
+
+                    <!-- Q3: URGENTE + NÃO IMPORTANTE (Delegate) -->
+                    <div
+                        class="bg-orange-50/50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-900/30 rounded-2xl p-4 flex flex-col relative group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-orange-500 rounded-t-2xl"></div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-orange-700 dark:text-orange-400 flex items-center gap-2">
+                                <span class="material-icons-round">people</span>
+                                Delegue (Q3)
+                            </h3>
+                            <span
+                                class="text-xs font-semibold bg-orange-100 dark:bg-orange-900/30 text-orange-600 px-2 py-1 rounded">Urgente
+                                + Não Importante</span>
+                        </div>
+                        <div id="matrix-q3" data-urgent="true" data-important="false"
+                            class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px]">
+                            <!-- Tasks Q3 -->
+                        </div>
+                    </div>
+
+                    <!-- Q4: NÃO URGENTE + NÃO IMPORTANTE (Delete) -->
+                    <div
+                        class="bg-slate-100/50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex flex-col relative group">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-slate-400 rounded-t-2xl"></div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                                <span class="material-icons-round">delete_outline</span>
+                                Elimine (Q4)
+                            </h3>
+                            <span
+                                class="text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-500 px-2 py-1 rounded">Não
+                                Urgente + Não Importante</span>
+                        </div>
+                        <div id="matrix-q4" data-urgent="false" data-important="false"
+                            class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px]">
+                            <!-- Tasks Q4 -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
 
             <!-- A FAZER -->
             <div class="kanban-column flex flex-col h-full">
@@ -148,19 +246,134 @@
     </button>
 </div>
 
+<!-- New Task Modal -->
+<div id="newTaskModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeNewTaskModal()"
+            aria-hidden="true"></div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div
+            class="inline-block align-bottom bg-white dark:bg-card-dark rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-slate-200 dark:border-slate-700">
+            <div class="bg-white dark:bg-card-dark px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div
+                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                        <span class="material-icons-round text-primary">add_task</span>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-slate-900 dark:text-white" id="modal-title">
+                            Nova Tarefa
+                        </h3>
+                        <div class="mt-4 space-y-4">
+                            <!-- Title -->
+                            <div>
+                                <label for="task-title"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300">Título</label>
+                                <input type="text" id="task-title"
+                                    class="mt-1 flex-1 block w-full rounded-md border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
+                                    placeholder="O que precisa ser feito?">
+                            </div>
+
+                            <!-- Description -->
+                            <div>
+                                <label for="task-desc"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300">Descrição
+                                    (Opcional)</label>
+                                <textarea id="task-desc" rows="2"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
+                                    placeholder="Detalhes..."></textarea>
+                            </div>
+
+                            <!-- Due Date -->
+                            <div>
+                                <label for="task-due"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300">Data de
+                                    Vencimento</label>
+                                <input type="datetime-local" id="task-due"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                            </div>
+
+                            <!-- Eisenhower Matrix Selection -->
+                            <div
+                                class="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Matriz
+                                    de Prioridade</span>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="task-urgent"
+                                            class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4">
+                                        <span class="text-sm text-slate-600 dark:text-slate-400">É Urgente? 🔥</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="task-important"
+                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+                                        <span class="text-sm text-slate-600 dark:text-slate-400">É Importante? ⭐</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="submitNewTask()"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Criar Tarefa
+                </button>
+                <button type="button" onclick="closeNewTaskModal()"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 <script>
+    let currentView = 'kanban';
+    let allTasksData = {};
+
     document.addEventListener('DOMContentLoaded', () => {
         loadKanbanTasks();
     });
+
+    function switchView(view) {
+        currentView = view;
+        const kanbanView = document.getElementById('view-kanban');
+        const matrixView = document.getElementById('view-matrix');
+        const btnKanban = document.getElementById('btn-view-kanban');
+        const btnMatrix = document.getElementById('btn-view-matrix');
+
+        if (view === 'kanban') {
+            kanbanView.classList.remove('hidden');
+            matrixView.classList.add('hidden');
+
+            btnKanban.className = "px-3 py-1.5 rounded-md text-sm font-medium bg-white dark:bg-slate-700 shadow-sm text-slate-700 dark:text-slate-200 transition-all";
+            btnMatrix.className = "px-3 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-all";
+        } else {
+            kanbanView.classList.add('hidden');
+            matrixView.classList.remove('hidden');
+
+            btnMatrix.className = "px-3 py-1.5 rounded-md text-sm font-medium bg-white dark:bg-slate-700 shadow-sm text-slate-700 dark:text-slate-200 transition-all";
+            btnKanban.className = "px-3 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-all";
+        }
+    }
 
     function loadKanbanTasks() {
         fetch('/tasks/api/kanban')
             .then(r => r.json())
             .then(data => {
+                allTasksData = data;
                 renderKanban(data);
+                renderMatrix(data);
                 initSortable();
+                initMatrixSortable();
                 checkOverdue(data);
             })
             .catch(err => console.error("Error loading kanban:", err));
@@ -172,11 +385,32 @@
             const counter = document.getElementById(`count-${status}`);
             if (!container) return;
 
-            // Update Count
             if (counter) counter.innerText = data[status].length;
-
             container.innerHTML = data[status].map(task => createTaskCard(task)).join('');
         });
+    }
+
+    function renderMatrix(data) {
+        // Flatten all tasks
+        const allTasks = Object.values(data).flat();
+
+        // Filter out completed tasks for Matrix? Or keep them? Usually Matrix is for Pending.
+        // Let's keep pending only
+        const pendingTasks = allTasks.filter(t => t.status !== 'concluida');
+
+        const q1 = [], q2 = [], q3 = [], q4 = [];
+
+        pendingTasks.forEach(task => {
+            if (task.is_urgent && task.is_important) q1.push(task);
+            else if (!task.is_urgent && task.is_important) q2.push(task);
+            else if (task.is_urgent && !task.is_important) q3.push(task);
+            else q4.push(task);
+        });
+
+        document.getElementById('matrix-q1').innerHTML = q1.map(t => createTaskCard(t)).join('');
+        document.getElementById('matrix-q2').innerHTML = q2.map(t => createTaskCard(t)).join('');
+        document.getElementById('matrix-q3').innerHTML = q3.map(t => createTaskCard(t)).join('');
+        document.getElementById('matrix-q4').innerHTML = q4.map(t => createTaskCard(t)).join('');
     }
 
     function createTaskCard(task) {
@@ -185,15 +419,25 @@
         const badgeColor = getSourceBadgeColor(task.source_type);
 
         let priorityIcon = '';
-        if (task.priority === 'urgente' || task.priority === 'alta') {
+        if (task.is_urgent && task.is_important) {
             priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
-                                <span class="material-icons-round text-primary text-sm">priority_high</span>
-                                <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">ME</div>
+                                <span class="material-icons-round text-red-500 text-sm" title="Urgente & Importante">gpp_good</span>
+                                <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-[10px] font-bold text-red-600 dark:text-red-400">Q1</div>
+                            </div>`;
+        } else if (!task.is_urgent && task.is_important) {
+            priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                                <span class="material-icons-round text-blue-500 text-sm" title="Importante">event</span>
+                                <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[10px] font-bold text-blue-600 dark:text-blue-400">Q2</div>
+                            </div>`;
+        } else if (task.is_urgent && !task.is_important) {
+            priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                                <span class="material-icons-round text-orange-500 text-sm" title="Urgente">update</span>
+                                <div class="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-[10px] font-bold text-orange-600 dark:text-orange-400">Q3</div>
                             </div>`;
         } else {
             priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
-                                <span class="material-icons-round text-slate-300 dark:text-slate-700 text-sm">low_priority</span>
-                                <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">ME</div>
+                                <span class="material-icons-round text-slate-400 text-sm" title="Baixa Prioridade">low_priority</span>
+                                <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">Q4</div>
                             </div>`;
         }
 
@@ -242,19 +486,43 @@
                     const itemEl = evt.item;
                     const taskId = itemEl.getAttribute('data-id');
                     const newStatus = evt.to.getAttribute('data-status');
-                    updateTaskStatus(taskId, newStatus);
+                    updateTask(taskId, { status: newStatus });
                 }
             });
         });
     }
 
-    function updateTaskStatus(id, status) {
+    function initMatrixSortable() {
+        ['matrix-q1', 'matrix-q2', 'matrix-q3', 'matrix-q4'].forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            new Sortable(el, {
+                group: 'matrix',
+                animation: 150,
+                ghostClass: 'opacity-50',
+                onEnd: function (evt) {
+                    const itemEl = evt.item;
+                    const taskId = itemEl.getAttribute('data-id');
+                    const toEl = evt.to;
+
+                    const isUrgent = toEl.getAttribute('data-urgent') === 'true';
+                    const isImportant = toEl.getAttribute('data-important') === 'true';
+
+                    updateTask(taskId, { is_urgent: isUrgent, is_important: isImportant });
+                }
+            });
+        });
+    }
+
+    function updateTask(id, payload) {
         fetch(`/tasks/api/move/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: status })
+            body: JSON.stringify(payload)
         }).then(r => {
             if (!r.ok) console.error('Erro ao mover');
+            else loadKanbanTasks(); // Reload to sync both views
         });
     }
 
@@ -271,11 +539,57 @@
         }
     }
 
+    // Modal Logic
     function openNewTaskModal() {
-        // Simple SweetAlert2 implementation
-        // If SweetAlert is missing, fallback to prompt
-        // Assuming SweetAlert is not loaded in base, but let's try or alert
-        alert("Modal de criação de tarefa será implementado em breve.");
+        document.getElementById('newTaskModal').classList.remove('hidden');
+    }
+
+    function closeNewTaskModal() {
+        document.getElementById('newTaskModal').classList.add('hidden');
+        document.getElementById('task-title').value = '';
+        document.getElementById('task-desc').value = '';
+        document.getElementById('task-due').value = '';
+        document.getElementById('task-urgent').checked = false;
+        document.getElementById('task-important').checked = false;
+    }
+
+    function submitNewTask() {
+        const title = document.getElementById('task-title').value;
+        const description = document.getElementById('task-desc').value;
+        const dueDate = document.getElementById('task-due').value;
+        const isUrgent = document.getElementById('task-urgent').checked;
+        const isImportant = document.getElementById('task-important').checked;
+
+        if (!title) {
+            alert('Por favor, insira um título.');
+            return;
+        }
+
+        const payload = {
+            title: title,
+            description: description,
+            due_date: dueDate || null,
+            is_urgent: isUrgent,
+            is_important: isImportant,
+            source_type: 'MANUAL',
+            status: 'a_fazer'
+        };
+
+        fetch('/tasks/api/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closeNewTaskModal();
+                    loadKanbanTasks();
+                } else {
+                    alert('Erro ao criar tarefa: ' + (data.error || 'Unknown'));
+                }
+            })
+            .catch(err => console.error("Error creating task:", err));
     }
 </script>
 {% endblock %}

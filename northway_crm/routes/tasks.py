@@ -62,7 +62,9 @@ def get_kanban_data():
                 'due_date': t.due_date.strftime('%Y-%m-%d') if t.due_date else None,
                 'source_type': t.source_type,
                 'client_name': t.client.name if t.client else None,
-                'auto_generated': t.auto_generated
+                'auto_generated': t.auto_generated,
+                'is_urgent': t.is_urgent,
+                'is_important': t.is_important
             })
             
     return jsonify(serialized)
@@ -81,10 +83,16 @@ def create_task_api():
         # Enforce created_by
         # If assigning to someone else, check permissions? MVP: Allow.
         
+        # Extract priority flags
+        is_urgent = data.get('is_urgent', False)
+        is_important = data.get('is_important', False)
+        
+        # Add to data payload if not present (or handled by service)
+        data['is_urgent'] = is_urgent
+        data['is_important'] = is_important
+        
         task = TaskService.create_task(data, user_id=current_user.id)
         return jsonify({'status': 'success', 'task_id': task.id}), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
 
 @tasks_bp.route('/api/move/<int:task_id>', methods=['PATCH'])
 @login_required
@@ -95,8 +103,25 @@ def move_task_api(task_id):
     data = request.json
     new_status = data.get('status')
     
+    # Handle dragging in Matrix (updates urgency/importance)
+    is_urgent = data.get('is_urgent')
+    is_important = data.get('is_important')
+    
     try:
-        TaskService.update_status(task_id, new_status, actor_id=current_user.id)
+        # If status is present, update status
+        if new_status:
+            TaskService.update_status(task_id, new_status, actor_id=current_user.id)
+            
+        # If urgency/importance present, update them
+        # We need to expose a method in Service or do it here manually for MVP
+        if is_urgent is not None or is_important is not None:
+             from models import Task, db
+             task = Task.query.get(task_id)
+             if task and task.company_id == current_user.company_id:
+                 if is_urgent is not None: task.is_urgent = is_urgent
+                 if is_important is not None: task.is_important = is_important
+                 db.session.commit()
+
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'error': str(e)}), 400

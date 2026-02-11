@@ -614,6 +614,10 @@ class Task(db.Model):
     # New Fields for My Execution Module
     source_type = db.Column(db.String(50), nullable=True) # LEAD, CUSTOMER, SERVICE_ORDER, CONTRACT, SUPPORT, MANUAL
     auto_generated = db.Column(db.Boolean, default=False)
+
+    # Eisenhower Matrix / Priority Matrix
+    is_urgent = db.Column(db.Boolean, default=False)
+    is_important = db.Column(db.Boolean, default=False)
     
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Link to client
