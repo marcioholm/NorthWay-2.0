@@ -412,13 +412,24 @@
         page.className = 'a4-page';
         page.id = 'page-' + pageNum;
 
-        // 1. Inject Header
-        const headerTemplate = document.getElementById('print-header-template');
-        if (headerTemplate) {
-            const header = headerTemplate.cloneNode(true);
-            header.id = '';
-            header.classList.remove('hidden');
-            page.appendChild(header.firstElementChild); // Append the inner div
+        // 0. Inject Visual Guide (Screen Only)
+        const guideTemplate = document.getElementById('visual-guide-template');
+        if (guideTemplate) {
+            const guide = guideTemplate.cloneNode(true);
+            guide.id = '';
+            guide.classList.remove('hidden');
+            page.appendChild(guide.firstElementChild);
+        }
+
+        // 1. Inject Header (Only if NOT first page)
+        if (pageNum > 1) {
+            const headerTemplate = document.getElementById('print-header-template');
+            if (headerTemplate) {
+                const header = headerTemplate.cloneNode(true);
+                header.id = '';
+                header.classList.remove('hidden');
+                page.appendChild(header.firstElementChild);
+            }
         }
 
         // 2. Content Area
