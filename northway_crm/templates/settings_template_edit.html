@@ -344,6 +344,18 @@
         padding-left: 2cm;
         margin-bottom: 6pt;
     }
+
+    /* Editor Specific Overrides for A4 WYSIWYG */
+    #editor-container .ql-editor {
+        padding-top: 35mm !important;
+        padding-bottom: 25mm !important;
+        padding-left: 15mm !important;
+        padding-right: 15mm !important;
+        min-height: 297mm;
+        /* Ensure text is above guides */
+        position: relative;
+        z-index: 20;
+    }
 </style>
 
 <!-- Quill JS -->
