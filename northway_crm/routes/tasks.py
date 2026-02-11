@@ -14,7 +14,8 @@ def execution_kanban():
     """
     Kanban Board View (My Execution)
     """
-    return render_template('tasks/execution_kanban.html')
+    users = User.query.filter_by(company_id=current_user.company_id).all()
+    return render_template('tasks/execution_kanban.html', users=users)
 
 @tasks_bp.route('/execution/team')
 @login_required
@@ -64,7 +65,8 @@ def get_kanban_data():
                 'client_name': t.client.name if t.client else None,
                 'auto_generated': t.auto_generated,
                 'is_urgent': t.is_urgent,
-                'is_important': t.is_important
+                'is_important': t.is_important,
+                'assigned_to_id': t.assigned_to_id
             })
             
     return jsonify(serialized)
@@ -114,14 +116,36 @@ def move_task_api(task_id):
         if new_status:
             TaskService.update_status(task_id, new_status, actor_id=current_user.id)
             
-        # If urgency/importance present, update them
+        # If urgency/importance/assignee present, update them
         # We need to expose a method in Service or do it here manually for MVP
-        if is_urgent is not None or is_important is not None:
+        assigned_to_id = data.get('assigned_to_id')
+        title = data.get('title')
+        description = data.get('description')
+        due_date_str = data.get('due_date')
+
+        if any(x is not None for x in [is_urgent, is_important, assigned_to_id, title, description, due_date_str]):
              from models import Task, db
              task = Task.query.get(task_id)
              if task and task.company_id == current_user.company_id:
                  if is_urgent is not None: task.is_urgent = is_urgent
                  if is_important is not None: task.is_important = is_important
+                 if assigned_to_id is not None:
+                     try:
+                         if isinstance(assigned_to_id, str) and not assigned_to_id:
+                             task.assigned_to_id = None # Handle empty string
+                         else:
+                             task.assigned_to_id = int(assigned_to_id)
+                     except (ValueError, TypeError):
+                         pass # Should we log this?
+                 if title is not None: task.title = title
+                 if description is not None: task.description = description
+                 if due_date_str is not None:
+                     try:
+                         if due_date_str == "":
+                             task.due_date = None
+                         else:
+                             task.due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M')
+                     except: pass
                  db.session.commit()
 
         return jsonify({'status': 'success'})
