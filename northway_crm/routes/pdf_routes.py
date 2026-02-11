@@ -19,8 +19,8 @@ def download_contract_pdf(id):
     # 1. Fetch Contract & verify permission
     contract = Contract.query.get_or_404(id)
     
-    # Check tenant access
-    if contract.tenant_id != current_user.tenant_id:
+    # Check company access
+    if contract.company_id != current_user.company_id:
         abort(403)
 
     try:
