@@ -460,7 +460,8 @@
     }
 
     function hasOverflow(element) {
-        return element.scrollHeight > element.clientHeight + 1;
+        // Use a safety buffer (5px) to prevent last element from touching footer
+        return element.scrollHeight > (element.clientHeight - 5);
     }
 
     function renderPaginatedContent(htmlContent) {
