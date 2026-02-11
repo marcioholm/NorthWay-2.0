@@ -259,7 +259,16 @@
         .no-print,
         .print\:hidden,
         #layout-wrapper>*:not(#scroll-container),
-        #layout-wrapper>.fixed {
+        #layout-wrapper>.fixed,
+        /* Target the local top bar specifics */
+        .fixed,
+        /* Generic fixed elements */
+        .z-40,
+        /* Header z-index */
+        .z-50
+
+        /* Mobile header z-index */
+            {
             display: none !important;
         }
 
