@@ -663,6 +663,10 @@ def sign_contract(id):
                 try: due_d = date(target_m.year, target_m.month, venc)
                 except ValueError: due_d = date(target_m.year, target_m.month, 28)
             
+                # FIX: Ensure due date is not in the past (Asaas rejects past dates for new boletos)
+                if due_d < date.today():
+                    due_d = date.today()
+
                 t = Transaction(
                     contract_id=contract.id, client_id=contract.client_id, company_id=contract.company_id,
                     description=f"Parcela {i+1}/{qtd_p}", amount=val_p, due_date=due_d, status='pending',
