@@ -83,11 +83,26 @@
                             </div>
                         </div>
 
-                        <!-- Quill Wrapper -->
+                        <!-- Quill Wrapper (A4 Simulation) -->
                         <div
-                            class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden pointer-events-auto">
-                            <div id="editor-container" class="bg-white font-sans text-base min-h-[500px]"
-                                style="border:none;"></div>
+                            class="bg-gray-200/50 p-4 rounded-lg overflow-x-auto flex justify-center border border-gray-200 shadow-inner">
+                            <div class="relative bg-white shadow-xl pointer-events-auto shrink-0"
+                                style="width: 210mm; min-height: 297mm;">
+
+                                <!-- Visual Guides (Editor) -->
+                                <div class="margin-guide pointer-events-none z-10">
+                                    <div class="guide-top"><span class="guide-label">Margem Superior (3.5cm)</span>
+                                    </div>
+                                    <div class="guide-bottom"><span class="guide-label">Margem Inferior (2.5cm)</span>
+                                    </div>
+                                    <div class="guide-left"></div>
+                                    <div class="guide-right"></div>
+                                </div>
+
+                                <!-- Editor Target -->
+                                <div id="editor-container" class="bg-transparent font-sans text-base"
+                                    style="border:none; min-height: 297mm;"></div>
+                            </div>
                         </div>
                     </div>
 
