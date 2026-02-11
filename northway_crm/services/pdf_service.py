@@ -171,15 +171,16 @@ class PdfService:
                 # Execute replacement
                 html = re.sub(r'<img[^>]+>', replace_img_src, html, flags=re.IGNORECASE)
 
-                # --- B. LAYOUT PRESERVATION (Fixing the "CompanyCNPJ" merge issue) ---
-                # 1. Ensure block elements have line breaks BEFORE stripping or processing
-                # Replace </div> with <br> to force a break
-                html = re.sub(r'</div>', '<br>', html, flags=re.IGNORECASE)
-                html = re.sub(r'</p>', '<br><br>', html, flags=re.IGNORECASE)
-                html = re.sub(r'</h1>', '<br><br>', html, flags=re.IGNORECASE)
-                html = re.sub(r'</h2>', '<br><br>', html, flags=re.IGNORECASE)
-                html = re.sub(r'</h3>', '<br><br>', html, flags=re.IGNORECASE)
+                # --- B. LAYOUT PRESERVATION ---
+                # We do NOT want to flatten P tags anymore, we want to keep them for alignment.
+                # However, we need to ensure they don't have weird spacing.
                 
+                # Ensure all paragraphs are justified
+                if '<p' in html:
+                    html = re.sub(r'<p([^>]*)>', r'<p align="justify"\1>', html, flags=re.IGNORECASE)
+                    # Clean up double aligns if we accidentally created them (e.g. align="justify" align="center")
+                    # Simplified: FPDF2 usually takes the last one or first one. 
+                    
                 # --- C. CLEANUP ---
                 # Strip Table Attributes that break layout
                 html = re.sub(r'(<table[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
@@ -201,14 +202,11 @@ class PdfService:
                 # Force Encoding
                 html = html.encode('latin-1', 'replace').decode('latin-1')
 
-                # Now safe to strip container tags since we injected <br>
-                html = re.sub(r'</?div[^>]*>', '', html, flags=re.IGNORECASE)
-                html = re.sub(r'</?p[^>]*>', '', html, flags=re.IGNORECASE)
-
                 # --- D. WRITE ---
                 # Wrap via Styled Font for Justification & Typography
+                # We use size 10 for better density.
                 sty_html = f"""
-                <font face="Helvetica" size="11">
+                <font face="Helvetica" size="10">
                 {html}
                 </font>
                 """
