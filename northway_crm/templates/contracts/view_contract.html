@@ -206,10 +206,12 @@
         /* Adjusted Padding for Header/Footer Space */
         padding-top: 35mm;
         /* Space for Header */
-        padding-bottom: 25mm;
+        padding-bottom: 30mm;
+        /* Increased from 25mm to prevent Footer Overlap */
         /* Space for Footer */
         padding-left: 15mm;
         padding-right: 15mm;
+
 
         overflow: hidden;
         flex-shrink: 0;
@@ -460,8 +462,7 @@
     }
 
     function hasOverflow(element) {
-        // Use a safety buffer (5px) to prevent last element from touching footer
-        return element.scrollHeight > (element.clientHeight - 5);
+        return element.scrollHeight > element.clientHeight + 1;
     }
 
     function renderPaginatedContent(htmlContent) {
