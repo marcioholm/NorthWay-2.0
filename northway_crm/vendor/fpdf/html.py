@@ -463,16 +463,28 @@ class HTML2FPDF(HTMLParser):
             if not data:
                 return
             if "inserted" in self.td_th:
+                # PATCH: Instead of crashing on mixed content (like <b> nested in <td>),
+                # we append the new text to the existing cell.
+                # This has a limitation: the WHOLE cell will share the style of the first element.
+                # But it prevents the 500 error.
+                if self.table_row and self.table_row.cells:
+                    last_cell = self.table_row.cells[-1]
+                    # Check if last_cell is actually a Cell object (it could be None or TableSpan)
+                    # We need to import Cell or check type name, but Cell is internal to table module.
+                    # We can check if it has 'text' attribute.
+                    if hasattr(last_cell, 'text'):
+                        last_cell.text += data
+                        return
+
+                # If we couldn't append, THEN raise error (or just log/pass)
                 td_th_tag = self.td_th["tag"]
-                raise NotImplementedError(
-                    f"Unsupported nested HTML tags inside <{td_th_tag}> element: <{self._tags_stack[-1]}>"
+                LOGGER.warning(
+                    f"Ignored nested HTML tags inside <{td_th_tag}> element: <{self._tags_stack[-1]}>. Content may be incomplete."
                 )
-                # We could potentially support nested <b> / <em> / <font> tags
-                # by building a list of Fragment instances from the HTML cell content
-                # and then passing those fragments to Row.cell().
-                # However there should be an incoming refactoring of this code
-                # dedicated to text layout, and we should probably wait for that
-                # before supporting this feature.
+                return
+                # raise NotImplementedError(
+                #    f"Unsupported nested HTML tags inside <{td_th_tag}> element: <{self._tags_stack[-1]}>"
+                # )
             align = self.td_th.get("align", self.tr.get("align"))
             if align:
                 align = align.upper()
