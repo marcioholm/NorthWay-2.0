@@ -113,6 +113,35 @@
     </script>
 
 
+    <!-- Visual Guide Template (Screen Only) -->
+    <div id="visual-guide-template" class="hidden">
+        <div class="margin-guide absolute inset-0 pointer-events-none z-50">
+            <!-- Top Margin Area -->
+            <div
+                class="absolute top-0 left-0 right-0 h-[35mm] bg-red-500/5 border-b border-red-300 border-dashed flex items-end justify-center">
+                <span class="text-[10px] text-red-300 font-mono mb-1">Margem Superior (Cabeçalho) - 3.5cm</span>
+            </div>
+            <!-- Bottom Margin Area -->
+            <div
+                class="absolute bottom-0 left-0 right-0 h-[25mm] bg-red-500/5 border-t border-red-300 border-dashed flex items-start justify-center">
+                <span class="text-[10px] text-red-300 font-mono mt-1">Margem Inferior (Rodapé) - 2.5cm</span>
+            </div>
+            <!-- Left Margin Area -->
+            <div class="absolute top-0 bottom-0 left-0 w-[15mm] bg-blue-500/5 border-r border-blue-300 border-dashed">
+            </div>
+            <!-- Right Margin Area -->
+            <div class="absolute top-0 bottom-0 right-0 w-[15mm] bg-blue-500/5 border-l border-blue-300 border-dashed">
+            </div>
+
+            <!-- Safe Area Label -->
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <span
+                    class="text-[50px] font-bold text-gray-100 opacity-20 pointer-events-none rotate-45 select-none">ÁREA
+                    SEGURA</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Header/Footer Templates -->
     <div id="print-header-template" class="hidden">
         <div
@@ -291,7 +320,8 @@
         /* Generic fixed elements */
         .z-40,
         /* Header z-index */
-        .z-50
+        .z-50,
+        .margin-guide
 
         /* Mobile header z-index */
             {
