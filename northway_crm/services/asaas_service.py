@@ -252,8 +252,11 @@ def create_webhook(webhook_url, email, api_key=None):
         if response.status_code == 200:
              return response.json(), None
         else:
-             error_data = response.json()
-             error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+             try:
+                 error_data = response.json()
+                 error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+             except:
+                 error_msg = f"Status {response.status_code}: {response.text}"
              return None, error_msg
     except Exception as e:
         return None, str(e)
