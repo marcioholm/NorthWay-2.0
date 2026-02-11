@@ -242,7 +242,8 @@
         body {
             margin: 0 !important;
             padding: 0 !important;
-            width: 210mm !important;
+            width: 100% !important;
+            /* Allow browser to determine printable width */
             height: auto !important;
             background: white !important;
             overflow: visible !important;
@@ -288,17 +289,22 @@
 
         /* 4. Strict A4 Page Definition */
         .a4-page {
-            width: 210mm !important;
-            height: 296mm !important;
-            /* Slightly less than 297mm to prevent blank pages */
-            margin: 0 !important;
-            padding: 30mm 20mm 20mm 30mm !important;
-            /* Top Right Bottom Left */
+            width: 100% !important;
+            /* Fill the @page area */
+            max-width: 210mm !important;
+            /* Cap at A4 just in case */
+            height: auto !important;
+            /* Allow content to dictate height */
+            min-height: 296mm !important;
+
+            margin: 0 auto !important;
+            padding: 25mm 20mm 20mm 25mm !important;
+            /* Slightly adjusted padding for safety */
 
             page-break-after: always;
             break-after: page;
 
-            overflow: hidden !important;
+            overflow: visible !important;
             position: relative !important;
             border: none !important;
             box-shadow: none !important;
