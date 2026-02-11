@@ -10,157 +10,120 @@ class ContractPDF(FPDF):
         self.set_auto_page_break(auto=True, margin=20)
 
     def header(self):
-        # Logo
-        try:
-            # Try multiple common paths
-            possible_paths = [
-                os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
-                os.path.join(current_app.root_path, 'static', 'images', 'logo.png'),
-                os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
-            ]
-            
-            logo_found = False
-            for logo_path in possible_paths:
-                if os.path.exists(logo_path):
-                    # Force width to 33mm
-                    self.image(logo_path, 10, 8, 33)
-                    logo_found = True
-                    break
-            
-            if not logo_found:
-                current_app.logger.warning("Logo file not found in any expected location.")
-                
-        except Exception as e:
-            # This catches 'Pillow not available' and other image errors
-            current_app.logger.warning(f"Could not load logo for PDF (Pillow missing?): {e}")
-            # Fallback: Write text instead of logo
-            self.set_font("Helvetica", "B", 10)
-            self.set_xy(10, 10)
-            self.cell(33, 10, "[NorthWay]", 0, 0, 'C')
-
-        # Font for Title
-        self.set_font('Arial', 'B', 15)
-        # Move to the right
-        self.cell(80)
-        # Title
-        self.cell(30, 10, 'CONTRATO DE SERVIÇOS', 0, 0, 'C')
+        # Premium Typographic Header (No Images required)
         
-        # Line break
-        self.ln(20)
+        # 1. Main Brand
+        self.set_font('Helvetica', 'B', 20)
+        self.set_text_color(0, 0, 0) # Black
+        self.cell(0, 10, 'NORTHWAY', 0, 1, 'L')
         
-        # Contract Code
+        # 2. Sub-brand / CNPJ
+        self.set_font('Helvetica', '', 9)
+        self.set_text_color(100, 100, 100) # Gray
+        self.cell(0, 5, 'NorthWay Company | CNPJ: 56.106.629/0001-75', 0, 1, 'L')
+        
+        # 3. Document Title (Right Aligned, but moved up via Y adjustment if needed, 
+        #    or just placed on next line for clean layout)
+        #    Let's keep it simple: Line break then Title centered or right
+        
+        self.set_y(15) # Back to top area for right side
+        self.set_font('Helvetica', 'B', 12)
+        self.set_text_color(0)
+        self.cell(0, 10, 'CONTRATO DE SERVIÇOS', 0, 1, 'R')
+        
+        # 4. Separator Line
+        self.set_y(35)
+        self.set_draw_color(200, 200, 200) # Light gray line
+        self.set_line_width(0.5)
+        self.line(10, 32, 200, 32)
+        
+        # 5. Reference Code (Small, Right, below line)
         if self.contract_code:
-            self.set_font('Arial', 'I', 8)
+            self.set_xy(10, 33)
+            self.set_font('Helvetica', 'I', 8)
             self.set_text_color(128)
-            self.set_xy(10, 25) # Position below logo
-            self.cell(0, 5, f"Ref: {self.contract_code}", 0, 1, 'L')
-            self.set_text_color(0) # Reset color
+            self.cell(0, 4, f"Ref: {self.contract_code}", 0, 1, 'R')
+            
+        self.ln(5) # Space after header
 
     def footer(self):
         # Position at 1.5 cm from bottom
         self.set_y(-15)
-        # Arial italic 8
-        self.set_font('Arial', 'I', 8)
+        self.set_font('Helvetica', 'I', 8)
         self.set_text_color(128)
-        # Page number
-        self.cell(0, 10, 'Página ' + str(self.page_no()) + ' de {nb}', 0, 0, 'C')
+        self.cell(0, 10, 'NorthWay Company - Documento Confidencial | Página ' + str(self.page_no()) + ' de {nb}', 0, 0, 'C')
 
 class PdfService:
     @staticmethod
     def generate_pdf(contract):
         """
         Generates a PDF for the contract using FPDF2.
-        
-        Args:
-            contract (Contract): The contract model instance.
-            
-        Returns:
-            bytes: The generated PDF content.
         """
         current_app.logger.info(f"Generating PDF for Contract ID: {contract.id}")
         try:
             current_app.logger.info("Initializing ContractPDF...")
             pdf = ContractPDF(contract_code=contract.code or str(contract.id))
             
-            current_app.logger.info("Calling alias_nb_pages...")
             pdf.alias_nb_pages()
-            
-            current_app.logger.info(f"Calling add_page... (Current page: {pdf.page_no()})")
             pdf.add_page()
-            current_app.logger.info(f"Page added. (Current page: {pdf.page_no()})")
             
-            if pdf.page_no() == 0:
-                current_app.logger.error("CRITICAL: add_page() failed to increment page number!")
-                raise Exception("add_page() failed to create a page (page_no is 0)")
-            
-            # Set font for body
-            pdf.set_font('Arial', '', 11)
+            # Set basic font
+            pdf.set_font('Helvetica', '', 10)
             
             # Write HTML content
-            # Note: generated_content is HTML. write_html handles it.
             if contract.generated_content:
-                # Basic cleanup if needed
+                # 1. Clean up HTML
                 html = contract.generated_content
                 
-                # FPDF2 write_html choke on 'auto' values for width/height/margin
-                # We replace them with valid values or remove them
                 import re
-                html = re.sub(r'width:\s*auto;?', '', html, flags=re.IGNORECASE)
-                html = re.sub(r'height:\s*auto;?', '', html, flags=re.IGNORECASE)
-                html = re.sub(r'margin:\s*auto;?', '', html, flags=re.IGNORECASE)
-                html = re.sub(r'width="auto"', '', html, flags=re.IGNORECASE)
-                html = re.sub(r'height="auto"', '', html, flags=re.IGNORECASE)
-
-                # FPDF2 / Pillow on Vercel is broken for images.
-                # We actively remove <img> tags to prevent "Pillow not available" crashes.
+                
+                # Strip <img> tags (Pillow crash prevention)
                 html = re.sub(r'<img[^>]*>', '', html, flags=re.IGNORECASE)
 
-                # Fix "Invalid .col_widths specified" error
-                # FPDF2 crashes if some columns have widths and others don't, or if they don't sum up.
-                # We strip ALL width attributes/styles from tables to force auto-layout.
+                # Strip Table Widths (Layout crash prevention)
                 html = re.sub(r'(<table[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
                 html = re.sub(r'(<td[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
                 html = re.sub(r'(<th[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
-                html = re.sub(r'width:\s*[^;"\']+[;"\']?', '', html, flags=re.IGNORECASE) # css width removal (aggressive)
+                html = re.sub(r'width:\s*[^;"\']+[;"\']?', '', html, flags=re.IGNORECASE)
 
-                # Replace standard font incompatible characters (Unicode -> Latin-1 safe)
+                # Latin-1 Sanitization
                 replacements = {
-                    '\u2013': '-',  # En-dash
-                    '\u2014': '-',  # Em-dash
-                    '\u2018': "'",  # Left single quote
-                    '\u2019': "'",  # Right single quote
-                    '\u201c': '"',  # Left double quote
-                    '\u201d': '"',  # Right double quote
-                    '\u2022': '-',  # Bullet
-                    '\u2026': '...', # Ellipsis
-                    '\u00a0': ' ',   # Non-breaking space
-                    '\u200b': '',    # Zero-width space
+                    '\u2013': '-', '\u2014': '-',
+                    '\u2018': "'", '\u2019': "'",
+                    '\u201c': '"', '\u201d': '"',
+                    '\u2022': '-', '\u2026': '...',
+                    '\u00a0': ' ', '\u200b': '',
                 }
                 for src, dst in replacements.items():
                     html = html.replace(src, dst)
                 
-                # NUCLEAR OPTION: Force Latin-1 compatibility
-                # This guarantees NO character outside Latin-1 range remains to crash FPDF
+                # Force Encoding
                 html = html.encode('latin-1', 'replace').decode('latin-1')
-                
-                # FPDF2 Tables DO NOT support nested block elements (p, div) or mixed content well.
-                # We flatten the structure:
-                # 1. Replace block breaks with <br>
-                html = re.sub(r'</p>\s*<p[^>]*>', '<br>', html, flags=re.IGNORECASE)
+
+                # Flatten Block Elements inside tables/structure
+                html = re.sub(r'</p>\s*<p[^>]*>', '<br><br>', html, flags=re.IGNORECASE) # Double break for paragraphs
                 html = re.sub(r'</div>\s*<div[^>]*>', '<br>', html, flags=re.IGNORECASE)
-                
-                # 2. Remove remaining block tags (unwrap content)
                 html = re.sub(r'</?div[^>]*>', '', html, flags=re.IGNORECASE)
                 html = re.sub(r'</?p[^>]*>', '', html, flags=re.IGNORECASE)
+
+                # 2. Wrap via Styled Div for Justification & Typography
+                # Note: fpdf2 writes this as a flow. 
+                # We use specific fonts and alignment to match "System" look.
+                sty_html = f"""
+                <font face="Helvetica" size="11">
+                {html}
+                </font>
+                """
                 
-                # 3. Clean up spans that might just be structural
-                # html = re.sub(r'</?span[^>]*>', '', html, flags=re.IGNORECASE) # Spans usually usually fine unless they split content? keep for now.
+                # Note: fpdf2 write_html doesn't fully support <div align="justify"> perfectly in all versions, 
+                # but standard write_html respects self.set_font etc.
+                # We can try to replace <br> with proper spacing if needed.
                 
-                pdf.write_html(html)
+                pdf.write_html(sty_html)
             else:
                 pdf.write(5, "Conteúdo do contrato não disponível.")
                 
-            return bytes(pdf.output()) # FPDF2 output() returns bytearray by default in recent versions
+            return bytes(pdf.output())
             
         except Exception as e:
             current_app.logger.error(f"Error generating PDF (FPDF): {str(e)}")
