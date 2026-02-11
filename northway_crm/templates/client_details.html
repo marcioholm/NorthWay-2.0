@@ -167,6 +167,10 @@
                                     client.drive_unread_files_count }}</span>
                                 {% endif %}
                             </button>
+                            <button type="button" onclick="switchClientTab('processes')" id="tab-client-processes"
+                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                <i data-lucide="list-checks" class="w-3.5 h-3.5"></i> Processos
+                            </button>
                         </div>
                     </div>
 
@@ -814,111 +818,138 @@
 
                         <!-- Drive Content (New Tab) -->
                         <div id="content-client-drive" class="hidden p-8">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                    <i data-lucide="hard-drive" class="w-5 h-5 text-gray-400"></i>
+                            <div class="flex items-center justify-between mb-8">
+                                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                    <div class="bg-blue-50 p-2 rounded-lg text-blue-600">
+                                        <i data-lucide="hard-drive" class="w-6 h-6"></i>
+                                    </div>
                                     Arquivos (Google Drive)
                                 </h3>
                                 <div class="flex gap-2">
                                     {% if client.drive_folder_url %}
                                     <button type="button" onclick="scanDriveFolder()" id="btn-scan-drive"
-                                        class="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200">
+                                        class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
                                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                                         Sincronizar
                                     </button>
                                     <a href="{{ client.drive_folder_url }}" target="_blank"
-                                        class="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200">
+                                        class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
                                         <i data-lucide="upload-cloud" class="w-4 h-4"></i>
                                         Upload
                                     </a>
                                     {% endif %}
                                     <button type="button" onclick="toggleModal('createDriveFoldersModal')"
-                                        class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-blue-100">
+                                        class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg shadow-blue-500/30">
                                         <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                                        {% if client.drive_folder_url %}Nova Pasta{% else %}Criar Pasta{% endif %}
+                                        {% if client.drive_folder_url %}Nova Pasta{% else %}Conectar Drive{% endif %}
                                     </button>
                                 </div>
                             </div>
 
                             {% if client.drive_folder_url %}
+
+                            <!-- Drive Stats / Info -->
                             <div
-                                class="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8 flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-bold text-blue-900 text-lg mb-1">Pasta do Cliente Conectada</h4>
-                                    <p class="text-blue-700 text-sm">Todos os arquivos sincronizados aparecerão aqui
-                                        automaticamente.</p>
-                                    <p class="text-blue-500 text-xs mt-2 flex items-center gap-1">
-                                        <i data-lucide="clock" class="w-3 h-3"></i>
-                                        Última sincronização: {{ client.drive_last_scan_at.strftime('%d/%m/%Y às %H:%M')
-                                        if client.drive_last_scan_at else 'Aguardando...' }}
-                                    </p>
+                                class="flex items-center gap-4 mb-8 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100 inline-block">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="folder" class="w-4 h-4 text-gray-400"></i>
+                                    <span>Pasta Conectada</span>
                                 </div>
-                                <a href="{{ client.drive_folder_url }}" target="_blank"
-                                    class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2">
-                                    <i data-lucide="external-link" class="w-4 h-4"></i>
-                                    Abrir Pasta no Drive
-                                </a>
+                                <div class="w-px h-4 bg-gray-300"></div>
+                                <div class="flex items-center gap-2" title="Última sincronização">
+                                    <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
+                                    <span>{{ client.drive_last_scan_at.strftime('%d/%m às %H:%M') if
+                                        client.drive_last_scan_at else 'Nunca sincronizado' }}</span>
+                                </div>
                             </div>
 
-                            <div class="space-y-3">
-                                <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Arquivos
-                                    Recentes</h4>
+                            <!-- Files Grid -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {% if client.drive_files_events %}
                                 {% for event in client.drive_files_events|sort(attribute='detected_at', reverse=True) %}
                                 <div
-                                    class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:shadow-sm transition-all group">
-                                    <div class="flex items-center gap-4">
+                                    class="group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all hover:border-blue-200 flex flex-col items-center text-center">
+
+                                    <div class="mb-3 relative">
+                                        {% if 'pdf' in event.mime_type %}
                                         <div
-                                            class="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-50 text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                                            {% if 'pdf' in event.mime_type %}
-                                            <i data-lucide="file-text" class="w-5 h-5"></i>
-                                            {% elif 'image' in event.mime_type %}
-                                            <i data-lucide="image" class="w-5 h-5"></i>
-                                            {% elif 'video' in event.mime_type %}
-                                            <i data-lucide="video" class="w-5 h-5"></i>
-                                            {% else %}
-                                            <i data-lucide="file" class="w-5 h-5"></i>
-                                            {% endif %}
+                                            class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
+                                            <i data-lucide="file-text" class="w-6 h-6"></i>
                                         </div>
-                                        <div>
-                                            <a href="{{ event.web_view_link }}" target="_blank"
-                                                class="font-bold text-gray-900 hover:text-blue-600 hover:underline transition-colors block">
-                                                {{ event.file_name }}
-                                            </a>
-                                            <p class="text-xs text-gray-400 mt-0.5">Detectado em {{
-                                                event.detected_at.strftime('%d/%m às %H:%M') }}</p>
+                                        {% elif 'image' in event.mime_type %}
+                                        <div
+                                            class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center">
+                                            <i data-lucide="image" class="w-6 h-6"></i>
                                         </div>
+                                        {% elif 'video' in event.mime_type %}
+                                        <div
+                                            class="w-12 h-12 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center">
+                                            <i data-lucide="video" class="w-6 h-6"></i>
+                                        </div>
+                                        {% elif 'folder' in event.mime_type %}
+                                        <div
+                                            class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
+                                            <i data-lucide="folder" class="w-6 h-6 fill-current"></i>
+                                        </div>
+                                        {% elif 'sheet' in event.mime_type or 'csv' in event.mime_type %}
+                                        <div
+                                            class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center">
+                                            <i data-lucide="table" class="w-6 h-6"></i>
+                                        </div>
+                                        {% else %}
+                                        <div
+                                            class="w-12 h-12 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center">
+                                            <i data-lucide="file" class="w-6 h-6"></i>
+                                        </div>
+                                        {% endif %}
                                     </div>
+
                                     <a href="{{ event.web_view_link }}" target="_blank"
-                                        class="text-gray-400 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                                        <i data-lucide="download" class="w-4 h-4"></i>
+                                        class="text-sm font-bold text-gray-700 hover:text-blue-600 mb-1 line-clamp-2 break-all"
+                                        title="{{ event.file_name }}">
+                                        {{ event.file_name }}
                                     </a>
+                                    <p class="text-[10px] text-gray-400">{{ event.detected_at.strftime('%d/%m/%Y') }}
+                                    </p>
+
+                                    <!-- Hover Actions -->
+                                    <div
+                                        class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <a href="{{ event.web_view_link }}" target="_blank"
+                                            class="p-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-100 hover:text-blue-600 block">
+                                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                        </a>
+                                    </div>
                                 </div>
                                 {% endfor %}
                                 {% else %}
                                 <div
-                                    class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                    <i data-lucide="folder-open" class="w-8 h-8 opacity-40 mb-2"></i>
-                                    <p class="text-sm font-medium">Nenhum arquivo encontrado.</p>
-                                    <p class="text-xs">Faça upload na pasta do Drive e aguarde a sincronização.</p>
+                                    class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                                    <div class="bg-gray-100 p-4 rounded-full mb-3">
+                                        <i data-lucide="cloud" class="w-8 h-8 opacity-40"></i>
+                                    </div>
+                                    <p class="text-sm font-medium">Pasta vazia ou não sincronizada.</p>
+                                    <p class="text-xs mt-1 max-w-xs mx-auto">Faça upload de arquivos no Drive ou clique
+                                        em "Sincronizar" para atualizar.</p>
                                 </div>
                                 {% endif %}
                             </div>
 
                             {% else %}
-                            <div class="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <div class="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-300">
                                 <div
-                                    class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                                    <i data-lucide="hard-drive" class="w-8 h-8"></i>
+                                    class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
+                                        class="w-10 h-10">
                                 </div>
-                                <h3 class="text-lg font-bold text-gray-900 mb-2">Google Drive Não Conectado</h3>
-                                <p class="text-gray-500 max-w-md mx-auto mb-6">Esta conta não possui uma pasta
-                                    vinculada. Isso ocorre automaticamente na conversão do Lead, ou se a integração não
-                                    estiver ativa.</p>
-                                <a href="{{ url_for('integrations_bp.drive_settings_page') }}"
-                                    class="text-blue-600 font-bold hover:underline text-sm">
-                                    Ver Configurações de Integração
-                                </a>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">Conecte o Google Drive</h3>
+                                <p class="text-gray-500 max-w-md mx-auto mb-8">Centralize contratos, documentos e
+                                    arquivos do cliente em uma pasta segura e compartilhada.</p>
+                                <button onclick="toggleModal('createDriveFoldersModal')"
+                                    class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 mx-auto">
+                                    <i data-lucide="hard-drive" class="w-5 h-5"></i>
+                                    Criar Pasta do Cliente
+                                </button>
                             </div>
                             {% endif %}
                         </div>
@@ -1044,19 +1075,20 @@
                     </div>
                     <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
 
-                    <!-- Processes / Checklists Section -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center justify-between mb-4">
+                    <!-- Processes Content (New Tab) -->
+                    <div id="content-client-processes" class="hidden p-8">
+                        <div class="flex items-center justify-between mb-6">
                             <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
                                 Processos & Serviços
                             </h3>
                             <button type="button" onclick="toggleModal('addProcessModal')"
-                                class="text-northway-red hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2">
+                                class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
                                 Adicionar Processo
                             </button>
                         </div>
+
 
                         <!-- NEW: Assign Process to User in Modal -->
                         <!-- Need to update Add Process Modal (which is likely in base.html or lower down, need to check) -->
@@ -1685,8 +1717,6 @@
         </form>
     </div>
 </div>
-{% endblock %}
-
 <!-- Service Order Modal -->
 <div id="serviceOrderModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
@@ -1788,6 +1818,90 @@
         </form>
     </div>
 </div>
+
+<!-- Delegate Process Modal -->
+<div id="delegateProcessModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Delegar Processo</h3>
+            <button data-close-modal="delegateProcessModal" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+            </button>
+        </div>
+        <form id="delegateProcessForm" method="POST" class="p-6 space-y-4">
+            <p class="text-sm text-gray-600 mb-4">
+                Delegar o processo <strong id="delegateProcessName"></strong> para outro colaborador.
+                Isso também transferirá todas as tarefas pendentes para o novo responsável.
+            </p>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Novo Responsável</label>
+                <!-- We need a list of users. Assuming 'users' might NOT be in context here (client_details often has it?) 
+                     Lets check context. client_details usually has current_user. We might need to pass users via route or fetch via AJAX.
+                     However, tasks.html had users. Let's assume we need to inject users into client_details route or use account_manager/company.users relationship if available in template. 
+                     Wait, company.users is available via current_user.company.users usually. -->
+                <select name="assigned_to_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                    <option value="">Selecione...</option>
+                    {% for user in current_user.company.users %}
+                    <option value="{{ user.id }}">{{ user.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button type="button" data-close-modal="delegateProcessModal"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Confirmar Delegação
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Create Drive Folders Modal -->
+<div id="createDriveFoldersModal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Criar Pastas no Drive</h3>
+            <button onclick="toggleModal('createDriveFoldersModal')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <form action="{{ url_for('clients.create_drive_folder', id=client.id) }}" method="POST" class="p-6 space-y-4">
+            <p class="text-sm text-gray-600 mb-4">
+                Selecione um modelo para criar a estrutura de pastas no Google Drive para este cliente.
+                Isso criará a pasta principal (se não existir) e as subpastas definidas no modelo.
+            </p>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Modelo de Pastas (Opcional)</label>
+                <select name="drive_template_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                    <option value="">Apenas Pasta Raiz (vazia)</option>
+                    {% if drive_templates %}
+                    {% for t in drive_templates %}
+                    <option value="{{ t.id }}">{{ t.name }}</option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button type="button" onclick="toggleModal('createDriveFoldersModal')"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Criar Pastas
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
 
 {% block scripts %}
 <script>
@@ -1906,7 +2020,7 @@
     function switchClientTab(tabName) {
         console.log("Switching to tab:", tabName);
         try {
-            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic'];
+            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic', 'drive', 'processes'];
 
             // Hide all contents
             tabs.forEach(t => {
@@ -2304,47 +2418,7 @@ ${dateHeader}
         }
     }
 </script>
-<!-- Delegate Process Modal -->
-<div id="delegateProcessModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div class="flex justify-between items-center p-6 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Delegar Processo</h3>
-            <button data-close-modal="delegateProcessModal" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
-            </button>
-        </div>
-        <form id="delegateProcessForm" method="POST" class="p-6 space-y-4">
-            <p class="text-sm text-gray-600 mb-4">
-                Delegar o processo <strong id="delegateProcessName"></strong> para outro colaborador.
-                Isso também transferirá todas as tarefas pendentes para o novo responsável.
-            </p>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Novo Responsável</label>
-                <!-- We need a list of users. Assuming 'users' might NOT be in context here (client_details often has it?) 
-                     Lets check context. client_details usually has current_user. We might need to pass users via route or fetch via AJAX.
-                     However, tasks.html had users. Let's assume we need to inject users into client_details route or use account_manager/company.users relationship if available in template. 
-                     Wait, company.users is available via current_user.company.users usually. -->
-                <select name="assigned_to_id"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
-                    <option value="">Selecione...</option>
-                    {% for user in current_user.company.users %}
-                    <option value="{{ user.id }}">{{ user.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="pt-4 flex gap-3">
-                <button type="button" data-close-modal="delegateProcessModal"
-                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancelar
-                </button>
-                <button type="submit"
-                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
-                    Confirmar Delegação
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+
 
 <script>
     function openDelegateModal(id, name, assignedToId) {
@@ -2370,44 +2444,5 @@ ${dateHeader}
     }
 </script>
 
-<!-- Create Drive Folders Modal -->
-<div id="createDriveFoldersModal"
-    class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div class="flex justify-between items-center p-6 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Criar Pastas no Drive</h3>
-            <button onclick="toggleModal('createDriveFoldersModal')" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-        <form action="{{ url_for('clients.create_drive_folder', id=client.id) }}" method="POST" class="p-6 space-y-4">
-            <p class="text-sm text-gray-600 mb-4">
-                Selecione um modelo para criar a estrutura de pastas no Google Drive para este cliente.
-                Isso criará a pasta principal (se não existir) e as subpastas definidas no modelo.
-            </p>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Modelo de Pastas (Opcional)</label>
-                <select name="drive_template_id"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
-                    <option value="">Apenas Pasta Raiz (vazia)</option>
-                    {% if drive_templates %}
-                    {% for t in drive_templates %}
-                    <option value="{{ t.id }}">{{ t.name }}</option>
-                    {% endfor %}
-                    {% endif %}
-                </select>
-            </div>
-            <div class="pt-4 flex gap-3">
-                <button type="button" onclick="toggleModal('createDriveFoldersModal')"
-                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancelar
-                </button>
-                <button type="submit"
-                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
-                    Criar Pastas
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+
 {% endblock %}
