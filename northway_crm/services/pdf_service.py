@@ -88,6 +88,10 @@ class PdfService:
             pdf.add_page()
             current_app.logger.info(f"Page added. (Current page: {pdf.page_no()})")
             
+            if pdf.page_no() == 0:
+                current_app.logger.error("CRITICAL: add_page() failed to increment page number!")
+                raise Exception("add_page() failed to create a page (page_no is 0)")
+            
             # Set font for body
             pdf.set_font('Arial', '', 11)
             
