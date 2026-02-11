@@ -1288,34 +1288,37 @@ def sys_migrate_forms():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-# --- EMERGENCY DB FIX ROUTE ---
-@app.route('/fix-db-schema-manual')
-def fix_db_schema_manual():
-    try:
-        # 1. Add is_urgent
-        try:
-            db.session.execute(text("ALTER TABLE task ADD COLUMN is_urgent BOOLEAN DEFAULT FALSE;"))
-            db.session.commit()
-            msg1 = "Added is_urgent."
-        except Exception as e:
-            db.session.rollback()
-            msg1 = f"is_urgent skipped: {e}"
 
-        # 2. Add is_important
+
+    # --- EMERGENCY DB FIX ROUTE ---
+    @app.route('/fix-db-schema-manual')
+    def fix_db_schema_manual():
         try:
-            db.session.execute(text("ALTER TABLE task ADD COLUMN is_important BOOLEAN DEFAULT FALSE;"))
-            db.session.commit()
-            msg2 = "Added is_important."
-        except Exception as e:
-            db.session.rollback()
-            msg2 = f"is_important skipped: {e}"
+            # 1. Add is_urgent
+            try:
+                db.session.execute(text("ALTER TABLE task ADD COLUMN is_urgent BOOLEAN DEFAULT FALSE;"))
+                db.session.commit()
+                msg1 = "Added is_urgent."
+            except Exception as e:
+                db.session.rollback()
+                msg1 = f"is_urgent skipped: {e}"
+
+            # 2. Add is_important
+            try:
+                db.session.execute(text("ALTER TABLE task ADD COLUMN is_important BOOLEAN DEFAULT FALSE;"))
+                db.session.commit()
+                msg2 = "Added is_important."
+            except Exception as e:
+                db.session.rollback()
+                msg2 = f"is_important skipped: {e}"
             
-        return jsonify({
-            "status": "success", 
-            "message": f"{msg1} | {msg2}"
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            return jsonify({
+                "status": "success", 
+                "message": f"{msg1} | {msg2}"
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
+    return app
+    app = create_app()
     app.run(debug=True, port=5001)
