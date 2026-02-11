@@ -1,21 +1,15 @@
-import logging
-from xhtml2pdf import pisa
-from flask import current_app
 import io
+from flask import current_app
 
 class PdfService:
     @staticmethod
     def generate_pdf(html_content):
         """
         Generates a PDF from HTML content using xhtml2pdf.
-        
-        Args:
-            html_content (str): The HTML string to convert.
-            
-        Returns:
-            bytes: The generated PDF content.
         """
         try:
+            from xhtml2pdf import pisa
+
             # Create a BytesIO buffer for the PDF
             pdf_buffer = io.BytesIO()
 

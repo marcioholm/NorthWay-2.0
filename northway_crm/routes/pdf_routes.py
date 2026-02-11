@@ -1,7 +1,6 @@
 from flask import Blueprint, send_file, render_template, current_app, abort
 from flask_login import login_required, current_user
 from models import Contract
-from services.pdf_service import PdfService
 import io
 
 pdf_bp = Blueprint('pdf', __name__)
@@ -12,6 +11,11 @@ def download_contract_pdf(id):
     """
     Generates and downloads a PDF for a specific contract.
     """
+    try:
+        from services.pdf_service import PdfService
+    except ImportError as e:
+        current_app.logger.error(f"Failed to import PdfService: {e}")
+        return f"Configuration Error: {e}", 500
     # 1. Fetch Contract & verify permission
     contract = Contract.query.get_or_404(id)
     
