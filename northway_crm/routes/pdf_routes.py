@@ -41,4 +41,5 @@ def download_contract_pdf(id):
         
     except Exception as e:
         current_app.logger.error(f"Failed to generate PDF for contract {id}: {str(e)}")
-        return "Erro ao gerar PDF", 500
+        # Return the actual error to the user for debugging
+        return f"Erro ao gerar PDF: {str(e)}", 500
