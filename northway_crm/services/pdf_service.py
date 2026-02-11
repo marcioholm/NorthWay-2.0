@@ -125,10 +125,15 @@ class PdfService:
                     '\u201d': '"',  # Right double quote
                     '\u2022': '-',  # Bullet
                     '\u2026': '...', # Ellipsis
-                    '\u00a0': ' '   # Non-breaking space
+                    '\u00a0': ' ',   # Non-breaking space
+                    '\u200b': '',    # Zero-width space
                 }
                 for src, dst in replacements.items():
                     html = html.replace(src, dst)
+                
+                # NUCLEAR OPTION: Force Latin-1 compatibility
+                # This guarantees NO character outside Latin-1 range remains to crash FPDF
+                html = html.encode('latin-1', 'replace').decode('latin-1')
                 
                 # FPDF2 Tables DO NOT support nested block elements (p, div) or mixed content well.
                 # We flatten the structure:
