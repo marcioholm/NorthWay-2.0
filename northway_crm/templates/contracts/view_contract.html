@@ -39,11 +39,11 @@
             </span>
             {% endif %}
 
-            <button onclick="window.print()"
+            <a href="{{ url_for('pdf.download_contract_pdf', id=contract.id) }}" target="_blank"
                 class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-black transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                <i data-lucide="printer" class="w-4 h-4"></i>
-                Imprimir
-            </button>
+                <i data-lucide="download" class="w-4 h-4"></i>
+                Baixar PDF
+            </a>
         </div>
     </div>
 

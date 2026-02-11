@@ -497,7 +497,8 @@ def create_app():
             ('routes.notifications', 'notifications_bp', 'notifications_bp', None),
             ('routes.roles', 'roles_bp', 'roles_bp', None),
             ('routes.billing', 'billing_bp', 'billing_bp', None),
-            ('routes.service_orders', 'service_orders_bp', 'service_orders_bp', None)
+            ('routes.service_orders', 'service_orders_bp', 'service_orders_bp', None),
+            ('routes.pdf', 'pdf_bp', 'pdf_bp', None)
         ]
 
         import importlib
