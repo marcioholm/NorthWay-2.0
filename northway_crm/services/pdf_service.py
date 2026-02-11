@@ -76,10 +76,17 @@ class PdfService:
         Returns:
             bytes: The generated PDF content.
         """
+        current_app.logger.info(f"Generating PDF for Contract ID: {contract.id}")
         try:
+            current_app.logger.info("Initializing ContractPDF...")
             pdf = ContractPDF(contract_code=contract.code or str(contract.id))
+            
+            current_app.logger.info("Calling alias_nb_pages...")
             pdf.alias_nb_pages()
+            
+            current_app.logger.info(f"Calling add_page... (Current page: {pdf.page_no()})")
             pdf.add_page()
+            current_app.logger.info(f"Page added. (Current page: {pdf.page_no()})")
             
             # Set font for body
             pdf.set_font('Arial', '', 11)
