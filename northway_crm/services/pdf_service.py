@@ -172,14 +172,15 @@ class PdfService:
                 html = re.sub(r'<img[^>]+>', replace_img_src, html, flags=re.IGNORECASE)
 
                 # --- B. LAYOUT PRESERVATION ---
-                # We do NOT want to flatten P tags anymore, we want to keep them for alignment.
-                # However, we need to ensure they don't have weird spacing.
-                
+                # FPDF2 sometimes treats <div> as inline. We must force a line break.
+                html = re.sub(r'</div>', '<br>', html, flags=re.IGNORECASE)
+
                 # Ensure all paragraphs are justified
                 if '<p' in html:
                     html = re.sub(r'<p([^>]*)>', r'<p align="justify"\1>', html, flags=re.IGNORECASE)
-                    # Clean up double aligns if we accidentally created them (e.g. align="justify" align="center")
-                    # Simplified: FPDF2 usually takes the last one or first one. 
+                    
+                # Clean up excessive breaks potentially caused by the div replacement
+                html = re.sub(r'(<br\s*/?>\s*){3,}', '<br><br>', html, flags=re.IGNORECASE)
                     
                 # --- C. CLEANUP ---
                 # Strip Table Attributes that break layout
