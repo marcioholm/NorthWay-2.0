@@ -93,6 +93,8 @@ def create_task_api():
         
         task = TaskService.create_task(data, user_id=current_user.id)
         return jsonify({'status': 'success', 'task_id': task.id}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 @tasks_bp.route('/api/move/<int:task_id>', methods=['PATCH'])
 @login_required
