@@ -1,12 +1,13 @@
 import logging
-from weasyprint import HTML, CSS
+from xhtml2pdf import pisa
 from flask import current_app
+import io
 
 class PdfService:
     @staticmethod
     def generate_pdf(html_content):
         """
-        Generates a PDF from HTML content using WeasyPrint.
+        Generates a PDF from HTML content using xhtml2pdf.
         
         Args:
             html_content (str): The HTML string to convert.
@@ -15,17 +16,24 @@ class PdfService:
             bytes: The generated PDF content.
         """
         try:
-            # Configure logging to suppress verbose WeasyPrint output
-            logger = logging.getLogger('weasyprint')
-            logger.setLevel(logging.ERROR)
-
-            # Create HTML object
-            # base_url is set to current_app.root_path to allow relative paths for static assets if needed
-            html = HTML(string=html_content, base_url=current_app.root_path)
+            # Create a BytesIO buffer for the PDF
+            pdf_buffer = io.BytesIO()
 
             # Generate PDF
-            # presentational_hints=True allows deprecated HTML attributes (like align, bgcolor) to be respected
-            pdf_bytes = html.write_pdf(presentational_hints=True)
+            # dest=pdf_buffer: Write PDF to buffer
+            # src=html_content: Source HTML
+            pisa_status = pisa.CreatePDF(
+                src=html_content,    # the HTML to convert
+                dest=pdf_buffer      # file handle to recieve result
+            )
+
+            # Check for errors
+            if pisa_status.err:
+                raise Exception(f"xhtml2pdf error: {pisa_status.err}")
+
+            # Get the value from the buffer
+            pdf_bytes = pdf_buffer.getvalue()
+            pdf_buffer.close()
             
             return pdf_bytes
             
