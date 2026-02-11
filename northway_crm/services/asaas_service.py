@@ -226,7 +226,7 @@ def create_webhook(webhook_url, email, api_key=None):
         "sendType": "SEQUENTIALLY",
         "events": [
             "PAYMENT_CREATED", "PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", 
-            "PAYMENT_OVERDUE", "PAYMENT_REFUNDED", "PAYMENT_REVERSED"
+            "PAYMENT_OVERDUE", "PAYMENT_REFUNDED"
         ]
     }
     
