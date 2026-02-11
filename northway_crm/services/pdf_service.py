@@ -81,6 +81,19 @@ class PdfService:
                 html = re.sub(r'width="auto"', '', html, flags=re.IGNORECASE)
                 html = re.sub(r'height="auto"', '', html, flags=re.IGNORECASE)
                 
+                # FPDF2 Tables DO NOT support nested block elements (p, div) or mixed content well.
+                # We flatten the structure:
+                # 1. Replace block breaks with <br>
+                html = re.sub(r'</p>\s*<p[^>]*>', '<br>', html, flags=re.IGNORECASE)
+                html = re.sub(r'</div>\s*<div[^>]*>', '<br>', html, flags=re.IGNORECASE)
+                
+                # 2. Remove remaining block tags (unwrap content)
+                html = re.sub(r'</?div[^>]*>', '', html, flags=re.IGNORECASE)
+                html = re.sub(r'</?p[^>]*>', '', html, flags=re.IGNORECASE)
+                
+                # 3. Clean up spans that might just be structural
+                # html = re.sub(r'</?span[^>]*>', '', html, flags=re.IGNORECASE) # Spans usually usually fine unless they split content? keep for now.
+                
                 pdf.write_html(html)
             else:
                 pdf.write(5, "Conteúdo do contrato não disponível.")
