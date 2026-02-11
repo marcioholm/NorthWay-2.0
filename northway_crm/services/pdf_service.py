@@ -1,36 +1,82 @@
 import io
+import os
+from fpdf import FPDF
 from flask import current_app
+
+class ContractPDF(FPDF):
+    def __init__(self, contract_code):
+        super().__init__()
+        self.contract_code = contract_code
+        self.set_auto_page_break(auto=True, margin=20)
+
+    def header(self):
+        # Logo
+        try:
+            # Path to logo - adjust based on your structure
+            logo_path = os.path.join(current_app.root_path, 'static', 'images', 'logo.png')
+            if os.path.exists(logo_path):
+                self.image(logo_path, 10, 8, 33)
+        except Exception as e:
+            pass # Skip logo if missing
+
+        # Font for Title
+        self.set_font('Arial', 'B', 15)
+        # Move to the right
+        self.cell(80)
+        # Title
+        self.cell(30, 10, 'CONTRATO DE SERVIÇOS', 0, 0, 'C')
+        
+        # Line break
+        self.ln(20)
+        
+        # Contract Code
+        if self.contract_code:
+            self.set_font('Arial', 'I', 8)
+            self.set_text_color(128)
+            self.set_xy(10, 25) # Position below logo
+            self.cell(0, 5, f"Ref: {self.contract_code}", 0, 1, 'L')
+            self.set_text_color(0) # Reset color
+
+    def footer(self):
+        # Position at 1.5 cm from bottom
+        self.set_y(-15)
+        # Arial italic 8
+        self.set_font('Arial', 'I', 8)
+        self.set_text_color(128)
+        # Page number
+        self.cell(0, 10, 'Página ' + str(self.page_no()) + ' de {nb}', 0, 0, 'C')
 
 class PdfService:
     @staticmethod
-    def generate_pdf(html_content):
+    def generate_pdf(contract):
         """
-        Generates a PDF from HTML content using xhtml2pdf.
+        Generates a PDF for the contract using FPDF2.
+        
+        Args:
+            contract (Contract): The contract model instance.
+            
+        Returns:
+            bytes: The generated PDF content.
         """
         try:
-            from xhtml2pdf import pisa
-
-            # Create a BytesIO buffer for the PDF
-            pdf_buffer = io.BytesIO()
-
-            # Generate PDF
-            # dest=pdf_buffer: Write PDF to buffer
-            # src=html_content: Source HTML
-            pisa_status = pisa.CreatePDF(
-                src=html_content,    # the HTML to convert
-                dest=pdf_buffer      # file handle to recieve result
-            )
-
-            # Check for errors
-            if pisa_status.err:
-                raise Exception(f"xhtml2pdf error: {pisa_status.err}")
-
-            # Get the value from the buffer
-            pdf_bytes = pdf_buffer.getvalue()
-            pdf_buffer.close()
+            pdf = ContractPDF(contract_code=contract.code or str(contract.id))
+            pdf.alias_nb_pages()
+            pdf.add_page()
             
-            return pdf_bytes
+            # Set font for body
+            pdf.set_font('Arial', '', 11)
+            
+            # Write HTML content
+            # Note: generated_content is HTML. write_html handles it.
+            if contract.generated_content:
+                # Basic cleanup if needed
+                html = contract.generated_content
+                pdf.write_html(html)
+            else:
+                pdf.write(5, "Conteúdo do contrato não disponível.")
+                
+            return pdf.output(dest='S').encode('latin-1', 'replace') # 'replace' handles unencodable chars safely
             
         except Exception as e:
-            current_app.logger.error(f"Error generating PDF: {str(e)}")
+            current_app.logger.error(f"Error generating PDF (FPDF): {str(e)}")
             raise e

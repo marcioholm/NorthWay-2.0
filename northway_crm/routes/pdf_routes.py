@@ -24,12 +24,9 @@ def download_contract_pdf(id):
         abort(403)
 
     try:
-        # 2. Render HTML template
-        # We use a dedicated print template that is optimized for WeasyPrint (A4, no JS)
-        html_content = render_template('contracts/print_template.html', contract=contract)
-
-        # 3. Generate PDF
-        pdf_bytes = PdfService.generate_pdf(html_content)
+        # 2. Generate PDF using FPDF2 (Zero-dependency)
+        # We pass the contract object directly, no intermediate HTML template needed for layout
+        pdf_bytes = PdfService.generate_pdf(contract)
 
         # 4. Return as attachment
         return send_file(
