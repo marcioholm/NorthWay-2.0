@@ -2511,12 +2511,25 @@ ${dateHeader}
 
 <script>
     function openRegenerateBillingModal(contractId) {
+        console.log("Opening Billing Modal for Contract:", contractId);
+        const modal = document.getElementById('regenerateBillingModal');
         const form = document.getElementById('regenerateBillingForm');
+
+        // Move to body to avoid overflow issues
+        if (modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+
         form.action = `/contracts/${contractId}/regenerate_billing`;
-        // Set default date to today
+
+        // Set default date
         const today = new Date().toISOString().split('T')[0];
         const dateInput = form.querySelector('input[name="new_due_date"]');
         if (dateInput) dateInput.value = today;
-        toggleModal('regenerateBillingModal');
+
+        // Force Show
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.style.zIndex = "9999"; // Ensure top
     }
 </script>
