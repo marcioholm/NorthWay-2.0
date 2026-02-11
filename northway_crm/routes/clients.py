@@ -453,11 +453,16 @@ def create_drive_folder(id):
                 client.drive_folder_name = folder_name
                 folder_id = folder.get('id')
                 db.session.commit()
+                flash('Pasta do cliente criada com sucesso!', 'success')
             else:
                  flash('Falha ao criar pasta principal.', 'error')
                  return redirect(url_for('clients.client_details', id=client.id))
+        else:
+            # If folder already exists and no template selected, just notify
+            if not drive_template_id:
+                flash('Pasta já existe.', 'info')
         
-        # 2. Create Structure from Template
+        # 2. Create Structure from Template (Optional)
         if drive_template_id:
             template = DriveFolderTemplate.query.get(drive_template_id)
             if template and template.company_id == current_user.company_id:
@@ -465,8 +470,6 @@ def create_drive_folder(id):
                 flash(f'Estrutura de pastas "{template.name}" criada com sucesso!', 'success')
             else:
                 flash('Template inválido.', 'error')
-        else:
-             flash('Nenhum template selecionado.', 'warning')
 
     except Exception as e:
         import traceback
@@ -474,3 +477,71 @@ def create_drive_folder(id):
         flash(f'Erro ao criar pastas: {str(e)}', 'error')
 
     return redirect(url_for('clients.client_details', id=client.id))
+
+@clients_bp.route('/clients/<int:id>/drive/scan', methods=['POST'])
+@login_required
+def scan_drive_folder(id):
+    client = Client.query.get_or_404(id)
+    if client.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    if not client.drive_folder_id:
+        return jsonify({'error': 'Cliente sem pasta vinculada.'}), 400
+
+    try:
+        from services.google_drive_service import GoogleDriveService
+        from models import DriveFileEvent
+        
+        drive_integration = TenantIntegration.query.filter_by(
+            company_id=current_user.company_id, 
+            provider='google_drive',
+            status='connected'
+        ).first()
+
+        if not drive_integration:
+            return jsonify({'error': 'Integração Google Drive não configurada.'}), 400
+
+        service = GoogleDriveService(company_id=current_user.company_id)
+        files = service.list_files(drive_integration, client.drive_folder_id)
+
+        # Clear old events or update? 
+        # Strategy: Delete strict duplicates or just append new?
+        # For MVP: Clear and re-add to avoid dups, or check ID.
+        # Let's check ID.
+        
+        existing_ids = {e.file_id for e in client.drive_files_events}
+        new_count = 0
+        
+        for f in files:
+            if f['id'] not in existing_ids:
+                # Parse timestamp
+                # 2023-10-27T10:00:00.000Z
+                created_dt = None
+                if f.get('createdTime'):
+                    try:
+                        created_dt = datetime.fromisoformat(f['createdTime'].replace('Z', '+00:00'))
+                    except: pass
+                
+                event = DriveFileEvent(
+                    company_id=current_user.company_id,
+                    client_id=client.id,
+                    file_id=f['id'],
+                    file_name=f['name'],
+                    mime_type=f['mimeType'],
+                    web_view_link=f['webViewLink'],
+                    created_time=created_dt
+                )
+                db.session.add(event)
+                new_count += 1
+        
+        client.drive_last_scan_at = datetime.utcnow()
+        client.drive_unread_files_count = new_count # Simple notification logic
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'new_files': new_count})
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500

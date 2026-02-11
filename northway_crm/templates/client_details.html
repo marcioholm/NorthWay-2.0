@@ -826,11 +826,25 @@
                                     <i data-lucide="hard-drive" class="w-5 h-5 text-gray-400"></i>
                                     Arquivos (Google Drive)
                                 </h3>
-                                <button type="button" onclick="toggleModal('createDriveFoldersModal')"
-                                    class="text-northway-red hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2">
-                                    <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                                    Criar Pastas
-                                </button>
+                                <div class="flex gap-2">
+                                    {% if client.drive_folder_url %}
+                                    <button type="button" onclick="scanDriveFolder()" id="btn-scan-drive"
+                                        class="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200">
+                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                        Sincronizar
+                                    </button>
+                                    <a href="{{ client.drive_folder_url }}" target="_blank"
+                                        class="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200">
+                                        <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                                        Upload
+                                    </a>
+                                    {% endif %}
+                                    <button type="button" onclick="toggleModal('createDriveFoldersModal')"
+                                        class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-blue-100">
+                                        <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                                        {% if client.drive_folder_url %}Nova Pasta{% else %}Criar Pasta{% endif %}
+                                    </button>
+                                </div>
                             </div>
 
                             {% if client.drive_folder_url %}
@@ -1421,7 +1435,7 @@
         // Enable inputs
         inputs.forEach(input => {
             input.disabled = false;
-            input.classList.remove('disabled:border-none');
+            input.classList.remove('disabled:bg-transparent', 'disabled:border-none', 'disabled:shadow-none', 'disabled:text-gray-600', 'disabled:font-medium', 'disabled:p-0');
             input.classList.add('border-gray-300');
         });
 
@@ -2267,6 +2281,35 @@ ${dateHeader}
             prompt("Copie o link manualmente:", url);
         });
     }
+
+    async function scanDriveFolder() {
+        const btn = document.getElementById('btn-scan-drive');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i> Sincronizando...`;
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/clients/{{ client.id }}/drive/scan`, { method: 'POST' });
+            const data = await res.json();
+
+            if (data.success) {
+                // Determine plural/singular
+                const fileMsg = data.new_files === 1 ? '1 novo arquivo encontrado.' : `${data.new_files} novos arquivos encontrados.`;
+                const msg = data.new_files > 0 ? `Sincronização concluída! ${fileMsg}` : 'Sincronização concluída! Nenhum arquivo novo.';
+                alert(msg);
+                location.reload();
+            } else {
+                alert('Erro: ' + (data.error || 'Erro desconhecido'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Erro de conexão ao sincronizar.');
+        } finally {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            lucide.createIcons();
+        }
+    }
 </script>
 <!-- Delegate Process Modal -->
 <div id="delegateProcessModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
@@ -2350,10 +2393,10 @@ ${dateHeader}
                 Isso criará a pasta principal (se não existir) e as subpastas definidas no modelo.
             </p>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Modelo de Pastas</label>
-                <select name="drive_template_id" required
+                <label class="block text-sm font-medium text-gray-700 mb-1">Modelo de Pastas (Opcional)</label>
+                <select name="drive_template_id"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
-                    <option value="">Selecione...</option>
+                    <option value="">Apenas Pasta Raiz (vazia)</option>
                     {% if drive_templates %}
                     {% for t in drive_templates %}
                     <option value="{{ t.id }}">{{ t.name }}</option>
