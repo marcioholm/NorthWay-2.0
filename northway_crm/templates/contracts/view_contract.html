@@ -243,7 +243,7 @@
             margin: 0 !important;
             padding: 0 !important;
             width: 210mm !important;
-            height: 100% !important;
+            height: auto !important;
             background: white !important;
             overflow: visible !important;
         }
@@ -258,7 +258,8 @@
         #toast-container,
         .no-print,
         .print\:hidden,
-        #layout-wrapper>*:not(#scroll-container) {
+        #layout-wrapper>*:not(#scroll-container),
+        #layout-wrapper>.fixed {
             display: none !important;
         }
 
