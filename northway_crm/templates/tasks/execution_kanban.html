@@ -1,86 +1,98 @@
 {% extends "base.html" %}
 
 {% block content %}
-:root {
---ice-bg: #f8fafc;
---ice-border: #e2e8f0;
---northway-red: #e31e24;
---northway-red-glow: rgba(227, 30, 36, 0.1);
-}
+<style>
+    :root {
+        --ice-bg: #f8fafc;
+        --ice-border: #e2e8f0;
+        --northway-red: #e31e24;
+        --northway-red-glow: rgba(227, 30, 36, 0.1);
+    }
 
-body {
-background-color: var(--ice-bg);
-}
+    body {
+        background-color: var(--ice-bg);
+    }
 
-.kanban-column {
-min-width: 300px;
-width: 300px;
-}
+    .kanban-column {
+        min-width: 300px;
+        width: 300px;
+    }
 
-/* Soft Ice Theme Polishes */
-.bg-ice { background-color: var(--ice-bg); }
-.border-ice { border-color: var(--ice-border); }
-.text-red { color: var(--northway-red); }
-.bg-red { background-color: var(--northway-red); }
+    /* Soft Ice Theme Polishes */
+    .bg-ice {
+        background-color: var(--ice-bg);
+    }
 
-.custom-scrollbar::-webkit-scrollbar {
-width: 4px;
-height: 4px;
-}
+    .border-ice {
+        border-color: var(--ice-border);
+    }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-background: transparent;
-}
+    .text-red {
+        color: var(--northway-red);
+    }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-background: #cbd5e1;
-border-radius: 10px;
-}
+    .bg-red {
+        background-color: var(--northway-red);
+    }
 
-.card-shadow {
-box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-}
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+    }
 
-.overdue-glow {
-box-shadow: 0 0 10px var(--northway-red-glow);
-border: 1px solid var(--northway-red);
-}
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
-.task-card:hover {
-transform: translateY(-2px);
-box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-border-color: var(--northway-red);
-}
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
 
-.matrix-grid-line {
-position: absolute;
-background-color: var(--northway-red);
-opacity: 0.15;
-}
+    .card-shadow {
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    }
 
-.empty-state-icon {
-font-size: 40px;
-color: var(--northway-red);
-opacity: 0.2;
-}
+    .overdue-glow {
+        box-shadow: 0 0 10px var(--northway-red-glow);
+        border: 1px solid var(--northway-red);
+    }
 
-.view-transition {
-transition: opacity 0.3s ease-in-out, transform 0.3s ease-out;
-}
+    .task-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        border-color: var(--northway-red);
+    }
 
-.view-hidden {
-opacity: 0;
-pointer-events: none;
-transform: translateY(5px);
-}
+    .matrix-grid-line {
+        position: absolute;
+        background-color: var(--northway-red);
+        opacity: 0.15;
+    }
 
-/* Red Accent Lines for Board */
-.board-header-line {
-height: 2px;
-background: linear-gradient(90deg, var(--northway-red), transparent);
-width: 100px;
-margin-top: 4px;
-}
+    .empty-state-icon {
+        font-size: 40px;
+        color: var(--northway-red);
+        opacity: 0.2;
+    }
+
+    .view-transition {
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-out;
+    }
+
+    .view-hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(5px);
+    }
+
+    /* Red Accent Lines for Board */
+    .board-header-line {
+        height: 2px;
+        background: linear-gradient(90deg, var(--northway-red), transparent);
+        width: 100px;
+        margin-top: 4px;
+    }
 </style>
 
 <div class="flex flex-col h-screen overflow-hidden bg-ice dark:bg-board-dark">
@@ -516,157 +528,157 @@ margin-top: 4px;
 
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
                     <script>
-                let currentView = 'kanban';
-                let allTasksData = {};
+                        let currentView = 'kanban';
+                        let allTasksData = {};
 
-                document.addEventListener('DOMContentLoaded', () => {
-                    loadKanbanTasks();
-                });
+                        document.addEventListener('DOMContentLoaded', () => {
+                            loadKanbanTasks();
+                        });
 
-                function switchView(view) {
-                    currentView = view;
-                    const kanbanView = document.getElementById('view-kanban');
-                    const matrixView = document.getElementById('view-matrix');
-                    const btnKanban = document.getElementById('btn-view-kanban');
-                    const btnMatrix = document.getElementById('btn-view-matrix');
+                        function switchView(view) {
+                            currentView = view;
+                            const kanbanView = document.getElementById('view-kanban');
+                            const matrixView = document.getElementById('view-matrix');
+                            const btnKanban = document.getElementById('btn-view-kanban');
+                            const btnMatrix = document.getElementById('btn-view-matrix');
 
-                    if (view === 'kanban') {
-                        kanbanView.classList.remove('hidden', 'view-hidden');
-                        matrixView.classList.add('hidden', 'view-hidden');
+                            if (view === 'kanban') {
+                                kanbanView.classList.remove('hidden', 'view-hidden');
+                                matrixView.classList.add('hidden', 'view-hidden');
 
-                        btnKanban.className = "px-4 py-2 rounded-md text-sm font-bold bg-white dark:bg-slate-700 shadow-sm text-slate-700 dark:text-slate-200 transition-all";
-                        btnMatrix.className = "px-4 py-2 rounded-md text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-all";
-                    } else {
-                        kanbanView.classList.add('hidden', 'view-hidden');
-                        matrixView.classList.remove('hidden', 'view-hidden');
+                                btnKanban.className = "px-4 py-2 rounded-md text-sm font-bold bg-white dark:bg-slate-700 shadow-sm text-slate-700 dark:text-slate-200 transition-all";
+                                btnMatrix.className = "px-4 py-2 rounded-md text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-all";
+                            } else {
+                                kanbanView.classList.add('hidden', 'view-hidden');
+                                matrixView.classList.remove('hidden', 'view-hidden');
 
-                        btnMatrix.className = "px-4 py-2 rounded-md text-sm font-bold bg-white dark:bg-slate-700 shadow-sm text-slate-700 dark:text-slate-200 transition-all";
-                        btnKanban.className = "px-4 py-2 rounded-md text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-all";
-                    }
-                }
+                                btnMatrix.className = "px-4 py-2 rounded-md text-sm font-bold bg-white dark:bg-slate-700 shadow-sm text-slate-700 dark:text-slate-200 transition-all";
+                                btnKanban.className = "px-4 py-2 rounded-md text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-all";
+                            }
+                        }
 
-                function loadKanbanTasks() {
-                    const client = document.getElementById('filter-client').value;
-                    const pipeline = document.getElementById('filter-pipeline').value;
-                    const start = document.getElementById('filter-start').value;
-                    const end = document.getElementById('filter-end').value;
-                    
-                    const params = new URLSearchParams({
-                        client_id: client,
-                        pipeline_stage_id: pipeline,
-                        date_start: start,
-                        date_end: end
-                    });
+                        function loadKanbanTasks() {
+                            const client = document.getElementById('filter-client').value;
+                            const pipeline = document.getElementById('filter-pipeline').value;
+                            const start = document.getElementById('filter-start').value;
+                            const end = document.getElementById('filter-end').value;
 
-                    fetch(`/tasks/api/kanban?${params.toString()}`)
-                        .then(r => r.json())
-                        .then(data => {
-                            allTasksData = data; // Keep this for other functions that might use it
-                            renderKanban(data);
-                            renderMatrix(data);
-                            updateStats(data);
-                            initSortable();
-                            initMatrixSortable();
-                            checkOverdue(data);
-                            updateProductivityScore(data);
-                        })
-                        .catch(err => console.error("Error loading kanban:", err));
-                }
+                            const params = new URLSearchParams({
+                                client_id: client,
+                                pipeline_stage_id: pipeline,
+                                date_start: start,
+                                date_end: end
+                            });
 
-                function renderKanban(data) {
-                    Object.keys(data).forEach(status => {
-                        const container = document.getElementById(`col-${status}`);
-                        const counter = document.getElementById(`count-${status}`);
-                        if (!container) return;
+                            fetch(`/tasks/api/kanban?${params.toString()}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    allTasksData = data; // Keep this for other functions that might use it
+                                    renderKanban(data);
+                                    renderMatrix(data);
+                                    updateStats(data);
+                                    initSortable();
+                                    initMatrixSortable();
+                                    checkOverdue(data);
+                                    updateProductivityScore(data);
+                                })
+                                .catch(err => console.error("Error loading kanban:", err));
+                        }
 
-                        if (counter) counter.innerText = data[status].length;
-                        container.innerHTML = data[status].map(task => createTaskCard(task)).join('');
-                    });
-                }
+                        function renderKanban(data) {
+                            Object.keys(data).forEach(status => {
+                                const container = document.getElementById(`col-${status}`);
+                                const counter = document.getElementById(`count-${status}`);
+                                if (!container) return;
 
-                function renderMatrix(data) {
-                    // Flatten all tasks
-                    const allTasks = Object.values(data).flat();
-                    const pendingTasks = allTasks.filter(t => t.status !== 'concluida');
+                                if (counter) counter.innerText = data[status].length;
+                                container.innerHTML = data[status].map(task => createTaskCard(task)).join('');
+                            });
+                        }
 
-                    const q1 = [], q2 = [], q3 = [], q4 = [];
+                        function renderMatrix(data) {
+                            // Flatten all tasks
+                            const allTasks = Object.values(data).flat();
+                            const pendingTasks = allTasks.filter(t => t.status !== 'concluida');
 
-                    pendingTasks.forEach(task => {
-                        if (task.is_urgent && task.is_important) q1.push(task);
-                        else if (!task.is_urgent && task.is_important) q2.push(task);
-                        else if (task.is_urgent && !task.is_important) q3.push(task);
-                        else q4.push(task);
-                    });
+                            const q1 = [], q2 = [], q3 = [], q4 = [];
 
-                    renderQuadrant('matrix-q1', q1, 'gpp_good', 'Faça AGORA');
-                    renderQuadrant('matrix-q2', q2, 'event', 'Agende');
-                    renderQuadrant('matrix-q3', q3, 'people', 'Delegue');
-                    renderQuadrant('matrix-q4', q4, 'low_priority', 'Elimine');
-                }
+                            pendingTasks.forEach(task => {
+                                if (task.is_urgent && task.is_important) q1.push(task);
+                                else if (!task.is_urgent && task.is_important) q2.push(task);
+                                else if (task.is_urgent && !task.is_important) q3.push(task);
+                                else q4.push(task);
+                            });
 
-                function updateStats(data) {
-                    const allTasks = Object.values(data).flat();
-                    const total = allTasks.length;
-                    const completed = allTasks.filter(t => t.status === 'concluida').length;
-                    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+                            renderQuadrant('matrix-q1', q1, 'gpp_good', 'Faça AGORA');
+                            renderQuadrant('matrix-q2', q2, 'event', 'Agende');
+                            renderQuadrant('matrix-q3', q3, 'people', 'Delegue');
+                            renderQuadrant('matrix-q4', q4, 'low_priority', 'Elimine');
+                        }
 
-                    const statsText = document.getElementById('header-stats-text');
-                    const progressBar = document.getElementById('header-progress-bar');
-                    const progressPercent = document.getElementById('header-progress-percent');
+                        function updateStats(data) {
+                            const allTasks = Object.values(data).flat();
+                            const total = allTasks.length;
+                            const completed = allTasks.filter(t => t.status === 'concluida').length;
+                            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-                    if (statsText) statsText.innerText = `${completed}/${total}`;
-                    if (progressBar) progressBar.style.width = `${percent}%`;
-                    if (progressPercent) progressPercent.innerText = `${percent}%`;
-                }
+                            const statsText = document.getElementById('header-stats-text');
+                            const progressBar = document.getElementById('header-progress-bar');
+                            const progressPercent = document.getElementById('header-progress-percent');
 
-                function renderQuadrant(id, tasks, icon, label) {
-                    const container = document.getElementById(id);
-                    if (!container) return;
+                            if (statsText) statsText.innerText = `${completed}/${total}`;
+                            if (progressBar) progressBar.style.width = `${percent}%`;
+                            if (progressPercent) progressPercent.innerText = `${percent}%`;
+                        }
 
-                    if (tasks.length === 0) {
-                        container.innerHTML = `
+                        function renderQuadrant(id, tasks, icon, label) {
+                            const container = document.getElementById(id);
+                            if (!container) return;
+
+                            if (tasks.length === 0) {
+                                container.innerHTML = `
                             <div class="flex flex-col items-center justify-center h-full opacity-40 py-8">
                                 <span class="material-icons-round empty-state-icon mb-2">${icon}</span>
                                 <p class="text-sm font-medium">Nada para ${label.toLowerCase()}</p>
                             </div>
                         `;
-                    } else {
-                        container.innerHTML = tasks.map(t => createTaskCard(t)).join('');
-                    }
-                }
+                            } else {
+                                container.innerHTML = tasks.map(t => createTaskCard(t)).join('');
+                            }
+                        }
 
-                function createTaskCard(task) {
-                    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'concluida';
-                    const overdueClass = isOverdue ? 'overdue-glow' : 'hover:border-primary/50';
-                    const badgeColor = getSourceBadgeColor(task.source_type);
-                    const taskJson = JSON.stringify(task).replace(/"/g, '&quot;');
+                        function createTaskCard(task) {
+                            const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'concluida';
+                            const overdueClass = isOverdue ? 'overdue-glow' : 'hover:border-primary/50';
+                            const badgeColor = getSourceBadgeColor(task.source_type);
+                            const taskJson = JSON.stringify(task).replace(/"/g, '&quot;');
 
-                    let priorityIcon = '';
-                    if (task.is_urgent && task.is_important) {
-                        priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                            let priorityIcon = '';
+                            if (task.is_urgent && task.is_important) {
+                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
                                 <span class="material-icons-round text-red-500 text-sm" title="Urgente & Importante">gpp_good</span>
                                 <div class="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-[10px] font-bold text-red-600 dark:text-red-400">Q1</div>
                             </div>`;
-                    } else if (!task.is_urgent && task.is_important) {
-                        priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                            } else if (!task.is_urgent && task.is_important) {
+                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
                                 <span class="material-icons-round text-blue-500 text-sm" title="Importante">event</span>
                                 <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-[10px] font-bold text-blue-600 dark:text-blue-400">Q2</div>
                             </div>`;
-                    } else if (task.is_urgent && !task.is_important) {
-                        priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                            } else if (task.is_urgent && !task.is_important) {
+                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
                                 <span class="material-icons-round text-orange-500 text-sm" title="Urgente">update</span>
                                 <div class="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-[10px] font-bold text-orange-600 dark:text-orange-400">Q3</div>
                             </div>`;
-                    } else {
-                        priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
+                            } else {
+                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
                                 <span class="material-icons-round text-slate-400 text-sm" title="Baixa Prioridade">low_priority</span>
                                 <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400">Q4</div>
                             </div>`;
-                    }
+                            }
 
-                    const initials = getInitials(task.assigned_user_name || 'U');
+                            const initials = getInitials(task.assigned_user_name || 'U');
 
-                    return `
+                            return `
         <div onclick="openEditTaskModal(${taskJson})" class="task-card bg-white dark:bg-card-dark p-4 rounded-xl border border-slate-200 dark:border-slate-800 card-shadow cursor-pointer transition-all group flex flex-col ${overdueClass} mb-3" data-id="${task.id}">
             <div class="flex justify-between items-start mb-3">
                 <span class="${badgeColor} text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">${task.source_type || 'Manual'}</span>
@@ -686,188 +698,188 @@ margin-top: 4px;
             ${priorityIcon}
         </div>
         `;
-                }
+                        }
 
-                function getInitials(name) {
-                    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-                }
+                        function getInitials(name) {
+                            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                        }
 
-                function getSourceBadgeColor(type) {
-                    const colors = {
-                        'LEAD': 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
-                        'OS': 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-                        'CONTRATO': 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-                        'MANUAL': 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                    };
-                    return colors[type] || colors['MANUAL'];
-                }
+                        function getSourceBadgeColor(type) {
+                            const colors = {
+                                'LEAD': 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
+                                'OS': 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+                                'CONTRATO': 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
+                                'MANUAL': 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                            };
+                            return colors[type] || colors['MANUAL'];
+                        }
 
-                function formatDate(dateStr) {
-                    if (!dateStr) return '';
-                    const [y, m, d] = dateStr.split('-');
-                    return `${d}/${m}`;
-                }
+                        function formatDate(dateStr) {
+                            if (!dateStr) return '';
+                            const [y, m, d] = dateStr.split('-');
+                            return `${d}/${m}`;
+                        }
 
-                function initSortable() {
-                    ['a_fazer', 'em_andamento', 'aguardando', 'validacao', 'concluida'].forEach(status => {
-                        const el = document.getElementById(`col-${status}`);
-                        if (!el) return;
+                        function initSortable() {
+                            ['a_fazer', 'em_andamento', 'aguardando', 'validacao', 'concluida'].forEach(status => {
+                                const el = document.getElementById(`col-${status}`);
+                                if (!el) return;
 
-                        new Sortable(el, {
-                            group: 'kanban',
-                            animation: 150,
-                            ghostClass: 'opacity-50',
-                            onEnd: function (evt) {
-                                const itemEl = evt.item;
-                                const taskId = itemEl.getAttribute('data-id');
-                                const newStatus = evt.to.getAttribute('data-status');
-                                updateTask(taskId, { status: newStatus });
+                                new Sortable(el, {
+                                    group: 'kanban',
+                                    animation: 150,
+                                    ghostClass: 'opacity-50',
+                                    onEnd: function (evt) {
+                                        const itemEl = evt.item;
+                                        const taskId = itemEl.getAttribute('data-id');
+                                        const newStatus = evt.to.getAttribute('data-status');
+                                        updateTask(taskId, { status: newStatus });
+                                    }
+                                });
+                            });
+                        }
+
+                        function initMatrixSortable() {
+                            ['matrix-q1', 'matrix-q2', 'matrix-q3', 'matrix-q4'].forEach(id => {
+                                const el = document.getElementById(id);
+                                if (!el) return;
+
+                                new Sortable(el, {
+                                    group: 'matrix',
+                                    animation: 150,
+                                    ghostClass: 'opacity-50',
+                                    onEnd: function (evt) {
+                                        const itemEl = evt.item;
+                                        const taskId = itemEl.getAttribute('data-id');
+                                        const toEl = evt.to;
+                                        const targetId = toEl.id;
+
+                                        const isUrgent = toEl.getAttribute('data-urgent') === 'true';
+                                        const isImportant = toEl.getAttribute('data-important') === 'true';
+
+                                        if (targetId === 'matrix-q3') {
+                                            openDelegateModal(taskId);
+                                        }
+
+                                        updateTask(taskId, { is_urgent: isUrgent, is_important: isImportant });
+                                    }
+                                });
+                            });
+                        }
+
+                        function openDelegateModal(taskId) {
+                            document.getElementById('delegate-task-id').value = taskId;
+                            document.getElementById('delegateModal').classList.remove('hidden');
+                        }
+
+                        function confirmDelegate() {
+                            const taskId = document.getElementById('delegate-task-id').value;
+                            const userId = document.getElementById('delegate-select').value;
+                            if (!userId) return;
+
+                            updateTask(taskId, { assigned_to_id: userId });
+                            document.getElementById('delegateModal').classList.add('hidden');
+                        }
+
+                        function updateTask(id, payload) {
+                            fetch(`/tasks/api/move/${id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            }).then(r => {
+                                if (!r.ok) console.error('Erro ao mover');
+                                else loadKanbanTasks();
+                            });
+                        }
+
+                        function checkOverdue(data) {
+                            let count = 0;
+                            Object.values(data).flat().forEach(t => {
+                                if (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'concluida') count++;
+                            });
+
+                            if (count > 0) {
+                                document.getElementById('overdue-count').innerText = count;
+                                document.getElementById('overdue-notification').classList.remove('hidden');
+                                document.getElementById('overdue-notification').classList.add('flex');
                             }
-                        });
-                    });
-                }
+                        }
 
-                function initMatrixSortable() {
-                    ['matrix-q1', 'matrix-q2', 'matrix-q3', 'matrix-q4'].forEach(id => {
-                        const el = document.getElementById(id);
-                        if (!el) return;
+                        function openNewTaskModal() {
+                            document.getElementById('newTaskModal').classList.remove('hidden');
+                            document.getElementById('modal-title').innerText = 'Nova Tarefa';
+                            document.getElementById('btn-save-task').innerText = 'Criar Tarefa';
+                            document.getElementById('task-id').value = '';
+                            document.getElementById('task-title').value = '';
+                            document.getElementById('task-desc').value = '';
+                            document.getElementById('task-due').value = '';
+                            document.getElementById('task-urgent').checked = false;
+                            document.getElementById('task-important').checked = false;
+                            document.getElementById('task-assignee').value = "{{ current_user.id }}";
+                        }
 
-                        new Sortable(el, {
-                            group: 'matrix',
-                            animation: 150,
-                            ghostClass: 'opacity-50',
-                            onEnd: function (evt) {
-                                const itemEl = evt.item;
-                                const taskId = itemEl.getAttribute('data-id');
-                                const toEl = evt.to;
-                                const targetId = toEl.id;
+                        function openEditTaskModal(task) {
+                            document.getElementById('task-id').value = task.id;
+                            document.getElementById('task-title').value = task.title;
+                            document.getElementById('task-desc').value = task.description || '';
+                            document.getElementById('task-due').value = task.due_date ? task.due_date.replace(' ', 'T') : '';
+                            document.getElementById('task-urgent').checked = task.is_urgent;
+                            document.getElementById('task-important').checked = task.is_important;
+                            // Assignee population requires task assigned_to_id which we might not have in JS task object yet?
+                            // Let's assume user.id for now or leave as is if not available.
+                            // I will assume assigned_to_id is available in task response (I added it to backend serializer next step).
+                            if (task.assigned_to_id) document.getElementById('task-assignee').value = task.assigned_to_id;
 
-                                const isUrgent = toEl.getAttribute('data-urgent') === 'true';
-                                const isImportant = toEl.getAttribute('data-important') === 'true';
+                            document.getElementById('newTaskModal').classList.remove('hidden');
+                            document.getElementById('modal-title').innerText = 'Editar Tarefa';
+                            document.getElementById('btn-save-task').innerText = 'Salvar Alterações';
+                        }
 
-                                if (targetId === 'matrix-q3') {
-                                    openDelegateModal(taskId);
-                                }
+                        function closeNewTaskModal() {
+                            document.getElementById('newTaskModal').classList.add('hidden');
+                        }
 
-                                updateTask(taskId, { is_urgent: isUrgent, is_important: isImportant });
+                        function submitTask() {
+                            const id = document.getElementById('task-id').value;
+                            const title = document.getElementById('task-title').value;
+                            const description = document.getElementById('task-desc').value;
+                            const dueDate = document.getElementById('task-due').value;
+                            const isUrgent = document.getElementById('task-urgent').checked;
+                            const isImportant = document.getElementById('task-important').checked;
+                            const assignedTo = document.getElementById('task-assignee').value;
+
+                            if (!title) {
+                                alert('Por favor, insira um título.');
+                                return;
                             }
-                        });
-                    });
-                }
 
-                function openDelegateModal(taskId) {
-                    document.getElementById('delegate-task-id').value = taskId;
-                    document.getElementById('delegateModal').classList.remove('hidden');
-                }
+                            const payload = {
+                                title: title,
+                                description: description,
+                                due_date: dueDate || null,
+                                is_urgent: isUrgent,
+                                is_important: isImportant,
+                                assigned_to_id: assignedTo,
+                                source_type: 'MANUAL',
+                                status: 'a_fazer'
+                            };
 
-                function confirmDelegate() {
-                    const taskId = document.getElementById('delegate-task-id').value;
-                    const userId = document.getElementById('delegate-select').value;
-                    if (!userId) return;
+                            const url = id ? `/tasks/api/move/${id}` : '/tasks/api/create';
 
-                    updateTask(taskId, { assigned_to_id: userId });
-                    document.getElementById('delegateModal').classList.add('hidden');
-                }
-
-                function updateTask(id, payload) {
-                    fetch(`/tasks/api/move/${id}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).then(r => {
-                        if (!r.ok) console.error('Erro ao mover');
-                        else loadKanbanTasks();
-                    });
-                }
-
-                function checkOverdue(data) {
-                    let count = 0;
-                    Object.values(data).flat().forEach(t => {
-                        if (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'concluida') count++;
-                    });
-
-                    if (count > 0) {
-                        document.getElementById('overdue-count').innerText = count;
-                        document.getElementById('overdue-notification').classList.remove('hidden');
-                        document.getElementById('overdue-notification').classList.add('flex');
-                    }
-                }
-
-                function openNewTaskModal() {
-                    document.getElementById('newTaskModal').classList.remove('hidden');
-                    document.getElementById('modal-title').innerText = 'Nova Tarefa';
-                    document.getElementById('btn-save-task').innerText = 'Criar Tarefa';
-                    document.getElementById('task-id').value = '';
-                    document.getElementById('task-title').value = '';
-                    document.getElementById('task-desc').value = '';
-                    document.getElementById('task-due').value = '';
-                    document.getElementById('task-urgent').checked = false;
-                    document.getElementById('task-important').checked = false;
-                    document.getElementById('task-assignee').value = "{{ current_user.id }}";
-                }
-
-                function openEditTaskModal(task) {
-                    document.getElementById('task-id').value = task.id;
-                    document.getElementById('task-title').value = task.title;
-                    document.getElementById('task-desc').value = task.description || '';
-                    document.getElementById('task-due').value = task.due_date ? task.due_date.replace(' ', 'T') : '';
-                    document.getElementById('task-urgent').checked = task.is_urgent;
-                    document.getElementById('task-important').checked = task.is_important;
-                    // Assignee population requires task assigned_to_id which we might not have in JS task object yet?
-                    // Let's assume user.id for now or leave as is if not available.
-                    // I will assume assigned_to_id is available in task response (I added it to backend serializer next step).
-                    if (task.assigned_to_id) document.getElementById('task-assignee').value = task.assigned_to_id;
-
-                    document.getElementById('newTaskModal').classList.remove('hidden');
-                    document.getElementById('modal-title').innerText = 'Editar Tarefa';
-                    document.getElementById('btn-save-task').innerText = 'Salvar Alterações';
-                }
-
-                function closeNewTaskModal() {
-                    document.getElementById('newTaskModal').classList.add('hidden');
-                }
-
-                function submitTask() {
-                    const id = document.getElementById('task-id').value;
-                    const title = document.getElementById('task-title').value;
-                    const description = document.getElementById('task-desc').value;
-                    const dueDate = document.getElementById('task-due').value;
-                    const isUrgent = document.getElementById('task-urgent').checked;
-                    const isImportant = document.getElementById('task-important').checked;
-                    const assignedTo = document.getElementById('task-assignee').value;
-
-                    if (!title) {
-                        alert('Por favor, insira um título.');
-                        return;
-                    }
-
-                    const payload = {
-                        title: title,
-                        description: description,
-                        due_date: dueDate || null,
-                        is_urgent: isUrgent,
-                        is_important: isImportant,
-                        assigned_to_id: assignedTo,
-                        source_type: 'MANUAL',
-                        status: 'a_fazer'
-                    };
-
-                    const url = id ? `/tasks/api/move/${id}` : '/tasks/api/create';
-
-                    fetch(url, {
-                        method: id ? 'PATCH' : 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.status === 'success' || data.task_id) {
-                                closeNewTaskModal();
-                                loadKanbanTasks();
-                            } else {
-                                alert('Erro: ' + (data.error || 'Unknown'));
-                            }
-                        });
-                }
+                            fetch(url, {
+                                method: id ? 'PATCH' : 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            })
+                                .then(r => r.json())
+                                .then(data => {
+                                    if (data.status === 'success' || data.task_id) {
+                                        closeNewTaskModal();
+                                        loadKanbanTasks();
+                                    } else {
+                                        alert('Erro: ' + (data.error || 'Unknown'));
+                                    }
+                                });
+                        }
                     </script>
                     {% endblock %}
