@@ -76,28 +76,50 @@
         {% endif %}
         {% endif %}
 
-        <a href="{{ url_for('contracts.new_contract', id=client.id) }}"
-            class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-            <i data-lucide="file-signature" class="w-4 h-4"></i>
-            <span>Emitir Contrato</span>
-        </a>
-        <div id="topEditActions">
-            <button type="button" onclick="startEditMode()" id="topEditBtn"
-                class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                <i data-lucide="pencil" class="w-4 h-4"></i>
-                <span>Editar Dados</span>
+        <div class="flex items-center gap-3">
+            <!-- Drive Button -->
+            {% if client.drive_folder_url %}
+            <a href="{{ client.drive_folder_url }}" target="_blank"
+                class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2"
+                title="Abrir Pasta no Drive">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
+                    class="w-4 h-4">
+                <span>Drive</span>
+            </a>
+            {% else %}
+            <button onclick="switchClientTab('drive')"
+                class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2"
+                title="Configurar Drive">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
+                    class="w-4 h-4 grayscale opacity-60">
+                <span>Drive</span>
             </button>
-            <div id="saveCancelBtns" class="hidden flex items-center gap-2">
-                <button onclick="cancelEditMode()"
+            {% endif %}
+
+            <a href="{{ url_for('contracts.new_contract', id=client.id) }}"
+                class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                <i data-lucide="file-signature" class="w-4 h-4"></i>
+                <span>Emitir Contrato</span>
+            </a>
+
+            <div id="topEditActions">
+                <button type="button" onclick="startEditMode()" id="topEditBtn"
                     class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                    <span>Cancelar</span>
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                    <span>Editar Dados</span>
                 </button>
-                <button onclick="saveClientForm()"
-                    class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i>
-                    <span>Salvar Alterações</span>
-                </button>
+                <div id="saveCancelBtns" class="hidden flex items-center gap-2">
+                    <button onclick="cancelEditMode()"
+                        class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                        <span>Cancelar</span>
+                    </button>
+                    <button onclick="saveClientForm()"
+                        class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span>Salvar Alterações</span>
+                    </button>
+                </div>
             </div>
         </div>
         {% endif %}
