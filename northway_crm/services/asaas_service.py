@@ -245,7 +245,8 @@ def create_webhook(webhook_url, email, api_key=None):
         
         # 2. Update or Create
         if existing_id:
-             response = requests.post(f"{ASAAS_API_URL}/webhooks/{existing_id}", json=payload, headers=headers)
+             # Try PUT for update
+             response = requests.put(f"{ASAAS_API_URL}/webhooks/{existing_id}", json=payload, headers=headers)
         else:
              response = requests.post(f"{ASAAS_API_URL}/webhooks", json=payload, headers=headers)
         
@@ -254,7 +255,12 @@ def create_webhook(webhook_url, email, api_key=None):
         else:
              try:
                  error_data = response.json()
-                 error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+                 # Handle list of errors or single object
+                 errors = error_data.get('errors', [])
+                 if isinstance(errors, list) and errors:
+                     error_msg = errors[0].get('description', response.text)
+                 else:
+                     error_msg = str(error_data)
              except:
                  error_msg = f"Status {response.status_code}: {response.text}"
              return None, error_msg
