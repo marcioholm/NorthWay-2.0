@@ -191,12 +191,20 @@
         background: white;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         position: relative;
-        padding-top: 30mm;
-        padding-bottom: 20mm;
-        padding-left: 30mm;
-        padding-right: 20mm;
+
+        /* MATCHING PRINT PRODUCTION MARGINS */
+        padding-top: 35mm;
+        padding-bottom: 25mm;
+        padding-left: 15mm;
+        padding-right: 15mm;
+
         overflow: hidden;
         flex-shrink: 0;
+    }
+
+    /* Page 1 Special Padding (No Header) - Matches view_contract.html */
+    .a4-page:first-child {
+        padding-top: 15mm;
     }
 
     .a4-content {
@@ -205,6 +213,70 @@
         line-height: 1.5;
         color: #000;
         height: 100%;
+        position: relative;
+        z-index: 10;
+        /* Ensure text is above guides */
+    }
+
+    /* Visual Guide Styles */
+    .margin-guide {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .guide-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 35mm;
+        background: rgba(239, 68, 68, 0.03);
+        border-bottom: 1px dashed rgba(239, 68, 68, 0.3);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .guide-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 25mm;
+        background: rgba(239, 68, 68, 0.03);
+        border-top: 1px dashed rgba(239, 68, 68, 0.3);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .guide-left {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 15mm;
+        background: rgba(59, 130, 246, 0.03);
+        border-right: 1px dashed rgba(59, 130, 246, 0.3);
+    }
+
+    .guide-right {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 15mm;
+        background: rgba(59, 130, 246, 0.03);
+        border-left: 1px dashed rgba(59, 130, 246, 0.3);
+    }
+
+    .guide-label {
+        font-family: monospace;
+        font-size: 10px;
+        color: rgba(239, 68, 68, 0.5);
+        margin: 2px 0;
     }
 
     /* Default Paragraph Styling (Juridical) */
@@ -468,11 +540,22 @@
     function createA4Page(pageNum) {
         const page = document.createElement('div');
         page.className = 'a4-page';
+
+        // Visual Guide HTML
+        const guides = `
+            <div class="margin-guide">
+                <div class="guide-top"><span class="guide-label">Margem Superior (3.5cm)</span></div>
+                <div class="guide-bottom"><span class="guide-label">Margem Inferior (2.5cm)</span></div>
+                <div class="guide-left"></div>
+                <div class="guide-right"></div>
+            </div>
+        `;
+
         // Fixed: Remove backslash for correct interpolation
-        page.innerHTML = `
+        page.innerHTML = guides + `
             <div class="a4-content"></div>
-            <div class="absolute bottom-4 right-8 text-[10px] text-gray-400 font-sans">Página ${pageNum}</div>
-             <div class="absolute bottom-4 left-8 text-[10px] text-gray-300 font-sans uppercase tracking-widest">NorthWay System</div>
+            <div class="absolute bottom-4 right-8 text-[10px] text-gray-400 font-sans z-20">Página ${pageNum}</div>
+             <div class="absolute bottom-4 left-8 text-[10px] text-gray-300 font-sans uppercase tracking-widest z-20">NorthWay System</div>
         `;
         return page;
     }
