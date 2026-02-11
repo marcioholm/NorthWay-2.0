@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    :root {
+        --ice-bg: #f8fafc;
+        --ice-border: #e2e8f0;
+        --northway-red: #e31e24;
+    }
+
+    body {
+        background-color: var(--ice-bg);
+    }
+
+    .team-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid var(--ice-border);
+    }
+
+    .team-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+        border-color: var(--northway-red);
+    }
+
+    .metric-bar {
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .metric-fill-q1 {
+        background: var(--northway-red);
+    }
+
+    .metric-fill-q2 {
+        background: #2563eb;
+    }
+
+    .crisis-alert {
+        animation: pulse-red 2s infinite;
+    }
+
+    @keyframes pulse-red {
+        0% {
+            box-shadow: 0 0 0 0 rgba(227, 30, 36, 0.4);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(227, 30, 36, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(227, 30, 36, 0);
+        }
+    }
+</style>
+
+<div class="flex flex-col h-screen overflow-hidden bg-ice">
+    <!-- Header -->
+    <div class="px-8 py-6 flex items-end justify-between shrink-0 bg-transparent border-b border-slate-200">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 uppercase tracking-tight">Execução do Time</h1>
+            <div class="h-0.5 bg-gradient-to-r from-red-600 to-transparent w-24 mt-1"></div>
+            <p class="text-slate-500 text-xs font-medium mt-3 uppercase tracking-widest">Dashboard de Desempenho
+                Estratégico</p>
+        </div>
+
+        <div class="flex gap-4">
+            <div class="bg-white/50 px-4 py-2 rounded-xl border border-slate-200 backdrop-blur-sm">
+                <span class="text-[10px] font-black text-slate-500 uppercase block mb-1">Média de Crise (Q1)</span>
+                <span class="text-xl font-black text-red-600" id="avg-q1-percent">0%</span>
+            </div>
+            <div class="bg-white/50 px-4 py-2 rounded-xl border border-slate-200 backdrop-blur-sm">
+                <span class="text-[10px] font-black text-slate-500 uppercase block mb-1">Foco Estratégico (Q2)</span>
+                <span class="text-xl font-black text-blue-600" id="avg-q2-percent">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-y-auto custom-scrollbar">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="team-grid">
+            <!-- User Cards will be injected here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', loadTeamStats);
+
+    function loadTeamStats() {
+        fetch('/tasks/api/team-stats')
+            .then(r => r.json())
+            .then(data => {
+                const grid = document.getElementById('team-grid');
+                grid.innerHTML = '';
+
+                let totalQ1 = 0;
+                let totalQ2 = 0;
+                let userCount = data.length;
+
+                data.forEach(user => {
+                    totalQ1 += user.q1_percent;
+                    totalQ2 += user.q2_percent;
+
+                    const card = document.createElement('div');
+                    card.className = `team-card bg-white p-6 rounded-2xl ${user.q1_percent > 40 ? 'crisis-alert border-red-500/50' : ''}`;
+
+                    const isCrisis = user.q1_percent > 40;
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 class="font-black text-lg text-slate-800 tracking-tight">${user.user_name}</h3>
+                                <span class="text-[10px] font-black text-slate-400 uppercase">${user.total_pending} tarefas pendentes</span>
+                            </div>
+                            ${isCrisis ? '<span class="material-icons-round text-red-600">report_problem</span>' : ''}
+                        </div>
+
+                        <div class="space-y-4">
+                            <!-- Q1 Metric -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Crise (Q1)</span>
+                                    <span class="text-xs font-black text-red-600">${user.q1_percent}%</span>
+                                </div>
+                                <div class="metric-bar">
+                                    <div class="metric-fill-q1 h-full transition-all duration-1000" style="width: ${user.q1_percent}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Q2 Metric -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Estratégia (Q2)</span>
+                                    <span class="text-xs font-black text-blue-600">${user.q2_percent}%</span>
+                                </div>
+                                <div class="metric-bar">
+                                    <div class="metric-fill-q2 h-full transition-all duration-1000" style="width: ${user.q2_percent}%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${isCrisis ? `
+                        <div class="mt-6 p-3 bg-red-50 rounded-xl border border-red-100">
+                            <p class="text-[10px] font-bold text-red-700 leading-tight">
+                                ATENÇÃO: Nível de crise alto. Reorganize prioridades para focar no Q2.
+                            </p>
+                        </div>
+                        ` : ''}
+                    `;
+                    grid.appendChild(card);
+                });
+
+                if (userCount > 0) {
+                    document.getElementById('avg-q1-percent').innerText = Math.round(totalQ1 / userCount) + '%';
+                    document.getElementById('avg-q2-percent').innerText = Math.round(totalQ2 / userCount) + '%';
+                }
+            });
+    }
+</script>
+{% endblock %}

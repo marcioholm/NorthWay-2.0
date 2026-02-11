@@ -6,12 +6,22 @@ class TaskService:
     def get_kanban_tasks(user_id, filters=None):
         """
         Returns tasks for a user organized by status for Kanban view.
+        Supported filters: client_id, lead_id, pipeline_stage_id, date_start, date_end
         """
         query = Task.query.filter((Task.assigned_to_id == user_id) | (Task.created_by_user_id == user_id))
         
         if filters:
-            # Implement filters here (e.g. by priority, due_date range)
-            pass
+            if filters.get('client_id'):
+                query = query.filter(Task.client_id == filters['client_id'])
+            if filters.get('lead_id'):
+                query = query.filter(Task.lead_id == filters['lead_id'])
+            if filters.get('pipeline_stage_id'):
+                from models import Lead
+                query = query.join(Lead, Task.lead_id == Lead.id).filter(Lead.pipeline_stage_id == filters['pipeline_stage_id'])
+            if filters.get('date_start'):
+                query = query.filter(Task.due_date >= filters['date_start'])
+            if filters.get('date_end'):
+                query = query.filter(Task.due_date <= filters['date_end'])
             
         tasks = query.all()
         
@@ -61,6 +71,8 @@ class TaskService:
                 status='a_fazer',
                 company_id=data.get('company_id'), # Should be passed or inferred
                 assigned_to_id=data.get('assigned_to_id', user_id),
+                is_urgent=data.get('is_urgent', False),
+                is_important=data.get('is_important', False),
                 created_by_user_id=user_id,
                 source_type=data.get('source_type', 'MANUAL'),
                 auto_generated=data.get('auto_generated', False),
@@ -114,6 +126,64 @@ class TaskService:
         
         db.session.commit()
         return task
+
+    @staticmethod
+    def apply_auto_rules(user_id, company_id):
+        """
+        Applies strategic automation rules for a specific user:
+        1. Lead 48h no follow-up -> Urgent
+        2. Task Overdue -> Urgent + Important
+        3. Contract expiring in 3 days -> Urgent
+        """
+        from models import Lead, Contract, Interaction
+        from datetime import datetime, timedelta
+        
+        # 1. Overdue Tasks -> Q1 (Urgent + Important)
+        overdue_tasks = Task.query.filter(
+            Task.assigned_to_id == user_id,
+            Task.status != 'concluida',
+            Task.due_date < datetime.utcnow()
+        ).all()
+        for t in overdue_tasks:
+            t.is_urgent = True
+            t.is_important = True
+
+        # 2. Leads without follow-up (48h) -> Urgent
+        threshold_48h = datetime.utcnow() - timedelta(hours=48)
+        leads_to_flag = Lead.query.filter(
+            Lead.company_id == company_id,
+            Lead.assigned_to_id == user_id,
+            Lead.status != 'CONVERTED' # Adjust based on actual converted status name
+        ).all()
+        
+        for lead in leads_to_flag:
+            # Check last interaction
+            last_interaction = Interaction.query.filter_by(lead_id=lead.id).order_by(Interaction.created_at.desc()).first()
+            last_date = last_interaction.created_at if last_interaction else lead.created_at
+            
+            if last_date < threshold_48h:
+                # Flag associated tasks or mark new ones? 
+                # USER goal: "Lead sem follow-up 48h -> marcar automaticamente como urgente"
+                # This usually refers to the tasks associated with that lead.
+                for task in lead.tasks:
+                    if task.status != 'concluida':
+                        task.is_urgent = True
+
+        # 3. Contract expiring in 3 days -> Urgent
+        # Note: Need to check how expiration data is stored. 
+        # Contract model viewed earlier didn't have a clear expiry date but usually it's in form_data or added via Vigencia.
+        # However, Task often has a due_date linked to a contract action.
+        # Let's check for tasks linked to contracts with short due dates.
+        contract_tasks = Task.query.filter(
+            Task.assigned_to_id == user_id,
+            Task.contract_id != None,
+            Task.status != 'concluida',
+            Task.due_date <= datetime.utcnow() + timedelta(days=3)
+        ).all()
+        for ct in contract_tasks:
+            ct.is_urgent = True
+
+        db.session.commit()
 
     @staticmethod
     def log_event(task_id, actor_id, event_type, payload=None, actor_type='USER'):

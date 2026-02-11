@@ -32,8 +32,14 @@ def execution_kanban():
     if total_tasks > 0:
         progress_percent = int((completed_tasks / total_tasks) * 100)
 
+    from models import Client, Pipeline
+    clients = Client.query.filter_by(company_id=current_user.company_id).all()
+    pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+
     return render_template('tasks/execution_kanban.html', 
                            users=users,
+                           clients=clients,
+                           pipelines=pipelines,
                            total_tasks=total_tasks,
                            completed_tasks=completed_tasks,
                            progress_percent=progress_percent)
@@ -68,7 +74,28 @@ def get_kanban_data():
          if current_user.role not in ['admin', 'gestor']:
              return jsonify({'error': 'Unauthorized'}), 403
 
-    kanban_data = TaskService.get_kanban_tasks(user_id)
+    # Apply strategic auto-urgency rules before fetching
+    TaskService.apply_auto_rules(user_id, current_user.company_id)
+
+    # Process filters from query params
+    filters = {
+        'client_id': request.args.get('client_id', type=int),
+        'lead_id': request.args.get('lead_id', type=int),
+        'pipeline_stage_id': request.args.get('pipeline_stage_id', type=int),
+        'date_start': request.args.get('date_start'),
+        'date_end': request.args.get('date_end')
+    }
+    
+    # Simple date parsing if provided
+    from datetime import datetime
+    for d_key in ['date_start', 'date_end']:
+        if filters[d_key]:
+            try:
+                filters[d_key] = datetime.strptime(filters[d_key], '%Y-%m-%d')
+            except ValueError:
+                filters[d_key] = None
+
+    kanban_data = TaskService.get_kanban_tasks(user_id, filters=filters)
     
     # Serialize tasks
     # We could do this in Service, but doing here for flexibility
@@ -87,7 +114,9 @@ def get_kanban_data():
                 'auto_generated': t.auto_generated,
                 'is_urgent': t.is_urgent,
                 'is_important': t.is_important,
-                'assigned_to_id': t.assigned_to_id
+                'assigned_to_id': t.assigned_to_id,
+                'assigned_user_name': t.responsible.name if t.responsible else 'N/A',
+                'status': t.status
             })
             
     return jsonify(serialized)
@@ -338,3 +367,35 @@ def update(id):
             
     db.session.commit()
     return redirect(request.referrer or url_for('tasks.tasks'))
+
+@tasks_bp.route('/api/team-stats', methods=['GET'])
+@login_required
+def get_team_stats():
+    """
+    Returns matrix stats for all users in the company
+    """
+    if current_user.role not in ['admin', 'gestor']:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    from models import User, Task
+    users = User.query.filter_by(company_id=current_user.company_id).all()
+    
+    stats = []
+    for user in users:
+        tasks = Task.query.filter_by(assigned_to_id=user.id, company_id=current_user.company_id).filter(Task.status != 'concluida').all()
+        total = len(tasks)
+        
+        q1 = len([t for t in tasks if t.is_urgent and t.is_important])
+        q2 = len([t for t in tasks if not t.is_urgent and t.is_important])
+        
+        stats.append({
+            'user_id': user.id,
+            'user_name': user.name,
+            'q1_count': q1,
+            'q2_count': q2,
+            'q1_percent': round((q1 / total) * 100) if total > 0 else 0,
+            'q2_percent': round((q2 / total) * 100) if total > 0 else 0,
+            'total_pending': total
+        })
+        
+    return jsonify(stats)
