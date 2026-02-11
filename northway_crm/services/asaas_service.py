@@ -212,3 +212,36 @@ def cancel_nfse(nfse_id, api_key=None):
              return None, error_msg
     except Exception as e:
         return None, str(e)
+
+def create_webhook(webhook_url, email, api_key=None):
+    """
+    Configures the webhook URL in Asaas.
+    """
+    payload = {
+        "url": webhook_url,
+        "email": email,
+        "enabled": True,
+        "interrupted": False,
+        "apiVersion": 3,
+        "sendType": "SEQUENTIALLY",
+        "events": [
+            "PAYMENT_CREATED", "PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", 
+            "PAYMENT_OVERDUE", "PAYMENT_REFUNDED", "PAYMENT_REVERSED"
+        ]
+    }
+    
+    try:
+        # Check if exists (GET) or just Update (POST/PUT)
+        # Asaas usually has a single webhook config per sub-account
+        response = requests.post(f"{ASAAS_API_URL}/webhooks", json=payload, headers=get_headers(api_key))
+        
+        if response.status_code == 200:
+             return response.json(), None
+        else:
+             # Try PUT if POST fails (maybe already exists)
+             # NOTE: Asaas API documentation says POST to create/update
+             error_data = response.json()
+             error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
+             return None, error_msg
+    except Exception as e:
+        return None, str(e)

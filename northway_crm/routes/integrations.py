@@ -51,7 +51,27 @@ def test_asaas_connection():
 @integrations_bp.route('/api/integrations/asaas/setup-webhook', methods=['POST'])
 @login_required
 def setup_asaas_webhook():
-     return api_response(success=False, error='Configuração Automática Desabilitada. Use o Painel Asaas.', status=503)
+    if not current_user.company_id:
+        return api_response(success=False, error='Usuário sem empresa.', status=403)
+
+    integration = Integration.query.filter_by(company_id=current_user.company_id, service='asaas', is_active=True).first()
+    if not integration or not integration.api_key:
+         return api_response(success=False, error='Integração Asaas não configurada.', status=400)
+    
+    # Generate Webhook URL
+    webhook_url = url_for('integrations_bp.asaas_webhook', company_id=current_user.company_id, _external=True)
+    
+    # Use current user email or company email
+    email = current_user.email
+    
+    from services.asaas_service import create_webhook
+    
+    config, err = create_webhook(webhook_url, email, integration.api_key)
+    
+    if config:
+        return api_response(success=True, data=config)
+    else:
+        return api_response(success=False, error=f"Erro Asaas: {err}", status=500)
 
 @integrations_bp.route('/api/integrations/google-maps/test', methods=['POST'])
 @login_required
