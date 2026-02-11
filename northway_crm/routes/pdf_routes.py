@@ -11,11 +11,15 @@ def download_contract_pdf(id):
     """
     Generates and downloads a PDF for a specific contract.
     """
-    try:
-        from services.pdf_service import PdfService
     except ImportError as e:
+        import subprocess
+        try:
+            installed_packages = subprocess.check_output(['pip', 'freeze']).decode('utf-8')
+        except Exception:
+            installed_packages = "Could not list packages"
+            
         current_app.logger.error(f"Failed to import PdfService: {e}")
-        return f"Configuration Error: {e}", 500
+        return f"Configuration Error: {e} \n\n Installed Packages: \n {installed_packages}", 500
     # 1. Fetch Contract & verify permission
     contract = Contract.query.get_or_404(id)
     
