@@ -172,18 +172,19 @@ class PdfService:
                 html = re.sub(r'<img[^>]+>', replace_img_src, html, flags=re.IGNORECASE)
 
                 # --- B. LAYOUT PRESERVATION ---
-                # FPDF2 sometimes treats <div> as inline. We must force a line break.
-                html = re.sub(r'</div>', '<br>', html, flags=re.IGNORECASE)
-
+                # REMOVED aggressive flattening (div/p -> br) to allow FPDF2 to handle structure.
+                
                 # Ensure all paragraphs are justified
+                # This helps with the professional look
                 if '<p' in html:
                     html = re.sub(r'<p([^>]*)>', r'<p align="justify"\1>', html, flags=re.IGNORECASE)
-                    
-                # Clean up excessive breaks potentially caused by the div replacement
-                html = re.sub(r'(<br\s*/?>\s*){3,}', '<br><br>', html, flags=re.IGNORECASE)
+                
+                # Ensure Divs don't merge (FPDF2 sometimes needs help with inline-block divs)
+                # We inject a small separator if needed, but standard block behavior should work.
+                # If the user has <div align="right">, we want to keep that.
                     
                 # --- C. CLEANUP ---
-                # Strip Table Attributes that break layout
+                # Strip Table Widths (Critical: FPDF2 often crashes on % or relative widths)
                 html = re.sub(r'(<table[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
                 html = re.sub(r'(<td[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
                 html = re.sub(r'(<th[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
@@ -204,12 +205,11 @@ class PdfService:
                 html = html.encode('latin-1', 'replace').decode('latin-1')
 
                 # --- D. WRITE ---
-                # Wrap via Styled Font for Justification & Typography
-                # We use size 10 for better density.
+                # Wrap in a container that enforces font and alignment
                 sty_html = f"""
-                <font face="Helvetica" size="10">
+                <div style="font-family: Helvetica; font-size: 10pt; text-align: justify; line-height: 1.5;">
                 {html}
-                </font>
+                </div>
                 """
                 pdf.write_html(sty_html)
             else:
