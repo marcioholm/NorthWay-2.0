@@ -9,36 +9,33 @@ class ContractPDF(FPDF):
         self.contract_code = contract_code
         self.set_auto_page_break(auto=True, margin=20)
 
-    def header(self):
         # Logo
         try:
-            # Logo - Robust loading
-            try:
-                # Try multiple common paths
-                possible_paths = [
-                    os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
-                    os.path.join(current_app.root_path, 'static', 'images', 'logo.png'),
-                    os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
-                ]
+            # Try multiple common paths
+            possible_paths = [
+                os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
+                os.path.join(current_app.root_path, 'static', 'images', 'logo.png'),
+                os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
+            ]
+            
+            logo_found = False
+            for logo_path in possible_paths:
+                if os.path.exists(logo_path):
+                    # Force width to 33mm
+                    self.image(logo_path, 10, 8, 33)
+                    logo_found = True
+                    break
+            
+            if not logo_found:
+                current_app.logger.warning("Logo file not found in any expected location.")
                 
-                logo_found = False
-                for logo_path in possible_paths:
-                    if os.path.exists(logo_path):
-                        # Force width to 33mm
-                        self.image(logo_path, 10, 8, 33)
-                        logo_found = True
-                        break
-                
-                if not logo_found:
-                    current_app.logger.warning("Logo file not found in any expected location.")
-                    
-            except Exception as e:
-                # This catches 'Pillow not available' and other image errors
-                current_app.logger.warning(f"Could not load logo for PDF (Pillow missing?): {e}")
-                # Fallback: Write text instead of logo
-                self.set_font("Helvetica", "B", 10)
-                self.set_xy(10, 10)
-                self.cell(33, 10, "[NorthWay]", 0, 0, 'C')
+        except Exception as e:
+            # This catches 'Pillow not available' and other image errors
+            current_app.logger.warning(f"Could not load logo for PDF (Pillow missing?): {e}")
+            # Fallback: Write text instead of logo
+            self.set_font("Helvetica", "B", 10)
+            self.set_xy(10, 10)
+            self.cell(33, 10, "[NorthWay]", 0, 0, 'C')
 
         # Font for Title
         self.set_font('Arial', 'B', 15)
