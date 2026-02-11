@@ -110,6 +110,10 @@ class PdfService:
                 html = re.sub(r'margin:\s*auto;?', '', html, flags=re.IGNORECASE)
                 html = re.sub(r'width="auto"', '', html, flags=re.IGNORECASE)
                 html = re.sub(r'height="auto"', '', html, flags=re.IGNORECASE)
+
+                # FPDF2 / Pillow on Vercel is broken for images.
+                # We actively remove <img> tags to prevent "Pillow not available" crashes.
+                html = re.sub(r'<img[^>]*>', '', html, flags=re.IGNORECASE)
                 
                 # FPDF2 Tables DO NOT support nested block elements (p, div) or mixed content well.
                 # We flatten the structure:
