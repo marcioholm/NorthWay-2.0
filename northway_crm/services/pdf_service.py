@@ -114,6 +114,21 @@ class PdfService:
                 # FPDF2 / Pillow on Vercel is broken for images.
                 # We actively remove <img> tags to prevent "Pillow not available" crashes.
                 html = re.sub(r'<img[^>]*>', '', html, flags=re.IGNORECASE)
+
+                # Replace standard font incompatible characters (Unicode -> Latin-1 safe)
+                replacements = {
+                    '\u2013': '-',  # En-dash
+                    '\u2014': '-',  # Em-dash
+                    '\u2018': "'",  # Left single quote
+                    '\u2019': "'",  # Right single quote
+                    '\u201c': '"',  # Left double quote
+                    '\u201d': '"',  # Right double quote
+                    '\u2022': '-',  # Bullet
+                    '\u2026': '...', # Ellipsis
+                    '\u00a0': ' '   # Non-breaking space
+                }
+                for src, dst in replacements.items():
+                    html = html.replace(src, dst)
                 
                 # FPDF2 Tables DO NOT support nested block elements (p, div) or mixed content well.
                 # We flatten the structure:
