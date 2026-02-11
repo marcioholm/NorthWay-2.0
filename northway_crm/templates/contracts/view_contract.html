@@ -232,8 +232,23 @@
 
     @media print {
 
-        /* 1. Hide Specific UI Elements */
-        /* Global UI from base.html */
+        /* 1. Reset Global Page/Body */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        html,
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            height: 100% !important;
+            background: white !important;
+            overflow: visible !important;
+        }
+
+        /* Hide UI */
         aside,
         header,
         nav,
@@ -242,88 +257,59 @@
         #mobile-sidebar-overlay,
         #toast-container,
         .no-print,
-        .print\:hidden {
-            display: none !important;
-        }
-
-        /* View-specific UI: Hide everything in layout-wrapper except the scroll container */
+        .print\:hidden,
         #layout-wrapper>*:not(#scroll-container) {
             display: none !important;
         }
 
-        /* Also hide the "Visualizar Impressão" badge */
-        #scroll-container>p {
-            display: none !important;
-        }
-
-        /* 2. Unwrap Structural Parents */
-        html,
-        body,
-        body>div,
-        main,
-        main>div,
+        /* Unwrap Structure */
         #layout-wrapper,
-        #scroll-container {
-            height: auto !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: white !important;
-            overflow: visible !important;
-            display: block !important;
-            position: relative !important;
-            /* Changed from static to relative */
-        }
-
-        /* 3. Ensure Pages Container Flows Naturally */
+        #scroll-container,
         #pages-container {
-            display: block !important;
             width: 100% !important;
+            height: auto !important;
             margin: 0 !important;
             padding: 0 !important;
+            display: block !important;
             overflow: visible !important;
+            position: static !important;
+            background: white !important;
         }
 
         /* 4. Strict A4 Page Definition */
         .a4-page {
             width: 210mm !important;
-            height: 297mm !important;
-            /* Keep strict height for pagination accuracy */
-            background: white !important;
+            height: 296mm !important;
+            /* Slightly less than 297mm to prevent blank pages */
             margin: 0 !important;
+            padding: 30mm 20mm 20mm 30mm !important;
+            /* Top Right Bottom Left */
 
-            /* Restore details from screen style */
-            padding-top: 30mm !important;
-            padding-bottom: 20mm !important;
-            padding-left: 30mm !important;
-            padding-right: 20mm !important;
-
-            box-shadow: none !important;
             page-break-after: always;
             break-after: page;
+
             overflow: hidden !important;
             position: relative !important;
             border: none !important;
+            box-shadow: none !important;
+            box-sizing: border-box !important;
 
             /* Ensure colors print correctly */
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
 
+        /* Remove break from last page */
         .a4-page:last-child {
             page-break-after: auto;
             break-after: auto;
-            height: auto !important;
-            /* Allow last page to be shorter to avoid blank page after it */
-            min-height: 0 !important;
         }
 
         /* 5. Ensure Content */
         .a4-content {
-            visibility: visible !important;
-            color: black !important;
+            width: 100% !important;
             height: auto !important;
-            /* Padding already handled by .a4-page wrapper */
+            color: black !important;
         }
     }
 </style>
