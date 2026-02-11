@@ -89,6 +89,33 @@ class ContractPDF(FPDF):
 
 class PdfService:
     @staticmethod
+    def _resolve_img_path(src):
+        """
+        Converts relative /static/ paths to absolute file system paths.
+        Returns the absolute path if found, or None.
+        """
+        # Handle already absolute paths (unlikely in web context but possible)
+        if os.path.isabs(src) and os.path.exists(src):
+            return src
+            
+        # Handle /static/... pattern
+        if src.startswith('/static/'):
+            # Remove leading slash and join with root_path
+            rel_path = src.lstrip('/')
+            abs_path = os.path.join(current_app.root_path, rel_path)
+            if os.path.exists(abs_path):
+                return abs_path
+                
+        # Handle incomplete relative paths (e.g. static/img/...)
+        possible_roots = [current_app.root_path]
+        for root in possible_roots:
+            abs_path = os.path.join(root, src.lstrip('/'))
+            if os.path.exists(abs_path):
+                return abs_path
+                
+        return None
+
+    @staticmethod
     def generate_pdf(contract):
         """
         Generates a PDF for the contract using FPDF2.
@@ -123,15 +150,38 @@ class PdfService:
             
             # Write HTML content
             if contract.generated_content:
-                # 1. Clean up HTML
                 html = contract.generated_content
-                
                 import re
                 
-                # Strip <img> tags (Pillow crash prevention)
-                html = re.sub(r'<img[^>]*>', '', html, flags=re.IGNORECASE)
+                # --- A. IMAGE PATH CORRECTION ---
+                # FPDF2 requires absolute paths. We must find <img src="..."> and fix it.
+                def replace_img_src(match):
+                    full_tag = match.group(0)
+                    src_match = re.search(r'src=["\']([^"\']+)["\']', full_tag)
+                    if src_match:
+                        original_src = src_match.group(1)
+                        abs_path = PdfService._resolve_img_path(original_src)
+                        if abs_path:
+                            # Replace the src with absolute path
+                            return full_tag.replace(original_src, abs_path)
+                    # If resolving fails, strip the image to prevent crash
+                    current_app.logger.warning(f"Could not resolve image: {full_tag}")
+                    return "" 
+                
+                # Execute replacement
+                html = re.sub(r'<img[^>]+>', replace_img_src, html, flags=re.IGNORECASE)
 
-                # Strip Table Widths (Layout crash prevention)
+                # --- B. LAYOUT PRESERVATION (Fixing the "CompanyCNPJ" merge issue) ---
+                # 1. Ensure block elements have line breaks BEFORE stripping or processing
+                # Replace </div> with <br> to force a break
+                html = re.sub(r'</div>', '<br>', html, flags=re.IGNORECASE)
+                html = re.sub(r'</p>', '<br><br>', html, flags=re.IGNORECASE)
+                html = re.sub(r'</h1>', '<br><br>', html, flags=re.IGNORECASE)
+                html = re.sub(r'</h2>', '<br><br>', html, flags=re.IGNORECASE)
+                html = re.sub(r'</h3>', '<br><br>', html, flags=re.IGNORECASE)
+                
+                # --- C. CLEANUP ---
+                # Strip Table Attributes that break layout
                 html = re.sub(r'(<table[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
                 html = re.sub(r'(<td[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
                 html = re.sub(r'(<th[^>]*?)\swidth="[^"]*"', r'\1', html, flags=re.IGNORECASE)
@@ -151,25 +201,17 @@ class PdfService:
                 # Force Encoding
                 html = html.encode('latin-1', 'replace').decode('latin-1')
 
-                # Flatten Block Elements inside tables/structure
-                html = re.sub(r'</p>\s*<p[^>]*>', '<br><br>', html, flags=re.IGNORECASE) # Double break for paragraphs
-                html = re.sub(r'</div>\s*<div[^>]*>', '<br>', html, flags=re.IGNORECASE)
+                # Now safe to strip container tags since we injected <br>
                 html = re.sub(r'</?div[^>]*>', '', html, flags=re.IGNORECASE)
                 html = re.sub(r'</?p[^>]*>', '', html, flags=re.IGNORECASE)
 
-                # 2. Wrap via Styled Div for Justification & Typography
-                # Note: fpdf2 writes this as a flow. 
-                # We use specific fonts and alignment to match "System" look.
+                # --- D. WRITE ---
+                # Wrap via Styled Font for Justification & Typography
                 sty_html = f"""
                 <font face="Helvetica" size="11">
                 {html}
                 </font>
                 """
-                
-                # Note: fpdf2 write_html doesn't fully support <div align="justify"> perfectly in all versions, 
-                # but standard write_html respects self.set_font etc.
-                # We can try to replace <br> with proper spacing if needed.
-                
                 pdf.write_html(sty_html)
             else:
                 pdf.write(5, "Conteúdo do contrato não disponível.")
