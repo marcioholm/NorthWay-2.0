@@ -12,25 +12,54 @@ class ContractPDF(FPDF):
         self.set_auto_page_break(auto=True, margin=20)
 
     def header(self):
-        # Premium Typographic Header (Dynamic)
+        # Premium Header (Logo + Dynamic Text Fallback)
         
-        # 1. Main Brand (Company Name)
-        self.set_font('Helvetica', 'B', 20)
-        self.set_text_color(0, 0, 0) # Black
-        # Fallback if empty
-        display_name = self.company_name if self.company_name else "NORTHWAY"
-        self.cell(0, 10, display_name, 0, 1, 'L')
+        logo_loaded = False
+        try:
+            # Try multiple common paths for the logo
+            possible_paths = [
+                os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
+                os.path.join(current_app.root_path, 'static', 'images', 'logo.png'),
+                os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
+            ]
+            
+            for logo_path in possible_paths:
+                if os.path.exists(logo_path):
+                    # Fixed width 33mm, auto height
+                    self.image(logo_path, 10, 8, w=33)
+                    logo_loaded = True
+                    break
+                    
+        except Exception as e:
+            current_app.logger.warning(f"Logo load failed (Pillow missing?): {e}")
+            logo_loaded = False
+
+        # If logo failed, use the Text Brand (Fallback)
+        if not logo_loaded: 
+            # 1. Main Brand (Company Name)
+            self.set_font('Helvetica', 'B', 20)
+            self.set_text_color(0, 0, 0) # Black
+            # Fallback if empty
+            display_name = self.company_name if self.company_name else "NORTHWAY"
+            self.cell(0, 10, display_name, 0, 1, 'L')
         
-        # 2. Sub-brand / CNPJ
-        self.set_font('Helvetica', '', 9)
-        self.set_text_color(100, 100, 100) # Gray
-        if self.company_subtext:
-            self.cell(0, 5, self.company_subtext, 0, 1, 'L')
+        # 2. Sub-brand / CNPJ (Always show this, or adjust position if logo present?)
+        # Design decision: If logo is present, we still want the CNPJ/Subtext, but maybe positioned differently?
+        # Let's keep the subtext simple.
+        
+        if logo_loaded:
+             # Move cursor to right to avoid overlapping logo? 
+             # Actually, standard design: Logo Left, Title Right.
+             # We just need to ensure we don't write over the logo.
+             self.set_xy(10, 25) # Below logo
         else:
-            self.cell(0, 5, "Documento Oficial", 0, 1, 'L')
-        
-        # 3. Document Title
-        self.set_y(15) # Back to top area for right side
+             self.set_font('Helvetica', '', 9)
+             self.set_text_color(100, 100, 100) # Gray
+             if self.company_subtext:
+                self.cell(0, 5, self.company_subtext, 0, 1, 'L')
+
+        # 3. Document Title (Right Aligned)
+        self.set_y(15) # Top area
         self.set_font('Helvetica', 'B', 12)
         self.set_text_color(0)
         self.cell(0, 10, 'CONTRATO DE SERVIÇOS', 0, 1, 'R')
