@@ -49,28 +49,21 @@
             </div>
 
             {% if current_user.role in ['admin', 'manager'] %}
-            <!-- Renewal Alert -->
             {% if client.renewal_date %}
             {% set days_left = (client.renewal_date - today).days %}
             {% if days_left <= 30 %} <div
-                class="mb-6 p-4 rounded-lg flex items-center justify-between shadow-sm border {{ 'bg-red-50 border-red-200' if days_left < 0 else 'bg-orange-50 border-orange-200' }}">
+                class="mb-4 px-4 py-2 rounded-lg flex items-center justify-between shadow-sm border {{ 'bg-red-50 border-red-100' if days_left < 0 else 'bg-orange-50 border-orange-100' }}">
                 <div class="flex items-center gap-3">
-                    <div
-                        class="p-2 rounded-full {{ 'bg-red-100 text-red-600' if days_left < 0 else 'bg-orange-100 text-orange-600' }}">
-                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold {{ 'text-red-900' if days_left < 0 else 'text-orange-900' }}">
-                            {% if days_left < 0 %} Renovação Vencida! {% else %} Renovação Próxima {% endif %} </h3>
-                                <p class="{{ 'text-red-700' if days_left < 0 else 'text-orange-700' }}">
-                                    O contrato vence em <strong>{{ client.renewal_date.strftime('%d/%m/%Y') }}</strong>.
-                                    {% if days_left < 0 %} (Atrasado há {{ days_left|abs }} dias) {% else %} (Faltam {{
-                                        days_left }} dias) {% endif %} </p>
-                    </div>
+                    <i data-lucide="alert-triangle"
+                        class="w-5 h-5 {{ 'text-red-500' if days_left < 0 else 'text-orange-500' }}"></i>
+                    <span class="text-sm font-medium {{ 'text-red-800' if days_left < 0 else 'text-orange-800' }}">
+                        {% if days_left < 0 %} Renovação Vencida há {{ days_left|abs }} dias ({{
+                            client.renewal_date.strftime('%d/%m/%Y') }}) {% else %} Renovação em {{ days_left }} dias
+                            ({{ client.renewal_date.strftime('%d/%m/%Y') }}) {% endif %} </span>
                 </div>
                 <button onclick="toggleModal('taskModal')"
-                    class="px-4 py-2 rounded-lg font-bold shadow-sm transition-colors {{ 'bg-northway-red text-white hover:bg-red-700' if days_left < 0 else 'bg-orange-500 text-white hover:bg-orange-600' }}">
-                    Agendar Contato
+                    class="text-xs font-bold px-3 py-1 bg-white border rounded shadow-sm hover:bg-gray-50 transition-colors {{ 'text-red-600 border-red-200' if days_left < 0 else 'text-orange-600 border-orange-200' }}">
+                    Agendar
                 </button>
         </div>
         {% endif %}
@@ -227,7 +220,7 @@
                                 </label>
                                 <input type="text" name="document" value="{{ client.document or '' }}"
                                     placeholder="Não informado" disabled
-                                    class="w-full bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all focus:border-[#fa0102] focus:ring-1 focus:ring-[#fa0102] disabled:opacity-100 disabled:cursor-not-allowed">
+                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-bold disabled:text-lg disabled:p-0 transition-all">
                             </div>
                             <div class="relative">
                                 <label
@@ -236,7 +229,7 @@
                                 </label>
                                 <input type="email" name="email_contact" value="{{ client.email_contact or '' }}"
                                     placeholder="Não informado" disabled
-                                    class="w-full bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all focus:border-[#fa0102] focus:ring-1 focus:ring-[#fa0102] disabled:opacity-100 disabled:cursor-not-allowed">
+                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
                             </div>
                             <div class="relative">
                                 <label
@@ -245,7 +238,7 @@
                                 </label>
                                 <input type="text" name="representative" value="{{ client.representative or '' }}"
                                     placeholder="Não informado" disabled
-                                    class="w-full bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all focus:border-[#fa0102] focus:ring-1 focus:ring-[#fa0102] disabled:opacity-100 disabled:cursor-not-allowed">
+                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
                             </div>
                             <div class="relative">
                                 <label
@@ -254,7 +247,7 @@
                                 </label>
                                 <input type="text" name="representative_cpf"
                                     value="{{ client.representative_cpf or '' }}" placeholder="Não informado" disabled
-                                    class="w-full bg-gray-50 px-4 py-3 rounded-xl border border-gray-100/80 text-gray-900 font-semibold text-sm transition-all focus:border-[#fa0102] focus:ring-1 focus:ring-[#fa0102] disabled:opacity-100 disabled:cursor-not-allowed">
+                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
                             </div>
                         </div>
 
@@ -276,11 +269,11 @@
                                             <input type="text" name="address_street"
                                                 value="{{ client.address_street or '' }}"
                                                 placeholder="Rua não informada" disabled
-                                                class="flex-1 bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed">
-                                            <span class="text-gray-400 font-light">,</span>
+                                                class="flex-1 border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
+                                            <span class="text-gray-400 font-light mt-1">,</span>
                                             <input type="text" name="address_number"
                                                 value="{{ client.address_number or '' }}" placeholder="S/N" disabled
-                                                class="w-20 bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed text-right block">
+                                                class="w-20 border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 text-right block placeholder-transparent">
                                         </div>
                                     </div>
                                 </div>
@@ -291,7 +284,7 @@
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">CEP</label>
                                         <input type="text" name="address_zip" value="{{ client.address_zip or '' }}"
                                             placeholder="-" disabled
-                                            class="w-full bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed">
+                                            class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
                                     </div>
                                 </div>
                             </div>
@@ -304,7 +297,7 @@
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Bairro</label>
                                         <input type="text" name="address_neighborhood"
                                             value="{{ client.address_neighborhood or '' }}" placeholder="-" disabled
-                                            class="w-full bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed">
+                                            class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
                                     </div>
                                 </div>
                                 <div class="overflow-hidden">
@@ -314,7 +307,7 @@
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Cidade</label>
                                         <input type="text" name="address_city" value="{{ client.address_city or '' }}"
                                             placeholder="-" disabled
-                                            class="w-full bg-transparent border-none p-0 text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed">
+                                            class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
                                     </div>
                                 </div>
                                 <div class="overflow-hidden">
@@ -324,7 +317,7 @@
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">UF</label>
                                         <input type="text" name="address_state" value="{{ client.address_state or '' }}"
                                             placeholder="-" disabled
-                                            class="w-full bg-transparent border-none p-0 text-sm text-gray-900 font-bold placeholder-gray-400 focus:ring-0 disabled:cursor-not-allowed text-center uppercase">
+                                            class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-bold disabled:p-0 text-center uppercase placeholder-transparent">
                                     </div>
                                 </div>
                             </div>
