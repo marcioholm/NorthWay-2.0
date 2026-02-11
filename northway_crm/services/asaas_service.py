@@ -230,16 +230,28 @@ def create_webhook(webhook_url, email, api_key=None):
         ]
     }
     
+    headers = get_headers(api_key)
+    
     try:
-        # Check if exists (GET) or just Update (POST/PUT)
-        # Asaas usually has a single webhook config per sub-account
-        response = requests.post(f"{ASAAS_API_URL}/webhooks", json=payload, headers=get_headers(api_key))
+        # 1. Try to list existing webhooks
+        get_res = requests.get(f"{ASAAS_API_URL}/webhooks", headers=headers)
+        existing_id = None
+        
+        if get_res.status_code == 200:
+            webhooks = get_res.json().get('data', [])
+            if webhooks:
+                # Assuming single webhook or taking the first one to update
+                existing_id = webhooks[0].get('id')
+        
+        # 2. Update or Create
+        if existing_id:
+             response = requests.post(f"{ASAAS_API_URL}/webhooks/{existing_id}", json=payload, headers=headers)
+        else:
+             response = requests.post(f"{ASAAS_API_URL}/webhooks", json=payload, headers=headers)
         
         if response.status_code == 200:
              return response.json(), None
         else:
-             # Try PUT if POST fails (maybe already exists)
-             # NOTE: Asaas API documentation says POST to create/update
              error_data = response.json()
              error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
              return None, error_msg
