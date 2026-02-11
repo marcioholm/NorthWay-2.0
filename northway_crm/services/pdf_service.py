@@ -9,6 +9,7 @@ class ContractPDF(FPDF):
         self.contract_code = contract_code
         self.set_auto_page_break(auto=True, margin=20)
 
+    def header(self):
         # Logo
         try:
             # Try multiple common paths
