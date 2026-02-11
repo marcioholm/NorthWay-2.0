@@ -148,523 +148,537 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Filter Bar -->
-            <div
-                class="px-8 py-4 bg-white/30 border-b border-slate-200/50 backdrop-blur-sm flex items-center gap-4 overflow-x-auto no-scrollbar">
-                <div class="flex items-center gap-2 group">
-                    <span class="material-icons-round text-slate-400 text-sm">filter_list</span>
-                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Filtros</span>
-                </div>
+    <!-- Filter Bar -->
+    <div
+        class="px-8 py-4 bg-white/30 border-b border-slate-200/50 backdrop-blur-sm flex items-center gap-4 overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-2 group">
+            <span class="material-icons-round text-slate-400 text-sm">filter_list</span>
+            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Filtros</span>
+        </div>
 
-                <!-- Client Filter -->
-                <select id="filter-client" onchange="loadKanbanTasks()"
-                    class="bg-white  border border-slate-200  rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600  focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all">
-                    <option value="">Todos os Clientes</option>
-                    {% for client in clients %}
-                    <option value="{{ client.id }}">{{ client.name }}</option>
-                    {% endfor %}
-                </select>
+        <!-- Client Filter -->
+        <select id="filter-client" onchange="loadKanbanTasks()"
+            class="bg-white  border border-slate-200  rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600  focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all">
+            <option value="">Todos os Clientes</option>
+            {% for client in clients %}
+            <option value="{{ client.id }}">{{ client.name }}</option>
+            {% endfor %}
+        </select>
 
-                <!-- Pipeline Stage Filter -->
-                <select id="filter-pipeline" onchange="loadKanbanTasks()"
-                    class="bg-white  border border-slate-200  rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600  focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all">
-                    <option value="">Todos os Estágios</option>
-                    {% for pipeline in pipelines %}
-                    <optgroup label="{{ pipeline.name }}">
-                        {% for stage in pipeline.stages %}
-                        <option value="{{ stage.id }}">{{ stage.name }}</option>
-                        {% endfor %}
-                    </optgroup>
-                    {% endfor %}
-                </select>
+        <!-- Pipeline Stage Filter -->
+        <select id="filter-pipeline" onchange="loadKanbanTasks()"
+            class="bg-white  border border-slate-200  rounded-lg px-3 py-1.5 text-xs font-bold text-slate-600  focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all">
+            <option value="">Todos os Estágios</option>
+            {% for pipeline in pipelines %}
+            <optgroup label="{{ pipeline.name }}">
+                {% for stage in pipeline.stages %}
+                <option value="{{ stage.id }}">{{ stage.name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endfor %}
+        </select>
 
-                <!-- Date Filters -->
-                <div class="flex items-center gap-2 bg-white  border border-slate-200  rounded-lg px-3 py-1.5">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">De</span>
-                    <input type="date" id="filter-start" onchange="loadKanbanTasks()"
-                        class="bg-transparent text-xs font-bold text-slate-600  focus:outline-none">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Até</span>
-                    <input type="date" id="filter-end" onchange="loadKanbanTasks()"
-                        class="bg-transparent text-xs font-bold text-slate-600  focus:outline-none">
-                </div>
+        <!-- Date Filters -->
+        <div class="flex items-center gap-2 bg-white  border border-slate-200  rounded-lg px-3 py-1.5">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">De</span>
+            <input type="date" id="filter-start" onchange="loadKanbanTasks()"
+                class="bg-transparent text-xs font-bold text-slate-600  focus:outline-none">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Até</span>
+            <input type="date" id="filter-end" onchange="loadKanbanTasks()"
+                class="bg-transparent text-xs font-bold text-slate-600  focus:outline-none">
+        </div>
 
-                <button onclick="clearFilters()" class="text-slate-400 hover:text-red-600 transition-colors">
-                    <span class="material-icons-round text-lg">backspace</span>
-                </button>
-            </div>
+        <button onclick="clearFilters()" class="text-slate-400 hover:text-red-600 transition-colors">
+            <span class="material-icons-round text-lg">backspace</span>
+        </button>
+    </div>
 
-            <!-- Main Content Area -->
-            <div class="flex-1 relative overflow-hidden">
-                <!-- Kanban Board -->
-                <div id="view-kanban"
-                    class="absolute inset-0 bg-[#f8fafc] overflow-x-auto custom-scrollbar p-8 transition-opacity duration-300">
-                    <div class="flex h-full space-x-8 min-w-max">
-                        <!-- A FAZER -->
-                        <div class="kanban-column flex flex-col h-full">
-                            <div class="flex items-center justify-between mb-4 px-2">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
-                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700">A Fazer</h3>
-                                    <span class="bg-slate-200 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600"
-                                        id="count-a_fazer">0</span>
-                                </div>
-                            </div>
-                            <div class="flex-1 space-y-4" id="col-a_fazer" data-status="a_fazer"></div>
-                        </div>
-
-                        <!-- EM ANDAMENTO -->
-                        <div class="kanban-column flex flex-col h-full">
-                            <div class="flex items-center justify-between mb-4 px-2">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
-                                        Em
-                                        Andamento</h3>
-                                    <span
-                                        class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
-                                        id="count-em_andamento">0</span>
-                                </div>
-                            </div>
-                            <div class="flex-1 space-y-4" id="col-em_andamento" data-status="em_andamento"></div>
-                        </div>
-
-                        <!-- AGUARDANDO -->
-                        <div class="kanban-column flex flex-col h-full">
-                            <div class="flex items-center justify-between mb-4 px-2">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
-                                        Aguardando Cliente</h3>
-                                    <span
-                                        class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
-                                        id="count-aguardando">0</span>
-                                </div>
-                            </div>
-                            <div class="flex-1 space-y-4" id="col-aguardando" data-status="aguardando"></div>
-                        </div>
-
-                        <!-- VALIDAÇÃO -->
-                        <div class="kanban-column flex flex-col h-full">
-                            <div class="flex items-center justify-between mb-4 px-2">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
-                                        Em
-                                        Validação</h3>
-                                    <span
-                                        class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
-                                        id="count-validacao">0</span>
-                                </div>
-                            </div>
-                            <div class="flex-1 space-y-4" id="col-validacao" data-status="validacao"></div>
-                        </div>
-
-                        <!-- CONCLUÍDO -->
-                        <div class="kanban-column flex flex-col h-full">
-                            <div class="flex items-center justify-between mb-4 px-2">
-                                <div class="flex items-center space-x-2">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
-                                        Concluído</h3>
-                                    <span
-                                        class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
-                                        id="count-concluida">0</span>
-                                </div>
-                            </div>
-                            <div class="flex-1 space-y-4 opacity-70" id="col-concluida" data-status="concluida"></div>
+    <!-- Main Content Area -->
+    <div class="flex-1 relative overflow-hidden">
+        <!-- Kanban Board -->
+        <div id="view-kanban"
+            class="absolute inset-0 bg-[#f8fafc] overflow-x-auto custom-scrollbar p-8 transition-opacity duration-300">
+            <div class="flex h-full space-x-8 min-w-max">
+                <!-- A FAZER -->
+                <div class="kanban-column flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+                            <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700">A Fazer</h3>
+                            <span class="bg-slate-200 px-2 py-0.5 rounded text-[10px] font-bold text-slate-600"
+                                id="count-a_fazer">0</span>
                         </div>
                     </div>
+                    <div class="flex-1 space-y-4" id="col-a_fazer" data-status="a_fazer"></div>
                 </div>
 
-                <!-- Matrix View -->
-                <div id="view-matrix"
-                    class="absolute inset-0 bg-[#f8fafc] hidden p-8 overflow-y-auto transition-opacity duration-300">
-                    <div class="grid grid-cols-2 grid-rows-2 gap-6 h-full min-h-[600px]">
-                        <!-- Q1-Q4 -->
-                        <div
-                            class="bg-white/60  border border-slate-200  rounded-2xl p-4 flex flex-col relative group overflow-hidden">
-                            <div class="absolute top-0 left-0 w-1 bg-red-600 h-full"></div>
-                            <div class="flex justify-between items-center mb-4 pl-2">
-                                <h3
-                                    class="font-black text-slate-800  flex items-center gap-2 text-xs uppercase tracking-tighter">
-                                    <span class="material-icons-round text-red-600 text-sm">gpp_good</span> Faça Agora
-                                    (Q1)
-                                </h3>
-                                <span
-                                    class="text-[8px] font-black bg-red-600 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Urgente
-                                    + Importante</span>
-                            </div>
-                            <div id="matrix-q1" data-urgent="true" data-important="true"
-                                class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px] px-2"></div>
-                        </div>
-
-                        <div
-                            class="bg-white/60  border border-slate-200  rounded-2xl p-4 flex flex-col relative group overflow-hidden">
-                            <div class="absolute top-0 left-0 w-1 bg-blue-600 h-full"></div>
-                            <div class="flex justify-between items-center mb-4 pl-2">
-                                <h3
-                                    class="font-black text-slate-800  flex items-center gap-2 text-xs uppercase tracking-tighter">
-                                    <span class="material-icons-round text-blue-600 text-sm">event</span> Agende (Q2)
-                                </h3>
-                                <span
-                                    class="text-[8px] font-black bg-blue-600 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Não
-                                    Urgente + Importante</span>
-                            </div>
-                            <div id="matrix-q2" data-urgent="false" data-important="true"
-                                class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px] px-2"></div>
-                        </div>
-
-                        <div
-                            class="bg-white/60  border border-slate-200  rounded-2xl p-4 flex flex-col relative group overflow-hidden">
-                            <div class="absolute top-0 left-0 w-1 bg-orange-500 h-full"></div>
-                            <div class="flex justify-between items-center mb-4 pl-2">
-                                <h3
-                                    class="font-black text-slate-800  flex items-center gap-2 text-xs uppercase tracking-tighter">
-                                    <span class="material-icons-round text-orange-500 text-sm">people</span> Delegue
-                                    (Q3)
-                                </h3>
-                                <span
-                                    class="text-[8px] font-black bg-orange-600 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Urgente
-                                    + Não Importante</span>
-                            </div>
-                            <div id="matrix-q3" data-urgent="true" data-important="false"
-                                class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px] px-2"></div>
-                        </div>
-
-                        <div
-                            class="bg-white/60  border border-slate-200  rounded-2xl p-4 flex flex-col relative group overflow-hidden">
-                            <div class="absolute top-0 left-0 w-1 bg-slate-400 h-full"></div>
-                            <div class="flex justify-between items-center mb-4 pl-2">
-                                <h3
-                                    class="font-black text-slate-800  flex items-center gap-2 text-xs uppercase tracking-tighter">
-                                    <span class="material-icons-round text-slate-600 text-sm">delete_outline</span>
-                                    Elimine (Q4)
-                                </h3>
-                                <span
-                                    class="text-[8px] font-black bg-slate-400 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Não
-                                    Urgente + Não Importante</span>
-                            </div>
-                            <div id="matrix-q4" data-urgent="false" data-important="false"
-                                class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px] px-2"></div>
+                <!-- EM ANDAMENTO -->
+                <div class="kanban-column flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                            <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
+                                Em
+                                Andamento</h3>
+                            <span class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
+                                id="count-em_andamento">0</span>
                         </div>
                     </div>
+                    <div class="flex-1 space-y-4" id="col-em_andamento" data-status="em_andamento"></div>
+                </div>
+
+                <!-- AGUARDANDO -->
+                <div class="kanban-column flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                            <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
+                                Aguardando Cliente</h3>
+                            <span class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
+                                id="count-aguardando">0</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 space-y-4" id="col-aguardando" data-status="aguardando"></div>
+                </div>
+
+                <!-- VALIDAÇÃO -->
+                <div class="kanban-column flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                            <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
+                                Em
+                                Validação</h3>
+                            <span class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
+                                id="count-validacao">0</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 space-y-4" id="col-validacao" data-status="validacao"></div>
+                </div>
+
+                <!-- CONCLUÍDO -->
+                <div class="kanban-column flex flex-col h-full">
+                    <div class="flex items-center justify-between mb-4 px-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                            <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
+                                Concluído</h3>
+                            <span class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
+                                id="count-concluida">0</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 space-y-4 opacity-70" id="col-concluida" data-status="concluida"></div>
                 </div>
             </div>
         </div>
 
-
-        <!-- Floating Notification (Hidden by default) -->
-        <div id="overdue-notification"
-            class="fixed bottom-6 right-6 hidden items-center bg-white  border border-slate-200  rounded-lg p-3 shadow-2xl animate-bounce z-50">
-            <div class="w-2 h-2 rounded-full bg-primary mr-3"></div>
-            <p class="text-xs font-medium text-slate-700 ">Você tem <span id="overdue-count">0</span>
-                tarefas
-                atrasadas hoje.</p>
-            <button onclick="document.getElementById('overdue-notification').classList.add('hidden')"
-                class="ml-4 text-slate-400 hover:text-slate-100">
-                <span class="material-icons-round text-sm">close</span>
-            </button>
-        </div>
-
-        <!-- New Task Modal -->
-        <div id="newTaskModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title"
-            role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeNewTaskModal()"
-                    aria-hidden="true"></div>
-
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <!-- Matrix View -->
+        <div id="view-matrix"
+            class="absolute inset-0 bg-[#f8fafc] hidden p-8 overflow-y-auto transition-opacity duration-300">
+            <div class="grid grid-cols-2 grid-rows-2 gap-6 h-full min-h-[600px]">
+                <!-- Q1-Q4 -->
+                <div
+                    class="bg-white/60  border border-slate-200  rounded-2xl p-4 flex flex-col relative group overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 bg-red-600 h-full"></div>
+                    <div class="flex justify-between items-center mb-4 pl-2">
+                        <h3
+                            class="font-black text-slate-800  flex items-center gap-2 text-xs uppercase tracking-tighter">
+                            <span class="material-icons-round text-red-600 text-sm">gpp_good</span> Faça Agora
+                            (Q1)
+                        </h3>
+                        <span
+                            class="text-[8px] font-black bg-red-600 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Urgente
+                            + Importante</span>
+                    </div>
+                    <div id="matrix-q1" data-urgent="true" data-important="true"
+                        class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px] px-2"></div>
+                </div>
 
                 <div
-                    class="inline-block align-bottom bg-white  rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-slate-200 ">
-                    <div class="bg-white  px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div
-                                class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100  sm:mx-0 sm:h-10 sm:w-10">
-                                <span class="material-icons-round text-primary">add_task</span>
+                    class="bg-white/60  border border-slate-200  rounded-2xl p-4 flex flex-col relative group overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 bg-blue-600 h-full"></div>
+                    <div class="flex justify-between items-center mb-4 pl-2">
+                        <h3
+                            class="font-black text-slate-800  flex items-center gap-2 text-xs uppercase tracking-tighter">
+                            <span class="material-icons-round text-blue-600 text-sm">event</span> Agende (Q2)
+                        </h3>
+                        <span
+                            class="text-[8px] font-black bg-blue-600 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Não
+                            Urgente + Importante</span>
+                    </div>
+                    <div id="matrix-q2" data-urgent="false" data-important="true"
+                        class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px] px-2"></div>
+                </div>
+
+                <div
+                    class="bg-white/60  border border-slate-200  rounded-2xl p-4 flex flex-col relative group overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 bg-orange-500 h-full"></div>
+                    <div class="flex justify-between items-center mb-4 pl-2">
+                        <h3
+                            class="font-black text-slate-800  flex items-center gap-2 text-xs uppercase tracking-tighter">
+                            <span class="material-icons-round text-orange-500 text-sm">people</span> Delegue
+                            (Q3)
+                        </h3>
+                        <span
+                            class="text-[8px] font-black bg-orange-600 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Urgente
+                            + Não Importante</span>
+                    </div>
+                    <div id="matrix-q3" data-urgent="true" data-important="false"
+                        class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px] px-2"></div>
+                </div>
+
+                <div
+                    class="bg-white/60  border border-slate-200  rounded-2xl p-4 flex flex-col relative group overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 bg-slate-400 h-full"></div>
+                    <div class="flex justify-between items-center mb-4 pl-2">
+                        <h3
+                            class="font-black text-slate-800  flex items-center gap-2 text-xs uppercase tracking-tighter">
+                            <span class="material-icons-round text-slate-600 text-sm">delete_outline</span>
+                            Elimine (Q4)
+                        </h3>
+                        <span
+                            class="text-[8px] font-black bg-slate-400 text-white px-2 py-0.5 rounded uppercase tracking-tighter">Não
+                            Urgente + Não Importante</span>
+                    </div>
+                    <div id="matrix-q4" data-urgent="false" data-important="false"
+                        class="flex-1 space-y-3 overflow-y-auto custom-scrollbar min-h-[100px] px-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Floating Notification (Hidden by default) -->
+<div id="overdue-notification"
+    class="fixed bottom-6 right-6 hidden items-center bg-white  border border-slate-200  rounded-lg p-3 shadow-2xl animate-bounce z-50">
+    <div class="w-2 h-2 rounded-full bg-primary mr-3"></div>
+    <p class="text-xs font-medium text-slate-700 ">Você tem <span id="overdue-count">0</span>
+        tarefas
+        atrasadas hoje.</p>
+    <button onclick="document.getElementById('overdue-notification').classList.add('hidden')"
+        class="ml-4 text-slate-400 hover:text-slate-100">
+        <span class="material-icons-round text-sm">close</span>
+    </button>
+</div>
+
+<!-- New Task Modal -->
+<div id="newTaskModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeNewTaskModal()"
+            aria-hidden="true"></div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div
+            class="inline-block align-bottom bg-white  rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-slate-200 ">
+            <div class="bg-white  px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div
+                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100  sm:mx-0 sm:h-10 sm:w-10">
+                        <span class="material-icons-round text-primary">add_task</span>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-slate-900 " id="modal-title">
+                            Nova Tarefa
+                        </h3>
+                        <div class="mt-4 space-y-4">
+                            <!-- Title -->
+                            <div>
+                                <label for="task-title" class="block text-sm font-medium text-slate-700 ">Título</label>
+                                <input type="text" id="task-title"
+                                    class="mt-1 flex-1 block w-full rounded-md border-gray-300    focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
+                                    placeholder="O que precisa ser feito?">
                             </div>
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-slate-900 " id="modal-title">
-                                    Nova Tarefa
-                                </h3>
-                                <div class="mt-4 space-y-4">
-                                    <!-- Title -->
-                                    <div>
-                                        <label for="task-title"
-                                            class="block text-sm font-medium text-slate-700 ">Título</label>
-                                        <input type="text" id="task-title"
-                                            class="mt-1 flex-1 block w-full rounded-md border-gray-300    focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-                                            placeholder="O que precisa ser feito?">
-                                    </div>
 
-                                    <!-- Description -->
-                                    <div>
-                                        <label for="task-desc"
-                                            class="block text-sm font-medium text-slate-700 ">Descrição
-                                            (Opcional)</label>
-                                        <textarea id="task-desc" rows="2"
-                                            class="mt-1 block w-full rounded-md border-gray-300    focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-                                            placeholder="Detalhes..."></textarea>
-                                    </div>
+                            <!-- Description -->
+                            <div>
+                                <label for="task-desc" class="block text-sm font-medium text-slate-700 ">Descrição
+                                    (Opcional)</label>
+                                <textarea id="task-desc" rows="2"
+                                    class="mt-1 block w-full rounded-md border-gray-300    focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
+                                    placeholder="Detalhes..."></textarea>
+                            </div>
 
-                                    <!-- Due Date -->
-                                    <div>
-                                        <label for="task-due" class="block text-sm font-medium text-slate-700 ">Data de
-                                            Vencimento</label>
-                                        <input type="datetime-local" id="task-due"
-                                            class="mt-1 block w-full rounded-md border-gray-300    focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
-                                    </div>
+                            <!-- Due Date -->
+                            <div>
+                                <label for="task-due" class="block text-sm font-medium text-slate-700 ">Data de
+                                    Vencimento</label>
+                                <input type="datetime-local" id="task-due"
+                                    class="mt-1 block w-full rounded-md border-gray-300    focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                            </div>
 
-                                    <!-- Eisenhower Matrix Selection -->
-                                    <!-- Assign To Field -->
-                                    <div class="mb-4">
-                                        <label for="task-assignee"
-                                            class="block text-sm font-medium text-slate-700 ">Atribuir
-                                            a</label>
-                                        <select id="task-assignee"
-                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm   ">
-                                            <option value="{{ current_user.id }}">Mim ({{ current_user.name }})</option>
-                                            {% for user in users %}
-                                            {% if user.id != current_user.id %}
-                                            <option value="{{ user.id }}">{{ user.name }}</option>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                    </div>
+                            <!-- Eisenhower Matrix Selection -->
+                            <!-- Assign To Field -->
+                            <div class="mb-4">
+                                <label for="task-assignee" class="block text-sm font-medium text-slate-700 ">Atribuir
+                                    a</label>
+                                <select id="task-assignee"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm   ">
+                                    <option value="{{ current_user.id }}">Mim ({{ current_user.name }})</option>
+                                    {% for user in users %}
+                                    {% if user.id != current_user.id %}
+                                    <option value="{{ user.id }}">{{ user.name }}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-                                    <!-- Priority Matrix -->
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-slate-700  mb-2">Matriz
-                                            de Prioridade</label>
-                                        <div class="flex gap-4">
-                                            <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" id="task-urgent"
-                                                    class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4">
-                                                <span class="text-sm text-slate-600 ">É Urgente?
-                                                    🔥</span>
-                                            </label>
-                                            <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="checkbox" id="task-important"
-                                                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
-                                                <span class="text-sm text-slate-600 ">É Importante?
-                                                    ⭐</span>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <input type="hidden" id="task-id">
-                                </div>
-                                <div class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                    <button type="button" onclick="submitTask()" id="btn-save-task"
-                                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
-                                        Salvar Tarefa
-                                    </button>
-                                    <button type="button" onclick="closeNewTaskModal()"
-                                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                                        Cancelar
-                                    </button>
+                            <!-- Priority Matrix -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-slate-700  mb-2">Matriz
+                                    de Prioridade</label>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="task-urgent"
+                                            class="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4">
+                                        <span class="text-sm text-slate-600 ">É Urgente?
+                                            🔥</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" id="task-important"
+                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+                                        <span class="text-sm text-slate-600 ">É Importante?
+                                            ⭐</span>
+                                    </label>
                                 </div>
                             </div>
+
+                            <input type="hidden" id="task-id">
+                        </div>
+                        <div class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button type="button" onclick="submitTask()" id="btn-save-task"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                Salvar Tarefa
+                            </button>
+                            <button type="button" onclick="closeNewTaskModal()"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                Cancelar
+                            </button>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Delegate Modal -->
-                    <div id="delegateModal" class="hidden fixed inset-0 z-50 overflow-y-auto"
-                        aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                        <div
-                            class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
-                            </div>
-                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen"
-                                aria-hidden="true">&#8203;</span>
-                            <div
-                                class="inline-block align-bottom bg-white  rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                                <div class="bg-white  px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                    <h3 class="text-lg leading-6 font-medium text-slate-900  mb-4">
-                                        Delegar Tarefa
-                                    </h3>
-                                    <p class="text-sm text-slate-500  mb-4">Selecione o usuário para
-                                        quem
-                                        deseja delegar esta tarefa.</p>
-                                    <select id="delegate-select"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm   ">
-                                        {% for user in users %}
-                                        {% if user.id != current_user.id %}
-                                        <option value="{{ user.id }}">{{ user.name }}</option>
-                                        {% endif %}
-                                        {% endfor %}
-                                    </select>
-                                    <input type="hidden" id="delegate-task-id">
-                                </div>
-                                <div class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                    <button type="button" onclick="confirmDelegate()"
-                                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Delegar</button>
-                                    <button type="button"
-                                        onclick="document.getElementById('delegateModal').classList.add('hidden')"
-                                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancelar</button>
-                                </div>
-                            </div>
+            <!-- Delegate Modal -->
+            <div id="delegateModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
+                <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true">
+                    </div>
+                    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                    <div
+                        class="inline-block align-bottom bg-white  rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                        <div class="bg-white  px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <h3 class="text-lg leading-6 font-medium text-slate-900  mb-4">
+                                Delegar Tarefa
+                            </h3>
+                            <p class="text-sm text-slate-500  mb-4">Selecione o usuário para
+                                quem
+                                deseja delegar esta tarefa.</p>
+                            <select id="delegate-select"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm   ">
+                                {% for user in users %}
+                                {% if user.id != current_user.id %}
+                                <option value="{{ user.id }}">{{ user.name }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" id="delegate-task-id">
+                        </div>
+                        <div class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button type="button" onclick="confirmDelegate()"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Delegar</button>
+                            <button type="button"
+                                onclick="document.getElementById('delegateModal').classList.add('hidden')"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancelar</button>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
-                    <script>
-                        let currentView = 'kanban';
-                        let allTasksData = {};
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+            <script>
+                let currentView = 'kanban';
+                let allTasksData = {};
 
-                        document.addEventListener('DOMContentLoaded', () => {
-                            loadKanbanTasks();
-                        });
+                document.addEventListener('DOMContentLoaded', () => {
+                    loadKanbanTasks();
+                });
 
-                        function switchView(view) {
-                            currentView = view;
-                            const kanbanView = document.getElementById('view-kanban');
-                            const matrixView = document.getElementById('view-matrix');
-                            const btnKanban = document.getElementById('btn-view-kanban');
-                            const btnMatrix = document.getElementById('btn-view-matrix');
+                function switchView(view) {
+                    currentView = view;
+                    const kanbanView = document.getElementById('view-kanban');
+                    const matrixView = document.getElementById('view-matrix');
+                    const btnKanban = document.getElementById('btn-view-kanban');
+                    const btnMatrix = document.getElementById('btn-view-matrix');
 
-                            if (view === 'kanban') {
-                                kanbanView.classList.remove('hidden', 'view-hidden');
-                                matrixView.classList.add('hidden', 'view-hidden');
+                    if (view === 'kanban') {
+                        kanbanView.classList.remove('hidden', 'view-hidden');
+                        matrixView.classList.add('hidden', 'view-hidden');
 
-                                btnKanban.className = "px-4 py-2 rounded-md text-sm font-bold bg-white  shadow-sm text-slate-700  transition-all";
-                                btnMatrix.className = "px-4 py-2 rounded-md text-sm font-bold text-slate-500 hover:text-slate-700  :text-slate-200 transition-all";
-                            } else {
-                                kanbanView.classList.add('hidden', 'view-hidden');
-                                matrixView.classList.remove('hidden', 'view-hidden');
+                        btnKanban.className = "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-white shadow-sm text-slate-800 transition-all border border-transparent";
+                        btnMatrix.className = "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all";
+                    } else {
+                        kanbanView.classList.add('hidden', 'view-hidden');
+                        matrixView.classList.remove('hidden', 'view-hidden');
 
-                                btnMatrix.className = "px-4 py-2 rounded-md text-sm font-bold bg-white  shadow-sm text-slate-700  transition-all";
-                                btnKanban.className = "px-4 py-2 rounded-md text-sm font-bold text-slate-500 hover:text-slate-700  :text-slate-200 transition-all";
-                            }
-                        }
+                        btnMatrix.className = "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest bg-white shadow-sm text-slate-800 transition-all border border-transparent";
+                        btnKanban.className = "px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all";
+                    }
+                }
 
-                        function loadKanbanTasks() {
-                            const client = document.getElementById('filter-client').value;
-                            const pipeline = document.getElementById('filter-pipeline').value;
-                            const start = document.getElementById('filter-start').value;
-                            const end = document.getElementById('filter-end').value;
+                function getInitials(name) {
+                    if (!name) return 'U';
+                    return name.trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                }
 
-                            const params = new URLSearchParams({
-                                client_id: client,
-                                pipeline_stage_id: pipeline,
-                                date_start: start,
-                                date_end: end
-                            });
+                function getSourceBadgeColor(source) {
+                    switch (source?.toUpperCase()) {
+                        case 'CRM': return 'bg-blue-100 text-blue-700';
+                        case 'FORM': return 'bg-purple-100 text-purple-700';
+                        case 'GOOGLE': return 'bg-green-100 text-green-700';
+                        default: return 'bg-slate-100 text-slate-700';
+                    }
+                }
 
-                            fetch(`/tasks/api/kanban?${params.toString()}`)
-                                .then(r => r.json())
-                                .then(data => {
-                                    allTasksData = data; // Keep this for other functions that might use it
-                                    renderKanban(data);
-                                    renderMatrix(data);
-                                    updateStats(data);
-                                    initSortable();
-                                    initMatrixSortable();
-                                    checkOverdue(data);
-                                    updateProductivityScore(data);
-                                })
-                                .catch(err => console.error("Error loading kanban:", err));
-                        }
+                function formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return dateStr;
+                    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                }
 
-                        let allTasksGlobal = {};
+                function loadKanbanTasks() {
+                    const client = document.getElementById('filter-client').value;
+                    const pipeline = document.getElementById('filter-pipeline').value;
+                    const start = document.getElementById('filter-start').value;
+                    const end = document.getElementById('filter-end').value;
 
-                        function renderKanban(data) {
-                            allTasksGlobal = {}; // Reset global map
-                            Object.values(data).flat().forEach(t => allTasksGlobal[t.id] = t);
+                    const params = new URLSearchParams({
+                        client_id: client,
+                        pipeline_stage_id: pipeline,
+                        date_start: start,
+                        date_end: end
+                    });
 
-                            Object.keys(data).forEach(status => {
-                                const container = document.getElementById(`col-${status}`);
-                                const counter = document.getElementById(`count-${status}`);
-                                if (!container) return;
+                    fetch(`/tasks/api/kanban?${params.toString()}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            allTasksData = data; // Keep this for other functions that might use it
+                            renderKanban(data);
+                            renderMatrix(data);
+                            updateStats(data);
+                            initSortable();
+                            initMatrixSortable();
+                            checkOverdue(data);
+                            updateProductivityScore(data);
+                        })
+                        .catch(err => console.error("Error loading kanban:", err));
+                }
 
-                                if (counter) counter.innerText = data[status].length;
-                                container.innerHTML = data[status].map(task => createTaskCard(task)).join('');
-                            });
-                        }
+                let allTasksGlobal = {};
 
-                        function renderMatrix(data) {
-                            // Flatten all tasks
-                            const allTasks = Object.values(data).flat();
-                            const pendingTasks = allTasks.filter(t => t.status !== 'concluida');
+                function renderKanban(data) {
+                    allTasksGlobal = {}; // Reset global map
+                    Object.values(data).flat().forEach(t => allTasksGlobal[t.id] = t);
 
-                            const q1 = [], q2 = [], q3 = [], q4 = [];
+                    Object.keys(data).forEach(status => {
+                        const container = document.getElementById(`col-${status}`);
+                        const counter = document.getElementById(`count-${status}`);
+                        if (!container) return;
 
-                            pendingTasks.forEach(task => {
-                                if (task.is_urgent && task.is_important) q1.push(task);
-                                else if (!task.is_urgent && task.is_important) q2.push(task);
-                                else if (task.is_urgent && !task.is_important) q3.push(task);
-                                else q4.push(task);
-                            });
+                        if (counter) counter.innerText = data[status].length;
+                        container.innerHTML = data[status].map(task => createTaskCard(task)).join('');
+                    });
+                }
 
-                            renderQuadrant('matrix-q1', q1, 'gpp_good', 'Faça AGORA');
-                            renderQuadrant('matrix-q2', q2, 'event', 'Agende');
-                            renderQuadrant('matrix-q3', q3, 'people', 'Delegue');
-                            renderQuadrant('matrix-q4', q4, 'low_priority', 'Elimine');
-                        }
+                function renderMatrix(data) {
+                    // Flatten all tasks
+                    const allTasks = Object.values(data).flat();
+                    const pendingTasks = allTasks.filter(t => t.status !== 'concluida');
 
-                        function updateStats(data) {
-                            const allTasks = Object.values(data).flat();
-                            const total = allTasks.length;
-                            const completed = allTasks.filter(t => t.status === 'concluida').length;
-                            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+                    const q1 = [], q2 = [], q3 = [], q4 = [];
 
-                            const statsText = document.getElementById('header-stats-text');
-                            const progressBar = document.getElementById('header-progress-bar');
-                            const progressPercent = document.getElementById('header-progress-percent');
+                    pendingTasks.forEach(task => {
+                        if (task.is_urgent && task.is_important) q1.push(task);
+                        else if (!task.is_urgent && task.is_important) q2.push(task);
+                        else if (task.is_urgent && !task.is_important) q3.push(task);
+                        else q4.push(task);
+                    });
 
-                            if (statsText) statsText.innerText = `${completed}/${total}`;
-                            if (progressBar) progressBar.style.width = `${percent}%`;
-                            if (progressPercent) progressPercent.innerText = `${percent}%`;
-                        }
+                    renderQuadrant('matrix-q1', q1, 'gpp_good', 'Faça AGORA');
+                    renderQuadrant('matrix-q2', q2, 'event', 'Agende');
+                    renderQuadrant('matrix-q3', q3, 'people', 'Delegue');
+                    renderQuadrant('matrix-q4', q4, 'low_priority', 'Elimine');
+                }
 
-                        function renderQuadrant(id, tasks, icon, label) {
-                            const container = document.getElementById(id);
-                            if (!container) return;
+                function updateStats(data) {
+                    const allTasks = Object.values(data).flat();
+                    const total = allTasks.length;
+                    const completed = allTasks.filter(t => t.status === 'concluida').length;
+                    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-                            if (tasks.length === 0) {
-                                container.innerHTML = `
+                    const statsText = document.getElementById('header-stats-text');
+                    const progressBar = document.getElementById('header-progress-bar');
+                    const progressPercent = document.getElementById('header-progress-percent');
+
+                    if (statsText) statsText.innerText = `${completed}/${total}`;
+                    if (progressBar) progressBar.style.width = `${percent}%`;
+                    if (progressPercent) progressPercent.innerText = `${percent}%`;
+                }
+
+                function renderQuadrant(id, tasks, icon, label) {
+                    const container = document.getElementById(id);
+                    if (!container) return;
+
+                    if (tasks.length === 0) {
+                        container.innerHTML = `
                             <div class="flex flex-col items-center justify-center h-full opacity-40 py-8">
                                 <span class="material-icons-round empty-state-icon mb-2">${icon}</span>
                                 <p class="text-sm font-medium">Nada para ${label.toLowerCase()}</p>
                             </div>
                         `;
-                            } else {
-                                container.innerHTML = tasks.map(t => createTaskCard(t)).join('');
-                            }
-                        }
+                    } else {
+                        container.innerHTML = tasks.map(t => createTaskCard(t)).join('');
+                    }
+                }
 
-                        function createTaskCard(task) {
-                            const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'concluida';
-                            const overdueClass = isOverdue ? 'overdue-glow border-red-500' : 'hover:border-red-500/50';
-                            const badgeColor = getSourceBadgeColor(task.source_type);
+                function createTaskCard(task) {
+                    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'concluida';
+                    const overdueClass = isOverdue ? 'overdue-glow border-red-500' : 'hover:border-red-500/50';
+                    const badgeColor = getSourceBadgeColor(task.source_type);
 
-                            let priorityIcon = '';
-                            if (task.is_urgent && task.is_important) {
-                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                    let priorityIcon = '';
+                    if (task.is_urgent && task.is_important) {
+                        priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
                                     <span class="material-icons-round text-red-500 text-sm" title="Urgente & Importante">gpp_good</span>
                                     <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-[10px] font-bold text-red-600">Q1</div>
                                 </div>`;
-                            } else if (!task.is_urgent && task.is_important) {
-                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                    } else if (!task.is_urgent && task.is_important) {
+                        priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
                                     <span class="material-icons-round text-blue-500 text-sm" title="Importante">event</span>
                                     <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">Q2</div>
                                 </div>`;
-                            } else if (task.is_urgent && !task.is_important) {
-                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                    } else if (task.is_urgent && !task.is_important) {
+                        priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
                                     <span class="material-icons-round text-orange-500 text-sm" title="Urgente">update</span>
                                     <div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px] font-bold text-orange-600">Q3</div>
                                 </div>`;
-                            } else {
-                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                    } else {
+                        priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
                                     <span class="material-icons-round text-slate-400 text-sm" title="Baixa Prioridade">low_priority</span>
                                     <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">Q4</div>
                                 </div>`;
-                            }
+                    }
 
-                            const initials = getInitials(task.assigned_user_name || 'U');
+                    const initials = getInitials(task.assigned_user_name || 'U');
 
-                            return `
+                    return `
                                 <div onclick="openEditTaskModalById(${task.id})" 
                                      class="task-card bg-white p-4 rounded-xl border border-slate-200 card-shadow cursor-pointer transition-all group flex flex-col ${overdueClass} mb-3" 
                                      data-id="${task.id}">
@@ -685,212 +699,212 @@
                                     ${priorityIcon}
                                 </div>
                             `;
-                        }
+                }
 
-                        function openEditTaskModalById(id) {
-                            const task = allTasksGlobal[id];
-                            if (task) openEditTaskModal(task);
-                        }
+                function openEditTaskModalById(id) {
+                    const task = allTasksGlobal[id];
+                    if (task) openEditTaskModal(task);
+                }
 
-                        function getInitials(name) {
-                            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-                        }
+                function getInitials(name) {
+                    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                }
 
-                        function getSourceBadgeColor(type) {
-                            const colors = {
-                                'LEAD': 'bg-orange-100  text-orange-600 ',
-                                'OS': 'bg-blue-100  text-blue-600 ',
-                                'CONTRATO': 'bg-purple-100  text-purple-600 ',
-                                'MANUAL': 'bg-slate-100  text-slate-500 '
-                            };
-                            return colors[type] || colors['MANUAL'];
-                        }
+                function getSourceBadgeColor(type) {
+                    const colors = {
+                        'LEAD': 'bg-orange-100  text-orange-600 ',
+                        'OS': 'bg-blue-100  text-blue-600 ',
+                        'CONTRATO': 'bg-purple-100  text-purple-600 ',
+                        'MANUAL': 'bg-slate-100  text-slate-500 '
+                    };
+                    return colors[type] || colors['MANUAL'];
+                }
 
-                        function formatDate(dateStr) {
-                            if (!dateStr) return '';
-                            const [y, m, d] = dateStr.split('-');
-                            return `${d}/${m}`;
-                        }
+                function formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const [y, m, d] = dateStr.split('-');
+                    return `${d}/${m}`;
+                }
 
-                        function initSortable() {
-                            ['a_fazer', 'em_andamento', 'aguardando', 'validacao', 'concluida'].forEach(status => {
-                                const el = document.getElementById(`col-${status}`);
-                                if (!el) return;
+                function initSortable() {
+                    ['a_fazer', 'em_andamento', 'aguardando', 'validacao', 'concluida'].forEach(status => {
+                        const el = document.getElementById(`col-${status}`);
+                        if (!el) return;
 
-                                new Sortable(el, {
-                                    group: 'kanban',
-                                    animation: 150,
-                                    ghostClass: 'opacity-50',
-                                    onEnd: function (evt) {
-                                        const itemEl = evt.item;
-                                        const taskId = itemEl.getAttribute('data-id');
-                                        const newStatus = evt.to.getAttribute('data-status');
-                                        updateTask(taskId, { status: newStatus });
-                                    }
-                                });
-                            });
-                        }
-
-                        function initMatrixSortable() {
-                            ['matrix-q1', 'matrix-q2', 'matrix-q3', 'matrix-q4'].forEach(id => {
-                                const el = document.getElementById(id);
-                                if (!el) return;
-
-                                new Sortable(el, {
-                                    group: 'matrix',
-                                    animation: 150,
-                                    ghostClass: 'opacity-50',
-                                    onEnd: function (evt) {
-                                        const itemEl = evt.item;
-                                        const taskId = itemEl.getAttribute('data-id');
-                                        const toEl = evt.to;
-                                        const targetId = toEl.id;
-
-                                        const isUrgent = toEl.getAttribute('data-urgent') === 'true';
-                                        const isImportant = toEl.getAttribute('data-important') === 'true';
-
-                                        if (targetId === 'matrix-q3') {
-                                            openDelegateModal(taskId);
-                                        }
-
-                                        updateTask(taskId, { is_urgent: isUrgent, is_important: isImportant });
-                                    }
-                                });
-                            });
-                        }
-
-                        function openDelegateModal(taskId) {
-                            document.getElementById('delegate-task-id').value = taskId;
-                            document.getElementById('delegateModal').classList.remove('hidden');
-                        }
-
-                        function confirmDelegate() {
-                            const taskId = document.getElementById('delegate-task-id').value;
-                            const userId = document.getElementById('delegate-select').value;
-                            if (!userId) return;
-
-                            updateTask(taskId, { assigned_to_id: userId });
-                            document.getElementById('delegateModal').classList.add('hidden');
-                        }
-
-                        function updateTask(id, payload) {
-                            fetch(`/tasks/api/move/${id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            }).then(r => {
-                                if (!r.ok) console.error('Erro ao mover');
-                                else loadKanbanTasks();
-                            });
-                        }
-
-                        function checkOverdue(data) {
-                            let count = 0;
-                            Object.values(data).flat().forEach(t => {
-                                if (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'concluida') count++;
-                            });
-
-                            if (count > 0) {
-                                document.getElementById('overdue-count').innerText = count;
-                                document.getElementById('overdue-notification').classList.remove('hidden');
-                                document.getElementById('overdue-notification').classList.add('flex');
+                        new Sortable(el, {
+                            group: 'kanban',
+                            animation: 150,
+                            ghostClass: 'opacity-50',
+                            onEnd: function (evt) {
+                                const itemEl = evt.item;
+                                const taskId = itemEl.getAttribute('data-id');
+                                const newStatus = evt.to.getAttribute('data-status');
+                                updateTask(taskId, { status: newStatus });
                             }
-                        }
+                        });
+                    });
+                }
 
-                        function openNewTaskModal() {
-                            document.getElementById('newTaskModal').classList.remove('hidden');
-                            document.getElementById('modal-title').innerText = 'Nova Tarefa';
-                            document.getElementById('btn-save-task').innerText = 'Criar Tarefa';
-                            document.getElementById('task-id').value = '';
-                            document.getElementById('task-title').value = '';
-                            document.getElementById('task-desc').value = '';
-                            document.getElementById('task-due').value = '';
-                            document.getElementById('task-urgent').checked = false;
-                            document.getElementById('task-important').checked = false;
-                            document.getElementById('task-assignee').value = "{{ current_user.id }}";
-                        }
+                function initMatrixSortable() {
+                    ['matrix-q1', 'matrix-q2', 'matrix-q3', 'matrix-q4'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (!el) return;
 
-                        function openEditTaskModal(task) {
-                            document.getElementById('task-id').value = task.id;
-                            document.getElementById('task-title').value = task.title;
-                            document.getElementById('task-desc').value = task.description || '';
-                            document.getElementById('task-due').value = task.due_date ? task.due_date.replace(' ', 'T') : '';
-                            document.getElementById('task-urgent').checked = task.is_urgent;
-                            document.getElementById('task-important').checked = task.is_important;
-                            // Assignee population requires task assigned_to_id which we might not have in JS task object yet?
-                            // Let's assume user.id for now or leave as is if not available.
-                            // I will assume assigned_to_id is available in task response (I added it to backend serializer next step).
-                            if (task.assigned_to_id) document.getElementById('task-assignee').value = task.assigned_to_id;
+                        new Sortable(el, {
+                            group: 'matrix',
+                            animation: 150,
+                            ghostClass: 'opacity-50',
+                            onEnd: function (evt) {
+                                const itemEl = evt.item;
+                                const taskId = itemEl.getAttribute('data-id');
+                                const toEl = evt.to;
+                                const targetId = toEl.id;
 
-                            document.getElementById('newTaskModal').classList.remove('hidden');
-                            document.getElementById('modal-title').innerText = 'Editar Tarefa';
-                            document.getElementById('btn-save-task').innerText = 'Salvar Alterações';
-                        }
+                                const isUrgent = toEl.getAttribute('data-urgent') === 'true';
+                                const isImportant = toEl.getAttribute('data-important') === 'true';
 
-                        function closeNewTaskModal() {
-                            document.getElementById('newTaskModal').classList.add('hidden');
-                        }
+                                if (targetId === 'matrix-q3') {
+                                    openDelegateModal(taskId);
+                                }
 
-                        function submitTask() {
-                            const id = document.getElementById('task-id').value;
-                            const title = document.getElementById('task-title').value;
-                            const description = document.getElementById('task-desc').value;
-                            const dueDate = document.getElementById('task-due').value;
-                            const isUrgent = document.getElementById('task-urgent').checked;
-                            const isImportant = document.getElementById('task-important').checked;
-                            const assignedTo = document.getElementById('task-assignee').value;
-
-                            if (!title) {
-                                alert('Por favor, insira um título.');
-                                return;
+                                updateTask(taskId, { is_urgent: isUrgent, is_important: isImportant });
                             }
+                        });
+                    });
+                }
 
-                            const payload = {
-                                title: title,
-                                description: description,
-                                due_date: dueDate || null,
-                                is_urgent: isUrgent,
-                                is_important: isImportant,
-                                assigned_to_id: assignedTo,
-                                source_type: 'MANUAL',
-                                status: 'a_fazer'
-                            };
+                function openDelegateModal(taskId) {
+                    document.getElementById('delegate-task-id').value = taskId;
+                    document.getElementById('delegateModal').classList.remove('hidden');
+                }
 
-                            const url = id ? `/tasks/api/move/${id}` : '/tasks/api/create';
+                function confirmDelegate() {
+                    const taskId = document.getElementById('delegate-task-id').value;
+                    const userId = document.getElementById('delegate-select').value;
+                    if (!userId) return;
 
-                            fetch(url, {
-                                method: id ? 'PATCH' : 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            })
-                                .then(r => r.json())
-                                .then(data => {
-                                    if (data.status === 'success' || data.task_id) {
-                                        closeNewTaskModal();
-                                        loadKanbanTasks();
-                                    } else {
-                                        alert('Erro: ' + (data.error || 'Unknown'));
-                                    }
-                                });
-                        }
-                        function updateProductivityScore(data) {
-                            const allTasks = Object.values(data).flat();
-                            if (allTasks.length === 0) {
-                                document.getElementById('productivity-score').innerText = '100';
-                                return;
+                    updateTask(taskId, { assigned_to_id: userId });
+                    document.getElementById('delegateModal').classList.add('hidden');
+                }
+
+                function updateTask(id, payload) {
+                    fetch(`/tasks/api/move/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).then(r => {
+                        if (!r.ok) console.error('Erro ao mover');
+                        else loadKanbanTasks();
+                    });
+                }
+
+                function checkOverdue(data) {
+                    let count = 0;
+                    Object.values(data).flat().forEach(t => {
+                        if (t.due_date && new Date(t.due_date) < new Date() && t.status !== 'concluida') count++;
+                    });
+
+                    if (count > 0) {
+                        document.getElementById('overdue-count').innerText = count;
+                        document.getElementById('overdue-notification').classList.remove('hidden');
+                        document.getElementById('overdue-notification').classList.add('flex');
+                    }
+                }
+
+                function openNewTaskModal() {
+                    document.getElementById('newTaskModal').classList.remove('hidden');
+                    document.getElementById('modal-title').innerText = 'Nova Tarefa';
+                    document.getElementById('btn-save-task').innerText = 'Criar Tarefa';
+                    document.getElementById('task-id').value = '';
+                    document.getElementById('task-title').value = '';
+                    document.getElementById('task-desc').value = '';
+                    document.getElementById('task-due').value = '';
+                    document.getElementById('task-urgent').checked = false;
+                    document.getElementById('task-important').checked = false;
+                    document.getElementById('task-assignee').value = "{{ current_user.id }}";
+                }
+
+                function openEditTaskModal(task) {
+                    document.getElementById('task-id').value = task.id;
+                    document.getElementById('task-title').value = task.title;
+                    document.getElementById('task-desc').value = task.description || '';
+                    document.getElementById('task-due').value = task.due_date ? task.due_date.replace(' ', 'T') : '';
+                    document.getElementById('task-urgent').checked = task.is_urgent;
+                    document.getElementById('task-important').checked = task.is_important;
+                    // Assignee population requires task assigned_to_id which we might not have in JS task object yet?
+                    // Let's assume user.id for now or leave as is if not available.
+                    // I will assume assigned_to_id is available in task response (I added it to backend serializer next step).
+                    if (task.assigned_to_id) document.getElementById('task-assignee').value = task.assigned_to_id;
+
+                    document.getElementById('newTaskModal').classList.remove('hidden');
+                    document.getElementById('modal-title').innerText = 'Editar Tarefa';
+                    document.getElementById('btn-save-task').innerText = 'Salvar Alterações';
+                }
+
+                function closeNewTaskModal() {
+                    document.getElementById('newTaskModal').classList.add('hidden');
+                }
+
+                function submitTask() {
+                    const id = document.getElementById('task-id').value;
+                    const title = document.getElementById('task-title').value;
+                    const description = document.getElementById('task-desc').value;
+                    const dueDate = document.getElementById('task-due').value;
+                    const isUrgent = document.getElementById('task-urgent').checked;
+                    const isImportant = document.getElementById('task-important').checked;
+                    const assignedTo = document.getElementById('task-assignee').value;
+
+                    if (!title) {
+                        alert('Por favor, insira um título.');
+                        return;
+                    }
+
+                    const payload = {
+                        title: title,
+                        description: description,
+                        due_date: dueDate || null,
+                        is_urgent: isUrgent,
+                        is_important: isImportant,
+                        assigned_to_id: assignedTo,
+                        source_type: 'MANUAL',
+                        status: 'a_fazer'
+                    };
+
+                    const url = id ? `/tasks/api/move/${id}` : '/tasks/api/create';
+
+                    fetch(url, {
+                        method: id ? 'PATCH' : 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.status === 'success' || data.task_id) {
+                                closeNewTaskModal();
+                                loadKanbanTasks();
+                            } else {
+                                alert('Erro: ' + (data.error || 'Unknown'));
                             }
+                        });
+                }
+                function updateProductivityScore(data) {
+                    const allTasks = Object.values(data).flat();
+                    if (allTasks.length === 0) {
+                        document.getElementById('productivity-score').innerText = '100';
+                        return;
+                    }
 
-                            const completed = allTasks.filter(t => t.status === 'concluida');
-                            const totalQ2 = allTasks.filter(t => !t.is_urgent && t.is_important);
-                            const completedQ2 = completed.filter(t => !t.is_urgent && t.is_important);
+                    const completed = allTasks.filter(t => t.status === 'concluida');
+                    const totalQ2 = allTasks.filter(t => !t.is_urgent && t.is_important);
+                    const completedQ2 = completed.filter(t => !t.is_urgent && t.is_important);
 
-                            // Score: 50% geral, 50% Q2
-                            const compRate = (completed.length / allTasks.length) * 50;
-                            const q2Rate = totalQ2.length > 0 ? (completedQ2.length / totalQ2.length) * 50 : 50;
+                    // Score: 50% geral, 50% Q2
+                    const compRate = (completed.length / allTasks.length) * 50;
+                    const q2Rate = totalQ2.length > 0 ? (completedQ2.length / totalQ2.length) * 50 : 50;
 
-                            const totalScore = Math.min(100, Math.round(compRate + q2Rate));
-                            const scoreEl = document.getElementById('productivity-score');
-                            if (scoreEl) scoreEl.innerText = totalScore;
-                        }
-                    </script>
-                    {% endblock %}
+                    const totalScore = Math.min(100, Math.round(compRate + q2Rate));
+                    const scoreEl = document.getElementById('productivity-score');
+                    if (scoreEl) scoreEl.innerText = totalScore;
+                }
+            </script>
+            {% endblock %}
