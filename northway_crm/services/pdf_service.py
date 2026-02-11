@@ -160,7 +160,7 @@ class PdfService:
             else:
                 pdf.write(5, "Conteúdo do contrato não disponível.")
                 
-            return pdf.output(dest='S').encode('latin-1', 'replace') # 'replace' handles unencodable chars safely
+            return bytes(pdf.output()) # FPDF2 output() returns bytearray by default in recent versions
             
         except Exception as e:
             current_app.logger.error(f"Error generating PDF (FPDF): {str(e)}")
