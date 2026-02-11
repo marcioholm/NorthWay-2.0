@@ -180,8 +180,7 @@
                 </select>
 
                 <!-- Date Filters -->
-                <div
-                    class="flex items-center gap-2 bg-white  border border-slate-200  rounded-lg px-3 py-1.5">
+                <div class="flex items-center gap-2 bg-white  border border-slate-200  rounded-lg px-3 py-1.5">
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">De</span>
                     <input type="date" id="filter-start" onchange="loadKanbanTasks()"
                         class="bg-transparent text-xs font-bold text-slate-600  focus:outline-none">
@@ -219,8 +218,7 @@
                             <div class="flex items-center justify-between mb-4 px-2">
                                 <div class="flex items-center space-x-2">
                                     <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                                    <h3
-                                        class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
+                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
                                         Em
                                         Andamento</h3>
                                     <span
@@ -236,8 +234,7 @@
                             <div class="flex items-center justify-between mb-4 px-2">
                                 <div class="flex items-center space-x-2">
                                     <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-                                    <h3
-                                        class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
+                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
                                         Aguardando Cliente</h3>
                                     <span
                                         class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
@@ -252,8 +249,7 @@
                             <div class="flex items-center justify-between mb-4 px-2">
                                 <div class="flex items-center space-x-2">
                                     <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                                    <h3
-                                        class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
+                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
                                         Em
                                         Validação</h3>
                                     <span
@@ -269,8 +265,7 @@
                             <div class="flex items-center justify-between mb-4 px-2">
                                 <div class="flex items-center space-x-2">
                                     <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
-                                    <h3
-                                        class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
+                                    <h3 class="font-bold text-sm tracking-wide uppercase text-slate-700 ">
                                         Concluído</h3>
                                     <span
                                         class="bg-slate-200  px-2 py-0.5 rounded text-[10px] font-bold text-slate-600 "
@@ -390,8 +385,7 @@
                                 <span class="material-icons-round text-primary">add_task</span>
                             </div>
                             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-slate-900 "
-                                    id="modal-title">
+                                <h3 class="text-lg leading-6 font-medium text-slate-900 " id="modal-title">
                                     Nova Tarefa
                                 </h3>
                                 <div class="mt-4 space-y-4">
@@ -416,8 +410,7 @@
 
                                     <!-- Due Date -->
                                     <div>
-                                        <label for="task-due"
-                                            class="block text-sm font-medium text-slate-700 ">Data de
+                                        <label for="task-due" class="block text-sm font-medium text-slate-700 ">Data de
                                             Vencimento</label>
                                         <input type="datetime-local" id="task-due"
                                             class="mt-1 block w-full rounded-md border-gray-300    focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
@@ -442,8 +435,7 @@
 
                                     <!-- Priority Matrix -->
                                     <div class="mb-4">
-                                        <label
-                                            class="block text-sm font-medium text-slate-700  mb-2">Matriz
+                                        <label class="block text-sm font-medium text-slate-700  mb-2">Matriz
                                             de Prioridade</label>
                                         <div class="flex gap-4">
                                             <label class="flex items-center space-x-2 cursor-pointer">
@@ -463,8 +455,7 @@
 
                                     <input type="hidden" id="task-id">
                                 </div>
-                                <div
-                                    class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <div class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                     <button type="button" onclick="submitTask()" id="btn-save-task"
                                         class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                                         Salvar Tarefa
@@ -506,8 +497,7 @@
                                     </select>
                                     <input type="hidden" id="delegate-task-id">
                                 </div>
-                                <div
-                                    class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <div class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                                     <button type="button" onclick="confirmDelegate()"
                                         class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Delegar</button>
                                     <button type="button"
@@ -577,7 +567,12 @@
                                 .catch(err => console.error("Error loading kanban:", err));
                         }
 
+                        let allTasksGlobal = {};
+
                         function renderKanban(data) {
+                            allTasksGlobal = {}; // Reset global map
+                            Object.values(data).flat().forEach(t => allTasksGlobal[t.id] = t);
+
                             Object.keys(data).forEach(status => {
                                 const container = document.getElementById(`col-${status}`);
                                 const counter = document.getElementById(`count-${status}`);
@@ -641,55 +636,60 @@
 
                         function createTaskCard(task) {
                             const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'concluida';
-                            const overdueClass = isOverdue ? 'overdue-glow' : 'hover:border-primary/50';
+                            const overdueClass = isOverdue ? 'overdue-glow border-red-500' : 'hover:border-red-500/50';
                             const badgeColor = getSourceBadgeColor(task.source_type);
-                            const taskJson = JSON.stringify(task).replace(/"/g, '&quot;');
 
                             let priorityIcon = '';
                             if (task.is_urgent && task.is_important) {
-                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100  mt-auto">
-                                <span class="material-icons-round text-red-500 text-sm" title="Urgente & Importante">gpp_good</span>
-                                <div class="w-6 h-6 rounded-full bg-red-100  flex items-center justify-center text-[10px] font-bold text-red-600 ">Q1</div>
-                            </div>`;
+                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                                    <span class="material-icons-round text-red-500 text-sm" title="Urgente & Importante">gpp_good</span>
+                                    <div class="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-[10px] font-bold text-red-600">Q1</div>
+                                </div>`;
                             } else if (!task.is_urgent && task.is_important) {
-                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100  mt-auto">
-                                <span class="material-icons-round text-blue-500 text-sm" title="Importante">event</span>
-                                <div class="w-6 h-6 rounded-full bg-blue-100  flex items-center justify-center text-[10px] font-bold text-blue-600 ">Q2</div>
-                            </div>`;
+                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                                    <span class="material-icons-round text-blue-500 text-sm" title="Importante">event</span>
+                                    <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">Q2</div>
+                                </div>`;
                             } else if (task.is_urgent && !task.is_important) {
-                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100  mt-auto">
-                                <span class="material-icons-round text-orange-500 text-sm" title="Urgente">update</span>
-                                <div class="w-6 h-6 rounded-full bg-orange-100  flex items-center justify-center text-[10px] font-bold text-orange-600 ">Q3</div>
-                            </div>`;
+                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                                    <span class="material-icons-round text-orange-500 text-sm" title="Urgente">update</span>
+                                    <div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px] font-bold text-orange-600">Q3</div>
+                                </div>`;
                             } else {
-                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100  mt-auto">
-                                <span class="material-icons-round text-slate-400 text-sm" title="Baixa Prioridade">low_priority</span>
-                                <div class="w-6 h-6 rounded-full bg-slate-100  flex items-center justify-center text-[10px] font-bold text-slate-500 ">Q4</div>
-                            </div>`;
+                                priorityIcon = `<div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-auto">
+                                    <span class="material-icons-round text-slate-400 text-sm" title="Baixa Prioridade">low_priority</span>
+                                    <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">Q4</div>
+                                </div>`;
                             }
 
                             const initials = getInitials(task.assigned_user_name || 'U');
 
                             return `
-        <div onclick="openEditTaskModal(${taskJson})" class="task-card bg-white  p-4 rounded-xl border border-slate-200  card-shadow cursor-pointer transition-all group flex flex-col ${overdueClass} mb-3" data-id="${task.id}">
-            <div class="flex justify-between items-start mb-3">
-                <span class="${badgeColor} text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">${task.source_type || 'Manual'}</span>
+                                <div onclick="openEditTaskModalById(${task.id})" 
+                                     class="task-card bg-white p-4 rounded-xl border border-slate-200 card-shadow cursor-pointer transition-all group flex flex-col ${overdueClass} mb-3" 
+                                     data-id="${task.id}">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <span class="${badgeColor} text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">${task.source_type || 'Manual'}</span>
+                                        <div class="flex items-center ${isOverdue ? 'text-red-600 font-bold animate-pulse' : 'text-slate-400'} text-[10px]">
+                                            <span class="material-icons-round text-[14px] mr-1">${isOverdue ? 'report_problem' : 'calendar_today'}</span>
+                                            ${task.due_date ? formatDate(task.due_date) : 'Sem data'}
+                                        </div>
+                                    </div>
+                                    <h4 class="font-bold text-sm mb-1 text-slate-800 group-hover:text-red-600 transition-colors line-clamp-2">${task.title}</h4>
+                                    <div class="flex items-center justify-between mt-1 mb-2">
+                                        <p class="text-slate-500 text-[11px] truncate flex-1 min-w-0 mr-2">${task.client_name || task.description || 'Nenhum detalhe'}</p>
+                                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-600 shrink-0 select-none border border-slate-200" title="${task.assigned_user_name}">
+                                            ${initials}
+                                        </div>
+                                    </div>
+                                    ${priorityIcon}
+                                </div>
+                            `;
+                        }
 
-                <div class="flex items-center ${isOverdue ? 'text-primary font-bold animate-pulse' : 'text-slate-400'} text-[10px]">
-                    <span class="material-icons-round text-[14px] mr-1">${isOverdue ? 'report_problem' : 'calendar_today'}</span>
-                    ${task.due_date ? formatDate(task.due_date) : 'Sem data'}
-                </div>
-            </div>
-            <h4 class="font-semibold text-sm mb-1 text-slate-800  group-hover:text-primary transition-colors">${task.title}</h4>
-            <div class="flex items-center justify-between mt-1">
-                <p class="text-slate-400 text-xs truncate mr-2">${task.client_name || task.description || 'Sem detalhes'}</p>
-                <div class="w-6 h-6 rounded-full bg-slate-100  flex items-center justify-center text-[10px] font-bold text-slate-600  shrink-0 select-none border border-slate-200 " title="${task.assigned_user_name}">
-                    ${initials}
-                </div>
-            </div>
-            ${priorityIcon}
-        </div>
-        `;
+                        function openEditTaskModalById(id) {
+                            const task = allTasksGlobal[id];
+                            if (task) openEditTaskModal(task);
                         }
 
                         function getInitials(name) {
