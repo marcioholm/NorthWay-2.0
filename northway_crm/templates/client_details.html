@@ -1116,207 +1116,211 @@
                                     ponta.
                                 </p>
                             </div>
-                        </div>
-                        <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
+                            <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
 
-                        <!-- Processes Content (New Tab) -->
-                        <div id="content-client-processes" class="hidden p-8">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                    <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
-                                    Processos & Serviços
-                                </h3>
-                                <button type="button" onclick="toggleModal('addProcessModal')"
-                                    class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    Adicionar Processo
-                                </button>
-                            </div>
-
-
-                            <!-- NEW: Assign Process to User in Modal -->
-                            <!-- Need to update Add Process Modal (which is likely in base.html or lower down, need to check) -->
-                            <!-- Assuming AddProcessModal is standard, we inject the select there or rely on default behavior -->
-                            <!-- Wait, AddProcessModal is probably elsewhere. I should check if I missed it in view_file. -->
-                            <!-- For safety, I will add the Delegate Button to existing processes first. -->
-
-                            <div class="space-y-4">
-                                {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
-                                <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
-                                    <!-- Header / Summary -->
-                                    <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
-                                        onclick="toggleProcess('{{ checklist.id }}')">
-                                        <div class="flex items-center gap-3">
-                                            <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
-                                                <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
-                                                <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
-                                                    <path class="text-gray-200"
-                                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                        fill="none" stroke="currentColor" stroke-width="4" />
-                                                    <path class="text-northway-red progress-ring"
-                                                        stroke-dasharray="0, 100"
-                                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                        fill="none" stroke="currentColor" stroke-width="4"
-                                                        id="ring-{{ checklist.id }}" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
-                                                <p class="text-xs text-gray-500">Iniciado em {{
-                                                    checklist.created_at.strftime('%d/%m/%Y') }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <!-- Delegate Button -->
-                                            <button
-                                                onclick='openDelegateModal("{{ checklist.id }}", {{ checklist.name|tojson|safe }}, "{{ checklist.assigned_to_id or "" }}"); event.stopPropagation();'
-                                                class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Delegar Processo">
-                                                {% if checklist.assigned_to %}
-                                                {{ user_avatar(checklist.assigned_to, size='xs', show_name=False) }}
-                                                {% else %}
-                                                <i data-lucide="user-plus" class="w-4 h-4"></i>
-                                                {% endif %}
-                                            </button>
-                                            <i data-lucide="chevron-down"
-                                                class="w-5 h-5 text-gray-400 transition-transform"
-                                                id="arrow-{{ checklist.id }}"></i>
-                                        </div>
-                                    </div>
-
-                                    <!-- Expanded Content -->
-                                    <div id="process-content-{{ checklist.id }}"
-                                        class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
-                                        {% for step in checklist.progress %}
-                                        {% set step_index = loop.index0 %}
-                                        <div class="step-group">
-                                            <h5
-                                                class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
-                                                {{ step.title }}</h5>
-                                            <div class="space-y-2 pl-2">
-                                                {% for item in step['items'] %}
-                                                <label
-                                                    class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                                                    <input type="checkbox"
-                                                        onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
-                                                        {% if item.done %}checked{% endif %}
-                                                        class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
-                                                    <span
-                                                        class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
-                                                        item.text }}</span>
-                                                </label>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-
-                                        <div class="pt-4 border-t border-gray-100 flex justify-end">
-                                            <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
-                                                class="text-xs text-red-500 hover:text-red-700 underline">Excluir
-                                                Processo</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% else %}
-                                <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
-                                    cliente.
-                                </p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-
-                    </div> <!-- Close lg:col-span-2 -->
-
-                    <!-- Sidebar Info Column -->
-                    <div class="space-y-6">
-                        <!-- Diagnostic Card (Access Control) -->
-                        {% if diag_instance %}
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div
-                                class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Menu Lateral:
-                                    Diagnóstico</h3>
-                                <i data-lucide="line-chart"
-                                    class="w-4 h-4 {{ 'text-northway-red' if client.diagnostic_status == 'done' else 'text-gray-400' }}"></i>
-                            </div>
-                            <div class="p-6">
-                                {% if client.diagnostic_status == 'done' %}
-                                <div class="flex items-center justify-between mb-4">
-                                    <div>
-                                        <div class="text-2xl font-black text-gray-900">{{ client.diagnostic_stars or 0
-                                            }}
-                                            <span class="text-xs text-gray-400 font-normal">/ 5</span>
-                                        </div>
-                                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Nota
-                                            Final</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="text-lg font-bold text-northway-red">{{ client.diagnostic_score or 0
-                                            }}
-                                        </div>
-                                        <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
-                                            Score
-                                        </div>
-                                    </div>
-                                </div>
-                                <button type="button" onclick="switchClientTab('diagnostic')"
-                                    class="w-full text-center py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-lg transition-colors border border-gray-100">
-                                    Ver Detalhes do Diagnóstico
-                                </button>
-                                {% else %}
-                                <div class="text-center py-2">
-                                    <p class="text-xs text-gray-500 mb-4 italic">Ainda não realizado.</p>
-                                    <button type="button"
-                                        onclick="copyDiagnosticLink('{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) }}?client_id={{ client.id }}')"
-                                        class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
-                                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                                        Copiar Link do Formulário
+                            <!-- Processes Content (New Tab) -->
+                            <div id="content-client-processes" class="hidden p-8">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                        <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
+                                        Processos & Serviços
+                                    </h3>
+                                    <button type="button" onclick="toggleModal('addProcessModal')"
+                                        class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                        Adicionar Processo
                                     </button>
                                 </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
 
-                        <!-- Management Card -->
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div
-                                class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gestão</h3>
-                                <i data-lucide="briefcase" class="w-4 h-4 text-gray-400"></i>
-                            </div>
-                            <div class="p-6">
-                                {% if client.account_manager %}
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-xs font-bold text-northway-red">
-                                        {{ client.account_manager.name[:2].upper() }}
+
+                                <!-- NEW: Assign Process to User in Modal -->
+                                <!-- Need to update Add Process Modal (which is likely in base.html or lower down, need to check) -->
+                                <!-- Assuming AddProcessModal is standard, we inject the select there or rely on default behavior -->
+                                <!-- Wait, AddProcessModal is probably elsewhere. I should check if I missed it in view_file. -->
+                                <!-- For safety, I will add the Delegate Button to existing processes first. -->
+
+                                <div class="space-y-4">
+                                    {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
+                                    <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
+                                        <!-- Header / Summary -->
+                                        <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                                            onclick="toggleProcess('{{ checklist.id }}')">
+                                            <div class="flex items-center gap-3">
+                                                <div class="circular-chart-xs"
+                                                    data-percent="{{ checklist.percent or 0 }}">
+                                                    <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
+                                                    <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
+                                                        <path class="text-gray-200"
+                                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                            fill="none" stroke="currentColor" stroke-width="4" />
+                                                        <path class="text-northway-red progress-ring"
+                                                            stroke-dasharray="0, 100"
+                                                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                            fill="none" stroke="currentColor" stroke-width="4"
+                                                            id="ring-{{ checklist.id }}" />
+                                                    </svg>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
+                                                    <p class="text-xs text-gray-500">Iniciado em {{
+                                                        checklist.created_at.strftime('%d/%m/%Y') }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <!-- Delegate Button -->
+                                                <button
+                                                    onclick='openDelegateModal("{{ checklist.id }}", {{ checklist.name|tojson|safe }}, "{{ checklist.assigned_to_id or "" }}"); event.stopPropagation();'
+                                                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Delegar Processo">
+                                                    {% if checklist.assigned_to %}
+                                                    {{ user_avatar(checklist.assigned_to, size='xs', show_name=False) }}
+                                                    {% else %}
+                                                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                                    {% endif %}
+                                                </button>
+                                                <i data-lucide="chevron-down"
+                                                    class="w-5 h-5 text-gray-400 transition-transform"
+                                                    id="arrow-{{ checklist.id }}"></i>
+                                            </div>
+                                        </div>
+
+                                        <!-- Expanded Content -->
+                                        <div id="process-content-{{ checklist.id }}"
+                                            class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
+                                            {% for step in checklist.progress %}
+                                            {% set step_index = loop.index0 %}
+                                            <div class="step-group">
+                                                <h5
+                                                    class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
+                                                    {{ step.title }}</h5>
+                                                <div class="space-y-2 pl-2">
+                                                    {% for item in step['items'] %}
+                                                    <label
+                                                        class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                                        <input type="checkbox"
+                                                            onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
+                                                            {% if item.done %}checked{% endif %}
+                                                            class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
+                                                        <span
+                                                            class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
+                                                            item.text }}</span>
+                                                    </label>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+
+                                            <div class="pt-4 border-t border-gray-100 flex justify-end">
+                                                <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
+                                                    class="text-xs text-red-500 hover:text-red-700 underline">Excluir
+                                                    Processo</button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <span class="text-sm font-bold">{{ client.account_manager.name }}</span>
+                                    {% else %}
+                                    <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para
+                                        este
+                                        cliente.
+                                    </p>
+                                    {% endfor %}
                                 </div>
-                                {% else %}
-                                <p class="text-xs text-gray-400 italic">Sem gerente</p>
-                                {% endif %}
                             </div>
-                        </div>
 
-                        <!-- Contact Card -->
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <h4 class="text-xs font-bold text-gray-400 uppercase mb-4">Contato</h4>
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="mail" class="w-4 h-4 text-gray-400"></i>
-                                    <span>{{ client.email }}</span>
+
+                        </div> <!-- Close lg:col-span-2 -->
+
+                        <!-- Sidebar Info Column -->
+                        <div class="space-y-6">
+                            <!-- Diagnostic Card (Access Control) -->
+                            {% if diag_instance %}
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div
+                                    class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Menu Lateral:
+                                        Diagnóstico</h3>
+                                    <i data-lucide="line-chart"
+                                        class="w-4 h-4 {{ 'text-northway-red' if client.diagnostic_status == 'done' else 'text-gray-400' }}"></i>
                                 </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="phone" class="w-4 h-4 text-gray-400"></i>
-                                    <span>{{ client.phone }}</span>
+                                <div class="p-6">
+                                    {% if client.diagnostic_status == 'done' %}
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div>
+                                            <div class="text-2xl font-black text-gray-900">{{ client.diagnostic_stars or
+                                                0
+                                                }}
+                                                <span class="text-xs text-gray-400 font-normal">/ 5</span>
+                                            </div>
+                                            <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
+                                                Nota
+                                                Final</div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-lg font-bold text-northway-red">{{ client.diagnostic_score
+                                                or 0
+                                                }}
+                                            </div>
+                                            <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
+                                                Score
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="switchClientTab('diagnostic')"
+                                        class="w-full text-center py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-lg transition-colors border border-gray-100">
+                                        Ver Detalhes do Diagnóstico
+                                    </button>
+                                    {% else %}
+                                    <div class="text-center py-2">
+                                        <p class="text-xs text-gray-500 mb-4 italic">Ainda não realizado.</p>
+                                        <button type="button"
+                                            onclick="copyDiagnosticLink('{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) }}?client_id={{ client.id }}')"
+                                            class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
+                                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                            Copiar Link do Formulário
+                                        </button>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
-                        </div>
-                    </div> <!-- End Sidebar Info Column -->
-                </div> <!-- End Grid -->
+                            {% endif %}
+
+                            <!-- Management Card -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div
+                                    class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gestão</h3>
+                                    <i data-lucide="briefcase" class="w-4 h-4 text-gray-400"></i>
+                                </div>
+                                <div class="p-6">
+                                    {% if client.account_manager %}
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-xs font-bold text-northway-red">
+                                            {{ client.account_manager.name[:2].upper() }}
+                                        </div>
+                                        <span class="text-sm font-bold">{{ client.account_manager.name }}</span>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-xs text-gray-400 italic">Sem gerente</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Contact Card -->
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                                <h4 class="text-xs font-bold text-gray-400 uppercase mb-4">Contato</h4>
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <i data-lucide="mail" class="w-4 h-4 text-gray-400"></i>
+                                        <span>{{ client.email }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <i data-lucide="phone" class="w-4 h-4 text-gray-400"></i>
+                                        <span>{{ client.phone }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- End Sidebar Info Column -->
+                    </div> <!-- End Grid -->
     </form>
 </div> <!-- End Main Content Scroll Area -->
 
