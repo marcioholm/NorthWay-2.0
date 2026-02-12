@@ -1,0 +1,141 @@
+{% extends "_settings_layout.html" %}
+
+{% block settings_content %}
+<div class="max-w-7xl mx-auto" x-data="{ tab: 'library' }">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Modelos de Drive</h1>
+            <p class="text-gray-500 text-sm mt-1">Gerencie as estruturas de pasta utilizadas na criação de pastas de
+                clientes.</p>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex space-x-1 rounded-xl bg-gray-200 p-1 mb-8 w-fit">
+        <button @click="tab = 'library'"
+            :class="tab === 'library' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:bg-white/[0.12] hover:text-gray-700'"
+            class="w-full rounded-lg py-2.5 px-6 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2 transition-all">
+            Biblioteca (Globais)
+        </button>
+        <button @click="tab = 'my_templates'"
+            :class="tab === 'my_templates' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:bg-white/[0.12] hover:text-gray-700'"
+            class="w-full rounded-lg py-2.5 px-6 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2 transition-all">
+            Meus Templates
+        </button>
+    </div>
+
+    <!-- Library Tab -->
+    <div x-show="tab === 'library'" class="space-y-6">
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i data-lucide="info" class="h-5 w-5 text-blue-400"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        Estes são templates padrões disponibilizados pela NorthWay. Você pode duplicá-los para sua
+                        biblioteca pessoal para fazer personalizações.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for template in global_templates %}
+            <div
+                class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                <div class="p-6 flex-1">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                            <i data-lucide="folder-tree" class="w-6 h-6"></i>
+                        </div>
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Global
+                        </span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ template.name }}</h3>
+                    <p class="text-sm text-gray-500 line-clamp-3">
+                        Estrutura de pastas pré-definida padrão.
+                    </p>
+                </div>
+                <div class="p-4 bg-gray-50 border-t border-gray-100">
+                    <form action="{{ url_for('templates.duplicate_drive_template', id=template.id) }}" method="POST">
+                        <button type="submit"
+                            class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-northway-red hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                            <i data-lucide="copy" class="w-4 h-4 mr-2"></i> Duplicar & Editar
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-full text-center py-12 text-gray-500">
+                <i data-lucide="folder-open" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                <p>Nenhum template global disponível no momento.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- My Templates Tab -->
+    <div x-show="tab === 'my_templates'" style="display: none;">
+
+        <div class="mb-6 flex justify-end">
+            <!-- Future: Add 'Create New' button here if we implement scratch creation -->
+            <button disabled
+                class="opacity-50 cursor-not-allowed bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Novo Template (Em Breve)
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50/50 border-b border-gray-200">
+                            <th class="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Nome do Template
+                            </th>
+                            <th class="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Ações
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for template in my_templates %}
+                        <tr class="hover:bg-gray-50/50 transition-colors group">
+                            <td class="p-6">
+                                <div class="font-bold text-gray-900">{{ template.name }}</div>
+                            </td>
+                            <td class="p-6 text-right flex justify-end gap-2">
+                                <!-- Future: Edit Action -->
+                                <button disabled class="text-gray-400 cursor-not-allowed p-2 rounded hover:bg-gray-100"
+                                    title="Editar (Em breve)">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+
+                                <form action="{{ url_for('templates.delete_drive_template', id=template.id) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Tem certeza que deseja excluir este template?');">
+                                    <button type="submit"
+                                        class="text-gray-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition-colors"
+                                        title="Excluir">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="p-12 text-center text-gray-500">
+                                Você ainda não possui templates personalizados.
+                                <br>
+                                <span class="text-sm mt-2 block">Duplique um da biblioteca para começar.</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "_settings_layout.html" %}
+
+{% block settings_content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Gerenciar Templates Globais</h1>
+            <p class="text-gray-500 text-sm mt-1">Controle quais templates do Google Drive cada empresa pode acessar.
+            </p>
+        </div>
+    </div>
+
+    <!-- Companies List -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50/50 border-b border-gray-200">
+                        <th class="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">ID</th>
+                        <th class="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Empresa</th>
+                        <th class="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest">Templates Liberados
+                        </th>
+                        <th class="p-6 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for company in companies %}
+                    <tr class="hover:bg-gray-50/50 transition-colors group">
+                        <td class="p-6 text-sm text-gray-400 font-mono">#{{ company.id }}</td>
+                        <td class="p-6">
+                            <div class="font-bold text-gray-900 group-hover:text-northway-red transition-colors">
+                                {{ company.name }}
+                            </div>
+                        </td>
+                        <td class="p-6 text-sm text-gray-500">
+                            {% set count = (company.allowed_global_template_ids or [])|length %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 'bg-green-100 text-green-800' if count > 0 else 'bg-gray-100 text-gray-800' }}">
+                                {{ count }} template(s)
+                            </span>
+                        </td>
+                        <td class="p-6 text-right">
+                            <a href="{{ url_for('admin.global_templates_edit', company_id=company.id) }}"
+                                class="inline-flex items-center justify-center px-4 py-2 text-gray-500 hover:text-northway-red hover:bg-red-50 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest border border-gray-200 hover:border-red-200">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5 mr-2"></i> Gerenciar Acesso
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

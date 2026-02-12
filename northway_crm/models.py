@@ -371,6 +371,7 @@ class DriveFolderTemplate(db.Model):
     name = db.Column(db.String(100), nullable=False)
     structure_json = db.Column(db.Text, nullable=False) # JSON list of dicts: [{'name': 'Folder', 'children': []}]
     is_default = db.Column(db.Boolean, default=False)
+    enabled = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
 

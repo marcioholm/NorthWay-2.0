@@ -257,35 +257,48 @@ def get_chart_data():
     else:
         start_date = now - timedelta(days=180)
 
+    # Generate all buckets in range
+    all_buckets = []
+    current = start_date
+    while current <= now:
+        sort_key, label = get_bucket_key(current, period)
+        if not all_buckets or all_buckets[-1][0] != sort_key:
+            all_buckets.append((sort_key, label))
+        
+        # Increment based on period
+        if period == 'today': current += timedelta(hours=1)
+        elif period == 'daily': current += timedelta(days=1)
+        elif period == 'weekly': current += timedelta(weeks=1)
+        elif period == 'monthly': 
+            # safe month increment
+            next_month = current.month + 1 if current.month < 12 else 1
+            next_year = current.year + 1 if current.month == 12 else current.year
+            current = current.replace(year=next_year, month=next_month, day=1)
+        else:
+             # Default approx 30 days for others to be safe
+             current += timedelta(days=30)
+             
+    # Initialize buckets
+    for sort_key, label in all_buckets:
+        if sort_key not in data_buckets:
+            data_buckets[sort_key] = {'label': label, 'leads': 0, 'sales': 0}
+
     from models import Lead, Client # Local import
     leads = Lead.query.filter(Lead.company_id == company_id, Lead.created_at >= start_date).all()
     # Use start_date for clients to reflect historical entry correctly
     clients = Client.query.filter(Client.company_id == company_id, Client.start_date >= start_date.date()).all()
 
-    data_buckets = {}
-
-    def get_bucket_key(date_obj, period):
-        if isinstance(date_obj, date) and not isinstance(date_obj, datetime):
-             # Convert date to datetime at midnight for formatting consistency if needed, 
-             # or just format directly. strftime works on date too.
-             pass
-        
-        if period == 'today': return date_obj.strftime('%Y-%m-%d-%H'), date_obj.strftime('%H:00')
-        if period == 'daily': return date_obj.strftime('%Y-%m-%d'), date_obj.strftime('%d/%m')
-        if period == 'weekly': return date_obj.strftime('%Y-%W'), f"Sem {date_obj.strftime('%W')}"
-        if period == 'monthly': return date_obj.strftime('%Y-%m'), date_obj.strftime('%b')
-        return date_obj.strftime('%Y-%m'), date_obj.strftime('%b')
-
     for l in leads:
         sort_key, label = get_bucket_key(l.created_at, period)
-        if sort_key not in data_buckets: data_buckets[sort_key] = {'label': label, 'leads': 0, 'sales': 0}
-        data_buckets[sort_key]['leads'] += 1
+        if sort_key in data_buckets:
+            data_buckets[sort_key]['leads'] += 1
     
     for c in clients:
-        # Use start_date
+        # Client start_date is Date, convert to datetime for bucket key if needed
+        # get_bucket_key handles date objects
         sort_key, label = get_bucket_key(c.start_date, period)
-        if sort_key not in data_buckets: data_buckets[sort_key] = {'label': label, 'leads': 0, 'sales': 0}
-        data_buckets[sort_key]['sales'] += 1
+        if sort_key in data_buckets:
+            data_buckets[sort_key]['sales'] += 1
     
     sorted_keys = sorted(data_buckets.keys())
     return api_response(data={

@@ -1,0 +1,72 @@
+{% extends "_settings_layout.html" %}
+
+{% block settings_content %}
+<div class="max-w-4xl mx-auto">
+    <div class="flex items-center gap-4 mb-8">
+        <a href="{{ url_for('admin.global_templates_list') }}"
+            class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Editar Permissões: <span class="text-northway-red">{{
+                    company.name }}</span></h1>
+            <p class="text-gray-500 text-sm mt-1">Selecione os templates globais que esta empresa poderá visualizar e
+                duplicar.</p>
+        </div>
+    </div>
+
+    <form method="POST" class="space-y-6">
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="p-6 bg-gray-50/50 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="font-bold text-gray-900 flex items-center gap-2">
+                    <i data-lucide="library" class="w-4 h-4 text-northway-red"></i>
+                    Biblioteca Global ({{ all_templates|length }})
+                </h3>
+                <div class="flex gap-2">
+                    <button type="button"
+                        onclick="document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = true)"
+                        class="text-xs font-bold uppercase tracking-widest text-northway-red hover:bg-red-50 px-3 py-1 rounded transition-colors">
+                        Marcar Todos
+                    </button>
+                    <button type="button"
+                        onclick="document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false)"
+                        class="text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-100 px-3 py-1 rounded transition-colors">
+                        Desmarcar Todos
+                    </button>
+                </div>
+            </div>
+
+            <div class="divide-y divide-gray-100">
+                {% for template in all_templates %}
+                <label class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition-colors group">
+                    <div class="flex items-center h-5">
+                        <input type="checkbox" name="template_ids" value="{{ template.id }}" {% if template.id in
+                            current_allowed %}checked{% endif %}
+                            class="w-5 h-5 text-northway-red border-gray-300 rounded focus:ring-northway-red transition-all">
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <div class="flex justify-between">
+                            <span
+                                class="text-sm font-medium text-gray-900 group-hover:text-northway-red transition-colors">{{
+                                template.name }}</span>
+                            <!-- Show nested structure count or summary if useful, for now just name -->
+                        </div>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4">
+            <a href="{{ url_for('admin.global_templates_list') }}"
+                class="px-6 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-all border border-transparent">
+                Cancelar
+            </a>
+            <button type="submit"
+                class="bg-northway-red text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 flex items-center">
+                <i data-lucide="save" class="w-4 h-4 mr-2"></i> Salvar Permissões
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

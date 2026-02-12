@@ -45,6 +45,13 @@
                 Modelos de Contrato
             </a>
 
+            <!-- Drive Templates -->
+            <a href="{{ url_for('templates.settings_drive_templates') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_drive_templates' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="folder-tree" class="w-4 h-4" aria-hidden="true"></i>
+                Modelos de Drive
+            </a>
+
             <!-- Integrations -->
             <a href="{{ url_for('admin.settings_integrations') }}"
                 class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_integrations' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">

@@ -4,7 +4,7 @@ from models import db, DriveFolderTemplate
 
 TEMPLATES = [
     {
-        "name": "🔹 TEMPLATE 01 — NorthWay | Crescimento Contínuo (Padrão)",
+        "name": "Template 01 — NorthWay | Crescimento Contínuo",
         "structure": [
             {"name": "Contrato & Financeiro"},
             {
@@ -72,7 +72,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 02 — NorthWay | Growth por Ciclo",
+        "name": "Template 02 — NorthWay | Growth por Ciclo",
         "structure": [
             {
                 "name": "Onboarding & Base",
@@ -115,7 +115,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 03 — Agência de Marketing / Social Media",
+        "name": "Template 03 — Agência de Marketing / Social Media",
         "structure": [
             {"name": "Contrato & Briefing"},
             {
@@ -142,7 +142,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 04 — Tráfego Pago (Google & Meta)",
+        "name": "Template 04 — Tráfego Pago (Google & Meta)",
         "structure": [
             {"name": "Contrato & Escopo"},
             {
@@ -165,7 +165,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 05 — Consultoria / Estratégia",
+        "name": "Template 05 — Consultoria / Estratégia",
         "structure": [
             {"name": "Contrato & Escopo"},
             {
@@ -182,7 +182,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 06 — Endomarketing & Cultura",
+        "name": "Template 06 — Endomarketing & Cultura",
         "structure": [
             {"name": "Contrato & Escopo"},
             {
@@ -202,7 +202,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 07 — Landing Pages & Conversão",
+        "name": "Template 07 — Landing Pages & Conversão",
         "structure": [
             {"name": "Contrato & Briefing"},
             {
@@ -218,7 +218,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 08 — TI / Software / Automação",
+        "name": "Template 08 — TI / Software / Automação",
         "structure": [
             {"name": "Contrato & Proposta"},
             {"name": "Levantamento de Requisitos"},
@@ -233,7 +233,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 09 — Jurídico / Contábil",
+        "name": "Template 09 — Jurídico / Contábil",
         "structure": [
             {"name": "Contrato & Procuração"},
             {"name": "Documentos do Cliente"},
@@ -244,7 +244,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 10 — Obras / Arquitetura / Engenharia",
+        "name": "Template 10 — Obras / Arquitetura / Engenharia",
         "structure": [
             {"name": "Contrato & Escopo"},
             {
@@ -261,7 +261,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 11 — Treinamentos / Mentoria / Cursos",
+        "name": "Template 11 — Treinamentos / Mentoria / Cursos",
         "structure": [
             {"name": "Contrato & Inscrição"},
             {
@@ -274,7 +274,7 @@ TEMPLATES = [
         ]
     },
     {
-        "name": "🔹 TEMPLATE 12 — Universal / Simples",
+        "name": "Template 12 — Universal / Simples",
         "structure": [
             {"name": "Contrato & Financeiro"},
             {"name": "Onboarding"},

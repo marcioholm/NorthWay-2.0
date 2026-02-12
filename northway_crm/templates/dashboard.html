@@ -391,59 +391,69 @@
 
         const maxVal = data.length > 0 ? Math.max(...data) : 1;
 
-        // Calculate floating bars: [offset, offset + value]
-        const floatingData = data.map(val => {
-            const offset = (maxVal - val) / 2;
-            return [offset, offset + val];
-        });
-
         funnelChartInstance = new Chart(ctxFunnel, {
-            type: 'bar',
+            type: 'bar', // Standard Bar
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Leads',
-                    data: floatingData,
+                    data: data,
                     backgroundColor: [
-                        '#7f1d1d', '#991b1b', '#b91c1c',
-                        '#dc2626', '#ef4444', '#f87171'
+                        'rgba(220, 38, 38, 0.9)', // Red-600
+                        'rgba(234, 88, 12, 0.9)', // Orange-600
+                        'rgba(217, 119, 6, 0.9)', // Amber-600
+                        'rgba(202, 138, 4, 0.9)', // Yellow-600
+                        'rgba(22, 163, 74, 0.9)', // Green-600
+                        'rgba(37, 99, 235, 0.9)'  // Blue-600
                     ],
                     borderRadius: 4,
-                    barPercentage: 0.8,
-                    borderSkipped: false
+                    barPercentage: 0.6,
                 }]
             },
             options: {
-                indexAxis: 'y',
+                indexAxis: 'y', // Horizontal
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
-                    tooltip: { enabled: false },
+                    tooltip: {
+                        enabled: true,
+                        callbacks: {
+                            label: function (context) {
+                                const val = context.raw;
+                                const firstVal = context.chart.data.datasets[0].data[0];
+                                const percentage = firstVal > 0 ? Math.round((val / firstVal) * 100) : 0;
+                                return `${val} Leads (${percentage}% do total)`;
+                            }
+                        }
+                    },
                     datalabels: {
-                        color: '#fff',
-                        anchor: 'center',
-                        align: 'center',
-                        textAlign: 'center',
-                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 13 },
+                        color: 'black', // Contrast
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 4,
+                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 12 },
                         formatter: function (value, context) {
-                            const label = context.chart.data.labels[context.dataIndex];
-                            // value is [start, end], original = end - start
-                            const originalVal = value[1] - value[0];
-
-                            // Get first item (max) from the specific dataset
-                            const firstItem = context.dataset.data[0];
-                            const firstStageVal = firstItem[1] - firstItem[0];
-
-                            const percentage = firstStageVal > 0 ? Math.round((originalVal / firstStageVal) * 100) : 0;
-                            return `${label}\n${originalVal} Leads (${percentage}%)`;
+                            if (value === 0) return '';
+                            return value;
                         }
                     }
                 },
-                layout: { padding: { right: 20, left: 20 } },
+                layout: { padding: { right: 50, left: 10 } }, // Space for labels
                 scales: {
-                    x: { grid: { display: false }, ticks: { display: false } },
-                    y: { display: false, grid: { display: false } }
+                    x: {
+                        grid: { display: false },
+                        ticks: { display: false },
+                        border: { display: false }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { family: "'Inter', sans-serif", size: 12, weight: '500' },
+                            color: '#374151'
+                        },
+                        border: { display: false }
+                    }
                 }
             }
         });

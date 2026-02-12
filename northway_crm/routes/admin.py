@@ -506,3 +506,45 @@ def fix_task_schema():
         return f"<h1>Task Schema Fix</h1><p>{msg1}</p><p>{msg2}</p><p><a href='/'>Go Home</a></p>"
     except Exception as e:
         return f"<h1>Error</h1><p>{str(e)}</p>", 500
+
+@admin_bp.route('/admin/global-templates')
+def global_templates_list():
+    from models import Company
+    
+    # Ensure super admin or simple admin check
+    if not current_user.role.lower() == 'admin':
+         # In a real scenario, we might want stricter checks for "Super Admin", 
+         # but for now, any Admin can see this (assuming single-tenant deployment or similar)
+         # or we rely on check_admin_access decorator at blueprint level.
+         pass
+
+    companies = Company.query.all()
+    return render_template('admin/global_templates_list.html', companies=companies)
+
+@admin_bp.route('/admin/global-templates/<int:company_id>', methods=['GET', 'POST'])
+def global_templates_edit(company_id):
+    from models import db, Company, DriveFolderTemplate
+    
+    company = Company.query.get_or_404(company_id)
+    
+    if request.method == 'POST':
+        selected_ids = request.form.getlist('template_ids') # list of strings
+        # Convert to int
+        try:
+            allowed_ids = [int(x) for x in selected_ids]
+        except ValueError:
+            allowed_ids = []
+            
+        company.allowed_global_template_ids = allowed_ids
+        db.session.commit()
+        
+        flash(f'Permissões de templates atualizadas para {company.name}', 'success')
+        return redirect(url_for('admin.global_templates_list'))
+    
+    # Check if we should auto-enable "Universal" template if empty?
+    # No, stick to raw editing.
+    
+    all_global_templates = DriveFolderTemplate.query.filter_by(scope='global', enabled=True).all()
+    current_allowed = company.allowed_global_template_ids or []
+    
+    return render_template('admin/global_templates_edit.html', company=company, all_templates=all_global_templates, current_allowed=current_allowed)

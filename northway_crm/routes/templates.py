@@ -172,3 +172,81 @@ def delete_process_template(id):
     db.session.commit()
     flash('Modelo excluído.', 'success')
     return redirect(url_for('templates.settings_processes'))
+
+@templates_bp.route('/settings/drive-templates')
+@login_required
+def settings_drive_templates():
+    from models import DriveFolderTemplate, Company
+    
+    if not current_user.company_id:
+        abort(403)
+        
+    # 1. Get Tenant Templates
+    my_templates = DriveFolderTemplate.query.filter_by(
+        company_id=current_user.company_id,
+        scope='tenant'
+    ).all()
+    
+    # 2. Get Allowed Global Templates
+    # Start with all global enabled
+    all_global = DriveFolderTemplate.query.filter_by(scope='global', enabled=True).all()
+    
+    # Filter by company.allowed_global_template_ids
+    # If allowed_ids is empty/None, user sees NOTHING (or potentially "Universal" if logic dictates, but we stick to strict Allow List)
+    allowed_ids = current_user.company.allowed_global_template_ids or []
+    
+    available_global_templates = [t for t in all_global if t.id in allowed_ids]
+    
+    return render_template('settings_drive_templates.html', 
+                           my_templates=my_templates, 
+                           global_templates=available_global_templates)
+
+@templates_bp.route('/settings/drive-templates/duplicate/<int:id>', methods=['POST'])
+@login_required
+def duplicate_drive_template(id):
+    from models import db, DriveFolderTemplate
+    import json
+    
+    if not current_user.company_id:
+        abort(403)
+        
+    global_template = DriveFolderTemplate.query.get_or_404(id)
+    
+    # Security check: Must be allowed
+    allowed_ids = current_user.company.allowed_global_template_ids or []
+    if global_template.id not in allowed_ids or global_template.scope != 'global':
+        flash('Você não tem permissão para copiar este template.', 'error')
+        return redirect(url_for('templates.settings_drive_templates'))
+        
+    # Create copy
+    new_template = DriveFolderTemplate(
+        name=f"{global_template.name} (Cópia)",
+        structure_json=global_template.structure_json,
+        scope='tenant',
+        company_id=current_user.company_id,
+        enabled=True,
+        is_default=False
+    )
+    
+    db.session.add(new_template)
+    db.session.commit()
+    
+    flash('Template duplicado com sucesso! Agora você pode editá-lo em "Meus Templates".', 'success')
+    return redirect(url_for('templates.settings_drive_templates'))
+
+@templates_bp.route('/settings/drive-templates/delete/<int:id>', methods=['POST'])
+@login_required
+def delete_drive_template(id):
+    from models import db, DriveFolderTemplate
+    
+    template = DriveFolderTemplate.query.get_or_404(id)
+    
+    if template.company_id != current_user.company_id:
+        abort(403)
+        
+    db.session.delete(template)
+    db.session.commit()
+    
+    flash('Template excluído.', 'success')
+    return redirect(url_for('templates.settings_drive_templates'))
+

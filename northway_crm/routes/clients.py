@@ -106,7 +106,17 @@ def client_details(id):
             ).first()
 
     # Fetch Drive Templates and Integration Status
-    drive_templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+    tenant_templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+    
+    # Global Templates
+    allowed_ids = current_user.company.allowed_global_template_ids or []
+    global_templates = DriveFolderTemplate.query.filter(
+        DriveFolderTemplate.scope == 'global',
+        DriveFolderTemplate.enabled == True,
+        DriveFolderTemplate.id.in_(allowed_ids)
+    ).all() if allowed_ids else []
+    
+    drive_templates = tenant_templates + global_templates
     
     drive_integration = TenantIntegration.query.filter_by(
         company_id=current_user.company_id, 
@@ -473,11 +483,22 @@ def create_drive_folder(id):
         # 2. Create Structure from Template (Optional)
         if drive_template_id:
             template = DriveFolderTemplate.query.get(drive_template_id)
-            if template and template.company_id == current_user.company_id:
+            
+            # Validation: Tenant owns it OR it's allowed global
+            is_valid = False
+            if template:
+                if template.company_id == current_user.company_id:
+                    is_valid = True
+                elif template.scope == 'global':
+                    allowed_ids = current_user.company.allowed_global_template_ids or []
+                    if template.id in allowed_ids:
+                         is_valid = True
+            
+            if is_valid:
                 drive_service.create_folder_structure(drive_integration, folder_id, template.structure_json)
                 flash(f'Estrutura de pastas "{template.name}" criada com sucesso!', 'success')
             else:
-                flash('Template inválido.', 'error')
+                flash('Template inválido ou sem permissão.', 'error')
 
     except Exception as e:
         import traceback

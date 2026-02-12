@@ -140,53 +140,57 @@ class TaskService:
         2. Task Overdue -> Urgent + Important
         3. Contract expiring in 3 days -> Urgent
         """
-        from models import Lead, Contract, Interaction
+        from models import Lead, Contract, Interaction, Task, db, LEAD_STATUS_WON, LEAD_STATUS_LOST
         from datetime import datetime, timedelta
+        from sqlalchemy import and_, or_, not_
         
         # 1. Overdue Tasks -> Q1 (Urgent + Important)
-        overdue_tasks = Task.query.filter(
+        # Bulk update for performance
+        Task.query.filter(
             Task.assigned_to_id == user_id,
             Task.status != 'concluida',
             Task.due_date < datetime.utcnow()
-        ).all()
-        for t in overdue_tasks:
-            t.is_urgent = True
-            t.is_important = True
+        ).update({Task.is_urgent: True, Task.is_important: True}, synchronize_session=False)
 
         # 2. Leads without follow-up (48h) -> Urgent
+        # Logic: Leads ACTIVE (not won/lost) where:
+        # (No interactions AND Created > 48h ago) OR (Last interaction > 48h ago)
+        # Optimization: Exclude leads that HAVE an interaction in the last 48h OR were created < 48h ago.
+        
         threshold_48h = datetime.utcnow() - timedelta(hours=48)
-        leads_to_flag = Lead.query.filter(
+        
+        # Subquery: Leads with recent interactions
+        recent_interactions = db.session.query(Interaction.lead_id).filter(
+            Interaction.created_at >= threshold_48h,
+            Interaction.lead_id != None
+        ).scalar_subquery()
+        
+        # Find Neglected Leads
+        neglected_leads_query = db.session.query(Lead.id).filter(
             Lead.company_id == company_id,
             Lead.assigned_to_id == user_id,
-            Lead.status != 'CONVERTED' # Adjust based on actual converted status name
-        ).all()
+            Lead.status.notin_([LEAD_STATUS_WON, LEAD_STATUS_LOST]),
+            # Condition: Not created recently (grace period) AND No recent interactions
+            Lead.created_at < threshold_48h,
+            ~Lead.id.in_(recent_interactions)
+        )
         
-        for lead in leads_to_flag:
-            # Check last interaction
-            last_interaction = Interaction.query.filter_by(lead_id=lead.id).order_by(Interaction.created_at.desc()).first()
-            last_date = last_interaction.created_at if last_interaction else lead.created_at
-            
-            if last_date < threshold_48h:
-                # Flag associated tasks or mark new ones? 
-                # USER goal: "Lead sem follow-up 48h -> marcar automaticamente como urgente"
-                # This usually refers to the tasks associated with that lead.
-                for task in lead.tasks:
-                    if task.status != 'concluida':
-                        task.is_urgent = True
+        neglected_lead_ids = [r[0] for r in neglected_leads_query.all()]
+        
+        if neglected_lead_ids:
+            Task.query.filter(
+                Task.lead_id.in_(neglected_lead_ids),
+                Task.status != 'concluida'
+            ).update({Task.is_urgent: True}, synchronize_session=False)
 
-        # 3. Contract expiring in 3 days -> Urgent
-        # Note: Need to check how expiration data is stored. 
-        # Contract model viewed earlier didn't have a clear expiry date but usually it's in form_data or added via Vigencia.
-        # However, Task often has a due_date linked to a contract action.
-        # Let's check for tasks linked to contracts with short due dates.
-        contract_tasks = Task.query.filter(
+        # 3. Contract related tasks due soon -> Urgent
+        # Bulk update
+        Task.query.filter(
             Task.assigned_to_id == user_id,
             Task.contract_id != None,
             Task.status != 'concluida',
             Task.due_date <= datetime.utcnow() + timedelta(days=3)
-        ).all()
-        for ct in contract_tasks:
-            ct.is_urgent = True
+        ).update({Task.is_urgent: True}, synchronize_session=False)
 
         db.session.commit()
 
