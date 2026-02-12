@@ -1235,7 +1235,8 @@
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                             <div
                                 class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Diagnóstico</h3>
+                                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Menu Lateral:
+                                    Diagnóstico</h3>
                                 <i data-lucide="line-chart"
                                     class="w-4 h-4 {{ 'text-northway-red' if client.diagnostic_status == 'done' else 'text-gray-400' }}"></i>
                             </div>
@@ -2069,7 +2070,8 @@
     const pageClientId = parseInt("{{ client.id }}");
 
     function switchClientTab(tabName) {
-        console.log("Switching to tab:", tabName);
+        // console.log("Switching to tab:", tabName);
+        // alert("DEBUG: Tentando trocar para aba: " + tabName);
         try {
             // Updated list of tabs
             const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic-tab', 'archivos', 'processes'];
@@ -2120,6 +2122,7 @@
 
         } catch (e) {
             console.error("Error switching tab:", e);
+            alert("ERRO CRITICO AO TROCAR ABA: " + e.message);
         }
     }
 
