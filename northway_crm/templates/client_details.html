@@ -884,74 +884,109 @@
 
                     {% if client.drive_folder_url %}
 
-                    <!-- Drive Stats / Info -->
-                    <div
-                        class="flex items-center gap-4 mb-8 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100 inline-block">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="folder" class="w-4 h-4 text-gray-400"></i>
-                            <span>Pasta Conectada</span>
+
+                    <!-- Drive Stats & Controls Toolbar -->
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                        <!-- Stats -->
+                        <div
+                            class="flex items-center gap-4 text-sm text-gray-500 bg-gray-50 p-2 px-4 rounded-lg border border-gray-100">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="folder" class="w-4 h-4 text-gray-400"></i>
+                                <span class="hidden md:inline">Pasta Conectada</span>
+                            </div>
+                            <div class="w-px h-4 bg-gray-300 hidden md:block"></div>
+                            <div class="flex items-center gap-2" title="Última sincronização">
+                                <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
+                                <span>{{ client.drive_last_scan_at.strftime('%d/%m %H:%M') if
+                                    client.drive_last_scan_at else 'N/A' }}</span>
+                            </div>
                         </div>
-                        <div class="w-px h-4 bg-gray-300"></div>
-                        <div class="flex items-center gap-2" title="Última sincronização">
-                            <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
-                            <span>{{ client.drive_last_scan_at.strftime('%d/%m às %H:%M') if
-                                client.drive_last_scan_at else 'Nunca sincronizado' }}</span>
+
+                        <!-- Controls -->
+                        <div class="flex items-center gap-3 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+                            <!-- Sort Dropdown -->
+                            <div class="relative">
+                                <select onchange="sortDriveFiles(this.value)"
+                                    class="appearance-none bg-transparent text-sm font-bold text-gray-600 pl-3 pr-8 py-1.5 focus:outline-none cursor-pointer hover:text-gray-900 border-r border-gray-100">
+                                    <option value="date-desc">Mais Recentes</option>
+                                    <option value="date-asc">Mais Antigos</option>
+                                    <option value="name-asc">Nome (A-Z)</option>
+                                    <option value="name-desc">Nome (Z-A)</option>
+                                </select>
+                                <i data-lucide="chevron-down"
+                                    class="w-4 h-4 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                            </div>
+
+                            <!-- View Toggles -->
+                            <div class="flex items-center gap-1 bg-gray-50 p-1 rounded-md">
+                                <button onclick="toggleDriveView('grid')" id="btn-view-grid"
+                                    class="p-1.5 rounded text-gray-700 bg-white shadow-sm transition-all hover:text-blue-600"
+                                    title="Grade">
+                                    <i data-lucide="grid" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="toggleDriveView('list')" id="btn-view-list"
+                                    class="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-200 transition-all"
+                                    title="Lista">
+                                    <i data-lucide="list" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Files Grid -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- Files Grid/List Container -->
+                    <div id="drive-files-container"
+                        class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 transition-all duration-300">
                         {% if client.drive_files_events %}
-                        {% for event in client.drive_files_events|sort(attribute='detected_at',
-                        reverse=True) %}
-                        <div
-                            class="group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all hover:border-blue-200 flex flex-col items-center text-center">
+                        {% for event in client.drive_files_events|sort(attribute='detected_at', reverse=True) %}
+                        <!-- File Item -->
+                        <div class="drive-file-item group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all hover:border-blue-200 flex flex-col items-center text-center"
+                            data-name="{{ event.file_name }}" data-date="{{ event.detected_at.timestamp() }}">
 
-                            <div class="mb-3 relative">
+                            <div class="drive-file-icon mb-3 relative shrink-0 transition-transform">
                                 {% if 'pdf' in event.mime_type %}
                                 <div
-                                    class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
+                                    class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center icon-box">
                                     <i data-lucide="file-text" class="w-6 h-6"></i>
                                 </div>
                                 {% elif 'image' in event.mime_type %}
                                 <div
-                                    class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center">
+                                    class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center icon-box">
                                     <i data-lucide="image" class="w-6 h-6"></i>
                                 </div>
                                 {% elif 'video' in event.mime_type %}
                                 <div
-                                    class="w-12 h-12 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center">
+                                    class="w-12 h-12 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center icon-box">
                                     <i data-lucide="video" class="w-6 h-6"></i>
                                 </div>
                                 {% elif 'folder' in event.mime_type %}
                                 <div
-                                    class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
+                                    class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center icon-box">
                                     <i data-lucide="folder" class="w-6 h-6 fill-current"></i>
                                 </div>
                                 {% elif 'sheet' in event.mime_type or 'csv' in event.mime_type %}
                                 <div
-                                    class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center">
+                                    class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center icon-box">
                                     <i data-lucide="table" class="w-6 h-6"></i>
                                 </div>
                                 {% else %}
                                 <div
-                                    class="w-12 h-12 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center">
+                                    class="w-12 h-12 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center icon-box">
                                     <i data-lucide="file" class="w-6 h-6"></i>
                                 </div>
                                 {% endif %}
                             </div>
 
                             <a href="{{ event.web_view_link }}" target="_blank"
-                                class="text-sm font-bold text-gray-700 hover:text-blue-600 mb-1 line-clamp-2 break-all"
+                                class="drive-file-name text-sm font-bold text-gray-700 hover:text-blue-600 mb-1 line-clamp-2 break-all"
                                 title="{{ event.file_name }}">
                                 {{ event.file_name }}
                             </a>
-                            <p class="text-[10px] text-gray-400">{{ event.detected_at.strftime('%d/%m/%Y')
-                                }}
-                            </p>
+                            <p class="drive-file-date text-[10px] text-gray-400">{{
+                                event.detected_at.strftime('%d/%m/%Y') }}</p>
 
                             <!-- Hover Actions -->
-                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div
+                                class="action-btn absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <a href="{{ event.web_view_link }}" target="_blank"
                                     class="p-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-100 hover:text-blue-600 block">
                                     <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
@@ -2461,13 +2496,134 @@ ${dateHeader}
                 alert('Erro: ' + (data.error || 'Erro desconhecido'));
             }
         } catch (e) {
-            console.error(e);
-            alert('Erro de conexão ao sincronizar.');
-        } finally {
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
-            lucide.createIcons();
+        } else {
+            alert('Erro: ' + (data.error || 'Erro desconhecido'));
         }
+    } catch (e) {
+        console.error(e);
+        alert('Erro ao sincronizar.');
+        const btn = document.getElementById('btn-scan-drive');
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }
+    }
+
+    // --- Drive View & Sort Logic ---
+    function toggleDriveView(view) {
+        const container = document.getElementById('drive-files-container');
+        if (!container) return; // Guard clause
+
+        const items = container.querySelectorAll('.drive-file-item');
+        const btnGrid = document.getElementById('btn-view-grid');
+        const btnList = document.getElementById('btn-view-list');
+
+        if (view === 'list') {
+            // Container
+            container.classList.remove('grid', 'grid-cols-2', 'md:grid-cols-4', 'lg:grid-cols-5');
+            container.classList.add('flex', 'flex-col', 'space-y-2');
+
+            // Items
+            items.forEach(item => {
+                item.classList.remove('flex-col', 'text-center', 'p-4');
+                item.classList.add('flex-row', 'text-left', 'p-3', 'items-center', 'gap-4');
+
+                // Icon wrapper
+                const icon = item.querySelector('.drive-file-icon');
+                if (icon) icon.classList.remove('mb-3');
+
+                // Name
+                const name = item.querySelector('.drive-file-name');
+                if (name) {
+                    name.classList.remove('mb-1', 'line-clamp-2');
+                    name.classList.add('flex-1', 'truncate');
+                }
+
+                // Date
+                const date = item.querySelector('.drive-file-date');
+                if (date) {
+                    date.classList.add('shrink-0', 'ml-auto');
+                }
+            });
+
+            // Buttons
+            btnList.classList.replace('text-gray-400', 'text-blue-600');
+            btnList.classList.add('bg-white', 'shadow-sm');
+            btnList.classList.remove('hover:bg-gray-200');
+
+            btnGrid.classList.replace('text-blue-600', 'text-gray-400'); // Assuming blue was default
+            btnGrid.classList.replace('text-gray-700', 'text-gray-400'); // Or gray
+            btnGrid.classList.remove('bg-white', 'shadow-sm');
+            btnGrid.classList.add('hover:bg-gray-200');
+
+        } else {
+            // Grid (Revert)
+            container.classList.add('grid', 'grid-cols-2', 'md:grid-cols-4', 'lg:grid-cols-5');
+            container.classList.remove('flex', 'flex-col', 'space-y-2');
+
+            items.forEach(item => {
+                item.classList.add('flex-col', 'text-center', 'p-4');
+                item.classList.remove('flex-row', 'text-left', 'p-3', 'items-center', 'gap-4');
+
+                // Icon wrapper
+                const icon = item.querySelector('.drive-file-icon');
+                if (icon) icon.classList.add('mb-3');
+
+                // Name
+                const name = item.querySelector('.drive-file-name');
+                if (name) {
+                    name.classList.add('mb-1', 'line-clamp-2');
+                    name.classList.remove('flex-1', 'truncate');
+                }
+
+                // Date
+                const date = item.querySelector('.drive-file-date');
+                if (date) {
+                    date.classList.remove('shrink-0', 'ml-auto');
+                }
+            });
+
+            // Buttons
+            btnGrid.classList.replace('text-gray-400', 'text-blue-600');
+            btnGrid.classList.add('bg-white', 'shadow-sm');
+            btnGrid.classList.remove('hover:bg-gray-200');
+
+            btnList.classList.replace('text-blue-600', 'text-gray-400');
+            btnList.classList.remove('bg-white', 'shadow-sm');
+            btnList.classList.add('hover:bg-gray-200');
+        }
+    }
+
+    function sortDriveFiles(criteria) {
+        const container = document.getElementById('drive-files-container');
+        if (!container) return;
+
+        const items = Array.from(container.querySelectorAll('.drive-file-item'));
+
+        items.sort((a, b) => {
+            const nameA = a.dataset.name || '';
+            const nameB = b.dataset.name || '';
+            const dateA = parseFloat(a.dataset.date || 0);
+            const dateB = parseFloat(b.dataset.date || 0);
+
+            if (criteria === 'name-asc') {
+                return nameA.localeCompare(nameB);
+            } else if (criteria === 'name-desc') {
+                return nameB.localeCompare(nameA);
+            } else if (criteria === 'date-asc') {
+                return dateA - dateB;
+            } else { // date-desc (default)
+                return dateB - dateA;
+            }
+        });
+
+        // Re-append in order
+        items.forEach(item => container.appendChild(item));
+    } alert('Erro de conexão ao sincronizar.');
+        } finally {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+        lucide.createIcons();
+    }
     }
 </script>
 
