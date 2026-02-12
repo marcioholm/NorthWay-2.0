@@ -234,6 +234,23 @@ def get_today_stats(company_id, user_id):
                                       .filter(Task.due_date >= date.today()).count()
     }
 
+
+def get_bucket_key(date_obj, period):
+    if not date_obj: return None, ''
+    
+    if period == 'today':
+        return date_obj.strftime('%Y-%m-%d-%H'), date_obj.strftime('%H:00')
+    elif period == 'daily':
+        return date_obj.strftime('%Y-%m-%d'), date_obj.strftime('%d/%m')
+    elif period == 'weekly':
+        # Start of week
+        start = date_obj - timedelta(days=date_obj.weekday())
+        return start.strftime('%Y-%W'), start.strftime('%d/%m')
+    elif period == 'monthly':
+        return date_obj.strftime('%Y-%m'), date_obj.strftime('%b/%Y')
+    else: # bimonthly, quarterly, etc - treat as monthly for now or custom
+        return date_obj.strftime('%Y-%m'), date_obj.strftime('%m/%Y')
+
 @dashboard_bp.route('/api/dashboard/chart-data')
 @login_required
 def get_chart_data():
@@ -244,8 +261,8 @@ def get_chart_data():
     now = datetime.now()
     company_id = current_user.company_id
     
-    # ... (date logic) ...
-
+    start_date = now - timedelta(days=365) # Default
+    
     if period == 'today':
         start_date = datetime(now.year, now.month, now.day)
     elif period == 'daily':
@@ -254,31 +271,37 @@ def get_chart_data():
         start_date = now - timedelta(weeks=12)
     elif period == 'monthly':
         start_date = now - timedelta(days=365)
-    else:
-        start_date = now - timedelta(days=180)
+    elif period == 'bimonthly':
+        start_date = now - timedelta(days=730)
+    elif period == 'quarterly':
+        start_date = now - timedelta(days=730)
+    elif period == 'semiannual':
+         start_date = now - timedelta(days=1095)
+    elif period == 'annual':
+        start_date = now - timedelta(days=1825)
 
-    # Generate all buckets in range
+    # Calculate Buckets
     all_buckets = []
+    data_buckets = {} # Initialize!
+    
     current = start_date
     while current <= now:
         sort_key, label = get_bucket_key(current, period)
         if not all_buckets or all_buckets[-1][0] != sort_key:
             all_buckets.append((sort_key, label))
         
-        # Increment based on period
+        # Increment
         if period == 'today': current += timedelta(hours=1)
         elif period == 'daily': current += timedelta(days=1)
         elif period == 'weekly': current += timedelta(weeks=1)
         elif period == 'monthly': 
-            # safe month increment
             next_month = current.month + 1 if current.month < 12 else 1
             next_year = current.year + 1 if current.month == 12 else current.year
             current = current.replace(year=next_year, month=next_month, day=1)
         else:
-             # Default approx 30 days for others to be safe
              current += timedelta(days=30)
              
-    # Initialize buckets
+    # Initialize dictionary
     for sort_key, label in all_buckets:
         if sort_key not in data_buckets:
             data_buckets[sort_key] = {'label': label, 'leads': 0, 'sales': 0}
