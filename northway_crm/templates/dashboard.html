@@ -433,17 +433,30 @@
                         anchor: 'end',
                         align: 'end',
                         offset: 4,
-                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 12 },
+                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 11 },
                         formatter: function (value, context) {
                             if (value === 0) return '';
-                            // Calculate Percentage
-                            const firstVal = context.chart.data.datasets[0].data[0];
-                            const percentage = firstVal > 0 ? Math.round((value / firstVal) * 100) : 0;
-                            return `${value} (${percentage}%)`;
+
+                            const index = context.dataIndex;
+                            const data = context.chart.data.datasets[0].data;
+
+                            // 1. Total Percentage (vs first stage)
+                            const firstVal = data[0];
+                            const totalPct = firstVal > 0 ? Math.round((value / firstVal) * 100) : 0;
+
+                            // 2. Step Percentage (vs previous stage)
+                            let stepInfo = '';
+                            if (index > 0) {
+                                const prevVal = data[index - 1];
+                                const stepPct = prevVal > 0 ? Math.round((value / prevVal) * 100) : 0;
+                                stepInfo = ` | ${stepPct}% etapa`;
+                            }
+
+                            return `${value} (${totalPct}%${stepInfo})`;
                         }
                     }
                 },
-                layout: { padding: { right: 50, left: 10 } }, // Space for labels
+                layout: { padding: { right: 80, left: 10 } }, // More space for longer labels
                 scales: {
                     x: {
                         grid: { display: false },
