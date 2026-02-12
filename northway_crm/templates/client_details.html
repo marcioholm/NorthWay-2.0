@@ -363,7 +363,7 @@
                                 class="group flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-red-100/30 hover:bg-red-50/10 transition-all bg-white shadow-sm relative">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 {{ 'bg-yellow-50 text-yellow-600' if contract.status == 'draft' else ('bg-green-50 text-green-600' if contract.status == 'signed' else ('bg-red-50 text-red-600' if contract.status == 'terminated' else 'bg-blue-50 text-blue-600')) }}">
+                                        class="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 {{ 'bg-yellow-50 text-yellow-600' if contract.status == 'draft' else ('bg-green-50 text-green-600' if contract.status in ['signed', 'active'] else ('bg-red-50 text-red-600' if contract.status == 'terminated' else 'bg-blue-50 text-blue-600')) }}">
                                         <i data-lucide="{{ 'file-edit' if contract.status == 'draft' else ('ban' if contract.status == 'terminated' else 'file-text') }}"
                                             class="w-6 h-6"></i>
                                     </div>
@@ -384,11 +384,12 @@
                                 </div>
                                 <div class="flex flex-col items-end gap-2">
                                     <span
-                                        class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else ('bg-green-100 text-green-700' if contract.status == 'signed' else ('bg-red-100 text-red-700' if contract.status == 'terminated' else 'bg-blue-100 text-blue-700')) }}">
+                                        class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else ('bg-green-100 text-green-700' if contract.status in ['signed', 'active'] else ('bg-red-100 text-red-700' if contract.status == 'terminated' else 'bg-blue-100 text-blue-700')) }}">
                                         {{ 'Rascunho' if contract.status == 'draft' else ('Emitido' if
                                         contract.status
                                         ==
-                                        'issued' else ('Assinado' if contract.status == 'signed' else ('Rescindido'
+                                        'issued' else ('Assinado' if contract.status in ['signed', 'active'] else
+                                        ('Rescindido'
                                         if
                                         contract.status == 'terminated' else contract.status))) }}
                                     </span>

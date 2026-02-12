@@ -80,7 +80,7 @@ def leads():
             Lead.name.ilike(search_term),
             Lead.email.ilike(search_term),
             Lead.phone.ilike(search_term),
-            Lead.company_name.ilike(search_term) # Assuming company_name exists or is relevant, check model if needed. 
+            Lead.legal_name.ilike(search_term) 
             # Actually Lead model usually has name. It might not have company_name field (it has company_id).
             # Let's check Lead model again or just stick to safe fields.
             # Viewing leads.py confirms Lead has name, email, phone.

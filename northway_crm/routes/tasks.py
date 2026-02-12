@@ -367,6 +367,22 @@ def delete_task(id):
     db.session.commit()
     return redirect(request.referrer or url_for('tasks.tasks'))
 
+@tasks_bp.route('/api/delete/<int:id>', methods=['DELETE', 'POST'])
+@login_required
+def delete_task_api(id):
+    from models import db
+    task = Task.query.get_or_404(id)
+    if task.company_id != current_user.company_id:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
+        
+    try:
+        db.session.delete(task)
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': 'Task deleted'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @tasks_bp.route('/<int:id>/update', methods=['POST'])
 @login_required
 def update(id):

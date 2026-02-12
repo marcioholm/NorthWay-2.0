@@ -39,7 +39,7 @@ def get_dashboard_data():
     year_new_contracts = Contract.query.filter(
         Contract.company_id == company_id,
         extract('year', Contract.created_at) == year, # Assuming created_at or specialized signed_at
-        Contract.status == 'signed'
+        Contract.status.in_(['signed', 'active'])
     ).all()
     
     # Initialize Aggregators

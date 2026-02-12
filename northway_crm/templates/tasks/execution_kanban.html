@@ -494,10 +494,14 @@
 
                             <input type="hidden" id="task-id">
                         </div>
-                        <div class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <div class="bg-slate-50  px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t">
                             <button type="button" onclick="submitTask()" id="btn-save-task"
                                 class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                                 Salvar Tarefa
+                            </button>
+                            <button type="button" onclick="deleteTask()" id="btn-delete-task"
+                                class="hidden w-full inline-flex justify-center rounded-md border border-red-200 shadow-sm px-4 py-2 bg-red-50 text-base font-medium text-red-600 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                Excluir
                             </button>
                             <button type="button" onclick="closeNewTaskModal()"
                                 class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
@@ -955,6 +959,7 @@
                     document.getElementById('task-urgent').checked = false;
                     document.getElementById('task-important').checked = false;
                     document.getElementById('task-assignee').value = "{{ current_user.id }}";
+                    document.getElementById('btn-delete-task').classList.add('hidden');
                 }
 
                 function openEditTaskModal(task) {
@@ -972,6 +977,7 @@
                     document.getElementById('newTaskModal').classList.remove('hidden');
                     document.getElementById('modal-title').innerText = 'Editar Tarefa';
                     document.getElementById('btn-save-task').innerText = 'Salvar Alterações';
+                    document.getElementById('btn-delete-task').classList.remove('hidden');
                 }
 
                 function closeNewTaskModal() {
@@ -1017,6 +1023,26 @@
                                 loadKanbanTasks();
                             } else {
                                 alert('Erro: ' + (data.error || 'Unknown'));
+                            }
+                        });
+                }
+
+                function deleteTask() {
+                    const id = document.getElementById('task-id').value;
+                    if (!id) return;
+
+                    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+
+                    fetch(`/tasks/api/delete/${id}`, {
+                        method: 'DELETE'
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                closeNewTaskModal();
+                                loadKanbanTasks();
+                            } else {
+                                alert('Erro ao excluir: ' + (data.message || 'Unknown'));
                             }
                         });
                 }

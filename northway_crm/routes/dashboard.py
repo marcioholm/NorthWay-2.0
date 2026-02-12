@@ -240,7 +240,7 @@ def get_bucket_key(date_obj, period):
     
     if period == 'today':
         return date_obj.strftime('%Y-%m-%d-%H'), date_obj.strftime('%H:00')
-    elif period == 'daily':
+    elif period in ['daily', 'last_7_days']:
         return date_obj.strftime('%Y-%m-%d'), date_obj.strftime('%d/%m')
     elif period == 'weekly':
         # Start of week
@@ -265,6 +265,8 @@ def get_chart_data():
     
     if period == 'today':
         start_date = datetime(now.year, now.month, now.day)
+    elif period == 'last_7_days':
+        start_date = now - timedelta(days=7)
     elif period == 'daily':
         start_date = now - timedelta(days=30)
     elif period == 'weekly':
@@ -292,7 +294,7 @@ def get_chart_data():
         
         # Increment
         if period == 'today': current += timedelta(hours=1)
-        elif period == 'daily': current += timedelta(days=1)
+        elif period in ['daily', 'last_7_days']: current += timedelta(days=1)
         elif period == 'weekly': current += timedelta(weeks=1)
         elif period == 'monthly': 
             next_month = current.month + 1 if current.month < 12 else 1

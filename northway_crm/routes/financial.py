@@ -83,7 +83,10 @@ def stats():
     # --- MRR & TICKET ---
     # Performance: Avoid parsing JSON for every request if possible.
     # For now, we iterate active contracts.
-    active_contracts = Contract.query.filter_by(company_id=company_id, status='signed').all()
+    active_contracts = Contract.query.filter(
+        Contract.company_id == company_id,
+        Contract.status.in_(['signed', 'active'])
+    ).all()
     cancelled_contracts = Contract.query.filter_by(company_id=company_id, status='cancelled').all() # Assuming 'cancelled' status exists/used
     
     mrr = 0

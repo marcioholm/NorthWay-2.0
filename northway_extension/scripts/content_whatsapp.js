@@ -146,8 +146,9 @@ function startObserver() {
 
 // --- REACT FIBER HELPERS ---
 function getReactInstance(dom) {
+    if (!dom) return null;
     for (const key in dom) {
-        if (key.startsWith("__reactFiber")) return dom[key];
+        if (key.startsWith("__reactFiber") || key.startsWith("__reactInternalInstance") || key.startsWith("__reactProps")) return dom[key];
     }
     return null;
 }
@@ -157,17 +158,25 @@ function findJidInFiber(fiber) {
     let visited = new Set();
     while (queue.length > 0) {
         const { node, depth } = queue.shift();
-        if (!node || depth > 25 || visited.has(node)) continue;
+        if (!node || depth > 30 || visited.has(node)) continue;
         visited.add(node);
 
-        const props = node.memoizedProps;
+        const props = node.memoizedProps || node.props;
         if (props) {
+            // High priority JID fields
             if (props.jid && typeof props.jid === 'string') return props.jid;
-            if (props.id && typeof props.id === 'object' && props.id.user) return props.id.user;
+            if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
+            if (props.id && typeof props.id === 'string' && (props.id.includes('@c.us') || props.id.includes('@g.us'))) return props.id;
+            
+            // Nested objects
+            if (props.chat && props.chat.id && typeof props.chat.id === 'string') return props.chat.id;
+            if (props.contact && props.contact.id && typeof props.contact.id === 'string') return props.contact.id;
+            if (props.msg && props.msg.to && typeof props.msg.to === 'string') return props.msg.to;
         }
 
         if (node.child) queue.push({ node: node.child, depth: depth + 1 });
         if (node.sibling) queue.push({ node: node.sibling, depth: depth + 1 });
+        if (node.return) queue.push({ node: node.return, depth: depth + 1 });
     }
     return null;
 }
@@ -183,14 +192,26 @@ function checkActiveChat() {
         // 1. Find the Main Chat Panel (Multiple Fallbacks)
         const mainPanel = document.getElementById('main') ||
             document.querySelector('div[role="main"]') ||
-            document.querySelector('._aigv._aigz') || // Common WA classes
-            document.querySelector('.x1c4vz4f');
+            document.querySelector('section._aigv') || 
+            document.querySelector('._aigv._aigz') || 
+            document.querySelector('.x1c4vz4f') ||
+            document.querySelector('#app > div > div > div:last-child');
 
         if (mainPanel) {
             // 2. Find the Header (Multiple Fallbacks)
-            const header = mainPanel.querySelector('header') ||
-                mainPanel.querySelector('div[role="button"]') || // Header is often a button
-                mainPanel.querySelector('._aigw');
+            let header = mainPanel.querySelector('header') ||
+                mainPanel.querySelector('div[role="button"]') || 
+                mainPanel.querySelector('._aigw') ||
+                mainPanel.querySelector('div._aiih');
+
+            // Fallback: Find header by common icons if standard selectors fail
+            if (!header) {
+                const searchIcon = mainPanel.querySelector('span[data-icon="search-alt"]') || 
+                                 mainPanel.querySelector('span[data-icon="search"]');
+                if (searchIcon) {
+                    header = searchIcon.closest('header') || searchIcon.closest('div._aigv') || searchIcon.closest('div._aigw');
+                }
+            }
 
             if (header) {
                 // 3. Extract Avatar & JID via Fiber
@@ -211,31 +232,26 @@ function checkActiveChat() {
                 }
 
                 // 4. Extract Name
-                // Search for title or specific spans in header
                 const nameEl = header.querySelector('span[title]') ||
                     header.querySelector('span[dir="auto"]') ||
-                    header.querySelector('._aacl'); // Name class
+                    header.querySelector('._aacl') ||
+                    header.querySelector('h1') ||
+                    header.querySelector('div[title]');
 
                 if (nameEl) {
                     name = nameEl.title || nameEl.innerText;
-                } else {
-                    // Final fallback for name (search for anything that looks like a name in header title area)
-                    const fallbackName = header.querySelector('h1') || header.querySelector('div[title]');
-                    if (fallbackName) name = fallbackName.innerText || fallbackName.title;
                 }
 
                 if (name) name = name.trim();
 
-                if (name || phone) {
-                    console.log("NW: Potential Chat Found", { name, phone, jid: phone });
-                }
-
-                // 5. Group Refinement (Check for subtitle indicators)
+                // 5. Group Refinement
                 const subtitleEl = header.querySelector('span[title*=","]') ||
-                    header.querySelector('._aa-y'); // Subtitle area
+                    header.querySelector('._aa-y') ||
+                    header.querySelector('._am_8'); // New subtitle class
+                    
                 if (subtitleEl) {
                     const subText = subtitleEl.innerText.toLowerCase();
-                    if (subText.includes(',') || subText.includes('participan') || subText.includes('clique')) {
+                    if (subText.includes(',') || subText.includes('participan') || subText.includes('clique') || subText.includes('online') === false && subText.length > 20) {
                         isGroup = true;
                     }
                 }
