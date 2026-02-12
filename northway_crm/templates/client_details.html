@@ -652,673 +652,668 @@
                                 <p class="text-xs mt-1">Gere uma nova cobrança para começar.</p>
                             </div>
                             {% endif %}
-                        </div> <!-- content-client-financial -->
+                        </div>
+                    </div> <!-- content-client-financial -->
 
-                        <!-- Service Orders Content (New Tab) -->
-                        <div id="content-client-service-orders" class="hidden p-8">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                    Ordens de Serviço Extras
-                                </h3>
-                                <button type="button" onclick="toggleModal('serviceOrderModal')"
-                                    class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    Nova Ordem de Serviço
-                                </button>
-                            </div>
 
-                            <div class="space-y-4">
-                                {% if client.service_orders %}
-                                {% for os in client.service_orders|sort(attribute='created_at', reverse=True) %}
-                                <div
-                                    class="bg-white border border-gray-200 rounded-xl p-5 hover:border-red-100 transition-all shadow-sm">
-                                    <div class="flex items-start justify-between">
-                                        <div class="flex items-start gap-4">
-                                            <div
-                                                class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 
+                    <!-- Service Orders Content (New Tab) -->
+                    <div id="content-client-service-orders" class="hidden p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                Ordens de Serviço Extras
+                            </h3>
+                            <button type="button" onclick="toggleModal('serviceOrderModal')"
+                                class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Nova Ordem de Serviço
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            {% if client.service_orders %}
+                            {% for os in client.service_orders|sort(attribute='created_at', reverse=True) %}
+                            <div
+                                class="bg-white border border-gray-200 rounded-xl p-5 hover:border-red-100 transition-all shadow-sm">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 
                                                 {{ 'bg-yellow-50 text-yellow-600' if os.status in ['SOLICITADA', 'AGUARDANDO_ACEITE'] else 
                                                 ('bg-blue-50 text-blue-600' if os.status in ['EM_EXECUCAO', 'AUTORIZADA'] else 
                                                 ('bg-green-50 text-green-600' if os.status == 'CONCLUIDA' else 
                                                 ('bg-red-50 text-red-600' if os.status == 'CANCELADA' else 'bg-gray-50 text-gray-600'))) }}">
-                                                <i data-lucide="briefcase" class="w-5 h-5"></i>
-                                            </div>
-                                            <div>
-                                                <div class="flex items-center gap-2 mb-1">
-                                                    <h4 class="text-base font-bold text-gray-900">{{ os.title }}
-                                                    </h4>
-                                                    <span
-                                                        class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md 
+                                            <i data-lucide="briefcase" class="w-5 h-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <h4 class="text-base font-bold text-gray-900">{{ os.title }}
+                                                </h4>
+                                                <span
+                                                    class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md 
                                                         {{ 'bg-yellow-100 text-yellow-700' if os.status in ['SOLICITADA', 'AGUARDANDO_ACEITE'] else 
                                                         ('bg-blue-100 text-blue-700' if os.status in ['EM_EXECUCAO', 'AUTORIZADA'] else 
                                                         ('bg-green-100 text-green-700' if os.status == 'CONCLUIDA' else 
                                                         ('bg-red-100 text-red-700' if os.status == 'CANCELADA' else 'bg-gray-100 text-gray-600'))) }}">
-                                                        {{ os.status.replace('_', ' ') }}
-                                                    </span>
-                                                </div>
-                                                <p class="text-xs text-gray-500 mb-2 max-w-xl">{{ os.description or
-                                                    'Sem
-                                                    descrição' }}</p>
-                                                {% if os.asaas_payment_id %}
-                                                <div class="flex items-center gap-2 text-xs text-gray-400">
-                                                    <span
-                                                        class="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
-                                                        <img src="https://ajuda.asaas.com/hc/article_attachments/360037805174/asaas-logo.png"
-                                                            class="h-3 opacity-60">
-                                                        Cobrança Gerada
-                                                    </span>
-                                                    {% if os.asaas_invoice_url %}
-                                                    <a href="{{ os.asaas_invoice_url }}" target="_blank"
-                                                        class="text-blue-500 hover:underline flex items-center gap-0.5">
-                                                        Ver fatura <i data-lucide="external-link" class="w-3 h-3"></i>
-                                                    </a>
-                                                    {% endif %}
-                                                </div>
+                                                    {{ os.status.replace('_', ' ') }}
+                                                </span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mb-2 max-w-xl">{{ os.description or
+                                                'Sem
+                                                descrição' }}</p>
+                                            {% if os.asaas_payment_id %}
+                                            <div class="flex items-center gap-2 text-xs text-gray-400">
+                                                <span
+                                                    class="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                                                    <img src="https://ajuda.asaas.com/hc/article_attachments/360037805174/asaas-logo.png"
+                                                        class="h-3 opacity-60">
+                                                    Cobrança Gerada
+                                                </span>
+                                                {% if os.asaas_invoice_url %}
+                                                <a href="{{ os.asaas_invoice_url }}" target="_blank"
+                                                    class="text-blue-500 hover:underline flex items-center gap-0.5">
+                                                    Ver fatura <i data-lucide="external-link" class="w-3 h-3"></i>
+                                                </a>
                                                 {% endif %}
                                             </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-lg font-extrabold text-gray-900">R$ {{
-                                                "%.2f"|format(os.value)|replace('.', ',') }}</p>
-                                            <p class="text-[10px] text-gray-400 mb-3">{{
-                                                os.created_at.strftime('%d/%m/%Y') }}</p>
-
-                                            {% if os.status not in ['CONCLUIDA', 'CANCELADA'] %}
-                                            <button
-                                                onclick='openCancelOSModal("{{ os.id }}", {{ os.title|tojson|safe }})'
-                                                class="text-xs font-bold text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors">
-                                                Cancelar OS
-                                            </button>
                                             {% endif %}
                                         </div>
                                     </div>
-                                    {% if os.status == 'CANCELADA' %}
-                                    <div
-                                        class="mt-3 pt-3 border-t border-red-50 flex items-start gap-2 text-xs text-red-400 bg-red-50/20 p-2 rounded">
-                                        <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5"></i>
-                                        <div>
-                                            <span class="font-bold">Cancelada por {{ os.canceled_by.name if
-                                                os.canceled_by else 'Sistema' }} em {{
-                                                os.canceled_at.strftime('%d/%m/%Y') if os.canceled_at else ''
-                                                }}</span>
-                                            <p class="italic">"{{ os.cancel_reason }}"</p>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
-                                {% else %}
-                                <div
-                                    class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                    <div class="bg-gray-100 p-3 rounded-full mb-3">
-                                        <i data-lucide="briefcase" class="w-8 h-8 opacity-40"></i>
-                                    </div>
-                                    <p class="text-sm italic font-medium">Nenhuma ordem de serviço extra.</p>
-                                    <p class="text-xs mt-1">Crie uma nova OS para serviços avulsos.</p>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-extrabold text-gray-900">R$ {{
+                                            "%.2f"|format(os.value)|replace('.', ',') }}</p>
+                                        <p class="text-[10px] text-gray-400 mb-3">{{
+                                            os.created_at.strftime('%d/%m/%Y') }}</p>
 
-                        <!-- Diagnostic Content -->
-                        <!-- Diagnostic Tab (Access Control) -->
-                        {% if diag_instance %}
-                        <div id="content-client-diagnostic-tab" class="hidden p-8">
-                            <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                <i data-lucide="line-chart" class="w-5 h-5 text-gray-400"></i>
-                                Diagnóstico Estratégico
-                            </h3>
-
-                            {% if client.diagnostic_status == 'done' %}
-                            <div class="space-y-8">
-                                <!-- Results Summary -->
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div
-                                        class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
-                                        <div class="text-3xl font-black text-gray-900">{{ client.diagnostic_stars or
-                                            0
-                                            }}</div>
-                                        <div class="text-[10px] text-gray-500 uppercase font-bold">Nota Final (0-5)
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
-                                        <div class="text-xl font-bold text-northway-red">{{ client.diagnostic_score
-                                            or 0
-                                            }}</div>
-                                        <div class="text-[10px] text-gray-500 uppercase font-bold">Score Total</div>
-                                    </div>
-                                    <div
-                                        class="bg-red-50 p-4 rounded-xl border border-red-100 flex flex-col items-center justify-center text-center relative group">
-                                        <div class="text-xs font-bold text-red-800 uppercase mb-1">Classificação
-                                        </div>
-                                        <div class="text-sm text-red-900 font-medium mb-2">{{
-                                            client.diagnostic_classification or 'Indefinido' }}</div>
-
-                                        {% if client.submissions %}
-                                        <a href="{{ url_for('forms.get_report', submission_id=client.submissions|sort(attribute='created_at', reverse=True)|first|attr('id')) }}"
-                                            target="_blank"
-                                            class="text-[10px] font-bold text-red-600 hover:text-red-800 underline">
-                                            Ver Relatório Completo
-                                        </a>
+                                        {% if os.status not in ['CONCLUIDA', 'CANCELADA'] %}
+                                        <button onclick='openCancelOSModal("{{ os.id }}", {{ os.title|tojson|safe }})'
+                                            class="text-xs font-bold text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors">
+                                            Cancelar OS
+                                        </button>
                                         {% endif %}
                                     </div>
                                 </div>
-
-                                <!-- Pillars Breakdown -->
-                                {% if client.diagnostic_pillars %}
-                                {% set pillars = client.diagnostic_pillars|from_json %}
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {% for pillar, data in pillars.items() %}
-                                    <div class="space-y-2">
-                                        <div class="flex justify-between items-end">
-                                            <span class="text-sm font-bold text-gray-700">{{ pillar }}</span>
-                                            <span class="text-xs font-bold text-northway-red">{{ data.score }}
-                                                pts</span>
-                                        </div>
-                                        <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                            <div class="bg-northway-red h-full rounded-full transition-all duration-1000"
-                                                style="width: {{ (data.score / data.max * 100)|round if data.max > 0 else 0 }}%">
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="flex justify-between text-[10px] text-gray-400 font-medium uppercase">
-                                            <span>Nível: {{ data.level }}</span>
-                                            <span>Máx: {{ data.max }}</span>
-                                        </div>
+                                {% if os.status == 'CANCELADA' %}
+                                <div
+                                    class="mt-3 pt-3 border-t border-red-50 flex items-start gap-2 text-xs text-red-400 bg-red-50/20 p-2 rounded">
+                                    <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5"></i>
+                                    <div>
+                                        <span class="font-bold">Cancelada por {{ os.canceled_by.name if
+                                            os.canceled_by else 'Sistema' }} em {{
+                                            os.canceled_at.strftime('%d/%m/%Y') if os.canceled_at else ''
+                                            }}</span>
+                                        <p class="italic">"{{ os.cancel_reason }}"</p>
                                     </div>
-                                    {% endfor %}
                                 </div>
                                 {% endif %}
-
                             </div>
+                            {% endfor %}
                             {% else %}
                             <div
                                 class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
                                 <div class="bg-gray-100 p-3 rounded-full mb-3">
-                                    <i data-lucide="clipboard-list" class="w-8 h-8 opacity-40"></i>
+                                    <i data-lucide="briefcase" class="w-8 h-8 opacity-40"></i>
                                 </div>
-                                <p class="text-sm italic font-medium">Nenhum diagnóstico realizado ainda.</p>
-                                <p class="text-xs mt-1">Envie o link de participação para o cliente.</p>
+                                <p class="text-sm italic font-medium">Nenhuma ordem de serviço extra.</p>
+                                <p class="text-xs mt-1">Crie uma nova OS para serviços avulsos.</p>
                             </div>
                             {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Diagnostic Content -->
+                    <!-- Diagnostic Tab (Access Control) -->
+                    {% if diag_instance %}
+                    <div id="content-client-diagnostic-tab" class="hidden p-8">
+                        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <i data-lucide="line-chart" class="w-5 h-5 text-gray-400"></i>
+                            Diagnóstico Estratégico
+                        </h3>
+
+                        {% if client.diagnostic_status == 'done' %}
+                        <div class="space-y-8">
+                            <!-- Results Summary -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div
+                                    class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
+                                    <div class="text-3xl font-black text-gray-900">{{ client.diagnostic_stars or
+                                        0
+                                        }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold">Nota Final (0-5)
+                                    </div>
+                                </div>
+                                <div
+                                    class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col items-center justify-center">
+                                    <div class="text-xl font-bold text-northway-red">{{ client.diagnostic_score
+                                        or 0
+                                        }}</div>
+                                    <div class="text-[10px] text-gray-500 uppercase font-bold">Score Total</div>
+                                </div>
+                                <div
+                                    class="bg-red-50 p-4 rounded-xl border border-red-100 flex flex-col items-center justify-center text-center relative group">
+                                    <div class="text-xs font-bold text-red-800 uppercase mb-1">Classificação
+                                    </div>
+                                    <div class="text-sm text-red-900 font-medium mb-2">{{
+                                        client.diagnostic_classification or 'Indefinido' }}</div>
+
+                                    {% if client.submissions %}
+                                    <a href="{{ url_for('forms.get_report', submission_id=client.submissions|sort(attribute='created_at', reverse=True)|first|attr('id')) }}"
+                                        target="_blank"
+                                        class="text-[10px] font-bold text-red-600 hover:text-red-800 underline">
+                                        Ver Relatório Completo
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Pillars Breakdown -->
+                            {% if client.diagnostic_pillars %}
+                            {% set pillars = client.diagnostic_pillars|from_json %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {% for pillar, data in pillars.items() %}
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-sm font-bold text-gray-700">{{ pillar }}</span>
+                                        <span class="text-xs font-bold text-northway-red">{{ data.score }}
+                                            pts</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                        <div class="bg-northway-red h-full rounded-full transition-all duration-1000"
+                                            style="width: {{ (data.score / data.max * 100)|round if data.max > 0 else 0 }}%">
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between text-[10px] text-gray-400 font-medium uppercase">
+                                        <span>Nível: {{ data.level }}</span>
+                                        <span>Máx: {{ data.max }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                        </div>
+                        {% else %}
+                        <div
+                            class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                            <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                <i data-lucide="clipboard-list" class="w-8 h-8 opacity-40"></i>
+                            </div>
+                            <p class="text-sm italic font-medium">Nenhum diagnóstico realizado ainda.</p>
+                            <p class="text-xs mt-1">Envie o link de participação para o cliente.</p>
                         </div>
                         {% endif %}
+                    </div>
+                    {% endif %}
 
-                        <!-- Drive Content (New Tab) -->
-                        <div id="content-client-archivos" class="hidden p-8">
-                            <div class="flex items-center justify-between mb-8">
-                                <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
-                                    <div class="bg-blue-50 p-2 rounded-lg text-blue-600">
-                                        <i data-lucide="hard-drive" class="w-6 h-6"></i>
-                                    </div>
-                                    Arquivos (Google Drive)
-                                </h3>
-                                <div
-                                    class="bg-red-100 border border-red-500 text-red-700 px-4 py-2 rounded mb-4 text-xs font-bold">
-                                    DEBUG: ABA ARQUIVOS CARREGADA (ID: content-client-archivos)
+                    <!-- Drive Content (New Tab) -->
+                    <div id="content-client-archivos" class="hidden p-8">
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                                <div class="bg-blue-50 p-2 rounded-lg text-blue-600">
+                                    <i data-lucide="hard-drive" class="w-6 h-6"></i>
                                 </div>
-                                <div class="flex gap-2">
-                                    {% if client.drive_folder_url %}
-                                    <button type="button" onclick="scanDriveFolder()" id="btn-scan-drive"
-                                        class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
-                                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                        Sincronizar
-                                    </button>
-                                    <a href="{{ client.drive_folder_url }}" target="_blank"
-                                        class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
-                                        <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-                                        Upload
-                                    </a>
-                                    {% endif %}
-                                    {% if is_drive_connected %}
-                                    <button type="button" onclick="toggleModal('createDriveFoldersModal')"
-                                        class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg shadow-blue-500/30">
-                                        <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                                        {% if client.drive_folder_url %}Nova Pasta{% else %}Conectar Drive{% endif
-                                        %}
-                                    </button>
-                                    {% else %}
-                                    <a href="{{ url_for('admin.settings_integrations') }}"
-                                        class="bg-gray-800 text-white hover:bg-gray-900 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg">
-                                        <i data-lucide="settings" class="w-4 h-4"></i>
-                                        Configurar Drive
-                                    </a>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            {% if client.drive_folder_url %}
-
-                            <!-- Drive Stats / Info -->
+                                Arquivos (Google Drive)
+                            </h3>
                             <div
-                                class="flex items-center gap-4 mb-8 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100 inline-block">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="folder" class="w-4 h-4 text-gray-400"></i>
-                                    <span>Pasta Conectada</span>
-                                </div>
-                                <div class="w-px h-4 bg-gray-300"></div>
-                                <div class="flex items-center gap-2" title="Última sincronização">
-                                    <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
-                                    <span>{{ client.drive_last_scan_at.strftime('%d/%m às %H:%M') if
-                                        client.drive_last_scan_at else 'Nunca sincronizado' }}</span>
-                                </div>
+                                class="bg-red-100 border border-red-500 text-red-700 px-4 py-2 rounded mb-4 text-xs font-bold">
+                                DEBUG: ABA ARQUIVOS CARREGADA (ID: content-client-archivos)
                             </div>
-
-                            <!-- Files Grid -->
-                            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                {% if client.drive_files_events %}
-                                {% for event in client.drive_files_events|sort(attribute='detected_at',
-                                reverse=True) %}
-                                <div
-                                    class="group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all hover:border-blue-200 flex flex-col items-center text-center">
-
-                                    <div class="mb-3 relative">
-                                        {% if 'pdf' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
-                                            <i data-lucide="file-text" class="w-6 h-6"></i>
-                                        </div>
-                                        {% elif 'image' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center">
-                                            <i data-lucide="image" class="w-6 h-6"></i>
-                                        </div>
-                                        {% elif 'video' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center">
-                                            <i data-lucide="video" class="w-6 h-6"></i>
-                                        </div>
-                                        {% elif 'folder' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
-                                            <i data-lucide="folder" class="w-6 h-6 fill-current"></i>
-                                        </div>
-                                        {% elif 'sheet' in event.mime_type or 'csv' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center">
-                                            <i data-lucide="table" class="w-6 h-6"></i>
-                                        </div>
-                                        {% else %}
-                                        <div
-                                            class="w-12 h-12 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center">
-                                            <i data-lucide="file" class="w-6 h-6"></i>
-                                        </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <a href="{{ event.web_view_link }}" target="_blank"
-                                        class="text-sm font-bold text-gray-700 hover:text-blue-600 mb-1 line-clamp-2 break-all"
-                                        title="{{ event.file_name }}">
-                                        {{ event.file_name }}
-                                    </a>
-                                    <p class="text-[10px] text-gray-400">{{ event.detected_at.strftime('%d/%m/%Y')
-                                        }}
-                                    </p>
-
-                                    <!-- Hover Actions -->
-                                    <div
-                                        class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <a href="{{ event.web_view_link }}" target="_blank"
-                                            class="p-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-100 hover:text-blue-600 block">
-                                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                                {% endfor %}
+                            <div class="flex gap-2">
+                                {% if client.drive_folder_url %}
+                                <button type="button" onclick="scanDriveFolder()" id="btn-scan-drive"
+                                    class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    Sincronizar
+                                </button>
+                                <a href="{{ client.drive_folder_url }}" target="_blank"
+                                    class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
+                                    <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                                    Upload
+                                </a>
+                                {% endif %}
+                                {% if is_drive_connected %}
+                                <button type="button" onclick="toggleModal('createDriveFoldersModal')"
+                                    class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg shadow-blue-500/30">
+                                    <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                                    {% if client.drive_folder_url %}Nova Pasta{% else %}Conectar Drive{% endif
+                                    %}
+                                </button>
                                 {% else %}
-                                <div
-                                    class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                    <div class="bg-gray-100 p-4 rounded-full mb-3">
-                                        <i data-lucide="cloud" class="w-8 h-8 opacity-40"></i>
-                                    </div>
-                                    <p class="text-sm font-medium">Pasta vazia ou não sincronizada.</p>
-                                    <p class="text-xs mt-1 max-w-xs mx-auto">Faça upload de arquivos no Drive ou
-                                        clique
-                                        em "Sincronizar" para atualizar.</p>
-                                </div>
+                                <a href="{{ url_for('admin.settings_integrations') }}"
+                                    class="bg-gray-800 text-white hover:bg-gray-900 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg">
+                                    <i data-lucide="settings" class="w-4 h-4"></i>
+                                    Configurar Drive
+                                </a>
                                 {% endif %}
                             </div>
+                        </div>
 
-                            {% else %}
-                            <div class="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                                <div
-                                    class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
-                                        class="w-10 h-10">
+                        {% if client.drive_folder_url %}
+
+                        <!-- Drive Stats / Info -->
+                        <div
+                            class="flex items-center gap-4 mb-8 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100 inline-block">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="folder" class="w-4 h-4 text-gray-400"></i>
+                                <span>Pasta Conectada</span>
+                            </div>
+                            <div class="w-px h-4 bg-gray-300"></div>
+                            <div class="flex items-center gap-2" title="Última sincronização">
+                                <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
+                                <span>{{ client.drive_last_scan_at.strftime('%d/%m às %H:%M') if
+                                    client.drive_last_scan_at else 'Nunca sincronizado' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Files Grid -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {% if client.drive_files_events %}
+                            {% for event in client.drive_files_events|sort(attribute='detected_at',
+                            reverse=True) %}
+                            <div
+                                class="group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all hover:border-blue-200 flex flex-col items-center text-center">
+
+                                <div class="mb-3 relative">
+                                    {% if 'pdf' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                                    </div>
+                                    {% elif 'image' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="image" class="w-6 h-6"></i>
+                                    </div>
+                                    {% elif 'video' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="video" class="w-6 h-6"></i>
+                                    </div>
+                                    {% elif 'folder' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="folder" class="w-6 h-6 fill-current"></i>
+                                    </div>
+                                    {% elif 'sheet' in event.mime_type or 'csv' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="table" class="w-6 h-6"></i>
+                                    </div>
+                                    {% else %}
+                                    <div
+                                        class="w-12 h-12 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center">
+                                        <i data-lucide="file" class="w-6 h-6"></i>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                <h3 class="text-xl font-bold text-gray-900 mb-2">Conecte o Google Drive</h3>
-                                <p class="text-gray-500 max-w-md mx-auto mb-8">Centralize contratos, documentos e
-                                    arquivos do cliente em uma pasta segura e compartilhada.</p>
-                                <button onclick="toggleModal('createDriveFoldersModal')"
-                                    class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 mx-auto">
-                                    <i data-lucide="hard-drive" class="w-5 h-5"></i>
-                                    Criar Pasta do Cliente
-                                </button>
+
+                                <a href="{{ event.web_view_link }}" target="_blank"
+                                    class="text-sm font-bold text-gray-700 hover:text-blue-600 mb-1 line-clamp-2 break-all"
+                                    title="{{ event.file_name }}">
+                                    {{ event.file_name }}
+                                </a>
+                                <p class="text-[10px] text-gray-400">{{ event.detected_at.strftime('%d/%m/%Y')
+                                    }}
+                                </p>
+
+                                <!-- Hover Actions -->
+                                <div
+                                    class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <a href="{{ event.web_view_link }}" target="_blank"
+                                        class="p-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-100 hover:text-blue-600 block">
+                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <div
+                                class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                                <div class="bg-gray-100 p-4 rounded-full mb-3">
+                                    <i data-lucide="cloud" class="w-8 h-8 opacity-40"></i>
+                                </div>
+                                <p class="text-sm font-medium">Pasta vazia ou não sincronizada.</p>
+                                <p class="text-xs mt-1 max-w-xs mx-auto">Faça upload de arquivos no Drive ou
+                                    clique
+                                    em "Sincronizar" para atualizar.</p>
                             </div>
                             {% endif %}
                         </div>
 
-                        <!-- WhatsApp Content -->
-                        <div id="content-client-whatsapp" class="hidden bg-white h-[600px] flex flex-col">
-                            <!-- Helper to know this client has a lead attached? Or direct link? -->
-                            <!-- Ideally clients should have a phone. We use client.phone -->
-
-                            <!-- Chat Area -->
-                            <div id="client-chat-messages"
-                                class="flex-1 overflow-y-auto space-y-4 p-4 bg-[#e5ddd5] rounded-t-lg border border-gray-200 border-b-0 bg-opacity-30">
-                                <div class="flex justify-center">
-                                    <span class="bg-gray-200 text-gray-500 text-xs px-2 py-1 rounded-full">Carregando
-                                        histórico...</span>
-                                </div>
-                            </div>
-
-                            <!-- Input Area -->
-                            <!-- Input Area (Standardized) -->
-                            <div
-                                class="bg-gray-50 p-3 border border-gray-200 border-t-0 rounded-b-lg flex flex-col gap-2 relative">
-                                <!-- Hidden File Input -->
-                                <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
-
-                                <!-- Attachment Menu (Absolute) -->
-                                <div id="attach-menu"
-                                    class="hidden absolute bottom-20 left-4 bg-white shadow-xl rounded-lg flex flex-col w-40 overflow-hidden z-20 border border-gray-100">
-                                    <button onclick="triggerFile('image/*')"
-                                        class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700 border-b border-gray-50">
-                                        <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos
-                                    </button>
-                                    <button onclick="triggerFile('*/*')"
-                                        class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700">
-                                        <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
-                                    </button>
-                                </div>
-
-                                <div class="flex items-end gap-2">
-                                    <!-- Default Toolbar -->
-                                    <div id="toolbar-default" class="flex-1 flex items-center gap-2">
-                                        <button type="button" id="btn-attach" onclick="toggleAttachMenu()"
-                                            class="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-200">
-                                            <i data-lucide="plus" class="w-6 h-6"></i>
-                                        </button>
-
-                                        <!-- Rich Text Toolbar (Mini) -->
-                                        <div
-                                            class="hidden md:flex items-center gap-0.5 border-r border-gray-300 pr-2 mr-1">
-                                            <button onclick="insertFormat('*')"
-                                                class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                                <i data-lucide="bold" class="w-4 h-4"></i>
-                                            </button>
-                                            <button onclick="insertFormat('_')"
-                                                class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                                <i data-lucide="italic" class="w-4 h-4"></i>
-                                            </button>
-                                            <button onclick="insertFormat('- ')"
-                                                class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                                <i data-lucide="list" class="w-4 h-4"></i>
-                                            </button>
-                                        </div>
-
-                                        <div
-                                            class="flex-1 bg-white rounded-lg border border-gray-300 focus-within:border-northway-red focus-within:ring-1 focus-within:ring-northway-red/20 transition-all overflow-hidden flex items-center px-4 py-2">
-                                            <input type="text" id="message-input" placeholder="Mensagem"
-                                                class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800 placeholder-gray-400"
-                                                autocomplete="off">
-                                        </div>
-
-                                        <!-- Mic / Send Toggle -->
-                                        <button type="button" id="btn-mic" onclick="toggleRecording()"
-                                            class="p-3 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors shadow-sm">
-                                            <i data-lucide="mic" class="w-5 h-5"></i>
-                                        </button>
-                                        <button type="button" id="btn-send" onclick="sendMessage()"
-                                            class="hidden p-3 bg-northway-red text-white rounded-full hover:bg-red-700 transition-colors shadow-sm">
-                                            <i data-lucide="send" class="w-5 h-5"></i>
-                                        </button>
-                                    </div>
-
-                                    <!-- Recording UI -->
-                                    <div id="toolbar-recording"
-                                        class="flex-1 items-center gap-4 hidden px-4 py-2 bg-white rounded-lg border border-red-100">
-                                        <button onclick="cancelRecording()"
-                                            class="text-gray-500 hover:text-red-500 p-2">
-                                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                                        </button>
-                                        <div class="flex-1 flex items-center gap-3 justify-center">
-                                            <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
-                                            <span id="recording-time"
-                                                class="text-gray-700 font-mono text-sm font-bold">0:00</span>
-                                        </div>
-                                        <button onclick="stopAndSendRecording()"
-                                            class="text-green-500 hover:text-green-600 p-2">
-                                            <i data-lucide="send" class="w-5 h-5"></i>
-                                        </button>
-                                    </div>
-
-                                    <!-- File Preview UI -->
-                                    <div id="toolbar-file"
-                                        class="flex-1 items-center gap-4 hidden bg-white rounded-lg px-4 py-2 border border-green-200">
-                                        <span class="text-gray-500"><i data-lucide="file"
-                                                class="w-5 h-5 inline"></i></span>
-                                        <span id="file-name"
-                                            class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
-                                        <button onclick="cancelFile()" class="text-gray-400 hover:text-red-500 p-2">
-                                            <i data-lucide="x" class="w-5 h-5"></i>
-                                        </button>
-                                        <button onclick="sendFile()"
-                                            class="text-green-600 hover:text-green-700 font-bold text-sm px-3">
-                                            Enviar
-                                        </button>
-                                    </div>
-                                </div>
-                                <p class="text-xs text-gray-400 mt-1 flex items-center gap-1 justify-center">
-                                    <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas
-                                    de
-                                    ponta a
-                                    ponta.
-                                </p>
-                            </div>
-                        </div>
-                        <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
-
-                        <!-- Processes Content (New Tab) -->
-                        <div id="content-client-processes" class="hidden p-8">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                    <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
-                                    Processos & Serviços
-                                </h3>
-                                <button type="button" onclick="toggleModal('addProcessModal')"
-                                    class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    Adicionar Processo
-                                </button>
-                            </div>
-
-
-                            <!-- NEW: Assign Process to User in Modal -->
-                            <!-- Need to update Add Process Modal (which is likely in base.html or lower down, need to check) -->
-                            <!-- Assuming AddProcessModal is standard, we inject the select there or rely on default behavior -->
-                            <!-- Wait, AddProcessModal is probably elsewhere. I should check if I missed it in view_file. -->
-                            <!-- For safety, I will add the Delegate Button to existing processes first. -->
-
-                            <div class="space-y-4">
-                                {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
-                                <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
-                                    <!-- Header / Summary -->
-                                    <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
-                                        onclick="toggleProcess('{{ checklist.id }}')">
-                                        <div class="flex items-center gap-3">
-                                            <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
-                                                <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
-                                                <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
-                                                    <path class="text-gray-200"
-                                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                        fill="none" stroke="currentColor" stroke-width="4" />
-                                                    <path class="text-northway-red progress-ring"
-                                                        stroke-dasharray="0, 100"
-                                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                                        fill="none" stroke="currentColor" stroke-width="4"
-                                                        id="ring-{{ checklist.id }}" />
-                                                </svg>
-                                            </div>
-                                            <div>
-                                                <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
-                                                <p class="text-xs text-gray-500">Iniciado em {{
-                                                    checklist.created_at.strftime('%d/%m/%Y') }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <!-- Delegate Button -->
-                                            <button
-                                                onclick='openDelegateModal("{{ checklist.id }}", {{ checklist.name|tojson|safe }}, "{{ checklist.assigned_to_id or "" }}"); event.stopPropagation();'
-                                                class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Delegar Processo">
-                                                {% if checklist.assigned_to %}
-                                                {{ user_avatar(checklist.assigned_to, size='xs', show_name=False) }}
-                                                {% else %}
-                                                <i data-lucide="user-plus" class="w-4 h-4"></i>
-                                                {% endif %}
-                                            </button>
-                                            <i data-lucide="chevron-down"
-                                                class="w-5 h-5 text-gray-400 transition-transform"
-                                                id="arrow-{{ checklist.id }}"></i>
-                                        </div>
-                                    </div>
-
-                                    <!-- Expanded Content -->
-                                    <div id="process-content-{{ checklist.id }}"
-                                        class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
-                                        {% for step in checklist.progress %}
-                                        {% set step_index = loop.index0 %}
-                                        <div class="step-group">
-                                            <h5
-                                                class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
-                                                {{ step.title }}</h5>
-                                            <div class="space-y-2 pl-2">
-                                                {% for item in step['items'] %}
-                                                <label
-                                                    class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                                                    <input type="checkbox"
-                                                        onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
-                                                        {% if item.done %}checked{% endif %}
-                                                        class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
-                                                    <span
-                                                        class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
-                                                        item.text }}</span>
-                                                </label>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-
-                                        <div class="pt-4 border-t border-gray-100 flex justify-end">
-                                            <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
-                                                class="text-xs text-red-500 hover:text-red-700 underline">Excluir
-                                                Processo</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% else %}
-                                <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
-                                    cliente.
-                                </p>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-
-                    </div>
-                </div>
-
-            </div> <!-- Close lg:col-span-2 -->
-
-            <!-- Sidebar Info Column -->
-            <div class="space-y-6">
-                <!-- Diagnostic Card (Access Control) -->
-                {% if diag_instance %}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Menu Lateral:
-                            Diagnóstico</h3>
-                        <i data-lucide="line-chart"
-                            class="w-4 h-4 {{ 'text-northway-red' if client.diagnostic_status == 'done' else 'text-gray-400' }}"></i>
-                    </div>
-                    <div class="p-6">
-                        {% if client.diagnostic_status == 'done' %}
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <div class="text-2xl font-black text-gray-900">{{ client.diagnostic_stars or 0
-                                    }}
-                                    <span class="text-xs text-gray-400 font-normal">/ 5</span>
-                                </div>
-                                <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Nota
-                                    Final</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-lg font-bold text-northway-red">{{ client.diagnostic_score or 0
-                                    }}
-                                </div>
-                                <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
-                                    Score
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" onclick="switchClientTab('diagnostic')"
-                            class="w-full text-center py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-lg transition-colors border border-gray-100">
-                            Ver Detalhes do Diagnóstico
-                        </button>
                         {% else %}
-                        <div class="text-center py-2">
-                            <p class="text-xs text-gray-500 mb-4 italic">Ainda não realizado.</p>
-                            <button type="button"
-                                onclick="copyDiagnosticLink('{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) }}?client_id={{ client.id }}')"
-                                class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
-                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                                Copiar Link do Formulário
+                        <div class="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <div
+                                class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
+                                    class="w-10 h-10">
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Conecte o Google Drive</h3>
+                            <p class="text-gray-500 max-w-md mx-auto mb-8">Centralize contratos, documentos e
+                                arquivos do cliente em uma pasta segura e compartilhada.</p>
+                            <button onclick="toggleModal('createDriveFoldersModal')"
+                                class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 mx-auto">
+                                <i data-lucide="hard-drive" class="w-5 h-5"></i>
+                                Criar Pasta do Cliente
                             </button>
                         </div>
                         {% endif %}
                     </div>
-                </div>
-                {% endif %}
 
-                <!-- Management Card -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gestão</h3>
-                        <i data-lucide="briefcase" class="w-4 h-4 text-gray-400"></i>
-                    </div>
-                    <div class="p-6">
-                        {% if client.account_manager %}
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-xs font-bold text-northway-red">
-                                {{ client.account_manager.name[:2].upper() }}
+                    <!-- WhatsApp Content -->
+                    <div id="content-client-whatsapp" class="hidden bg-white h-[600px] flex flex-col">
+                        <!-- Helper to know this client has a lead attached? Or direct link? -->
+                        <!-- Ideally clients should have a phone. We use client.phone -->
+
+                        <!-- Chat Area -->
+                        <div id="client-chat-messages"
+                            class="flex-1 overflow-y-auto space-y-4 p-4 bg-[#e5ddd5] rounded-t-lg border border-gray-200 border-b-0 bg-opacity-30">
+                            <div class="flex justify-center">
+                                <span class="bg-gray-200 text-gray-500 text-xs px-2 py-1 rounded-full">Carregando
+                                    histórico...</span>
                             </div>
-                            <span class="text-sm font-bold">{{ client.account_manager.name }}</span>
                         </div>
-                        {% else %}
-                        <p class="text-xs text-gray-400 italic">Sem gerente</p>
-                        {% endif %}
-                    </div>
-                </div>
 
-                <!-- Contact Card -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-4">Contato</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-2 text-sm">
-                            <i data-lucide="mail" class="w-4 h-4 text-gray-400"></i>
-                            <span>{{ client.email }}</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-sm">
-                            <i data-lucide="phone" class="w-4 h-4 text-gray-400"></i>
-                            <span>{{ client.phone }}</span>
+                        <!-- Input Area -->
+                        <!-- Input Area (Standardized) -->
+                        <div
+                            class="bg-gray-50 p-3 border border-gray-200 border-t-0 rounded-b-lg flex flex-col gap-2 relative">
+                            <!-- Hidden File Input -->
+                            <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
+
+                            <!-- Attachment Menu (Absolute) -->
+                            <div id="attach-menu"
+                                class="hidden absolute bottom-20 left-4 bg-white shadow-xl rounded-lg flex flex-col w-40 overflow-hidden z-20 border border-gray-100">
+                                <button onclick="triggerFile('image/*')"
+                                    class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700 border-b border-gray-50">
+                                    <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos
+                                </button>
+                                <button onclick="triggerFile('*/*')"
+                                    class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
+                                </button>
+                            </div>
+
+                            <div class="flex items-end gap-2">
+                                <!-- Default Toolbar -->
+                                <div id="toolbar-default" class="flex-1 flex items-center gap-2">
+                                    <button type="button" id="btn-attach" onclick="toggleAttachMenu()"
+                                        class="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-200">
+                                        <i data-lucide="plus" class="w-6 h-6"></i>
+                                    </button>
+
+                                    <!-- Rich Text Toolbar (Mini) -->
+                                    <div class="hidden md:flex items-center gap-0.5 border-r border-gray-300 pr-2 mr-1">
+                                        <button onclick="insertFormat('*')"
+                                            class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                            <i data-lucide="bold" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="insertFormat('_')"
+                                            class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                            <i data-lucide="italic" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="insertFormat('- ')"
+                                            class="p-1 text-gray-400 hover:text-gray-600 rounded">
+                                            <i data-lucide="list" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        class="flex-1 bg-white rounded-lg border border-gray-300 focus-within:border-northway-red focus-within:ring-1 focus-within:ring-northway-red/20 transition-all overflow-hidden flex items-center px-4 py-2">
+                                        <input type="text" id="message-input" placeholder="Mensagem"
+                                            class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800 placeholder-gray-400"
+                                            autocomplete="off">
+                                    </div>
+
+                                    <!-- Mic / Send Toggle -->
+                                    <button type="button" id="btn-mic" onclick="toggleRecording()"
+                                        class="p-3 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors shadow-sm">
+                                        <i data-lucide="mic" class="w-5 h-5"></i>
+                                    </button>
+                                    <button type="button" id="btn-send" onclick="sendMessage()"
+                                        class="hidden p-3 bg-northway-red text-white rounded-full hover:bg-red-700 transition-colors shadow-sm">
+                                        <i data-lucide="send" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Recording UI -->
+                                <div id="toolbar-recording"
+                                    class="flex-1 items-center gap-4 hidden px-4 py-2 bg-white rounded-lg border border-red-100">
+                                    <button onclick="cancelRecording()" class="text-gray-500 hover:text-red-500 p-2">
+                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                    </button>
+                                    <div class="flex-1 flex items-center gap-3 justify-center">
+                                        <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
+                                        <span id="recording-time"
+                                            class="text-gray-700 font-mono text-sm font-bold">0:00</span>
+                                    </div>
+                                    <button onclick="stopAndSendRecording()"
+                                        class="text-green-500 hover:text-green-600 p-2">
+                                        <i data-lucide="send" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+
+                                <!-- File Preview UI -->
+                                <div id="toolbar-file"
+                                    class="flex-1 items-center gap-4 hidden bg-white rounded-lg px-4 py-2 border border-green-200">
+                                    <span class="text-gray-500"><i data-lucide="file" class="w-5 h-5 inline"></i></span>
+                                    <span id="file-name"
+                                        class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
+                                    <button onclick="cancelFile()" class="text-gray-400 hover:text-red-500 p-2">
+                                        <i data-lucide="x" class="w-5 h-5"></i>
+                                    </button>
+                                    <button onclick="sendFile()"
+                                        class="text-green-600 hover:text-green-700 font-bold text-sm px-3">
+                                        Enviar
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1 flex items-center gap-1 justify-center">
+                                <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas
+                                de
+                                ponta a
+                                ponta.
+                            </p>
                         </div>
                     </div>
+                    <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
+
+                    <!-- Processes Content (New Tab) -->
+                    <div id="content-client-processes" class="hidden p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
+                                Processos & Serviços
+                            </h3>
+                            <button type="button" onclick="toggleModal('addProcessModal')"
+                                class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Adicionar Processo
+                            </button>
+                        </div>
+
+
+                        <!-- NEW: Assign Process to User in Modal -->
+                        <!-- Need to update Add Process Modal (which is likely in base.html or lower down, need to check) -->
+                        <!-- Assuming AddProcessModal is standard, we inject the select there or rely on default behavior -->
+                        <!-- Wait, AddProcessModal is probably elsewhere. I should check if I missed it in view_file. -->
+                        <!-- For safety, I will add the Delegate Button to existing processes first. -->
+
+                        <div class="space-y-4">
+                            {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
+                            <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
+                                <!-- Header / Summary -->
+                                <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                                    onclick="toggleProcess('{{ checklist.id }}')">
+                                    <div class="flex items-center gap-3">
+                                        <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
+                                            <!-- Computed in JS or Backend. For MVP, we calculate on toggle -->
+                                            <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
+                                                <path class="text-gray-200"
+                                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                    fill="none" stroke="currentColor" stroke-width="4" />
+                                                <path class="text-northway-red progress-ring" stroke-dasharray="0, 100"
+                                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                    fill="none" stroke="currentColor" stroke-width="4"
+                                                    id="ring-{{ checklist.id }}" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
+                                            <p class="text-xs text-gray-500">Iniciado em {{
+                                                checklist.created_at.strftime('%d/%m/%Y') }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <!-- Delegate Button -->
+                                        <button
+                                            onclick='openDelegateModal("{{ checklist.id }}", {{ checklist.name|tojson|safe }}, "{{ checklist.assigned_to_id or "" }}"); event.stopPropagation();'
+                                            class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Delegar Processo">
+                                            {% if checklist.assigned_to %}
+                                            {{ user_avatar(checklist.assigned_to, size='xs', show_name=False) }}
+                                            {% else %}
+                                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                            {% endif %}
+                                        </button>
+                                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"
+                                            id="arrow-{{ checklist.id }}"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Expanded Content -->
+                                <div id="process-content-{{ checklist.id }}"
+                                    class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
+                                    {% for step in checklist.progress %}
+                                    {% set step_index = loop.index0 %}
+                                    <div class="step-group">
+                                        <h5
+                                            class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
+                                            {{ step.title }}</h5>
+                                        <div class="space-y-2 pl-2">
+                                            {% for item in step['items'] %}
+                                            <label
+                                                class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                                <input type="checkbox"
+                                                    onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
+                                                    {% if item.done %}checked{% endif %}
+                                                    class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
+                                                <span
+                                                    class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
+                                                    item.text }}</span>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+
+                                    <div class="pt-4 border-t border-gray-100 flex justify-end">
+                                        <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
+                                            class="text-xs text-red-500 hover:text-red-700 underline">Excluir
+                                            Processo</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
+                                cliente.
+                            </p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+
                 </div>
-            </div> <!-- End Sidebar Info Column -->
-        </div> <!-- End Grid -->
-    </form>
+            </div>
+
+        </div> <!-- Close lg:col-span-2 -->
+
+        <!-- Sidebar Info Column -->
+        <div class="space-y-6">
+            <!-- Diagnostic Card (Access Control) -->
+            {% if diag_instance %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Menu Lateral:
+                        Diagnóstico</h3>
+                    <i data-lucide="line-chart"
+                        class="w-4 h-4 {{ 'text-northway-red' if client.diagnostic_status == 'done' else 'text-gray-400' }}"></i>
+                </div>
+                <div class="p-6">
+                    {% if client.diagnostic_status == 'done' %}
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <div class="text-2xl font-black text-gray-900">{{ client.diagnostic_stars or 0
+                                }}
+                                <span class="text-xs text-gray-400 font-normal">/ 5</span>
+                            </div>
+                            <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Nota
+                                Final</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-northway-red">{{ client.diagnostic_score or 0
+                                }}
+                            </div>
+                            <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
+                                Score
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="switchClientTab('diagnostic')"
+                        class="w-full text-center py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-lg transition-colors border border-gray-100">
+                        Ver Detalhes do Diagnóstico
+                    </button>
+                    {% else %}
+                    <div class="text-center py-2">
+                        <p class="text-xs text-gray-500 mb-4 italic">Ainda não realizado.</p>
+                        <button type="button"
+                            onclick="copyDiagnosticLink('{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) }}?client_id={{ client.id }}')"
+                            class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            Copiar Link do Formulário
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Management Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gestão</h3>
+                    <i data-lucide="briefcase" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <div class="p-6">
+                    {% if client.account_manager %}
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-xs font-bold text-northway-red">
+                            {{ client.account_manager.name[:2].upper() }}
+                        </div>
+                        <span class="text-sm font-bold">{{ client.account_manager.name }}</span>
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-gray-400 italic">Sem gerente</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contact Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-4">Contato</h4>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 text-sm">
+                        <i data-lucide="mail" class="w-4 h-4 text-gray-400"></i>
+                        <span>{{ client.email }}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <i data-lucide="phone" class="w-4 h-4 text-gray-400"></i>
+                        <span>{{ client.phone }}</span>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End Sidebar Info Column -->
+</div> <!-- End Grid -->
+</form>
 </div> <!-- End Main Content Scroll Area -->
 
 
