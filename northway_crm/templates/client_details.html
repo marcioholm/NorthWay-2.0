@@ -4,6 +4,12 @@
 {% block content %}
 <div class="flex-1 overflow-y-auto bg-gray-100 p-8">
     <div class="max-w-7xl mx-auto pb-20">
+        <!-- DEBUG BUTTON -->
+        <button onclick="window.debugDrive && window.debugDrive()"
+            class="fixed bottom-4 right-4 z-50 bg-purple-600 text-white p-4 rounded-full shadow-xl font-bold hover:bg-purple-700 transition-colors">
+            DEBUG DRIVE
+        </button>
+        <script src="{{ url_for('static', filename='js/debug_drive.js') }}?v={{ range(1, 10000) | random }}"></script>
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-4">
