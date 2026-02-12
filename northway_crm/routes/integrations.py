@@ -325,6 +325,41 @@ def save_drive_root_folder():
         
     return redirect(url_for('integrations_bp.drive_settings_page'))
 
+
+@integrations_bp.route('/api/integrations/google-drive/auto-config', methods=['POST'])
+@login_required
+def auto_configure_drive():
+    try:
+        from services.google_drive_service import GoogleDriveService
+        
+        integration = TenantIntegration.query.filter_by(
+            company_id=current_user.company_id, 
+            provider='google_drive'
+        ).first()
+
+        if not integration or integration.status != 'connected':
+             flash('Google Drive não está conectado.', 'error')
+             return redirect(url_for('integrations_bp.drive_settings_page'))
+        
+        drive_service = GoogleDriveService(company_id=current_user.company_id)
+
+        # Create Root Folder
+        folder_name = f"NorthWay CRM - {current_user.company.name}"
+        folder = drive_service.create_folder(integration, folder_name)
+        
+        if folder:
+            integration.root_folder_id = folder.get('id')
+            integration.root_folder_url = folder.get('webViewLink')
+            db.session.commit()
+            flash(f'Pasta raiz "{folder_name}" criada e configurada com sucesso!', 'success')
+        else:
+            flash('Falha ao criar pasta no Google Drive.', 'error')
+
+    except Exception as e:
+        flash(f'Erro ao configurar automaticamente: {str(e)}', 'error')
+
+    return redirect(url_for('integrations_bp.drive_settings_page'))
+
 @integrations_bp.route('/api/integrations/google-drive/disconnect', methods=['POST'])
 @login_required
 def disconnect_google_drive():

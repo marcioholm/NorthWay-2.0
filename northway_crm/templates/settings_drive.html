@@ -47,30 +47,49 @@
                         </div>
 
                         <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-6">
-                            <form action="{{ url_for('integrations_bp.save_drive_root_folder') }}" method="POST">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Pasta Raiz dos
-                                    Clientes</label>
-                                <div class="flex gap-2">
-                                    <input type="text" name="root_folder_url"
-                                        value="{{ integration.root_folder_url or '' }}"
-                                        placeholder="Cole a URL da pasta do Google Drive aqui..."
-                                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <button type="submit"
-                                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                        Salvar
-                                    </button>
+                            {% if integration.root_folder_id %}
+                            <div
+                                class="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="folder-check" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-900">Pasta Raiz Ativa</p>
+                                        <a href="{{ integration.root_folder_url }}" target="_blank"
+                                            class="text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1">
+                                            Abrir no Google Drive <i data-lucide="external-link" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-2">
-                                    Todas as pastas de novos clientes serão criadas dentro desta pasta.
-                                    {% if integration.root_folder_id %}
-                                    <span class="text-green-600 font-medium ml-1">✓ Configurado (ID: {{
-                                        integration.root_folder_id }})</span>
-                                    {% else %}
-                                    <span class="text-amber-600 font-medium ml-1">⚠ Necessário configurar para automação
-                                        funcionar.</span>
-                                    {% endif %}
-                                </p>
-                            </form>
+                                <form action="{{ url_for('integrations_bp.auto_configure_drive') }}" method="POST"
+                                    onsubmit="return confirm('Isso criará uma NOVA pasta raiz e desvinculará a atual. Continuar?')">
+                                    <button type="submit" class="text-xs text-gray-500 hover:text-red-600 font-medium">
+                                        Recriar Pasta
+                                    </button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <div class="space-y-4">
+                                <div class="bg-amber-50 text-amber-900 p-4 rounded-lg text-sm border border-amber-100">
+                                    <strong class="flex items-center gap-2 mb-1">
+                                        <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                                        Ação Necessária
+                                    </strong>
+                                    O CRM precisa criar sua própria pasta mestre devido às permissões de segurança do
+                                    Google. Pastas criadas manualmente não são acessíveis.
+                                </div>
+
+                                <form action="{{ url_for('integrations_bp.auto_configure_drive') }}" method="POST">
+                                    <button type="submit"
+                                        class="w-full bg-blue-600 text-white px-6 py-4 rounded-xl hover:bg-blue-700 transition-all font-bold shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95">
+                                        <i data-lucide="folder-plus" class="w-5 h-5"></i>
+                                        Criar Pasta "NorthWay CRM" Automaticamente
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="border-t border-gray-100 pt-6">

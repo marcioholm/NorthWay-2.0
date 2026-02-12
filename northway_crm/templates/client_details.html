@@ -845,11 +845,19 @@
                                         Upload
                                     </a>
                                     {% endif %}
+                                    {% if is_drive_connected %}
                                     <button type="button" onclick="toggleModal('createDriveFoldersModal')"
                                         class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg shadow-blue-500/30">
                                         <i data-lucide="folder-plus" class="w-4 h-4"></i>
                                         {% if client.drive_folder_url %}Nova Pasta{% else %}Conectar Drive{% endif %}
                                     </button>
+                                    {% else %}
+                                    <a href="{{ url_for('admin.settings_integrations') }}"
+                                        class="bg-gray-800 text-white hover:bg-gray-900 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg">
+                                        <i data-lucide="settings" class="w-4 h-4"></i>
+                                        Configurar Drive
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
 

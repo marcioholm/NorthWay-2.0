@@ -105,8 +105,15 @@ def client_details(id):
                 owner_user_id=current_user.id
             ).first()
 
-    # Fetch Drive Templates
+    # Fetch Drive Templates and Integration Status
     drive_templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
+    
+    drive_integration = TenantIntegration.query.filter_by(
+        company_id=current_user.company_id, 
+        provider='google_drive', 
+        status='connected'
+    ).first()
+    is_drive_connected = bool(drive_integration)
 
     return render_template('client_details.html', 
                           client=client, 
@@ -119,7 +126,8 @@ def client_details(id):
                           process_templates=process_templates,
                           users=users,
                           diag_instance=diag_instance,
-                          drive_templates=drive_templates)
+                          drive_templates=drive_templates,
+                          is_drive_connected=is_drive_connected)
 
 @clients_bp.route('/clients/<int:id>/update', methods=['POST'])
 @login_required
