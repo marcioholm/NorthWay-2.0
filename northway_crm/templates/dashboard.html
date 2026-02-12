@@ -131,62 +131,62 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- Activity Chart -->
-<!-- Performance Charts Grid -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Activity Chart (Collapsible) -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100" id="performanceChartCard">
-        <div class="flex items-center justify-between mb-6 cursor-pointer" onclick="togglePerformanceChart()">
-            <div>
-                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    Visão Geral de Performance
-                    <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transform transition-transform"
-                        id="perfChevron"></i>
-                </h3>
-                <p class="text-xs text-gray-500">Novos Leads vs Vendas Ganhas</p>
+    <!-- Activity Chart -->
+    <!-- Performance Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Activity Chart (Collapsible) -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100" id="performanceChartCard">
+            <div class="flex items-center justify-between mb-6 cursor-pointer" onclick="togglePerformanceChart()">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        Visão Geral de Performance
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transform transition-transform"
+                            id="perfChevron"></i>
+                    </h3>
+                    <p class="text-xs text-gray-500">Novos Leads vs Vendas Ganhas</p>
+                </div>
+                <select id="chartPeriod" onclick="event.stopPropagation()"
+                    class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red">
+                    <option value="today">Hoje (Por Hora)</option>
+                    <option value="daily">Últimos 30 Dias</option>
+                    <option value="weekly">Semanal (12 sem)</option>
+                    <option value="monthly" selected>Mensal (12 meses)</option>
+                    <option value="bimonthly">Bimestral (2 anos)</option>
+                    <option value="quarterly">Trimestral (2 anos)</option>
+                    <option value="semiannual">Semestral (3 anos)</option>
+                    <option value="annual">Anual (5 anos)</option>
+                </select>
             </div>
-            <select id="chartPeriod" onclick="event.stopPropagation()"
-                class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red">
-                <option value="today">Hoje (Por Hora)</option>
-                <option value="daily">Últimos 30 Dias</option>
-                <option value="weekly">Semanal (12 sem)</option>
-                <option value="monthly" selected>Mensal (12 meses)</option>
-                <option value="bimonthly">Bimestral (2 anos)</option>
-                <option value="quarterly">Trimestral (2 anos)</option>
-                <option value="semiannual">Semestral (3 anos)</option>
-                <option value="annual">Anual (5 anos)</option>
-            </select>
+            <div class="relative h-80 w-full transition-all duration-300 overflow-hidden"
+                id="performanceChartContainer">
+                <canvas id="activityChart"></canvas>
+            </div>
         </div>
-        <div class="relative h-80 w-full transition-all duration-300 overflow-hidden" id="performanceChartContainer">
-            <canvas id="activityChart"></canvas>
+
+        <!-- Sales Funnel Chart (New) -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900">Funil de Vendas</h3>
+                    <p class="text-xs text-gray-500">Conversão por etapa do pipeline</p>
+                </div>
+                {% if pipelines %}
+                <select id="pipelineSelect"
+                    class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red max-w-[150px]">
+                    {% for pipeline in pipelines %}
+                    <option value="{{ pipeline.id }}" {% if pipeline.id==current_pipeline_id %}selected{% endif %}>
+                        {{ pipeline.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </div>
+            <div class="relative h-80 w-full">
+                <canvas id="funnelChart"></canvas>
+            </div>
         </div>
     </div>
-
-    <!-- Sales Funnel Chart (New) -->
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h3 class="text-lg font-bold text-gray-900">Funil de Vendas</h3>
-                <p class="text-xs text-gray-500">Conversão por etapa do pipeline</p>
-            </div>
-            {% if pipelines %}
-            <select id="pipelineSelect"
-                class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red max-w-[150px]">
-                {% for pipeline in pipelines %}
-                <option value="{{ pipeline.id }}" {% if pipeline.id==current_pipeline_id %}selected{% endif %}>
-                    {{ pipeline.name }}
-                </option>
-                {% endfor %}
-            </select>
-            {% endif %}
-        </div>
-        <div class="relative h-80 w-full">
-            <canvas id="funnelChart"></canvas>
-        </div>
-    </div>
-</div>
 </div>
 
 <!-- Chart.js Plugin Datalabels -->
