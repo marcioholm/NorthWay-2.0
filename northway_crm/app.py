@@ -324,6 +324,7 @@ def create_app():
                             name VARCHAR(100) NOT NULL,
                             structure_json TEXT NOT NULL,
                             is_default BOOLEAN DEFAULT FALSE,
+                            enabled BOOLEAN DEFAULT TRUE,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         );""",
@@ -676,6 +677,10 @@ def create_app():
                             
                             if 'scope' not in tmpl_cols:
                                 try: conn.execute(text("ALTER TABLE drive_folder_template ADD COLUMN scope VARCHAR(20) DEFAULT 'tenant'"))
+                                except: pass
+
+                            if 'enabled' not in tmpl_cols:
+                                try: conn.execute(text("ALTER TABLE drive_folder_template ADD COLUMN enabled BOOLEAN DEFAULT TRUE"))
                                 except: pass
                             
                             # Try to make company_id nullable

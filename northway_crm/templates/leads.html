@@ -45,7 +45,104 @@
         </div>
     </div>
 
-    <!-- Leads Table (Premium Design) -->
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <form action="{{ url_for('leads.leads') }}" method="GET" class="flex flex-wrap gap-4 items-end">
+            <!-- Search -->
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Buscar</label>
+                <div class="relative">
+                    <input type="text" name="q" value="{{ request.args.get('q') or '' }}"
+                        placeholder="Nome, Email, Telefone..."
+                        class="w-full bg-gray-50 border border-gray-200 text-gray-700 py-2 px-3 pl-10 rounded focus:outline-none focus:bg-white focus:border-northway-red">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-gray-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage Filter -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Etapa</label>
+                <div class="relative">
+                    <select name="stage_id"
+                        class="appearance-none w-40 bg-gray-50 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded focus:outline-none focus:bg-white focus:border-northway-red">
+                        <option value="">Todas</option>
+                        {% if stages %}
+                        {% for stage in stages %}
+                        <option value="{{ stage.id }}" {% if request.args.get('stage_id')|int==stage.id %}selected{%
+                            endif %}>
+                            {{ stage.name }}
+                        </option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Status</label>
+                <div class="relative">
+                    <select name="status"
+                        class="appearance-none w-32 bg-gray-50 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded focus:outline-none focus:bg-white focus:border-northway-red">
+                        <option value="">Todos</option>
+                        <option value="new" {% if request.args.get('status')=='new' %}selected{% endif %}>Novo</option>
+                        <option value="contacted" {% if request.args.get('status')=='contacted' %}selected{% endif %}>
+                            Contatado</option>
+                        <option value="qualified" {% if request.args.get('status')=='qualified' %}selected{% endif %}>
+                            Qualificado</option>
+                        <option value="proposal" {% if request.args.get('status')=='proposal' %}selected{% endif %}>
+                            Proposta
+                        </option>
+                        <option value="won" {% if request.args.get('status')=='won' %}selected{% endif %}>Ganho</option>
+                        <option value="lost" {% if request.args.get('status')=='lost' %}selected{% endif %}>Perdido
+                        </option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Owner Filter -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Responsável</label>
+                <div class="relative">
+                    <select name="assigned_to"
+                        class="appearance-none w-40 bg-gray-50 border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded focus:outline-none focus:bg-white focus:border-northway-red">
+                        <option value="">Todos</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if request.args.get('assigned_to')|int==user.id %}selected{%
+                            endif %}>
+                            {{ user.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit"
+                    class="bg-northway-red text-white px-4 py-2 rounded hover:bg-red-700 transition-colors font-bold shadow-sm flex items-center gap-2">
+                    <i data-lucide="filter" class="w-4 h-4"></i>
+                    Filtrar
+                </button>
+                {% if request.args %}
+                <a href="{{ url_for('leads.leads') }}"
+                    class="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 transition-colors">
+                    Limpar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
     <div class="bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col">
         <div class="overflow-x-auto">
             <table class="w-full min-w-[800px] divide-y divide-gray-100">

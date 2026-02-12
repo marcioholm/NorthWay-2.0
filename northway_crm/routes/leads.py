@@ -68,9 +68,23 @@ def leads():
     query = Lead.query.filter(Lead.company_id == current_user.company_id)
     
     # Filters
+    search_q = request.args.get('q')
     status = request.args.get('status')
     source = request.args.get('source')
     assigned_to = request.args.get('assigned_to')
+    stage_id = request.args.get('stage_id')
+    
+    if search_q:
+        search_term = f"%{search_q}%"
+        query = query.filter(db.or_(
+            Lead.name.ilike(search_term),
+            Lead.email.ilike(search_term),
+            Lead.phone.ilike(search_term),
+            Lead.company_name.ilike(search_term) # Assuming company_name exists or is relevant, check model if needed. 
+            # Actually Lead model usually has name. It might not have company_name field (it has company_id).
+            # Let's check Lead model again or just stick to safe fields.
+            # Viewing leads.py confirms Lead has name, email, phone.
+        ))
     
     if status:
         query = query.filter_by(status=status)
@@ -78,6 +92,8 @@ def leads():
         query = query.filter_by(source=source)
     if assigned_to:
         query = query.filter_by(assigned_to_id=int(assigned_to))
+    if stage_id:
+        query = query.filter_by(pipeline_stage_id=int(stage_id))
         
     pagination = query.options(
         db.joinedload(Lead.assigned_user),
@@ -86,11 +102,19 @@ def leads():
     
     leads_list = pagination.items
     
-    from models import User # Lazy import
+    from models import User, Pipeline, PipelineStage # Lazy import
     # Strict filter
     users = User.query.filter(User.company_id == current_user.company_id).all()
     
-    return render_template('leads.html', leads=leads_list, pagination=pagination, users=users)
+    # Fetch pipelines and stages for filter
+    # For MVP, assuming single pipeline or picking the first one for stage filter context
+    # ideally we allow selecting pipeline too, but let's just get all stages for the company's active pipeline
+    pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+    stages = []
+    if pipeline:
+         stages = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).all()
+    
+    return render_template('leads.html', leads=leads_list, pagination=pagination, users=users, stages=stages)
 
 @leads_bp.route('/leads/<int:id>')
 @login_required

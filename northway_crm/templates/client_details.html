@@ -2478,6 +2478,8 @@ ${dateHeader}
 
     async function scanDriveFolder() {
         const btn = document.getElementById('btn-scan-drive');
+        if (!btn) return;
+
         const originalContent = btn.innerHTML;
         btn.innerHTML = `<i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i> Sincronizando...`;
         btn.disabled = true;
@@ -2487,7 +2489,6 @@ ${dateHeader}
             const data = await res.json();
 
             if (data.success) {
-                // Determine plural/singular
                 const fileMsg = data.new_files === 1 ? '1 novo arquivo encontrado.' : `${data.new_files} novos arquivos encontrados.`;
                 const msg = data.new_files > 0 ? `Sincronização concluída! ${fileMsg}` : 'Sincronização concluída! Nenhum arquivo novo.';
                 alert(msg);
@@ -2496,16 +2497,15 @@ ${dateHeader}
                 alert('Erro: ' + (data.error || 'Erro desconhecido'));
             }
         } catch (e) {
-        } else {
-            alert('Erro: ' + (data.error || 'Erro desconhecido'));
+            console.error(e);
+            alert('Erro ao sincronizar: ' + e.message);
+        } finally {
+            if (btn) {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+            if (window.lucide) lucide.createIcons();
         }
-    } catch (e) {
-        console.error(e);
-        alert('Erro ao sincronizar.');
-        const btn = document.getElementById('btn-scan-drive');
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-    }
     }
 
     // --- Drive View & Sort Logic ---
@@ -2618,12 +2618,6 @@ ${dateHeader}
 
         // Re-append in order
         items.forEach(item => container.appendChild(item));
-    } alert('Erro de conexão ao sincronizar.');
-        } finally {
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-        lucide.createIcons();
-    }
     }
 </script>
 

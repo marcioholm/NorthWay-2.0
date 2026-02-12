@@ -16,10 +16,20 @@ def clients():
     query = Client.query.filter_by(company_id=current_user.company_id)
     
     # Filters
+    search_q = request.args.get('q')
     status = request.args.get('status')
     manager_id = request.args.get('manager')
     renewal_start = request.args.get('renewal_start')
     renewal_end = request.args.get('renewal_end')
+    
+    if search_q:
+        search_term = f"%{search_q}%"
+        query = query.filter(db.or_(
+            Client.name.ilike(search_term),
+            Client.email.ilike(search_term),
+            Client.phone.ilike(search_term),
+            Client.service.ilike(search_term)
+        ))
     
     if status:
         query = query.filter_by(status=status)
