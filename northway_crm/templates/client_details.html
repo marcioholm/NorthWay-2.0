@@ -2095,6 +2095,7 @@
             // 2. SHOW selected content
             const selectedContent = document.getElementById(`content-client-${tabName}`);
             if (selectedContent) {
+                // alert("DEBUG: Conteúdo encontrado: content-client-" + tabName);
                 selectedContent.classList.remove('hidden');
                 if (tabName === 'whatsapp') {
                     selectedContent.classList.add('flex');
@@ -2103,6 +2104,7 @@
                 }
             } else {
                 console.warn(`Content for tab '${tabName}' not found!`);
+                alert(`ERRO: Conteúdo da aba '${tabName}' não encontrado (ID: content-client-${tabName})`);
                 // Fallback to details if selected tab doesn't exist (e.g. diag is hidden)
                 if (tabName !== 'details') return switchClientTab('details');
             }
