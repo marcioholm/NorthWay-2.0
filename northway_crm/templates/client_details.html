@@ -2035,35 +2035,44 @@
     function switchClientTab(tabName) {
         console.log("Switching to tab:", tabName);
         try {
+            // Updated list of tabs
             const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic', 'drive', 'processes'];
 
-            // Hide all contents
+            // 1. Force HIDE all contents first
             tabs.forEach(t => {
                 const content = document.getElementById(`content-client-${t}`);
                 if (content) {
                     content.classList.add('hidden');
-                    content.classList.remove('flex'); // Clear flex if it was there
+                    content.classList.remove('flex', 'block'); // Ensure display classes are removed
+                }
+
+                // Reset buttons
+                const btn = document.getElementById(`tab-client-${t}`);
+                if (btn) {
+                    btn.className = "px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60";
                 }
             });
 
-            // Show selected content
+            // 2. SHOW selected content
             const selectedContent = document.getElementById(`content-client-${tabName}`);
             if (selectedContent) {
                 selectedContent.classList.remove('hidden');
-                if (tabName === 'whatsapp') selectedContent.classList.add('flex');
+                if (tabName === 'whatsapp') {
+                    selectedContent.classList.add('flex');
+                } else {
+                    selectedContent.classList.add('block');
+                }
+            } else {
+                console.warn(`Content for tab '${tabName}' not found!`);
+                // Fallback to details if selected tab doesn't exist (e.g. diag is hidden)
+                if (tabName !== 'details') return switchClientTab('details');
             }
 
-            // Update Tab Styles
-            tabs.forEach(t => {
-                const btn = document.getElementById(`tab-client-${t}`);
-                if (btn) {
-                    if (t === tabName) {
-                        btn.className = "px-5 py-2.5 text-xs font-bold text-gray-700 bg-white shadow-sm rounded-xl transition-all flex items-center gap-2 border border-gray-100/50 transform scale-105 shadow-md";
-                    } else {
-                        btn.className = "px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60";
-                    }
-                }
-            });
+            // 3. Update Selected Button Style
+            const selectedBtn = document.getElementById(`tab-client-${tabName}`);
+            if (selectedBtn) {
+                selectedBtn.className = "px-5 py-2.5 text-xs font-bold text-gray-700 bg-white shadow-sm rounded-xl transition-all flex items-center gap-2 border border-gray-100/50 transform scale-105 shadow-md";
+            }
 
             // Load logic
             if (tabName === 'whatsapp') {
