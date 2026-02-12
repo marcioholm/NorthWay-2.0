@@ -319,8 +319,9 @@
         function updateChart(period) {
             fetch(`/api/dashboard/chart-data?period=${period}`)
                 .then(response => response.json())
-                .then(data => {
-                    initChart(data);
+                .then(json => {
+                    const chartData = json.data ? json.data : json;
+                    initChart(chartData);
                 })
                 .catch(error => console.error('Error loading chart data:', error));
         }
@@ -435,7 +436,10 @@
                         font: { family: "'Inter', sans-serif", weight: 'bold', size: 12 },
                         formatter: function (value, context) {
                             if (value === 0) return '';
-                            return value;
+                            // Calculate Percentage
+                            const firstVal = context.chart.data.datasets[0].data[0];
+                            const percentage = firstVal > 0 ? Math.round((value / firstVal) * 100) : 0;
+                            return `${value} (${percentage}%)`;
                         }
                     }
                 },
