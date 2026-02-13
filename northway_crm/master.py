@@ -1038,9 +1038,7 @@ def run_library_migration():
         abort(403)
         
     try:
-        from migrate_library import migrate_library
-        # Call the logic directly (adapting migrate_library to be callable without creating new app context if inside request)
-        # However, migrate_library creates its own app context. Let's just inline the logic or call a helper that uses current context.
+        # Inline the logic here to use current db session
         
         # Better: Inline the logic here to use current db session
         from models import LibraryBook, Company
@@ -1121,15 +1119,54 @@ def run_library_migration():
                 'route_name': 'docs.presentation_diagnostic',
                 'cover_image': None,
                 'active': True
+            },
+            {
+                'title': 'Ebook: Os Pilares do Marketing',
+                'description': 'Guia fundamental sobre os pilares estratégicos do marketing moderno.',
+                'category': 'Ebook',
+                'route_name': 'docs.ebook_marketing_pillars',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Ebook Institucional NorthWay',
+                'description': 'Apresentação detalhada da visão e metodologia NorthWay.',
+                'category': 'Ebook',
+                'route_name': 'docs.ebook_institutional',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Growth Framework',
+                'description': 'Framework estratégico para aceleração de crescimento.',
+                'category': 'Estratégia',
+                'route_name': 'docs.presentation_growth_framework',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'PLAYBOOK DE BDR — NORTHWAY',
+                'description': 'Manual completo para operação de Business Development Representative.',
+                'category': 'Estratégia & Vendas',
+                'route_name': 'docs.presentation_playbook_bdr',
+                'cover_image': None,
+                'active': True
             }
         ]
         
         all_companies = Company.query.all()
         count = 0
+        count_upd = 0
         
         for data in initial_books:
-            existing = LibraryBook.query.filter_by(route_name=data['route_name']).first()
-            if not existing:
+            book = LibraryBook.query.filter_by(route_name=data['route_name']).first()
+            if book:
+                book.active = data['active']
+                book.description = data['description']
+                book.category = data['category']
+                book.title = data['title']
+                count_upd += 1
+            else:
                 book = LibraryBook(
                     title=data['title'],
                     description=data['description'],
@@ -1139,12 +1176,13 @@ def run_library_migration():
                     active=data['active']
                 )
                 for comp in all_companies:
-                    book.allowed_companies.append(comp)
+                    if comp not in book.allowed_companies:
+                        book.allowed_companies.append(comp)
                 db.session.add(book)
                 count += 1
                 
         db.session.commit()
-        return f"Migration Successful! Added {count} new books. <a href='{url_for('master.books')}'>Go to Library</a>"
+        return f"Migration Successful! Added {count} new books and updated {count_upd}. <a href='{url_for('master.dashboard')}'>Go to Library</a>"
         
     except Exception as e:
         return f"Error: {str(e)}"
