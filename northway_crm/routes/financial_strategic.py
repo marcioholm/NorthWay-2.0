@@ -56,13 +56,24 @@ def dashboard():
         FixedCost.inicio_competencia <= f"{year}-{month:02d}"
     ).all()
     
+    # DEBUG: Log query results
+    print(f"[DEBUG] tenant_id={current_user.company_id}, year={year}, month={month}")
+    print(f"[DEBUG] Found {len(fixed_costs_query)} fixed costs")
+    for cost in fixed_costs_query:
+        print(f"[DEBUG] Cost: {cost.nome_custo} = R$ {cost.valor}, tipo={cost.tipo}, inicio={cost.inicio_competencia}, parcelas={cost.total_parcelas}")
+    
     total_fixed_costs = 0.0
     for cost in fixed_costs_query:
-        if is_cost_active_in_month(cost, year, month):
+        is_active = is_cost_active_in_month(cost, year, month)
+        print(f"[DEBUG] {cost.nome_custo}: is_active={is_active}")
+        if is_active:
             if cost.tipo == 'Anual Rateado':
                 total_fixed_costs += float(cost.valor) / 12
             else:
                 total_fixed_costs += float(cost.valor)
+    
+    print(f"[DEBUG] Total fixed costs calculated: R$ {total_fixed_costs}")
+
             
     # 3. Resultado Operacional
     operational_result = float(revenue) - total_fixed_costs
