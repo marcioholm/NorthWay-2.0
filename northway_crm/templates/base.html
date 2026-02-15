@@ -259,7 +259,7 @@
         <!-- Sidebar Wrapper for Desktop (Sticky) and Mobile (Fixed) -->
         <aside id="sidebar"
             class="fixed inset-y-0 left-0 z-[70] transform -translate-x-full md:relative md:translate-x-0 
-               w-64 bg-northway-dark text-white flex flex-col flex-shrink-0 transition-transform duration-300 ease-in-out group md:h-full">
+               w-64 bg-[#1a1625] text-white flex flex-col flex-shrink-0 transition-transform duration-300 ease-in-out group md:h-full">
 
             <!-- Sidebar Header (Desktop Only Check) -->
             <div class="hidden md:flex p-6 items-center justify-center border-b border-white/10 min-h-[5rem]">
@@ -307,17 +307,44 @@
                 {% endif %}
 
                 {% if current_user.has_permission('financial_view') %}
-                <a href="{{ url_for('financial.dashboard') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'financial.dashboard' %}bg-white/10 text-white font-semibold{% endif %}">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="sidebar-text transition-opacity duration-300">Financeiro</span>
-                </a>
+                <!-- Financial Submenu (Accordion) -->
+                <div class="financial-menu">
+                    <button onclick="toggleFinancialSubmenu()"
+                        class="flex items-center justify-between w-full px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 flex-shrink-0"></i>
+                            <span class="sidebar-text transition-opacity duration-300">Financeiro</span>
+                        </div>
+                        <i data-lucide="chevron-down" id="financial-chevron"
+                            class="w-4 h-4 transition-transform duration-200"></i>
+                    </button>
 
-                <a href="{{ url_for('payable.list_payable') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'payable.list_payable' %}bg-white/10 text-white font-semibold{% endif %}">
-                    <i data-lucide="calculator" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="sidebar-text transition-opacity duration-300">Contas a Pagar</span>
-                </a>
+                    <div id="financial-submenu" class="hidden mt-1 ml-4 space-y-1">
+                        <a href="{{ url_for('financial.dashboard') }}"
+                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'financial.dashboard' %}bg-white/15  text-white font-semibold{% endif %}">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4 flex-shrink-0"></i>
+                            <span class="text-sm">Visão Geral</span>
+                        </a>
+
+                        <a href="{{ url_for('financial_strategic.dashboard') }}"
+                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'financial_strategic.dashboard' %}bg-white/15 text-white font-semibold{% endif %}">
+                            <i data-lucide="trending-up" class="w-4 h-4 flex-shrink-0"></i>
+                            <span class="text-sm">DRE Estratégico</span>
+                        </a>
+
+                        <a href="{{ url_for('payable.list_payable') }}"
+                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'payable.list_payable' %}bg-white/15 text-white font-semibold{% endif %}">
+                            <i data-lucide="calculator" class="w-4 h-4 flex-shrink-0"></i>
+                            <span class="text-sm">Contas a Pagar</span>
+                        </a>
+
+                        <a href="{{ url_for('commercial.performance') }}"
+                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'commercial.performance' %}bg-white/15 text-white font-semibold{% endif %}">
+                            <i data-lucide="line-chart" class="w-4 h-4 flex-shrink-0"></i>
+                            <span class="text-sm">Performance</span>
+                        </a>
+                    </div>
+                </div>
                 {% endif %}
 
                 {% if current_user.has_permission('leads_view') %}
@@ -372,12 +399,6 @@
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'clients.clients' else 'text-gray-400' }}">
                     <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Clientes</span>
-                </a>
-
-                <a href="{{ url_for('commercial.performance') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'commercial.performance' else 'text-gray-400' }}">
-                    <i data-lucide="line-chart" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="sidebar-text transition-opacity duration-300">Performance</span>
                 </a>
 
                 <a href="{{ url_for('contracts.index') }}"
@@ -561,6 +582,47 @@
                             sidebar.classList.add('!transition-none');
                             collapseSidebar();
                             setTimeout(() => sidebar.classList.remove('!transition-none'), 300);
+                        }
+                    }
+                });
+            </script>
+
+            <!-- Financial Submenu Script -->
+            <script>
+                // Financial Submenu Toggle
+                function toggleFinancialSubmenu() {
+                    const submenu = document.getElementById('financial-submenu');
+                    const chevron = document.getElementById('financial-chevron');
+
+                    if (submenu && chevron) {
+                        if (submenu.classList.contains('hidden')) {
+                            submenu.classList.remove('hidden');
+                            chevron.style.transform = 'rotate(180deg)';
+                            sessionStorage.setItem('financialSubmenuOpen', 'true');
+                        } else {
+                            submenu.classList.add('hidden');
+                            chevron.style.transform = 'rotate(0deg)';
+                            sessionStorage.setItem('financialSubmenuOpen', 'false');
+                        }
+                    }
+                }
+
+                // Restore submenu state on page load
+                document.addEventListener('DOMContentLoaded', function () {
+                    const isOpen = sessionStorage.getItem('financialSubmenuOpen') === 'true';
+
+                    // Check if any financial route is active
+                    const financialRoutes = ['financial.dashboard', 'financial_strategic.dashboard', 'payable.list_payable', 'commercial.performance'];
+                    const currentEndpoint = '{{ request.endpoint }}';
+                    const isFinancialRoute = financialRoutes.includes(currentEndpoint);
+
+                    if (isOpen || isFinancialRoute) {
+                        const submenu = document.getElementById('financial-submenu');
+                        const chevron = document.getElementById('financial-chevron');
+                        if (submenu && chevron) {
+                            submenu.classList.remove('hidden');
+                            chevron.style.transform = 'rotate(180deg)';
+                            sessionStorage.setItem('financialSubmenuOpen', 'true');
                         }
                     }
                 });
