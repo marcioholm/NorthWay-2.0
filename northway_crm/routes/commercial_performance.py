@@ -59,7 +59,7 @@ def performance():
             func.count(CommissionSnapshot.id).label('qty')
         ).join(CommissionSnapshot, User.id == CommissionSnapshot.beneficiario_id)\
          .join(Contract, CommissionSnapshot.contract_id == Contract.id)\
-         .filter(Contract.company_id == current_user.company_id, CommissionSnapshot.competence_fechamento == competence)\
+         .filter(Contract.company_id == current_user.company_id, CommissionSnapshot.competencia_fechamento == competence)\
          .group_by(User.id).all()
         
         chart_data = [{'name': b[0], 'qty': b[1]} for b in beneficiaries_stats]
