@@ -45,21 +45,31 @@ def create_app():
         database_url = os.environ.get('DATABASE_URL')
         
         def test_db_connection(url):
-            if not url: return False
+            if not url: 
+                print("📡 DB CONNECTION TEST: Missing URL.")
+                return False
             try:
+                print(f"📡 DB CONNECTION TEST: Attempting connection to {url.split('@')[-1]}...")
                 # Short timeout (5s) to avoid hanging startup
                 engine = create_engine(url, connect_args={'connect_timeout': 5})
                 with engine.connect() as conn:
                     conn.execute(text("SELECT 1"))
+                print("✅ DB CONNECTION TEST: SUCCESS.")
                 return True
             except Exception as conn_e:
-                print(f"📡 DB CONNECTION TEST FAILED: {conn_e}")
+                print(f"📡 DB CONNECTION TEST FAILED: {type(conn_e).__name__} - {conn_e}")
                 return False
 
         try:
             # 1. Normalize Postgres URL
             if database_url and database_url.startswith("postgres://"):
                 database_url = database_url.replace("postgres://", "postgresql://", 1)
+            
+            # 1.1 Force SSL for Supabase if missing
+            if database_url and 'postgresql' in database_url and 'sslmode' not in database_url:
+                separator = "?" if "?" not in database_url else "&"
+                database_url += f"{separator}sslmode=require"
+                print("🔒 DATABASE: Appending sslmode=require to connection string.")
             
             # 2. Check if we should use Postgres and if it's reachable
             is_postgres = database_url and 'postgresql' in database_url
@@ -80,32 +90,20 @@ def create_app():
             # 3. Decision Logic & Fallbacks
             if is_postgres and connection_ok:
                 print("✅ DATABASE: Connection to PostgreSQL successful.")
-            else:
-                if is_postgres:
-                    print("⚠️ DATABASE: Falling back to SQLite due to connection failure.")
-                
-                # Vercel/Local SQLite Choice
-                src_db = os.path.join(app.root_path, 'crm.db')
-                tmp_db = '/tmp/crm.db'
-                
-                if os.path.exists(src_db):
-                    # If we are on Vercel (read-only), we might need to copy to /tmp
-                    # On local mac, we can just use crm.db directly
-                    if os.access(app.root_path, os.W_OK):
-                        database_url = f'sqlite:///{src_db}'
-                        print(f"🏠 DATABASE: Using local SQLite at {src_db}")
-                    else:
-                        import shutil
-                        try:
-                            shutil.copy2(src_db, tmp_db)
-                            database_url = f'sqlite:///{tmp_db}'
-                            print(f"📦 DATABASE: Using copied SQLite at {tmp_db} (Vercel Mode)")
-                        except:
-                            database_url = 'sqlite:///:memory:'
-                            print("💾 DATABASE: Read-only FS and copy failed. Using In-Memory.")
+            elif is_postgres and not connection_ok:
+                print("❌ DATABASE: PostgreSQL connection FAILED.")
+                # CRITICAL: In production, NEVER fall back to SQLite if Postgres is expected
+                if os.environ.get('VERCEL') or os.environ.get('DATABASE_URL'):
+                    print("🚨 DATABASE: Production environment detected. BLOCKING fallback to SQLite to prevent data loss.")
+                    # Keep database_url as postgresql to force error 500 instead of empty DB
                 else:
-                    print("⚠️ DATABASE: No 'crm.db' found. Using /tmp/crm.db (Fresh).")
-                    database_url = 'sqlite:////tmp/crm.db'
+                    print("⚠️ DATABASE: Local environment. Falling back to SQLite.")
+                    database_url = f'sqlite:///{os.path.join(app.root_path, "crm.db")}'
+            else:
+                # No Postgres configured, use SQLite (Local mode)
+                print("🏠 DATABASE: Using local SQLite.")
+                src_db = os.path.join(app.root_path, 'crm.db')
+                database_url = f'sqlite:///{src_db}'
 
         except Exception as e:
             print(f"🔥 CRITICAL DB SETUP ERROR: {e}")
