@@ -68,17 +68,21 @@ def create_app():
             if is_postgres:
                 try:
                     import psycopg2
-                    print("🐘 DATABASE: Testing PostgreSQL connection...")
+                    print(f"🐘 DATABASE: Testing PostgreSQL connection to {database_url.split('@')[-1]}...")
                     connection_ok = test_db_connection(database_url)
+                    if not connection_ok:
+                        print("❌ DATABASE: PostgreSQL connection test FAILED.")
                 except ImportError:
                     print("⚠️ Postgres configured but 'psycopg2' missing.")
+                except Exception as pg_e:
+                    print(f"🔥 DATABASE: Unexpected Postgres error: {pg_e}")
             
             # 3. Decision Logic & Fallbacks
             if is_postgres and connection_ok:
                 print("✅ DATABASE: Connection to PostgreSQL successful.")
             else:
                 if is_postgres:
-                    print("⚠️ DATABASE: PostgreSQL unreachable or driver error. Falling back to SQLite.")
+                    print("⚠️ DATABASE: Falling back to SQLite due to connection failure.")
                 
                 # Vercel/Local SQLite Choice
                 src_db = os.path.join(app.root_path, 'crm.db')
@@ -533,16 +537,26 @@ def create_app():
                 print("✅ Tables created (if missing).")
 
                 # 1.1. Manual Migrations (Safety check for new columns)
+                # Using engine.connect() for more direct DDL execution
                 try:
                     from sqlalchemy import text
-                    db.session.execute(text("ALTER TABLE client ADD COLUMN payment_status VARCHAR(20) DEFAULT 'em_dia'"))
-                    db.session.commit()
-                    print("🛠️ MIGRATION: Column 'payment_status' added to 'client' table.")
+                    with db.engine.connect() as conn:
+                        # Check if it's postgres or sqlite
+                        is_postgres_env = 'postgresql' in str(db.engine.url)
+                        print(f"🛠️ MIGRATION: Running on {'PostgreSQL' if is_postgres_env else 'SQLite'}")
+                        
+                        try:
+                            conn.execute(text("ALTER TABLE client ADD COLUMN payment_status VARCHAR(20) DEFAULT 'em_dia'"))
+                            conn.commit()
+                            print("🛠️ MIGRATION: Column 'payment_status' added successfully.")
+                        except Exception as e_inner:
+                            # Postgres often throws unique error for duplicate column
+                            if "already exists" in str(e_inner).lower() or "duplicate column" in str(e_inner).lower():
+                                print("🛠️ MIGRATION: Column 'payment_status' already exists. OK.")
+                            else:
+                                raise e_inner
                 except Exception as e_mig:
-                    db.session.rollback()
-                    # Ignore if column already exists (common on local SQLite after first run)
-                    if "already exists" not in str(e_mig).lower() and "duplicate column" not in str(e_mig).lower():
-                        print(f"⚠️ MIGRATION NOTICE: {e_mig}")
+                    print(f"⚠️ MIGRATION NOTICE (Non-critical if already exists): {e_mig}")
                 
                 # 2. Seed Admin (Safe Check)
                 try:
