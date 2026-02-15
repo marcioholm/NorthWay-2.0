@@ -19,7 +19,7 @@ def performance():
     collaborator_id = request.args.get('collaborator_id')
 
     # Base Metrics
-    query_base = CommissionSnapshot.query.filter_by(competence_fechamento=competence)
+    query_base = CommissionSnapshot.query.filter_by(competencia_fechamento=competence)
     if collaborator_id:
         query_base = query_base.filter_by(beneficiario_id=int(collaborator_id))
     else:
