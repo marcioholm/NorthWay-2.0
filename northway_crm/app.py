@@ -19,9 +19,13 @@ from services.supabase_service import init_supabase
 from flask_cors import CORS
 
 def create_app():
+    # CRITICAL: Set instance path BEFORE Flask initialization
+    # This prevents OSError on Vercel's read-only filesystem
+    os.environ.setdefault('FLASK_INSTANCE_PATH', '/tmp')
+    
     # EMERGENCY WRAPPER
     try:
-        app = Flask(__name__, instance_path='/tmp')
+        app = Flask(__name__, instance_path='/tmp', instance_relative_config=False)
         app.instance_path = '/tmp' # FORCE override for Vercel
         
         # Allow Chrome Extensions (Defensive)
