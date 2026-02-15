@@ -477,6 +477,7 @@ def create_app():
             ('auth', 'auth', 'auth_blueprint', None),
             ('master', 'master', 'master_blueprint', None),
             ('routes.financial', 'financial_bp', 'financial_bp', None),
+            ('routes.financial_strategic', 'financial_strategic_bp', 'financial_strategic_bp', None),
             ('routes.docs', 'docs_bp', 'docs_bp', None),
             ('routes.goals', 'goals_bp', 'goals_bp', None),
             ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None),

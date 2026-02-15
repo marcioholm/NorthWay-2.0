@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-gray-50/50 relative">
+    <div class="p-6 max-w-[1600px] mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-northway-red"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 tracking-tight">DRE Estratégico</h1>
+                    <p class="text-xs text-gray-500">Monitoramento de saúde financeira e ponto de equilíbrio</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <form action="{{ url_for('financial_strategic.dashboard') }}" method="GET" class="flex gap-2">
+                    <select name="month" onchange="this.form.submit()"
+                        class="text-xs border-gray-200 rounded-md shadow-sm">
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}" {% if m==month %}selected{% endif %}>{{ ['Janeiro', 'Fevereiro',
+                            'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro',
+                            'Dezembro'][m-1] }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="year" onchange="this.form.submit()"
+                        class="text-xs border-gray-200 rounded-md shadow-sm">
+                        {% for y in range(2024, 2027) %}
+                        <option value="{{ y }}" {% if y==year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <button onclick="window.location.href='{{ url_for('financial_strategic.fixed_costs') }}'"
+                    class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm flex items-center gap-2">
+                    <i data-lucide="settings" class="w-3 h-3"></i> Custos Fixos
+                </button>
+                <button onclick="window.location.href='{{ url_for('financial_strategic.export_pdf') }}'"
+                    class="px-3 py-1.5 bg-northway-red text-white rounded-md text-xs font-bold hover:bg-red-700 shadow-sm flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-3 h-3"></i> Exportar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Receita Bruta -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 relative group overflow-hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-2 bg-blue-50 rounded-lg">
+                        <i data-lucide="dollar-sign" class="w-4 h-4 text-blue-600"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Receita Bruta (Paga)</p>
+                    <h3 class="text-2xl font-bold text-gray-900 mt-1">R$ {{ "{:,.2f}".format(revenue).replace(',',
+                        'X').replace('.', ',').replace('X', '.') }}</h3>
+                </div>
+                <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <i data-lucide="dollar-sign" class="w-24 h-24"></i>
+                </div>
+            </div>
+
+            <!-- Custos Fixos Totais -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 relative group overflow-hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-2 bg-orange-50 rounded-lg">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-orange-600"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Custos Fixos Globais</p>
+                    <h3 class="text-2xl font-bold text-gray-900 mt-1">R$ {{
+                        "{:,.2f}".format(total_fixed_costs).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+                    </h3>
+                </div>
+                <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <i data-lucide="pie-chart" class="w-24 h-24"></i>
+                </div>
+            </div>
+
+            <!-- Resultado Operacional -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 relative group overflow-hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div
+                        class="p-2 {% if operational_result > 0 %}bg-green-50{% elif operational_result < 0 %}bg-red-50{% else %}bg-gray-50{% endif %} rounded-lg">
+                        <i data-lucide="activity"
+                            class="w-4 h-4 {% if operational_result > 0 %}text-green-600{% elif operational_result < 0 %}text-red-600{% else %}text-gray-600{% endif %}"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Resultado Operacional</p>
+                    <h3
+                        class="text-2xl font-bold mt-1 {% if operational_result > 0 %}text-green-600{% elif operational_result < 0 %}text-red-600{% else %}text-gray-600{% endif %}">
+                        R$ {{ "{:,.2f}".format(operational_result).replace(',', 'X').replace('.', ',').replace('X', '.')
+                        }}
+                    </h3>
+                </div>
+                <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <i data-lucide="activity" class="w-24 h-24"></i>
+                </div>
+            </div>
+
+            <!-- Ponto de Equilíbrio -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 relative group overflow-hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-2 bg-purple-50 rounded-lg">
+                        <i data-lucide="target" class="w-4 h-4 text-purple-600"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ponto de Equilíbrio</p>
+                    <h3 class="text-2xl font-bold text-gray-900 mt-1">R$ {{ "{:,.2f}".format(break_even).replace(',',
+                        'X').replace('.', ',').replace('X', '.') }}</h3>
+                </div>
+                <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <i data-lucide="target" class="w-24 h-24"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Evolution Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-sm text-gray-800 uppercase tracking-wider">Evolução Estratégica (6 Meses)
+                    </h3>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase">Receita</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase">Custos</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-1 min-h-0">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Composition Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-sm text-gray-800 uppercase tracking-wider">Composição de Resultado
+                        Automática</h3>
+                </div>
+                <div class="flex-1 min-h-0">
+                    <canvas id="waterfallChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const trendData = {{ trend_data | tojson
+    }};
+    const labels = trendData.map(d => d.label);
+    const revenues = trendData.map(d => d.revenue);
+    const costs = trendData.map(d => d.costs);
+
+    // Evolution Chart
+    const ctxEvolution = document.getElementById('evolutionChart').getContext('2d');
+    new Chart(ctxEvolution, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Receita',
+                    data: revenues,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderWidth: 2
+                },
+                {
+                    label: 'Custos Fixos',
+                    data: costs,
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    padding: 12,
+                    backgroundColor: '#111827',
+                    titleFont: { size: 12, weight: 'bold' },
+                    bodyFont: { size: 12 },
+                    callbacks: {
+                        label: function (context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10, weight: 'bold' }, color: '#9ca3af' }
+                },
+                y: {
+                    grid: { color: '#f3f4f6', borderDash: [4, 4] },
+                    ticks: {
+                        font: { size: 10 },
+                        color: '#9ca3af',
+                        callback: function (value) {
+                            return new Intl.NumberFormat('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' }).format(value);
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Waterfall Chart (Simplified composition)
+    const ctxWaterfall = document.getElementById('waterfallChart').getContext('2d');
+    const rev = {{ revenue }};
+    const cst = {{ total_fixed_costs }};
+    const res = {{ operational_result }};
+
+    new Chart(ctxWaterfall, {
+        type: 'bar',
+        data: {
+            labels: ['Receita', 'Custos Fixos', 'Resultado'],
+            datasets: [{
+                data: [rev, -cst, res],
+                backgroundColor: [
+                    '#3b82f6', // Blue
+                    '#ef4444', // Red
+                    res > 0 ? '#10b981' : '#ef4444' // Green/Red
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    grid: { color: '#f3f4f6' },
+                    ticks: {
+                        callback: function (value) {
+                            return new Intl.NumberFormat('pt-BR', { notation: 'compact', style: 'currency', currency: 'BRL' }).format(value);
+                        }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { weight: 'bold' } }
+                }
+            }
+        }
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+    });
+</script>
+{% endblock %}

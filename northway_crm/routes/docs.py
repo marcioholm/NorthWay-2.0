@@ -81,6 +81,11 @@ def ebook_marketing_pillars():
 def presentation_growth_framework():
     return render_template('docs/presentation_growth_framework.html')
 
+@docs_bp.route('/ebook-quanto-vale-a-hora')
+@login_required
+def ebook_time_value():
+    return render_template('docs/ebook_time_value.html')
+
 @docs_bp.route('/ebook-institucional')
 # Public access for sharing via link
 def ebook_institutional():

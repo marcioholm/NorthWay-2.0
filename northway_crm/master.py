@@ -1065,7 +1065,7 @@ def run_library_migration():
                 'active': True
             },
             {
-                'title': 'Oferta Principal',
+                'title': 'Ebook: Máquina Comercial Digital (Oferta Principal)',
                 'description': 'Estrutura Completa da Proposta Comercial.',
                 'category': 'Vendas',
                 'route_name': 'docs.presentation_offer_main',
@@ -1073,7 +1073,7 @@ def run_library_migration():
                 'active': True
             },
             {
-                'title': 'Plano Essencial (Downsell)',
+                'title': 'Ebook: Estrutura Comercial Essencial (Downsell)',
                 'description': 'Alternativa de proposta para recuperação.',
                 'category': 'Vendas',
                 'route_name': 'docs.presentation_offer_downsell',
@@ -1145,10 +1145,18 @@ def run_library_migration():
                 'active': True
             },
             {
-                'title': 'PLAYBOOK DE BDR — NORTHWAY',
+                'title': 'Ebook: PLAYBOOK DE BDR — NORTHWAY',
                 'description': 'Manual completo para operação de Business Development Representative.',
                 'category': 'Estratégia & Vendas',
                 'route_name': 'docs.presentation_playbook_bdr',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Ebook: Quanto vale a sua hora?',
+                'description': 'O método NorthWay para identificar, calcular e transformar seu tempo em crescimento estratégico.',
+                'category': 'Gestão & Produtividade',
+                'route_name': 'docs.ebook_time_value',
                 'cover_image': None,
                 'active': True
             }
@@ -1165,6 +1173,10 @@ def run_library_migration():
                 book.description = data['description']
                 book.category = data['category']
                 book.title = data['title']
+                # Ensure it's linked to all companies during migration for visibility
+                for comp in all_companies:
+                    if comp not in book.allowed_companies:
+                        book.allowed_companies.append(comp)
                 count_upd += 1
             else:
                 book = LibraryBook(

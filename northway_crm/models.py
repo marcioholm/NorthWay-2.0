@@ -941,3 +941,37 @@ class FormSubmission(db.Model):
     instance = db.relationship('FormInstance', backref='submissions')
     lead = db.relationship('Lead', backref='submissions')
     client = db.relationship('Client', backref='submissions')
+    
+class FixedCost(db.Model):
+    __tablename__ = 'custos_fixos_globais'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    nome_custo = db.Column(db.String(255), nullable=False)
+    categoria = db.Column(db.String(50), nullable=False) # Equipe, Ferramenta, Estrutura, Impostos, Outros
+    valor = db.Column(db.Numeric(12, 2), nullable=False)
+    tipo = db.Column(db.String(50), nullable=False) # Mensal, Anual Rateado
+    status = db.Column(db.String(20), default='Ativo') # Ativo, Inativo
+    observacao = db.Column(db.Text)
+    inicio_competencia = db.Column(db.String(7)) # YYYY-MM
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    company = db.relationship('Company', backref='fixed_costs')
+    creator = db.relationship('User', foreign_keys=[created_by])
+    updater = db.relationship('User', foreign_keys=[updated_by])
+
+class StrategicAuditLog(db.Model):
+    __tablename__ = 'strategic_audit_log'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    action = db.Column(db.String(50), nullable=False) # CREATE, UPDATE, DELETE, IMPORT
+    target_type = db.Column(db.String(50), nullable=False) # FixedCost
+    target_id = db.Column(db.String(36))
+    changes = db.Column(db.JSON) # Old vs New
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    company = db.relationship('Company', backref='strategic_audit_logs')
+    user = db.relationship('User', backref='strategic_audit_logs')
