@@ -19,6 +19,7 @@ def clients():
     # Filters
     search_q = request.args.get('q')
     status = request.args.get('status')
+    payment_status = request.args.get('payment_status')
     manager_id = request.args.get('manager')
     renewal_start = request.args.get('renewal_start')
     renewal_end = request.args.get('renewal_end')
@@ -34,6 +35,9 @@ def clients():
     
     if status:
         query = query.filter_by(status=status)
+    
+    if payment_status:
+        query = query.filter_by(payment_status=payment_status)
         
     if manager_id:
         query = query.filter_by(account_manager_id=int(manager_id))
@@ -391,6 +395,7 @@ def import_clients():
             start_date_raw = row.get('Data Inicio') or row.get('Start Date')
             contract_type_raw = row.get('Tipo Contrato') or row.get('Contract Type') or row.get('contract_type')
             renewal_date_raw = row.get('Data Renovacao') or row.get('Renewal Date') or row.get('renewal_date')
+            payment_status_raw = row.get('Status Pagamento') or row.get('Payment Status') or row.get('payment_status')
             
             # Check duplication
             if email:
@@ -460,6 +465,20 @@ def import_clients():
                             continue
                 except:
                     pass
+            
+            # Payment status parsing and health_status mapping
+            payment_status = 'em_dia'
+            if payment_status_raw:
+                ps = payment_status_raw.lower().strip()
+                if 'inadimpl' in ps or 'overdue' in ps:
+                    payment_status = 'inadimplente'
+                    health_status = 'vermelho'  # Override health status
+                elif 'atras' in ps or 'late' in ps:
+                    payment_status = 'atrasado'
+                    if health_status == 'verde':  # Only override if not already critical
+                        health_status = 'amarelo'
+                elif 'dia' in ps or 'current' in ps or 'paid' in ps:
+                    payment_status = 'em_dia'
 
             new_client = Client(
                 name=name,
@@ -468,6 +487,8 @@ def import_clients():
                 company_id=current_user.company_id,
                 account_manager_id=current_user.id, # Default to uploader
                 status=status,
+                health_status=health_status,
+                payment_status=payment_status,
                 service=service,
                 contract_type=contract_type,
                 monthly_value=monthly_value,

@@ -369,6 +369,7 @@ def create_app():
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS gmb_last_sync TIMESTAMP WITH TIME ZONE;",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS profile_pic_url VARCHAR(500);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS health_status VARCHAR(20) DEFAULT 'verde';",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'em_dia';",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS niche VARCHAR(100);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS document VARCHAR(20);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_street VARCHAR(150);",

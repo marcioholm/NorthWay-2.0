@@ -398,6 +398,7 @@ class Client(db.Model):
     
     status = db.Column(db.String(20), default='onboarding') # onboarding, ativo, pausado, cancelado
     health_status = db.Column(db.String(20), default='verde') # verde, amarelo, vermelho
+    payment_status = db.Column(db.String(20), default='em_dia') # em_dia, atrasado, inadimplente
     start_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     
     service = db.Column(db.String(100))
