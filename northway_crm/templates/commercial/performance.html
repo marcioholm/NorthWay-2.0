@@ -5,8 +5,8 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold font-display text-white">Performance Comercial</h1>
-            <p class="text-gray-400">Relatório detalhado de comissões e metas por competência.</p>
+            <h1 class="text-2xl font-bold font-display text-gray-900">Performance Comercial</h1>
+            <p class="text-gray-600">Relatório detalhado de comissões e metas por competência.</p>
         </div>
 
         <form class="flex flex-col md:flex-row items-center gap-3">
@@ -32,17 +32,17 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="card-premium p-6 border-l-4 border-l-blue-500">
             <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contratos Fechados</p>
-            <p class="text-3xl font-bold text-white mt-2">{{ stats.contracts }}</p>
+            <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.contracts }}</p>
             <p class="text-xs text-blue-400 mt-1">Somas do mês selecionado</p>
         </div>
         <div class="card-premium p-6 border-l-4 border-l-green-500">
             <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Base Contratual Total</p>
-            <p class="text-3xl font-bold text-white mt-2">R$ {{ "%.2f"|format(stats.revenue|float) }}</p>
+            <p class="text-3xl font-bold text-gray-900 mt-2">R$ {{ "%.2f"|format(stats.revenue|float) }}</p>
             <p class="text-xs text-gray-500 mt-1">Excluindo juros e multas</p>
         </div>
         <div class="card-premium p-6 border-l-4 border-l-orange-500">
             <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Comissão Final (c/ Ajustes)</p>
-            <p class="text-3xl font-bold text-white mt-2">R$ {{ "%.2f"|format(stats.comm_final|float) }}</p>
+            <p class="text-3xl font-bold text-gray-900 mt-2">R$ {{ "%.2f"|format(stats.comm_final|float) }}</p>
             <div class="mt-2 flex gap-2">
                 <span class="text-[10px] text-gray-400">Prov: R$ {{ "%.2f"|format(stats.comm_provisional|float)
                     }}</span>
@@ -51,7 +51,7 @@
         </div>
         <div class="card-premium p-6 border-l-4 border-l-northway-red">
             <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Status de Payout</p>
-            <p class="text-3xl font-bold text-white mt-2">R$ {{ "%.2f"|format(stats.paid|float) }}</p>
+            <p class="text-3xl font-bold text-gray-900 mt-2">R$ {{ "%.2f"|format(stats.paid|float) }}</p>
             <p class="text-xs text-red-400 mt-1">Pendente: R$ {{ "%.2f"|format(stats.pending|float) }}</p>
         </div>
     </div>
@@ -61,7 +61,7 @@
         <!-- Snapshots Detail -->
         <div class="lg:col-span-2 card-premium p-6">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <i data-lucide="list" class="w-5 h-5 text-northway-red"></i>
                     Detalhamento de Contratos
                 </h2>
@@ -82,11 +82,11 @@
                         {% for s in snapshots %}
                         <tr class="text-sm">
                             <td class="py-4">
-                                <p class="font-semibold text-white">#{{ s.contract_id }}</p>
+                                <p class="font-semibold text-gray-900">#{{ s.contract_id }}</p>
                                 <p class="text-xs text-gray-500">{{ s.data_fechamento.strftime('%d/%m/%Y') }}</p>
                             </td>
                             <td class="py-4 text-gray-300">{{ s.beneficiario.name }}</td>
-                            <td class="py-4 text-right text-white">R$ {{ "%.2f"|format(s.contract.amount|float) if
+                            <td class="py-4 text-right text-gray-900">R$ {{ "%.2f"|format(s.contract.amount|float) if
                                 s.contract else '0.00' }}</td>
                             <td class="py-4 text-center">
                                 <span
@@ -110,14 +110,14 @@
         <!-- Tier Progress / Analytics Side -->
         <div class="space-y-6">
             <div class="card-premium p-6">
-                <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <i data-lucide="pie-chart" class="w-4 h-4"></i> Distribuição por Consultor
                 </h3>
                 <canvas id="contracts-chart" height="300"></canvas>
             </div>
 
             <div class="card-premium p-6 bg-northway-red/5 border-northway-red/10">
-                <h3 class="text-sm font-bold text-white mb-2">Resumo de Auditabilidade</h3>
+                <h3 class="text-sm font-bold text-gray-900 mb-2">Resumo de Auditabilidade</h3>
                 <p class="text-xs text-gray-400 leading-relaxed">
                     Todas as comissões são calculadas sobre o valor original dos contratos, excluindo encargos pagos
                     pelos clientes (juros/multas).

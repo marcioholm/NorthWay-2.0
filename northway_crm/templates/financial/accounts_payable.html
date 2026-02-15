@@ -5,8 +5,8 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold font-display text-white">Contas a Pagar</h1>
-            <p class="text-gray-400">Gestão de comissões e pagamentos comerciais.</p>
+            <h1 class="text-2xl font-bold font-display text-gray-900">Contas a Pagar</h1>
+            <p class="text-gray-600">Gestão de comissões e pagamentos comerciais.</p>
         </div>
 
         <div class="flex items-center gap-3">
@@ -22,7 +22,7 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="card-premium p-6">
             <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Pendente (Mês)</p>
-            <p class="text-2xl font-bold text-white mt-1">R$ {{
+            <p class="text-2xl font-bold text-gray-900 mt-1">R$ {{
                 payables|sum(attribute='valor_comissao_calculado')|float|round(2) }}</p>
         </div>
         <div class="card-premium p-6">
@@ -68,7 +68,8 @@
                                     {{ p.beneficiario.name[:1] if p.beneficiario else '?' }}
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold text-white">{{ p.beneficiario.name if p.beneficiario
+                                    <p class="text-sm font-semibold text-gray-900">{{ p.beneficiario.name if
+                                        p.beneficiario
                                         else 'N/A' }}</p>
                                     <p class="text-xs text-gray-500">{{ p.beneficiario.funcao_comercial or 'Comercial'
                                         }}</p>
@@ -85,7 +86,7 @@
                         <td class="px-6 py-4 text-sm text-gray-300">{{ p.competencia }}</td>
                         <td class="px-6 py-4 text-sm text-right text-gray-400">R$ {{
                             "%.2f"|format(p.valor_base_contratual|float) }}</td>
-                        <td class="px-6 py-4 text-sm font-bold text-right text-white">R$ {{
+                        <td class="px-6 py-4 text-sm font-bold text-right text-gray-900">R$ {{
                             "%.2f"|format(p.valor_comissao_calculado|float) }}</td>
                         <td class="px-6 py-4">
                             {% if p.status == 'PAGO' %}
@@ -125,7 +126,7 @@
 <div id="pay-modal"
     class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
     <div class="card-premium p-6 w-full max-w-md">
-        <h3 class="text-lg font-bold text-white mb-4">Confirmar Pagamento</h3>
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Confirmar Pagamento</h3>
         <form id="pay-form" method="POST" action="">
             <div class="space-y-4">
                 <div>
