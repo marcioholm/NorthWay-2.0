@@ -389,6 +389,8 @@ def import_clients():
             value_raw = row.get('Valor') or row.get('Value') or row.get('valor') or row.get('VALOR')
             service = row.get('Servico') or row.get('Service') or row.get('servico') or row.get('SERVICO')
             start_date_raw = row.get('Data Inicio') or row.get('Start Date')
+            contract_type_raw = row.get('Tipo Contrato') or row.get('Contract Type') or row.get('contract_type')
+            renewal_date_raw = row.get('Data Renovacao') or row.get('Renewal Date') or row.get('renewal_date')
             
             # Check duplication
             if email:
@@ -419,6 +421,19 @@ def import_clients():
                 except:
                     pass
             
+            # Contract type parsing
+            contract_type = None
+            if contract_type_raw:
+                ct = contract_type_raw.lower().strip()
+                if 'mensal' in ct or 'month' in ct:
+                    contract_type = 'mensal'
+                elif 'trimestral' in ct or 'quarter' in ct:
+                    contract_type = 'trimestral'
+                elif 'semestral' in ct or 'semester' in ct:
+                    contract_type = 'semestral'
+                elif 'anual' in ct or 'annual' in ct or 'year' in ct:
+                    contract_type = 'anual'
+            
             # Date parsing
             start_date = date.today()
             if start_date_raw:
@@ -427,6 +442,19 @@ def import_clients():
                     for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']:
                         try:
                             start_date = datetime.strptime(start_date_raw, fmt).date()
+                            break
+                        except:
+                            continue
+                except:
+                    pass
+            
+            # Renewal date parsing
+            renewal_date = None
+            if renewal_date_raw:
+                try:
+                    for fmt in ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y']:
+                        try:
+                            renewal_date = datetime.strptime(renewal_date_raw, fmt).date()
                             break
                         except:
                             continue
@@ -441,8 +469,10 @@ def import_clients():
                 account_manager_id=current_user.id, # Default to uploader
                 status=status,
                 service=service,
+                contract_type=contract_type,
                 monthly_value=monthly_value,
                 start_date=start_date,
+                renewal_date=renewal_date,
                 created_at=datetime.utcnow()
             )
             db.session.add(new_client)
