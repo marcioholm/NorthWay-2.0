@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, jsonify, abort, request
 from flask_login import login_required, current_user
-from models import db, Contract, Transaction, FinancialCategory, Expense, ROLE_ADMIN, ROLE_MANAGER
+from models import db, Contract, Transaction, FinancialCategory, Expense, AccountsPayable, ROLE_ADMIN, ROLE_MANAGER
 
 from datetime import date, datetime
 import json
@@ -317,6 +317,20 @@ def get_dre_data():
             variable_costs += val
         else:
             fixed_expenses += val
+
+    # --- 1.2 COMMISSIONS (VARIABLE COSTS) ---
+    comp_str = f"{year}-{month:02d}"
+    period_commissions = AccountsPayable.query.filter_by(
+        tenant_id=company_id,
+        competencia=comp_str,
+        status='PAGO' # Only paid? Or all committed? DRE Competency = All committed.
+    ).all()
+    
+    comm_total = sum(float(c.valor_comissao_calculado) for c in period_commissions)
+    variable_costs += comm_total
+    
+    if comm_total > 0:
+        breakdown['Comissões Comerciais'] = comm_total
 
     # --- CALCULATION ---
     net_revenue = gross_revenue - taxes

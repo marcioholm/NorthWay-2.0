@@ -10,7 +10,7 @@ db = SQLAlchemy()
 
 class Contact(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(36), unique=True, nullable=False) # UUID string
+    uuid = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4())) # UUID string
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     phone = db.Column(db.String(50), nullable=False) # Canonical E.164
     created_at = db.Column(db.DateTime, default=get_now_br)
@@ -197,6 +197,17 @@ class User(UserMixin, db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Nullable for Supabase Auth Triggers
     created_at = db.Column(db.DateTime, default=get_now_br)
     last_login = db.Column(db.DateTime, nullable=True)
+
+    # New Commercial Fields
+    funcao_comercial = db.Column(db.String(100), nullable=True) # Closer, BDR, SDR, Head
+    tipo_vinculo = db.Column(db.String(20), nullable=True) # PJ, CLT, Parceiro, Outro
+    papel_comercial_id = db.Column(db.String(36), db.ForeignKey('papeis_comerciais.id'), nullable=True)
+    regra_comissao_id = db.Column(db.String(36), db.ForeignKey('regras_comissao.id'), nullable=True)
+
+    # Relationships
+    role_obj = db.relationship('Role', backref='users')
+    papel_comercial = db.relationship('CommercialRole', backref='users')
+    regra_comissao = db.relationship('CommissionRule', backref='users')
 
     # Profile Fields
     profile_image = db.Column(db.String(150), nullable=True)
@@ -965,14 +976,98 @@ class FixedCost(db.Model):
 
 class StrategicAuditLog(db.Model):
     __tablename__ = 'strategic_audit_log'
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = db.Column(db.Integer, primary_key=True)
     tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    action = db.Column(db.String(50), nullable=False) # CREATE, UPDATE, DELETE, IMPORT
-    target_type = db.Column(db.String(50), nullable=False) # FixedCost
-    target_id = db.Column(db.String(36))
-    changes = db.Column(db.JSON) # Old vs New
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    action = db.Column(db.String(50), nullable=False) # e.g., CREATE, UPDATE, DELETE, IMPORT
+    target_type = db.Column(db.String(50), nullable=False) # e.g., FixedCost, Transaction
+    target_id = db.Column(db.String(36), nullable=False) # Changed to string for UUID compatibility
+    changes = db.Column(db.JSON, nullable=True) # Store changes as JSON
     created_at = db.Column(db.DateTime, default=get_now_br)
 
     company = db.relationship('Company', backref='strategic_audit_logs')
     user = db.relationship('User', backref='strategic_audit_logs')
+
+# --- NEW COMMERCIAL & ACCOUNTS PAYABLE MODELS ---
+
+class CommercialRole(db.Model):
+    __tablename__ = 'papeis_comerciais'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.Text, nullable=True)
+    tipo_vinculo = db.Column(db.String(20), nullable=False) # PJ, CLT, Parceiro
+    ativo = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='commercial_roles')
+    regras = db.relationship('CommissionRule', backref='papel', cascade='all, delete-orphan')
+
+class CommissionRule(db.Model):
+    __tablename__ = 'regras_comissao'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    papel_comercial_id = db.Column(db.String(36), db.ForeignKey('papeis_comerciais.id'), nullable=False)
+    modelo = db.Column(db.String(50), nullable=False) # PROGRESSAO_MENSAL, PERCENTUAL_FIXO_LIFETIME, PERCENTUAL_FIXO_UNICO
+    parametros = db.Column(db.JSON, nullable=False) # faixas, percentuais, etc.
+    ativo = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+class CommissionSnapshot(db.Model):
+    __tablename__ = 'comissao_snapshots'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=False)
+    beneficiario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    papel_comercial_id = db.Column(db.String(36), db.ForeignKey('papeis_comerciais.id'), nullable=False)
+    regra_id = db.Column(db.String(36), db.ForeignKey('regras_comissao.id'), nullable=False)
+    modelo = db.Column(db.String(50), nullable=False) # FAIXA_MENSAL_UNICA, PERCENTUAL_FIXO_LIFETIME
+    percentual_provisorio = db.Column(db.Float, nullable=False)
+    percentual_definitivo = db.Column(db.Float, nullable=True) # Set on tier update or month close
+    data_fechamento = db.Column(db.DateTime, default=get_now_br)
+    competencia_fechamento = db.Column(db.String(7), nullable=False) # YYYY-MM
+    base_calculo = db.Column(db.String(20), default='valor_pago')
+    recorrente = db.Column(db.Boolean, default=True)
+
+    contract = db.relationship('Contract', backref=db.backref('commission_snapshot', uselist=False))
+    beneficiario = db.relationship('User', foreign_keys=[beneficiario_id])
+
+class AccountsPayable(db.Model):
+    __tablename__ = 'contas_a_pagar'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False) # COMISSAO, FORNECEDOR, OUTRO
+    beneficiario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
+    asaas_payment_id = db.Column(db.String(50), nullable=True)
+    competencia = db.Column(db.String(7), nullable=False) # YYYY-MM
+    
+    # Base calculation fields
+    valor_base_contratual = db.Column(db.Numeric(12, 2), nullable=False)
+    valor_pago_cliente_total = db.Column(db.Numeric(12, 2), nullable=False)
+    juros_cliente = db.Column(db.Numeric(12, 2), default=0.00)
+    multa_cliente = db.Column(db.Numeric(12, 2), default=0.00)
+    
+    percentual_aplicado = db.Column(db.Float, nullable=False)
+    valor_comissao_calculado = db.Column(db.Numeric(12, 2), nullable=False)
+    
+    # Payment to collaborator fields
+    valor_final_pago_colaborador = db.Column(db.Numeric(12, 2), nullable=True)
+    juros_pago_colaborador = db.Column(db.Numeric(12, 2), default=0.00)
+    
+    # Adjustment fields
+    eh_ajuste = db.Column(db.Boolean, default=False)
+    referencia_comissao_id = db.Column(db.String(36), db.ForeignKey('contas_a_pagar.id'), nullable=True)
+    
+    status = db.Column(db.String(20), default='A_PAGAR') # A_PAGAR, PAGO, ESTORNADO
+    data_pagamento = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='accounts_payable')
+    contract_obj = db.relationship('Contract', backref='commissions_payable')
+    client_obj = db.relationship('Client', backref='commissions_payable')
+    beneficiario = db.relationship('User', foreign_keys=[beneficiario_id])
+    referencia = db.relationship('AccountsPayable', remote_side=[id], backref='ajustes')

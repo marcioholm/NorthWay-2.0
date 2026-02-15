@@ -312,6 +312,12 @@
                     <i data-lucide="bar-chart-3" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Financeiro</span>
                 </a>
+
+                <a href="{{ url_for('payable.list_payable') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'payable.list_payable' %}bg-white/10 text-white font-semibold{% endif %}">
+                    <i data-lucide="calculator" class="w-5 h-5 flex-shrink-0"></i>
+                    <span class="sidebar-text transition-opacity duration-300">Contas a Pagar</span>
+                </a>
                 {% endif %}
 
                 {% if current_user.has_permission('leads_view') %}
@@ -366,6 +372,12 @@
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'clients.clients' else 'text-gray-400' }}">
                     <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
                     <span class="sidebar-text transition-opacity duration-300">Clientes</span>
+                </a>
+
+                <a href="{{ url_for('commercial.performance') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if request.endpoint == 'commercial.performance' else 'text-gray-400' }}">
+                    <i data-lucide="line-chart" class="w-5 h-5 flex-shrink-0"></i>
+                    <span class="sidebar-text transition-opacity duration-300">Performance</span>
                 </a>
 
                 <a href="{{ url_for('contracts.index') }}"

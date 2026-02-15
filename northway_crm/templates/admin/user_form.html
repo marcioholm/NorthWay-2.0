@@ -51,27 +51,72 @@
                     </p>
                 </div>
 
-                <!-- Password -->
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                        {% if user %}Alterar Senha (opcional){% else %}Senha de Acesso{% endif %}
-                    </label>
-                    <input type="password" name="password" {% if not user %}required{% endif %} placeholder="••••••••"
-                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all placeholder-gray-400 text-sm font-mono">
-                    {% if user %}
-                    <p class="text-[10px] text-gray-400 mt-2 italic px-1">Deixe em branco para manter a senha atual.</p>
-                    {% endif %}
-                </div>
+            </div>
 
-                <div class="pt-6 border-t border-gray-100">
-                    <button type="submit"
-                        class="w-full bg-northway-red text-white px-6 py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 flex justify-center items-center gap-2">
-                        <i data-lucide="save" class="w-5 h-5"></i>
-                        {% if user %}Salvar Alterações{% else %}Cadastrar na Equipe{% endif %}
-                    </button>
+            <!-- Divider -->
+            <div class="pt-6 border-t border-gray-100">
+                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="briefcase" class="w-4 h-4 text-northway-red"></i>
+                    Configurações Comerciais
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Função
+                            Comercial</label>
+                        <input type="text" name="funcao_comercial" value="{{ user.funcao_comercial if user else '' }}"
+                            placeholder="Ex: Closer, BDR, SDR"
+                            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all placeholder-gray-400 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tipo de
+                            Vínculo</label>
+                        <select name="tipo_vinculo"
+                            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none text-sm">
+                            <option value="CLT" {% if user and user.tipo_vinculo=='CLT' %}selected{% endif %}>CLT
+                            </option>
+                            <option value="PJ" {% if user and user.tipo_vinculo=='PJ' %}selected{% endif %}>PJ /
+                                Parceiro</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-        </form>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Papel
+                        Comercial</label>
+                    <select name="papel_comercial_id"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none text-sm">
+                        <option value="">Nenhum</option>
+                        {% for p in papeis %}
+                        <option value="{{ p.id }}" {% if user and user.papel_comercial_id==p.id %}selected{% endif %}>{{
+                            p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Regra de
+                        Comissão</label>
+                    <select name="regra_comissao_id"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none text-sm">
+                        <option value="">Nenhuma</option>
+                        {% for r in regras %}
+                        <option value="{{ r.id }}" {% if user and user.regra_comissao_id==r.id %}selected{% endif %}>{{
+                            r.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-gray-100">
+                <button type="submit"
+                    class="w-full bg-northway-red text-white px-6 py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 flex justify-center items-center gap-2">
+                    <i data-lucide="save" class="w-5 h-5"></i>
+                    {% if user %}Salvar Alterações{% else %}Cadastrar na Equipe{% endif %}
+                </button>
+            </div>
     </div>
+    </form>
+</div>
 </div>
 {% endblock %}

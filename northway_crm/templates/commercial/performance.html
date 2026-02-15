@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="p-6 space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold font-display text-white">Performance Comercial</h1>
+            <p class="text-gray-400">Relatório detalhado de comissões e metas por competência.</p>
+        </div>
+
+        <form class="flex flex-col md:flex-row items-center gap-3">
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">Competência:</label>
+                <input type="month" name="competence" value="{{ competence }}" class="input-premium py-1.5 text-sm"
+                    onchange="this.form.submit()">
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-gray-500 uppercase">Colaborador:</label>
+                <select name="collaborator_id" class="input-premium py-1.5 text-sm" onchange="this.form.submit()">
+                    <option value="">Todos</option>
+                    {% for c in collaborators %}
+                    <option value="{{ c.id }}" {{ 'selected' if request.args.get('collaborator_id')==c.id|string }}>{{
+                        c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="card-premium p-6 border-l-4 border-l-blue-500">
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contratos Fechados</p>
+            <p class="text-3xl font-bold text-white mt-2">{{ stats.contracts }}</p>
+            <p class="text-xs text-blue-400 mt-1">Somas do mês selecionado</p>
+        </div>
+        <div class="card-premium p-6 border-l-4 border-l-green-500">
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Base Contratual Total</p>
+            <p class="text-3xl font-bold text-white mt-2">R$ {{ "%.2f"|format(stats.revenue|float) }}</p>
+            <p class="text-xs text-gray-500 mt-1">Excluindo juros e multas</p>
+        </div>
+        <div class="card-premium p-6 border-l-4 border-l-orange-500">
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Comissão Final (c/ Ajustes)</p>
+            <p class="text-3xl font-bold text-white mt-2">R$ {{ "%.2f"|format(stats.comm_final|float) }}</p>
+            <div class="mt-2 flex gap-2">
+                <span class="text-[10px] text-gray-400">Prov: R$ {{ "%.2f"|format(stats.comm_provisional|float)
+                    }}</span>
+                <span class="text-[10px] text-orange-400">Aj: R$ {{ "%.2f"|format(stats.adjustments|float) }}</span>
+            </div>
+        </div>
+        <div class="card-premium p-6 border-l-4 border-l-northway-red">
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Status de Payout</p>
+            <p class="text-3xl font-bold text-white mt-2">R$ {{ "%.2f"|format(stats.paid|float) }}</p>
+            <p class="text-xs text-red-400 mt-1">Pendente: R$ {{ "%.2f"|format(stats.pending|float) }}</p>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Snapshots Detail -->
+        <div class="lg:col-span-2 card-premium p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="list" class="w-5 h-5 text-northway-red"></i>
+                    Detalhamento de Contratos
+                </h2>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-xs font-bold text-gray-500 uppercase border-b border-white/5 pb-2">
+                            <th class="py-3">Contrato</th>
+                            <th class="py-3">Beneficiário</th>
+                            <th class="py-3 text-right">Valor Base</th>
+                            <th class="py-3 text-center">Modelo</th>
+                            <th class="py-3 text-right">Comissão %</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for s in snapshots %}
+                        <tr class="text-sm">
+                            <td class="py-4">
+                                <p class="font-semibold text-white">#{{ s.contract_id }}</p>
+                                <p class="text-xs text-gray-500">{{ s.data_fechamento.strftime('%d/%m/%Y') }}</p>
+                            </td>
+                            <td class="py-4 text-gray-300">{{ s.beneficiario.name }}</td>
+                            <td class="py-4 text-right text-white">R$ {{ "%.2f"|format(s.contract.amount|float) if
+                                s.contract else '0.00' }}</td>
+                            <td class="py-4 text-center">
+                                <span
+                                    class="text-[10px] bg-white/5 px-2 py-1 rounded text-gray-400 font-bold uppercase">{{
+                                    s.modelo }}</span>
+                            </td>
+                            <td class="py-4 text-right">
+                                <span class="font-bold text-green-400">{{ "%.1f"|format(s.percentual_definitivo or
+                                    s.percentual_provisorio) }}%</span>
+                                {% if s.percentual_definitivo and s.percentual_definitivo > s.percentual_provisorio %}
+                                <i data-lucide="trending-up" class="inline w-3 h-3 text-orange-400 ml-1"></i>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tier Progress / Analytics Side -->
+        <div class="space-y-6">
+            <div class="card-premium p-6">
+                <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i> Distribuição por Consultor
+                </h3>
+                <canvas id="contracts-chart" height="300"></canvas>
+            </div>
+
+            <div class="card-premium p-6 bg-northway-red/5 border-northway-red/10">
+                <h3 class="text-sm font-bold text-white mb-2">Resumo de Auditabilidade</h3>
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    Todas as comissões são calculadas sobre o valor original dos contratos, excluindo encargos pagos
+                    pelos clientes (juros/multas).
+                    As regras foram snatpshoted no momento do fechamento para garantir segurança jurídica.
+                </p>
+                <div class="mt-4 flex items-center gap-2 text-[10px] font-bold text-green-400 uppercase">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    Assinado Digitalmente
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const ctx = document.getElementById('contracts-chart').getContext('2d');
+        const data = JSON.parse('{{ chart_data|tojson|safe }}');
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: data.map(d => d.name),
+                datasets: [{
+                    data: data.map(d => d.qty),
+                    backgroundColor: ['#fa0102', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8', font: { size: 10 } }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    });
+</script>
+
+<style>
+    .card-premium {
+        @apply bg-card-dark border border-white/5 rounded-2xl shadow-xl;
+    }
+
+    .input-premium {
+        @apply bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-northway-red focus:ring-1 focus:ring-northway-red transition-all outline-none;
+    }
+</style>
+{% endblock %}

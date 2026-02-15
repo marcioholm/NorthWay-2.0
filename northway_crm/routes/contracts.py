@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import db, Client, Contract, ContractTemplate, Transaction, Task, WhatsAppMessage
 from utils import create_notification, get_contract_replacements, get_date_extenso_br
+from services.commission_service import CommissionService
 from datetime import datetime, date, timedelta
 import json
 import uuid
@@ -698,6 +699,14 @@ def sign_contract(id):
         
         contract.signed_at = datetime.now()
         contract.status = 'active'
+        
+        # --- COMMISSION SNAPSHOT ---
+        try:
+            if contract.client.account_manager:
+                CommissionService.create_snapshot(contract, contract.client.account_manager)
+        except Exception as comm_e:
+            print(f"⚠️ Error creating commission snapshot: {comm_e}")
+        
         db.session.commit()
         
         msg = 'Contrato assinado.'

@@ -7,6 +7,7 @@ from services.facebook_capi_service import FacebookCapiService
 from utils import api_response, retry_request
 import json
 import requests
+from services.commission_service import CommissionService
 
 integrations_bp = Blueprint('integrations_bp', __name__)
 
@@ -141,6 +142,12 @@ def asaas_webhook(company_id):
             if event == 'PAYMENT_RECEIVED' or event == 'PAYMENT_CONFIRMED':
                 transaction.status = 'paid'
                 transaction.paid_date = db.func.current_date()
+                
+                # --- COMMISSION TRIGGER ---
+                try:
+                    CommissionService.process_payment_received(transaction, payload)
+                except Exception as comm_e:
+                    current_app.logger.error(f"Commission Generation Error: {comm_e}")
                 
                 # --- FACEBOOK CAPI TRIGGER ---
                 try:

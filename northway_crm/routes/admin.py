@@ -41,7 +41,7 @@ def users():
 
 @admin_bp.route('/admin/users/new', methods=['GET', 'POST'])
 def new_user():
-    from models import db, User # Lazy Import
+    from models import db, User, CommercialRole, CommissionRule # Lazy Import
     if request.method == 'POST':
         name = request.form.get('name')
         email = request.form.get('email')
@@ -57,7 +57,11 @@ def new_user():
             email=email,
             password_hash=generate_password_hash(password),
             company_id=current_user.company_id, # STRICTLY FORCE COMPANY ID
-            role=role
+            role=role,
+            funcao_comercial=request.form.get('funcao_comercial'),
+            tipo_vinculo=request.form.get('tipo_vinculo'),
+            papel_comercial_id=request.form.get('papel_comercial_id') or None,
+            regra_comissao_id=request.form.get('regra_comissao_id') or None
         )
         
         db.session.add(new_user)
@@ -98,11 +102,14 @@ def new_user():
         flash('Usuário criado e convite enviado por e-mail!', 'success')
         return redirect(url_for('admin.users'))
         
-    return render_template('admin/user_form.html', user=None)
+    papeis = CommercialRole.query.filter_by(company_id=current_user.company_id, active=True).all()
+    regras = CommissionRule.query.filter_by(company_id=current_user.company_id, active=True).all()
+    
+    return render_template('admin/user_form.html', user=None, papeis=papeis, regras=regras)
 
 @admin_bp.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
 def edit_user(user_id):
-    from models import db, User # Lazy Import
+    from models import db, User, CommercialRole, CommissionRule # Lazy Import
     # CRITICAL: Verify user belongs to SAME company
     user = User.query.get_or_404(user_id)
     
@@ -113,6 +120,10 @@ def edit_user(user_id):
         user.name = request.form.get('name')
         user.email = request.form.get('email')
         user.role = request.form.get('role')
+        user.funcao_comercial = request.form.get('funcao_comercial')
+        user.tipo_vinculo = request.form.get('tipo_vinculo')
+        user.papel_comercial_id = request.form.get('papel_comercial_id') or None
+        user.regra_comissao_id = request.form.get('regra_comissao_id') or None
         
         password = request.form.get('password')
         if password:
@@ -122,7 +133,10 @@ def edit_user(user_id):
         flash('Usuário atualizado com sucesso!', 'success')
         return redirect(url_for('admin.users'))
         
-    return render_template('admin/user_form.html', user=user)
+    papeis = CommercialRole.query.filter_by(company_id=current_user.company_id, active=True).all()
+    regras = CommissionRule.query.filter_by(company_id=current_user.company_id, active=True).all()
+    
+    return render_template('admin/user_form.html', user=user, papeis=papeis, regras=regras)
 
 @admin_bp.route('/settings/company', methods=['GET', 'POST'])
 def company_settings():

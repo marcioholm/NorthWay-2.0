@@ -500,7 +500,9 @@ def create_app():
             ('routes.roles', 'roles_bp', 'roles_bp', None),
             ('routes.billing', 'billing_bp', 'billing_bp', None),
             ('routes.service_orders', 'service_orders_bp', 'service_orders_bp', None),
-            ('routes.pdf_routes', 'pdf_bp', 'pdf_bp', None)
+            ('routes.pdf_routes', 'pdf_bp', 'pdf_bp', None),
+            ('routes.financial_payable', 'payable_bp', 'payable_bp', None),
+            ('routes.commercial_performance', 'commercial_bp', 'commercial_bp', None)
         ]
 
         import importlib
