@@ -300,3 +300,78 @@ def update_integration_health(company_id, service, error=None):
     except Exception as e:
         print(f"Error updating integration health: {e}")
         db.session.rollback()
+
+def update_client_payment_status(client_id):
+    """
+    Calculates and updates client payment_status based on overdue transactions.
+    Also syncs health_status accordingly.
+    
+    Rules:
+    - 0 days overdue = em_dia (green)
+    - 1-30 days overdue = atrasado (yellow)
+    - 30+ days overdue = inadimplente (red)
+    """
+    from models import Client, Transaction
+    from datetime import date
+    
+    try:
+        client = Client.query.get(client_id)
+        if not client:
+            return
+        
+        # Find all pending/overdue transactions that are past due date
+        today = date.today()
+        overdue_transactions = Transaction.query.filter(
+            Transaction.client_id == client_id,
+            Transaction.status.in_(['pending', 'overdue']),
+            Transaction.due_date < today
+        ).order_by(Transaction.due_date.asc()).all()
+        
+        if not overdue_transactions:
+            # No overdue transactions - client is current
+            client.payment_status = 'em_dia'
+            # Only update health_status if it was red due to payment issues
+            # (preserve health_status if it's yellow/red for other reasons like lack of interaction)
+            if client.health_status == 'vermelho' and client.payment_status != 'inadimplente':
+                client.health_status = 'verde'
+        else:
+            # Get the oldest overdue transaction (highest delay)
+            oldest_transaction = overdue_transactions[0]
+            
+            # Robust date parsing for SQLite strings and datetime objects
+            d_date = oldest_transaction.due_date
+            if not d_date:
+                db.session.rollback()
+                return
+
+            if isinstance(d_date, str):
+                try:
+                    from datetime import date
+                    d_date = date.fromisoformat(d_date[:10])
+                except:
+                    db.session.rollback()
+                    return
+            
+            # If it's a datetime object, convert to date
+            if hasattr(d_date, 'date'):
+                d_date = d_date.date()
+            
+            days_overdue = (today - d_date).days
+            
+            if days_overdue >= 30:
+                client.payment_status = 'inadimplente'
+                client.health_status = 'vermelho'
+            elif days_overdue > 0:
+                client.payment_status = 'atrasado'
+                # Only downgrade to yellow if currently green
+                if client.health_status == 'verde':
+                    client.health_status = 'amarelo'
+        
+        db.session.commit()
+        
+    except Exception as e:
+        print(f"Error updating client payment status: {e}")
+        try:
+            db.session.rollback()
+        except:
+            pass

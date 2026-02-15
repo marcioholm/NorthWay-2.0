@@ -90,15 +90,22 @@ def stats():
     cancelled_contracts = Contract.query.filter_by(company_id=company_id, status='cancelled').all() # Assuming 'cancelled' status exists/used
     
     mrr = 0
-    active_clients_count = len(active_contracts)
-    cancelled_count = len(cancelled_contracts)
+    mrr_at_risk = 0
+    delinquent_count = 0
+    active_clients_count = 0
     
     for c in active_contracts:
         try:
             data = json.loads(c.form_data)
             val_str = data.get('valor_parcela', '0')
             val = float(val_str.replace('.', '').replace(',', '.'))
-            mrr += val
+            
+            if c.client.payment_status == 'inadimplente':
+                mrr_at_risk += val
+                delinquent_count += 1
+            else:
+                mrr += val
+                active_clients_count += 1
         except:
             pass
 
@@ -196,6 +203,8 @@ def stats():
             'confirmed': paid_this_month,
             'risk': overdue,
             'mrr': mrr,
+            'mrr_at_risk': mrr_at_risk,
+            'delinquent_count': delinquent_count,
             'avg_ticket': avg_ticket,
             'active_clients': active_clients_count,
             'churn_rate': round(churn_rate, 2)
@@ -499,6 +508,11 @@ def cancel_transaction_route(id):
             reason = request.json.get('reason')
             if reason:
                 tx.cancellation_reason = reason
+        
+        # Update client status
+        if tx.client_id:
+            from utils import update_client_payment_status
+            update_client_payment_status(tx.client_id)
                 
         db.session.commit()
         return jsonify({'success': True})

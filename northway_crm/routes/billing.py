@@ -181,6 +181,11 @@ def asaas_webhook():
                 transaction.status = 'paid'
                 transaction.paid_date = datetime.now().date()
                 
+                # Update client payment status automatically
+                if transaction.client_id:
+                    from utils import update_client_payment_status
+                    update_client_payment_status(transaction.client_id)
+                
                 # NFS-e Emission Logic
                 if transaction.contract and transaction.contract.emit_nfse:
                     # Check if already issued

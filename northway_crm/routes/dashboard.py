@@ -99,9 +99,22 @@ def dashboard():
     active_clients = Client.query.filter(Client.company_id == company_id, Client.status == 'ativo').count()
     won_deals = Lead.query.filter(Lead.company_id == company_id, Lead.status == 'won').count()
     
-    # Calculate MRR
-    mrr_query = db.session.query(db.func.sum(Client.monthly_value)).filter_by(company_id=company_id, status='ativo').scalar()
+    
+    # Calculate MRR (exclude inadimplentes for accurate projections)
+    mrr_query = db.session.query(db.func.sum(Client.monthly_value)).filter(
+        Client.company_id == company_id,
+        Client.status == 'ativo',
+        Client.payment_status.in_(['em_dia', 'atrasado'])  # Exclude inadimplentes
+    ).scalar()
     mrr = mrr_query if mrr_query else 0.0
+    
+    # MRR at Risk (inadimplentes)
+    mrr_risk_query = db.session.query(db.func.sum(Client.monthly_value)).filter(
+        Client.company_id == company_id,
+        Client.status == 'ativo',
+        Client.payment_status == 'inadimplente'
+    ).scalar()
+    mrr_at_risk = mrr_risk_query if mrr_risk_query else 0.0
     
     # 2. Risk & Tasks
     risky_clients = Client.query.filter_by(company_id=company_id, health_status='vermelho').count()
@@ -121,6 +134,7 @@ def dashboard():
                            active_clients=active_clients,
                            won_deals=won_deals,
                            mrr=mrr,
+                           mrr_at_risk=mrr_at_risk,
                            risky_clients=risky_clients,
                            pending_tasks=pending_tasks,
                            overdue_tasks=overdue_tasks,

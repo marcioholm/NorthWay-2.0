@@ -531,6 +531,18 @@ def create_app():
                 # 1. Simple Table Creation
                 db.create_all()
                 print("✅ Tables created (if missing).")
+
+                # 1.1. Manual Migrations (Safety check for new columns)
+                try:
+                    from sqlalchemy import text
+                    db.session.execute(text("ALTER TABLE client ADD COLUMN payment_status VARCHAR(20) DEFAULT 'em_dia'"))
+                    db.session.commit()
+                    print("🛠️ MIGRATION: Column 'payment_status' added to 'client' table.")
+                except Exception as e_mig:
+                    db.session.rollback()
+                    # Ignore if column already exists (common on local SQLite after first run)
+                    if "already exists" not in str(e_mig).lower() and "duplicate column" not in str(e_mig).lower():
+                        print(f"⚠️ MIGRATION NOTICE: {e_mig}")
                 
                 # 2. Seed Admin (Safe Check)
                 try:

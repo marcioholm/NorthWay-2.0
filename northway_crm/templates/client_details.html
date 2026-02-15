@@ -120,6 +120,45 @@
         {% endif %}
     </div>
 
+    <!-- Payment Status Alert Banner -->
+    {% if client.payment_status == 'inadimplente' %}
+    <div
+        class="mb-6 px-6 py-4 bg-red-600 rounded-xl shadow-lg border border-red-700 flex items-center justify-between text-white animate-pulse">
+        <div class="flex items-center gap-4">
+            <div class="p-2 bg-white/20 rounded-lg">
+                <i data-lucide="shield-alert" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-lg leading-tight uppercase">Cliente Inadimplente</h3>
+                <p class="text-xs text-red-100 font-medium">Este cliente possui faturas vencidas há mais de 30 dias.
+                    Ações comerciais devem ser priorizadas para regularização.</p>
+            </div>
+        </div>
+        <button type="button" onclick="switchClientTab('financial')"
+            class="px-4 py-2 bg-white text-red-600 rounded-lg font-bold text-xs hover:bg-gray-100 transition-colors shadow-sm uppercase tracking-wider">
+            Ver Faturas
+        </button>
+    </div>
+    {% elif client.payment_status == 'atrasado' %}
+    <div
+        class="mb-6 px-6 py-4 bg-amber-400 rounded-xl shadow-md border border-amber-500 flex items-center justify-between text-amber-900">
+        <div class="flex items-center gap-4">
+            <div class="p-2 bg-black/10 rounded-lg">
+                <i data-lucide="alert-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-lg leading-tight uppercase">Pagamento em Atraso</h3>
+                <p class="text-xs text-amber-800 font-medium">Atenção: Existem pendências financeiras recentes (1-30
+                    dias). Favor verificar com o financeiro.</p>
+            </div>
+        </div>
+        <button type="button" onclick="switchClientTab('financial')"
+            class="px-4 py-2 bg-amber-900 text-amber-50 rounded-lg font-bold text-xs hover:bg-black transition-colors shadow-sm uppercase tracking-wider">
+            Ver Faturas
+        </button>
+    </div>
+    {% endif %}
+
     <form action="{{ url_for('clients.update_client', id=client.id) }}" method="POST" id="clientForm">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Main Info Column -->

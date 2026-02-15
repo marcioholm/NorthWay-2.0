@@ -677,6 +677,10 @@ def sign_contract(id):
                 db.session.add(t)
                 db.session.flush() # Get ID
                 
+                # Update client payment status after creating transaction
+                from utils import update_client_payment_status
+                update_client_payment_status(contract.client_id)
+                
                 # Create Real Boleto if Tenant Configured
                 if tenant_api_key and asaas_customer_id:
                     try:

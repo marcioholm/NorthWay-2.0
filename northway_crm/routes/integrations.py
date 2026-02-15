@@ -143,6 +143,11 @@ def asaas_webhook(company_id):
                 transaction.status = 'paid'
                 transaction.paid_date = db.func.current_date()
                 
+                # Update client payment status automatically
+                if transaction.client_id:
+                    from utils import update_client_payment_status
+                    update_client_payment_status(transaction.client_id)
+                
                 # --- COMMISSION TRIGGER ---
                 try:
                     CommissionService.process_payment_received(transaction, payload)
@@ -173,8 +178,14 @@ def asaas_webhook(company_id):
                 # -----------------------------
             elif event == 'PAYMENT_OVERDUE':
                 transaction.status = 'overdue'
+                if transaction.client_id:
+                    from utils import update_client_payment_status
+                    update_client_payment_status(transaction.client_id)
             elif event in ['PAYMENT_REFUNDED', 'PAYMENT_REVERSED']:
                 transaction.status = 'cancelled' # or refunded
+                if transaction.client_id:
+                    from utils import update_client_payment_status
+                    update_client_payment_status(transaction.client_id)
                 
             # Potentially update Contract status if all paid? (Out of scope for now)
         

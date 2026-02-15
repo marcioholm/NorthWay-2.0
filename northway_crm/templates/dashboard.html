@@ -64,6 +64,43 @@
         </div>
     </div>
 
+    <!-- Financial Section -->
+    <h2 class="text-lg font-bold text-gray-900 mb-4 px-1 flex items-center gap-2">
+        <i data-lucide="wallet" class="w-5 h-5 text-gray-400"></i> Saúde Financeira
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- MRR -->
+        <div
+            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-default">
+            <div>
+                <p
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-green-600 transition-colors">
+                    MRR (Realidade)</p>
+                <p class="text-3xl font-black text-gray-900 mt-2">R$ {{ "%.2f"|format(mrr)|replace('.', ',') }}</p>
+                <p class="text-xs text-gray-400 mt-1">Exclui inadimplentes (>30d)</p>
+            </div>
+            <div class="p-3 bg-green-50 rounded-xl text-green-600 group-hover:bg-green-100 transition-colors">
+                <i data-lucide="trending-up" class="w-8 h-8"></i>
+            </div>
+        </div>
+
+        <!-- MRR at Risk -->
+        <div
+            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-default">
+            <div>
+                <p
+                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
+                    MRR em Risco</p>
+                <p class="text-3xl font-black text-orange-600 mt-2">R$ {{ "%.2f"|format(mrr_at_risk)|replace('.', ',')
+                    }}</p>
+                <p class="text-xs text-gray-400 mt-1">Clientes inadimplentes</p>
+            </div>
+            <div class="p-3 bg-orange-50 rounded-xl text-orange-500 group-hover:bg-orange-100 transition-colors">
+                <i data-lucide="shield-alert" class="w-8 h-8"></i>
+            </div>
+        </div>
+    </div>
+
     <!-- Secondary Stats -->
     <h2 class="text-lg font-bold text-gray-900 mb-4 px-1">Performance e Saúde</h2>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
