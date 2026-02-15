@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required, current_user
 from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate, LibraryTemplate, FormInstance, TenantIntegration, DriveFolderTemplate
 from utils import update_client_health, create_notification
 from datetime import datetime, date
 import csv
 import io
+import os
 
 clients_bp = Blueprint('clients', __name__)
 
@@ -330,6 +331,19 @@ def create_client():
         print(f"Error creating client: {e}")
         flash(f'Erro ao criar cliente: {e}', 'error')
         return redirect(url_for('clients.clients'))
+
+@clients_bp.route('/clients/import/template')
+@login_required
+def download_import_template():
+    """Download CSV template for client import"""
+    template_path = os.path.join(os.path.dirname(__file__), '..', 'templates', 'clients_import_template.csv')
+    return send_file(
+        template_path,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name='modelo_importacao_clientes.csv'
+    )
+
 
 @clients_bp.route('/clients/import', methods=['POST'])
 @login_required
