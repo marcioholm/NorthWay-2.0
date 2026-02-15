@@ -144,6 +144,82 @@ def add_fixed_cost():
     flash('Custo fixo adicionado com sucesso.', 'success')
     return redirect(url_for('financial_strategic.fixed_costs'))
 
+@financial_strategic_bp.route('/financial/strategic/fixed-costs/edit/<id>', methods=['POST'])
+@login_required
+def edit_fixed_cost(id):
+    if not current_user.has_permission('admin_view'):
+        abort(403)
+        
+    cost = FixedCost.query.get_or_404(id)
+    if cost.tenant_id != current_user.company_id:
+        abort(403)
+        
+    old_data = {
+        'nome': cost.nome_custo,
+        'valor': float(cost.valor),
+        'tipo': cost.tipo,
+        'status': cost.status
+    }
+    
+    cost.nome_custo = request.form.get('nome_custo')
+    cost.categoria = request.form.get('categoria')
+    cost.valor = float(request.form.get('valor').replace(',', '.'))
+    cost.tipo = request.form.get('tipo')
+    cost.status = request.form.get('status', 'Ativo')
+    cost.observacao = request.form.get('observacao')
+    cost.inicio_competencia = request.form.get('inicio_competencia')
+    cost.updated_by = current_user.id
+    cost.updated_at = get_now_br()
+    
+    # Audit Log
+    log = StrategicAuditLog(
+        tenant_id=current_user.company_id,
+        user_id=current_user.id,
+        action='UPDATE',
+        target_type='FixedCost',
+        target_id=cost.id,
+        changes=json.dumps({
+            'old': old_data,
+            'new': {
+                'nome': cost.nome_custo,
+                'valor': float(cost.valor),
+                'tipo': cost.tipo,
+                'status': cost.status
+            }
+        })
+    )
+    db.session.add(log)
+    
+    db.session.commit()
+    flash('Custo fixo atualizado com sucesso.', 'success')
+    return redirect(url_for('financial_strategic.fixed_costs'))
+
+@financial_strategic_bp.route('/financial/strategic/fixed-costs/delete/<id>', methods=['POST'])
+@login_required
+def delete_fixed_cost(id):
+    if not current_user.has_permission('admin_view'):
+        abort(403)
+        
+    cost = FixedCost.query.get_or_404(id)
+    if cost.tenant_id != current_user.company_id:
+        abort(403)
+        
+    # Audit Log before deletion
+    log = StrategicAuditLog(
+        tenant_id=current_user.company_id,
+        user_id=current_user.id,
+        action='DELETE',
+        target_type='FixedCost',
+        target_id=cost.id,
+        changes=json.dumps({'deleted': {'nome': cost.nome_custo, 'valor': float(cost.valor)}})
+    )
+    db.session.add(log)
+    
+    db.session.delete(cost)
+    db.session.commit()
+    flash('Custo fixo removido com sucesso.', 'warning')
+    return redirect(url_for('financial_strategic.fixed_costs'))
+
 @financial_strategic_bp.route('/financial/strategic/import', methods=['POST'])
 @login_required
 def import_csv():

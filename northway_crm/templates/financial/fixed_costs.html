@@ -73,12 +73,29 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right flex justify-end gap-2">
-                                <button class="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600">
+                                <button onclick='openEditModal({{ {
+                                    "id": cost.id,
+                                    "nome": cost.nome_custo,
+                                    "cat": cost.categoria,
+                                    "valor": "{:,.2f}".format(cost.valor).replace(",", "."),
+                                    "tipo": cost.tipo,
+                                    "comp": cost.inicio_competencia,
+                                    "obs": cost.observacao or "",
+                                    "status": cost.status
+                                } | tojson | safe }})'
+                                    class="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+                                    title="Editar">
                                     <i data-lucide="edit-2" class="w-4 h-4"></i>
                                 </button>
-                                <button class="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
+                                <form action="{{ url_for('financial_strategic.delete_fixed_cost', id=cost.id) }}"
+                                    method="POST" class="inline"
+                                    onsubmit="return confirmDelete('{{ cost.nome_custo }}')">
+                                    <button type="submit"
+                                        class="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
+                                        title="Excluir">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                         {% else %}
@@ -98,28 +115,30 @@
     </div>
 </div>
 
-<!-- Add Cost Modal -->
-<div id="addCostModal"
+</div>
+</div>
+
+<!-- Edit Cost Modal -->
+<div id="editCostModal"
     class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-            <h3 class="font-bold text-gray-900">Adicionar Custo Fixo</h3>
-            <button onclick="document.getElementById('addCostModal').classList.add('hidden')"
+            <h3 class="font-bold text-gray-900">Editar Custo Fixo</h3>
+            <button onclick="document.getElementById('editCostModal').classList.add('hidden')"
                 class="text-gray-400 hover:text-gray-600">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form action="{{ url_for('financial_strategic.add_fixed_cost') }}" method="POST" class="p-6 space-y-4">
+        <form id="editCostForm" method="POST" class="p-6 space-y-4">
             <div class="grid grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nome do Custo</label>
-                    <input type="text" name="nome_custo" required
-                        class="w-full border-gray-200 rounded-lg text-sm focus:ring-northway-red focus:border-northway-red"
-                        placeholder="Ex: Aluguel Escritório">
+                    <input type="text" name="nome_custo" id="edit_nome" required
+                        class="w-full border-gray-200 rounded-lg text-sm focus:ring-northway-red focus:border-northway-red">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Categoria</label>
-                    <select name="categoria" required class="w-full border-gray-200 rounded-lg text-sm">
+                    <select name="categoria" id="edit_cat" required class="w-full border-gray-200 rounded-lg text-sm">
                         <option value="Equipe">Equipe</option>
                         <option value="Ferramenta">Ferramenta</option>
                         <option value="Estrutura">Estrutura</option>
@@ -129,33 +148,40 @@
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tipo</label>
-                    <select name="tipo" required class="w-full border-gray-200 rounded-lg text-sm">
+                    <select name="tipo" id="edit_tipo" required class="w-full border-gray-200 rounded-lg text-sm">
                         <option value="Mensal">Mensal</option>
                         <option value="Anual Rateado">Anual Rateado</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Valor (R$)</label>
-                    <input type="text" name="valor" required class="w-full border-gray-200 rounded-lg text-sm"
-                        placeholder="0,00">
+                    <input type="text" name="valor" id="edit_valor" required
+                        class="w-full border-gray-200 rounded-lg text-sm">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Início Competência</label>
-                    <input type="month" name="inicio_competencia" required
+                    <input type="month" name="inicio_competencia" id="edit_comp" required
                         class="w-full border-gray-200 rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Status</label>
+                    <select name="status" id="edit_status" required class="w-full border-gray-200 rounded-lg text-sm">
+                        <option value="Ativo">Ativo</option>
+                        <option value="Inativo">Inativo</option>
+                    </select>
                 </div>
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Observação</label>
-                <textarea name="observacao" rows="2" class="w-full border-gray-200 rounded-lg text-sm"
-                    placeholder="Detalhes opcionais..."></textarea>
+                <textarea name="observacao" id="edit_obs" rows="2"
+                    class="w-full border-gray-200 rounded-lg text-sm"></textarea>
             </div>
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                <button type="button" onclick="document.getElementById('addCostModal').classList.add('hidden')"
+                <button type="button" onclick="document.getElementById('editCostModal').classList.add('hidden')"
                     class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">Cancelar</button>
                 <button type="submit"
                     class="px-6 py-2 bg-northway-red text-white text-sm font-bold rounded-lg hover:bg-red-700 shadow-lg shadow-red-500/20">Salvar
-                    Custo</button>
+                    Alterações</button>
             </div>
         </form>
     </div>
@@ -217,5 +243,24 @@
     document.addEventListener('DOMContentLoaded', function () {
         if (window.lucide) window.lucide.createIcons();
     });
+
+    function openEditModal(data) {
+        document.getElementById('edit_nome').value = data.nome;
+        document.getElementById('edit_cat').value = data.cat;
+        document.getElementById('edit_tipo').value = data.tipo;
+        document.getElementById('edit_valor').value = data.valor.replace('.', ',');
+        document.getElementById('edit_comp').value = data.comp;
+        document.getElementById('edit_obs').value = data.obs;
+        document.getElementById('edit_status').value = data.status;
+
+        const form = document.getElementById('editCostForm');
+        form.action = `/financial/strategic/fixed-costs/edit/${data.id}`;
+
+        document.getElementById('editCostModal').classList.remove('hidden');
+    }
+
+    function confirmDelete(nome) {
+        return confirm(`Tem certeza que deseja excluir o custo "${nome}"? Esta ação não pode ser desfeita.`);
+    }
 </script>
 {% endblock %}
