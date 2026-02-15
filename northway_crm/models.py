@@ -953,6 +953,7 @@ class FixedCost(db.Model):
     status = db.Column(db.String(20), default='Ativo') # Ativo, Inativo
     observacao = db.Column(db.Text)
     inicio_competencia = db.Column(db.String(7)) # YYYY-MM
+    total_parcelas = db.Column(db.Integer, default=0) # 0 = Recorrente (Sem fim)
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))

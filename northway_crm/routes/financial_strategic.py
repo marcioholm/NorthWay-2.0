@@ -30,9 +30,26 @@ def dashboard():
         extract('year', Transaction.paid_date) == year
     ).scalar() or 0.0
     
+    def is_cost_active_in_month(cost, y, m):
+        if cost.status != 'Ativo':
+            return False
+        
+        # Start date
+        start_y = int(cost.inicio_competencia[:4])
+        start_m = int(cost.inicio_competencia[5:])
+        
+        if y < start_y or (y == start_y and m < start_m):
+            return False # Not started yet
+            
+        if cost.total_parcelas and cost.total_parcelas > 0:
+            # End date = Start Date + (total_parcelas - 1) months
+            months_diff = (y - start_y) * 12 + (m - start_m)
+            if months_diff >= cost.total_parcelas:
+                return False # Installments finished
+                
+        return True
+
     # 2. Custos Fixos
-    # Sum status = Ativo and inicio_competencia <= current month
-    # type = Anual Rateado -> valor / 12
     fixed_costs_query = FixedCost.query.filter(
         FixedCost.tenant_id == current_user.company_id,
         FixedCost.status == 'Ativo',
@@ -41,10 +58,11 @@ def dashboard():
     
     total_fixed_costs = 0.0
     for cost in fixed_costs_query:
-        if cost.tipo == 'Anual Rateado':
-            total_fixed_costs += float(cost.valor) / 12
-        else:
-            total_fixed_costs += float(cost.valor)
+        if is_cost_active_in_month(cost, year, month):
+            if cost.tipo == 'Anual Rateado':
+                total_fixed_costs += float(cost.valor) / 12
+            else:
+                total_fixed_costs += float(cost.valor)
             
     # 3. Resultado Operacional
     operational_result = float(revenue) - total_fixed_costs
@@ -76,10 +94,11 @@ def dashboard():
         ).all()
         m_costs = 0.0
         for c in m_costs_q:
-            if c.tipo == 'Anual Rateado':
-                m_costs += float(c.valor) / 12
-            else:
-                m_costs += float(c.valor)
+            if is_cost_active_in_month(c, y, m):
+                if c.tipo == 'Anual Rateado':
+                    m_costs += float(c.valor) / 12
+                else:
+                    m_costs += float(c.valor)
         
         trend_data.append({
             'label': f"{m:02d}/{y}",
@@ -121,6 +140,7 @@ def add_fixed_cost():
         status=request.form.get('status', 'Ativo'),
         observacao=request.form.get('observacao'),
         inicio_competencia=request.form.get('inicio_competencia'),
+        total_parcelas=int(request.form.get('total_parcelas', 0) or 0),
         created_by=current_user.id
     )
     db.session.add(cost)
@@ -135,7 +155,8 @@ def add_fixed_cost():
         changes=json.dumps({'new': {
             'nome': cost.nome_custo,
             'valor': float(cost.valor),
-            'tipo': cost.tipo
+            'tipo': cost.tipo,
+            'total_parcelas': cost.total_parcelas
         }})
     )
     db.session.add(log)
@@ -168,6 +189,7 @@ def edit_fixed_cost(id):
     cost.status = request.form.get('status', 'Ativo')
     cost.observacao = request.form.get('observacao')
     cost.inicio_competencia = request.form.get('inicio_competencia')
+    cost.total_parcelas = int(request.form.get('total_parcelas', 0) or 0)
     cost.updated_by = current_user.id
     cost.updated_at = get_now_br()
     
@@ -184,7 +206,8 @@ def edit_fixed_cost(id):
                 'nome': cost.nome_custo,
                 'valor': float(cost.valor),
                 'tipo': cost.tipo,
-                'status': cost.status
+                'status': cost.status,
+                'total_parcelas': cost.total_parcelas
             }
         })
     )
@@ -245,7 +268,7 @@ def import_csv():
         success_count = 0
         error_logs = []
         
-        valid_categories = ['Equipe', 'Ferramenta', 'Estrutura', 'Impostos', 'Outros']
+        valid_categories = ['Equipe', 'Ferramenta', 'Estrutura', 'Impostos', 'Outros', 'Investimento']
         valid_types = ['Mensal', 'Anual Rateado']
         
         row_num = 1 # Header is row 0 technically in count
@@ -258,6 +281,7 @@ def import_csv():
             valor_str = row.get('valor', '').replace(',', '.').strip()
             tipo = row.get('tipo', '').strip()
             comp = row.get('inicio_competencia', '').strip()
+            parcelas_str = row.get('total_parcelas', '0').strip()
             
             # Validations
             if not nome:
@@ -275,6 +299,12 @@ def import_csv():
                 
             if tipo not in valid_types:
                 errors.append("tipo deve ser 'Mensal' ou 'Anual Rateado'")
+            
+            total_parcelas = 0
+            try:
+                total_parcelas = int(parcelas_str or 0)
+            except:
+                errors.append(f"total_parcelas inválido '{parcelas_str}'")
             
             # YYYY-MM validation
             try:
@@ -309,6 +339,7 @@ def import_csv():
                     status='Ativo',
                     observacao=row.get('observacao', ''),
                     inicio_competencia=comp,
+                    total_parcelas=total_parcelas,
                     created_by=current_user.id
                 )
                 db.session.add(cost)
