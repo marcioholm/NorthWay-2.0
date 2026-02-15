@@ -205,9 +205,9 @@ class User(UserMixin, db.Model):
     regra_comissao_id = db.Column(db.String(36), db.ForeignKey('regras_comissao.id'), nullable=True)
 
     # Relationships
-    role_obj = db.relationship('Role', backref='users')
-    papel_comercial = db.relationship('CommercialRole', backref='users')
-    regra_comissao = db.relationship('CommissionRule', backref='users')
+    role_obj = db.relationship('Role', backref=db.backref('assigned_users', lazy=True), overlaps="user_role,users")
+    papel_comercial = db.relationship('CommercialRole', backref=db.backref('commercial_users', lazy=True))
+    regra_comissao = db.relationship('CommissionRule', backref=db.backref('commission_users', lazy=True))
 
     # Profile Fields
     profile_image = db.Column(db.String(150), nullable=True)
