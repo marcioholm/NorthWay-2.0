@@ -76,6 +76,16 @@ def presentation_cost_of_inaction():
 def ebook_marketing_pillars():
     return render_template('docs/ebook_marketing_pillars.html')
 
+@docs_bp.route('/ebook-oportunidades-norte-pioneiro')
+@login_required
+def ebook_norte_pioneiro():
+    return render_template('docs/ebook_norte_pioneiro.html')
+
+@docs_bp.route('/ebook-oportunidades-campos-gerais')
+@login_required
+def ebook_campos_gerais():
+    return render_template('docs/ebook_campos_gerais.html')
+
 @docs_bp.route('/growth-framework')
 @login_required
 def presentation_growth_framework():
