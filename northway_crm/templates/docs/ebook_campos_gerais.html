@@ -6,17 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radar Solar: Campos Gerais (PR) - Northway</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Outfit:wght@400;700;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Montserrat:wght@400;600;700;800;900&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
             --primary: #fa0102;
             --primary-dark: #cc0000;
-            --bg: #030712;
-            --card-bg: rgba(17, 24, 39, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
-            --text-main: #f3f4f6;
+            --bg: #050505;
+            --card-bg: rgba(20, 20, 20, 0.6);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
             --text-muted: #9ca3af;
         }
 
@@ -38,7 +38,7 @@
         h1,
         h2,
         h3 {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Montserrat', sans-serif;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: -0.02em;
@@ -84,14 +84,10 @@
             font-size: 80px;
             line-height: 0.9;
             margin-bottom: 30px;
-            background: linear-gradient(to bottom, #fff, #999);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         .hero .highlight {
             color: var(--primary);
-            -webkit-text-fill-color: var(--primary);
         }
 
         .hero p {
@@ -216,6 +212,9 @@
             align-items: center;
             gap: 10px;
             transition: all 0.3s ease;
+            z-index: 50;
+            cursor: pointer;
+            border: none;
         }
 
         .floating-cta:hover {
@@ -237,14 +236,15 @@
             }
 
             .floating-cta {
-                display: none;
+                display: none !important;
             }
 
             .glass-card {
-                background: #f9f9f9 !important;
-                border: 1px solid #ddd !important;
+                background: #fff !important;
+                border: 1px solid #000 !important;
                 color: #000 !important;
                 backdrop-filter: none !important;
+                box-shadow: none !important;
             }
 
             body {
@@ -253,25 +253,32 @@
             }
 
             .stat-value {
-                color: var(--primary) !important;
+                color: #000 !important;
+            }
+
+            p,
+            span,
+            li,
+            h1,
+            h2,
+            h3,
+            h4,
+            strong {
+                color: #000 !important;
             }
 
             th {
                 background: #eee !important;
                 color: #000 !important;
-                border: 1px solid #ddd;
+                border: 1px solid #000;
             }
 
             td {
-                border: 1px solid #ddd;
+                border: 1px solid #000;
             }
 
-            h1,
-            h2,
-            h3 {
+            .text-white {
                 color: #000 !important;
-                -webkit-text-fill-color: initial !important;
-                background: none !important;
             }
         }
     </style>
@@ -747,9 +754,9 @@
         </div>
     </section>
 
-    <!-- Floating CTA (Updated for print) -->
-    <button onclick="window.print()" class="floating-cta cursor-pointer border-none">
-        <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
+    <!-- Floating CTA -->
+    <button onclick="window.print()" class="floating-cta">
+        <i data-lucide="download" class="w-4 h-4"></i> Exportar PDF
     </button>
 
     <script>
