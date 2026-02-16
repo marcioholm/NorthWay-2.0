@@ -1,4 +1,10 @@
 {
+    "builds": [
+        {
+            "src": "api/index.py",
+            "use": "@vercel/python"
+        }
+    ],
     "routes": [
         {
             "src": "/assets/(.*)",
@@ -6,7 +12,7 @@
         },
         {
             "src": "/(.*)",
-            "dest": "/api/index.py"
+            "dest": "api/index.py"
         }
     ]
 }

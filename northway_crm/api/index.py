@@ -28,8 +28,10 @@ except ImportError:
         except Exception as e:
                 from flask import Flask
                 app = Flask(__name__)
+                import traceback
+                error_details = str(e) + "\n\n" + traceback.format_exc()
                 @app.route('/', defaults={'path': ''})
                 @app.route('/<path:path>')
                 def catch_all(path):
-                    return "<h1>Sistema Indisponível</h1><p>Ocorreu um erro na inicialização. Por favor, tente novamente mais tarde.</p>", 500
+                    return f"<h1>🔥 Boot Error</h1><pre>{error_details}</pre>", 500
 

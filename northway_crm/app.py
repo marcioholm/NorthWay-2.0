@@ -50,8 +50,8 @@ def create_app():
             # Content Security Policy (Base safe policy)
             csp = (
                 "default-src 'self' https:; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com https://unpkg.com https://cdn.tailwindcss.com; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.tailwindcss.com; "
                 "font-src 'self' https://fonts.gstatic.com; "
                 "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://*.whatsapp.net https://*.google.com https://*.whatsapp.com; "
                 "connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.googleapis.com;"

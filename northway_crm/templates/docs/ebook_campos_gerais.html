@@ -113,7 +113,7 @@
 
         .grid-stats {
             display: grid;
-            grid-cols: 1;
+            grid-template-columns: 1fr;
             gap: 20px;
             margin-top: 40px;
         }
@@ -313,6 +313,80 @@
                     Gerais guardam um dos maiores volumes de mercado aberto do Sul do Brasil. Com menos de 1.5% de
                     penetração, a região é o cenário ideal para integradores que buscam escala e grandes contratos B2B e
                     residenciais de alto padrão.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Novo Section: Manifesto -->
+    <section id="manifesto" class="bg-black/40">
+        <div class="container text-center">
+            <span data-lucide="brain-circuit" class="w-16 h-16 text-primary mx-auto mb-6"></span>
+            <h2 class="section-title">MANIFESTO</h2>
+            <div class="glass-card max-w-3xl mx-auto border-primary/20">
+                <p class="text-2xl font-light italic mb-8">"Negócios são feitos de <strong
+                        class="text-white">pessoas</strong>.<br>
+                    Marketing sem direção é <strong class="text-white">esforço perdido</strong>.<br>
+                    Crescimento sem processo vira <strong class="text-white">caos</strong>."</p>
+
+                <div class="h-px w-24 bg-primary mx-auto mb-8"></div>
+
+                <p class="text-gray-400">Não é falta de esforço. É falta de <span
+                        class="text-primary font-bold">caminho</span>.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Novo Section: Framework 4 Pilares -->
+    <section id="framework">
+        <div class="container">
+            <h2 class="section-title text-center">O Framework de Crescimento</h2>
+            <p class="section-desc text-center mx-auto">Para capturar as oportunidades deste radar, sua operação precisa
+                dominar 4 pilares.</p>
+
+            <div class="grid md:grid-cols-4 gap-4 mt-12">
+                <!-- Pilar 1 -->
+                <div class="glass-card text-center hover:border-primary transition-colors group">
+                    <div
+                        class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
+                        <span data-lucide="magnet" class="w-6 h-6"></span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">1. ATRAIR</h3>
+                    <p class="text-sm text-gray-500">Trazer o cliente certo via Tráfego e SEO.</p>
+                </div>
+
+                <!-- Pilar 2 -->
+                <div class="glass-card text-center hover:border-primary transition-colors group">
+                    <div
+                        class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
+                        <span data-lucide="message-circle" class="w-6 h-6"></span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">2. ENGAJAR</h3>
+                    <p class="text-sm text-gray-500">Criar confiança e relacionamento.</p>
+                </div>
+
+                <!-- Pilar 3 -->
+                <div class="glass-card text-center hover:border-primary transition-colors group">
+                    <div
+                        class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
+                        <span data-lucide="check-circle-2" class="w-6 h-6"></span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">3. VENDER</h3>
+                    <p class="text-sm text-gray-500">Transformar interesse em contrato.</p>
+                </div>
+
+                <!-- Pilar 4 -->
+                <div class="glass-card text-center hover:border-primary transition-colors group">
+                    <div
+                        class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
+                        <span data-lucide="repeat" class="w-6 h-6"></span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">4. RETER</h3>
+                    <p class="text-sm text-gray-500">Vender de novo (LTV) e indicação.</p>
+                </div>
+            </div>
+
+            <div class="mt-12 text-center">
+                <p class="text-xl italic text-gray-400">"Se um desses pilares quebra, o crescimento para."</p>
             </div>
         </div>
     </section>
@@ -658,10 +732,25 @@
         </div>
     </section>
 
-    <!-- CTA -->
-    <a href="#" class="floating-cta">
-        <i data-lucide="download" class="w-4 h-4"></i> Exportar PDF
-    </a>
+    <!-- CTA Final -->
+    <section id="cta-final" class="bg-gradient-to-t from-primary/20 to-transparent">
+        <div class="container text-center">
+            <h2 class="text-4xl font-black mb-8">QUER DOMINAR OS CAMPOS GERAIS?</h2>
+            <p class="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">Agende um diagnóstico gratuito e descubra onde sua
+                operação está travando.</p>
+
+            <a href="https://wa.me/5542999896358?text=Ol%C3%A1%2C%20li%20o%20Radar%20Campos%20Gerais%20e%20quero%20agendar%20um%20diagn%C3%B3stico"
+                target="_blank"
+                class="inline-flex items-center gap-3 bg-primary hover:bg-primary-dark text-white font-bold py-4 px-8 rounded-full text-lg transition-all shadow-lg hover:shadow-primary/50">
+                <span data-lucide="calendar"></span> AGENDAR DIAGNÓSTICO
+            </a>
+        </div>
+    </section>
+
+    <!-- Floating CTA (Updated for print) -->
+    <button onclick="window.print()" class="floating-cta cursor-pointer border-none">
+        <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
+    </button>
 
     <script>
         lucide.createIcons();
