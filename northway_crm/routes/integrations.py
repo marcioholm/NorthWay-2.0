@@ -105,6 +105,14 @@ def test_google_maps():
 # WEBHOOK
 @integrations_bp.route('/api/webhooks/asaas/<int:company_id>', methods=['POST'])
 def asaas_webhook(company_id):
+    # SECURITY: Verify Asaas Access Token
+    webhook_token = request.headers.get('asaas-access-token')
+    expected_token = current_app.config.get('ASAAS_WEBHOOK_TOKEN') or os.environ.get('ASAAS_WEBHOOK_TOKEN')
+    
+    if expected_token and webhook_token != expected_token:
+        current_app.logger.warning(f"Unauthorized Asaas Webhook Attempt: Invalid Token for company {company_id}")
+        return api_response(success=False, error='Unauthorized', status=401)
+
     # Retrieve payload
     payload = request.json
     event = payload.get('event')

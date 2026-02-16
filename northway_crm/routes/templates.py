@@ -250,3 +250,66 @@ def delete_drive_template(id):
     flash('Template excluído.', 'success')
     return redirect(url_for('templates.settings_drive_templates'))
 
+@templates_bp.route('/settings/drive-templates/create', methods=['POST'])
+@login_required
+def create_drive_template():
+    from models import db, DriveFolderTemplate
+    
+    if not current_user.company_id:
+        abort(403)
+    
+    name = request.form.get('name')
+    structure_json = request.form.get('structure_json')
+    
+    # Validate JSON
+    try:
+        import json
+        json.loads(structure_json)
+    except:
+        flash('Estrutura JSON inválida. Verifique o formato.', 'error')
+        return redirect(url_for('templates.settings_drive_templates'))
+    
+    new_template = DriveFolderTemplate(
+        name=name,
+        structure_json=structure_json,
+        scope='tenant',
+        company_id=current_user.company_id,
+        enabled=True,
+        is_default=False
+    )
+    
+    db.session.add(new_template)
+    db.session.commit()
+    
+    flash('Template criado com sucesso!', 'success')
+    return redirect(url_for('templates.settings_drive_templates'))
+
+@templates_bp.route('/settings/drive-templates/<int:id>/update', methods=['POST'])
+@login_required
+def update_drive_template(id):
+    from models import db, DriveFolderTemplate
+    
+    template = DriveFolderTemplate.query.get_or_404(id)
+    
+    if template.company_id != current_user.company_id:
+        abort(403)
+    
+    name = request.form.get('name')
+    structure_json = request.form.get('structure_json')
+    
+    # Validate JSON
+    try:
+        import json
+        json.loads(structure_json)
+    except:
+        flash('Estrutura JSON inválida. Verifique o formato.', 'error')
+        return redirect(url_for('templates.settings_drive_templates'))
+    
+    template.name = name
+    template.structure_json = structure_json
+    
+    db.session.commit()
+    
+    flash('Template atualizado com sucesso!', 'success')
+    return redirect(url_for('templates.settings_drive_templates'))
+

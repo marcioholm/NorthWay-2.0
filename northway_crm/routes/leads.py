@@ -59,13 +59,16 @@ def leads():
             flash(f'Erro ao criar lead: {str(e)}', 'error')
             
         return redirect(url_for('leads.leads'))
-    if not current_user.company_id:
-        abort(403)
-
+    from flask import current_app
+    current_app.logger.info(f"📡 API LEADS: Access by {current_user.email} (Company: {current_user.company_id})")
+    
     page = request.args.get('page', 1, type=int)
     per_page = 20
     # Strict filter
     query = Lead.query.filter(Lead.company_id == current_user.company_id)
+    
+    total_leads_raw = query.count()
+    current_app.logger.info(f"📡 API LEADS: Total leads for company {current_user.company_id} = {total_leads_raw}")
     
     # Filters
     search_q = request.args.get('q')

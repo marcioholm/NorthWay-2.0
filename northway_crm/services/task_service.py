@@ -107,13 +107,13 @@ class TaskService:
             raise e
 
     @staticmethod
-    def update_status(task_id, new_status, actor_id):
+    def update_status(task_id, new_status, actor_id, company_id):
         """
         Updates task status and logs event.
         """
-        task = Task.query.get(task_id)
+        task = Task.query.filter_by(id=task_id, company_id=company_id).first()
         if not task:
-            raise ValueError("Task not found")
+            raise ValueError("Task not found or unauthorized")
             
         old_status = task.status
         task.status = new_status

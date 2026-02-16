@@ -29,9 +29,17 @@ def home():
     company_id = current_user.company_id
     user_id = current_user.id
     
+    from flask import current_app
+    current_app.logger.info(f"🏠 DASHBOARD HOME: Access by {current_user.email} (Company: {current_user.company_id})")
+    
     # 1. Summary stats
     lead_count = Lead.query.filter(Lead.company_id == company_id).count()
     client_count = Client.query.filter(Client.company_id == company_id).count()
+    
+    # Global check (Hydra Strategy)
+    total_leads_global = Lead.query.count()
+    current_app.logger.info(f"🏠 DASHBOARD HOME: Leads for Company {company_id} = {lead_count}. Total Global Leads = {total_leads_global}")
+    
     recent_leads = Lead.query.filter(Lead.company_id == company_id).order_by(Lead.created_at.desc()).limit(5).all()
     
     # 2. Daily items (Tasks and Attention Leads)
@@ -94,10 +102,17 @@ def dashboard():
     company_id = current_user.company_id
     user_id = current_user.id
     
+    from flask import current_app
+    current_app.logger.info(f"📊 DASHBOARD STATS: Access by {current_user.email} (Company: {current_user.company_id})")
+    
     # 1. KPIs
     total_leads = Lead.query.filter(Lead.company_id == company_id).count()
     active_clients = Client.query.filter(Client.company_id == company_id, Client.status == 'ativo').count()
     won_deals = Lead.query.filter(Lead.company_id == company_id, Lead.status == 'won').count()
+    
+    # Global check
+    total_clients_global = Client.query.count()
+    current_app.logger.info(f"📊 DASHBOARD STATS: Leads: {total_leads}, Active Clients: {active_clients}. Global Clients: {total_clients_global}")
     
     
     # Calculate MRR (exclude inadimplentes for accurate projections)

@@ -79,14 +79,14 @@ def system_reset():
             db.session.execute(text("DELETE FROM email_log")) # FK to User
             
             # 3. Pipelines (Fix: Clear association first)
-            db.session.execute(text(f"DELETE FROM user_pipeline_association WHERE pipeline_id IN (SELECT id FROM pipeline WHERE company_id != {current_user.company_id})"))
-            db.session.execute(text(f"DELETE FROM pipeline_stage WHERE company_id != {current_user.company_id}"))
-            db.session.execute(text(f"DELETE FROM pipeline WHERE company_id != {current_user.company_id}"))
+            db.session.execute(text("DELETE FROM user_pipeline_association WHERE pipeline_id IN (SELECT id FROM pipeline WHERE company_id != :company_id)"), {'company_id': current_user.company_id})
+            db.session.execute(text("DELETE FROM pipeline_stage WHERE company_id != :company_id"), {'company_id': current_user.company_id})
+            db.session.execute(text("DELETE FROM pipeline WHERE company_id != :company_id"), {'company_id': current_user.company_id})
             
             # 4. Users & Companies (Safe check)
-            db.session.execute(text(f'DELETE FROM "user" WHERE id != {current_user.id}'))
-            db.session.execute(text(f"DELETE FROM role WHERE company_id != {current_user.company_id}")) # Delete Roles after Users
-            db.session.execute(text(f"DELETE FROM company WHERE id != {current_user.company_id}"))
+            db.session.execute(text('DELETE FROM "user" WHERE id != :user_id'), {'user_id': current_user.id})
+            db.session.execute(text("DELETE FROM role WHERE company_id != :company_id"), {'company_id': current_user.company_id}) # Delete Roles after Users
+            db.session.execute(text("DELETE FROM company WHERE id != :company_id"), {'company_id': current_user.company_id})
             
             # 5. Reset Master Company Status
             master_company = current_user.company

@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import login_required, current_user
+from decorators import super_admin_required
 # Defer model imports to avoid circular dependency with app initialization
 # from models import db, User, Role, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
 from werkzeug.security import generate_password_hash
@@ -419,6 +420,7 @@ def generate_self_payment():
         return redirect(url_for('admin.company_settings'))
 @admin_bp.route('/admin/run-initial-migrations', methods=['GET'])
 @login_required
+@super_admin_required
 def run_initial_migrations():
     """
     Temporary route to add diagnostic columns to relevant tables.
@@ -495,6 +497,8 @@ def run_initial_migrations():
         tb = traceback.format_exc()
 
 @admin_bp.route('/admin/fix-task-schema')
+@login_required
+@super_admin_required
 def fix_task_schema():
     from models import db
     from sqlalchemy import text
@@ -522,6 +526,8 @@ def fix_task_schema():
         return f"<h1>Error</h1><p>{str(e)}</p>", 500
 
 @admin_bp.route('/admin/global-templates')
+@login_required
+@super_admin_required
 def global_templates_list():
     from models import Company
     
@@ -536,6 +542,8 @@ def global_templates_list():
     return render_template('admin/global_templates_list.html', companies=companies)
 
 @admin_bp.route('/admin/global-templates/<int:company_id>', methods=['GET', 'POST'])
+@login_required
+@super_admin_required
 def global_templates_edit(company_id):
     from models import db, Company, DriveFolderTemplate
     

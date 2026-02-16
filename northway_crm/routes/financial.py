@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, abort, request
+from flask import Blueprint, render_template, jsonify, abort, request, current_app
 from flask_login import login_required, current_user
 from models import db, Contract, Transaction, FinancialCategory, Expense, AccountsPayable, ROLE_ADMIN, ROLE_MANAGER
 
@@ -37,27 +37,35 @@ def stats():
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
     
+    print(f"📡 API STATS: Request by {current_user.email} (ID: {current_user.id})")
+    current_app.logger.info(f"📡 API STATS: Request by {current_user.email} (ID: {current_user.id})")
+    current_app.logger.info(f"🏢 API STATS: current_user.company_id = {current_user.company_id}")
+    
     company_id = current_user.company_id
+    if not company_id:
+        current_app.logger.info("🚨 API STATS: company_id is MISSING! Skipping data fetch.")
+        return jsonify({'error': 'Empresa não vinculada'}), 400
+        
     today = date.today()
     
+    current_app.logger.info(f"📊 DEBUG FINANCIAL: Loading stats for Company ID: {company_id}, User: {current_user.email}")
+    
     # --- PROJECTION & REVENUE ---
-    # Optimized: Single aggregate query for future revenue buckets could be faster,
-    # but Python loop is acceptable for <10k transactions.
-    
-    forecast_30 = 0
-    forecast_60 = 0
-    forecast_90 = 0
-    
-    # Fetch all pending future transactions
-    # Simplified: Direct filter on Transaction using company_id
     upcoming_transactions = Transaction.query.filter(
         Transaction.company_id == company_id,
         Transaction.status == 'pending',
         Transaction.due_date >= today
     ).all()
     
+    current_app.logger.info(f"📊 DEBUG FINANCIAL: Found {len(upcoming_transactions)} upcoming transactions.")
+    
+    forecast_30 = 0
+    forecast_60 = 0
+    forecast_90 = 0
+    
     for t in upcoming_transactions:
         days_diff = (t.due_date - today).days
+        print(f"📊 DEBUG FINANCIAL: tx {t.id} - due: {t.due_date} - amount: {t.amount} - diff: {days_diff}")
         if days_diff <= 30:
             forecast_30 += t.amount
         if days_diff <= 60:
@@ -94,11 +102,16 @@ def stats():
     delinquent_count = 0
     active_clients_count = 0
     
+    print(f"📊 DEBUG FINANCIAL: Found {len(active_contracts)} active/signed contracts.")
+    
     for c in active_contracts:
         try:
+            print(f"📊 DEBUG FINANCIAL: Processing Contract ID: {c.id}, Client: {c.client.name}, Status: {c.status}")
             data = json.loads(c.form_data)
             val_str = data.get('valor_parcela', '0')
+            print(f"📊 DEBUG FINANCIAL: Contract {c.id} - valor_parcela (raw): {val_str}")
             val = float(val_str.replace('.', '').replace(',', '.'))
+            print(f"📊 DEBUG FINANCIAL: Contract {c.id} - valor_parcela (parsed): {val}")
             
             if c.client.payment_status == 'inadimplente':
                 mrr_at_risk += val
@@ -106,14 +119,25 @@ def stats():
             else:
                 mrr += val
                 active_clients_count += 1
-        except:
+        except Exception as e:
+            print(f"📊 DEBUG FINANCIAL ERROR (Contract {c.id if c else 'unknown'}): {e}")
             pass
+    
+    print(f"📊 DEBUG FINANCIAL RESULT: MRR: {mrr}, At Risk: {mrr_at_risk}, Active Clients: {active_clients_count}")
 
+    print(f"📊 DEBUG FINANCIAL Result - MRR: {mrr}, Count: {active_clients_count}, Risk: {mrr_at_risk}")
+    
     avg_ticket = mrr / active_clients_count if active_clients_count > 0 else 0
     
     # Churn Rate: (Cancelled / (Active + Cancelled)) * 100
+    cancelled_count = len(cancelled_contracts)
+    print(f"📊 DEBUG FINANCIAL: Cancelled Contracts Count: {cancelled_count}")
+    
     total_ever_signed = active_clients_count + cancelled_count
     churn_rate = (cancelled_count / total_ever_signed * 100) if total_ever_signed > 0 else 0
+    
+    # Final KPIs Log
+    print(f"📊 DEBUG FINANCIAL FINAL KPIs: {forecast_30}, {paid_this_month}, {overdue}, {mrr}, {avg_ticket}")
 
     # --- CHARTS (12 Months Projection) ---
     chart_labels = []
@@ -167,7 +191,8 @@ def stats():
     # Create matching list of counts for the frontend (same order as labels)
     niche_quantities = [niche_counts[label] for label in niche_labels]
 
-    # --- RECENT TRANSACTIONS ---
+    # --- RERECENT TRANSACTIONS ---
+    print(f"📡 API STATS: Fetching recent transactions for company: {company_id}")
     recent_txs = Transaction.query.filter(
         Transaction.company_id == company_id,
         Transaction.status != 'cancelled' # Hide cancelled
@@ -175,6 +200,8 @@ def stats():
         Transaction.status == 'paid', # Pending first
         Transaction.due_date.asc()
     ).limit(50).all()
+    
+    print(f"📡 API STATS: Found {len(recent_txs)} recent transactions.")
     
     tx_list = []
     for t in recent_txs:
@@ -472,20 +499,10 @@ def cancel_transaction_route(id):
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         return jsonify({'success': False, 'error': 'Acesso negado. Apenas Admin/Gerente podem cancelar.'}), 403
     
-    # Get Transaction safely
-    tx = Transaction.query.get(id)
+    # Get Transaction safely (scoped to company)
+    tx = Transaction.query.filter_by(id=id, company_id=current_user.company_id).first()
     if not tx:
-        return jsonify({'success': False, 'error': 'Transação não encontrada.'}), 404
-    
-    # Security Check: Belongs to user's company
-    tx_company_id = tx.company_id
-    if not tx_company_id and tx.contract:
-        tx_company_id = tx.contract.company_id
-    elif not tx_company_id and tx.client:
-        tx_company_id = tx.client.company_id
-        
-    if tx_company_id != current_user.company_id:
-        return jsonify({'success': False, 'error': 'Acesso negado. Transação pertence a outra empresa.'}), 403
+        return jsonify({'success': False, 'error': 'Transação não encontrada ou acesso negado.'}), 404
         
     try:
         # Cancel in Asaas if linked

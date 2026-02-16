@@ -27,9 +27,9 @@ except ImportError:
              from app import app
         except Exception as e:
                 from flask import Flask
-                import traceback
                 app = Flask(__name__)
                 @app.route('/', defaults={'path': ''})
                 @app.route('/<path:path>')
                 def catch_all(path):
-                    return f"<h1>Start Error (Nested API)</h1><pre>{traceback.format_exc()}</pre>", 500
+                    return "<h1>Sistema Indisponível</h1><p>Ocorreu um erro na inicialização. Por favor, tente novamente mais tarde.</p>", 500
+

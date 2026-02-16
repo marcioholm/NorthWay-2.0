@@ -250,6 +250,15 @@ def send_media():
 # --- WEBHOOK ---(Public)
 @whatsapp_bp.route('/api/webhooks/zapi/<int:company_id>', methods=['POST'])
 def webhook(company_id):
+    # SECURITY: Verify Z-API Client-Token
+    client_token = request.headers.get('Client-Token')
+    config = WhatsAppService.get_config(company_id)
+    
+    if config and config.get('client_token'):
+        if client_token != config['client_token']:
+            current_app.logger.warning(f"Unauthorized Z-API Webhook Attempt: Invalid Client-Token for company {company_id}")
+            return jsonify({'error': 'Unauthorized'}), 401
+            
     try:
         res = WhatsAppService.process_webhook(company_id, request.json)
         return jsonify(res)

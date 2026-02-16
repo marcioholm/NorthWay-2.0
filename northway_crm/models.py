@@ -327,7 +327,7 @@ class Lead(db.Model):
     cnpj = db.Column(db.String(20), nullable=True)
     registration_status = db.Column(db.String(50), nullable=True) # Situação Cadastral
     company_size = db.Column(db.String(50), nullable=True) # Porte
-    equity = db.Column(db.Float, nullable=True) # Capital Social
+    equity = db.Column(db.Numeric(12, 2), nullable=True) # Capital Social
     foundation_date = db.Column(db.String(20), nullable=True) # Data de Abertura
     legal_email = db.Column(db.String(120), nullable=True) # Email na Receita
     legal_phone = db.Column(db.String(50), nullable=True) # Telefone na Receita
@@ -403,7 +403,7 @@ class Client(db.Model):
     
     service = db.Column(db.String(100))
     contract_type = db.Column(db.String(50)) # mensal, trimestral, anual
-    monthly_value = db.Column(db.Float)
+    monthly_value = db.Column(db.Numeric(12, 2))
     renewal_date = db.Column(db.Date)
     niche = db.Column(db.String(100), nullable=True) # Added Niche field
     notes = db.Column(db.Text)
@@ -502,7 +502,7 @@ class Contract(db.Model):
     template = db.relationship('ContractTemplate')
 
     # Financial / NFS-e Settings
-    amount = db.Column(db.Float, default=0.0)
+    amount = db.Column(db.Numeric(12, 2), default=0.0)
     billing_type = db.Column(db.String(20), default='BOLETO') # BOLETO, PIX, CREDIT_CARD
     total_installments = db.Column(db.Integer, default=12)
     
@@ -668,7 +668,7 @@ class Transaction(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Direct link for easier querying/manual charges
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy
     description = db.Column(db.String(200), nullable=False) # e.g. "Mensalidade 1/12"
-    amount = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
     due_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), default='pending') # pending, paid, overdue, cancelled
     paid_date = db.Column(db.Date, nullable=True)
@@ -731,7 +731,7 @@ class FinancialCategory(db.Model):
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(200), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
     due_date = db.Column(db.Date, nullable=False)
     paid_date = db.Column(db.Date, nullable=True)
     status = db.Column(db.String(20), default='paid') # pending, paid
@@ -772,9 +772,9 @@ class Goal(db.Model):
     
     month = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
-    target_amount = db.Column(db.Float, nullable=False, default=0.0)
+    target_amount = db.Column(db.Numeric(12, 2), nullable=False, default=0.0)
     type = db.Column(db.String(20), default='revenue') # revenue (MRR), deals_count
-    min_new_sales = db.Column(db.Float, default=0.0) # New Goal Condition
+    min_new_sales = db.Column(db.Numeric(12, 2), default=0.0) # New Goal Condition
 
 
 class PasswordResetToken(db.Model):

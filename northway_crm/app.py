@@ -10,13 +10,15 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, text
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 from models import db, User, Task, Role
 import json
 # Blueprint imports moved to create_app to prevent global import crashes
 from services.supabase_service import init_supabase
 from flask_cors import CORS
+from extensions import limiter
+import logging
 
 def create_app():
     # CRITICAL: Set instance path BEFORE Flask initialization
@@ -28,11 +30,53 @@ def create_app():
         app = Flask(__name__, instance_path='/tmp', instance_relative_config=False)
         app.instance_path = '/tmp' # FORCE override for Vercel
         
-        # Allow Chrome Extensions (Defensive)
+        # SECURITY & CORS
         try:
-             CORS(app, resources={r"/api/ext/*": {"origins": "*"}})
+             # Restrict CORS to specific common origins for extensions
+             allowed_origins = [
+                 "https://web.whatsapp.com",
+                 "https://crm.northwaycompany.com.br"
+             ]
+             CORS(app, resources={r"/api/ext/*": {"origins": allowed_origins}})
         except:
              print("⚠️ CORS/Flask-Cors not available. Skipping.")
+
+        @app.after_request
+        def add_security_headers(response):
+            response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+            response.headers['X-Content-Type-Options'] = 'nosniff'
+            response.headers['X-XSS-Protection'] = '1; mode=block'
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+            # Content Security Policy (Base safe policy)
+            csp = (
+                "default-src 'self' https:; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://*.whatsapp.net https://*.google.com https://*.whatsapp.com; "
+                "connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.googleapis.com;"
+            )
+            response.headers['Content-Security-Policy'] = csp
+            
+            # SECURITY: Structured Logging (Audit)
+            if response.status_code >= 400:
+                log_data = {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "method": request.method,
+                    "path": request.path,
+                    "status": response.status_code,
+                    "ip": request.remote_addr,
+                    "user_id": current_user.id if current_user.is_authenticated else None,
+                    "company_id": current_user.company_id if current_user.is_authenticated else None,
+                    "agent": request.user_agent.string
+                }
+                app.logger.warning(f"AUDIT_LOG: {json.dumps(log_data)}")
+            
+            return response
+
+        # Rate Limiting Configuration
+        limiter.init_app(app)
+        app.limiter = limiter
 
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
         
@@ -44,20 +88,57 @@ def create_app():
         # Database Setup with Resilience
         database_url = os.environ.get('DATABASE_URL')
         
+        @app.route('/api/debug/health')
+        @login_required
+        def debug_health():
+            if not getattr(current_user, 'is_super_admin', False):
+                return jsonify({"error": "Unauthorized"}), 403
+            from models import Lead, Client, Transaction, Company
+            return jsonify({
+                'user': {
+                    'email': getattr(current_user, 'email', 'unknown'),
+                    'id': getattr(current_user, 'id', 'unknown'),
+                    'company_id': getattr(current_user, 'company_id', None),
+                    'role': getattr(current_user, 'role', 'unknown')
+                },
+                'db': {
+                    'uri_host': str(db.engine.url).split('@')[-1] if db.engine else 'no_engine',
+                    'is_postgres': 'postgresql' in str(db.engine.url) if db.engine else False
+                },
+                'counts': {
+                    'leads_total': Lead.query.count(),
+                    'clients_total': Client.query.count(),
+                    'tx_total': Transaction.query.count(),
+                    'companies_total': Company.query.count()
+                },
+                'company_counts': {
+                    'leads': Lead.query.filter_by(company_id=current_user.company_id).count() if current_user.company_id else 0,
+                    'clients': Client.query.filter_by(company_id=current_user.company_id).count() if current_user.company_id else 0,
+                    'tx': Transaction.query.filter_by(company_id=current_user.company_id).count() if current_user.company_id else 0
+                },
+                'tx_details': [
+                    {'id': t.id, 'status': t.status, 'due_date': str(t.due_date), 'amount': float(t.amount)} 
+                    for t in Transaction.query.filter_by(company_id=current_user.company_id).limit(10).all()
+                ] if current_user.company_id else []
+            })
+        
         def test_db_connection(url):
             if not url: 
-                print("📡 DB CONNECTION TEST: Missing URL.")
+                app.logger.error("📡 DB CONNECTION TEST: Missing URL.")
                 return False
             try:
-                print(f"📡 DB CONNECTION TEST: Attempting connection to {url.split('@')[-1]}...")
+                app.logger.info(f"📡 DB CONNECTION TEST: Attempting connection to {url.split('@')[-1]}...")
                 # Short timeout (5s) to avoid hanging startup
-                engine = create_engine(url, connect_args={'connect_timeout': 5})
+                connect_args = {}
+                if 'postgresql' in url:
+                    connect_args['connect_timeout'] = 5
+                engine = create_engine(url, connect_args=connect_args)
                 with engine.connect() as conn:
                     conn.execute(text("SELECT 1"))
-                print("✅ DB CONNECTION TEST: SUCCESS.")
+                app.logger.info("✅ DB CONNECTION TEST: SUCCESS.")
                 return True
             except Exception as conn_e:
-                print(f"📡 DB CONNECTION TEST FAILED: {type(conn_e).__name__} - {conn_e}")
+                app.logger.error(f"📡 DB CONNECTION TEST FAILED: {type(conn_e).__name__} - {conn_e}")
                 return False
 
         try:
@@ -92,18 +173,19 @@ def create_app():
                 print("✅ DATABASE: Connection to PostgreSQL successful.")
             elif is_postgres and not connection_ok:
                 print("❌ DATABASE: PostgreSQL connection FAILED.")
-                # CRITICAL: In production, NEVER fall back to SQLite if Postgres is expected
-                if os.environ.get('VERCEL') or os.environ.get('DATABASE_URL'):
-                    print("🚨 DATABASE: Production environment detected. BLOCKING fallback to SQLite to prevent data loss.")
-                    # Keep database_url as postgresql to force error 500 instead of empty DB
+                if os.environ.get('VERCEL'):
+                    print("🚨 DATABASE: Vercel environment. Blocking fallback.")
                 else:
                     print("⚠️ DATABASE: Local environment. Falling back to SQLite.")
-                    database_url = f'sqlite:///{os.path.join(app.root_path, "crm.db")}'
-            else:
-                # No Postgres configured, use SQLite (Local mode)
-                print("🏠 DATABASE: Using local SQLite.")
+                    if not database_url or 'postgresql' in database_url:
+                        database_url = f'sqlite:///{os.path.join(app.root_path, "crm.db")}'
+            elif not database_url:
+                # No database configured at all
+                print("🏠 DATABASE: No URL configured. Using local SQLite.")
                 src_db = os.path.join(app.root_path, 'crm.db')
                 database_url = f'sqlite:///{src_db}'
+            else:
+                print(f"📡 DATABASE: Using existing URL: {database_url.split('@')[-1] if '@' in database_url else 'hidden'}")
 
         except Exception as e:
             print(f"🔥 CRITICAL DB SETUP ERROR: {e}")
@@ -111,6 +193,18 @@ def create_app():
 
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        
+        # Optimize SQLAlchemy for Serverless (Vercel)
+        engine_options = {
+            'pool_recycle': 280,
+            'pool_pre_ping': True
+        }
+        if database_url and 'postgresql' in database_url:
+            engine_options['pool_size'] = 1
+            engine_options['max_overflow'] = 0
+            engine_options['connect_args'] = {'connect_timeout': 10}
+            
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = engine_options
         
         # Folders
         app.config['UPLOAD_FOLDER'] = 'static/uploads/profiles'
@@ -251,12 +345,18 @@ def create_app():
             try: db.session.rollback()
             except: pass
             
-            import traceback
-            tb = traceback.format_exc()
-            return render_template('500.html', error=str(error), traceback=tb), 500
+            # Use request ID or generic message in production
+            error_msg = str(error)
+            if os.environ.get('VERCEL'):
+                error_msg = "Internal Server Error. Please contact support."
+                
+            return render_template('500.html', error=error_msg), 500
 
         @app.route('/debug_schema')
+        @login_required
         def debug_schema():
+            if not getattr(current_user, 'is_super_admin', False):
+                return jsonify({"error": "Unauthorized"}), 403
             debug_info = {}
             try:
                 # 1. Env Var Check
@@ -284,7 +384,10 @@ def create_app():
                 return jsonify({'error': str(e), 'traceback': traceback.format_exc(), 'partial_info': debug_info}), 500
 
         @app.route('/emergency-migration')
+        @login_required
         def emergency_migration():
+            if not getattr(current_user, 'is_super_admin', False):
+                return "Unauthorized", 403
             try:
                 from models import db
                 from sqlalchemy import text
@@ -758,7 +861,7 @@ def create_app():
                 if request.path.startswith('/sys_admin'):
                     return {}
 
-                if not current_user.is_authenticated or not current_user.company_id:
+                if not current_user or not getattr(current_user, 'is_authenticated', False) or not getattr(current_user, 'company_id', None):
                     return {}
                 
                 # Days Remaining Calculation

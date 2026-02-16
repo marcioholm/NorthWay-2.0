@@ -213,3 +213,15 @@ class GoogleDriveService:
             stack.append({'level': level, 'children': node['children']})
             
         return root
+
+    def delete_file(self, tenant_integration, file_id):
+        """Deletes a file or folder from Google Drive."""
+        service = self.get_drive_service(tenant_integration)
+        
+        try:
+            service.files().delete(fileId=file_id).execute()
+            logger.info(f"Successfully deleted file {file_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting file {file_id}: {e}")
+            raise

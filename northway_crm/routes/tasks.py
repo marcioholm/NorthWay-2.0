@@ -185,7 +185,7 @@ def move_task_api(task_id):
     try:
         # If status is present, update status
         if new_status:
-            TaskService.update_status(task_id, new_status, actor_id=current_user.id)
+            TaskService.update_status(task_id, new_status, actor_id=current_user.id, company_id=current_user.company_id)
             
         # If urgency/importance/assignee present, update them
         # We need to expose a method in Service or do it here manually for MVP
@@ -348,7 +348,7 @@ def toggle_task(id):
         new_status = 'a_fazer' if task.status == 'concluida' else 'concluida'
         
         # Use Service to ensure logs and events are created and consistency is maintained
-        TaskService.update_status(id, new_status, actor_id=current_user.id)
+        TaskService.update_status(id, new_status, actor_id=current_user.id, company_id=current_user.company_id)
         
         return redirect(request.referrer or url_for('tasks.tasks'))
     except Exception as e:
@@ -436,3 +436,11 @@ def get_team_stats():
         })
         
     return jsonify(stats)
+
+@tasks_bp.route('/dismiss-onboarding', methods=['POST'])
+@login_required
+def dismiss_onboarding():
+    from models import db
+    current_user.onboarding_dismissed = True
+    db.session.commit()
+    return jsonify({'status': 'success'})

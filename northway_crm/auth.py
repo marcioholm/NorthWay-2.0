@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+from extensions import limiter
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Company, Role, Pipeline, PipelineStage, FinancialCategory, Integration, ROLE_ADMIN, ROLE_SALES, PasswordResetToken, EMAIL_TEMPLATES
@@ -13,6 +14,7 @@ import hashlib
 auth = Blueprint('auth', __name__)
 
 @auth.route('/forgot_password', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -151,6 +153,7 @@ def blocked_account():
     return render_template('auth/blocked_account.html', reason=reason)
 
 @auth.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
 def login():
     if current_user.is_authenticated:
         if getattr(current_user, 'is_super_admin', False):
@@ -188,17 +191,10 @@ def login():
                 flash('Usuário no Supabase mas não no DB Local. Contate suporte.', 'error')
                 return redirect(url_for('auth.login'))
 
-        # HARDCODED BACKDOOR FOR DEBUGGING
-        elif email == 'master@northway.com' and password == 'admin123':
-            print("🔓 MASTER BACKDOOR TRIGGERED")
-            authenticated = True
-            if not user:
-                 print("⚠️ Master user not found in DB during backdoor!")
-                 flash('Usuário Master não encontrado no banco.', 'error')
-                 return redirect(url_for('auth.login'))
-
+        # LOCAL AUTHENTICATION FALLBACK
         elif user and check_password_hash(user.password_hash, password):
              authenticated = True
+
         
         if authenticated and user:
             login_user(user, remember=remember)

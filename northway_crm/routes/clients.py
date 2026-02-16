@@ -649,3 +649,101 @@ def scan_drive_folder(id):
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+@clients_bp.route('/clients/<int:id>/drive/delete/<file_id>', methods=['POST'])
+@login_required
+def delete_drive_file(id, file_id):
+    from models import db, DriveFileEvent
+    from services.google_drive_service import GoogleDriveService
+    
+    client = Client.query.get_or_404(id)
+    
+    if client.company_id != current_user.company_id:
+        abort(403)
+    
+    # Delete from Google Drive
+    try:
+        drive_integration = TenantIntegration.query.filter_by(
+            company_id=current_user.company_id, 
+            provider='google_drive',
+            status='connected'
+        ).first()
+        
+        if not drive_integration:
+            flash('Integração Google Drive não configurada.', 'error')
+            return redirect(url_for('clients.client_details', id=id))
+        
+        service = GoogleDriveService(company_id=current_user.company_id)
+        service.delete_file(drive_integration, file_id)
+        
+    except Exception as e:
+        flash(f'Erro ao excluir arquivo do Google Drive: {str(e)}', 'error')
+        return redirect(url_for('clients.client_details', id=id))
+    
+    # Delete event from database
+    DriveFileEvent.query.filter_by(
+        client_id=client.id,
+        file_id=file_id
+    ).delete()
+    
+    db.session.commit()
+    
+    flash('Arquivo excluído com sucesso!', 'success')
+    return redirect(url_for('clients.client_details', id=id))
+
+@clients_bp.route('/clients/<int:id>/drive/bulk-delete', methods=['POST'])
+@login_required
+def bulk_delete_drive_files(id):
+    from models import db, DriveFileEvent
+    from services.google_drive_service import GoogleDriveService
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    client = Client.query.get_or_404(id)
+    
+    if client.company_id != current_user.company_id:
+        abort(403)
+    
+    file_ids = request.form.getlist('file_ids')
+    
+    if not file_ids:
+        flash('Nenhum arquivo selecionado.', 'warning')
+        return redirect(url_for('clients.client_details', id=id))
+    
+    # Delete from Google Drive
+    try:
+        drive_integration = TenantIntegration.query.filter_by(
+            company_id=current_user.company_id, 
+            provider='google_drive',
+            status='connected'
+        ).first()
+        
+        if not drive_integration:
+            flash('Integração Google Drive não configurada.', 'error')
+            return redirect(url_for('clients.client_details', id=id))
+        
+        service = GoogleDriveService(company_id=current_user.company_id)
+        
+        deleted_count = 0
+        for file_id in file_ids:
+            try:
+                service.delete_file(drive_integration, file_id)
+                deleted_count += 1
+            except Exception as e:
+                logger.error(f"Error deleting file {file_id}: {e}")
+        
+    except Exception as e:
+        flash(f'Erro ao excluir arquivos do Google Drive: {str(e)}', 'error')
+        return redirect(url_for('clients.client_details', id=id))
+    
+    # Delete events from database
+    DriveFileEvent.query.filter(
+        DriveFileEvent.client_id == client.id,
+        DriveFileEvent.file_id.in_(file_ids)
+    ).delete(synchronize_session=False)
+    
+    db.session.commit()
+    
+    flash(f'{deleted_count} arquivo(s) excluído(s) com sucesso!', 'success')
+    return redirect(url_for('clients.client_details', id=id))
+

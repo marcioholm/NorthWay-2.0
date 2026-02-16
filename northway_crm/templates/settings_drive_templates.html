@@ -81,10 +81,9 @@
     <div x-show="tab === 'my_templates'" style="display: none;">
 
         <div class="mb-6 flex justify-end">
-            <!-- Future: Add 'Create New' button here if we implement scratch creation -->
-            <button disabled
-                class="opacity-50 cursor-not-allowed bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center">
-                <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Novo Template (Em Breve)
+            <button onclick="openTemplateModal()" type="button"
+                class="bg-northway-red hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors shadow-sm">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Novo Template
             </button>
         </div>
 
@@ -106,9 +105,11 @@
                                 <div class="font-bold text-gray-900">{{ template.name }}</div>
                             </td>
                             <td class="p-6 text-right flex justify-end gap-2">
-                                <!-- Future: Edit Action -->
-                                <button disabled class="text-gray-400 cursor-not-allowed p-2 rounded hover:bg-gray-100"
-                                    title="Editar (Em breve)">
+                                <button
+                                    onclick='editTemplate({{ template.id }}, {{ template.name|tojson }}, {{ template.structure_json|tojson }})'
+                                    type="button"
+                                    class="text-gray-600 hover:text-blue-600 p-2 rounded hover:bg-blue-50 transition-colors"
+                                    title="Editar">
                                     <i data-lucide="edit-3" class="w-4 h-4"></i>
                                 </button>
 
@@ -138,4 +139,84 @@
         </div>
     </div>
 </div>
+
+<!-- Template Editor Modal -->
+<div id="templateModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 id="modalTitle" class="text-2xl font-bold text-gray-900">Novo Template</h2>
+                <button onclick="closeTemplateModal()" type="button" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <form id="templateForm" method="POST" class="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+            <input type="hidden" id="templateId" name="template_id">
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Nome do Template</label>
+                <input type="text" id="templateName" name="name" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    placeholder="Ex: Template Padrão de Cliente">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Estrutura de Pastas (JSON)</label>
+                <textarea id="templateStructure" name="structure_json" rows="15" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono text-sm"
+                    placeholder='[{"name": "Pasta 1"}, {"name": "Pasta 2", "children": [{"name": "Subpasta"}]}]'></textarea>
+                <p class="text-xs text-gray-500 mt-2">
+                    <strong>Formato:</strong> <code
+                        class="bg-gray-100 px-2 py-1 rounded">[{"name": "Nome da Pasta", "children": [...]}]</code>
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                    <strong>Exemplo:</strong> <code
+                        class="bg-gray-100 px-2 py-1 rounded">[{"name": "Contratos"}, {"name": "Marketing", "children": [{"name": "Google Ads"}, {"name": "Meta Ads"}]}]</code>
+                </p>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <button type="button" onclick="closeTemplateModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                    Salvar Template
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openTemplateModal() {
+    document.getElementById('modalTitle').textContent = 'Novo Template';
+    document.getElementById('templateForm').action = '{{ url_for("templates.create_drive_template") }}';
+    document.getElementById('templateId').value = '';
+    document.getElementById('templateName').value = '';
+    document.getElementById('templateStructure').value = '';
+    document.getElementById('templateModal').classList.remove('hidden');
+    document.getElementById('templateModal').classList.add('flex');
+    lucide.createIcons();
+}
+
+function editTemplate(id, name, structure) {
+    document.getElementById('modalTitle').textContent = 'Editar Template';
+    document.getElementById('templateForm').action = '{{ url_for("templates.update_drive_template", id=0) }}'.replace('/0', '/' + id);
+    document.getElementById('templateId').value = id;
+    document.getElementById('templateName').value = name;
+    document.getElementById('templateStructure').value = JSON.stringify(JSON.parse(structure), null, 2);
+    document.getElementById('templateModal').classList.remove('hidden');
+    document.getElementById('templateModal').classList.add('flex');
+    lucide.createIcons();
+}
+
+function closeTemplateModal() {
+    document.getElementById('templateModal').classList.add('hidden');
+    document.getElementById('templateModal').classList.remove('flex');
+}
+</script>
 {% endblock %}

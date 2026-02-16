@@ -12,6 +12,14 @@
         </div>
     </header>
 
+    <script>
+        console.log("🛠️ HYDRA DASHBOARD DEBUG:");
+        console.log("Total Leads (Jinja):", "{{ total_leads }}");
+        console.log("Active Clients (Jinja):", "{{ active_clients }}");
+        console.log("MRR (Jinja):", "{{ mrr }}");
+        console.log("Company ID (Session):", "{{ current_user.company_id }}");
+    </script>
+
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <!-- Total Leads -->
