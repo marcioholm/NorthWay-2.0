@@ -16,7 +16,7 @@ def check_master_access():
         'master.company_materials', 'master.run_library_migration', 
         'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 
         'master.refresh_roles', 'master.sync_schema', 'master.diagnostic_access',
-        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5', 'master.migrate_library_v6', 'master.migrate_library_v7'
+        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5', 'master.migrate_library_v6', 'master.migrate_library_v7', 'master.migrate_library_v8'
     ]
     
     if request.endpoint in whitelist:
@@ -2098,5 +2098,105 @@ def migrate_library_v6():
         
         db.session.commit()
         return f"Migration V6 Successful! Created {count} new books, Updated {updated}. Linked to {len(all_companies)} companies. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+@master.route('/master/force-library-migration-v7', methods=['GET'])
+def migrate_library_v7():
+    """
+    Migration V7: 
+    1. Registers new Guides (Video & Editing).
+    2. STRICT ACCESS CONTROL: New items are ONLY linked to Master Company.
+    3. REORGANIZATION: Updates categories for all existing books to be clearer (Internal vs External).
+    """
+    if request.args.get('secret') != 'northway_super_diagnostic_99':
+        return "Forbidden", 403
+    
+    try:
+        from models import LibraryBook, Company
+        db.create_all()
+        
+        # 1. Define New Books
+        new_books = [
+            {
+                'title': 'Guia de Captação (Vídeo/Foto)',
+                'description': 'Padrão NorthWay para clientes e time. Como gravar vídeos que performam.',
+                'category': 'Treinamento (Externo)',
+                'route_name': 'docs.guide_captacao',
+                'active': True 
+            },
+            {
+                'title': 'Manual de Edição & Criativos',
+                'description': 'Processo interno de edição, aprovação e métricas de criativo.',
+                'category': 'Processos (Interno)',
+                'route_name': 'docs.manual_edicao',
+                'active': True
+            }
+        ]
+        
+        # 2. Get Master Company (NorthWay)
+        # Assuming ID 1 or name 'NorthWay' is master. 
+        # Ideally, we find the company of the current master user, or loop and check names.
+        # Fallback: We will just NOT link to all companies, only to the one running this script if logged in?
+        # Actually, better strategy: Clear allowed_companies for these specific new books and only add specific ones.
+        
+        # Strategy: Do NOT auto-add all companies.
+        # The Master Admin can see everything via the "Super Admin" flag usually, 
+        # OR needs to be explicitly added.
+        
+        master_company = Company.query.filter(Company.name.ilike('%NorthWay%')).first()
+        if not master_company:
+             # Fallback if name is different, pick the first one which is usually the admin
+             master_company = Company.query.first()
+             
+        created_count = 0
+        updated_count = 0
+        
+        for data in new_books:
+            book = LibraryBook.query.filter_by(route_name=data['route_name']).first()
+            if not book:
+                book = LibraryBook(
+                    title=data['title'],
+                    description=data['description'],
+                    category=data['category'],
+                    route_name=data['route_name'],
+                    active=data['active']
+                )
+                db.session.add(book)
+                created_count += 1
+            else:
+                updated_count += 1
+                book.title = data['title']
+                book.description = data['description']
+                book.category = data['category']
+            
+            # STRICT ACCESS: Only Master Company gets access initially
+            if master_company and master_company not in book.allowed_companies:
+                book.allowed_companies.append(master_company)
+                
+            # Crucially: We do NOT loop over all_companies here. 
+            # This ensures other companies DO NOT get access by default.
+
+        # 3. Categorization Cleanup (Optional but requested "organize a casa")
+        # We can update categories of existing books to be clearer if needed.
+        # Example mappings or strict updates can go here.
+        # shifting 'Apresentação' to 'Comercial (Externo)' etc.
+        
+        # Let's verify existing books and categorize them better
+        corrections = {
+            'docs.playbook_north_direcao': 'Processos (Interno)',
+            'docs.briefing_northway': 'Processos (Interno)',
+            'docs.scripts_northway': 'Vendas (Interno)',
+            'docs.ebook_norte_pioneiro': 'Comercial (Externo)',
+            'docs.ebook_campos_gerais': 'Comercial (Externo)'
+        }
+        
+        for route, new_cat in corrections.items():
+            b = LibraryBook.query.filter_by(route_name=route).first()
+            if b:
+                b.category = new_cat
+
+        db.session.commit()
+        return f"Migration V7 Successful! Created {created_count}, Updated {updated_count}. Access restricted to Master. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
     except Exception as e:
         return f"Error: {str(e)}"

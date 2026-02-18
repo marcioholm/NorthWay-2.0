@@ -53,23 +53,29 @@
     </div>
     {% endif %}
 
-    <!-- Section 1: Apresentações & Comercial -->
+    <!-- Section: Materiais Externos (Cliente/Comercial) -->
     <div class="mb-12">
         <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <i data-lucide="monitor-play" class="text-[#fa0102]"></i> Apresentações & Comercial
+            <i data-lucide="share-2" class="text-[#fa0102]"></i> Materiais Externos (Cliente)
         </h2>
-        {% set commercial_books = [] %}
+        {% set external_books = [] %}
         {% for book in system_books %}
-        {% if book.category in ['Vendas', 'Institucional', 'Apresentação'] %}
-        {% if commercial_books.append(book) %}{% endif %}
+        {% if 'Externo' in book.category or book.category in ['Apresentação', 'Institucional', 'Comercial'] %}
+        {% if external_books.append(book) %}{% endif %}
         {% endif %}
         {% endfor %}
 
-        {% if commercial_books %}
+        {% if external_books %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for book in commercial_books %}
+            {% for book in external_books %}
             <div
-                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-red-100 h-full flex flex-col">
+                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-red-100 h-full flex flex-col relative">
+                <!-- Date Badge -->
+                <div
+                    class="absolute top-4 right-4 z-20 bg-black/50 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider border border-white/10">
+                    {{ book.created_at.strftime('%d/%m/%Y') if book.created_at else 'N/A' }}
+                </div>
+
                 <div
                     class="relative aspect-video rounded-2xl bg-[#0f0f0f] overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 border border-gray-800">
                     {% if book.cover_image %}
@@ -96,7 +102,7 @@
                     <div class="mb-4">
                         <span
                             class="bg-red-50 text-[#fa0102] text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{{
-                            book.category }}</span>
+                            book.category.replace('(Externo)', '') }}</span>
                     </div>
                     <h3
                         class="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#fa0102] transition-colors line-clamp-2">
@@ -110,22 +116,19 @@
                                 class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-[#fa0102] transition-colors">
                                 <i data-lucide="eye" class="w-4 h-4 mr-2"></i> Ler Agora
                             </a>
-
-                            <!-- Copy Link Button -->
                             <button
-                                onclick="navigator.clipboard.writeText('{{ url_for(book.route_name, _external=True) if book.route_name else url_for('docs.view_book', id=book.id, _external=True) }}'); alert('Link copiado para a área de transferência!');"
-                                class="text-xs font-bold text-gray-500 hover:text-green-600 flex items-center gap-1 transition-colors"
-                                title="Copiar Link para Cliente">
-                                <i data-lucide="link" class="w-4 h-4"></i> Copiar Link
+                                onclick="navigator.clipboard.writeText('{{ url_for(book.route_name, _external=True) if book.route_name else url_for('docs.view_book', id=book.id, _external=True) }}'); alert('Link copiado!');"
+                                class="text-xs font-bold text-gray-400 hover:text-green-600 flex items-center gap-1 transition-colors"
+                                title="Copiar Link">
+                                <i data-lucide="link" class="w-4 h-4"></i> Copiar
                             </button>
                         </div>
-
                         {% if current_user.is_super_admin %}
-                        <div class="flex items-center gap-2 pt-2 border-t border-gray-100 justify-end">
+                        <div
+                            class="flex items-center gap-2 pt-2 border-t border-gray-100 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                             <a href="{{ url_for('master.master_library_edit', id=book.id) }}"
-                                class="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="Editar">
-                                <i data-lucide="edit-3" class="w-3 h-3"></i>
-                            </a>
+                                class="text-gray-400 hover:text-blue-600"><i data-lucide="edit-3"
+                                    class="w-3 h-3"></i></a>
                         </div>
                         {% endif %}
                     </div>
@@ -134,88 +137,68 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-gray-400 italic">Nenhum material disponível nesta seção.</p>
+        <p class="text-gray-400 italic">Nenhum material externo disponível.</p>
         {% endif %}
     </div>
 
-    <!-- Section 2: Processos & Treinamento -->
-    <div>
+    <!-- Section: Materiais Internos (Time/Processos) -->
+    <div class="mb-12">
         <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <i data-lucide="book-open" class="text-gray-400"></i> Processos & Treinamento
+            <i data-lucide="lock" class="text-gray-400"></i> Materiais Internos (Time)
         </h2>
 
-        {% set training_books = [] %}
+        {% set internal_books = [] %}
         {% for book in system_books %}
-        {% if book.category not in ['Vendas', 'Institucional', 'Apresentação'] %}
-        {% if training_books.append(book) %}{% endif %}
+        {% if 'Interno' in book.category or book.category in ['Vendas', 'Processos', 'Treinamento'] %}
+        {% if internal_books.append(book) %}{% endif %}
         {% endif %}
         {% endfor %}
 
-        {% if training_books %}
+        {% if internal_books %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for book in training_books %}
+            {% for book in internal_books %}
             <div
-                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-gray-300 h-full flex flex-col">
+                class="group bg-white rounded-3xl p-2 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-gray-300 h-full flex flex-col relative">
+                <!-- Date Badge -->
                 <div
-                    class="relative aspect-video rounded-2xl bg-gray-50 overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 flex items-center justify-center border border-gray-100">
-                    <!-- Special styling for 'Treinamento' aka Academia -->
-                    {% if book.category == 'Treinamento' %}
-                    <div class="absolute inset-0 bg-[#0a0a0a]"></div>
-                    <div class="text-center relative z-10">
-                        <i data-lucide="graduation-cap" class="w-10 h-10 text-blue-500 mx-auto mb-3"></i>
-                        <span
-                            class="text-[10px] tracking-[0.2em] font-bold uppercase text-gray-500 block">Academia</span>
-                    </div>
-                    {% else %}
-                    <div class="text-center p-4">
-                        <i data-lucide="book" class="w-10 h-10 text-gray-400 mx-auto mb-3"></i>
-                        <span class="text-[10px] tracking-[0.2em] font-bold uppercase text-gray-500 block">{{
-                            book.category }}</span>
-                    </div>
+                    class="absolute top-4 right-4 z-20 bg-black/50 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider border border-white/10">
+                    {{ book.created_at.strftime('%d/%m/%Y') if book.created_at else 'N/A' }}
+                </div>
+
+                <div
+                    class="relative aspect-video rounded-2xl bg-gray-50 overflow-hidden mb-6 group-hover:scale-[1.02] transition-transform duration-500 flex items-center justify-center border border-gray-200">
+                    {% if book.cover_image %}
+                    <img src="{{ url_for('static', filename='images/' + book.cover_image) }}"
+                        class="absolute inset-0 w-full h-full object-cover opacity-50 grayscale group-hover:grayscale-0 transition-all duration-500">
                     {% endif %}
 
-                    {% if book.cover_image %}
-                    <img src="{{ book.cover_image }}"
-                        class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay">
-                    {% endif %}
+                    <div class="text-center relative z-10 p-4">
+                        {% if not book.cover_image %}
+                        <i data-lucide="file-text" class="w-10 h-10 text-gray-400 mx-auto mb-3"></i>
+                        {% endif %}
+                        <h4 class="text-lg font-bold text-gray-800 uppercase tracking-tight">{{ book.title }}</h4>
+                    </div>
                 </div>
 
                 <div class="px-6 pb-6 flex-1 flex flex-col">
                     <div class="mb-4">
-                        {% if book.category == 'Treinamento' %}
-                        <span
-                            class="bg-blue-900/10 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Treinamento</span>
-                        {% else %}
                         <span
                             class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{{
-                            book.category }}</span>
-                        {% endif %}
+                            book.category.replace('(Interno)', '') }}</span>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">{{ book.title }}</h3>
                     <p class="text-sm text-gray-500 mb-4 line-clamp-2">{{ book.description or '' }}</p>
 
                     <div class="mt-auto flex items-center justify-between">
                         <a href="{{ url_for(book.route_name) if book.route_name else url_for('docs.view_book', id=book.id) }}"
-                            class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
-                            Ler Material <i data-lucide="arrow-right"
-                                class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+                            class="inline-flex items-center text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                            Acessar <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
                         </a>
-
                         {% if current_user.is_super_admin %}
-                        <div class="flex items-center gap-2">
+                        <div
+                            class="flex items-center gap-2 pt-2 border-t border-gray-100 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                             <a href="{{ url_for('master.master_library_edit', id=book.id) }}"
-                                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                title="Editar">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </a>
-                            <form action="{{ url_for('master.master_library_delete', id=book.id) }}" method="POST"
-                                onsubmit="return confirm('Excluir este material permanentemente?');">
-                                <button type="submit"
-                                    class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                    title="Excluir">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </form>
+                                class="text-gray-400 hover:text-blue-600"><i data-lucide="edit-3"
+                                    class="w-3 h-3"></i></a>
                         </div>
                         {% endif %}
                     </div>
@@ -224,7 +207,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-gray-400 italic">Nenhum material disponível nesta seção.</p>
+        <p class="text-gray-400 italic">Nenhum material interno disponível.</p>
         {% endif %}
     </div>
 
