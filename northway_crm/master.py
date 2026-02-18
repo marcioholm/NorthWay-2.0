@@ -16,7 +16,7 @@ def check_master_access():
         'master.company_materials', 'master.run_library_migration', 
         'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 
         'master.refresh_roles', 'master.sync_schema', 'master.diagnostic_access',
-        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5'
+        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5', 'master.migrate_library_v6'
     ]
     
     if request.endpoint in whitelist:
