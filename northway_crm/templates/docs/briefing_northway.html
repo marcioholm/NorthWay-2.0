@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Briefing de Aquisição — NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .font-display { font-family: 'Montserrat', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #fa0102; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white !important; color: black !important; }
+            .bg-dark { background-color: white !important; }
+            .text-white { color: black !important; }
+            .border-white\/10 { border-color: #ddd !important; }
+        }
+    </style>
+</head>
+<body class="bg-[#050505] text-white font-sans selection:bg-[#fa0102] pb-20">
+
+    <!-- Controls -->
+    <div class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference no-print">
+        <button onclick="window.print()" class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors flex items-center gap-2">
+            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-6 py-12">
+        <!-- Header -->
+        <div class="text-center mb-16 border-b border-white/10 pb-12">
+            <div class="inline-block px-4 py-1 border border-[#fa0102] text-[#fa0102] text-xs font-bold uppercase tracking-widest mb-6 rounded-full">Ferramenta Estratégica</div>
+            <h1 class="text-4xl md:text-5xl font-black font-display uppercase tracking-tight mb-4">Briefing de Aquisição</h1>
+            <p class="text-xl text-gray-500 max-w-2xl mx-auto">Documento base para setup de campanhas e estratégia de tráfego.</p>
+        </div>
+
+        <!-- Bloco 1 -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold font-display uppercase mb-6 flex items-center gap-3 text-[#fa0102]">
+                <span class="bg-[#fa0102]/10 w-8 h-8 flex items-center justify-center rounded text-sm">01</span>
+                Dinheiro & Meta
+            </h2>
+            <div class="bg-[#101010] p-8 rounded-2xl border border-white/5 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Qual a meta financeira mensal?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Qual o Ticket Médio atual?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Qual a verba disponível para mídia (Ads)?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Qual o CMV ou Custo do Produto?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco 2 -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold font-display uppercase mb-6 flex items-center gap-3 text-[#fa0102]">
+                <span class="bg-[#fa0102]/10 w-8 h-8 flex items-center justify-center rounded text-sm">02</span>
+                Oferta & Público
+            </h2>
+            <div class="bg-[#101010] p-8 rounded-2xl border border-white/5 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Qual o produto/serviço foco?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Qual a Grande Promessa (Big Idea)?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Quem compra? (Perfil do Cliente Ideal)</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Quem NÃO compra? (Público a excluir)</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco 3 -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold font-display uppercase mb-6 flex items-center gap-3 text-[#fa0102]">
+                <span class="bg-[#fa0102]/10 w-8 h-8 flex items-center justify-center rounded text-sm">03</span>
+                Aquisição
+            </h2>
+            <div class="bg-[#101010] p-8 rounded-2xl border border-white/5 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Quais canais já foram testados?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Existem criativos validados (imagem/vídeo)?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Link da Landing Page ou Destino:</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco 4 -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold font-display uppercase mb-6 flex items-center gap-3 text-[#fa0102]">
+                <span class="bg-[#fa0102]/10 w-8 h-8 flex items-center justify-center rounded text-sm">04</span>
+                Operação & Vendas
+            </h2>
+            <div class="bg-[#101010] p-8 rounded-2xl border border-white/5 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Quem atenderá os leads? (Nome/Cargo)</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Qual o CRM utilizado?</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Horário de atendimento:</label>
+                    <div class="w-full bg-[#1a1a1a] p-4 rounded text-gray-300 min-h-[50px] border border-white/10"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center pt-8 border-t border-white/10 text-gray-600 text-sm">
+            &copy; 2026 NorthWay. Documento Confidencial.
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

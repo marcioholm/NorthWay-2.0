@@ -10,6 +10,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, text
+from sqlalchemy.pool import NullPool
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 from models import db, User, Task, Role
@@ -200,9 +201,13 @@ def create_app():
             'pool_pre_ping': True
         }
         if database_url and 'postgresql' in database_url:
-            engine_options['pool_size'] = 1
-            engine_options['max_overflow'] = 0
+            # Use NullPool for Vercel/Serverless to avoid QueuePool limits
+            engine_options['poolclass'] = NullPool
             engine_options['connect_args'] = {'connect_timeout': 10}
+            # Remove pool_size/max_overflow when using NullPool
+            if 'pool_size' in engine_options: del engine_options['pool_size']
+            if 'max_overflow' in engine_options: del engine_options['max_overflow']
+            if 'pool_recycle' in engine_options: del engine_options['pool_recycle']
             
         app.config['SQLALCHEMY_ENGINE_OPTIONS'] = engine_options
         

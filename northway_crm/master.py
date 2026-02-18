@@ -1965,3 +1965,62 @@ def migrate_library_v4():
         return f"Migration V4 Successful! Added/Updated {count} books. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
     except Exception as e:
         return f"Error: {str(e)}"
+
+@master.route('/master/force-library-migration-v5', methods=['GET'])
+def migrate_library_v5():
+    if request.args.get('secret') != 'northway_super_diagnostic_99':
+        return "Forbidden", 403
+    
+    try:
+        from models import LibraryBook, Company
+        db.create_all()
+        
+        new_books = [
+            {
+                'title': 'Briefing de Aquisição',
+                'description': 'Ferramenta estratégica para setup de campanhas.',
+                'category': 'Processos',
+                'route_name': 'docs.briefing_northway',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Scripts de Vendas',
+                'description': 'Roteiros de vendas e técnicas de fechamento para o Playbook.',
+                'category': 'Vendas',
+                'route_name': 'docs.scripts_northway',
+                'cover_image': None,
+                'active': True
+            }
+        ]
+        
+        all_companies = Company.query.all()
+        count = 0
+        
+        for data in new_books:
+            book = LibraryBook.query.filter_by(route_name=data['route_name']).first()
+            if not book:
+                book = LibraryBook(
+                    title=data['title'],
+                    description=data['description'],
+                    category=data['category'],
+                    route_name=data['route_name'],
+                    active=data['active']
+                )
+                db.session.add(book)
+                count += 1
+            
+            # Update attributes
+            book.title = data['title']
+            book.description = data['description']
+            book.category = data['category']
+            
+            # Ensure links
+            for comp in all_companies:
+                if comp not in book.allowed_companies:
+                    book.allowed_companies.append(comp)
+        
+        db.session.commit()
+        return f"Migration V5 Successful! Added {count} attachment docs. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"

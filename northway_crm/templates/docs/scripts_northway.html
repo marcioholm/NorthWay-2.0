@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scripts de Vendas — NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .font-display { font-family: 'Montserrat', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #fa0102; }
+    </style>
+</head>
+<body class="bg-[#050505] text-white font-sans selection:bg-[#fa0102] pb-20">
+
+    <!-- Controls -->
+    <div class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference">
+        <button onclick="window.print()" class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors flex items-center gap-2">
+            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-6 py-12">
+        <!-- Header -->
+        <div class="text-center mb-16 border-b border-white/10 pb-12">
+            <div class="inline-block px-4 py-1 border border-[#fa0102] text-[#fa0102] text-xs font-bold uppercase tracking-widest mb-6 rounded-full">Ferramenta Tática</div>
+            <h1 class="text-4xl md:text-5xl font-black font-display uppercase tracking-tight mb-4">Scripts de Vendas</h1>
+            <p class="text-xl text-gray-500 max-w-2xl mx-auto">Roteiros validados para atendimento, qualificação e follow-up.</p>
+        </div>
+
+        <!-- Script 1 -->
+        <div class="mb-16">
+            <div class="flex items-center gap-4 mb-6">
+                 <div class="w-10 h-10 rounded-full bg-[#fa0102] flex items-center justify-center font-bold text-white text-lg">1</div>
+                 <h2 class="text-2xl font-bold font-display uppercase">Primeira Resposta (WhatsApp)</h2>
+            </div>
+            
+            <div class="glass-panel bg-[#101010] border border-white/5 rounded-2xl p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-white/5 px-3 py-1 text-xs font-bold text-gray-500 rounded-bl-xl uppercase">Objetivo: Conexão Rápida</div>
+                
+                <div class="space-y-6 font-mono text-sm leading-relaxed text-gray-300">
+                    <div class="bg-[#1a1a1a] p-4 rounded-lg border-l-4 border-[#fa0102]">
+                        <p><strong class="text-white block mb-2">Mensagem:</strong></p>
+                        <p>"Olá, [Nome do Lead]! Tudo bem? 👋"</p>
+                        <p class="mt-2">"Aqui é o [Seu Nome], da [Sua Empresa]. Vi que você demonstrou interesse em [Produto/Oferta]."</p>
+                        <p class="mt-2">"Para eu te direcionar melhor: você já conhece como funciona o nosso método ou é o primeiro contato?"</p>
+                    </div>
+                    
+                    <div class="text-gray-500 text-xs italic">
+                        💡 Dica: Sempre termine com uma pergunta. Isso obriga o cérebro do cliente a processar uma resposta.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script 2 -->
+        <div class="mb-16">
+            <div class="flex items-center gap-4 mb-6">
+                 <div class="w-10 h-10 rounded-full bg-[#fa0102] flex items-center justify-center font-bold text-white text-lg">2</div>
+                 <h2 class="text-2xl font-bold font-display uppercase">Qualificação (3 Perguntas)</h2>
+            </div>
+            
+            <div class="glass-panel bg-[#101010] border border-white/5 rounded-2xl p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-white/5 px-3 py-1 text-xs font-bold text-gray-500 rounded-bl-xl uppercase">Objetivo: Filtrar Curiosos</div>
+                
+                <div class="space-y-6 font-mono text-sm leading-relaxed text-gray-300">
+                    <div class="bg-[#1a1a1a] p-4 rounded-lg border-l-4 border-yellow-500">
+                        <p><strong class="text-white block mb-2">Pergunta 1 (Contexto):</strong></p>
+                        <p>"Legal! Me conta um pouco: qual o seu maior desafio hoje em relação a [Problema que você resolve]?"</p>
+                    </div>
+
+                    <div class="bg-[#1a1a1a] p-4 rounded-lg border-l-4 border-yellow-500">
+                        <p><strong class="text-white block mb-2">Pergunta 2 (Urgência):</strong></p>
+                        <p>"Entendi. E você está buscando resolver isso para agora ou está apenas pesquisando para o futuro?"</p>
+                    </div>
+
+                    <div class="bg-[#1a1a1a] p-4 rounded-lg border-l-4 border-yellow-500">
+                        <p><strong class="text-white block mb-2">Pergunta 3 (Decisão/Orçamento):</strong></p>
+                        <p>"Perfeito. Se eu te apresentar uma solução que resolva [Problema citado], você teria disponibilidade para agendarmos uma conversa rápida amanhã?"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script 3 -->
+        <div class="mb-16">
+            <div class="flex items-center gap-4 mb-6">
+                 <div class="w-10 h-10 rounded-full bg-[#fa0102] flex items-center justify-center font-bold text-white text-lg">3</div>
+                 <h2 class="text-2xl font-bold font-display uppercase">Follow-up (D+1)</h2>
+            </div>
+            
+            <div class="glass-panel bg-[#101010] border border-white/5 rounded-2xl p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-white/5 px-3 py-1 text-xs font-bold text-gray-500 rounded-bl-xl uppercase">Objetivo: Recuperar Atenção</div>
+                
+                <div class="space-y-6 font-mono text-sm leading-relaxed text-gray-300">
+                    <div class="bg-[#1a1a1a] p-4 rounded-lg border-l-4 border-blue-500">
+                        <p><strong class="text-white block mb-2">Para quem parou de responder:</strong></p>
+                        <p>"Oi [Nome], tudo bem?"</p>
+                        <p class="mt-2">"Imagino que a correria esteja grande por aí. Só passando para saber se esse assunto ainda é prioridade ou se devo encerrar seu atendimento por aqui?"</p>
+                    </div>
+                    
+                    <div class="text-gray-500 text-xs italic">
+                        💡 Dica: O "encerrar atendimento" (Takeaway) gera medo da perda e reativa o lead.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center pt-8 border-t border-white/10 text-gray-600 text-sm">
+            &copy; 2026 NorthWay. Uso Exclusivo.
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

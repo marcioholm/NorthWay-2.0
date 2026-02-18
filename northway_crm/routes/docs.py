@@ -167,3 +167,13 @@ def view_book(id):
         abort(403)
         
     return render_template('docs/view_book.html', book=book)
+
+@docs_bp.route('/briefing-aquisicao')
+@login_required
+def briefing_northway():
+    return render_template('docs/briefing_northway.html')
+
+@docs_bp.route('/scripts-vendas')
+@login_required
+def scripts_northway():
+    return render_template('docs/scripts_northway.html')
