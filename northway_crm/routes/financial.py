@@ -426,6 +426,83 @@ def expenses_api():
     # For simplicity, returning categories for the modal first
     return jsonify({'error': 'Use specific endpoints'})
 
+@financial_bp.route('/api/financial/revenue', methods=['POST'])
+@login_required
+def create_revenue():
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    data = request.json
+    company_id = current_user.company_id
+    
+    # Validation
+    if not data.get('amount') or not data.get('due_date'):
+        return jsonify({'error': 'Valor e Data de Vencimento são obrigatórios.'}), 400
+
+    try:
+        from models import Client, Transaction
+        from datetime import datetime
+        
+        # 1. Handle Client (Existing or New)
+        client_id = data.get('client_id')
+        new_client_name = data.get('new_client_name')
+        
+        if not client_id and new_client_name:
+            # Create NEW Client on the fly
+            # Check dupes first?
+            existing = Client.query.filter_by(company_id=company_id, name=new_client_name).first()
+            if existing:
+                client_id = existing.id
+            else:
+                new_client = Client(
+                    name=new_client_name,
+                    company_id=company_id,
+                    status='ativo', # Active by default
+                    created_at=datetime.utcnow(),
+                    account_manager_id=current_user.id # Assigned to creator
+                )
+                db.session.add(new_client)
+                db.session.flush() # Get ID
+                client_id = new_client.id
+        elif not client_id and not new_client_name:
+             return jsonify({'error': 'Selecione um cliente ou informe um nome para o novo.'}), 400
+
+        # 2. Parse Data
+        try:
+             amount = float(str(data['amount']).replace('R$', '').replace('.', '').replace(',', '.'))
+        except:
+             return jsonify({'error': 'Formato de valor inválido.'}), 400
+             
+        due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
+        paid_date = None
+        if data.get('paid_date'):
+             paid_date = datetime.strptime(data['paid_date'], '%Y-%m-%d').date()
+        
+        # 3. Create Transaction
+        new_tx = Transaction(
+            company_id=company_id,
+            client_id=client_id,
+            description=data.get('description') or 'Receita Manual',
+            amount=amount,
+            due_date=due_date,
+            paid_date=paid_date,
+            status=data.get('status', 'pending'), # pending or paid
+            created_at=datetime.utcnow()
+        )
+        
+        db.session.add(new_tx)
+        
+        # 4. Update Client MRR if requested? (Optional, user might just want one-off)
+        # For now, just transaction.
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Receita lançada com sucesso!'})
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error adding revenue: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @financial_bp.route('/api/financial/categories')
 @login_required
 def get_categories():

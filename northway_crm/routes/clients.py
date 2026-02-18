@@ -74,6 +74,21 @@ def clients():
     
     return render_template('clients.html', clients=clients_list, pagination=pagination, users=users, today=date.today())
 
+@clients_bp.route('/api/clients/search', methods=['GET'])
+@login_required
+def search_clients_api():
+    query = request.args.get('q', '')
+    if not query or len(query) < 2:
+        return jsonify([])
+        
+    search_term = f"%{query}%"
+    clients = Client.query.filter(
+        Client.company_id == current_user.company_id,
+        Client.name.ilike(search_term)
+    ).limit(10).all()
+    
+    return jsonify([{'id': c.id, 'name': c.name, 'email': c.email} for c in clients])
+
 @clients_bp.route('/clients/<int:id>', methods=['GET'])
 @login_required
 def client_details(id):
@@ -467,7 +482,10 @@ def import_clients():
                     pass
             
             # Payment status parsing and health_status mapping
+            print(f"DEBUG IMPORT: Processing row {row_num}")
             payment_status = 'em_dia'
+            health_status = 'verde' # Default health
+            print(f"DEBUG IMPORT: health_status init: {health_status}")
             if payment_status_raw:
                 ps = payment_status_raw.lower().strip()
                 if 'inadimpl' in ps or 'overdue' in ps:

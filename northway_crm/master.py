@@ -2200,3 +2200,74 @@ def migrate_library_v7():
         return f"Migration V7 Successful! Created {created_count}, Updated {updated_count}. Access restricted to Master. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
     except Exception as e:
         return f"Error: {str(e)}"
+
+@master.route('/master/force-library-migration-v8', methods=['GET'])
+def migrate_library_v8():
+    """
+    Migration V8: Visual Polish & Organization
+    - Assigns specific cover images to all items.
+    - Standardizes categories to '... (Interno)' and '... (Externo)'.
+    """
+    if request.args.get('secret') != 'northway_super_diagnostic_99':
+        return "Forbidden", 403
+    
+    try:
+        from models import LibraryBook
+        from datetime import datetime
+        
+        # Mapping: route_name -> {category, cover_image}
+        updates = {
+             # External / Commercial
+            'docs.ebook_norte_pioneiro': {
+                'category': 'Comercial (Externo)',
+                'cover_image': 'north_growth.png'
+            },
+            'docs.ebook_campos_gerais': {
+                'category': 'Comercial (Externo)',
+                'cover_image': 'north_growth.png'
+            },
+            
+            # External / Training
+            'docs.guide_captacao': {
+                'category': 'Treinamento (Externo)',
+                'cover_image': 'north_meeting.png' # Using meeting image for training
+            },
+            
+            # Internal / Process
+            'docs.playbook_north_direcao': {
+                'category': 'Processos (Interno)',
+                'cover_image': 'north_structure.png'
+            },
+            'docs.manual_edicao': {
+                'category': 'Processos (Interno)',
+                'cover_image': 'compass_banner.png' # Using banner/compass for editing manual
+            },
+            'docs.briefing_northway': {
+                 'category': 'Processos (Interno)',
+                 'cover_image': 'north_compass.png'
+            },
+            
+            # Internal / Sales
+            'docs.scripts_northway': {
+                 'category': 'Vendas (Interno)',
+                 'cover_image': 'sdr-bg.png' # Using SDR bg for scripts
+            }
+        }
+        
+        updated_count = 0
+        for route, data in updates.items():
+            book = LibraryBook.query.filter_by(route_name=route).first()
+            if book:
+                book.category = data['category']
+                book.cover_image = data['cover_image']
+                # Refresh created_at to today if needed? No, user asked for "data de adição", better keep original or touch updated_at
+                # But to show "New" for user, we might want to ensure they look fresh.
+                # Let's preserve created_at to avoid lying, unless it's missing.
+                if not book.created_at: 
+                    book.created_at = datetime.utcnow()
+                updated_count += 1
+                
+        db.session.commit()
+        return f"Migration V8 Successful! Updated {updated_count} books with Covers & Categories. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"

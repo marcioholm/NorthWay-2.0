@@ -540,17 +540,24 @@
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
 
+    // Make functions global explicitly
+    window.openNewClientModal = openNewClientModal;
+    window.openImportModal = openImportModal;
+
     function openImportModal() {
+        console.log("Opening Import Modal");
         // Modal for importing clients via CSV
         const modalHtml = `
             <div id="importClientsModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center">
-                <div class="bg-white rounded-lg w-full max-w-md p-6">
+                <div class="bg-white rounded-lg w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-xl font-bold text-gray-900">Importar Clientes</h3>
-                        <button onclick="document.getElementById('importClientsModal').remove()" class="text-gray-500 hover:text-gray-700">
+                        <button type="button" onclick="document.getElementById('importClientsModal').remove()" class="text-gray-500 hover:text-gray-700">
                             <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
@@ -563,7 +570,7 @@
                                 <ul class="list-disc list-inside space-y-1 text-xs">
                                     <li>O arquivo deve ser <strong>.CSV</strong>.</li>
                                     <li>Colunas necessárias: <strong>Nome, Email, Telefone</strong>.</li>
-                                    <li>Colunas opcionais: <strong>Status</strong> (Ativo, Cancelado, Inativo, Ex-Cliente), <strong>Valor</strong>, <strong>Servico</strong>, <strong>Data Inicio</strong>, <strong>Tipo Contrato</strong> (mensal, trimestral, anual), <strong>Data Renovacao</strong>.</li>
+                                    <li>Colunas opcionais: <strong>Status</strong>, <strong>Valor</strong>, <strong>Servico</strong>, <strong>Data Inicio</strong>.</li>
                                 </ul>
                              </div>
                         </div>
@@ -604,7 +611,9 @@
             </div>
         `;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
 </script>
 {% endblock %}

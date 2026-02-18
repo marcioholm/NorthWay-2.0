@@ -69,6 +69,10 @@
                     class="px-3 py-1.5 bg-northway-red text-white rounded-md text-xs font-bold hover:bg-red-700 shadow-sm flex items-center gap-2">
                     <i data-lucide="plus" class="w-3 h-3"></i> Título a Pagar
                 </button>
+                <button onclick="toggleModal('addRevenueModal')"
+                    class="px-3 py-1.5 bg-green-600 text-white rounded-md text-xs font-bold hover:bg-green-700 shadow-sm flex items-center gap-2">
+                    <i data-lucide="plus" class="w-3 h-3"></i> Nova Receita
+                </button>
             </div>
         </div>
 
@@ -209,6 +213,107 @@
     </div>
 </div>
 
+<!-- Modal Add Revenue -->
+<div id="addRevenueModal" class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 animate-in fade-in zoom-in duration-200">
+        <form action="#" onsubmit="submitRevenue(event)" class="flex flex-col h-full">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-green-50 rounded-t-xl">
+                <h3 class="font-bold text-green-800 flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-4 h-4"></i> Nova Receita
+                </h3>
+                <button type="button" onclick="toggleModal('addRevenueModal')"
+                    class="text-green-800/50 hover:text-green-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+
+                <!-- Client Selection Mode -->
+                <div class="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                    <button type="button" onclick="setRevenueMode('existing')" id="btn-mode-existing"
+                        class="flex-1 py-1 text-xs font-bold rounded-md bg-white shadow-sm text-gray-800 transition-all">Cliente
+                        Existente</button>
+                    <button type="button" onclick="setRevenueMode('new')" id="btn-mode-new"
+                        class="flex-1 py-1 text-xs font-bold rounded-md text-gray-500 hover:text-gray-700 transition-all">Novo
+                        Cliente</button>
+                </div>
+                <input type="hidden" id="revenueMode" value="existing">
+
+                <!-- Existing Client Search -->
+                <div id="field-existing-client">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Buscar Cliente</label>
+                    <div class="relative">
+                        <input type="text" id="clientSearchInput" placeholder="Digite para buscar..."
+                            oninput="searchClients(this.value)"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-green-500 focus:border-green-500 pl-8">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5"></i>
+                        <input type="hidden" name="client_id" id="selectedClientId">
+
+                        <!-- Dropdown -->
+                        <div id="clientSearchResults"
+                            class="hidden absolute top-full left-0 w-full bg-white border border-gray-200 rounded-lg shadow-xl mt-1 z-50 max-h-40 overflow-y-auto">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Client Name -->
+                <div id="field-new-client" class="hidden">
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Nome do Novo Cliente</label>
+                    <input type="text" name="new_client_name" placeholder="Ex: Empresa ABC Ltda"
+                        class="w-full rounded-lg border-gray-300 text-sm focus:ring-green-500 focus:border-green-500">
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Descrição</label>
+                    <input type="text" name="description" placeholder="Ex: Mensalidade Fevereiro"
+                        class="w-full rounded-lg border-gray-300 text-sm focus:ring-green-500 focus:border-green-500">
+                </div>
+
+                <!-- Values Row -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Valor (R$)</label>
+                        <input type="text" name="amount" required placeholder="0,00"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Status</label>
+                        <select name="status"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-green-500 focus:border-green-500">
+                            <option value="paid">Recebido</option>
+                            <option value="pending">Pendente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dates Row -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Vencimento</label>
+                        <input type="date" name="due_date" required
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Data Recebimento</label>
+                        <input type="date" name="paid_date"
+                            class="w-full rounded-lg border-gray-300 text-sm focus:ring-green-500 focus:border-green-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+                <button type="button" onclick="toggleModal('addRevenueModal')"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+                <button type="submit"
+                    class="px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700 shadow-md">Salvar
+                    Receita</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         loadDRE();
@@ -313,5 +418,102 @@
             alert("Erro de conexão");
         }
     }
+
+    // --- Revenue Logic ---
+    function setRevenueMode(mode) {
+        document.getElementById('revenueMode').value = mode;
+        if (mode === 'existing') {
+            document.getElementById('field-existing-client').classList.remove('hidden');
+            document.getElementById('field-new-client').classList.add('hidden');
+            document.getElementById('btn-mode-existing').classList.add('bg-white', 'shadow-sm', 'text-gray-800');
+            document.getElementById('btn-mode-existing').classList.remove('text-gray-500');
+            document.getElementById('btn-mode-new').classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
+            document.getElementById('btn-mode-new').classList.add('text-gray-500');
+        } else {
+            document.getElementById('field-existing-client').classList.add('hidden');
+            document.getElementById('field-new-client').classList.remove('hidden');
+            document.getElementById('btn-mode-new').classList.add('bg-white', 'shadow-sm', 'text-gray-800');
+            document.getElementById('btn-mode-new').classList.remove('text-gray-500');
+            document.getElementById('btn-mode-existing').classList.remove('bg-white', 'shadow-sm', 'text-gray-800');
+            document.getElementById('btn-mode-existing').classList.add('text-gray-500');
+        }
+    }
+
+    let searchTimeout;
+    async function searchClients(query) {
+        clearTimeout(searchTimeout);
+        const resultsDiv = document.getElementById('clientSearchResults');
+
+        if (query.length < 2) {
+            resultsDiv.classList.add('hidden');
+            return;
+        }
+
+        searchTimeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/clients/search?q=${encodeURIComponent(query)}`);
+                const clients = await res.json();
+
+                if (clients.length > 0) {
+                    resultsDiv.innerHTML = clients.map(c => `
+                        <div onclick="selectClient(${c.id}, '${c.name.replace(/'/g, "\\'")}')" 
+                             class="px-4 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0">
+                            <div class="font-bold text-gray-800 text-xs">${c.name}</div>
+                            <div class="text-[10px] text-gray-400">${c.email || ''}</div>
+                        </div>
+                    `).join('');
+                    resultsDiv.classList.remove('hidden');
+                } else {
+                    resultsDiv.innerHTML = '<div class="px-4 py-2 text-xs text-gray-400">Nenhum cliente encontrado.</div>';
+                    resultsDiv.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }, 300);
+    }
+
+    function selectClient(id, name) {
+        document.getElementById('selectedClientId').value = id;
+        document.getElementById('clientSearchInput').value = name;
+        document.getElementById('clientSearchResults').classList.add('hidden');
+    }
+
+    async function submitRevenue(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Adjust payload based on mode
+        const mode = document.getElementById('revenueMode').value;
+        if (mode === 'new') {
+            data.client_id = null; // Clear if switched
+        } else {
+            data.new_client_name = null;
+        }
+
+        try {
+            const res = await fetch('/api/financial/revenue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+
+            if (json.success) {
+                toggleModal('addRevenueModal');
+                form.reset();
+                loadDRE();
+                alert('Receita lançada com sucesso!');
+            } else {
+                alert('Erro: ' + (json.error || 'Desconhecido'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão");
+        }
+    }
+</script>
 </script>
 {% endblock %}
