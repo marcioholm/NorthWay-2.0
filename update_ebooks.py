@@ -26,17 +26,27 @@ def update_ebooks():
                 'cover_image': 'north_growth.png',
                 'title': 'Radar Solar: Campos Gerais',
                 'description': 'Mapeamento estratégico do mercado solar nos Campos Gerais. Dados de potencial industrial e residencial.'
+            },
+            {
+                'route_name': 'docs.playbook_north_direcao',
+                'category': 'Processos',
+                'cover_image': 'north_compass.png',
+                'title': 'Playbook: North Direção',
+                'description': 'Procedimento Operacional Padrão (POP) para Construção de Sistemas de Crescimento. O que fazer, quando e como.'
             }
         ]
 
         for data in ebooks_data:
+            # Check if book exists
             book = LibraryBook.query.filter_by(route_name=data['route_name']).first()
             
             if book:
-                print(f"Updating existing book: {book.title}")
+                print(f"Updating existing book: {data['title']}")
+                book.title = data['title']
                 book.category = data['category']
                 book.cover_image = data['cover_image']
-                book.description = data['description'] # Ensure description is set
+                book.description = data['description']
+                book.active = True
             else:
                 print(f"Creating new book: {data['title']}")
                 book = LibraryBook(

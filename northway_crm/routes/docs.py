@@ -91,6 +91,11 @@ def ebook_campos_gerais():
 def presentation_growth_framework():
     return render_template('docs/presentation_growth_framework.html')
 
+@docs_bp.route('/playbook-north-direcao')
+@login_required
+def playbook_north_direcao():
+    return render_template('docs/pop_north_direcao.html')
+
 @docs_bp.route('/ebook-quanto-vale-a-hora')
 @login_required
 def ebook_time_value():

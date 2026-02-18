@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playbook de Atendimento NorthWay — North Direção</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;family=Montserrat:wght@400;600;700;800;900&amp;display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .bg-pattern-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .text-red-north {
+            color: #fa0102;
+        }
+
+        .bg-red-north {
+            background-color: #fa0102;
+        }
+
+        .border-red-north {
+            border-color: #fa0102;
+        }
+
+        @media print {
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+
+            body {
+                background-color: #050505 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .page-break {
+                break-after: always;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#050505] text-white font-sans selection:bg-[#fa0102]">
+
+    <!-- Controls -->
+    <div class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference no-print">
+        <a href="{{ url_for('docs.library') }}"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+        </a>
+        <button onclick="window.print()"
+            class="bg-white text-black px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-gray-200 transition-colors">
+            Baixar PDF
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="w-full">
+
+        <!-- Slide 1: Capa -->
+        <section class="min-h-screen relative flex items-center justify-center bg-pattern-grid page-break">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(250,1,2,0.15),_transparent)]">
+            </div>
+            <div class="relative z-10 text-center max-w-5xl px-6">
+                <div
+                    class="inline-block px-6 py-2 bg-red-north/10 border border-red-north rounded-full text-red-north text-xs font-black uppercase tracking-[0.2em] mb-8">
+                    Procedimento Operacional Padrão
+                </div>
+                <h1 class="text-6xl md:text-8xl font-black font-display tracking-tighter mb-8 leading-[0.9]">
+                    PLAYBOOK DE<br>ATENDIMENTO<br>
+                    <span class="text-red-north">NORTHWAY</span>
+                </h1>
+                <p class="text-2xl text-gray-400 font-light max-w-2xl mx-auto border-t border-white/10 pt-8 mt-8">
+                    North Direção — Procedimento Operacional Padrão para Construção de Sistemas de Crescimento
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 2: Manifesto -->
+        <section class="min-h-screen flex items-center justify-center page-break bg-[#080808]">
+            <div class="container mx-auto px-6 text-center max-w-4xl">
+                <i data-lucide="compass" class="w-16 h-16 text-red-north mx-auto mb-8"></i>
+                <h2 class="text-5xl font-black font-display mb-12 uppercase tracking-tight">Manifesto NorthWay</h2>
+
+                <div class="glass-panel p-12 rounded-3xl border-red-north/20 text-left">
+                    <p class="text-2xl font-light leading-relaxed mb-6 text-gray-300">
+                        "Na NorthWay, <strong class="text-white">não vendemos tráfego.</strong><br>
+                        Construímos sistemas de crescimento previsíveis."
+                    </p>
+                    <p class="text-2xl font-light leading-relaxed mb-6 text-gray-300">
+                        Acreditamos que empresas não crescem por sorte, <strong class="text-white">crescem por
+                            processo.</strong>
+                        Nosso papel é trazer direção estratégica, método de execução e leitura de dados para que cada
+                        cliente evolua com clareza.
+                    </p>
+                    <p class="text-2xl font-light leading-relaxed mb-6 text-gray-300">
+                        Marketing não é mágica. É <strong class="text-white">engenharia de aquisição, relacionamento e
+                            vendas.</strong>
+                    </p>
+
+                    <div class="h-1 w-24 bg-red-north my-8"></div>
+
+                    <p class="text-xl text-gray-400">
+                        Nossa responsabilidade é estruturar o caminho.<br>
+                        A responsabilidade do cliente é executar com disciplina.<br>
+                        <span class="text-red-north font-bold mt-4 block text-2xl">A Ordem devolve a vida.</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: Propósito do Playbook -->
+        <section class="min-h-screen flex items-center justify-center page-break bg-pattern-grid">
+            <div class="container mx-auto px-6 max-w-6xl">
+                <div class="grid md:grid-cols-2 gap-16 items-center">
+                    <div>
+                        <h2 class="text-5xl font-black font-display mb-8 leading-tight">Propósito do<br><span
+                                class="text-red-north">Playbook</span></h2>
+                        <div class="text-xl text-gray-400 space-y-6">
+                            <p>Este Playbook é o Procedimento Operacional Padrão (POP) da NorthWay para execução do
+                                serviço North Direção.</p>
+                            <p>Ele define, de forma clara e padronizada:</p>
+                            <ul class="space-y-2 text-white font-medium">
+                                <li class="flex items-center gap-2"><i data-lucide="check"
+                                        class="w-4 h-4 text-red-north"></i> O que fazer</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check"
+                                        class="w-4 h-4 text-red-north"></i> Quando fazer</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check"
+                                        class="w-4 h-4 text-red-north"></i> Como fazer</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check"
+                                        class="w-4 h-4 text-red-north"></i> O que entregar ao cliente</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check"
+                                        class="w-4 h-4 text-red-north"></i> O que medir</li>
+                                <li class="flex items-center gap-2"><i data-lucide="check"
+                                        class="w-4 h-4 text-red-north"></i> Como decidir</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div
+                        class="glass-panel p-10 rounded-[2rem] border-white/5 bg-gradient-to-br from-gray-900 to-black">
+                        <h3 class="text-2xl font-bold font-display mb-6 text-white uppercase tracking-wider">O Objetivo
+                            é Garantir:</h3>
+                        <div class="grid gap-4">
+                            <div class="p-4 bg-white/5 rounded-xl flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-red-north/20 flex items-center justify-center text-red-north font-bold">
+                                    1</div>
+                                <span class="text-lg font-bold">Previsibilidade de resultado</span>
+                            </div>
+                            <div class="p-4 bg-white/5 rounded-xl flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-red-north/20 flex items-center justify-center text-red-north font-bold">
+                                    2</div>
+                                <span class="text-lg font-bold">Padronização de entrega</span>
+                            </div>
+                            <div class="p-4 bg-white/5 rounded-xl flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-red-north/20 flex items-center justify-center text-red-north font-bold">
+                                    3</div>
+                                <span class="text-lg font-bold">Clareza de valor para o cliente</span>
+                            </div>
+                            <div class="p-4 bg-white/5 rounded-xl flex items-center gap-4">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-red-north/20 flex items-center justify-center text-red-north font-bold">
+                                    4</div>
+                                <span class="text-lg font-bold">Escala da operação sem perda de qualidade</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Visão Geral do Método -->
+        <section class="min-h-screen flex items-center justify-center page-break bg-[#050505]">
+            <div class="container mx-auto px-6 max-w-7xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-5xl font-black font-display mb-4 uppercase tracking-tighter">Visão Geral do Método
+                    </h2>
+                    <p class="text-xl text-gray-400">North Direção — Pilares de crescimento</p>
+                </div>
+
+                <!-- Pilares -->
+                <div class="grid grid-cols-4 gap-4 mb-20">
+                    <div class="glass-panel p-8 rounded-3xl text-center border-t-4 border-red-north relative group">
+                        <div
+                            class="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#050505] px-4 text-xs font-bold text-gray-500 uppercase">
+                            Pilar 1</div>
+                        <h3 class="text-3xl font-black font-display mb-2 uppercase">Atrair</h3>
+                        <div class="text-xs text-gray-400 mt-2">Atividades de criação<br>Métricas de
+                            controle<br>Entregáveis claros</div>
+                    </div>
+                    <div class="flex items-center justify-center -ml-6 -mr-6 z-10 text-gray-600"><i
+                            data-lucide="arrow-right" class="w-8 h-8"></i></div>
+
+                    <div
+                        class="glass-panel p-8 rounded-3xl text-center border-t-4 border-red-north relative group col-start-2">
+                        <div
+                            class="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#050505] px-4 text-xs font-bold text-gray-500 uppercase">
+                            Pilar 2</div>
+                        <h3 class="text-3xl font-black font-display mb-2 uppercase">Engajar</h3>
+                        <div class="text-xs text-gray-400 mt-2">Atividades de criação<br>Métricas de
+                            controle<br>Entregáveis claros</div>
+                    </div>
+                    <div class="flex items-center justify-center -ml-6 -mr-6 z-10 text-gray-600 col-start-2"><i
+                            data-lucide="arrow-right" class="w-8 h-8"></i></div>
+
+                    <div
+                        class="glass-panel p-8 rounded-3xl text-center border-t-4 border-red-north relative group col-start-3">
+                        <div
+                            class="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#050505] px-4 text-xs font-bold text-gray-500 uppercase">
+                            Pilar 3</div>
+                        <h3 class="text-3xl font-black font-display mb-2 uppercase">Vender</h3>
+                        <div class="text-xs text-gray-400 mt-2">Atividades de criação<br>Métricas de
+                            controle<br>Entregáveis claros</div>
+                    </div>
+                    <div class="flex items-center justify-center -ml-6 -mr-6 z-10 text-gray-600 col-start-3"><i
+                            data-lucide="arrow-right" class="w-8 h-8"></i></div>
+
+                    <div
+                        class="glass-panel p-8 rounded-3xl text-center border-t-4 border-red-north relative group col-start-4">
+                        <div
+                            class="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#050505] px-4 text-xs font-bold text-gray-500 uppercase">
+                            Pilar 4</div>
+                        <h3 class="text-3xl font-black font-display mb-2 uppercase">Reter</h3>
+                        <div class="text-xs text-gray-400 mt-2">Atividades de criação<br>Métricas de
+                            controle<br>Entregáveis claros</div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-12">
+                    <!-- Timeline Summary -->
+                    <div>
+                        <h3
+                            class="text-2xl font-bold font-display mb-6 text-white uppercase tracking-wider border-l-4 border-red-north pl-4">
+                            Linha do Tempo (90 dias)</h3>
+                        <div class="space-y-4">
+                            <div class="flex gap-4 items-start">
+                                <div class="w-24 font-bold text-red-north">Semana 1</div>
+                                <div class="text-gray-300">Direção estratégica</div>
+                            </div>
+                            <div class="flex gap-4 items-start">
+                                <div class="w-24 font-bold text-red-north">Semana 2</div>
+                                <div class="text-gray-300">Setup do sistema de aquisição</div>
+                            </div>
+                            <div class="flex gap-4 items-start">
+                                <div class="w-24 font-bold text-red-north">Semana 3-4</div>
+                                <div class="text-gray-300">Otimização inicial e consolidação</div>
+                            </div>
+                            <div class="flex gap-4 items-start">
+                                <div class="w-24 font-bold text-red-north">Mês 2-3</div>
+                                <div class="text-gray-300">Escala e maturação do sistema</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Definição de Sucesso -->
+                    <div class="glass-panel p-8 rounded-2xl bg-red-north/5 border-red-north/20">
+                        <h3 class="text-xl font-bold font-display mb-6 text-white uppercase tracking-wider">Definição
+                            Mínima de Sucesso</h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-center gap-3"><i data-lucide="target"
+                                    class="text-red-north w-5 h-5"></i> CPL abaixo de (ticket médio ÷ 3)</li>
+                            <li class="flex items-center gap-3"><i data-lucide="target"
+                                    class="text-red-north w-5 h-5"></i> SLA de atendimento cumprido</li>
+                            <li class="flex items-center gap-3"><i data-lucide="target"
+                                    class="text-red-north w-5 h-5"></i> 2 a 3 criativos vencedores ativos</li>
+                            <li class="flex items-center gap-3"><i data-lucide="target"
+                                    class="text-red-north w-5 h-5"></i> Remarketing rodando de forma estruturada</li>
+                            <li class="flex items-center gap-3"><i data-lucide="target"
+                                    class="text-red-north w-5 h-5"></i> Gargalo do funil identificado e tratado</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Papéis e Responsabilidades -->
+        <section class="min-h-screen flex items-center justify-center page-break bg-pattern-grid">
+            <div class="container mx-auto px-6 max-w-6xl">
+                <div class="text-center mb-16">
+                    <h2 class="text-5xl font-black font-display mb-4 uppercase tracking-tighter">Papéis e
+                        Responsabilidades</h2>
+                    <p class="text-xl text-gray-400">Clareza gera execução.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- NorthWay -->
+                    <div class="glass-panel p-10 rounded-3xl border-l-8 border-red-north">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div
+                                class="w-12 h-12 bg-red-north rounded-full flex items-center justify-center font-black text-white">
+                                N</div>
+                            <h3 class="text-3xl font-black font-display uppercase">NorthWay</h3>
+                        </div>
+                        <ul class="space-y-4 text-lg text-gray-300">
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-red-north mt-1 w-5 h-5 shrink-0"></i> Conduzir o processo estratégico
+                            </li>
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-red-north mt-1 w-5 h-5 shrink-0"></i> Estruturar oferta, funil e
+                                rastreamento</li>
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-red-north mt-1 w-5 h-5 shrink-0"></i> Criar campanhas, criativos e
+                                scripts</li>
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-red-north mt-1 w-5 h-5 shrink-0"></i> Analisar dados e tomar decisões
+                            </li>
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-red-north mt-1 w-5 h-5 shrink-0"></i> Entregar relatórios e planos de
+                                ação</li>
+                        </ul>
+                        <div class="mt-8 pt-8 border-t border-white/10 text-center font-bold text-white">
+                            A NorthWay constrói o sistema.
+                        </div>
+                    </div>
+
+                    <!-- Cliente -->
+                    <div class="glass-panel p-10 rounded-3xl border-l-8 border-white/20">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div
+                                class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center font-black text-white">
+                                C</div>
+                            <h3 class="text-3xl font-black font-display uppercase">Cliente</h3>
+                        </div>
+                        <ul class="space-y-4 text-lg text-gray-300">
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-gray-500 mt-1 w-5 h-5 shrink-0"></i> Responder leads dentro do SLA
+                                combinado</li>
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-gray-500 mt-1 w-5 h-5 shrink-0"></i> Executar o processo comercial
+                                acordado</li>
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-gray-500 mt-1 w-5 h-5 shrink-0"></i> Não alterar oferta sem alinhamento
+                            </li>
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-gray-500 mt-1 w-5 h-5 shrink-0"></i> Fornecer acessos e materiais</li>
+                            <li class="flex gap-3"><i data-lucide="chevron-right"
+                                    class="text-gray-500 mt-1 w-5 h-5 shrink-0"></i> Participar das reuniões de
+                                alinhamento</li>
+                        </ul>
+                        <div class="mt-8 pt-8 border-t border-white/10 text-center font-bold text-white">
+                            O cliente opera o sistema.
+                        </div>
+                    </div>
+                </div>
+                <p class="text-center mt-12 text-2xl font-light text-gray-400">
+                    Resultado é consequência da <span class="text-white font-bold">disciplina na execução</span>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 6: Cronograma Detalhado (Parte 1) -->
+        <section class="min-h-screen flex items-center justify-center page-break bg-[#0a0a0a]">
+            <div class="container mx-auto px-6 max-w-5xl py-20">
+                <h2 class="text-4xl font-black font-display mb-12 uppercase tracking-tighter text-center">Linha do Tempo
+                    (Semana 1-2)</h2>
+
+                <div class="space-y-12">
+                    <!-- Semana 1 -->
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-red-north">
+                        <div class="flex justify-between items-start mb-6">
+                            <h3 class="text-2xl font-black font-display uppercase">Semana 1 — Onboarding & Direção</h3>
+                            <span
+                                class="bg-red-north/20 text-red-north px-3 py-1 rounded text-xs font-bold uppercase">Setup</span>
+                        </div>
+                        <p class="text-gray-400 mb-6 font-light">Objetivo: Definir o rumo do projeto: metas, foco, KPIs,
+                            escopo e riscos.</p>
+
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="font-bold text-white mb-3 uppercase text-sm tracking-wider">Você faz:</h4>
+                                <ul class="text-sm text-gray-400 space-y-2">
+                                    <li>• Reunião de kickoff</li>
+                                    <li>• Coleta de briefing</li>
+                                    <li>• Diagnóstico por pilar</li>
+                                    <li>• Mapeamento de canais e histórico</li>
+                                    <li>• Definição de objetivo trimestral e KPIs</li>
+                                    <li>• Alinhamento de escopo</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white mb-3 uppercase text-sm tracking-wider">Você entrega:
+                                </h4>
+                                <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                                    <p class="font-bold text-white mb-2 text-xs uppercase">Documento “Direção do Projeto
+                                        (90 dias)”</p>
+                                    <ul class="text-xs text-gray-400 space-y-1">
+                                        <li>- objetivo principal</li>
+                                        <li>- KPIs por pilar</li>
+                                        <li>- foco do trimestre</li>
+                                        <li>- escopo fechado</li>
+                                        <li>- riscos e dependências</li>
+                                        <li>- próximos passos</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-white/5 text-sm text-gray-500 italic">
+                            Resultado esperado: O cliente entende exatamente o plano, o processo e o que esperar da
+                            NorthWay.
+                        </div>
+                    </div>
+
+                    <!-- Semana 2 -->
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-red-north">
+                        <div class="flex justify-between items-start mb-6">
+                            <h3 class="text-2xl font-black font-display uppercase">Semana 2 — Setup do Sistema de
+                                Aquisição</h3>
+                            <span
+                                class="bg-red-north/20 text-red-north px-3 py-1 rounded text-xs font-bold uppercase">Execução</span>
+                        </div>
+                        <p class="text-gray-400 mb-6 font-light">Objetivo: Colocar o sistema mínimo de geração de
+                            demanda no ar.</p>
+
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="font-bold text-white mb-3 uppercase text-sm tracking-wider">Você faz:</h4>
+                                <ul class="text-sm text-gray-400 space-y-2">
+                                    <li>• Setup de rastreio (Meta Pixel, GA4, Google Ads)</li>
+                                    <li>• Estrutura de contas de anúncios</li>
+                                    <li>• Criação de 2 a 4 criativos iniciais</li>
+                                    <li>• Definição de oferta e ângulo principal</li>
+                                    <li>• Criação de scripts de atendimento e follow-up</li>
+                                    <li>• Estruturação do funil comercial básico</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-white mb-3 uppercase text-sm tracking-wider">Você entrega:
+                                </h4>
+                                <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                                    <p class="font-bold text-white mb-2 text-xs uppercase">Documento “Sistema Inicial de
+                                        Aquisição”</p>
+                                    <ul class="text-xs text-gray-400 space-y-1">
+                                        <li>- canais escolhidos</li>
+                                        <li>- oferta principal</li>
+                                        <li>- scripts de atendimento</li>
+                                        <li>- funil desenhado</li>
+                                        <li>- SLA de resposta</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-white/5 text-sm text-gray-500 italic">
+                            Resultado esperado: O cliente visualiza o sistema funcionando e a geração de demanda
+                            iniciada.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Cronograma Detalhado (Parte 2) -->
+        <section class="min-h-screen flex items-center justify-center page-break bg-[#0a0a0a]">
+            <div class="container mx-auto px-6 max-w-5xl py-20">
+                <h2 class="text-4xl font-black font-display mb-12 uppercase tracking-tighter text-center">Linha do Tempo
+                    (Semana 3-Mês 3)</h2>
+
+                <div class="space-y-8">
+                    <!-- Semanas 3 e 4 -->
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-white">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-black font-display uppercase">Semanas 3 e 4 — Dados, Otimização e
+                                Consolidação</h3>
+                            <span
+                                class="bg-white/10 text-white px-3 py-1 rounded text-xs font-bold uppercase">Otimização</span>
+                        </div>
+                        <p class="text-gray-400 mb-4 font-light text-sm">Objetivo: Transformar dados iniciais em
+                            decisões estratégicas.</p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <ul class="text-sm text-gray-400 space-y-1">
+                                <li>• Analisa CPL, CTR, CPC, conversas</li>
+                                <li>• Pausa criativos fracos</li>
+                                <li>• Cria variações de vencedores</li>
+                                <li>• Ajusta scripts e propostas</li>
+                                <li>• Inicia remarketing</li>
+                            </ul>
+                            <div class="bg-white/5 p-3 rounded border border-white/10">
+                                <p class="font-bold text-white text-xs uppercase mb-1">Relatório Semanal (1 pág)</p>
+                                <p class="text-xs text-gray-500">O que rodou, o que funcionou, o que será testado.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fim Mês 1 -->
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-white">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-black font-display uppercase">Fim do Mês 1 — Relatório Mensal
+                                Executivo</h3>
+                        </div>
+                        <p class="text-gray-400 mb-4 font-light text-sm">Objetivo: Consolidar aprendizados e definir a
+                            estratégia do próximo ciclo.</p>
+                        <ul class="text-sm text-gray-400 space-y-1 mb-4">
+                            <li>• Analisa os 4 pilares</li>
+                            <li>• Identifica o gargalo principal</li>
+                            <li>• Define o foco do Mês 2</li>
+                        </ul>
+                        <div class="bg-white/5 p-3 rounded border border-white/10">
+                            <p class="font-bold text-white text-xs uppercase mb-1">Entregável: Relatório Mensal
+                                Executivo</p>
+                            <p class="text-xs text-gray-500">Resultado vs objetivo, evolução por pilar, gargalo
+                                principal, decisões.</p>
+                        </div>
+                    </div>
+
+                    <!-- Meses 2 e 3 -->
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-red-north">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-black font-display uppercase">Meses 2 e 3 — Consolidação e Escala
+                            </h3>
+                            <span
+                                class="bg-red-north/20 text-red-north px-3 py-1 rounded text-xs font-bold uppercase">Growth</span>
+                        </div>
+                        <p class="text-gray-400 mb-4 font-light text-sm">Objetivo: Transformar o sistema em máquina
+                            previsível de crescimento.</p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <ul class="text-sm text-gray-400 space-y-1">
+                                <li><strong class="text-white">Escala</strong> criativos vencedores (Atrair)</li>
+                                <li><strong class="text-white">Otimiza</strong> qualificação (Engajar)</li>
+                                <li><strong class="text-white">Ajusta</strong> funil (Vender)</li>
+                                <li><strong class="text-white">Ativa</strong> remarketing (Reter)</li>
+                            </ul>
+                            <div class="bg-white/5 p-3 rounded border border-white/10 flex items-center justify-center">
+                                <p class="font-bold text-white text-center">Relatório Mensal + Plano de Ação</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Checklist Operacional -->
+        <section class="min-h-screen flex items-center justify-center page-break bg-pattern-grid">
+            <div class="container mx-auto px-6 max-w-6xl">
+                <div class="text-center mb-12">
+                    <h2 class="text-5xl font-black font-display mb-4 uppercase tracking-tighter">Checklist Operacional
+                    </h2>
+                    <p class="text-xl text-gray-400">Pilar por Pilar</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Atrair -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3
+                            class="text-xl font-bold font-display uppercase mb-4 text-red-north flex items-center gap-2">
+                            <i data-lucide="magnet" class="w-5 h-5"></i> Atrair
+                        </h3>
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Você Faz:</p>
+                            <p class="text-sm text-white">Setup de rastreio, campanhas, criativos, testes semanais.</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase">Você Entrega:</p>
+                            <p class="text-sm text-white">Campanhas ativas, banco de criativos, relatório semanal.</p>
+                        </div>
+                    </div>
+
+                    <!-- Engajar -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3
+                            class="text-xl font-bold font-display uppercase mb-4 text-red-north flex items-center gap-2">
+                            <i data-lucide="message-circle" class="w-5 h-5"></i> Engajar
+                        </h3>
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Você Faz:</p>
+                            <p class="text-sm text-white">Scripts de atendimento, follow-up, ajustes por objeção real.
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase">Você Entrega:</p>
+                            <p class="text-sm text-white">Scripts, checklist de atendimento, calendário de
+                                conteúdo-guia.</p>
+                        </div>
+                    </div>
+
+                    <!-- Vender -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3
+                            class="text-xl font-bold font-display uppercase mb-4 text-red-north flex items-center gap-2">
+                            <i data-lucide="check-circle-2" class="w-5 h-5"></i> Vender
+                        </h3>
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Você Faz:</p>
+                            <p class="text-sm text-white">Funil, script de reunião, proposta padrão.</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase">Você Entrega:</p>
+                            <p class="text-sm text-white">Funil desenhado, proposta padrão, playbook comercial.</p>
+                        </div>
+                    </div>
+
+                    <!-- Reter -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3
+                            class="text-xl font-bold font-display uppercase mb-4 text-red-north flex items-center gap-2">
+                            <i data-lucide="repeat" class="w-5 h-5"></i> Reter
+                        </h3>
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Você Faz:</p>
+                            <p class="text-sm text-white">Remarketing, reativação e pós-venda.</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase">Você Entrega:</p>
+                            <p class="text-sm text-white">Campanhas de remarketing ativas, plano de reativação mensal,
+                                relatório.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 9: Regra de Ouro -->
+        <section class="min-h-screen flex items-center justify-center page-break bg-[#080808]">
+            <div class="container mx-auto px-6 max-w-4xl text-center">
+                <i data-lucide="award" class="text-red-north w-20 h-20 mx-auto mb-8"></i>
+                <h2 class="text-5xl font-black font-display mb-12 uppercase tracking-tight">Regra de Ouro Para Escalar
+                </h2>
+
+                <div class="glass-panel p-12 rounded-3xl border-red-north/30">
+                    <p class="text-3xl font-light leading-relaxed mb-8">
+                        "O cliente não compra tráfego.<br>
+                        O cliente compra <strong class="text-white">processo, direção e clareza de evolução.</strong>"
+                    </p>
+                    <div class="h-1 w-32 bg-red-north mx-auto mb-8"></div>
+                    <p class="text-xl text-gray-400">
+                        Quando o cliente entende <strong>o que está sendo feito</strong>, <strong>por que está sendo
+                            feito</strong>, <strong>o que funcionou</strong> e <strong>o que será testado</strong>...
+                    </p>
+                    <p class="mt-8 text-2xl font-bold text-white uppercase tracking-wider">
+                        A relação deixa de ser operacional e passa a ser <span
+                            class="text-red-north">estratégica</span>.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 10: Glossário & Detalhes -->
+        <section class="min-h-screen py-24 flex items-center justify-center page-break bg-[#050505]">
+            <div class="container mx-auto px-6 max-w-6xl">
+                <h2 class="text-4xl font-black font-display mb-12 uppercase tracking-tighter text-center">Glossário
+                    NorthWay</h2>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div
+                        class="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-red-north/50 transition-colors">
+                        <strong class="text-red-north block text-sm mb-1">CPL</strong>
+                        <span class="text-xs text-gray-400">Custo por Lead</span>
+                    </div>
+                    <div
+                        class="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-red-north/50 transition-colors">
+                        <strong class="text-red-north block text-sm mb-1">CTR</strong>
+                        <span class="text-xs text-gray-400">Taxa de cliques</span>
+                    </div>
+                    <div
+                        class="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-red-north/50 transition-colors">
+                        <strong class="text-white block text-sm mb-1">Pixel</strong>
+                        <span class="text-xs text-gray-400">Rastreamento de conversão</span>
+                    </div>
+                    <div
+                        class="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-red-north/50 transition-colors">
+                        <strong class="text-white block text-sm mb-1">SLA</strong>
+                        <span class="text-xs text-gray-400">Tempo de resposta</span>
+                    </div>
+                    <div
+                        class="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-red-north/50 transition-colors">
+                        <strong class="text-white block text-sm mb-1">Gargalo</strong>
+                        <span class="text-xs text-gray-400">Perda de conversão</span>
+                    </div>
+                    <div
+                        class="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-red-north/50 transition-colors">
+                        <strong class="text-white block text-sm mb-1">Criativo</strong>
+                        <span class="text-xs text-gray-400">Peça visual (Anúncio)</span>
+                    </div>
+                    <div
+                        class="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-red-north/50 transition-colors">
+                        <strong class="text-white block text-sm mb-1">Offer</strong>
+                        <span class="text-xs text-gray-400">Proposta de valor</span>
+                    </div>
+                    <div
+                        class="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-red-north/50 transition-colors">
+                        <strong class="text-white block text-sm mb-1">Escala</strong>
+                        <span class="text-xs text-gray-400">Aumento com eficiência</span>
+                    </div>
+                </div>
+
+                <div class="mt-16 p-8 bg-gray-900 rounded-2xl border border-white/10">
+                    <h3 class="text-xl font-bold font-display mb-4 text-white uppercase">Recursos Adicionais (Anexos)
+                    </h3>
+                    <div class="grid md:grid-cols-2 gap-8 text-sm text-gray-400">
+                        <div>
+                            <strong class="text-white block mb-2">Briefing (Blocos)</strong>
+                            <ul class="space-y-1 list-disc list-inside">
+                                <li>Bloco 1: Dinheiro & Meta</li>
+                                <li>Bloco 2: Oferta & Público</li>
+                                <li>Bloco 3: Aquisição</li>
+                                <li>Bloco 4: Operação & Vendas</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-white block mb-2">Scripts Padrão</strong>
+                            <ul class="space-y-1 list-disc list-inside">
+                                <li>1ª Resposta (WhatsApp)</li>
+                                <li>Qualificação (3 perguntas)</li>
+                                <li>Follow-up D+1</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Initialization -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
