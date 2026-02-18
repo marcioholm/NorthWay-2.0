@@ -16,7 +16,7 @@ def check_master_access():
         'master.company_materials', 'master.run_library_migration', 
         'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 
         'master.refresh_roles', 'master.sync_schema', 'master.diagnostic_access',
-        'master.diagnostic_access_v2', 'master.migrate_library_v3'
+        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4'
     ]
     
     if request.endpoint in whitelist:
@@ -1911,3 +1911,57 @@ def sync_schema():
         flash(f"Erro ao sincronizar banco: {e}", "error")
         
     return redirect(url_for('master.dashboard'))
+
+@master.route('/master/force-library-migration-v4', methods=['GET'])
+def migrate_library_v4():
+    if request.args.get('secret') != 'northway_super_diagnostic_99':
+        return "Forbidden", 403
+    
+    try:
+        from models import LibraryBook, Company
+        db.create_all()
+        
+        # Only add the new Playbook, but we could add others if needed.
+        # This is a delta migration.
+        new_books = [
+            {
+                'title': 'Playbook: North Direção',
+                'description': 'Procedimento Operacional Padrão (POP) e Playbook de Atendimento.',
+                'category': 'Processos',
+                'route_name': 'docs.playbook_north_direcao',
+                'cover_image': None,
+                'active': True
+            }
+        ]
+        
+        all_companies = Company.query.all()
+        count = 0
+        
+        for data in new_books:
+            book = LibraryBook.query.filter_by(route_name=data['route_name']).first()
+            if not book:
+                book = LibraryBook(
+                    title=data['title'],
+                    description=data['description'],
+                    category=data['category'],
+                    route_name=data['route_name'],
+                    active=data['active']
+                )
+                db.session.add(book)
+                count += 1
+            
+            # Update attributes regardless
+            book.title = data['title']
+            book.description = data['description']
+            book.category = data['category']
+            book.active = data['active']
+            
+            # Ensure links
+            for comp in all_companies:
+                if comp not in book.allowed_companies:
+                    book.allowed_companies.append(comp)
+        
+        db.session.commit()
+        return f"Migration V4 Successful! Added/Updated {count} books. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"
