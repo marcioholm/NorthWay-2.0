@@ -16,7 +16,7 @@ def check_master_access():
         'master.company_materials', 'master.run_library_migration', 
         'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 
         'master.refresh_roles', 'master.sync_schema', 'master.diagnostic_access',
-        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5', 'master.migrate_library_v6'
+        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5', 'master.migrate_library_v6', 'master.migrate_library_v7'
     ]
     
     if request.endpoint in whitelist:
@@ -2022,5 +2022,81 @@ def migrate_library_v5():
         
         db.session.commit()
         return f"Migration V5 Successful! Added {count} attachment docs. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+@master.route('/master/force-library-migration-v6', methods=['GET'])
+def migrate_library_v6():
+    """
+    Consolidated Migration: V4 (Playbook) + V5 (Attachments).
+    Ensures all new materials are present.
+    """
+    if request.args.get('secret') != 'northway_super_diagnostic_99':
+        return "Forbidden", 403
+    
+    try:
+        from models import LibraryBook, Company
+        db.create_all()
+        
+        # Consolidated list of ALL recent additions
+        books_to_ensure = [
+            {
+                'title': 'Playbook: North Direção',
+                'description': 'Procedimento Operacional Padrão (POP) e Playbook de Atendimento.',
+                'category': 'Processos',
+                'route_name': 'docs.playbook_north_direcao',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Briefing de Aquisição',
+                'description': 'Ferramenta estratégica para setup de campanhas.',
+                'category': 'Processos',
+                'route_name': 'docs.briefing_northway',
+                'cover_image': None,
+                'active': True
+            },
+            {
+                'title': 'Scripts de Vendas',
+                'description': 'Roteiros de vendas e técnicas de fechamento para o Playbook.',
+                'category': 'Vendas',
+                'route_name': 'docs.scripts_northway',
+                'cover_image': None,
+                'active': True
+            }
+        ]
+        
+        all_companies = Company.query.all()
+        count = 0
+        updated = 0
+        
+        for data in books_to_ensure:
+            book = LibraryBook.query.filter_by(route_name=data['route_name']).first()
+            if not book:
+                book = LibraryBook(
+                    title=data['title'],
+                    description=data['description'],
+                    category=data['category'],
+                    route_name=data['route_name'],
+                    active=data['active']
+                )
+                db.session.add(book)
+                count += 1
+            else:
+                updated += 1
+            
+            # Ensure attributes are up to date
+            book.title = data['title']
+            book.description = data['description']
+            book.category = data['category']
+            book.active = data['active']
+            
+            # Ensure links to all companies
+            for comp in all_companies:
+                if comp not in book.allowed_companies:
+                    book.allowed_companies.append(comp)
+        
+        db.session.commit()
+        return f"Migration V6 Successful! Created {count} new books, Updated {updated}. Linked to {len(all_companies)} companies. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
     except Exception as e:
         return f"Error: {str(e)}"

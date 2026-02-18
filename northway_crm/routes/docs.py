@@ -177,3 +177,13 @@ def briefing_northway():
 @login_required
 def scripts_northway():
     return render_template('docs/scripts_northway.html')
+
+@docs_bp.route('/guide-captacao')
+@login_required
+def guide_captacao():
+    return render_template('docs/guide_captacao.html')
+
+@docs_bp.route('/manual-edicao')
+@login_required
+def manual_edicao():
+    return render_template('docs/manual_edicao.html')
