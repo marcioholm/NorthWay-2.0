@@ -1,0 +1,52 @@
+# Northway CRM
+
+## O que é
+CRM moderno baseado em Flask para gerenciamento de leads, prospects e clientes. Integra com Supabase para banco de dados, Google OAuth para autenticação e contém múltiplos módulos de funcionalidade (prospecção, contratos, etc).
+
+## Stack
+- **Backend:** Python Flask 3.0.3
+- **Database:** Supabase (PostgreSQL)
+- **Auth:** Google OAuth 2.0
+- **Frontend:** HTML / CSS / JavaScript (templates Flask)
+- **Deploy:** Vercel
+- **ORM:** SQLAlchemy com Flask-SQLAlchemy
+
+## Estrutura
+- `/northway_crm/app.py` — App principal Flask
+- `/northway_crm/models.py` — Modelos SQLAlchemy
+- `/northway_crm/auth.py` — Lógica de autenticação
+- `/northway_crm/routes/` — Blueprints de rotas
+- `/northway_crm/services/` — Serviços (Supabase, etc)
+- `/northway_crm/templates/` — Templates HTML Jinja2
+- `/northway_crm/static/` — CSS, JS, imagens
+- `/northway_crm/maintenance/` — Scripts de manutenção
+- `/northway_crm/scripts/` — Utilitários e seed data
+
+## Comandos
+```bash
+# Instalar dependências
+pip install -r requirements.txt
+
+# Rodar localmente
+python northway_crm/app.py
+
+# Migrations
+flask db upgrade
+
+# Seed data
+python northway_crm/seed_northway_data.py
+```
+
+## Git Workflow
+- Branch `dev` para desenvolvimento
+- Branch `main` para produção
+- NUNCA push direto na main (Vercel)
+
+## Variáveis de Ambiente
+Ver `.env.example` para todas as variáveis necessárias.
+Principais:
+- `SUPABASE_URL` — URL do projeto Supabase
+- `SUPABASE_KEY` — Chave pública Supabase
+- `GOOGLE_OAUTH_ID` / `GOOGLE_OAUTH_SECRET` — Google OAuth
+- `DATABASE_URL` — Conexão PostgreSQL
+- `SECRET_KEY` — Chave secreta Flask
