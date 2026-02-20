@@ -219,6 +219,9 @@ def search_contact(current_user):
         # IGNORE GROUPS early
         if "@g.us" in str(phone):
              return jsonify({'found': False, 'reason': 'group_ignored'}), 404
+        
+        # Strip individual JID suffix if present
+        phone = str(phone).replace("@c.us", "")
 
         from services.whatsapp_service import WhatsAppService
         clean_phone = WhatsAppService.normalize_phone(phone)

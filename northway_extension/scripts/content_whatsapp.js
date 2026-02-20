@@ -61,7 +61,7 @@ const NWDB = {
 
 // --- INITIALIZATION ---
 async function init() {
-    console.log("NW: Initializing... v2.1 - Syntax Fixed");
+    console.log("NW: Initializing... v2.5.1 - Anti-Ban & JID Fix");
 
     let sidebarContainer = document.getElementById('northway-sidebar-host');
     if (!sidebarContainer) {
