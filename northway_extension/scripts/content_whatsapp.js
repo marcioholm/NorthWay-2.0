@@ -4,6 +4,8 @@ let currentPhone = null;
 let currentLeadId = null;
 let intervalChat = null;
 let intervalLayout = null;
+let currentContactName = null;
+let currentPhoneValue = null;
 
 // --- INDEXEDDB HELPER FOR FILE PERSISTENCE ---
 const NWDB = {
@@ -61,7 +63,7 @@ const NWDB = {
 
 // --- INITIALIZATION ---
 async function init() {
-    console.log("NW: Initializing... v2.5.3 - Safe Loading");
+    console.log("NW: Initializing... v2.5.4 - Fix Flashing UI");
 
     let sidebarContainer = document.getElementById('northway-sidebar-host');
     if (!sidebarContainer) {
@@ -311,7 +313,16 @@ function checkActiveChat() {
             }
         }
 
-        if (name === "WhatsApp") name = null;
+        // --- CACHE RECOVERY ---
+        // If Fiber randomly fails to find phone, restore it if name matches our cache
+        if (!phone && name && currentContactName === name && currentPhoneValue) {
+            phone = currentPhoneValue;
+        }
+
+        if (name && phone) {
+            currentContactName = name;
+            currentPhoneValue = phone;
+        }
 
         // --- DISPATCH ---
         if (isBcActive) {
@@ -319,25 +330,34 @@ function checkActiveChat() {
             return;
         }
 
-        if (isGroup) {
-            const key = `GROUP:${name}`;
-            if (currentPhone !== key) {
-                currentPhone = key;
+        const isSystemChat = name === "WhatsApp" || name === "Contato";
+        if (isSystemChat) {
+            // Do not track WhatsApp internal channels or generic Contato placeholder
+            return;
+        }
+
+        const chatId = isGroup ? `GROUP:${name}` : (phone || name);
+
+        if (!chatId) {
+            if (currentPhone !== null) {
+                currentPhone = null;
+                showState('idle');
+            }
+            return;
+        }
+
+        if (chatId !== currentPhone) {
+            currentPhone = chatId;
+            if (isGroup) {
                 showState('group');
                 const el = shadowRoot.getElementById('nw-group-name');
                 if (el) el.textContent = name || "Grupo";
+            } else {
+                // If phone is found, pass phone. Otherwise it's just a name-based search.
+                updateSidebar(name || phone, phone, name, avatarUrl);
             }
-        } else if (phone && phone !== currentPhone) {
-            currentPhone = phone;
-            updateSidebar(name || phone, phone, null, avatarUrl);
-        } else if (name && name !== currentPhone && !name.includes("WhatsApp") && name !== "Contato") {
-            currentPhone = name;
-            updateSidebar(name, null, name, avatarUrl);
-        } else if (!name && !phone && currentPhone !== null && !isBcActive) {
-            // Reset if no chat is active AND no broadcast is running
-            currentPhone = null;
-            showState('idle');
         }
+
 
     } catch (err) {
         console.log("NW: Detection Error", err);
@@ -1647,6 +1667,8 @@ function unmount() {
     currentPhone = null;
     currentLeadId = null;
     shadowRoot = null;
+    currentContactName = null;
+    currentPhoneValue = null;
 
     // 4. Reset Layout
     const appWrapper = document.getElementById('app');
