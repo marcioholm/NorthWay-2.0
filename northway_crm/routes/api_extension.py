@@ -323,6 +323,21 @@ def get_pipelines(current_user):
         
     return jsonify(result)
 
+@api_ext.route('/api/ext/templates', methods=['GET'])
+@token_required
+def get_templates(current_user):
+    from models import QuickMessage
+    templates = QuickMessage.query.filter_by(company_id=current_user.company_id).all()
+    result = []
+    for t in templates:
+        result.append({
+            'id': t.id,
+            'title': t.title,
+            'content': t.content,
+            'shortcut': t.shortcut
+        })
+    return jsonify(result)
+
 @api_ext.route('/api/ext/leads', methods=['POST'])
 @token_required
 def create_lead(current_user):
