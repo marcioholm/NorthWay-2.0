@@ -61,7 +61,7 @@ const NWDB = {
 
 // --- INITIALIZATION ---
 async function init() {
-    console.log("NW: Initializing... v2.5.2 - Robust Detection");
+    console.log("NW: Initializing... v2.5.3 - Safe Loading");
 
     let sidebarContainer = document.getElementById('northway-sidebar-host');
     if (!sidebarContainer) {
@@ -375,6 +375,7 @@ function showState(state) {
 }
 
 async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
+    console.log(`NW: Updating sidebar for ${name} (${phone})`);
     showState('loading');
     getEl('nw-contact-name').textContent = name || "Desconhecido";
 
@@ -394,17 +395,38 @@ async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
         initialsEl.classList.remove('hidden');
     }
 
-    if (!phone && !searchName) return;
+    if (!phone && !searchName) {
+        console.warn("NW: No phone or searchName provided, showing idle");
+        showState('idle');
+        return;
+    }
 
     try {
-        const response = await chrome.runtime.sendMessage({
+        // Promise timeout for 10 seconds to avoid infinite loading
+        const responsePromise = chrome.runtime.sendMessage({
             action: "GET_CONTACT",
             phone: phone,
             name: searchName
         });
 
-        if (response.error) {
+        const timeoutPromise = new Promise(resolve =>
+            setTimeout(() => resolve({ error: 'timeout' }), 10000)
+        );
+
+        const response = await Promise.race([responsePromise, timeoutPromise]);
+        console.log("NW: Contact Search Response", response);
+
+        if (!response || response.error) {
             getEl('nw-connection-status').className = 'status-dot disconnected';
+
+            if (response && response.needsLogin) {
+                console.warn("NW: User is unauthorized, showing idle/login");
+                // Reset or show login if possible
+                showState('idle');
+            } else {
+                // If error or timeout, we can't just hang. Show 'new' or 'idle'
+                showState('idle');
+            }
             return;
         }
 
@@ -415,7 +437,7 @@ async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
             currentLeadId = null;
             showState('new');
             getEl('nw-new-name').value = name;
-            getEl('nw-new-phone').value = phone ? phone.split('@')[0] : "";
+            getEl('nw-new-phone').value = phone ? phone.split('@')[0].replace(/\D/g, '') : "";
             getEl('nw-new-phone').placeholder = phone ? "Detectado" : "Digite o telefone";
             loadPipelines(null, 'nw-new-stage');
         } else {
@@ -423,7 +445,8 @@ async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
             renderContact(response.data, avatarUrl);
         }
     } catch (e) {
-        console.log("NW Error", e);
+        console.log("NW Critical Error", e);
+        showState('idle');
     }
 }
 

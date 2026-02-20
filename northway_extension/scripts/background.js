@@ -124,8 +124,18 @@ async function login(email, password) {
 }
 
 async function apiCall(endpoint, method, body = null) {
-    const token = await getToken();
-    if (!token) return { error: "Unauthorized" };
+    let token = null;
+    try {
+        token = await getToken();
+    } catch (e) {
+        console.error("NW: Token retrieval failed", e);
+        return { error: "Token error" };
+    }
+
+    if (!token) {
+        console.warn("NW: No auth token found");
+        return { error: "Unauthorized", needsLogin: true };
+    }
 
     try {
         const options = {
@@ -139,7 +149,10 @@ async function apiCall(endpoint, method, body = null) {
 
         const response = await fetch(`${API_BASE}${endpoint}`, options);
 
-        // Handle 404 cleanly
+        if (response.status === 401 || response.status === 403) {
+            return { error: "Unauthorized", needsLogin: true };
+        }
+
         if (response.status === 404) return { found: false };
 
         if (!response.ok) {
@@ -148,6 +161,7 @@ async function apiCall(endpoint, method, body = null) {
 
         return await response.json();
     } catch (e) {
-        return { error: e.message };
+        console.error("NW: API Call Exception", e);
+        return { error: e.message || "Connection failed" };
     }
 }
