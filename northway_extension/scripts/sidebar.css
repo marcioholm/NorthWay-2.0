@@ -349,3 +349,34 @@ textarea:focus {
     background: #333;
     border-radius: 5px;
 }
+
+/* === SKELETONS === */
+.skeleton-header {
+    height: 30px;
+    width: 60%;
+    background: linear-gradient(90deg, #1a1a20 25%, #2a2a35 50%, #1a1a20 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.skeleton-line {
+    height: 12px;
+    width: 100%;
+    background: linear-gradient(90deg, #1a1a20 25%, #2a2a35 50%, #1a1a20 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}

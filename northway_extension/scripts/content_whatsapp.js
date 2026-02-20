@@ -61,7 +61,7 @@ const NWDB = {
 
 // --- INITIALIZATION ---
 async function init() {
-    console.log("NW: Initializing... v2.5.1 - Anti-Ban & JID Fix");
+    console.log("NW: Initializing... v2.5.2 - Robust Detection");
 
     let sidebarContainer = document.getElementById('northway-sidebar-host');
     if (!sidebarContainer) {
@@ -242,14 +242,20 @@ function checkActiveChat() {
 
                 if (name) name = name.trim();
 
+                // Failsafe: If phone is null but name looks like a phone, extract it
+                if (!phone && name && name.match(/\+?\d[\d\s-]{10,}/)) {
+                    phone = name.replace(/\D/g, '') + "@c.us";
+                }
+
                 // 5. Group Refinement
                 const subtitleEl = header.querySelector('span[title*=","]') ||
                     header.querySelector('._aa-y') ||
-                    header.querySelector('._am_8'); // New subtitle class
+                    header.querySelector('._am_8') ||
+                    header.querySelector('span[data-icon="group"]');
 
                 if (subtitleEl) {
                     const subText = subtitleEl.innerText.toLowerCase();
-                    if (subText.includes(',') || subText.includes('participan') || subText.includes('clique') || subText.includes('online') === false && subText.length > 20) {
+                    if (subText.includes(',') || subText.includes('participan') || subText.includes('clique') || (subText.includes('online') === false && subText.length > 20)) {
                         isGroup = true;
                     }
                 }
