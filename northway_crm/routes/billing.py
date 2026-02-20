@@ -9,7 +9,7 @@ import os
 
 billing_bp = Blueprint('billing', __name__, url_prefix='/billing')
 
-ASAAS_WEBHOOK_TOKEN = os.environ.get('ASAAS_WEBHOOK_TOKEN', 'my-secret-token')
+ASAAS_WEBHOOK_TOKEN = os.environ.get('ASAAS_WEBHOOK_TOKEN', 'whsec_3PF5yv-lNJWNvIFBR5lgRO9BQJBUGQKCtQ4z9MsoVyU')
 
 @billing_bp.route('/payment-pending')
 @login_required

@@ -40,6 +40,10 @@ def configure():
     api_url = request.form.get('api_url', 'https://api.z-api.io').strip()
     client_token = request.form.get('client_token', '').strip()
     
+    # Anti-ban delays
+    min_delay = request.form.get('min_delay', '1').strip()
+    max_delay = request.form.get('max_delay', '5').strip()
+    
     if not instance_id or not token:
         flash('Instance ID e Token são obrigatórios.', 'error')
         return redirect(url_for('admin.settings_integrations'))
@@ -54,7 +58,9 @@ def configure():
     integration.config_json = json.dumps({
         'instance_id': instance_id,
         'api_url': api_url.rstrip('/'),
-        'client_token': client_token
+        'client_token': client_token,
+        'min_delay': int(min_delay) if min_delay.isdigit() else 1,
+        'max_delay': int(max_delay) if max_delay.isdigit() else 5
     })
     integration.is_active = True
     

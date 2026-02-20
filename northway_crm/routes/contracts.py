@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import db, Client, Contract, ContractTemplate, Transaction, Task, WhatsAppMessage
 from utils import create_notification, get_contract_replacements, get_date_extenso_br
 from services.commission_service import CommissionService
+from services.asaas_service import create_customer, create_payment, cancel_payment
 from datetime import datetime, date, timedelta
 import json
 import uuid
@@ -562,12 +563,22 @@ def terminate_contract(id):
             Transaction.status.in_(['pending', 'overdue'])
         ).all()
     
-        # from services.asaas_service import AsaasService
-        # for tx in targets:
-        #     tx.status = 'cancelled'
-        #     if tx.asaas_id:
-        #         try: AsaasService.cancel_payment(contract.company_id, tx.asaas_id)
-        #         except: pass
+        # Cancel Pending/Overdue in Asaas
+        tenant_integration = Integration.query.filter_by(
+            company_id=current_user.company_id, 
+            service='asaas', 
+            is_active=True
+        ).first()
+        tenant_api_key = tenant_integration.api_key if tenant_integration else None
+
+        for tx in targets:
+            tx.status = 'cancelled'
+            if tx.asaas_id and tenant_api_key:
+                try: 
+                    cancel_payment(tx.asaas_id, api_key=tenant_api_key)
+                    current_app.logger.info(f"✅ Cancelled Asaas Payment {tx.asaas_id} for contract termination.")
+                except Exception as e: 
+                    current_app.logger.error(f"❌ Failed to cancel Asaas Payment {tx.asaas_id}: {e}")
     
         db.session.commit()
     
@@ -580,11 +591,23 @@ def terminate_contract(id):
             )
             db.session.add(fee_tx)
             db.session.commit()
-            # try:
-            #     cust_id = AsaasService.create_customer(contract.company_id, contract.client)
-            #     AsaasService.create_payment(contract.company_id, cust_id, fee_tx)
-            #     db.session.commit()
-            # except: pass
+            
+            if tenant_api_key and contract.client.asaas_customer_id:
+                try:
+                    payment, err = create_payment(
+                        customer_id=contract.client.asaas_customer_id,
+                        value=penalty,
+                        due_date=due_date.strftime('%Y-%m-%d'),
+                        description=f"Multa Rescisória - Contrato #{contract.id}",
+                        external_ref=fee_tx.id,
+                        api_key=tenant_api_key
+                    )
+                    if payment:
+                        fee_tx.asaas_id = payment.get('id')
+                        fee_tx.asaas_invoice_url = payment.get('invoiceUrl')
+                        db.session.commit()
+                except Exception as e:
+                    current_app.logger.error(f"❌ Failed to create penalty payment: {e}")
     
         if request.is_json:
             return jsonify({'message': 'Contrato encerrado com sucesso.'})
@@ -827,8 +850,10 @@ def regenerate_billing(id):
             return redirect(url_for('contracts.view_contract', id=id))
 
         # 3. Iterate Transactions and Generate Boletos
-        # Get optional new due date from form
+        # Get optional new due date and notification preference from form
         new_due_date_str = request.form.get('new_due_date')
+        disable_notifications = request.form.get('disable_notifications') == 'true'
+        
         new_due_date = None
         if new_due_date_str:
             try:
@@ -860,7 +885,8 @@ def regenerate_billing(id):
                     due_date=t.due_date.strftime('%Y-%m-%d'),
                     description=f"Contrato #{contract.id} - {t.description}",
                     external_ref=t.id,
-                    api_key=tenant_api_key
+                    api_key=tenant_api_key,
+                    disable_notifications=disable_notifications
                 )
                 if payment:
                     t.asaas_id = payment.get('id')

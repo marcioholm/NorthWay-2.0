@@ -216,14 +216,22 @@ def search_contact(current_user):
     
     # 1. Search by Phone
     if phone:
-        clean_phone = ''.join(filter(str.isdigit, phone))
-        if len(clean_phone) > 6: # Minimum length to avoid false positives
+        # IGNORE GROUPS early
+        if "@g.us" in str(phone):
+             return jsonify({'found': False, 'reason': 'group_ignored'}), 404
+
+        from services.whatsapp_service import WhatsAppService
+        clean_phone = WhatsAppService.normalize_phone(phone)
+        
+        if clean_phone and len(clean_phone) > 6: # Minimum length to avoid false positives
+            # Search Lead
             lead = Lead.query.filter(
                 Lead.company_id == current_user.company_id,
                 Lead.phone.ilike(f'%{clean_phone}%') 
             ).first()
             
             if not lead:
+                # Search Client
                 client = Client.query.filter(
                     Client.company_id == current_user.company_id,
                     Client.phone.ilike(f'%{clean_phone}%')
@@ -271,6 +279,30 @@ def search_contact(current_user):
         })
         
     return jsonify({'found': False}), 404
+
+@api_ext.route('/api/ext/config', methods=['GET'])
+@token_required
+def get_config_ext(current_user):
+    """Exposes anti-ban settings and other configs to the extension."""
+    from models import Integration
+    import json
+    
+    integration = Integration.query.filter_by(company_id=current_user.company_id, service='z_api').first()
+    config = {}
+    
+    if integration and integration.config_json:
+        try:
+            full_config = json.loads(integration.config_json)
+            # Only expose what the extension needs (delays)
+            config = {
+                'min_delay': full_config.get('min_delay', 1),
+                'max_delay': full_config.get('max_delay', 5),
+                'is_active': integration.is_active
+            }
+        except:
+            pass
+            
+    return jsonify(config)
 
 @api_ext.route('/api/ext/pipelines', methods=['GET'])
 @token_required

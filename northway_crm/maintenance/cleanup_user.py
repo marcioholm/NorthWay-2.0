@@ -21,6 +21,15 @@ with app.app_context():
                 # Check if other users are in this company
                 other_users = User.query.filter(User.company_id == company_id, User.id != user.id).count()
                 if other_users == 0:
+                    # Cancel Asaas Subscription if exists
+                    if company.subscription_id:
+                        from services.asaas_service import delete_subscription
+                        try:
+                            delete_subscription(company.subscription_id)
+                            print(f"✅ Subscription {company.subscription_id} cancelled for company '{company.name}'.")
+                        except Exception as asaas_e:
+                            print(f"⚠️ Failed to cancel Asaas subscription: {asaas_e}")
+
                     db.session.delete(company)
                     print(f"Company '{company.name}' deleted (no other users).")
                 else:

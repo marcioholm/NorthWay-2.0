@@ -87,6 +87,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    if (request.action === "GET_CONFIG") {
+        apiCall('/config', 'GET').then(sendResponse);
+        return true;
+    }
+
     // Future: "ENQUEUE_MESSAGE" action for automated sending
 });
 

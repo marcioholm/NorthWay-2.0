@@ -69,7 +69,7 @@ def get_subscription(subscription_id, api_key=None):
     except Exception:
         return None
 
-def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', description="NorthWay CRM Subscription", api_key=None):
+def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', description="NorthWay CRM Subscription", external_ref=None, api_key=None, disable_notifications=False):
     """
     Creates a recurring subscription.
     """
@@ -79,7 +79,9 @@ def create_subscription(customer_id, value, next_due_date, cycle='MONTHLY', desc
         "value": value,
         "nextDueDate": next_due_date, # YYYY-MM-DD
         "cycle": cycle,
-        "description": description
+        "description": description,
+        "externalReference": str(external_ref) if external_ref else None,
+        "notificationDisabled": disable_notifications
     }
     
     try:
@@ -140,7 +142,7 @@ def cancel_payment(payment_id, api_key=None):
     except Exception as e:
         return False, str(e)
 
-def create_payment(customer_id, value, due_date, description, external_ref=None, api_key=None):
+def create_payment(customer_id, value, due_date, description, external_ref=None, api_key=None, disable_notifications=False):
     """
     Creates a single payment (cobranca avulsa) - BOLETO/PIX.
     """
@@ -150,7 +152,8 @@ def create_payment(customer_id, value, due_date, description, external_ref=None,
         "value": value,
         "dueDate": due_date,
         "description": description,
-        "externalReference": str(external_ref) if external_ref else None
+        "externalReference": str(external_ref) if external_ref else None,
+        "notificationDisabled": disable_notifications
     }
     
     try:

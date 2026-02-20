@@ -167,7 +167,7 @@ function findJidInFiber(fiber) {
             if (props.jid && typeof props.jid === 'string') return props.jid;
             if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
             if (props.id && typeof props.id === 'string' && (props.id.includes('@c.us') || props.id.includes('@g.us'))) return props.id;
-            
+
             // Nested objects
             if (props.chat && props.chat.id && typeof props.chat.id === 'string') return props.chat.id;
             if (props.contact && props.contact.id && typeof props.contact.id === 'string') return props.contact.id;
@@ -192,22 +192,22 @@ function checkActiveChat() {
         // 1. Find the Main Chat Panel (Multiple Fallbacks)
         const mainPanel = document.getElementById('main') ||
             document.querySelector('div[role="main"]') ||
-            document.querySelector('section._aigv') || 
-            document.querySelector('._aigv._aigz') || 
+            document.querySelector('section._aigv') ||
+            document.querySelector('._aigv._aigz') ||
             document.querySelector('.x1c4vz4f') ||
             document.querySelector('#app > div > div > div:last-child');
 
         if (mainPanel) {
             // 2. Find the Header (Multiple Fallbacks)
             let header = mainPanel.querySelector('header') ||
-                mainPanel.querySelector('div[role="button"]') || 
+                mainPanel.querySelector('div[role="button"]') ||
                 mainPanel.querySelector('._aigw') ||
                 mainPanel.querySelector('div._aiih');
 
             // Fallback: Find header by common icons if standard selectors fail
             if (!header) {
-                const searchIcon = mainPanel.querySelector('span[data-icon="search-alt"]') || 
-                                 mainPanel.querySelector('span[data-icon="search"]');
+                const searchIcon = mainPanel.querySelector('span[data-icon="search-alt"]') ||
+                    mainPanel.querySelector('span[data-icon="search"]');
                 if (searchIcon) {
                     header = searchIcon.closest('header') || searchIcon.closest('div._aigv') || searchIcon.closest('div._aigw');
                 }
@@ -223,10 +223,8 @@ function checkActiveChat() {
                         const jid = findJidInFiber(fiber);
                         if (jid) {
                             if (jid.includes('@g.us')) isGroup = true;
-                            else {
-                                const clean = jid.replace(/\D/g, '');
-                                if (clean.length >= 10) phone = clean;
-                            }
+                            // Preserve JID for both groups and individuals
+                            phone = jid;
                         }
                     }
                 }
@@ -248,7 +246,7 @@ function checkActiveChat() {
                 const subtitleEl = header.querySelector('span[title*=","]') ||
                     header.querySelector('._aa-y') ||
                     header.querySelector('._am_8'); // New subtitle class
-                    
+
                 if (subtitleEl) {
                     const subText = subtitleEl.innerText.toLowerCase();
                     if (subText.includes(',') || subText.includes('participan') || subText.includes('clique') || subText.includes('online') === false && subText.length > 20) {
@@ -298,7 +296,7 @@ function checkActiveChat() {
                         const spans = container.querySelectorAll('span');
                         for (const s of spans) {
                             if (s.innerText.match(/^\+?\d[\d\s-]{12,}$/)) {
-                                phone = s.innerText.replace(/\D/g, '');
+                                phone = s.innerText.replace(/\D/g, '') + "@c.us";
                                 break;
                             }
                         }
@@ -411,7 +409,7 @@ async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
             currentLeadId = null;
             showState('new');
             getEl('nw-new-name').value = name;
-            getEl('nw-new-phone').value = phone || "";
+            getEl('nw-new-phone').value = phone ? phone.split('@')[0] : "";
             getEl('nw-new-phone').placeholder = phone ? "Detectado" : "Digite o telefone";
             loadPipelines(null, 'nw-new-stage');
         } else {
@@ -663,8 +661,22 @@ const BroadcastEngine = {
         if (result.bc_index !== undefined) this.currentIndex = result.bc_index;
         if (result.bc_templates) this.templates = result.bc_templates;
         this.autoSend = result.bc_auto || false;
-        if (result.bc_config) this.config = result.bc_config;
-        this.batchCount = result.bc_batch_count || 0;
+        if (result.bc_config) {
+            this.config = result.bc_config;
+            console.log("NW: Loaded local config:", this.config);
+        } else {
+            // FETCH REMOTE CONFIG FROM CRM (Initial defaults)
+            try {
+                const remoteConfig = await chrome.runtime.sendMessage({ action: "GET_CONFIG" });
+                if (remoteConfig && remoteConfig.is_active) {
+                    console.log("NW: Remote config synced (initial):", remoteConfig);
+                    this.config.min = remoteConfig.min_delay || this.config.min;
+                    this.config.max = remoteConfig.max_delay || this.config.max;
+                }
+            } catch (err) {
+                console.log("NW: Failed to fetch remote config", err);
+            }
+        }
         if (result.bc_current_message) this.currentMessage = result.bc_current_message;
         if (result.bc_media_caption) this.mediaCaption = result.bc_media_caption;
         if (result.bc_current_step) this.currentStep = result.bc_current_step;
@@ -1123,7 +1135,7 @@ const BroadcastEngine = {
         const currentNameEl = getEl('nw-bc-current-name');
         if (currentNameEl) currentNameEl.textContent = item.name;
         const currentPhoneEl = getEl('nw-bc-current-phone');
-        if (currentPhoneEl) currentPhoneEl.textContent = item.phone;
+        if (currentPhoneEl) currentPhoneEl.textContent = item.phone.split('@')[0];
 
         // Rotation A/B/C
         const variantKeys = ['A', 'B', 'C'];

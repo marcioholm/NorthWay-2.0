@@ -51,20 +51,30 @@ class WhatsAppService:
     def normalize_phone(phone):
         """
         Force canonical format: 55 + DDD + Number.
-        Removes all formatting and ensures BR country code.
+        Preserves @c.us or @g.us suffixes if present.
         """
         if not phone: return None
         
-        # 1. Clean digits
-        clean = re.sub(r'\D', '', str(phone))
+        phone_str = str(phone).strip()
+        
+        # Preserve JID suffixes
+        suffix = ""
+        if "@g.us" in phone_str:
+            suffix = "@g.us"
+            phone_str = phone_str.replace("@g.us", "")
+        elif "@c.us" in phone_str:
+            suffix = "@c.us"
+            phone_str = phone_str.replace("@c.us", "")
+            
+        # Clean digits
+        clean = re.sub(r'\D', '', phone_str)
         if not clean: return None
         
-        # 2. Add Country Code if missing (assuming Brazil)
-        # If 10 or 11 digits (DDD + 8 or 9 digits)
+        # Add Country Code if missing (assuming Brazil for 10/11 digit numbers)
         if len(clean) in [10, 11]:
             clean = '55' + clean
             
-        return clean
+        return clean + suffix
 
     @staticmethod
     def find_contact(phone, company_id):
@@ -575,6 +585,11 @@ class WhatsAppService:
              
         if not phone:
             return {'ignored': True, 'reason': 'missing_phone'}
+
+        # IGNORE GROUP MESSAGES
+        if "@g.us" in str(phone):
+            current_app.logger.info(f"Ignoring group message from {phone}")
+            return {'ignored': True, 'reason': 'group_message'}
 
         norm_phone = WhatsAppService.normalize_phone(phone)
         attachment_url = None

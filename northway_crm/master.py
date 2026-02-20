@@ -52,7 +52,20 @@ def system_reset():
         try:
             from datetime import date, timedelta
             from sqlalchemy import text
+            from services.asaas_service import delete_subscription
             
+            # --- ASAAS SYNC START ---
+            # Identify companies to be deleted and cancel their subscriptions
+            companies_to_sync = Company.query.filter(Company.id != current_user.company_id).all()
+            for comp in companies_to_sync:
+                if comp.subscription_id:
+                    try:
+                        delete_subscription(comp.subscription_id)
+                        current_app.logger.info(f"✅ Subscription {comp.subscription_id} cancelled during system reset for company {comp.name}")
+                    except Exception as asaas_e:
+                        current_app.logger.error(f"⚠️ Failed to cancel Asaas subscription for {comp.name}: {asaas_e}")
+            # --- ASAAS SYNC END ---
+
             # 1. Clear Activity Data with FORCE (SQL) to bypass circular refs
             db.session.execute(text("UPDATE lead SET contact_uuid = NULL"))
             db.session.execute(text("UPDATE client SET contact_uuid = NULL"))
@@ -841,7 +854,8 @@ def generate_payment(company_id):
                 value=val, 
                 next_due_date=next_due, 
                 cycle='MONTHLY' if plan_type != 'annual' else 'YEARLY',
-                description=f"NorthWay CRM - {company.name} ({plan_key}/{plan_type})"
+                description=f"NorthWay CRM - {company.name} ({plan_key}/{plan_type})",
+                disable_notifications=True
             )
             if sub_data:
                 company.subscription_id = sub_data['id']
@@ -1318,12 +1332,22 @@ def launch_wipe():
         companies_to_delete = Company.query.filter(Company.id != my_company_id).all()
         count = len(companies_to_delete)
         
+        from services.asaas_service import delete_subscription # Import for sync
+        
         if count == 0:
              return f"<h1>Cleanup Complete</h1><p>No other companies found besides yours (#{my_company_id}). Database is clean.</p><a href='{url_for('master.dashboard')}'>Back to Dashboard</a>"
 
         deleted_names = []
         for comp in companies_to_delete:
             deleted_names.append(comp.name)
+            
+            # Cancel Asaas Subscription if exists
+            if comp.subscription_id:
+                try:
+                    delete_subscription(comp.subscription_id)
+                    current_app.logger.info(f"✅ Subscription cancelled for company {comp.name} during launch wipe")
+                except Exception as e:
+                    current_app.logger.error(f"❌ Failed to cancel Asaas subscription for {comp.name}: {e}")
             
             # Cascade delete usually handles children, but let's be safe with users first to avoid constraint issues if cascade missing
             users = User.query.filter_by(company_id=comp.id).all()

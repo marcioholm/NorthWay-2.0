@@ -243,9 +243,47 @@ def delete_client(id):
     if client.company_id != current_user.company_id:
         return "Unauthorized", 403
     
+    # --- SYNC WITH ASAAS ---
+    try:
+        from models import Integration, Transaction
+        from services.asaas_service import cancel_payment, delete_subscription
+        
+        tenant_integration = Integration.query.filter_by(
+            company_id=current_user.company_id, 
+            service='asaas', 
+            is_active=True
+        ).first()
+        
+        if tenant_integration and tenant_integration.api_key:
+            api_key = tenant_integration.api_key
+            
+            # 1. Cancel active subscriptions
+            if client.subscription_id:
+                try:
+                    delete_subscription(client.subscription_id, api_key=api_key)
+                    current_app.logger.info(f"✅ Subscription deleted for client {client.id}")
+                except Exception as sub_e:
+                    current_app.logger.error(f"⚠️ Failed to delete Asaas Subscription: {sub_e}")
+
+            # 2. Cancel pending/overdue payments
+            pending_txs = Transaction.query.filter(
+                Transaction.client_id == client.id,
+                Transaction.status.in_(['pending', 'overdue']),
+                Transaction.asaas_id != None
+            ).all()
+            
+            for tx in pending_txs:
+                try:
+                    cancel_payment(tx.asaas_id, api_key=api_key)
+                    current_app.logger.info(f"✅ Payment {tx.asaas_id} cancelled for client {client.id}")
+                except Exception as tx_e:
+                    current_app.logger.error(f"⚠️ Failed to cancel Asaas Payment {tx.asaas_id}: {tx_e}")
+    except Exception as e:
+        current_app.logger.error(f"CRITICAL: Asaas Sync Error during client deletion: {e}")
+
     db.session.delete(client)
     db.session.commit()
-    flash('Cliente excluído com sucesso.', 'success')
+    flash('Cliente e suas cobranças vinculadas foram removidos.', 'success')
     return redirect(url_for('clients.clients'))
 
 @clients_bp.route('/clients/<int:id>/interactions', methods=['POST'])
@@ -396,7 +434,7 @@ def import_clients():
         success_count = 0
         skipped_count = 0
         
-        for row in csv_input:
+        for row_num, row in enumerate(csv_input, start=1):
             # Flexible key getting
             name = row.get('Nome') or row.get('name') or row.get('NOME')
             if not name: 

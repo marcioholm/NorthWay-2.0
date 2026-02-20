@@ -1,12 +1,12 @@
 from flask import Blueprint, request, current_app, url_for, redirect, render_template, flash, jsonify
 from datetime import datetime
 from flask_login import login_required, current_user
-from models import db, Integration, FinancialEvent, Transaction, Contract
-
-from services.facebook_capi_service import FacebookCapiService
-from utils import api_response, retry_request
+from models import db, Integration, FinancialEvent, Transaction, Contract, Client
+import os
 import json
 import requests
+from services.facebook_capi_service import FacebookCapiService
+from utils import api_response, retry_request
 from services.commission_service import CommissionService
 
 integrations_bp = Blueprint('integrations_bp', __name__)
@@ -140,8 +140,40 @@ def asaas_webhook(company_id):
             payload=payload
         )
         db.session.add(log) # Add log regardless of matching transaction
-        
+
+        # --- PAYMENT_CREATED HANDLER ---
+        # If transaction doesn't exist but it's a new payment, try to link or create
+        if event == 'PAYMENT_CREATED' and not transaction:
+             subscription_id = payment_data.get('subscription')
+             if subscription_id:
+                 # Find client by subscription_id
+                 client = Client.query.filter_by(subscription_id=subscription_id).first()
+                 if client:
+                     # Auto-create Transaction in CRM for the new recurring installment
+                     transaction = Transaction(
+                         company_id=company_id,
+                         client_id=client.id,
+                         asaas_id=payment_data.get('id'),
+                         amount=payment_data.get('value'),
+                         due_date=datetime.strptime(payment_data.get('dueDate'), '%Y-%m-%d').date() if payment_data.get('dueDate') else None,
+                         status='pending',
+                         description=payment_data.get('description', f"Mensalidade - {client.name}"),
+                         asaas_invoice_url=payment_data.get('invoiceUrl')
+                     )
+                     db.session.add(transaction)
+                     db.session.flush() # Get ID
+                     log.payment_id = transaction.id
+                     current_app.logger.info(f"Auto-created transaction {transaction.id} for subscription {subscription_id}")
+
         if transaction:
+            # Update asaas_id if missing (match by externalReference)
+            if not transaction.asaas_id and payment_data.get('id'):
+                transaction.asaas_id = payment_data.get('id')
+            
+            # Update Invoice URL if provided
+            if payment_data.get('invoiceUrl'):
+                transaction.asaas_invoice_url = payment_data.get('invoiceUrl')
+
             # Verify company mismatch? (Should not happen if URL is correct but good to check)
             if transaction.company_id != company_id:
                 current_app.logger.warning(f"Webhook Company Mismatch: URL {company_id} vs Trans {transaction.company_id}")

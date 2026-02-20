@@ -393,7 +393,8 @@ def generate_self_payment():
                 value=val, 
                 next_due_date=next_due, 
                 cycle='MONTHLY',
-                description=f"NorthWay CRM - {company.name} ({plan_key})"
+                description=f"NorthWay CRM - {company.name} ({plan_key})",
+                disable_notifications=True
             )
             if sub_data:
                 company.subscription_id = sub_data['id']

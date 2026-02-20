@@ -239,9 +239,32 @@
                     <input type="file" id="nw-broadcast-import-file" accept=".csv" class="hidden">
                 </div>
 
-                <!-- Step 2: Message Models (A/B/C) -->
+                <!-- Step 2: Safety Controls -->
                 <div class="nw-card">
-                    <label class="nw-label-caps" style="margin-bottom: 12px;">2. Modelos de Mensagem (Rotação)</label>
+                    <label class="nw-label-caps">2. Controles de Segurança (Anti-Ban)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div class="nw-field">
+                            <label style="font-size: 10px; opacity: 0.7;">Delay Mín (s)</label>
+                            <input type="number" id="nw-delay-min" value="10" min="1">
+                        </div>
+                        <div class="nw-field">
+                            <label style="font-size: 10px; opacity: 0.7;">Delay Máx (s)</label>
+                            <input type="number" id="nw-delay-max" value="20" min="2">
+                        </div>
+                        <div class="nw-field">
+                            <label style="font-size: 10px; opacity: 0.7;">Lote (msgs)</label>
+                            <input type="number" id="nw-batch-size" value="10" min="0">
+                        </div>
+                        <div class="nw-field">
+                            <label style="font-size: 10px; opacity: 0.7;">Pausa Lote (s)</label>
+                            <input type="number" id="nw-batch-wait" value="60" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Message Models (A/B/C) -->
+                <div class="nw-card">
+                    <label class="nw-label-caps" style="margin-bottom: 12px;">3. Modelos de Mensagem (Rotação)</label>
 
                     <div class="nw-tabs">
                         <button class="nw-tab-btn active" data-tab="A">Modelo A</button>
