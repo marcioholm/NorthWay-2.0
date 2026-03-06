@@ -880,6 +880,11 @@ def regenerate_billing(id):
                 api_key=tenant_api_key
             )
             if err: raise Exception(err)
+            
+            # Save the ID locally to ensure webhooks map properly
+            if asaas_customer_id:
+                contract.client.asaas_customer_id = asaas_customer_id
+                db.session.commit()
         except Exception as e:
             flash(f"Erro ao criar cliente no Asaas: {e}", 'error')
             return redirect(url_for('contracts.view_contract', id=id))
