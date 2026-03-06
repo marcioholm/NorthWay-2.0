@@ -906,36 +906,36 @@
                         <div class="flex items-center justify-between mb-8">
                             <h3 class="text-xl font-bold text-gray-900 flex items-center gap-3">
                                 <i data-lucide="hard-drive" class="w-6 h-6"></i>
-                        </div>
-                        Arquivos (Google Drive)
-                        </h3>
-                        <div class="flex gap-2">
-                            {% if client.drive_folder_url %}
-                            <button type="button" onclick="scanDriveFolder()" id="btn-scan-drive"
-                                class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                Sincronizar
-                            </button>
-                            <a href="{{ client.drive_folder_url }}" target="_blank"
-                                class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
-                                <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-                                Upload
-                            </a>
-                            {% endif %}
-                            {% if is_drive_connected %}
-                            <button type="button" onclick="toggleModal('createDriveFoldersModal')"
-                                class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg shadow-blue-500/30">
-                                <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                                {% if client.drive_folder_url %}Nova Pasta{% else %}Conectar Drive{% endif
-                                %}
-                            </button>
-                            {% else %}
-                            <a href="{{ url_for('admin.settings_integrations') }}"
-                                class="bg-gray-800 text-white hover:bg-gray-900 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg">
-                                <i data-lucide="settings" class="w-4 h-4"></i>
-                                Configurar Drive
-                            </a>
-                            {% endif %}
+                                Arquivos (Google Drive)
+                            </h3>
+                            <div class="flex gap-2">
+                                {% if client.drive_folder_url %}
+                                <button type="button" onclick="scanDriveFolder()" id="btn-scan-drive"
+                                    class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                    Sincronizar
+                                </button>
+                                <a href="{{ client.drive_folder_url }}" target="_blank"
+                                    class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
+                                    <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                                    Upload
+                                </a>
+                                {% endif %}
+                                {% if is_drive_connected %}
+                                <button type="button" onclick="toggleModal('createDriveFoldersModal')"
+                                    class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg shadow-blue-500/30">
+                                    <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                                    {% if client.drive_folder_url %}Nova Pasta{% else %}Conectar Drive{% endif
+                                    %}
+                                </button>
+                                {% else %}
+                                <a href="{{ url_for('admin.settings_integrations') }}"
+                                    class="bg-gray-800 text-white hover:bg-gray-900 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg">
+                                    <i data-lucide="settings" class="w-4 h-4"></i>
+                                    Configurar Drive
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
 
 
