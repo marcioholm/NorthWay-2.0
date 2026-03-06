@@ -3,461 +3,794 @@
 {% block content %}
 <div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
     <!-- Header -->
-    <div class="px-8 py-6 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
+    <div
+        class="px-8 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center shrink-0 z-30">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Prospecção Ativa</h1>
-            <p class="text-gray-500 text-sm mt-1">Busque empresas no Google Maps e importe para seu funil de vendas.
-            </p>
+            <h1 class="text-3xl font-display font-extrabold text-gray-900 tracking-tight">Prospecção <span
+                    class="text-northway-red">Ativa</span></h1>
+            <p class="text-gray-400 text-xs mt-1 font-medium italic">Encontre novos horizontes comerciais com Google
+                Places.</p>
         </div>
-        <div class="flex items-center gap-2 text-sm text-gray-500">
-            <i data-lucide="shield-check" class="w-4 h-4 text-green-500"></i>
-            <span>Google Places API Protegida</span>
+        <div class="flex items-center gap-4">
+            <div
+                class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 shadow-sm transition-all hover:shadow-md cursor-default">
+                <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-[10px] font-bold text-green-700 uppercase tracking-wider">Google API Connect</span>
+            </div>
         </div>
     </div>
 
     <!-- Main Content Area -->
-    <div class="flex-1 overflow-hidden relative flex flex-col items-center">
+    <div
+        class="flex-1 overflow-hidden relative flex flex-col items-center bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
         <!-- Search Bar -->
-        <div class="w-full max-w-3xl mt-12 px-6 shrink-0 relative z-10">
-            <div class="relative group">
-                <div
-                    class="absolute -inset-1 bg-gradient-to-r from-northway-red to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-200">
-                </div>
-                <div
-                    class="relative flex flex-col md:flex-row items-center bg-white rounded-xl shadow-xl overflow-hidden p-2 gap-2">
-                    <!-- Main Search -->
-                    <div class="flex-1 flex items-center w-full bg-gray-50 rounded-lg px-2">
-                        <i data-lucide="search" class="w-5 h-5 text-gray-400 ml-2"></i>
-                        <input type="text" id="searchInput"
-                            class="w-full px-3 py-3 text-base focus:outline-none bg-transparent text-gray-700 placeholder-gray-400"
-                            placeholder="O que você busca? (Ex: Ótica, Padaria...)" autofocus>
-                    </div>
-
-                    <!-- Location Filters -->
-                    <div class="flex items-center gap-2 w-full md:w-auto">
-                        <div class="flex items-center bg-gray-50 rounded-lg px-2 w-full md:w-40">
-                            <input type="text" id="filterCity"
-                                class="w-full px-2 py-3 text-sm focus:outline-none bg-transparent text-gray-700 placeholder-gray-400"
-                                placeholder="Cidade">
+        <div class="w-full max-w-5-5xl mt-8 px-6 shrink-0 relative z-20">
+            <div class="glass rounded-2xl shadow-glow transition-all duration-500 p-1">
+                <div class="bg-white/40 rounded-[14px] p-4 flex flex-col gap-4">
+                    <!-- Row 1: Search -->
+                    <div class="flex flex-col md:flex-row items-center gap-3">
+                        <div
+                            class="flex-1 flex items-center w-full bg-white/80 rounded-xl border border-gray-100 focus-within:border-northway-red/30 focus-within:ring-4 focus-within:ring-northway-red/5 transition-all px-4 shadow-sm">
+                            <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                            <input type="text" id="searchInput"
+                                class="w-full px-3 py-3.5 text-base focus:outline-none border-none ring-0 focus:ring-0 bg-transparent text-gray-700 placeholder:text-gray-400/70 font-medium"
+                                placeholder="O que você busca? Ex: 'Auto Peças', 'Energia Solar'..." autofocus>
                         </div>
-                        <div class="flex items-center bg-gray-50 rounded-lg px-2 w-32 md:w-36">
-                            <select id="filterState"
-                                class="w-full px-2 py-3 text-sm focus:outline-none bg-transparent text-gray-700 appearance-none cursor-pointer">
-                                <option value="">Estado (UF)</option>
-                                <option value="AC">Acre</option>
-                                <option value="AL">Alagoas</option>
-                                <option value="AP">Amapá</option>
-                                <option value="AM">Amazonas</option>
-                                <option value="BA">Bahia</option>
-                                <option value="CE">Ceará</option>
-                                <option value="DF">Distrito Federal</option>
-                                <option value="ES">Espírito Santo</option>
-                                <option value="GO">Goiás</option>
-                                <option value="MA">Maranhão</option>
-                                <option value="MT">Mato Grosso</option>
-                                <option value="MS">Mato Grosso do Sul</option>
-                                <option value="MG">Minas Gerais</option>
-                                <option value="PA">Pará</option>
-                                <option value="PB">Paraíba</option>
-                                <option value="PR">Paraná</option>
-                                <option value="PE">Pernambuco</option>
-                                <option value="PI">Piauí</option>
-                                <option value="RJ">Rio de Janeiro</option>
-                                <option value="RN">Rio Grande do Norte</option>
-                                <option value="RS">Rio Grande do Sul</option>
-                                <option value="RO">Rondônia</option>
-                                <option value="RR">Roraima</option>
-                                <option value="SC">Santa Catarina</option>
-                                <option value="SP">São Paulo</option>
-                                <option value="SE">Sergipe</option>
-                                <option value="TO">Tocantins</option>
-                            </select>
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 mr-2 pointer-events-none"></i>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button onclick="saveFavorite()" id="saveFavBtn" title="Salvar Busca"
+                                class="bg-white/80 text-gray-400 p-3.5 rounded-xl border border-gray-100/50 hover:text-northway-red hover:bg-white transition-all flex items-center justify-center shadow-sm active:scale-90 group">
+                                <i data-lucide="heart" class="w-5 h-5 group-hover:fill-northway-red transition-all"></i>
+                            </button>
+                            <button onclick="performSearch()" id="searchBtn"
+                                class="bg-northway-red text-white px-10 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-red-700 transition-all flex items-center gap-3 transform active:scale-[0.98] flex-1 md:flex-none justify-center shadow-xl shadow-red-200">
+                                <span id="btnText">Explorar</span>
+                                <div id="btnLoader"
+                                    class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white">
+                                </div>
+                            </button>
                         </div>
                     </div>
 
-                    <button onclick="performSearch()" id="searchBtn"
-                        class="bg-northway-red text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 transition-all flex items-center gap-2 transform active:scale-95 w-full md:w-auto justify-center shadow-lg shadow-red-100">
-                        <span id="btnText">Buscar</span>
-                        <div id="btnLoader" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white">
+                    <!-- Row 2: Advanced Filters (Seamless Bar) -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div
+                            class="flex-1 flex flex-wrap md:flex-nowrap items-center bg-white/50 border border-gray-100/50 rounded-xl p-1 shadow-sm focus-within:bg-white focus-within:border-northway-red/20 transition-all text-gray-400">
+                            <!-- City & Location -->
+                            <div class="flex-1 min-w-[140px] flex items-center px-4">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 mr-2"></i>
+                                <input type="text" id="filterCity"
+                                    class="w-full py-2 text-[10px] focus:outline-none border-none ring-0 focus:ring-0 bg-transparent text-gray-600 placeholder:text-gray-400/60 font-black uppercase tracking-wider"
+                                    placeholder="CIDADES">
+                                <div class="relative flex items-center ml-2 border-l border-gray-100/20 pl-3">
+                                    <select id="filterState"
+                                        class="text-[10px] focus:outline-none border-none ring-0 focus:ring-0 bg-transparent text-gray-600 appearance-none cursor-pointer font-black uppercase tracking-wider pr-4">
+                                        <option value="">UF</option>
+                                        <option value="PR">PR</option>
+                                        <option value="SP">SP</option>
+                                        <option value="SC">SC</option>
+                                        <option value="RS">RS</option>
+                                        <option value="MG">MG</option>
+                                        <option value="RJ">RJ</option>
+                                        <option value="BA">BA</option>
+                                        <option value="GO">GO</option>
+                                        <option value="MT">MT</option>
+                                    </select>
+                                    <i data-lucide="chevron-down"
+                                        class="w-3 h-3 text-gray-300 absolute right-0 pointer-events-none"></i>
+                                </div>
+                            </div>
+
+                            <!-- Radius -->
+                            <div class="w-full md:w-28 flex items-center px-4">
+                                <i data-lucide="radius" class="w-3.5 h-3.5 mr-2"></i>
+                                <input type="number" id="filterRadius"
+                                    class="w-full py-2 text-[10px] focus:outline-none border-none ring-0 focus:ring-0 bg-transparent text-gray-600 placeholder:text-gray-400 font-black uppercase"
+                                    placeholder="RAIO KM">
+                            </div>
+
+                            <!-- Rating -->
+                            <div class="w-full md:w-28 flex items-center px-4">
+                                <i data-lucide="star" class="w-3.5 h-3.5 text-yellow-400/70 mr-2"></i>
+                                <input type="number" id="filterMinRating" step="0.1"
+                                    class="w-full py-2 text-[10px] focus:outline-none border-none ring-0 focus:ring-0 bg-transparent text-gray-600 placeholder:text-gray-400 font-black uppercase"
+                                    placeholder="ESTRELAS">
+                            </div>
+
+                            <!-- Reviews -->
+                            <div class="w-full md:w-28 flex items-center px-4">
+                                <i data-lucide="messages-square" class="w-3.5 h-3.5 mr-2"></i>
+                                <input type="number" id="filterMinReviews"
+                                    class="w-full py-2 text-[10px] focus:outline-none border-none ring-0 focus:ring-0 bg-transparent text-gray-600 placeholder:text-gray-400 font-black uppercase"
+                                    placeholder="AVALIAÇÕES">
+                            </div>
                         </div>
-                    </button>
+
+                        <!-- Buttons Section -->
+                        <div class="flex items-center gap-1">
+                            <button onclick="toggleFavorites()"
+                                class="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-northway-red hover:bg-white/50 transition-all flex items-center gap-2 group">
+                                <i data-lucide="heart"
+                                    class="w-3.5 h-3.5 group-hover:scale-110 transition-transform"></i> Favoritos
+                            </button>
+                            <button onclick="toggleHistory()"
+                                class="px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 hover:bg-white/50 transition-all flex items-center gap-2 group">
+                                <i data-lucide="history"
+                                    class="w-3.5 h-3.5 group-hover:rotate-12 transition-transform"></i> Histórico
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Suggestion chips -->
-            <div id="suggestionsContainer"
-                class="mt-4 flex flex-wrap gap-2 justify-center text-xs text-gray-400 items-center min-h-[1.5rem]">
+
+            <div id="suggestionsContainer" class="mt-4 flex flex-wrap gap-2 justify-center items-center">
                 <!-- Populated via JS -->
             </div>
         </div>
 
-        <!-- Results Count -->
         <!-- Results Header -->
-        <div id="resultsHeader" class="w-full max-w-5xl px-6 mb-4 flex items-center justify-between hidden">
-            <span id="resultsCount" class="text-sm text-gray-500 font-medium">
-                <!-- Populated via JS -->
-            </span>
+        <div id="resultsHeader"
+            class="w-full max-w-5xl px-6 mt-8 mb-4 flex flex-col md:flex-row items-center justify-between gap-4 hidden">
+            <div class="flex items-center gap-4">
+                <div class="flex bg-gray-100 p-1 rounded-lg">
+                    <button onclick="setView('grid')" id="viewGridBtn"
+                        class="p-1.5 rounded-md bg-white shadow-sm text-northway-red">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="setView('list')" id="viewListBtn"
+                        class="p-1.5 rounded-md text-gray-500 hover:text-northway-red">
+                        <i data-lucide="list" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <span id="resultsCount" class="text-sm text-gray-500 font-medium"></span>
+                <div class="h-4 w-px bg-gray-200"></div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-400 font-medium">Importar em:</label>
+                    <select id="importStage"
+                        class="text-xs bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-northway-red/20">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+            </div>
 
-            <button onclick="importAll()" id="importAllBtn"
-                class="bg-white text-gray-700 hover:text-northway-red border border-gray-200 hover:border-northway-red px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-sm transform active:scale-95 group">
-                <i data-lucide="list-plus" class="w-4 h-4 text-gray-400 group-hover:text-northway-red"></i>
-                <span>Importar Todas</span>
-            </button>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSelectAll()" id="selectAllBtn"
+                    class="text-xs text-gray-500 hover:text-northway-red font-medium transition-colors">
+                    Selecionar Todos
+                </button>
+                <button onclick="importSelected()" id="importSelectedBtn"
+                    class="bg-gray-900 text-white hover:bg-northway-red px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 shadow-lg shadow-gray-200 group">
+                    <i data-lucide="download" class="w-4 h-4 text-white"></i>
+                    <span>Importar <span id="selectedCount"></span></span>
+                </button>
+            </div>
         </div>
 
         <!-- Results Area -->
-        <div class="w-full max-w-5xl flex-1 overflow-y-auto custom-scrollbar px-6 pb-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 content-start"
-            id="resultsContainer">
-
-            <!-- Empty State -->
-            <div class="col-span-full flex flex-col items-center justify-center text-gray-400 mt-10 opacity-60">
-                <i data-lucide="map-pin" class="w-16 h-16 mb-4 text-gray-300"></i>
-                <p>Os resultados da sua busca aparecerão aqui.</p>
+        <div class="w-full max-w-5xl flex-1 overflow-y-auto custom-scrollbar px-6 pb-20 flex flex-col gap-6"
+            id="scrollContainer">
+            <div id="resultsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 content-start">
+                <!-- Empty State -->
+                <div class="col-span-full flex flex-col items-center justify-center text-gray-400 mt-10 opacity-60">
+                    <i data-lucide="map-pin" class="w-16 h-16 mb-4 text-gray-300"></i>
+                    <p>Os resultados da sua busca aparecerão aqui.</p>
+                </div>
             </div>
 
+            <!-- Load More -->
+            <div id="loadMoreContainer" class="hidden flex justify-center py-6">
+                <button onclick="loadMore()" id="loadMoreBtn"
+                    class="bg-white border border-gray-200 text-gray-700 px-10 py-3 rounded-xl font-bold hover:border-northway-red hover:text-northway-red transition-all flex items-center gap-2 shadow-sm">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    <span>Carregar Mais</span>
+                    <div id="loadMoreLoader"
+                        class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-northway-red"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals / Side Panels -->
+    <!-- Favorites Dialog -->
+    <div id="favoritesPanel"
+        class="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 border-l border-gray-100 flex flex-col">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+            <h2 class="font-bold text-lg">Buscas Favoritas</h2>
+            <button onclick="toggleFavorites()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div id="favoritesList" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <!-- History Dialog -->
+    <div id="historyPanel"
+        class="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 border-l border-gray-100 flex flex-col">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+            <h2 class="font-bold text-lg">Histórico de Importação</h2>
+            <button onclick="toggleHistory()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div id="historyList" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+            <!-- Populated via JS -->
         </div>
     </div>
 </div>
+</div>
+</div>
 
 <script>
-    // --- Persistence Logic ---
-    const STORAGE_KEY_LAST_RESULT = 'northway_prospecting_last_result';
-    const STORAGE_KEY_HISTORY = 'northway_prospecting_history';
+    // --- State Management ---
+    let resultsState = [];
+    let nextToken = null;
+    let currentView = localStorage.getItem('prospecting_view') || 'grid';
+    let selectedIds = new Set();
+    let isLoadingMore = false;
 
+    // --- initialization ---
     document.addEventListener('DOMContentLoaded', () => {
-        loadState();
-        renderHistoryChips();
-    });
+        initView();
+        loadPipelineStages();
+        loadHistory();
+        loadFavorites();
 
-    function saveState(query, city, state, results) {
-        const stateData = {
-            query: query,
-            city: city,
-            state: state,
-            results: results,
-            timestamp: new Date().getTime()
-        };
-        localStorage.setItem(STORAGE_KEY_LAST_RESULT, JSON.stringify(stateData));
-        addToHistory(query);
-    }
-
-    function loadState() {
-        const saved = localStorage.getItem(STORAGE_KEY_LAST_RESULT);
+        // Check for saved search in URL or state
+        const saved = localStorage.getItem('prospecting_last_search');
         if (saved) {
             try {
-                const state = JSON.parse(saved);
-                if (state.results) { // Allow empty query if results exist? No, query is needed context
-                    document.getElementById('searchInput').value = state.query || '';
-                    document.getElementById('filterCity').value = state.city || '';
-                    document.getElementById('filterState').value = state.state || '';
-                    renderResults(state.results);
-                }
-            } catch (e) {
-                console.error("Error loading saved state", e);
+                const data = JSON.parse(saved);
+                document.getElementById('searchInput').value = data.query || '';
+                document.getElementById('filterCity').value = data.city || '';
+                document.getElementById('filterState').value = data.state || '';
+            } catch (e) { }
+        }
+    });
+
+    function initView() {
+        setView(currentView);
+    }
+
+    async function loadPipelineStages() {
+        try {
+            const select = document.getElementById('importStage');
+            if (!select) return;
+
+            const resp = await fetch('/api/prospecting/pipelines');
+            const data = await resp.json();
+            if (data.success && data.data && data.data.length > 0) {
+                const mainPipeline = data.data[0];
+                select.innerHTML = mainPipeline.stages.map(s =>
+                    `<option value="${s.id}">${s.name}</option>`
+                ).join('');
+            }
+        } catch (e) {
+            console.error("Error loading stages", e);
+        }
+    }
+
+    // --- Search Logic ---
+    async function performSearch(isLoadMore = false) {
+        const query = document.getElementById('searchInput').value.trim();
+        const city = document.getElementById('filterCity').value.trim();
+        const state = document.getElementById('filterState').value.trim();
+        const radius = document.getElementById('filterRadius').value;
+        const minRating = document.getElementById('filterMinRating').value;
+        const minReviews = document.getElementById('filterMinReviews').value;
+
+        if (!query && !isLoadMore) return;
+
+        const btn = isLoadMore ? document.getElementById('loadMoreBtn') : document.getElementById('searchBtn');
+        const loader = isLoadMore ? document.getElementById('loadMoreLoader') : document.getElementById('btnLoader');
+        const btnText = isLoadMore ? null : document.getElementById('btnText');
+
+        if (!isLoadMore) {
+            resultsState = [];
+            selectedIds.clear();
+            nextToken = null;
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-20">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-northway-red mb-4"></div>
+                    <p class="text-gray-500 animate-pulse">Buscando empresas...</p>
+                </div>
+            `;
+        } else {
+            isLoadingMore = true;
+            loader.classList.remove('hidden');
+            btn.disabled = true;
+        }
+
+        try {
+            let url = `/api/prospecting/search?query=${encodeURIComponent(query)}`;
+            if (city) url += `&city=${encodeURIComponent(city)}`;
+            if (state) url += `&state=${encodeURIComponent(state)}`;
+            if (radius) url += `&radius=${radius}`;
+            if (minRating) url += `&min_rating=${minRating}`;
+            if (minReviews) url += `&min_reviews=${minReviews}`;
+            if (isLoadMore && nextToken) url += `&pagetoken=${nextToken}`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (!data.success) throw new Error(data.error || 'Erro na busca');
+
+            const results = data.data.results || [];
+            nextToken = data.data.next_page_token;
+            resultsState = isLoadMore ? [...resultsState, ...results] : results;
+
+            renderResults();
+            updateSelectedCount();
+
+            if (!isLoadMore) {
+                localStorage.setItem('prospecting_last_search', JSON.stringify({ query, city, state }));
+                document.getElementById('resultsHeader').classList.remove('hidden');
+                document.getElementById('scrollContainer').scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // Toggle load more button
+            document.getElementById('loadMoreContainer').classList.toggle('hidden', !nextToken);
+
+        } catch (error) {
+            console.error(error);
+            if (!isLoadMore) {
+                document.getElementById('resultsContainer').innerHTML = `
+                    <div class="col-span-full text-center py-10">
+                        <p class="text-red-500 font-bold">Erro: ${error.message}</p>
+                    </div>
+                `;
+            } else {
+                alert("Erro ao carregar mais: " + error.message);
+            }
+        } finally {
+            if (isLoadMore) {
+                isLoadingMore = false;
+                loader.classList.add('hidden');
+                btn.disabled = false;
+            } else {
+                document.getElementById('btnLoader').classList.add('hidden');
+                document.getElementById('btnText').classList.remove('hidden');
+                document.getElementById('searchBtn').disabled = false;
             }
         }
     }
 
-    function addToHistory(query) {
-        let history = getHistory();
-        // Remove existing to push to top
-        history = history.filter(q => q.toLowerCase() !== query.toLowerCase());
-        history.unshift(query);
-        // Limit to 5
-        if (history.length > 5) history = history.slice(0, 5);
-
-        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
-        renderHistoryChips();
-    }
-
-    function getHistory() {
-        try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || '[]');
-        } catch {
-            return [];
+    function loadMore() {
+        if (nextToken && !isLoadingMore) {
+            performSearch(true);
         }
     }
 
-    function renderHistoryChips() {
-        const history = getHistory();
-        const container = document.getElementById('suggestionsContainer');
+    // --- Rendering Logic ---
+    function setView(view) {
+        currentView = view;
+        localStorage.setItem('prospecting_view', view);
 
-        if (!container) return;
+        document.getElementById('viewGridBtn').classList.toggle('bg-white', view === 'grid');
+        document.getElementById('viewGridBtn').classList.toggle('shadow-sm', view === 'grid');
+        document.getElementById('viewGridBtn').classList.toggle('text-northway-red', view === 'grid');
+        document.getElementById('viewGridBtn').classList.toggle('text-gray-500', view !== 'grid');
 
-        if (history.length === 0) {
+        document.getElementById('viewListBtn').classList.toggle('bg-white', view === 'list');
+        document.getElementById('viewListBtn').classList.toggle('shadow-sm', view === 'list');
+        document.getElementById('viewListBtn').classList.toggle('text-northway-red', view === 'list');
+        document.getElementById('viewListBtn').classList.toggle('text-gray-500', view !== 'list');
+
+        const container = document.getElementById('resultsContainer');
+        if (view === 'grid') {
+            container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 content-start";
+        } else {
+            container.className = "flex flex-col gap-2 content-start";
+        }
+
+        renderResults();
+    }
+
+    function renderResults() {
+        const container = document.getElementById('resultsContainer');
+        const countSpan = document.getElementById('resultsCount');
+
+        if (resultsState.length === 0) {
             container.innerHTML = `
-                <span>Sugestões:</span>
-                <button onclick="setQuery('Óticas em São Paulo')" class="hover:text-northway-red hover:underline">Óticas em SP</button>
-                <button onclick="setQuery('Advocacia Trabalhista')" class="hover:text-northway-red hover:underline">Advocacia</button>
+                <div class="col-span-full flex flex-col items-center justify-center text-gray-400 mt-10">
+                    <i data-lucide="search-x" class="w-16 h-16 mb-4 opacity-20"></i>
+                    <p>Nenhuma empresa encontrada com estes filtros.</p>
+                </div>
             `;
+            countSpan.textContent = '0 resultados';
+            if (window.lucide) lucide.createIcons();
             return;
         }
 
-        const chips = history.map(q => `
-            <button onclick="setQuery('${q}')" 
-                class="bg-gray-100 hover:bg-white hover:text-northway-red hover:border-northway-red border border-transparent px-3 py-1 rounded-full transition-all text-gray-600 flex items-center gap-1 group">
-                <i data-lucide="clock" class="w-3 h-3 opacity-50 group-hover:text-northway-red"></i> ${q}
-            </button>
-        `).join('');
+        countSpan.textContent = `${resultsState.length} resultados`;
 
-        container.innerHTML = `<span class="mr-1">Recentes:</span> ${chips}`;
+        if (currentView === 'grid') {
+            container.innerHTML = resultsState.map(place => renderCard(place)).join('');
+        } else {
+            container.innerHTML = `
+                <div class="bg-gray-100 rounded-lg p-3 grid grid-cols-12 gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider sticky top-0 z-10">
+                    <div class="col-span-1 flex justify-center">SEL</div>
+                    <div class="col-span-4">EMPRESA</div>
+                    <div class="col-span-3">LOCALIZAÇÃO</div>
+                    <div class="col-span-2">CONTATO</div>
+                    <div class="col-span-1">AVALIAÇÃO</div>
+                    <div class="col-span-1 flex justify-end">AÇÃO</div>
+                </div>
+            ` + resultsState.map(place => renderRow(place)).join('');
+        }
+
         if (window.lucide) lucide.createIcons();
     }
 
-    function setQuery(text) {
-        document.getElementById('searchInput').value = text;
-        performSearch();
-    }
+    function renderCard(place) {
+        const isSelected = selectedIds.has(place.place_id);
+        const isDuplicate = place.is_duplicate;
 
-    document.getElementById('searchInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') performSearch();
-    });
+        // Premium Porte Logic
+        const ratings = place.user_ratings_total || 0;
+        let porteClass = 'bg-gray-100 text-gray-500';
+        let porteText = 'Small Business';
+        let porteIcon = 'building';
 
-    async function performSearch() {
-        let query = document.getElementById('searchInput').value.trim();
-        const city = document.getElementById('filterCity').value.trim();
-        const state = document.getElementById('filterState').value.trim();
-
-        if (!query) return;
-
-        // Build composite query: Order and punctuation matter for API
-        let fullQuery = query;
-        if (city) fullQuery += `, ${city}`;
-        if (state) fullQuery += `, ${state}`;
-        if (city || state) {
-            fullQuery += ", Brasil";
+        if (ratings > 200) {
+            porteClass = 'bg-northway-red/10 text-northway-red';
+            porteText = 'Enterprise';
+            porteIcon = 'landmark';
+        } else if (ratings > 50) {
+            porteClass = 'bg-blue-100/80 text-blue-600';
+            porteText = 'Mid-Market';
+            porteIcon = 'building-2';
         }
 
-        const btn = document.getElementById('searchBtn');
-        const btnText = document.getElementById('btnText');
-        const btnLoader = document.getElementById('btnLoader');
-        const container = document.getElementById('resultsContainer');
-
-        // Loading State
-        btn.disabled = true;
-        btnText.classList.add('hidden');
-        btnLoader.classList.remove('hidden');
-        container.innerHTML = `
-            <div class="col-span-full flex flex-col items-center justify-center py-20">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-northway-red mb-4"></div>
-                <p class="text-gray-500 animate-pulse">Buscando '${fullQuery}'...</p>
-            </div>
-        `;
-
-        try {
-            const response = await fetch(`/api/prospecting/search?query=${encodeURIComponent(fullQuery)}`);
-            const data = await response.json();
-
-            if (data.error) throw new Error(data.error);
-
-            // Our api_response wraps actual data in a 'data' field
-            const results = data.data ? (data.data.results || []) : [];
-            const debugInfo = data.data ? data.data.debug : null;
-
-            renderResults(results, debugInfo);
-            saveState(query, city, state, results);
-
-        } catch (error) {
-            console.error(error);
-            container.innerHTML = `
-                <div class="col-span-full text-center py-10 px-6">
-                    <div class="bg-red-50 text-red-600 p-6 rounded-2xl inline-block max-w-lg">
-                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
-                        <p class="font-bold text-lg mb-2">Erro na busca</p>
-                        <p class="text-sm opacity-80">${error.message}</p>
-                        <button onclick="performSearch()" class="mt-4 text-xs font-bold underline uppercase tracking-widest">Tentar novamente</button>
-                    </div>
+        return `
+            <div id="card-${place.place_id}" 
+                 class="group relative flex flex-col h-full bg-white/70 backdrop-blur-sm rounded-2xl border ${isSelected ? 'border-northway-red ring-4 ring-northway-red/5 shadow-glow' : 'border-gray-100/50 shadow-sm'} hover:shadow-xl hover:-translate-y-1 transition-all duration-500 overflow-hidden">
+                
+                ${isDuplicate ? `
+                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md text-northway-red text-[10px] font-black px-2.5 py-1 rounded-full z-10 flex items-center gap-1.5 shadow-sm border border-northway-red/10 uppercase tracking-widest">
+                    <i data-lucide="check-circle-2" class="w-3 h-3"></i> No CRM
                 </div>
-            `;
-            if (window.lucide) lucide.createIcons();
-        } finally {
-            btn.disabled = false;
-            btnText.classList.remove('hidden');
-            btnLoader.classList.add('hidden');
-        }
-    }
-
-    function renderResults(results, debug = null) {
-        const container = document.getElementById('resultsContainer');
-        const countDiv = document.getElementById('resultsCount');
-        const headerDiv = document.getElementById('resultsHeader');
-
-        if (results.length === 0) {
-            if (headerDiv) headerDiv.classList.add('hidden');
-            else if (countDiv) countDiv.classList.add('hidden');
-
-            container.innerHTML = `
-                <div class="col-span-full flex flex-col items-center justify-center text-gray-400 mt-10">
-                    <i data-lucide="search-x" class="w-16 h-16 mb-4 text-gray-300"></i>
-                    <p class="text-lg font-medium text-gray-600">Nenhuma empresa encontrada.</p>
-                    <p class="text-sm mt-1 max-w-sm text-center">Tente remover filtros de cidade/estado ou usar termos mais genéricos.</p>
-                    
-                    ${debug ? `
-                    <div class="mt-8 p-4 bg-gray-100 rounded-xl text-[10px] font-mono text-gray-500 text-left border border-gray-200">
-                        <p class="font-bold uppercase mb-1">Status Técnico:</p>
-                        <p>Query: ${debug.query_sent}</p>
-                        <p>Google Status: ${debug.google_status}</p>
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-            if (window.lucide) lucide.createIcons();
-            return;
-        }
-
-        // Show Count
-        countDiv.textContent = `${results.length} empresas encontradas`;
-        if (headerDiv) headerDiv.classList.remove('hidden');
-        else countDiv.classList.remove('hidden');
-
-        container.innerHTML = results.map(place => {
-            const isOpen = place.business_status === 'OPERATIONAL';
-            const statusColor = isOpen ? 'text-green-600 bg-green-50' : 'text-gray-500 bg-gray-100';
-            const statusText = isOpen ? 'Aberto' : (place.business_status || 'Desconhecido');
-
-            return `
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 flex flex-col h-full group">
-                <div class="p-5 flex flex-col h-full">
-                    <div class="flex justify-between items-start mb-3 gap-2">
-                        <div class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider line-clamp-1">
-                            ${(place.types[0] || 'Empresa').replace(/_/g, ' ')}
+                ` : ''}
+                
+                <div class="p-6 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-3">
+                            <label class="relative flex cursor-pointer">
+                                <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${place.place_id}')" 
+                                       class="peer sr-only">
+                                <div class="w-5 h-5 rounded-md border-2 border-gray-200 peer-checked:border-northway-red peer-checked:bg-northway-red transition-all flex items-center justify-center">
+                                    <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                                </div>
+                            </label>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">
+                                    ${(place.types[0] || 'Company').replace(/_/g, ' ')}
+                                </span>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="flex items-center text-yellow-500 font-black text-sm">
+                                        <i data-lucide="star" class="w-3 h-3 fill-current mr-1"></i>
+                                        ${place.rating || '-'}
+                                    </div>
+                                    <span class="text-[10px] text-gray-400 font-medium">(${ratings} rev)</span>
+                                </div>
+                            </div>
                         </div>
-                        <span class="text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${statusColor}">
-                            ${statusText}
-                        </span>
+                        <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg ${porteClass} scale-90 origin-right transition-transform group-hover:scale-100">
+                            <i data-lucide="${porteIcon}" class="w-3 h-3"></i>
+                            <span class="text-[9px] font-black uppercase tracking-tighter">${porteText}</span>
+                        </div>
                     </div>
                     
-                    <h3 class="font-bold text-gray-900 text-lg leading-tight mb-2 group-hover:text-northway-red transition-colors line-clamp-2">
+                    <h3 class="font-display font-bold text-gray-900 text-lg leading-tight mb-3 group-hover:text-northway-red transition-colors line-clamp-2">
                         ${place.name}
                     </h3>
                     
-                    <div class="flex items-start text-sm text-gray-500 mb-4 flex-1">
-                        <i data-lucide="map-pin" class="w-4 h-4 mr-1 shrink-0 mt-0.5"></i>
-                        <span class="line-clamp-3">${place.formatted_address || 'Endereço não disponível'}</span>
-                    </div>
-
-                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
-                        <div class="flex items-center text-yellow-500 text-xs font-bold gap-1">
-                            <i data-lucide="star" class="w-3 h-3 fill-current"></i>
-                            <span>${place.rating || '-'}</span>
-                            <span class="text-gray-300 font-normal">(${place.user_ratings_total || 0})</span>
+                    <div class="space-y-2.5 mb-6">
+                        <div class="flex items-start text-xs text-gray-500 font-medium group/loc">
+                            <div class="mt-0.5 p-1 rounded bg-gray-50 text-gray-400 group-hover/loc:text-northway-red transition-colors">
+                                <i data-lucide="map-pin" class="w-3 h-3"></i>
+                            </div>
+                            <span class="ml-2.5 line-clamp-2 leading-relaxed">${place.formatted_address || 'Address unavailable'}</span>
                         </div>
                         
-                        <button onclick="importLead('${place.place_id}', this)"
-                            class="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg font-medium hover:bg-northway-red transition-all shadow-lg shadow-gray-200 hover:shadow-red-200 flex items-center gap-2">
-                            <span>Importar</span>
-                            <i data-lucide="download" class="w-3 h-3"></i>
+                        ${place.phone ? `
+                        <div class="flex items-center text-xs text-gray-500 font-medium">
+                            <div class="p-1 rounded bg-gray-50 text-gray-400">
+                                <i data-lucide="phone" class="w-3 h-3"></i>
+                            </div>
+                            <span class="ml-2.5">${place.phone}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="mt-auto pt-5 border-t border-gray-100/50 flex items-center justify-between">
+                        <div class="flex gap-2">
+                            ${place.website ? `
+                            <a href="${place.website}" target="_blank" 
+                               class="p-2.5 rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-northway-red hover:border-northway-red/20 transition-all shadow-sm"
+                               title="Ver Website">
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                            </a>
+                            ` : ''}
+                        </div>
+                        
+                        <button onclick="importLead('${place.place_id}', this)" ${isDuplicate ? 'disabled' : ''}
+                            class="relative overflow-hidden group/btn ${isDuplicate ? 'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-100' : 'bg-gray-900 text-white hover:bg-black'} text-[11px] font-black uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all flex items-center gap-2">
+                            <span class="relative z-10">${isDuplicate ? 'Sincronizado' : 'Prospectar'}</span>
+                            <i data-lucide="${isDuplicate ? 'check' : 'plus'}" class="w-3.5 h-3.5 relative z-10"></i>
+                            ${!isDuplicate ? '<div class="absolute inset-0 bg-gradient-to-r from-northway-red to-orange-600 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>' : ''}
                         </button>
                     </div>
                 </div>
             </div>
-            `;
-        }).join('');
-
-        if (window.lucide) lucide.createIcons();
+        `;
     }
 
-    async function importLead(placeId, btn) {
+    function renderRow(place) {
+        const isSelected = selectedIds.has(place.place_id);
+        const isDuplicate = place.is_duplicate;
+
+        return `
+            <div class="group glass-sm bg-white/60 p-4 rounded-xl border ${isSelected ? 'border-northway-red bg-white/90 ring-4 ring-northway-red/5' : 'border-gray-100/50'} hover:border-northway-red/30 transition-all flex items-center gap-6">
+                <div class="flex items-center justify-center">
+                    <label class="relative flex cursor-pointer">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${place.place_id}')" class="peer sr-only">
+                        <div class="w-5 h-5 rounded-md border-2 border-gray-200 peer-checked:border-northway-red peer-checked:bg-northway-red transition-all flex items-center justify-center">
+                            <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                        </div>
+                    </label>
+                </div>
+                
+                <div class="w-1/3">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <p class="font-display font-bold text-gray-900 line-clamp-1 group-hover:text-northway-red transition-colors">${place.name}</p>
+                        ${isDuplicate ? '<i data-lucide="check-circle-2" class="w-3 h-3 text-green-500"></i>' : ''}
+                    </div>
+                    <p class="text-[9px] text-gray-400 font-black uppercase tracking-tight">${(place.types[0] || '').replace(/_/g, ' ')}</p>
+                </div>
+                
+                <div class="flex-1 text-xs text-gray-500 font-medium line-clamp-1 opacity-70">
+                    ${place.formatted_address || 'Address unknown'}
+                </div>
+                
+                <div class="w-32 flex flex-col items-center">
+                    <div class="flex items-center text-yellow-500 text-xs font-black gap-1">
+                        <i data-lucide="star" class="w-3 h-3 fill-current"></i> ${place.rating || '-'}
+                    </div>
+                    <span class="text-[9px] text-gray-400 font-medium">${place.user_ratings_total} revs.</span>
+                </div>
+                
+                <div class="w-12 flex justify-end">
+                    <button onclick="importLead('${place.place_id}', this)" ${isDuplicate ? 'disabled' : ''}
+                        class="${isDuplicate ? 'text-green-500 bg-green-50' : 'text-gray-400 hover:text-white hover:bg-northway-red shadow-sm'} p-2.5 rounded-xl transition-all active:scale-90">
+                        <i data-lucide="${isDuplicate ? 'check-circle' : 'plus'}" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // --- Bulk & Selection ---
+    function toggleSelect(id) {
+        if (selectedIds.has(id)) {
+            selectedIds.delete(id);
+        } else {
+            selectedIds.add(id);
+        }
+        updateSelectedCount();
+
+        // Visual feedback
+        const card = document.getElementById(`card-${id}`);
+        if (card) {
+            card.classList.toggle('border-northway-red', selectedIds.has(id));
+            card.classList.toggle('ring-1', selectedIds.has(id));
+            card.classList.toggle('ring-northway-red/20', selectedIds.has(id));
+        }
+    }
+
+    function updateSelectedCount() {
+        const span = document.getElementById('selectedCount');
+        const count = selectedIds.size;
+        span.textContent = count > 0 ? `(${count})` : '';
+        document.getElementById('importSelectedBtn').classList.toggle('opacity-50', count === 0);
+        document.getElementById('importSelectedBtn').disabled = count === 0;
+    }
+
+    let allSelected = false;
+    function toggleSelectAll() {
+        allSelected = !allSelected;
+        if (allSelected) {
+            resultsState.forEach(p => {
+                if (!p.is_duplicate) selectedIds.add(p.place_id);
+            });
+        } else {
+            selectedIds.clear();
+        }
+        renderResults();
+        updateSelectedCount();
+    }
+
+    async function importSelected() {
+        if (selectedIds.size === 0) return;
+
+        const stageId = document.getElementById('importStage').value;
+        const btn = document.getElementById('importSelectedBtn');
         const originalContent = btn.innerHTML;
+
         btn.disabled = true;
-        btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>`;
-        btn.classList.add('opacity-75');
+        btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> <span>Importando...</span>`;
+
+        try {
+            const placesToImport = resultsState.filter(p => selectedIds.has(p.place_id));
+            const response = await fetch('/api/prospecting/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    places: placesToImport,
+                    stage_id: stageId
+                })
+            });
+            const data = await response.json();
+
+            if (!data.success) throw new Error(data.error);
+
+            alert(`Sucesso! ${data.data.imported_count} empresas importadas.`);
+
+            // Refresh results to show "Already in CRM"
+            selectedIds.clear();
+            performSearch();
+            loadHistory(); // Update history sidebar
+
+        } catch (error) {
+            alert("Erro na importação: " + error.message);
+        } finally {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            updateSelectedCount();
+        }
+    }
+
+    async function importLead(id, btn) {
+        const place = resultsState.find(p => p.place_id === id);
+        if (!place) return;
+
+        const stageId = document.getElementById('importStage').value;
+        const originalContent = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = `<div class="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>`;
 
         try {
             const response = await fetch('/api/prospecting/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ place_id: placeId })
+                body: JSON.stringify({
+                    places: [place],
+                    stage_id: stageId
+                })
             });
             const data = await response.json();
+            if (!data.success) throw new Error(data.error);
 
-            if (data.error) throw new Error(data.error);
-
-            // Success Animation
-            btn.className = "bg-green-100 text-green-700 text-sm px-4 py-2 rounded-lg font-medium flex items-center gap-2 cursor-default border border-green-200";
-            btn.innerHTML = `<span>Importado</span> <i data-lucide="check" class="w-3 h-3"></i>`;
-
-            // Mark as imported for bulk logic check
-            btn.setAttribute('data-imported', 'true');
-
-            // Optional: Toast notification could be good here
-
-        } catch (error) {
-            console.error(error);
-            // alert("Erro ao importar: " + error.message); // Suppress alert for bulk? No, keep it or use toast.
-            // For single click, alert is fine. For bulk, we catch it.
-            // Let's check call stack or just suppress alert inside importAll?
-            // Actually, importAll calls this. If we throw here, importAll catches.
-            // But we have a catch block here.
-            // Let's re-throw if it wasn't handled silently?
-            // Simple: just restore button if error.
-            if (!document.getElementById('importAllBtn').disabled) {
-                alert("Erro ao importar: " + error.message);
-            }
-
+            btn.innerHTML = `<i data-lucide="check" class="w-3 h-3"></i>`;
+            btn.className = "bg-green-100 text-green-600 text-[11px] px-3 py-1.5 rounded-lg font-bold flex items-center justify-center";
+            place.is_duplicate = true;
+            loadHistory();
+        } catch (e) {
+            alert(e.message);
             btn.innerHTML = originalContent;
             btn.disabled = false;
-            btn.classList.remove('opacity-75');
-            throw error; // Propagate for importAll count
         }
+        if (window.lucide) lucide.createIcons();
     }
 
-    async function importAll() {
-        const btn = document.getElementById('importAllBtn');
-        const originalContent = btn.innerHTML;
-        const buttons = document.querySelectorAll('#resultsContainer button[onclick^="importLead"]');
+    // --- Favorites Logic ---
+    function toggleFavorites() {
+        const panel = document.getElementById('favoritesPanel');
+        const isHidden = panel.classList.contains('translate-x-full');
+        panel.classList.toggle('translate-x-full', !isHidden);
+        if (isHidden) loadFavorites();
+    }
 
-        // Filter out already imported (check class, disabled state or data-imported)
-        const toImport = Array.from(buttons).filter(b => !b.hasAttribute('data-imported') && !b.disabled && !b.textContent.includes('Importado'));
+    async function saveFavorite() {
+        const name = prompt("Nome para esta busca favoritada:");
+        if (!name) return;
 
-        if (toImport.length === 0) {
-            alert('Nenhuma empresa nova para importar nesta página.');
-            return;
-        }
+        const data = {
+            name: name,
+            query: document.getElementById('searchInput').value,
+            city: document.getElementById('filterCity').value,
+            state: document.getElementById('filterState').value,
+            radius: document.getElementById('filterRadius').value,
+            min_rating: document.getElementById('filterMinRating').value,
+            min_reviews: document.getElementById('filterMinReviews').value
+        };
 
-        if (!confirm(`Deseja importar ${toImport.length} empresas sequencialmente?`)) return;
-
-        btn.disabled = true;
-        let successCount = 0;
-        let failCount = 0;
-
-        for (let i = 0; i < toImport.length; i++) {
-            const targetBtn = toImport[i];
-
-            // Extract placeId from onclick attribute: importLead('PLACE_ID', this)
-            const match = targetBtn.getAttribute('onclick').match(/importLead\('([^']+)'/);
-            if (match && match[1]) {
-                const placeId = match[1];
-
-                // Update Main Button Status
-                btn.innerHTML = `<span class="animate-pulse">Importando ${i + 1}/${toImport.length}...</span> <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-northway-red"></div>`;
-
-                try {
-                    // Trigger the individual import logic
-                    await importLead(placeId, targetBtn);
-                    successCount++;
-                } catch (e) {
-                    console.warn(`Failed to import ${placeId}`, e);
-                    failCount++;
-                }
-
-                // Small delay to be safer
-                await new Promise(r => setTimeout(r, 800));
+        try {
+            const resp = await fetch('/api/prospecting/favorites', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (resp.ok) {
+                alert("Busca salva com sucesso!");
+                loadFavorites();
             }
-        }
+        } catch (e) { }
+    }
 
-        const icon = failCount === 0 ? 'check-circle' : 'alert-circle';
-        const color = failCount === 0 ? 'text-green-500' : 'text-orange-500';
+    async function loadFavorites() {
+        try {
+            const resp = await fetch('/api/prospecting/favorites');
+            const data = await resp.json();
+            const list = document.getElementById('favoritesList');
+            if (data.success && data.data) {
+                if (data.data.length === 0) {
+                    list.innerHTML = `<p class="text-xs text-gray-400 text-center py-10">Nenhuma busca salva.</p>`;
+                    return;
+                }
+                list.innerHTML = data.data.map(f => `
+                    <div class="bg-gray-50 border border-gray-100 p-3 rounded-lg flex flex-col gap-2 group relative">
+                        <button onclick="applyFavorite(${JSON.stringify(f).replace(/"/g, '&quot;')})" class="text-left">
+                            <p class="font-bold text-sm text-gray-900 line-clamp-1">${f.name}</p>
+                            <p class="text-[10px] text-gray-500 line-clamp-1">${f.query}${f.city ? ' @ ' + f.city : ''}</p>
+                        </button>
+                        <button onclick="deleteFavorite(${f.id})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 transition-colors">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                `).join('');
+                if (window.lucide) lucide.createIcons();
+            }
+        } catch (e) { }
+    }
 
-        btn.innerHTML = `<span>${successCount} Importados (${failCount} erros)</span> <i data-lucide="${icon}" class="w-4 h-4 ${color}"></i>`;
+    function applyFavorite(f) {
+        document.getElementById('searchInput').value = f.query || '';
+        document.getElementById('filterCity').value = f.city || '';
+        document.getElementById('filterState').value = f.state || '';
+        document.getElementById('filterRadius').value = f.radius || '';
+        document.getElementById('filterMinRating').value = f.min_rating || '';
+        document.getElementById('filterMinReviews').value = f.min_reviews || '';
+        toggleFavorites();
+        performSearch();
+    }
 
-        if (window.lucide) lucide.createIcons();
+    async function deleteFavorite(id) {
+        if (!confirm("Excluir favorito?")) return;
+        await fetch(`/api/prospecting/favorites/${id}`, { method: 'DELETE' });
+        loadFavorites();
+    }
 
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = originalContent; // Reset
-            if (window.lucide) lucide.createIcons();
-        }, 4000);
+    // --- History Logic ---
+    function toggleHistory() {
+        const panel = document.getElementById('historyPanel');
+        const isHidden = panel.classList.contains('translate-x-full');
+        panel.classList.toggle('translate-x-full', !isHidden);
+        if (isHidden) loadHistory();
+    }
+
+    async function loadHistory() {
+        try {
+            const resp = await fetch('/api/prospecting/history');
+            const data = await resp.json();
+            const list = document.getElementById('historyList');
+            if (data.success && data.data) {
+                if (data.data.length === 0) {
+                    list.innerHTML = `<p class="text-xs text-gray-400 text-center py-10">Nenhuma importação recente.</p>`;
+                    return;
+                }
+                list.innerHTML = data.data.map(l => `
+                    <div class="bg-gray-50 p-2 rounded flex justify-between items-center text-[11px] border border-transparent hover:border-gray-200">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-gray-900">${l.name}</span>
+                            <span class="text-[9px] text-gray-400">${l.created_at}</span>
+                        </div>
+                        <span class="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[9px] font-bold">${l.stage}</span>
+                    </div>
+                `).join('');
+            }
+        } catch (e) { }
     }
 </script>
 {% endblock %}

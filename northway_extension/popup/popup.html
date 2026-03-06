@@ -29,7 +29,7 @@
         <div id="nw-view-auth">
             <div class="nw-hero">
                 <h1>Acesse sua <br><span>Operação</span></h1>
-                <p>ZapWay Extension v2.5</p>
+                <p>ZapWay Extension v3.0</p>
             </div>
 
             <div id="nw-login-form" class="nw-auth-card">
@@ -45,46 +45,53 @@
         </div>
 
         <!-- ACTIVE VIEW (Logged In) -->
-        <div id="nw-view-active" class="nw-view hidden">
-            <div class="nw-hero">
-                <div class="nw-logo-icon-large" style="margin: 0 auto 20px;">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 6L9 17l-5-5"></path>
-                    </svg>
-                </div>
-                <h1>Tudo <br><span>Pronto!</span></h1>
-                <p>Extensão Ativa e Conectada.</p>
-            </div>
-
-            <div class="nw-auth-card" style="text-align: center;">
-                <div class="nw-user-avatar" style="margin: 0 auto 15px;">
+        <div id="nw-view-active" class="nw-view hidden" style="padding-top: 20px;">
+            <div class="nw-auth-card" style="text-align: center; margin-bottom: 20px;">
+                <div class="nw-user-avatar" style="margin: 0 auto 10px;">
                     <img id="nw-user-img" src="" class="hidden">
                     <span id="nw-user-initials">AD</span>
                 </div>
-                <strong id="nw-user-name" style="display: block; font-size: 16px; margin-bottom: 5px;">Usuário</strong>
+                <strong id="nw-user-name" style="display: block; font-size: 16px; margin-bottom: 2px;">Usuário</strong>
                 <span id="nw-user-email"
-                    style="display: block; color: var(--nw-text-muted); font-size: 12px; margin-bottom: 20px;">email@northway.com</span>
-
-                <div
-                    style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; font-size: 11px; color: #ccc; margin-bottom: 20px;">
-                    🚀 Use a barra lateral no <b>WhatsApp Web</b> para realizar disparos.
-                </div>
-
-                <a href="https://web.whatsapp.com" target="_blank" class="nw-btn primary big"
-                    style="text-decoration: none;">
-                    Abrir WhatsApp Web
-                </a>
-
-                <button id="nw-btn-logout" class="nw-btn logout" style="margin-top: 15px;">
-                    Desconectar
-                </button>
+                    style="display: block; color: var(--nw-text-muted); font-size: 12px;">email@northway.com</span>
             </div>
+
+            <!-- Stats (Bug 13) -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div
+                    style="flex: 1; background: rgba(var(--nw-primary-rgb), 0.1); border: 1px solid rgba(var(--nw-primary-rgb), 0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                    <div id="nw-popup-sent"
+                        style="font-size: 20px; font-weight: bold; color: var(--nw-primary); margin-bottom: 4px;">0
+                    </div>
+                    <div style="font-size: 10px; color: var(--nw-text-muted); text-transform: uppercase;">Disparos</div>
+                </div>
+                <div
+                    style="flex: 1; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                    <div id="nw-popup-crm"
+                        style="font-size: 20px; font-weight: bold; color: #10b981; margin-bottom: 4px;">0</div>
+                    <div style="font-size: 10px; color: var(--nw-text-muted); text-transform: uppercase;">Leads</div>
+                </div>
+            </div>
+
+            <div
+                style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; font-size: 11px; color: #ccc; margin-bottom: 20px; text-align: center;">
+                🚀 Use a barra lateral no <b>WhatsApp Web</b> para realizar disparos.
+            </div>
+
+            <a href="https://web.whatsapp.com" target="_blank" class="nw-btn primary"
+                style="text-decoration: none; width: 100%; justify-content: center; margin-bottom: 8px;">
+                Abrir WhatsApp Web
+            </a>
+
+            <button id="nw-btn-logout" class="nw-btn"
+                style="width: 100%; justify-content: center; background: rgba(255,255,255,0.05);">
+                Desconectar
+            </button>
         </div>
 
         <!-- FOOTER -->
         <div class="nw-popup-footer">
-            <span class="nw-version">v2.5.0</span>
+            <span class="nw-version">v3.0.0</span>
             <div class="nw-footer-stats hidden" id="nw-footer-stats">
                 Enviados hoje: <span id="nw-today-count">0</span>
             </div>

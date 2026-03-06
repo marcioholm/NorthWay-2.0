@@ -16,7 +16,7 @@ let config = {
 };
 
 // Initialize Settings
-chrome.storage.local.get(['minDelay', 'maxDelay', 'dailyLimit', 'sentToday', 'lastResetDate'], (data) => {
+chrome.storage.local.get(['minDelay', 'maxDelay', 'dailyLimit', 'sentToday', 'crmToday', 'lastResetDate'], (data) => {
     if (data.minDelay) config.minDelay = data.minDelay;
     if (data.maxDelay) config.maxDelay = data.maxDelay;
     if (data.dailyLimit) config.dailyLimit = data.dailyLimit;
@@ -25,9 +25,11 @@ chrome.storage.local.get(['minDelay', 'maxDelay', 'dailyLimit', 'sentToday', 'la
     const today = new Date().toDateString();
     if (data.lastResetDate !== today) {
         config.sentToday = 0;
-        chrome.storage.local.set({ sentToday: 0, lastResetDate: today });
+        config.crmToday = 0;
+        chrome.storage.local.set({ sentToday: 0, crmToday: 0, lastResetDate: today });
     } else {
         config.sentToday = data.sentToday || 0;
+        config.crmToday = data.crmToday || 0;
     }
 });
 
@@ -54,6 +56,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (data.dailyLimit) config.dailyLimit = data.dailyLimit;
             console.log("ZapWay Config Updated:", config);
         });
+        return false;
+    }
+
+    // --- DAILY COUNTERS ---
+    if (request.action === "INCREMENT_SENT") {
+        config.sentToday++;
+        chrome.storage.local.set({ sentToday: config.sentToday });
+        sendResponse({ success: true, count: config.sentToday });
+        return false;
+    }
+
+    if (request.action === "INCREMENT_CRM") {
+        config.crmToday++;
+        chrome.storage.local.set({ crmToday: config.crmToday });
+        sendResponse({ success: true, count: config.crmToday });
+        return false;
+    }
+
+    if (request.action === "GET_TODAY_STATS") {
+        sendResponse({ sent: config.sentToday, crm: config.crmToday });
         return false;
     }
 
@@ -89,6 +111,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.action === "GET_CONFIG") {
         apiCall('/config', 'GET').then(sendResponse);
+        return true;
+    }
+
+    if (request.action === "GET_TEMPLATES") {
+        apiCall('/templates', 'GET').then(sendResponse);
         return true;
     }
 

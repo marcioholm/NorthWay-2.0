@@ -51,8 +51,8 @@ def create_app():
             # Content Security Policy (Base safe policy)
             csp = (
                 "default-src 'self' https:; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com https://unpkg.com https://cdn.tailwindcss.com; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.tailwindcss.com; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com https://unpkg.com https://cdn.tailwindcss.com https://cdn.quilljs.com; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.quilljs.com; "
                 "font-src 'self' https://fonts.gstatic.com; "
                 "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://*.whatsapp.net https://*.google.com https://*.whatsapp.com; "
                 "connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.googleapis.com;"
@@ -135,11 +135,14 @@ def create_app():
                     connect_args['connect_timeout'] = 5
                 engine = create_engine(url, connect_args=connect_args)
                 with engine.connect() as conn:
+                    from sqlalchemy import text
                     conn.execute(text("SELECT 1"))
                 app.logger.info("✅ DB CONNECTION TEST: SUCCESS.")
                 return True
             except Exception as conn_e:
-                app.logger.error(f"📡 DB CONNECTION TEST FAILED: {type(conn_e).__name__} - {conn_e}")
+                import traceback
+                error_trace = traceback.format_exc()
+                app.logger.error(f"📡 DB CONNECTION TEST FAILED: {type(conn_e).__name__} - {conn_e}\nTraceback:\n{error_trace}")
                 return False
 
         try:
@@ -178,13 +181,24 @@ def create_app():
                     print("🚨 DATABASE: Vercel environment. Blocking fallback.")
                 else:
                     print("⚠️ DATABASE: Local environment. Falling back to SQLite.")
-                    if not database_url or 'postgresql' in database_url:
-                        database_url = f'sqlite:///{os.path.join(app.root_path, "crm.db")}'
+                    # Prioritize instance folder for local data if root db is missing or empty
+                    instance_db = os.path.join(app.root_path, 'instance', 'crm.db')
+                    root_db = os.path.join(app.root_path, "crm.db")
+                    
+                    if os.path.exists(instance_db):
+                        database_url = f'sqlite:///{instance_db}'
+                    else:
+                        database_url = f'sqlite:///{root_db}'
             elif not database_url:
                 # No database configured at all
                 print("🏠 DATABASE: No URL configured. Using local SQLite.")
-                src_db = os.path.join(app.root_path, 'crm.db')
-                database_url = f'sqlite:///{src_db}'
+                instance_db = os.path.join(app.root_path, 'instance', 'crm.db')
+                root_db = os.path.join(app.root_path, 'crm.db')
+                
+                if os.path.exists(instance_db):
+                    database_url = f'sqlite:///{instance_db}'
+                else:
+                    database_url = f'sqlite:///{root_db}'
             else:
                 print(f"📡 DATABASE: Using existing URL: {database_url.split('@')[-1] if '@' in database_url else 'hidden'}")
 
@@ -491,6 +505,7 @@ def create_app():
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS representative VARCHAR(100);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS representative_cpf VARCHAR(20);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS email_contact VARCHAR(120);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS asaas_customer_id VARCHAR(50);",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS stars FLOAT;",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS classification VARCHAR(100);",
@@ -617,7 +632,8 @@ def create_app():
             ('routes.service_orders', 'service_orders_bp', 'service_orders_bp', None),
             ('routes.pdf_routes', 'pdf_bp', 'pdf_bp', None),
             ('routes.financial_payable', 'payable_bp', 'payable_bp', None),
-            ('routes.commercial_performance', 'commercial_bp', 'commercial_bp', None)
+            ('routes.commercial_performance', 'commercial_bp', 'commercial_bp', None),
+            ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None)
         ]
 
         import importlib
@@ -631,6 +647,16 @@ def create_app():
                     app.register_blueprint(bp)
             except Exception as e:
                 print(f"❌ Failed to load blueprint {var_name}: {e}")
+                
+        # --- BLUEPRINT FALLBACKS (Safety for router build errors) ---
+        @app.route('/prospecting')
+        @login_required
+        def prospecting_fallback():
+            try:
+                # Try to redirect to leads if prospecting is totally broken
+                return redirect(url_for('leads.leads'))
+            except:
+                return "The prospecting module is currently offline. Please contact support.", 503
 
         # --- BILLING MIDDLEWARE ---
             
@@ -661,6 +687,37 @@ def create_app():
                                 print("🛠️ MIGRATION: Column 'payment_status' already exists. OK.")
                             else:
                                 raise e_inner
+                        
+                        # Added Lead Repairs directly here for robustness
+                        try:
+                            from sqlalchemy import inspect, text
+                            inspector = inspect(db.engine)
+                            if inspector.has_table("lead"):
+                                lead_cols = [c['name'] for c in inspector.get_columns("lead")]
+                                lead_repairs = [
+                                    ('estimated_value', "NUMERIC(12, 2) DEFAULT 0.0"),
+                                    ('google_place_id', "VARCHAR(100)"),
+                                    ('address', "TEXT"),
+                                    ('website', "VARCHAR(500)"),
+                                    ('profile_pic_url', "VARCHAR(500)"),
+                                    ('diagnostic_status', "VARCHAR(20) DEFAULT 'pending'"),
+                                    ('diagnostic_pillars', "JSONB" if is_postgres_env else "TEXT"),
+                                    ('gmb_rating', "FLOAT DEFAULT 0.0"),
+                                    ('gmb_reviews', "INTEGER DEFAULT 0"),
+                                    ('gmb_link', "VARCHAR(500)"),
+                                    ('gmb_photos', "INTEGER DEFAULT 0"),
+                                    ('gmb_last_sync', "TIMESTAMP")
+                                ]
+                                for col, dtype in lead_repairs:
+                                    if col not in lead_cols:
+                                        try:
+                                            print(f"🛠️ MIGRATION: Adding {col} to lead...")
+                                            conn.execute(text(f"ALTER TABLE lead ADD COLUMN {col} {dtype}"))
+                                            conn.commit()
+                                        except Exception as e_lead:
+                                            print(f"⚠️ MIGRATION FAILED for lead.{col}: {e_lead}")
+                        except Exception as e_lead_mig:
+                            print(f"⚠️ LEAD MIGRATION ERROR: {e_lead_mig}")
                 except Exception as e_mig:
                     print(f"⚠️ MIGRATION NOTICE (Non-critical if already exists): {e_mig}")
                 
@@ -686,7 +743,7 @@ def create_app():
 
                 # 3. Add Columns (Critical for Billing) - GUARDED
                 try:
-                    from sqlalchemy import inspect
+                    from sqlalchemy import inspect, text
                     inspector = inspect(db.engine)
                     
                     if inspector.has_table("company"):
@@ -738,6 +795,10 @@ def create_app():
                                 ('company_size', "VARCHAR(50)"),
                                 ('equity', "FLOAT"),
                                 ('foundation_date', "VARCHAR(20)"),
+                                ('legal_nature', "VARCHAR(100)"),
+                                ('opening_date', "VARCHAR(20)"),
+                                ('estimated_value', "FLOAT DEFAULT 0.0"),
+                                ('google_place_id', "VARCHAR(100)"),
                                 ('legal_email', "VARCHAR(120)"),
                                 ('legal_phone', "VARCHAR(50)"),
                                 ('cnae', "VARCHAR(200)"),
@@ -746,8 +807,11 @@ def create_app():
                             ]
                             for col, dtype in repairs:
                                 if col not in lead_cols:
-                                    try: conn.execute(text(f"ALTER TABLE lead ADD COLUMN {col} {dtype}"))
-                                    except: pass
+                                    try:
+                                        print(f"🛠️ REPAIR: Adding {col} to lead...")
+                                        conn.execute(text(f"ALTER TABLE lead ADD COLUMN {col} {dtype}"))
+                                    except Exception as e_rep:
+                                        print(f"⚠️ REPAIR FAILED for {col}: {e_rep}")
                             conn.commit()
 
                     # 5. CLIENT REPAIR
@@ -783,7 +847,8 @@ def create_app():
                                 ('gmb_rating', "FLOAT DEFAULT 0.0"),
                                 ('gmb_reviews', "INTEGER DEFAULT 0"),
                                 ('gmb_photos', "INTEGER DEFAULT 0"),
-                                ('gmb_last_sync', "TIMESTAMP")
+                                ('gmb_last_sync', "TIMESTAMP"),
+                                ('asaas_customer_id', "VARCHAR(50)")
                             ]
                             for col, dtype in repairs:
                                 if col not in client_cols:

@@ -316,6 +316,7 @@ class Lead(db.Model):
     profile_pic_url = db.Column(db.String(500), nullable=True) # WhatsApp Profile Pic
 
     # GMB / Maps Data
+    google_place_id = db.Column(db.String(100), index=True, nullable=True)
     gmb_link = db.Column(db.String(500), nullable=True)
     gmb_rating = db.Column(db.Float, default=0.0)
     gmb_reviews = db.Column(db.Integer, default=0)
@@ -342,6 +343,7 @@ class Lead(db.Model):
     diagnostic_classification = db.Column(db.String(50), nullable=True)
     diagnostic_date = db.Column(db.DateTime, nullable=True)
     diagnostic_pillars = db.Column(db.JSON, nullable=True) # Breakdown {"Atrair": 10, ...}
+    estimated_value = db.Column(db.Numeric(12, 2), default=0.0)
 
     # Google Drive Fields
     drive_folder_id = db.Column(db.String(100), nullable=True)
@@ -414,6 +416,7 @@ class Client(db.Model):
     # Enhanced Contract Data
     document = db.Column(db.String(20), nullable=True) # CPF/CNPJ
     address_street = db.Column(db.String(150), nullable=True)
+    asaas_customer_id = db.Column(db.String(50), nullable=True) # Asaas Customer ID
     
     # Diagnostic Data (New)
     diagnostic_status = db.Column(db.String(20), default='pending') # pending, done
@@ -1072,3 +1075,19 @@ class AccountsPayable(db.Model):
     client_obj = db.relationship('Client', backref='commissions_payable')
     beneficiario = db.relationship('User', foreign_keys=[beneficiario_id])
     referencia = db.relationship('AccountsPayable', remote_side=[id], backref='ajustes')
+
+class ProspectingSearch(db.Model):
+    __tablename__ = 'prospecting_searches'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    query = db.Column(db.String(200), nullable=False)
+    city = db.Column(db.String(200), nullable=True)
+    state = db.Column(db.String(20), nullable=True)
+    radius = db.Column(db.Integer, nullable=True)
+    min_rating = db.Column(db.Float, nullable=True)
+    min_reviews = db.Column(db.Integer, nullable=True)
+    
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    company = db.relationship('Company', backref='prospecting_searches')

@@ -39,6 +39,31 @@
             </div>
             <p class="text-gray-500 mt-1">Gerencie suas oportunidades</p>
         </div>
+
+        <!-- Quick Filters -->
+        <div class="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+            <div class="relative group/search">
+                <input type="text" id="pipelineSearch" placeholder="Buscar lead..." onkeyup="filterPipeline()"
+                    class="pl-9 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 w-64 transition-all">
+                <i data-lucide="search"
+                    class="w-4 h-4 text-gray-400 absolute left-3 top-2.5 group-focus-within/search:text-northway-red"></i>
+            </div>
+
+            <div class="h-6 w-px bg-gray-200"></div>
+
+            <div class="relative group/responsible">
+                <select id="responsibleFilter" onchange="filterPipeline()"
+                    class="pl-9 pr-8 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 appearance-none cursor-pointer">
+                    <option value="">Todos os Responsáveis</option>
+                    {% for user in active_pipeline.company.users %}
+                    <option value="{{ user.id }}">{{ user.name }}</option>
+                    {% endfor %}
+                </select>
+                <i data-lucide="user" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5"></i>
+                <i data-lucide="chevron-down"
+                    class="w-4 h-4 text-gray-400 absolute right-2 top-2.5 pointer-events-none"></i>
+            </div>
+        </div>
     </header>
 
     <div class="flex gap-6 h-[calc(100vh-12rem)] pb-4">
@@ -59,10 +84,21 @@
                     {% endif %}
                 </div>
 
+                <!-- Stage Total Value -->
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">
+                    Total: <span class="text-gray-600">R$ {{ "{:,.2f}".format(stage_totals[stage.id]).replace(',',
+                        'X').replace('.', ',').replace('X', '.') }}</span>
+                </div>
+
                 <div class="flex items-center gap-2">
                     <span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full font-medium count-badge">
-                        {{ leads|selectattr("pipeline_stage_id", "equalto", stage.id)|list|length }}
+                        {{ leads_by_stage[stage.id]|length }}
                     </span>
+
+                    <a href="{{ url_for('leads.export_leads', stage_id=stage.id) }}" title="Exportar leads desta etapa"
+                        class="text-gray-400 hover:text-green-600 opacity-0 group-hover/header:opacity-100 transition-opacity">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    </a>
 
                     {% if current_user.role == 'admin' %}
                     <!-- Delete Button -->
@@ -93,7 +129,7 @@
 
             <!-- Cards Container -->
             <div class="flex-1 overflow-y-auto p-3 space-y-3 cards-container">
-                {% for lead in leads if lead.pipeline_stage_id == stage.id %}
+                {% for lead in leads_by_stage[stage.id] %}
                 <div draggable="true" onclick="openLeadModal(this)" data-id="{{ lead.id }}" data-name="{{ lead.name }}"
                     data-phone="{{ lead.phone or '' }}" data-email="{{ lead.email or '' }}"
                     data-website="{{ lead.website or '' }}" data-address="{{ lead.address or '' }}"
@@ -104,7 +140,9 @@
                     data-diag-stars="{{ lead.diagnostic_stars or 0 }}"
                     data-diag-score="{{ lead.diagnostic_score or 0 }}"
                     data-diag-class="{{ lead.diagnostic_classification or '' }}"
-                    class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-l-red-500 animate-pulse' if lead.days_inactive > 5 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
+                    data-responsible-id="{{ lead.assigned_to_id or '' }}"
+                    data-estimated-value="{{ lead.estimated_value or 0 }}"
+                    class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-l-orange-500' if lead.days_inactive > 3 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
 
                     {% if lead.days_inactive > 5 %}
                     <div class="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md z-10"
@@ -112,8 +150,15 @@
                         <i data-lucide="alert-circle" class="w-4 h-4"></i>
                     </div>
                     {% endif %}
-                    <h4 class="font-medium text-gray-900 group-hover:text-northway-red transition-colors">{{ lead.name
-                        }}</h4>
+                    <h4
+                        class="font-medium text-gray-900 group-hover:text-northway-red transition-colors flex justify-between items-start gap-2">
+                        <span>{{ lead.name }}</span>
+                        {% if lead.estimated_value > 0 %}
+                        <span class="text-[11px] font-bold text-green-600 whitespace-nowrap">
+                            R$ {{ "{:,.0f}".format(lead.estimated_value).replace(',', '.') }}
+                        </span>
+                        {% endif %}
+                    </h4>
                     <div class="flex items-center justify-between mt-1">
                         <p class="text-xs text-gray-500">{{ lead.phone or 'Sem telefone' }}</p>
                         {% if lead.diagnostic_status == 'done' %}
@@ -136,8 +181,15 @@
                     </div>
 
                     <div class="mt-3 flex items-center justify-between">
-                        <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">{{
-                            lead.created_at.strftime('%d/%m') }}</span>
+                        <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">
+                            {{ lead.created_at.strftime('%d/%m') }}
+                        </span>
+
+                        <div
+                            class="flex items-center gap-1.5 text-[10px] {{ 'text-orange-600 font-bold' if lead.days_inactive > 3 else 'text-gray-400' }}">
+                            <i data-lucide="clock" class="w-3 h-3"></i>
+                            {{ lead.days_inactive }}d parado
+                        </div>
                     </div>
                 </div>
                 {% else %}
@@ -237,10 +289,19 @@
                     </h4>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">E-mail</label>
-                            <input type="email" name="email" id="modalInputEmail"
-                                class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                                <input type="email" id="modalInputEmail" name="email"
+                                    class="w-full bg-gray-50 border-gray-200 rounded text-sm focus:ring-northway-red">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Valor Estimado
+                                    (R$)</label>
+                                <input type="number" step="0.01" id="modalInputEstimatedValue" name="estimated_value"
+                                    class="w-full bg-gray-50 border-gray-200 rounded text-sm focus:ring-northway-red font-bold text-green-600"
+                                    placeholder="0,00">
+                            </div>
                         </div>
 
                         <!-- Phone with DDI -->
@@ -689,6 +750,36 @@
         });
     }
 
+    function filterPipeline() {
+        const searchTerm = document.getElementById('pipelineSearch').value.toLowerCase();
+        const responsibleId = document.getElementById('responsibleFilter').value;
+        const cards = document.querySelectorAll('.pipeline-card');
+
+        cards.forEach(card => {
+            const name = card.dataset.name.toLowerCase();
+            const cardResponsibleId = card.dataset.responsibleId;
+
+            const matchesSearch = name.includes(searchTerm);
+            const matchesResponsible = !responsibleId || cardResponsibleId === responsibleId;
+
+            if (matchesSearch && matchesResponsible) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        updateColumnCounts();
+    }
+
+    function updateColumnCounts() {
+        document.querySelectorAll('.pipeline-column').forEach(column => {
+            const visibleCards = column.querySelectorAll('.pipeline-card:not(.hidden)').length;
+            const badge = column.querySelector('.count-badge');
+            if (badge) badge.textContent = visibleCards;
+        });
+    }
+
     // ... Helpers ...
     function editStage(id, name) { document.getElementById(`edit-form-${id}`).classList.remove('hidden'); }
     function cancelEdit(id) { document.getElementById(`edit-form-${id}`).classList.add('hidden'); }
@@ -750,6 +841,7 @@
         document.getElementById('modalInputAddress').value = lead.address || '';
         document.getElementById('modalInputSource').value = lead.source || '';
         document.getElementById('modalInputInterest').value = lead.interest || '';
+        document.getElementById('modalInputEstimatedValue').value = input.dataset.estimatedValue || 0;
         document.getElementById('bantBudget').value = lead.bant_budget || '';
         document.getElementById('bantAuthority').value = lead.bant_authority || '';
         document.getElementById('bantTimeline').value = lead.bant_timeline || '';

@@ -84,6 +84,14 @@
 
                 {% if current_user.is_super_admin or (not tmpl.is_global or (tmpl.is_global and tmpl.company_id ==
                 current_user.company_id)) %}
+                <form action="{{ url_for('templates.duplicate_template', id=tmpl.id) }}" method="POST" class="inline">
+                    <button type="submit"
+                        class="text-gray-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                        title="Duplicar">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                </form>
+
                 <form action="{{ url_for('templates.delete_template', id=tmpl.id) }}" method="POST"
                     onsubmit="return confirm('Tem certeza que deseja excluir este modelo?');" class="inline">
                     <button type="submit"

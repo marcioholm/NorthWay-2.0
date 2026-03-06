@@ -1138,18 +1138,30 @@
             if (companies.length === 0) {
                 resultsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhuma empresa encontrada.</p>';
             } else {
-                resultsContainer.innerHTML = companies.map(c => `
-                    <div class="p-4 border border-gray-100 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer group" onclick="confirmEnrichment('${c.tax_id}', '${c.name.replace(/'/g, "\\'")}')">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <h4 class="text-sm font-bold text-gray-900 group-hover:text-purple-600">${c.name}</h4>
-                                <p class="text-xs text-gray-500 mt-0.5">${c.tax_id} &bull; ${c.alias || ''}</p>
-                                <p class="text-[10px] text-gray-400 mt-1">${c.address ? c.address.city + '/' + c.address.state : ''}</p>
-                            </div>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500 uppercase">${(c.status || {}).text || c.status || 'N/A'}</span>
+                resultsContainer.innerHTML = companies.map(c => {
+                    const isDuplicate = c.existing_lead && c.existing_lead.id !== pageLeadId;
+                    const duplicateBanner = isDuplicate ? `
+                        <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded flex items-center gap-2 text-amber-700">
+                             <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                             <span class="text-[10px] font-bold">Lead já cadastrado: ${c.existing_lead.name} (${c.existing_lead.status})</span>
                         </div>
-                    </div>
-                `).join('');
+                    ` : '';
+
+                    return `
+                        <div class="p-4 border border-gray-100 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer group" onclick="confirmEnrichment('${c.tax_id}', '${c.name.replace(/'/g, "\\'")}')">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <h4 class="text-sm font-bold text-gray-900 group-hover:text-purple-600">${c.name}</h4>
+                                    <p class="text-xs text-gray-500 mt-0.5">${c.tax_id} &bull; ${c.alias || ''}</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">${c.address ? c.address.city + '/' + c.address.state : ''}</p>
+                                    ${duplicateBanner}
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500 uppercase">${(c.status || {}).text || c.status || 'N/A'}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                if (window.lucide) lucide.createIcons();
             }
         } catch (e) {
             resultsContainer.innerHTML = `<p class="text-center text-red-500 py-8">Erro: ${e.message}</p>`;

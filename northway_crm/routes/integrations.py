@@ -144,10 +144,10 @@ def asaas_webhook(company_id):
         # --- PAYMENT_CREATED HANDLER ---
         # If transaction doesn't exist but it's a new payment, try to link or create
         if event == 'PAYMENT_CREATED' and not transaction:
-             subscription_id = payment_data.get('subscription')
-             if subscription_id:
-                 # Find client by subscription_id
-                 client = Client.query.filter_by(subscription_id=subscription_id).first()
+             # Find client by Asaas Customer ID
+             asaas_customer_id = payment_data.get('customer')
+             if asaas_customer_id:
+                 client = Client.query.filter_by(asaas_customer_id=asaas_customer_id).first()
                  if client:
                      # Auto-create Transaction in CRM for the new recurring installment
                      transaction = Transaction(
@@ -163,7 +163,7 @@ def asaas_webhook(company_id):
                      db.session.add(transaction)
                      db.session.flush() # Get ID
                      log.payment_id = transaction.id
-                     current_app.logger.info(f"Auto-created transaction {transaction.id} for subscription {subscription_id}")
+                     current_app.logger.info(f"Auto-created transaction {transaction.id} for customer {asaas_customer_id}")
 
         if transaction:
             # Update asaas_id if missing (match by externalReference)

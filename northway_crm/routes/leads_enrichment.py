@@ -37,6 +37,20 @@ def search_cnpj():
             'status': result.get('status'),
             'address': result.get('address')
         }
+
+        # Check for existing lead with this CNPJ to warn user
+        existing = Lead.query.filter(
+            Lead.company_id == current_user.company_id,
+            db.func.replace(db.func.replace(db.func.replace(Lead.cnpj, '.', ''), '/', ''), '-', '') == clean_query
+        ).first()
+        
+        if existing:
+            normalized['existing_lead'] = {
+                'id': existing.id,
+                'name': existing.name,
+                'status': existing.status
+            }
+
         return api_response(data=[normalized])
 
     else:

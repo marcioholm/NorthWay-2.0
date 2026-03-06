@@ -700,7 +700,7 @@ def sign_contract(id):
         if tenant_api_key:
             # Create/Get Customer in Tenant's Asaas
             try:
-                asaas_customer_id = create_customer(
+                asaas_cust, asaas_err = create_customer(
                     name=contract.client.name,
                     email=contract.client.email,
                     cpf_cnpj=contract.client.document,
@@ -708,8 +708,13 @@ def sign_contract(id):
                     external_id=contract.client.id,
                     api_key=tenant_api_key
                 )
+                if asaas_cust:
+                    asaas_customer_id = asaas_cust
+                    contract.client.asaas_customer_id = asaas_cust
+                else:
+                    print(f"⚠️ Failed to create Asaas customer: {asaas_err}")
             except Exception as e:
-                print(f"⚠️ Failed to create Asaas customer: {e}")
+                print(f"⚠️ Exception creating Asaas customer: {e}")
 
         if Transaction.query.filter_by(contract_id=contract.id).count() == 0:
             for i in range(qtd_p):

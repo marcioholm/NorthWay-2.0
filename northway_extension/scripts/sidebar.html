@@ -37,14 +37,58 @@
     <div class="nw-scroll-area">
         <!-- Content State: Idle -->
         <div id="nw-state-idle" class="nw-state">
-            <div class="nw-empty-state">
-                <div style="margin-bottom: 20px; opacity: 0.1;">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
+            <div style="text-align: center; margin-bottom: 24px; padding-top: 20px;">
+                <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Bem-vindo ao ZapWay</h2>
+                <p style="color: var(--nw-text-muted); font-size: 13px;">Selecione um contato para começar ou utilize os
+                    atalhos abaixo.</p>
+            </div>
+
+            <!-- Dashboard Stats -->
+            <div class="nw-card" style="margin-bottom: 24px;">
+                <h3
+                    style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--nw-text-secondary); margin-bottom: 12px; letter-spacing: 0.5px;">
+                    Seu Desempenho Hoje</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div
+                        style="background: rgba(var(--nw-primary-rgb), 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(var(--nw-primary-rgb), 0.2);">
+                        <div style="font-size: 24px; font-weight: 700; color: var(--nw-primary); margin-bottom: 4px;"
+                            id="nw-idle-stat-sent">0</div>
+                        <div style="font-size: 11px; color: var(--nw-text-muted);">Mensagens de Disparo</div>
+                    </div>
+                    <div
+                        style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <div style="font-size: 24px; font-weight: 700; color: #10b981; margin-bottom: 4px;"
+                            id="nw-idle-stat-crm">0</div>
+                        <div style="font-size: 11px; color: var(--nw-text-muted);">Adicionados ao CRM</div>
+                    </div>
                 </div>
-                <p>Abra uma conversa para visualizar os dados.</p>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="nw-card">
+                <h3
+                    style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--nw-text-secondary); margin-bottom: 12px; letter-spacing: 0.5px;">
+                    Ações Rápidas</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="nw-btn primary" onclick="document.getElementById('nw-btn-nav-broadcast').click()"
+                        style="width: 100%; justify-content: center;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="margin-right: 8px;">
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Novo Disparo Assistido
+                    </button>
+                    <button class="nw-btn" onclick="document.getElementById('nw-btn-settings').click()"
+                        style="width: 100%; justify-content: center; background: rgba(255,255,255,0.05);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="margin-right: 8px;">
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                        </svg>
+                        Configurações do CRM
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -56,57 +100,85 @@
             <div class="skeleton-line" style="width: 70%"></div>
         </div>
 
-        <!-- Content State: New Lead -->
+        <!-- Content State: New Lead (COLAPSADO POR PADRÃO) -->
         <div id="nw-state-new" class="nw-state hidden">
-            <div class="nw-card">
-                <h3>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round" style="color: var(--nw-primary);">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <line x1="19" y1="8" x2="19" y2="14" />
-                        <line x1="22" y1="11" x2="16" y2="11" />
-                    </svg>
-                    Novo Lead Detectado
-                </h3>
-
-                <div class="nw-field">
-                    <label>Nome do Contato</label>
-                    <input type="text" id="nw-new-name" placeholder="Nome Completo">
+            <div class="nw-profile">
+                <div class="nw-avatar" id="nw-contact-avatar">
+                    <img id="nw-contact-img" src="" class="hidden" alt="Avatar">
+                    <span id="nw-contact-initials">NW</span>
                 </div>
+                <h2 id="nw-contact-name-new">Nome do Contato</h2>
+                <p id="nw-contact-phone-new" style="font-size: 12px; color: var(--nw-text-muted);"></p>
+                <span class="badge"
+                    style="background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid rgba(255,193,7,0.2);">
+                    Não cadastrado
+                </span>
+            </div>
 
-                <div class="nw-field-row">
+            <!-- Card colapsado: só botão de ação -->
+            <div id="nw-new-collapsed" class="nw-card">
+                <p style="font-size: 12px; color: var(--nw-text-muted); margin-bottom: 14px; line-height: 1.5;">
+                    Este contato ainda não está no CRM.
+                </p>
+                <button id="nw-btn-open-form" class="nw-btn primary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Adicionar ao CRM
+                </button>
+            </div>
+
+            <!-- Formulário expandido (hidden por padrão) -->
+            <div id="nw-new-form" class="hidden">
+                <div class="nw-card">
                     <div class="nw-field">
-                        <label>Telefone</label>
-                        <input type="text" id="nw-new-phone" placeholder="Digite o telefone">
+                        <label>Nome do Contato</label>
+                        <input type="text" id="nw-new-name" placeholder="Nome Completo">
+                    </div>
+                    <div class="nw-field-row">
+                        <div class="nw-field">
+                            <label>Telefone</label>
+                            <input type="text" id="nw-new-phone" placeholder="Detectado automaticamente">
+                        </div>
+                        <div class="nw-field">
+                            <label>Etapa</label>
+                            <select id="nw-new-stage">
+                                <option>Carregando...</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="nw-field">
-                        <label>Etapa</label>
-                        <select id="nw-new-stage">
-                            <option value="">Carregando...</option>
+                        <label>E-mail</label>
+                        <input type="email" id="nw-new-email" placeholder="cliente@exemplo.com">
+                    </div>
+                    <!-- Origem do lead -->
+                    <div class="nw-field">
+                        <label>Origem</label>
+                        <select id="nw-new-source">
+                            <option value="">Selecione...</option>
+                            <option value="whatsapp">WhatsApp Orgânico</option>
+                            <option value="google_ads">Google Ads</option>
+                            <option value="meta_ads">Meta Ads</option>
+                            <option value="instagram">Instagram Orgânico</option>
+                            <option value="indicacao">Indicação</option>
+                            <option value="site">Site</option>
+                            <option value="outro">Outro</option>
                         </select>
                     </div>
-                </div>
+                    <div class="nw-field">
+                        <label>Observações</label>
+                        <textarea id="nw-new-notes" rows="3" placeholder="Notas sobre o atendimento..."></textarea>
+                    </div>
 
-                <div class="nw-field">
-                    <label>E-mail</label>
-                    <input type="email" id="nw-new-email" placeholder="cliente@exemplo.com">
+                    <button id="nw-btn-create" class="nw-btn primary">
+                        Cadastrar no CRM
+                    </button>
+                    <button id="nw-btn-cancel-form" class="nw-btn"
+                        style="margin-top: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--nw-border);">
+                        Cancelar
+                    </button>
                 </div>
-
-                <div class="nw-field">
-                    <label>Observações</label>
-                    <textarea id="nw-new-notes" rows="3" placeholder="Notas sobre o atendimento..."></textarea>
-                </div>
-
-                <button id="nw-btn-create" class="nw-btn primary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                        <polyline points="17 21 17 13 7 13 7 21" />
-                        <polyline points="7 3 7 8 15 8" />
-                    </svg>
-                    Cadastrar no CRM
-                </button>
             </div>
         </div>
 
@@ -119,6 +191,14 @@
                 </div>
                 <h2 id="nw-contact-name">Nome do Contato</h2>
                 <p id="nw-contact-phone">+55 11 99999-9999</p>
+                <div style="min-height: 18px; margin-top: 4px;">
+                    <span id="nw-contact-online-status"
+                        style="font-size: 11px; color: var(--nw-success); font-weight: 500; display: none;">Online</span>
+                </div>
+                <div id="nw-contact-tags"
+                    style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; justify-content: center;">
+                    <!-- Tags injetadas aqui -->
+                </div>
                 <span id="nw-contact-status" class="badge">Novo</span>
             </div>
 
@@ -133,6 +213,17 @@
                 <div class="nw-field">
                     <label>Observações</label>
                     <textarea id="nw-input-notes" rows="4"></textarea>
+                </div>
+
+                <div class="nw-field" style="margin-top: -10px; margin-bottom: 15px;">
+                    <label style="font-size: 10px; opacity: 0.8;">Nota Rápida</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="nw-quick-note" placeholder="Adicionar nota..."
+                            style="flex: 1; padding: 6px; font-size: 12px;">
+                        <button id="nw-btn-quick-note" class="nw-btn primary" style="padding: 6px 10px;">
+                            Add
+                        </button>
+                    </div>
                 </div>
 
                 <button id="nw-btn-save" class="nw-btn primary">Salvar Alterações</button>
@@ -393,8 +484,17 @@
 
                 <div class="nw-broadcast-controls">
                     <button id="nw-btn-bc-stop" class="nw-btn"
-                        style="background: rgba(255, 31, 75, 0.1); color: var(--nw-primary); border: 1px solid rgba(255, 31, 75, 0.2); text-transform: none; margin-bottom: 10px; width: 100%;">Parar
-                        Disparo</button>
+                        style="background: rgba(255, 31, 75, 0.1); color: var(--nw-primary); border: 1px solid rgba(255, 31, 75, 0.2); text-transform: none; margin-bottom: 10px; width: 100%;">
+                        Parar Disparo
+                    </button>
+                    <!-- Pause and Resume Block -->
+                    <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 10px;">
+                        <button id="nw-btn-bc-pause" class="nw-btn"
+                            style="flex: 1; background: rgba(255, 193, 7, 0.15); color: #ffeb3b; border: 1px solid rgba(255, 193, 7, 0.4); text-transform: none;">
+                            ⏸ Pausar Lote
+                        </button>
+                    </div>
+
                     <div style="display: flex; gap: 10px; width: 100%;">
                         <button id="nw-btn-bc-skip" class="nw-btn"
                             style="flex: 1; background: rgba(255,255,255,0.05); text-transform: none;">Pular</button>

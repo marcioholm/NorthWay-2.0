@@ -29,7 +29,7 @@
                         Importar CSV
                     </button>
                     <div class="border-t border-gray-100 my-1"></div>
-                    <a href="{{ url_for('leads.export_leads') }}"
+                    <a href="{{ url_for('leads.export_leads', **request.args) }}"
                         class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black">
                         <i data-lucide="download" class="w-4 h-4"></i>
                         Exportar CSV
@@ -367,12 +367,30 @@
                 </div>
             </div>
 
-            <!-- Row 4: Notes -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Observações Rápidas</label>
-                <textarea name="notes" rows="2"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none"
-                    placeholder="Informações adicionais..."></textarea>
+            <!-- Row 4: CNPJ | Notes -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="cnpj" id="create_lead_cnpj"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red"
+                            placeholder="00.000.000/0000-00">
+                        <button type="button" onclick="checkCnpjDuplicate()"
+                            class="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors text-xs font-bold border border-gray-200 flex items-center gap-1">
+                            <i data-lucide="search" class="w-3 h-3"></i>
+                            Verificar
+                        </button>
+                    </div>
+                    <div id="cnpj_warning" class="mt-2 hidden">
+                        <!-- Warning message here -->
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Observações Rápidas</label>
+                    <textarea name="notes" rows="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none"
+                        placeholder="Informações adicionais..."></textarea>
+                </div>
             </div>
 
             <div class="pt-4 flex gap-3">
@@ -493,5 +511,49 @@
             });
         });
     });
+    async function checkCnpjDuplicate() {
+        const cnpjInput = document.getElementById('create_lead_cnpj');
+        const warningDiv = document.getElementById('cnpj_warning');
+        const cnpj = cnpjInput.value.replace(/\D/g, '');
+
+        if (cnpj.length !== 14) {
+            alert('Por favor, digite um CNPJ válido com 14 dígitos para verificar.');
+            return;
+        }
+
+        warningDiv.innerHTML = '<p class="text-[10px] text-gray-500 animate-pulse">Verificando...</p>';
+        warningDiv.classList.remove('hidden');
+
+        try {
+            const res = await fetch(`/api/leads/search-cnpj?q=${cnpj}`);
+            const data = await res.json();
+
+            if (data.success && data.data && data.data.length > 0) {
+                const result = data.data[0];
+                if (result.existing_lead) {
+                    warningDiv.innerHTML = `
+                        <div class="p-2 bg-amber-50 border border-amber-200 rounded flex items-center gap-2 text-amber-700">
+                             <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                             <span class="text-[10px] font-bold">Aviso: Já existe um lead com este CNPJ: ${result.existing_lead.name}</span>
+                        </div>
+                    `;
+                    if (window.lucide) lucide.createIcons();
+                } else {
+                    warningDiv.innerHTML = `
+                        <div class="p-2 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-green-700">
+                             <i data-lucide="check-circle" class="w-3 h-3"></i>
+                             <span class="text-[10px] font-bold">CNPJ disponível para cadastro.</span>
+                        </div>
+                    `;
+                    if (window.lucide) lucide.createIcons();
+                }
+            } else {
+                warningDiv.classList.add('hidden');
+            }
+        } catch (e) {
+            console.error(e);
+            warningDiv.classList.add('hidden');
+        }
+    }
 </script>
 {% endblock %}

@@ -20,10 +20,24 @@ def leads():
         email = request.form.get('email')
         interest = request.form.get('interest')
         notes = request.form.get('notes')
+        cnpj = request.form.get('cnpj')
 
         if not name or not phone or not source:
             flash('Nome, Telefone e Origem são obrigatórios.', 'error')
             return redirect(url_for('leads.leads'))
+
+        # Duplicate Check by CNPJ
+        if cnpj:
+            clean_cnpj = ''.join(filter(str.isdigit, str(cnpj)))
+            if clean_cnpj:
+                existing = Lead.query.filter(
+                    Lead.company_id == current_user.company_id,
+                    db.func.replace(db.func.replace(db.func.replace(Lead.cnpj, '.', ''), '/', ''), '-', '') == clean_cnpj
+                ).first()
+                
+                if existing:
+                    flash(f'Erro: Já existe um lead cadastrado com este CNPJ ({existing.name}).', 'error')
+                    return redirect(url_for('leads.leads'))
 
         # Get default pipeline and stage for this company
         pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
@@ -43,6 +57,7 @@ def leads():
             source=source,
             bant_need=interest,
             notes=notes,
+            cnpj=cnpj,
             company_id=current_user.company_id,
             status=LEAD_STATUS_NEW,
             assigned_to_id=assigned_to_id,
@@ -205,9 +220,26 @@ def pipeline(pipeline_id=None):
         abort(403)
         
     stages = PipelineStage.query.filter_by(pipeline_id=pipeline_id).order_by(PipelineStage.order).all()
-    leads_list = Lead.query.filter_by(pipeline_id=pipeline_id, company_id=current_user.company_id)\
-                        .options(db.joinedload(Lead.assigned_user))\
-                        .all()
+    
+    # Optimized query: Eager load interactions (for days_inactive) and assigned user
+    # Fixed visibility: Removed status restriction to show leads in 'Fechado' (Won/Lost)
+    # Filter by company and pipeline
+    leads_list = Lead.query.filter(
+        Lead.pipeline_id == pipeline_id, 
+        Lead.company_id == current_user.company_id
+    ).options(
+        db.joinedload(Lead.assigned_user),
+        db.joinedload(Lead.interactions)
+    ).all()
+
+    # Pre-group leads by stage for O(1) template lookup and calculate totals
+    leads_by_stage = {stage.id: [] for stage in stages}
+    stage_totals = {stage.id: 0.0 for stage in stages}
+
+    for lead in leads_list:
+        if lead.pipeline_stage_id in leads_by_stage:
+            leads_by_stage[lead.pipeline_stage_id].append(lead)
+            stage_totals[lead.pipeline_stage_id] += float(lead.estimated_value or 0)
         
     # Diagnostic Form Instance for Link Generation (Access Control)
     from models import LibraryTemplate, LibraryTemplateGrant, FormInstance
@@ -230,7 +262,8 @@ def pipeline(pipeline_id=None):
                           pipelines=pipelines, 
                           active_pipeline=current_pipeline, 
                           stages=stages, 
-                          leads=leads_list,
+                          leads_by_stage=leads_by_stage,
+                          stage_totals=stage_totals,
                           diag_instance=diag_instance)
 
 @leads_bp.route('/leads/<int:id>/move/<direction>', methods=['POST'])
@@ -561,6 +594,13 @@ def update_lead_info(id):
             lead.equity = float(clean_equity)
         except (ValueError, TypeError):
              pass
+
+    est_val = request.form.get('estimated_value')
+    if est_val:
+        try:
+            lead.estimated_value = float(est_val)
+        except (ValueError, TypeError):
+            pass
             
     # Stage Update
     pipeline_stage_id = request.form.get('pipeline_stage_id')
@@ -710,11 +750,11 @@ def download_lead_template():
     import io
     from flask import Response
     
-    header = ['Nome', 'Email', 'Telefone', 'Origem', 'Interesse', 'Observações']
+    header = ['Nome', 'Email', 'Telefone', 'Origem', 'Interesse', 'Observações', 'CNPJ']
     si = io.StringIO()
     cw = csv.writer(si, delimiter=';')
     cw.writerow(header)
-    cw.writerow(['Exemplo Empresa', 'contato@empresa.com', '(11) 99999-9999', 'Google', 'Consultoria', 'Cliente interessado em...'])
+    cw.writerow(['Exemplo Empresa', 'contato@empresa.com', '(11) 99999-9999', 'Google', 'Consultoria', 'Cliente interessado em...', '00.000.000/0001-91'])
     
     output = si.getvalue()
     return Response(
@@ -733,21 +773,51 @@ def export_leads():
     import io
     from flask import Response
     
-    leads = Lead.query.filter(Lead.company_id == current_user.company_id).all()
+    # Filtering logic
+    query = Lead.query.filter(Lead.company_id == current_user.company_id)
     
-    header = ['ID', 'Nome', 'Email', 'Telefone', 'Status', 'Origem', 'Data Criação']
+    stage_id = request.args.get('stage_id')
+    status = request.args.get('status')
+    assigned_to = request.args.get('assigned_to')
+    search_query = request.args.get('q')
+    
+    filename_suffix = ""
+    
+    if stage_id:
+        query = query.filter(Lead.pipeline_stage_id == stage_id)
+        stage = PipelineStage.query.get(stage_id)
+        if stage:
+            filename_suffix += f"_{stage.name.lower().replace(' ', '_')}"
+            
+    if status:
+        query = query.filter(Lead.status == status)
+        
+    if assigned_to:
+        query = query.filter(Lead.assigned_to_id == assigned_to)
+        
+    if search_query:
+        query = query.filter(db.or_(
+            Lead.name.ilike(f'%{search_query}%'),
+            Lead.email.ilike(f'%{search_query}%'),
+            Lead.phone.ilike(f'%{search_query}%')
+        ))
+        
+    leads = query.order_by(Lead.created_at.desc()).all()
+    
+    header = ['ID', 'Nome', 'Email', 'Telefone', 'Status', 'Origem', 'Etapa', 'Data Criação']
     si = io.StringIO()
     cw = csv.writer(si, delimiter=';')
     cw.writerow(header)
     
     for l in leads:
-        cw.writerow([l.id, l.name, l.email or '', l.phone or '', l.status, l.source or '', l.created_at.strftime('%d/%m/%Y')])
+        stage_name = l.pipeline_stage.name if l.pipeline_stage else 'N/A'
+        cw.writerow([l.id, l.name, l.email or '', l.phone or '', l.status, l.source or '', stage_name, l.created_at.strftime('%d/%m/%Y') if l.created_at else 'N/A'])
         
     output = si.getvalue()
     return Response(
         output,
         mimetype="text/csv",
-        headers={"Content-disposition": f"attachment; filename=leads_export_{datetime.now().strftime('%Y%m%d')}.csv"}
+        headers={"Content-disposition": f"attachment; filename=leads_export{filename_suffix}_{datetime.now().strftime('%Y%m%d')}.csv"}
     )
 
 @leads_bp.route('/leads/import', methods=['POST'])
@@ -780,9 +850,10 @@ def import_leads():
             header = next(csv_input, None) # Skip header
             
             count = 0
+            duplicates = 0
             for row in csv_input:
                 if len(row) < 1: continue
-                # Simple mapping based on template order: Name, Email, Phone, Source, Interest, Notes
+                # Name, Email, Phone, Source, Interest, Notes, CNPJ
                 name = row[0]
                 if not name: continue
                 
@@ -791,7 +862,22 @@ def import_leads():
                 source = row[3] if len(row) > 3 else 'Importado'
                 interest = row[4] if len(row) > 4 else None
                 notes = row[5] if len(row) > 5 else None
+                cnpj = row[6] if len(row) > 6 else None
                 
+                # Duplicate Check by CNPJ
+                if cnpj:
+                    # Clean CNPJ for consistent matching
+                    clean_cnpj = ''.join(filter(str.isdigit, str(cnpj)))
+                    if clean_cnpj:
+                        existing = Lead.query.filter(
+                            Lead.company_id == current_user.company_id,
+                            db.func.replace(db.func.replace(db.func.replace(Lead.cnpj, '.', ''), '/', ''), '-', '') == clean_cnpj
+                        ).first()
+                        
+                        if existing:
+                            duplicates += 1
+                            continue
+
                 lead = Lead(
                     name=name,
                     email=email,
@@ -799,6 +885,7 @@ def import_leads():
                     source=source,
                     bant_need=interest,
                     notes=notes,
+                    cnpj=cnpj,
                     company_id=current_user.company_id,
                     status='new',
                     assigned_to_id=current_user.id
@@ -807,7 +894,10 @@ def import_leads():
                 count += 1
             
             db.session.commit()
-            flash(f'{count} leads importados com sucesso!', 'success')
+            if duplicates > 0:
+                flash(f'{count} leads importados. {duplicates} duplicatas (CNPJ) foram puladas.', 'info')
+            else:
+                flash(f'{count} leads importados com sucesso!', 'success')
             
         except Exception as e:
             db.session.rollback()

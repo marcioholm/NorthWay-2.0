@@ -92,6 +92,11 @@
                                         title="Visualizar">
                                         <i data-lucide="eye" class="w-4 h-4"></i>
                                     </a>
+                                    <form action="{{ url_for('contracts.duplicate_contract', id=contract.id) }}" method="POST" class="inline">
+                                        <button type="submit" class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all" title="Duplicar (Criar Variação)">
+                                            <i data-lucide="copy" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
                                     {% if contract.status == 'draft' %}
                                     <a href="{{ url_for('contracts.load_draft', contract_id=contract.id) }}"
                                         class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"

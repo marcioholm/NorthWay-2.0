@@ -84,6 +84,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // Fetch Daily Stats (Bug 13)
+        chrome.runtime.sendMessage({ action: "GET_TODAY_STATS" }, (stats) => {
+            if (stats) {
+                const elSent = document.getElementById('nw-popup-sent');
+                const elCrm = document.getElementById('nw-popup-crm');
+                if (elSent) elSent.textContent = stats.sent || 0;
+                if (elCrm) elCrm.textContent = stats.crm || 0;
+            }
+        });
+
         showView('active');
     };
 

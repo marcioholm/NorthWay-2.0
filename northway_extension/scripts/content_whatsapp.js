@@ -6,6 +6,9 @@ let intervalChat = null;
 let intervalLayout = null;
 let currentContactName = null;
 let currentPhoneValue = null;
+const SIDEBAR_WIDTH = 360;
+let isSidebarCollapsed = false;
+let chatObserver = null;
 
 // --- INDEXEDDB HELPER FOR FILE PERSISTENCE ---
 const NWDB = {
@@ -75,11 +78,12 @@ async function init() {
     sidebarContainer.style.position = 'fixed';
     sidebarContainer.style.top = '0';
     sidebarContainer.style.right = '0';
-    sidebarContainer.style.width = '350px';
+    sidebarContainer.style.width = SIDEBAR_WIDTH + 'px';
     sidebarContainer.style.height = '100%';
     sidebarContainer.style.zIndex = '99999';
     sidebarContainer.style.pointerEvents = 'none';
     sidebarContainer.style.boxShadow = '-2px 0 5px rgba(0,0,0,0.1)';
+    sidebarContainer.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
 
     if (!shadowRoot) {
         shadowRoot = sidebarContainer.attachShadow({ mode: 'open' });
@@ -106,6 +110,8 @@ async function init() {
         startObserver();
         adjustLayout(); // User requested resizing back
 
+        loadTemplates();
+
         // --- BRIDGE CHECK ---
         setTimeout(() => {
             console.log("NW: Sending PING to Main World...");
@@ -113,10 +119,13 @@ async function init() {
         }, 3000);
         // --------------------
 
+        createToggleButton();
+
         if (intervalChat) clearInterval(intervalChat);
         if (intervalLayout) clearInterval(intervalLayout);
 
-        intervalChat = setInterval(checkActiveChat, 1000);
+        // Fallback interval just in case observer misses (runs rarely)
+        intervalChat = setInterval(checkActiveChat, 5000);
         intervalLayout = setInterval(adjustLayout, 2000);
 
     } catch (e) {
@@ -126,24 +135,150 @@ async function init() {
 
 // (Page Script is now injected via manifest.json with world: "MAIN")
 
+function createToggleButton() {
+    if (document.getElementById('nw-toggle-btn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'nw-toggle-btn';
+    btn.innerHTML = '‹';
+    btn.style.cssText = `
+        position: fixed;
+        top: 50%;
+        right: ${SIDEBAR_WIDTH}px;
+        transform: translateY(-50%);
+        z-index: 100000;
+        width: 22px;
+        height: 56px;
+        background: #1a0b0e;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        color: #ff1f4b;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: -3px 0 10px rgba(0,0,0,0.3);
+    `;
+
+    document.body.appendChild(btn);
+
+    btn.addEventListener('click', () => {
+        isSidebarCollapsed = !isSidebarCollapsed;
+        const sidebar = document.getElementById('northway-sidebar-host');
+        const app = document.getElementById('app');
+
+        if (isSidebarCollapsed) {
+            sidebar.style.transform = `translateX(${SIDEBAR_WIDTH}px)`;
+            btn.style.right = '0px';
+            btn.innerHTML = '›';
+            if (app) {
+                app.style.width = '100%';
+            }
+        } else {
+            sidebar.style.transform = 'translateX(0)';
+            btn.style.right = `${SIDEBAR_WIDTH}px`;
+            btn.innerHTML = '‹';
+            if (app) {
+                app.style.width = `calc(100% - ${SIDEBAR_WIDTH}px)`;
+            }
+        }
+    });
+}
+
+// Substitui todos os alert() da extensão
+function toast(message, type = 'info', duration = 4000) {
+    const container = typeof shadowRoot !== 'undefined' && shadowRoot ? shadowRoot.getElementById('nw-toast-container') : null;
+    let dynamicContainer = container || document.getElementById('nw-toast-container');
+
+    if (!dynamicContainer) {
+        dynamicContainer = document.createElement('div');
+        dynamicContainer.id = 'nw-toast-container';
+        dynamicContainer.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: ${typeof isSidebarCollapsed !== 'undefined' && isSidebarCollapsed ? 20 : (typeof SIDEBAR_WIDTH !== 'undefined' ? SIDEBAR_WIDTH + 20 : 350)}px;
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            transition: right 0.3s ease;
+        `;
+        document.body.appendChild(dynamicContainer);
+    }
+
+    const colors = {
+        success: { bg: 'rgba(0,230,153,0.12)', border: 'rgba(0,230,153,0.25)', text: '#00e699', icon: '✓' },
+        error: { bg: 'rgba(255,31,75,0.12)', border: 'rgba(255,31,75,0.25)', text: '#ff1f4b', icon: '✕' },
+        warning: { bg: 'rgba(255,193,7,0.12)', border: 'rgba(255,193,7,0.25)', text: '#ffc107', icon: '⚠' },
+        info: { bg: 'rgba(99,102,241,0.12)', border: 'rgba(99,102,241,0.25)', text: '#818cf8', icon: 'ℹ' },
+    };
+
+    const c = colors[type] || colors.info;
+    const el = document.createElement('div');
+    el.style.cssText = `
+        background: ${c.bg};
+        border: 1px solid ${c.border};
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: ${c.text};
+        font-family: Inter, sans-serif;
+        max-width: 280px;
+        pointer-events: auto;
+        cursor: pointer;
+        animation: nw-slide-in 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    `;
+    el.innerHTML = `<span style="flex-shrink:0;font-weight:800">${c.icon}</span><span>${message}</span>`;
+    el.addEventListener('click', () => el.remove());
+    dynamicContainer.appendChild(el);
+    setTimeout(() => {
+        el.style.animation = 'nw-slide-out 0.3s ease forwards';
+        setTimeout(() => el.remove(), 300);
+    }, duration);
+}
+
 function adjustLayout() {
+    if (typeof isSidebarCollapsed !== 'undefined' && isSidebarCollapsed) return;
     const appWrapper = document.getElementById('app');
     if (appWrapper) {
-        // FIX: Resize the ROOT container directly.
-        // This avoids breaking internal flex/grid layouts of WhatsApp.
-        appWrapper.style.width = 'calc(100% - 350px)';
+        appWrapper.style.width = `calc(100% - ${typeof SIDEBAR_WIDTH !== 'undefined' ? SIDEBAR_WIDTH : 330}px)`;
         appWrapper.style.minWidth = 'auto'; // Prevent min-width lockout
         // appWrapper.style.boxSizing = 'border-box'; // Usually standard, but good safety
-        appWrapper.style.transition = 'width 0.3s ease';
+        appWrapper.style.transition = 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
     }
 }
 
 function startObserver() {
-    const observer = new MutationObserver(() => {
-        checkActiveChat();
+    console.log("NW: Starting App Observer...");
+
+    // Disconnect old if exists
+    if (chatObserver) chatObserver.disconnect();
+
+    let debounceTimer = null;
+
+    chatObserver = new MutationObserver(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(checkActiveChat, 300); // 300ms debounce
     });
-    const main = document.getElementById('main') || document.body;
-    observer.observe(main, { childList: true, subtree: true });
+
+    // Observe body to catch all class/pane changes efficiently
+    chatObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'data-id', 'aria-label']
+    });
 }
 
 // --- REACT FIBER HELPERS ---
@@ -167,7 +302,7 @@ function findJidInFiber(fiber) {
         if (props) {
             // High priority JID fields
             if (props.jid && typeof props.jid === 'string') return props.jid;
-            if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
+            if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user} @${props.id.server} `;
             if (props.id && typeof props.id === 'string' && (props.id.includes('@c.us') || props.id.includes('@g.us'))) return props.id;
 
             // Nested objects
@@ -190,6 +325,7 @@ function checkActiveChat() {
         let phone = null;
         let avatarUrl = null;
         let isGroup = false;
+        let contactStatus = null; // New field for online/typing status
 
         // 1. Find the Main Chat Panel (Multiple Fallbacks)
         const mainPanel = document.getElementById('main') ||
@@ -260,6 +396,17 @@ function checkActiveChat() {
                     if (subText.includes(',') || subText.includes('participan') || subText.includes('clique') || (subText.includes('online') === false && subText.length > 20)) {
                         isGroup = true;
                     }
+                }
+
+                // 6. Extract Status (Online/Typing)
+                const statusEl = header.querySelector('span[title*="online"]') ||
+                    header.querySelector('span[title*="digitando"]') ||
+                    header.querySelector('span[title*="typing"]') ||
+                    header.querySelector('span[title*="gravando"]') ||
+                    header.querySelector('span[title*="recording"]');
+
+                if (statusEl && !isGroup) {
+                    contactStatus = statusEl.title || statusEl.innerText;
                 }
             }
         }
@@ -336,7 +483,7 @@ function checkActiveChat() {
             return;
         }
 
-        const chatId = isGroup ? `GROUP:${name}` : (phone || name);
+        const chatId = isGroup ? `GROUP:${name} ` : (phone || name);
 
         if (!chatId) {
             if (currentPhone !== null) {
@@ -354,7 +501,20 @@ function checkActiveChat() {
                 if (el) el.textContent = name || "Grupo";
             } else {
                 // If phone is found, pass phone. Otherwise it's just a name-based search.
-                updateSidebar(name || phone, phone, name, avatarUrl);
+                updateSidebar(name || phone, phone, name, avatarUrl, contactStatus);
+            }
+        } else {
+            // Even if same phone, status might have changed
+            if (!isGroup) {
+                const statusEl = shadowRoot.getElementById('nw-contact-online-status');
+                if (statusEl) {
+                    if (contactStatus) {
+                        statusEl.textContent = contactStatus;
+                        statusEl.style.display = 'block';
+                    } else {
+                        statusEl.style.display = 'none';
+                    }
+                }
             }
         }
 
@@ -377,6 +537,17 @@ function showState(state) {
     const active = getEl(`nw-state-${state}`);
     if (active) active.classList.remove('hidden');
 
+    if (state === 'idle') {
+        chrome.runtime.sendMessage({ action: "GET_TODAY_STATS" }, (stats) => {
+            if (stats) {
+                const elSent = getEl('nw-idle-stat-sent');
+                const elCrm = getEl('nw-idle-stat-crm');
+                if (elSent) elSent.textContent = stats.sent || 0;
+                if (elCrm) elCrm.textContent = stats.crm || 0;
+            }
+        });
+    }
+
     // Show/Hide Templates Section
     const templates = getEl('nw-templates-container');
     if (templates) {
@@ -394,8 +565,8 @@ function showState(state) {
     }
 }
 
-async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
-    console.log(`NW: Updating sidebar for ${name} (${phone})`);
+async function updateSidebar(name, phone, searchName = null, avatarUrl = null, contactStatus = null) {
+    console.log(`NW: Updating sidebar for ${name}(${phone})`);
     showState('loading');
     getEl('nw-contact-name').textContent = name || "Desconhecido";
 
@@ -413,6 +584,17 @@ async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
     } else {
         img.classList.add('hidden');
         initialsEl.classList.remove('hidden');
+    }
+
+    // Handle Contact Status (Online/Typing)
+    const statusEl = getEl('nw-contact-online-status');
+    if (statusEl) {
+        if (contactStatus) {
+            statusEl.textContent = contactStatus;
+            statusEl.style.display = 'block';
+        } else {
+            statusEl.style.display = 'none';
+        }
     }
 
     if (!phone && !searchName) {
@@ -456,6 +638,8 @@ async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
             // New Lead
             currentLeadId = null;
             showState('new');
+            getEl('nw-new-collapsed').classList.remove('hidden');
+            getEl('nw-new-form').classList.add('hidden');
             getEl('nw-new-name').value = name;
             getEl('nw-new-phone').value = phone ? phone.split('@')[0].replace(/\D/g, '') : "";
             getEl('nw-new-phone').placeholder = phone ? "Detectado" : "Digite o telefone";
@@ -477,6 +661,28 @@ function renderContact(data, freshAvatarUrl = null) {
     getEl('nw-contact-phone').textContent = data.phone;
     getEl('nw-contact-status').textContent = data.status || 'Contato';
     getEl('nw-input-notes').value = data.notes || '';
+
+    // Render Tags
+    const tagsContainer = getEl('nw-contact-tags');
+    if (tagsContainer) {
+        tagsContainer.innerHTML = '';
+        if (data.tags && data.tags.length > 0) {
+            data.tags.forEach(tag => {
+                const t = document.createElement('span');
+                t.textContent = tag;
+                t.style.cssText = `
+                    background: rgba(255, 255, 255, 0.1);
+                    color: var(--nw-text);
+                    padding: 3px 8px;
+                    border-radius: 12px;
+                    font-size: 10px;
+                    font-weight: 500;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                `;
+                tagsContainer.appendChild(t);
+            });
+        }
+    }
 
     // Avatar Logic
     const img = getEl('nw-contact-img');
@@ -515,6 +721,64 @@ async function loadPipelines(currentStageId, targetId = 'nw-input-stage') {
             });
             select.appendChild(grp);
         });
+    }
+}
+
+async function loadTemplates() {
+    try {
+        const response = await chrome.runtime.sendMessage({ action: "GET_TEMPLATES" });
+        const container = getEl('nw-templates-container');
+        if (!container) return;
+
+        const section = container.querySelector('.nw-templates-section');
+        if (!section) return;
+
+        // Clear existing template cards (except header)
+        const existingCards = section.querySelectorAll('.nw-template-card');
+        existingCards.forEach(c => c.remove());
+
+        if (response && Array.isArray(response)) {
+            response.forEach(tpl => {
+                const card = document.createElement('div');
+                card.className = 'nw-template-card';
+                card.style.cursor = 'pointer';
+                card.innerHTML = `
+            < div class= "nw-template-icon" >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                </svg>
+                    </div >
+                    <div class="nw-template-info">
+                        <strong>${tpl.title}</strong>
+                        <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">${tpl.content}</p>
+                    </div>
+                    <span class="nw-template-badge" style="font-size: 10px; opacity: 0.7;">${tpl.shortcut || ''}</span>
+        `;
+
+                card.addEventListener('click', () => {
+                    const state = Array.from(shadowRoot.querySelectorAll('.nw-state')).find(el => !el.classList.contains('hidden'));
+                    if (state && state.id === 'nw-state-broadcast') {
+                        const ta = getEl('nw-broadcast-template');
+                        if (ta) ta.value = tpl.content;
+                    } else if (state && state.id === 'nw-state-contact') {
+                        const ta = getEl('nw-input-notes');
+                        if (ta) ta.value = tpl.content;
+                    } else if (state && state.id === 'nw-state-new') {
+                        const ta = getEl('nw-new-notes');
+                        if (ta) ta.value = tpl.content;
+                    } else {
+                        navigator.clipboard.writeText(tpl.content);
+                        alert("Copiado para a área de transferência!");
+                    }
+                });
+
+                section.appendChild(card);
+            });
+        }
+    } catch (e) {
+        console.warn("NW: Templates failed to load", e);
     }
 }
 
@@ -632,12 +896,12 @@ const GroupExtractor = {
                 this.contacts.set(key, {
                     name: name.replace(/"/g, ''),
                     phone: phone,
-                    origin: `Grupo: ${this.groupName}`,
+                    origin: `Grupo: ${this.groupName} `,
                     date: new Date().toLocaleDateString()
                 });
                 // Live Update
                 const p = getEl('nw-export-status');
-                if (p) p.innerText = `Capturando... ${this.contacts.size} detetados`;
+                if (p) p.innerText = `Capturando...${this.contacts.size} detetados`;
             }
         });
     },
@@ -671,7 +935,7 @@ const GroupExtractor = {
                 toCSV(c.phone),
                 toCSV(c.origin),
                 toCSV("A definir"),
-                toCSV(`Extraído em ${c.date}`)
+                toCSV(`Extraído em ${c.date} `)
             ].join(';');
         });
 
@@ -789,7 +1053,7 @@ const BroadcastEngine = {
                     fileType = result.bc_media_type || savedMedia.type || "application/octet-stream";
                 }
 
-                console.log(`NW: Restoring File. Name: ${fileName}, Ext: ${ext}, Forced Type: ${fileType}`);
+                console.log(`NW: Restoring File.Name: ${fileName}, Ext: ${ext}, Forced Type: ${fileType} `);
 
                 this.media = new File([savedMedia], fileName, {
                     type: fileType,
@@ -844,7 +1108,7 @@ const BroadcastEngine = {
             const isImageOrVideo = this.media.type.startsWith('image/') || this.media.type.startsWith('video/');
             const kind = isImageOrVideo ? 'media' : 'document';
 
-            console.log(`NW: Sending Attach Request to Page. Kind: ${kind}, Type: ${this.media.type}`);
+            console.log(`NW: Sending Attach Request to Page.Kind: ${kind}, Type: ${this.media.type} `);
 
             // 3. Send Message to Page Script
             window.postMessage({
@@ -1099,17 +1363,45 @@ const BroadcastEngine = {
         this.updateStats();
     },
 
-    renderQueue: function () {
+    renderQueue: function (searchTerm = '') {
         const list = getEl('nw-bc-queue-list');
         if (!list) return;
+
+        // Counter Update
+        if (counterEl) counterEl.innerHTML = `< span class="nw-chip" > ${this.queue.length} contatos</span > `;
+
+        // Search Filters
+        let filteredQueue = this.queue;
+        if (searchTerm && searchTerm.trim() !== '') {
+            const lowerTerm = searchTerm.toLowerCase();
+            filteredQueue = this.queue.filter(c =>
+                (c.name && c.name.toLowerCase().includes(lowerTerm)) ||
+                (c.phone && c.phone.includes(lowerTerm)) ||
+                (c.status && c.status.toLowerCase().includes(lowerTerm))
+            );
+        }
+
         list.innerHTML = '';
-        this.queue.forEach((item, index) => {
+        filteredQueue.forEach((item) => {
+            const originalIndex = this.queue.indexOf(item);
+
+            // Badge Variante (Bug 10)
+            const variantKeys = ['A', 'B', 'C'];
+            const variant = variantKeys[originalIndex % 3];
+            const isActive = originalIndex === this.currentIndex ? 'active' : '';
+
             const div = document.createElement('div');
-            div.className = `nw-q-item ${index === this.currentIndex ? 'active' : ''}`;
+            div.className = `nw-q-item ${isActive}`;
             div.innerHTML = `
-                <span>${item.name}</span>
+            <div style="display: flex; flex-direction: column;">
+                    <span>${item.name}</span>
+                    <span style="font-size: 10px; color: var(--nw-text-secondary);">${item.phone}</span>
+                </div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <span class="badge" style="font-size: 9px; padding: 2px 4px; border: 1px solid var(--nw-border); opacity: 0.8;">Mod ${variant}</span>
                 <span class="nw-q-status ${item.status}">${item.status}</span>
-            `;
+            </div>
+        `;
             list.appendChild(div);
         });
     },
@@ -1152,9 +1444,9 @@ const BroadcastEngine = {
             const sec = Math.floor(totalSeconds % 60);
 
             const parts = [];
-            if (h > 0) parts.push(`${h}h`);
-            parts.push(`${m}m`);
-            parts.push(`${sec}s`);
+            if (h > 0) parts.push(`${h} h`);
+            parts.push(`${m} m`);
+            parts.push(`${sec} s`);
 
             etaEl.textContent = parts.join(' ');
         } else if (etaEl) {
@@ -1213,15 +1505,15 @@ const BroadcastEngine = {
         this.currentMediaCaption = caption;
 
         const previewEl = getEl('nw-bc-message-preview');
-        const mediaTag = this.media ? `\n\n📎 [ANEXO: ${this.media.name}]\n📝 [LEGENDA: ${caption}]` : "";
-        if (previewEl) previewEl.textContent = `[Variação ${currentVariant}] ${message}${mediaTag}`;
+        const mediaTag = this.media ? `\n\n📎[ANEXO: ${this.media.name}]\n📝[LEGENDA: ${caption}]` : "";
+        if (previewEl) previewEl.textContent = `[Variação ${currentVariant}] ${message}${mediaTag} `;
         return message;
     },
 
     next: async function () {
         this.currentIndex++;
         if (this.currentIndex >= this.queue.length) {
-            alert("✅ Disparo finalizado!");
+            toast("Disparo finalizado! Todos os contatos concluídos.", "success");
             await this.stop();
             return;
         }
@@ -1239,7 +1531,11 @@ const BroadcastEngine = {
         const targetUrl = `https://web.whatsapp.com/send?phone=${item.phone}&text=${encodeURIComponent(this.currentMessage)}`;
 
         if (!currentUrl.search.includes(item.phone)) {
-            window.location.href = targetUrl;
+            const link = document.createElement('a');
+            link.href = targetUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     },
 
@@ -1260,6 +1556,9 @@ const BroadcastEngine = {
         }
 
         this.queue[this.currentIndex].status = 'ENVIADO';
+
+        // Disparar atualização pro worker contar +1
+        chrome.runtime.sendMessage({ action: "INCREMENT_SENT" });
         this.updateStats();
 
         // Batch Counting
@@ -1335,6 +1634,54 @@ const BroadcastEngine = {
         this.currentDelayInterval = interval;
     },
 
+    togglePause: function () {
+        if (!this.isActive) return;
+
+        const btnPause = getEl('nw-btn-bc-pause');
+        const btnConfirm = getEl('nw-btn-bc-confirm');
+
+        if (this.isPaused) {
+            // Resume
+            this.isPaused = false;
+            if (btnPause) {
+                btnPause.textContent = "⏸ Pausar Lote";
+                btnPause.style.background = "rgba(255, 193, 7, 0.15)";
+                btnPause.style.color = "#ffeb3b";
+                btnPause.style.border = "1px solid rgba(255, 193, 7, 0.4)";
+            }
+            if (btnConfirm) btnConfirm.disabled = true;
+
+            // Resume countdown
+            const remaining = parseFloat((btnConfirm?.textContent.replace(/[^0-9.]/g, '') || 0).toString());
+            if (remaining > 0) {
+                // Not ideal parsing from text, but simple enough for resumption
+                this.batchCount--; // counteract increment in confirmSend since we are jumping midway
+                this.confirmSend(remaining);
+            } else {
+                if (this.autoSend) this.attemptAutoSend();
+            }
+        } else {
+            // Pause
+            this.isPaused = true;
+            clearInterval(this.currentDelayInterval);
+
+            if (btnPause) {
+                btnPause.textContent = "▶ Retomar";
+                btnPause.style.background = "rgba(16, 185, 129, 0.15)";
+                btnPause.style.color = "#10b981";
+                btnPause.style.border = "1px solid rgba(16, 185, 129, 0.4)";
+            }
+            if (btnConfirm) {
+                btnConfirm.textContent = "Pausado (Retomar)";
+                btnConfirm.disabled = false;
+            }
+
+            const progressFill = getEl('nw-progress-fill');
+            if (progressFill) progressFill.style.background = "#ffc107";
+            toast("Disparo pausado.", "info");
+        }
+    },
+
     stop: async function () {
         console.log("NW: Stopping Broadcast");
 
@@ -1342,6 +1689,9 @@ const BroadcastEngine = {
         if (this.currentDelayInterval) clearInterval(this.currentDelayInterval);
 
         this.isPaused = false;
+        this.isActive = false;
+        chrome.storage.local.set({ bc_active: false });
+
         this.currentIndex = -1;
         this.queue = [];
         this.batchCount = 0;
@@ -1354,6 +1704,7 @@ const BroadcastEngine = {
             btn.disabled = false;
             btn.textContent = "Confirmar Envio";
         }
+
 
         // Reset Progress UI
         const progressSection = getEl('nw-progress-section');
@@ -1380,6 +1731,23 @@ function bindEvents() {
     // Nav
     getEl('nw-btn-nav-broadcast').addEventListener('click', () => showState('broadcast'));
     getEl('nw-btn-close-broadcast').addEventListener('click', () => showState('idle'));
+
+    // New Lead
+    const btnOpenForm = getEl('nw-btn-open-form');
+    if (btnOpenForm) {
+        btnOpenForm.addEventListener('click', () => {
+            getEl('nw-new-collapsed').classList.add('hidden');
+            getEl('nw-new-form').classList.remove('hidden');
+        });
+    }
+
+    const btnCancelForm = getEl('nw-btn-cancel-form');
+    if (btnCancelForm) {
+        btnCancelForm.addEventListener('click', () => {
+            getEl('nw-new-form').classList.add('hidden');
+            getEl('nw-new-collapsed').classList.remove('hidden');
+        });
+    }
 
     // Tabs
     shadowRoot.querySelectorAll('.nw-tab-btn').forEach(btn => {
@@ -1413,6 +1781,13 @@ function bindEvents() {
         BroadcastEngine.templates[BroadcastEngine.currentTab] = e.target.value;
     });
 
+    const searchInput = getEl('nw-bc-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            BroadcastEngine.renderQueue(e.target.value);
+        });
+    }
+
     // Import
     getEl('nw-broadcast-import-text').addEventListener('input', (e) => {
         BroadcastEngine.importContacts(e.target.value);
@@ -1424,7 +1799,9 @@ function bindEvents() {
         const reader = new FileReader();
         reader.onload = (f) => {
             BroadcastEngine.importContacts(f.target.result);
-            getEl('nw-broadcast-import-text').value = f.target.result;
+            getEl('nw-broadcast-import-text').value = '';
+            getEl('nw-broadcast-import-text').placeholder = `✓ Arquivo ${file.name} importado`;
+            toast(`${BroadcastEngine.queue.length} contatos carregados.`, 'success');
         };
         reader.readAsText(file);
     });
@@ -1437,6 +1814,7 @@ function bindEvents() {
         BroadcastEngine.queue[BroadcastEngine.currentIndex].status = 'PULADO';
         BroadcastEngine.next();
     });
+    if (getEl('nw-btn-bc-pause')) getEl('nw-btn-bc-pause').addEventListener('click', () => BroadcastEngine.togglePause());
     if (getEl('nw-btn-bc-stop')) getEl('nw-btn-bc-stop').addEventListener('click', () => BroadcastEngine.stop());
 
     // Media Attachments
@@ -1556,12 +1934,21 @@ function bindEvents() {
             const notes = getEl('nw-new-notes')?.value;
             const stageId = getEl('nw-new-stage')?.value;
             const avatarUrl = getEl('nw-contact-img')?.classList.contains('hidden') ? null : getEl('nw-contact-img')?.src;
-            const res = await chrome.runtime.sendMessage({
-                action: "CREATE_LEAD",
-                data: { name, phone, email, notes, pipeline_stage_id: stageId, avatar_url: avatarUrl }
-            });
-            if (res.success) renderContact(res.lead);
-            else alert(res.error);
+            try {
+                const res = await chrome.runtime.sendMessage({
+                    action: "CREATE_LEAD",
+                    data: { name, phone, email, notes, pipeline_stage_id: stageId, avatar_url: avatarUrl }
+                });
+                if (res && res.success) {
+                    toast("Lead criado com sucesso", "success");
+                    chrome.runtime.sendMessage({ action: "INCREMENT_CRM" });
+                    renderContact(res.lead);
+                } else {
+                    toast(res?.error || "Erro ao criar lead", "error");
+                }
+            } catch (err) {
+                toast("Erro de conexão.", "error");
+            }
         });
     }
 
@@ -1571,14 +1958,25 @@ function bindEvents() {
             const notes = getEl('nw-input-notes')?.value;
             const stageId = getEl('nw-input-stage')?.value;
             const avatarUrl = getEl('nw-contact-img')?.classList.contains('hidden') ? null : getEl('nw-contact-img')?.src;
-            await chrome.runtime.sendMessage({
-                action: "UPDATE_LEAD",
-                id: currentLeadId,
-                data: { notes, pipeline_stage_id: stageId, avatar_url: avatarUrl }
-            });
-            const btn = getEl('nw-btn-save');
-            btn.textContent = "Salvo!";
-            setTimeout(() => btn.textContent = "Salvar Alterações", 2000);
+            try {
+                const res = await chrome.runtime.sendMessage({
+                    action: "UPDATE_LEAD",
+                    id: currentLeadId,
+                    data: { notes, pipeline_stage_id: stageId, avatar_url: avatarUrl }
+                });
+
+                if (res && res.success) {
+                    const btn = getEl('nw-btn-save');
+                    btn.textContent = "Salvo!";
+                    toast("Lead atualizado com sucesso!", "success");
+                    setTimeout(() => btn.textContent = "Salvar Alterações", 2000);
+                } else {
+                    toast(res?.error || "Erro ao atualizar lead", "error");
+                }
+            } catch (err) {
+                toast("Erro de conexão com o painel.", "error");
+                console.error("NW: API Error", err);
+            }
         });
     }
 
@@ -1586,17 +1984,52 @@ function bindEvents() {
         getEl('nw-link-crm').addEventListener('click', (e) => {
             if (currentLeadId) e.target.href = `https://crm.northwaycompany.com.br/leads/${currentLeadId}`;
         });
+    }
 
-        const exportBtn = getEl('nw-btn-export');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
-                // Use the toggle method primarily
-                GroupExtractor.toggle();
-            });
-        }
+    if (getEl('nw-btn-quick-note')) {
+        getEl('nw-btn-quick-note').addEventListener('click', async () => {
+            if (!currentLeadId) return;
+            const quickNoteInput = getEl('nw-quick-note');
+            const noteText = quickNoteInput?.value.trim();
+            if (!noteText) return;
+
+            const notesArea = getEl('nw-input-notes');
+            const currentDate = new Date().toLocaleDateString('pt-BR');
+            const newContent = `[${currentDate}] ${noteText}\n${notesArea.value}`;
+
+            // Optimistically update UI
+            notesArea.value = newContent;
+            quickNoteInput.value = '';
+
+            const stageId = getEl('nw-input-stage')?.value;
+            const avatarUrl = getEl('nw-contact-img')?.classList.contains('hidden') ? null : getEl('nw-contact-img')?.src;
+
+            try {
+                const res = await chrome.runtime.sendMessage({
+                    action: "UPDATE_LEAD",
+                    id: currentLeadId,
+                    data: { notes: newContent, pipeline_stage_id: stageId, avatar_url: avatarUrl }
+                });
+
+                if (res && res.success) {
+                    toast("Nota rápida adicionada!", "success");
+                } else {
+                    toast(res?.error || "Erro ao adicionar nota", "error");
+                }
+            } catch (err) {
+                toast("Erro de conexão.", "error");
+            }
+        });
+    }
+
+    const exportBtn = getEl('nw-btn-export');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            // Use the toggle method primarily
+            GroupExtractor.toggle();
+        });
     }
 }
-
 
 // --- AUTH GATING & LIFECYCLE ---
 async function bootstrap() {
@@ -1653,7 +2086,7 @@ function unmount() {
     const el = document.getElementById('northway-sidebar-host');
     if (el) el.remove();
 
-    // 2. Stop Interval Loops
+    // 2. Clear Fallback Interval
     if (intervalChat) {
         clearInterval(intervalChat);
         intervalChat = null;
@@ -1661,6 +2094,11 @@ function unmount() {
     if (intervalLayout) {
         clearInterval(intervalLayout);
         intervalLayout = null;
+    }
+
+    if (chatObserver) {
+        chatObserver.disconnect();
+        chatObserver = null;
     }
 
     // 3. Reset State
@@ -1682,3 +2120,17 @@ function unmount() {
 
 // Start Lifecycle
 setTimeout(bootstrap, 2000);
+
+// Global Keyboard Shortcut (Bug 14)
+document.addEventListener('keydown', (e) => {
+    // Cmd/Ctrl + Shift + Z resets or toggles sidebar
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyZ') {
+        e.preventDefault();
+        const root = document.getElementById('northway-sidebar-host');
+        if (root) {
+            root.style.transform = root.style.transform === 'translateX(0px)'
+                ? 'translateX(100%)'
+                : 'translateX(0px)';
+        }
+    }
+});

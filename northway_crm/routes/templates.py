@@ -105,6 +105,47 @@ def delete_template(id):
     flash('Template excluído.', 'success')
     return redirect(url_for('templates.settings_templates'))
 
+@templates_bp.route('/settings/templates/<int:id>/duplicate', methods=['POST'])
+@login_required
+def duplicate_template(id):
+    if not current_user.company_id:
+        abort(403)
+
+    if current_user.role != ROLE_ADMIN:
+        abort(403)
+
+    source_template = ContractTemplate.query.get_or_404(id)
+    
+    # Security check: Must be same company OR global OR library (shared)
+    is_super = getattr(current_user, 'is_super_admin', False)
+    has_access = is_super or source_template.company_id == current_user.company_id or source_template.is_global
+    
+    if not has_access:
+        # Check library association
+        from models import template_company_association
+        lib_access = db.session.query(template_company_association).filter_by(
+            template_id=id, company_id=current_user.company_id
+        ).first()
+        if not lib_access:
+            abort(403)
+
+    new_template = ContractTemplate(
+        name=f"{source_template.name} (Cópia)",
+        description=source_template.description,
+        content=source_template.content,
+        type=source_template.type,
+        company_id=current_user.company_id,
+        is_library=False, # Copy becomes a private template
+        is_global=False,  # Copy becomes a private template
+        created_at=datetime.now()
+    )
+    
+    db.session.add(new_template)
+    db.session.commit()
+    
+    flash('Modelo duplicado com sucesso!', 'success')
+    return redirect(url_for('templates.settings_templates'))
+
 @templates_bp.route('/settings/processes')
 @login_required
 def settings_processes():

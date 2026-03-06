@@ -431,50 +431,109 @@
         const wrapper = document.getElementById('preview-wrapper');
         if (wrapper) resizeObserver.observe(wrapper);
         fitPreview();
+        console.log("Template ID:", "{{ template.id if template else 'None' }}");
+        console.log("Company ID:", "{{ current_user.company_id }}");
     });
 
-    var quill = new Quill('#editor-container', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, false] }],
-                ['bold', 'italic', 'underline'],
-                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                [{ 'align': [] }],
-                ['clean']
-            ]
+    var quill;
+    try {
+        quill = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['clean']
+                ]
+            }
+        });
+        console.log("Quill initialized successfully.");
+    } catch (e) {
+        console.error("Failed to initialize Quill:", e);
+        // Fallback: show the hidden textarea so user can at least see/edit raw HTML
+        if (document.getElementById('templateContent')) {
+            const ta = document.getElementById('templateContent');
+            ta.classList.remove('hidden');
+            ta.style.display = 'block';
+            ta.style.width = '100%';
+            ta.style.height = '600px';
         }
-    });
+    }
 
     // Initial Content
     const hiddenTextarea = document.getElementById('templateContent');
-    if (hiddenTextarea.value) {
-        quill.clipboard.dangerouslyPasteHTML(hiddenTextarea.value);
-        // Trigger initial render
-        setTimeout(updatePreview, 100);
+
+    if (typeof quill !== 'undefined' && quill) {
+        if (hiddenTextarea && hiddenTextarea.value) {
+            console.log("Loading initial content into Quill...");
+            try {
+                quill.clipboard.dangerouslyPasteHTML(hiddenTextarea.value);
+                console.log("Content loaded successfully.");
+                // Trigger initial render
+                setTimeout(updatePreview, 100);
+            } catch (e) {
+                console.error("Error loading content into Quill:", e);
+            }
+        } else {
+            console.warn("No hidden textarea found or value is empty.");
+        }
+
+        // Sync Content on Change & Update Preview
+        quill.on('text-change', function () {
+            if (hiddenTextarea) {
+                hiddenTextarea.value = quill.root.innerHTML;
+            }
+            updatePreview();
+        });
+    } else {
+        // Fallback Mode logic
+        console.log("Running in HTML fallback mode.");
+        if (hiddenTextarea) {
+            setTimeout(updatePreview, 100);
+            hiddenTextarea.addEventListener('input', function () {
+                updatePreview();
+            });
+        }
     }
 
-    // Sync Content on Change & Update Preview
-    quill.on('text-change', function () {
-        hiddenTextarea.value = quill.root.innerHTML;
-        updatePreview();
-    });
-
     function insertVar(text) {
-        const range = quill.getSelection(true);
-        if (range) {
-            quill.insertText(range.index, text);
-            quill.setSelection(range.index + text.length);
+        if (typeof quill !== 'undefined' && quill) {
+            const range = quill.getSelection(true);
+            if (range) {
+                quill.insertText(range.index, text);
+                quill.setSelection(range.index + text.length);
+            } else {
+                const length = quill.getLength();
+                quill.insertText(length - 1, text); // Insert at end
+            }
         } else {
-            const length = quill.getLength();
-            quill.insertText(length - 1, text); // Insert at end
+            // Fallback for textarea
+            const ta = document.getElementById('templateContent');
+            if (ta) {
+                const start = ta.selectionStart;
+                const end = ta.selectionEnd;
+                const val = ta.value;
+                ta.value = val.substring(0, start) + text + val.substring(end);
+                ta.selectionStart = ta.selectionEnd = start + text.length;
+                ta.focus();
+                updatePreview();
+            }
         }
     }
 
     // --- Pagination Logic ---
     function updatePreview() {
-        // Use a slight delay to ensure latest edits are captured if needed, though 'text-change' is fast.
-        const content = quill.root.innerHTML;
+        let content = "";
+        if (typeof quill !== 'undefined' && quill) {
+            content = quill.root.innerHTML;
+        } else {
+            const ta = document.getElementById('templateContent');
+            if (ta) {
+                content = ta.value;
+            }
+        }
         requestAnimationFrame(() => renderPaginatedContent(content));
     }
 
