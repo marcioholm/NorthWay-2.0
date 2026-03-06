@@ -945,7 +945,7 @@
                                     <i data-lucide="users" class="w-5 h-5 text-gray-400"></i>
                                     Matriz de Públicos
                                 </h3>
-                                <button onclick="openMatrixWizard()"
+                                <button type="button" onclick="openMatrixWizard()"
                                     class="bg-northway-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                     Nova Matriz
@@ -976,16 +976,16 @@
 
                                         <div class="flex items-center justify-between pt-4 border-t border-gray-50">
                                             <div class="flex gap-3">
-                                                <button onclick="editMatrix('{{ matrix.id }}')"
+                                                <button type="button" onclick="editMatrix('{{ matrix.id }}')"
                                                     class="text-xs font-black text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
                                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
                                                 </button>
-                                                <button onclick="deleteMatrix('{{ matrix.id }}')"
+                                                <button type="button" onclick="deleteMatrix('{{ matrix.id }}')"
                                                     class="text-xs font-black text-red-600 hover:text-red-800 transition-colors flex items-center gap-1">
                                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Excluir
                                                 </button>
                                             </div>
-                                            <button onclick="downloadMatrixPDF('{{ matrix.id }}')"
+                                            <button type="button" onclick="downloadMatrixPDF('{{ matrix.id }}')"
                                                 class="p-2 bg-gray-50 text-gray-400 hover:bg-northway-red hover:text-white rounded-lg transition-all"
                                                 title="Baixar PDF">
                                                 <i data-lucide="download" class="w-4 h-4"></i>
@@ -1015,7 +1015,7 @@
                                     <i data-lucide="shield-alert" class="w-5 h-5 text-gray-400"></i>
                                     Matriz de Riscos (CREPI)
                                 </h3>
-                                <button onclick="openCrepiInterface()"
+                                <button type="button" onclick="openCrepiInterface()"
                                     class="bg-northway-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                     Novo Diagnóstico de Risco
@@ -1045,16 +1045,16 @@
                                     </p>
                                     <div class="flex items-center justify-between pt-4 border-t border-gray-50">
                                         <div class="flex gap-3">
-                                            <button onclick="openCrepiInterface('{{ crepi.id }}')"
+                                            <button type="button" onclick="openCrepiInterface('{{ crepi.id }}')"
                                                 class="text-xs font-black text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
                                             </button>
-                                            <button onclick="deleteCrepi('{{ crepi.id }}')"
+                                            <button type="button" onclick="deleteCrepi('{{ crepi.id }}')"
                                                 class="text-xs font-black text-red-600 hover:text-red-800 transition-colors flex items-center gap-1">
                                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Excluir
                                             </button>
                                         </div>
-                                        <button onclick="downloadCrepiPDF('{{ crepi.id }}')"
+                                        <button type="button" onclick="downloadCrepiPDF('{{ crepi.id }}')"
                                             class="p-2 bg-gray-50 text-gray-400 hover:bg-northway-red hover:text-white rounded-lg transition-all">
                                             <i data-lucide="file-down" class="w-4 h-4"></i>
                                         </button>
