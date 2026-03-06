@@ -1016,114 +1016,114 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Files Grid/List Container -->
-                            <div id="drive-files-container"
-                                class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 transition-all duration-300">
-                                {% if client.drive_files_events %}
-                                {% for event in client.drive_files_events|sort(attribute='detected_at', reverse=True) %}
-                                <!-- File Item -->
-                                <div class="drive-file-item group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all hover:border-blue-200 flex flex-col items-center text-center"
-                                    data-name="{{ event.file_name }}" data-date="{{ event.detected_at.timestamp() }}">
+                        <!-- Files Grid/List Container -->
+                        <div id="drive-files-container"
+                            class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 transition-all duration-300">
+                            {% if client.drive_files_events %}
+                            {% for event in client.drive_files_events|sort(attribute='detected_at', reverse=True) %}
+                            <!-- File Item -->
+                            <div class="drive-file-item group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all hover:border-blue-200 flex flex-col items-center text-center"
+                                data-name="{{ event.file_name }}" data-date="{{ event.detected_at.timestamp() }}">
 
-                                    <!-- Checkbox for bulk selection -->
-                                    <input type="checkbox" name="file_ids" value="{{ event.file_id }}"
-                                        class="bulk-select-checkbox absolute top-2 left-2 w-4 h-4 text-red-600 rounded focus:ring-red-500 cursor-pointer z-10">
+                                <!-- Checkbox for bulk selection -->
+                                <input type="checkbox" name="file_ids" value="{{ event.file_id }}"
+                                    class="bulk-select-checkbox absolute top-2 left-2 w-4 h-4 text-red-600 rounded focus:ring-red-500 cursor-pointer z-10">
 
-                                    <div class="drive-file-icon mb-3 relative shrink-0 transition-transform">
-                                        {% if 'pdf' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center icon-box">
-                                            <i data-lucide="file-text" class="w-6 h-6"></i>
-                                        </div>
-                                        {% elif 'image' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center icon-box">
-                                            <i data-lucide="image" class="w-6 h-6"></i>
-                                        </div>
-                                        {% elif 'video' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center icon-box">
-                                            <i data-lucide="video" class="w-6 h-6"></i>
-                                        </div>
-                                        {% elif 'folder' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center icon-box">
-                                            <i data-lucide="folder" class="w-6 h-6 fill-current"></i>
-                                        </div>
-                                        {% elif 'sheet' in event.mime_type or 'csv' in event.mime_type %}
-                                        <div
-                                            class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center icon-box">
-                                            <i data-lucide="table" class="w-6 h-6"></i>
-                                        </div>
-                                        {% else %}
-                                        <div
-                                            class="w-12 h-12 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center icon-box">
-                                            <i data-lucide="file" class="w-6 h-6"></i>
-                                        </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <a href="{{ event.web_view_link }}" target="_blank"
-                                        class="drive-file-name text-sm font-bold text-gray-700 hover:text-blue-600 mb-1 line-clamp-2 break-all"
-                                        title="{{ event.file_name }}">
-                                        {{ event.file_name }}
-                                    </a>
-                                    <p class="drive-file-date text-[10px] text-gray-400">{{
-                                        event.detected_at.strftime('%d/%m/%Y') }}</p>
-
-                                    <!-- Hover Actions -->
+                                <div class="drive-file-icon mb-3 relative shrink-0 transition-transform">
+                                    {% if 'pdf' in event.mime_type %}
                                     <div
-                                        class="action-btn absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                        <a href="{{ event.web_view_link }}" target="_blank"
-                                            class="p-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-100 hover:text-blue-600 block">
-                                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                                        </a>
-                                        <form
-                                            action="{{ url_for('clients.delete_drive_file', id=client.id, file_id=event.file_id) }}"
-                                            method="POST"
-                                            onsubmit="return confirm('Tem certeza que deseja excluir {{ event.file_name }}?');"
-                                            class="inline-block">
-                                            <button type="submit"
-                                                class="p-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-100 hover:text-red-600 hover:bg-red-50 transition-colors">
-                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                            </button>
-                                        </form>
+                                        class="w-12 h-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center icon-box">
+                                        <i data-lucide="file-text" class="w-6 h-6"></i>
                                     </div>
-                                </div>
-                                {% endfor %}
-                                {% else %}
-                                <div
-                                    class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                    <div class="bg-gray-100 p-4 rounded-full mb-3">
-                                        <i data-lucide="cloud" class="w-8 h-8 opacity-40"></i>
+                                    {% elif 'image' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-purple-50 text-purple-500 rounded-xl flex items-center justify-center icon-box">
+                                        <i data-lucide="image" class="w-6 h-6"></i>
                                     </div>
-                                    <p class="text-sm font-medium">Pasta vazia ou não sincronizada.</p>
-                                    <p class="text-xs mt-1 max-w-xs mx-auto">Faça upload de arquivos no Drive ou
-                                        clique
-                                        em "Sincronizar" para atualizar.</p>
+                                    {% elif 'video' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center icon-box">
+                                        <i data-lucide="video" class="w-6 h-6"></i>
+                                    </div>
+                                    {% elif 'folder' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center icon-box">
+                                        <i data-lucide="folder" class="w-6 h-6 fill-current"></i>
+                                    </div>
+                                    {% elif 'sheet' in event.mime_type or 'csv' in event.mime_type %}
+                                    <div
+                                        class="w-12 h-12 bg-green-50 text-green-500 rounded-xl flex items-center justify-center icon-box">
+                                        <i data-lucide="table" class="w-6 h-6"></i>
+                                    </div>
+                                    {% else %}
+                                    <div
+                                        class="w-12 h-12 bg-gray-50 text-gray-500 rounded-xl flex items-center justify-center icon-box">
+                                        <i data-lucide="file" class="w-6 h-6"></i>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                                {% endif %}
-                            </div>
 
-                            {% else %}
-                            <div class="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                                <a href="{{ event.web_view_link }}" target="_blank"
+                                    class="drive-file-name text-sm font-bold text-gray-700 hover:text-blue-600 mb-1 line-clamp-2 break-all"
+                                    title="{{ event.file_name }}">
+                                    {{ event.file_name }}
+                                </a>
+                                <p class="drive-file-date text-[10px] text-gray-400">{{
+                                    event.detected_at.strftime('%d/%m/%Y') }}</p>
+
+                                <!-- Hover Actions -->
                                 <div
-                                    class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
-                                        class="w-10 h-10">
+                                    class="action-btn absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                    <a href="{{ event.web_view_link }}" target="_blank"
+                                        class="p-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-100 hover:text-blue-600 block">
+                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                    <form
+                                        action="{{ url_for('clients.delete_drive_file', id=client.id, file_id=event.file_id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Tem certeza que deseja excluir {{ event.file_name }}?');"
+                                        class="inline-block">
+                                        <button type="submit"
+                                            class="p-1.5 bg-white text-gray-600 rounded-lg shadow-sm border border-gray-100 hover:text-red-600 hover:bg-red-50 transition-colors">
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </form>
                                 </div>
-                                <h3 class="text-xl font-bold text-gray-900 mb-2">Conecte o Google Drive</h3>
-                                <p class="text-gray-500 max-w-md mx-auto mb-8">Centralize contratos, documentos e
-                                    arquivos do cliente em uma pasta segura e compartilhada.</p>
-                                <button onclick="toggleModal('createDriveFoldersModal')"
-                                    class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 mx-auto">
-                                    <i data-lucide="hard-drive" class="w-5 h-5"></i>
-                                    Criar Pasta do Cliente
-                                </button>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <div
+                                class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                                <div class="bg-gray-100 p-4 rounded-full mb-3">
+                                    <i data-lucide="cloud" class="w-8 h-8 opacity-40"></i>
+                                </div>
+                                <p class="text-sm font-medium">Pasta vazia ou não sincronizada.</p>
+                                <p class="text-xs mt-1 max-w-xs mx-auto">Faça upload de arquivos no Drive ou
+                                    clique
+                                    em "Sincronizar" para atualizar.</p>
                             </div>
                             {% endif %}
                         </div>
+
+                        {% else %}
+                        <div class="text-center py-20 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <div
+                                class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
+                                    class="w-10 h-10">
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Conecte o Google Drive</h3>
+                            <p class="text-gray-500 max-w-md mx-auto mb-8">Centralize contratos, documentos e
+                                arquivos do cliente em uma pasta segura e compartilhada.</p>
+                            <button onclick="toggleModal('createDriveFoldersModal')"
+                                class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 mx-auto">
+                                <i data-lucide="hard-drive" class="w-5 h-5"></i>
+                                Criar Pasta do Cliente
+                            </button>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- WhatsApp Content -->
