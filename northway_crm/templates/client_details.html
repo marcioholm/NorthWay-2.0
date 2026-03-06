@@ -4252,71 +4252,83 @@ ${dateHeader}
             fetch(`/matrix/${matrixId}`)
                 .then(res => res.json())
                 .then(data => {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.style.width = '1200px';
-                    tempDiv.innerHTML = `
-                <div style="font-family: 'Figtree', sans-serif; padding: 40px; background: white;">
-                    <div style="background: #e31f1f; padding: 40px; color: white; border-radius: 20px 20px 0 0; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h1 style="font-size: 32px; font-weight: 900; text-transform: uppercase; margin: 0;">Matriz de Públicos</h1>
-                            <p style="opacity: 0.8; font-weight: bold; margin: 5px 0 0 0;">${data.product}</p>
-                        </div>
-                        <div style="text-align: right">
-                            <p style="font-weight: 900; margin: 0;">${document.getElementById('matrix-business-name') ? document.getElementById('matrix-business-name').value : ''}</p>
-                            <p style="opacity: 0.6; font-size: 10px; margin: 0;">GERADO PELO NORTHWAY CRM</p>
-                        </div>
-                    </div>
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 15px; text-align: left; font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #f3f4f6;">Público</th>
-                                <th style="padding: 15px; text-align: left; font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #f3f4f6;">Dor Principal</th>
-                                <th style="padding: 15px; text-align: left; font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #f3f4f6;">Transformação</th>
-                                <th style="padding: 15px; text-align: left; font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #f3f4f6;">Objeções & Quebras</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.audiences.map(aud => `
-                                <tr style="border-bottom: 1px solid #f3f4f6;">
-                                    <td style="padding: 20px; vertical-align: top; width: 150px;">
-                                        <div style="font-weight: 900; color: #111827; text-transform: uppercase; font-size: 12px;">${aud.name}</div>
-                                    </td>
-                                    <td style="padding: 20px; vertical-align: top;">
-                                        <div style="font-size: 10px; font-weight: bold; color: #e31f1f; margin-bottom: 4px;">DOR:</div>
-                                        <p style="font-size: 11px; color: #4b5563; margin: 0; line-height: 1.5;">${aud.pain || '-'}</p>
-                                    </td>
-                                    <td style="padding: 20px; vertical-align: top;">
-                                        <div style="font-size: 10px; font-weight: bold; color: #059669; margin-bottom: 4px;">TRANSFORMAÇÃO:</div>
-                                        <p style="font-size: 11px; color: #4b5563; margin: 0; line-height: 1.5;">${aud.transf || '-'}</p>
-                                    </td>
-                                    <td style="padding: 20px; vertical-align: top;">
-                                        <div style="margin-bottom: 10px;">
-                                            <div style="font-size: 10px; font-weight: bold; color: #d97706; text-transform: uppercase;">Objeção:</div>
-                                            <p style="font-size: 10px; color: #6b7280; font-style: italic; margin: 0;">"${aud.obj || '-'}"</p>
+                    const palette = [
+                        { bg: '#fff1f1', accent: '#e31f1f', border: '#fca5a5' },
+                        { bg: '#eff6ff', accent: '#2563eb', border: '#93c5fd' },
+                        { bg: '#f0fdf4', accent: '#16a34a', border: '#86efac' },
+                        { bg: '#fefce8', accent: '#ca8a04', border: '#fde047' },
+                    ];
+
+                    const audienceCards = data.audiences.map((aud, idx) => {
+                        const p = palette[idx % palette.length];
+                        return `
+                        <div style="background:${p.bg}; border:2px solid ${p.border}; border-radius:16px; padding:28px; margin-bottom:20px; page-break-inside:avoid;">
+                            <div style="display:inline-block; background:${p.accent}; color:white; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:2px; padding:5px 14px; border-radius:30px; margin-bottom:18px;">${aud.name || 'Público ' + (idx+1)}</div>
+                            <table style="width:100%; border-collapse:collapse;">
+                                <tr>
+                                    <td style="width:50%; padding:0 10px 0 0; vertical-align:top;">
+                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #e31f1f; margin-bottom:12px;">
+                                            <div style="font-size:8px; font-weight:900; color:#e31f1f; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Dor Principal</div>
+                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7;">${aud.pain || '—'}</p>
                                         </div>
-                                        <div>
-                                            <div style="font-size: 10px; font-weight: bold; color: #2563eb; text-transform: uppercase;">Quebra:</div>
-                                            <p style="font-size: 10px; color: #111827; font-weight: bold; margin: 0;">${aud.break || '-'}</p>
+                                    </td>
+                                    <td style="width:50%; padding:0 0 0 10px; vertical-align:top;">
+                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #16a34a; margin-bottom:12px;">
+                                            <div style="font-size:8px; font-weight:900; color:#16a34a; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Transformação</div>
+                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7;">${aud.transf || '—'}</p>
                                         </div>
                                     </td>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f3f4f6; text-align: center; font-size: 10px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
-                        Matriz Estratégica de Público • NorthWay Assessoria
+                                <tr>
+                                    <td style="padding:0 10px 0 0; vertical-align:top;">
+                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #ca8a04;">
+                                            <div style="font-size:8px; font-weight:900; color:#ca8a04; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Objeção</div>
+                                            <p style="font-size:11px; color:#374151; margin:0; line-height:1.7; font-style:italic;">"${aud.obj || '—'}"</p>
+                                        </div>
+                                    </td>
+                                    <td style="padding:0 0 0 10px; vertical-align:top;">
+                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #2563eb;">
+                                            <div style="font-size:8px; font-weight:900; color:#2563eb; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Quebra de Objeção</div>
+                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7; font-weight:700;">${aud.break || '—'}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>`;
+                    }).join('');
+
+                    const tempDiv = document.createElement('div');
+                    tempDiv.style.cssText = 'width:900px; position:absolute; left:-9999px; top:0;';
+                    tempDiv.innerHTML = `
+                    <div style="font-family: Arial, Helvetica, sans-serif; background:#f9fafb; padding:0;">
+                        <div style="background:linear-gradient(135deg,#e31f1f 0%,#991b1b 100%); padding:44px 52px; display:flex; align-items:flex-end; justify-content:space-between;">
+                            <div>
+                                <div style="font-size:9px; color:rgba(255,255,255,0.6); font-weight:800; letter-spacing:3px; text-transform:uppercase; margin-bottom:8px;">Diagnóstico Estratégico</div>
+                                <h1 style="font-size:34px; font-weight:900; color:white; text-transform:uppercase; margin:0 0 8px 0; letter-spacing:-0.5px;">Matriz de Públicos</h1>
+                                <p style="font-size:13px; color:rgba(255,255,255,0.75); margin:0; font-weight:600;">${data.product || ''}</p>
+                            </div>
+                            <div style="text-align:right;">
+                                <p style="font-size:13px; font-weight:900; color:white; margin:0; text-transform:uppercase;">{{ client.name }}</p>
+                                <p style="font-size:8px; color:rgba(255,255,255,0.45); margin:4px 0 0 0; text-transform:uppercase; letter-spacing:2px;">NorthWay CRM</p>
+                            </div>
+                        </div>
+                        <div style="padding:40px 52px;">
+                            ${audienceCards}
+                        </div>
+                        <div style="padding:16px 52px 28px; text-align:center; border-top:1px solid #e5e7eb;">
+                            <p style="font-size:8px; color:#9ca3af; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin:0;">Matriz Estratégica de Público • NorthWay Assessoria</p>
+                        </div>
                     </div>
-                </div>
-            `;
+                    `;
 
                     document.body.appendChild(tempDiv);
 
                     const opt = {
                         margin: 0,
-                        filename: `Matriz_Publicos_${data.product.replace(/\s+/g, '_')}.pdf`,
+                        filename: `Matriz_Publicos_${(data.product || 'matriz').replace(/\s+/g, '_')}.pdf`,
                         image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                     };
 
                     html2pdf().from(tempDiv).set(opt).save().then(() => {
