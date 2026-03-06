@@ -128,11 +128,15 @@ def client_details(id):
             template_id=diag_template.id, 
             status="active"
         ).first()
-        is_master = getattr(current_user, "is_super_admin", False) or current_user.email == "master@northway.com"
+        is_master = getattr(current_user, "is_super_admin", False) == 1 or \
+                    getattr(current_user, "is_super_admin", False) is True or \
+                    current_user.email == "master@northway.com"
+        
         if has_grant or is_master:
+            # For master, we want to ensure we have a form instance to show the link
+            # Master might not "own" the instance but should see a default one or the first one
             diag_instance = FormInstance.query.filter_by(
-                template_id=diag_template.id,
-                owner_user_id=current_user.id
+                template_id=diag_template.id
             ).first()
 
     # Fetch Drive Templates and Integration Status
