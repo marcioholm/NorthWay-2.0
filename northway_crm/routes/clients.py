@@ -316,6 +316,8 @@ def add_client_task(id):
     due_date_str = request.form.get('due_date')
     due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M') if due_date_str else None
     
+    assigned_to_id = request.form.get('responsible_id') or current_user.id
+    
     task = Task(
         title=request.form.get('title'),
         description=request.form.get('description'),
@@ -324,7 +326,7 @@ def add_client_task(id):
         status='pendente',
         client_id=client.id,
         company_id=current_user.company_id,
-        assigned_to_id=current_user.id
+        assigned_to_id=assigned_to_id
     )
     db.session.add(task)
     db.session.commit()

@@ -716,6 +716,8 @@ def sign_contract(id):
             except Exception as e:
                 print(f"⚠️ Exception creating Asaas customer: {e}")
 
+        
+        asaas_errors = []
         if Transaction.query.filter_by(contract_id=contract.id).count() == 0:
             for i in range(qtd_p):
                 target_m = add_months_helper(start_d, i)
@@ -755,8 +757,10 @@ def sign_contract(id):
                             t.asaas_invoice_url = payment.get('invoiceUrl') or payment.get('bankSlipUrl')
                             print(f"✅ Created Asaas Payment {t.asaas_id} for Transaction {t.id}")
                         else:
+                            asaas_errors.append(f"Parcela {i+1}: {err}")
                             print(f"❌ Failed to create Asaas Payment: {err}")
                     except Exception as bill_e:
+                        asaas_errors.append(f"Parcela {i+1}: {str(bill_e)}")
                         print(f"❌ Exception generating boleto {i+1}: {bill_e}")
         
         contract.signed_at = datetime.now()
@@ -772,12 +776,18 @@ def sign_contract(id):
         db.session.commit()
         
         msg = 'Contrato assinado.'
+        success = True
+        
         if tenant_api_key and asaas_customer_id:
-            msg += ' Boletos gerados no seu Asaas com sucesso!'
+            if not asaas_errors:
+                msg += ' Boletos gerados no seu Asaas com sucesso!'
+            else:
+                msg += f' Mas houve erros em algumas parcelas do Asaas: {", ".join(asaas_errors)}'
+                # Note: We technically succeed in signing, but with billing warnings
         else:
             msg += ' (Boletos não gerados: configure sua integração Asaas)'
             
-        return jsonify({'message': msg})
+        return jsonify({'message': msg, 'success': success, 'asaas_errors': asaas_errors})
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': f'Erro: {str(e)}'}), 500
@@ -840,6 +850,7 @@ def save_contract(id):
         return jsonify({'message': 'Contrato salvo com sucesso.'})
     except Exception as e:
         db.session.rollback()
+        return jsonify({'message': f'Erro: {str(e)}'}), 500
 @contracts_bp.route('/contracts/<int:id>/regenerate_billing', methods=['POST'])
 @login_required
 def regenerate_billing(id):

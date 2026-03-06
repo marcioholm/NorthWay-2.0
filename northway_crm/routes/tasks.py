@@ -230,6 +230,7 @@ def tasks():
     if request.method == 'POST':
         title = request.form.get('title')
         lead_id = request.form.get('lead_id')
+        client_id = request.form.get('client_id')
         assigned_to_id = request.form.get('assigned_to_id')
         due_date_str = request.form.get('due_date')
         is_recurring = request.form.get('is_recurring') == '1'
@@ -245,15 +246,18 @@ def tasks():
             except ValueError:
                 pass
                 
-        # Handle empty/none lead_id
-        if not lead_id or lead_id == 'None':
+        # Handle empty/none lead_id/client_id
+        if not lead_id or lead_id == 'None' or lead_id == '':
             lead_id = None
+        if not client_id or client_id == 'None' or client_id == '':
+            client_id = None
             
         task = Task(
             title=title,
-            description=request.form.get('description'), # Added description
+            description=request.form.get('description'),
             due_date=due_date,
             lead_id=lead_id,
+            client_id=client_id,
             assigned_to_id=assigned_to_id or current_user.id,
             company_id=current_user.company_id,
             status='pendente',
@@ -269,8 +273,6 @@ def tasks():
             # flash(f'Erro: {e}', 'error')
             pass
             
-        return render_template('tasks.html') # Redirect usually, but let's follow standard pattern
-        # Actually standard is redirect.
         return redirect(url_for('tasks.tasks'))
 
     # GET: List Tasks
@@ -319,7 +321,9 @@ def tasks():
         progress_percent = int((completed_count / total_tasks) * 100)
         
     # Context data for modals
+    from models import Client
     leads = Lead.query.filter_by(company_id=company_id).all()
+    clients_list = Client.query.filter_by(company_id=company_id).all()
     users = User.query.filter_by(company_id=company_id).all()
     
     now = datetime.now()
@@ -329,6 +333,7 @@ def tasks():
                            client_tasks=client_tasks,
                            general_tasks=general_tasks,
                            completed_tasks_list=completed_tasks_list,
+                           clients_list=clients_list,
                            completed_tasks=completed_count,
                            total_tasks=total_tasks,
                            progress_percent=progress_percent,

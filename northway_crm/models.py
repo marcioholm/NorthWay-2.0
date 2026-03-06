@@ -448,6 +448,9 @@ class Client(db.Model):
     drive_folder_name = db.Column(db.String(255), nullable=True)
     drive_last_scan_at = db.Column(db.DateTime, nullable=True)
     drive_unread_files_count = db.Column(db.Integer, default=0)
+    
+    # Relationships
+    audience_matrices = db.relationship('AudienceMatrix', backref='client', lazy=True, cascade="all, delete-orphan")
 
     # Relationships
     company = db.relationship('Company', backref='clients')
@@ -459,6 +462,7 @@ class Client(db.Model):
     
     interactions = db.relationship('Interaction', backref='client', cascade='all, delete-orphan', lazy=True)
     drive_files_events = db.relationship('DriveFileEvent', backref='client', cascade='all, delete-orphan', lazy=True)
+    crepi_diagnosticos = db.relationship('CREPIDiagnostico', backref='client', cascade='all, delete-orphan', lazy=True)
 
     @property
     def address(self):
@@ -1091,3 +1095,42 @@ class ProspectingSearch(db.Model):
     created_at = db.Column(db.DateTime, default=get_now_br)
 
     company = db.relationship('Company', backref='prospecting_searches')
+
+class AudienceMatrix(db.Model):
+    __tablename__ = 'audience_matrices'
+    id = db.Column(db.String(36), primary_key=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    product = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(20), default='rascunho') # rascunho, concluido
+    audiences = db.Column(db.JSON, nullable=False) # Stores the 4 audiences data
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+class CREPIDiagnostico(db.Model):
+    __tablename__ = 'crepi_diagnosticos'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    projeto = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), default='rascunho') # rascunho, concluido
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    # Relationship
+    premissas = db.relationship('CREPIPremissa', backref='diagnostico', cascade='all, delete-orphan', order_by="CREPIPremissa.ordem")
+
+class CREPIPremissa(db.Model):
+    __tablename__ = 'crepi_premissas'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    diagnostico_id = db.Column(db.String(36), db.ForeignKey('crepi_diagnosticos.id'), nullable=False)
+    ordem = db.Column(db.Integer, default=0)
+    nome = db.Column(db.String(150), nullable=False)
+    categoria = db.Column(db.String(100), nullable=True)
+    causa = db.Column(db.Text, nullable=True)
+    risco = db.Column(db.Text, nullable=True)
+    efeito = db.Column(db.Text, nullable=True)
+    probabilidade = db.Column(db.Integer, default=0) # 0-10
+    impacto = db.Column(db.Integer, default=0)      # 0-10
+    score = db.Column(db.Integer, default=0)        # P * I
+    decisao_consultor = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)

@@ -13,7 +13,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.pool import NullPool
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
-from models import db, User, Task, Role
+from models import db, User, Task, Role, AudienceMatrix, CREPIDiagnostico, CREPIPremissa
 import json
 # Blueprint imports moved to create_app to prevent global import crashes
 from services.supabase_service import init_supabase
@@ -633,7 +633,9 @@ def create_app():
             ('routes.pdf_routes', 'pdf_bp', 'pdf_bp', None),
             ('routes.financial_payable', 'payable_bp', 'payable_bp', None),
             ('routes.commercial_performance', 'commercial_bp', 'commercial_bp', None),
-            ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None)
+            ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None),
+            ('routes.matrix_routes', 'matrix_bp', 'matrix_bp', None),
+            ('routes.crepi_routes', 'crepi_bp', 'crepi_bp', None)
         ]
 
         import importlib
