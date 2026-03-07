@@ -21,6 +21,10 @@ def save_asaas_config():
     api_key = data.get('api_key')
     environment = data.get('environment', 'sandbox')
     
+    email_enabled = data.get('emailEnabled', True)
+    sms_enabled = data.get('smsEnabled', False)
+    whatsapp_enabled = data.get('whatsappEnabled', False)
+    
     if not api_key:
         return api_response(success=False, error='API Key is required', status=400)
 
@@ -36,8 +40,23 @@ def save_asaas_config():
         db.session.add(integration)
     
     integration.api_key = api_key
-    # Store environment in config_json
-    integration.config_json = json.dumps({'environment': environment})
+    
+    # Preserve existing config if any, overriding specifically these keys
+    existing_config = {}
+    if integration.config_json:
+        try:
+            existing_config = json.loads(integration.config_json)
+        except:
+            pass
+            
+    existing_config.update({
+        'environment': environment,
+        'emailEnabled': email_enabled,
+        'smsEnabled': sms_enabled,
+        'whatsappEnabled': whatsapp_enabled
+    })
+    
+    integration.config_json = json.dumps(existing_config)
     integration.updated_at = db.func.now()
     
     db.session.commit()

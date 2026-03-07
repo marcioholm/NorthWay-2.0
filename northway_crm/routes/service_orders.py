@@ -133,6 +133,18 @@ def approve_service_order(id):
         ).first()
 
         tenant_api_key = tenant_integration.api_key if tenant_integration else None
+        
+        email_enabled, sms_enabled, whatsapp_enabled = True, False, False
+        if tenant_integration and tenant_integration.config_json:
+            try:
+                import json
+                config = json.loads(tenant_integration.config_json)
+                email_enabled = config.get('emailEnabled', True)
+                sms_enabled = config.get('smsEnabled', False)
+                whatsapp_enabled = config.get('whatsappEnabled', False)
+            except:
+                pass
+                
         client = os_order.client
 
         if tenant_api_key and not client.asaas_customer_id:
@@ -142,7 +154,10 @@ def approve_service_order(id):
                 cpf_cnpj=client.document,
                 phone=client.phone,
                 external_id=client.id,
-                api_key=tenant_api_key
+                api_key=tenant_api_key,
+                email_enabled=email_enabled,
+                sms_enabled=sms_enabled,
+                whatsapp_enabled=whatsapp_enabled
             )
             if asaas_cust:
                 client.asaas_customer_id = asaas_cust

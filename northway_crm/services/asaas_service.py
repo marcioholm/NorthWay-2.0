@@ -13,9 +13,11 @@ def get_headers(api_key=None):
         'access_token': token
     }
 
-def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key=None):
+def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key=None, email_enabled=None, sms_enabled=None, whatsapp_enabled=None):
     """
     Creates or Retrieves a customer in Asaas.
+    If notification flags (email_enabled, sms_enabled, whatsapp_enabled) are provided,
+    it updates the customer's notifications to match these preferences.
     """
     token = api_key or os.environ.get('ASAAS_API_KEY')
     if not token:
@@ -29,8 +31,17 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key
         if response.status_code == 200:
             data = response.json()
             if data.get('totalCount', 0) > 0:
-                print(f"✅ Customer found in Asaas: {data['data'][0]['id']}")
-                return data['data'][0]['id'], None
+                customer_id = data['data'][0]['id']
+                print(f"✅ Customer found in Asaas: {customer_id}")
+                
+                # Check and sync notifications if explicitly provided
+                if email_enabled is not None or sms_enabled is not None or whatsapp_enabled is not None:
+                    e_en = email_enabled if email_enabled is not None else True
+                    s_en = sms_enabled if sms_enabled is not None else True
+                    w_en = whatsapp_enabled if whatsapp_enabled is not None else True
+                    update_customer_notifications(customer_id, e_en, s_en, w_en, token)
+                
+                return customer_id, None
     except Exception as e:
         print(f"⚠️ Error searching customer in Asaas: {e}")
 
@@ -47,7 +58,16 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key
     try:
         response = requests.post(f"{ASAAS_API_URL}/customers", json=payload, headers=get_headers(token))
         if response.status_code == 200:
-            return response.json()['id'], None
+            customer_id = response.json()['id']
+            
+            # Sync notifications if explicitly provided
+            if email_enabled is not None or sms_enabled is not None or whatsapp_enabled is not None:
+                e_en = email_enabled if email_enabled is not None else True
+                s_en = sms_enabled if sms_enabled is not None else True
+                w_en = whatsapp_enabled if whatsapp_enabled is not None else True
+                update_customer_notifications(customer_id, e_en, s_en, w_en, token)
+            
+            return customer_id, None
         else:
             error_data = response.json()
             error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
@@ -56,6 +76,51 @@ def create_customer(name, email, cpf_cnpj, phone=None, external_id=None, api_key
     except Exception as e:
         print(f"❌ Exception creating customer: {e}")
         return None, str(e)
+
+def update_customer_notifications(customer_id, email_enabled=True, sms_enabled=True, whatsapp_enabled=True, api_key=None):
+    """
+    Updates the notification preferences (Email, SMS, WhatsApp) for all notifications of a customer.
+    """
+    token = api_key or os.environ.get('ASAAS_API_KEY')
+    if not token:
+        return False, "ASAAS_API_KEY Missing"
+        
+    try:
+        # 1. Fetch existing notifications for the customer
+        url = f"{ASAAS_API_URL}/customers/{customer_id}/notifications"
+        res = requests.get(url, headers=get_headers(token))
+        if res.status_code != 200:
+            print(f"⚠️ Failed to fetch notifications for {customer_id}: {res.text}")
+            return False, f"Failed to fetch notifications: {res.text}"
+            
+        data = res.json()
+        notifications = data.get('data', [])
+        
+        if not notifications:
+            return True, None
+            
+        # 2. Prepare batch update payload
+        batch_payload = {"notifications": []}
+        for n in notifications:
+            batch_payload["notifications"].append({
+                "id": n["id"],
+                "emailEnabled": email_enabled,
+                "smsEnabled": sms_enabled,
+                "whatsappEnabled": whatsapp_enabled
+            })
+            
+        # 3. Send batch update
+        batch_url = f"{ASAAS_API_URL}/notifications/batch"
+        batch_res = requests.post(batch_url, json=batch_payload, headers=get_headers(token))
+        if batch_res.status_code != 200:
+            print(f"⚠️ Failed to batch update notifications for {customer_id}: {batch_res.text}")
+            return False, f"Batch update failed: {batch_res.text}"
+            
+        print(f"✅ Successfully updated notifications for {customer_id}")
+        return True, None
+    except Exception as e:
+        print(f"❌ Exception updating notifications: {e}")
+        return False, str(e)
 
 def get_subscription(subscription_id, api_key=None):
     """

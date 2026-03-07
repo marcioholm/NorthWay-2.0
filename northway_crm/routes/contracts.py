@@ -696,6 +696,16 @@ def sign_contract(id):
         
         tenant_api_key = tenant_integration.api_key if tenant_integration else None
         
+        email_enabled, sms_enabled, whatsapp_enabled = True, False, False
+        if tenant_integration and tenant_integration.config_json:
+            try:
+                import json
+                config = json.loads(tenant_integration.config_json)
+                email_enabled = config.get('emailEnabled', True)
+                sms_enabled = config.get('smsEnabled', False)
+                whatsapp_enabled = config.get('whatsappEnabled', False)
+            except: pass
+        
         asaas_customer_id = None
         if tenant_api_key:
             # Create/Get Customer in Tenant's Asaas
@@ -706,7 +716,10 @@ def sign_contract(id):
                     cpf_cnpj=contract.client.document,
                     phone=contract.client.phone,
                     external_id=contract.client.id,
-                    api_key=tenant_api_key
+                    api_key=tenant_api_key,
+                    email_enabled=email_enabled,
+                    sms_enabled=sms_enabled,
+                    whatsapp_enabled=whatsapp_enabled
                 )
                 if asaas_cust:
                     asaas_customer_id = asaas_cust
@@ -879,6 +892,16 @@ def regenerate_billing(id):
         
         tenant_api_key = tenant_integration.api_key
         
+        email_enabled, sms_enabled, whatsapp_enabled = True, False, False
+        if tenant_integration.config_json:
+            try:
+                import json
+                config = json.loads(tenant_integration.config_json)
+                email_enabled = config.get('emailEnabled', True)
+                sms_enabled = config.get('smsEnabled', False)
+                whatsapp_enabled = config.get('whatsappEnabled', False)
+            except: pass
+        
         # 2. Get/Create Customer
         asaas_customer_id = None
         try:
@@ -888,7 +911,10 @@ def regenerate_billing(id):
                 cpf_cnpj=contract.client.document,
                 phone=contract.client.phone,
                 external_id=contract.client.id,
-                api_key=tenant_api_key
+                api_key=tenant_api_key,
+                email_enabled=email_enabled,
+                sms_enabled=sms_enabled,
+                whatsapp_enabled=whatsapp_enabled
             )
             if err: raise Exception(err)
             
