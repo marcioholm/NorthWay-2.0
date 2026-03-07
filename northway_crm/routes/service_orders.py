@@ -115,7 +115,7 @@ def approve_service_order(id):
         if os_order.company_id != current_user.company_id:
             return jsonify({'success': False, 'error': 'Permission denied'}), 403
 
-        if not current_user.has_permission('financial') and not current_user.user_role.name in [ROLE_ADMIN, ROLE_MANAGER]:
+        if not current_user.has_permission('financial') and current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
             return jsonify({'success': False, 'error': 'O usuário não tem permissão financeira para aprovar.'}), 403
 
         if os_order.status not in ['SOLICITADA', 'AGUARDANDO_ACEITE']:
