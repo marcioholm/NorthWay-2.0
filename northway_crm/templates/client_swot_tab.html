@@ -1,0 +1,1182 @@
+<!-- SWOT CSS & Layout Variables scoped -->
+<style>
+    .swot-wrapper {
+        --s-color: #16a34a;
+        --s-bg: #f0fdf4;
+        --s-border: #bbf7d0;
+        --s-light: rgba(22, 163, 74, .08);
+        --w-color: #dc2626;
+        --w-bg: #fef2f2;
+        --w-border: #fecaca;
+        --w-light: rgba(220, 38, 38, .08);
+        --o-color: #d97706;
+        --o-bg: #fffbeb;
+        --o-border: #fde68a;
+        --o-light: rgba(217, 119, 6, .08);
+        --t-color: #7c3aed;
+        --t-bg: #faf5ff;
+        --t-border: #ddd6fe;
+        --t-light: rgba(124, 58, 237, .08);
+        --ai: #0ea5e9;
+        --ai-bg: rgba(14, 165, 233, .08);
+        --ai-border: rgba(14, 165, 233, .2);
+        --ink: #141414;
+        --ink2: #444;
+        --ink3: #888;
+        --border: #e2ddd8;
+        --border2: #ccc8c2;
+        --surface: #efeae4;
+        font-family: 'Figtree', sans-serif;
+    }
+
+    .swot-wrapper * {
+        box-sizing: border-box;
+    }
+
+    /* ── HEADER ACTIONS ── */
+    .swot-header-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 24px;
+    }
+
+    .swot-mode-wrap {
+        display: flex;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .swot-mode-btn {
+        padding: 6px 14px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--ink3);
+        transition: all .2s;
+    }
+
+    .swot-mode-btn.active {
+        background: var(--ink);
+        color: white;
+    }
+
+    .swot-btn {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all .2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .swot-btn-dark {
+        background: var(--ink);
+        color: white;
+    }
+
+    .swot-btn-dark:hover {
+        opacity: .85;
+    }
+
+    .swot-btn-outline {
+        background: white;
+        color: var(--ink2);
+        border: 1px solid var(--border2);
+    }
+
+    .swot-btn-outline:hover {
+        border-color: var(--ink);
+        color: var(--ink);
+    }
+
+    /* ── ANALISES LIST ── */
+    .swot-list-item {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        transition: box-shadow .2s;
+        cursor: pointer;
+    }
+
+    .swot-list-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border-color: var(--ink3);
+    }
+
+    .swot-list-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .swot-list-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--ink);
+    }
+
+    .swot-list-date {
+        font-size: 12px;
+        color: var(--ink3);
+    }
+
+    .swot-list-stats {
+        display: flex;
+        gap: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .swot-stat-badge {
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    .swot-stat-s {
+        background: var(--s-bg);
+        color: var(--s-color);
+    }
+
+    .swot-stat-w {
+        background: var(--w-bg);
+        color: var(--w-color);
+    }
+
+    .swot-stat-o {
+        background: var(--o-bg);
+        color: var(--o-color);
+    }
+
+    .swot-stat-t {
+        background: var(--t-bg);
+        color: var(--t-color);
+    }
+
+    /* ── PROJECT BAR ── */
+    .swot-project-bar {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .swot-project-bar label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--ink3);
+        white-space: nowrap;
+    }
+
+    .swot-project-input {
+        flex: 1;
+        min-width: 180px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 9px 14px;
+        font-size: 14px;
+        color: var(--ink);
+        outline: none;
+        transition: border-color .2s;
+    }
+
+    .swot-project-input:focus {
+        border-color: var(--ink);
+    }
+
+    .swot-project-input::placeholder {
+        color: var(--ink3);
+    }
+
+    .swot-project-input:disabled {
+        opacity: 0.8;
+    }
+
+    .swot-project-divider {
+        width: 1px;
+        height: 28px;
+        background: var(--border);
+    }
+
+    /* ── SWOT GRID ── */
+    .swot-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .quadrant {
+        background: white;
+        border: 1.5px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: box-shadow .2s;
+    }
+
+    .quadrant:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, .07);
+    }
+
+    .quadrant.s {
+        border-top: 3px solid var(--s-color);
+    }
+
+    .quadrant.w {
+        border-top: 3px solid var(--w-color);
+    }
+
+    .quadrant.o {
+        border-top: 3px solid var(--o-color);
+    }
+
+    .quadrant.t {
+        border-top: 3px solid var(--t-color);
+    }
+
+    .quad-head {
+        padding: 14px 18px 12px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .quad-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .s .quad-icon {
+        background: var(--s-light);
+    }
+
+    .w .quad-icon {
+        background: var(--w-light);
+    }
+
+    .o .quad-icon {
+        background: var(--o-light);
+    }
+
+    .t .quad-icon {
+        background: var(--t-light);
+    }
+
+    .quad-title {
+        font-family: 'Bebas Neue', 'Arial Narrow', sans-serif;
+        font-size: 18px;
+        letter-spacing: .06em;
+    }
+
+    .s .quad-title {
+        color: var(--s-color);
+    }
+
+    .w .quad-title {
+        color: var(--w-color);
+    }
+
+    .o .quad-title {
+        color: var(--o-color);
+    }
+
+    .t .quad-title {
+        color: var(--t-color);
+    }
+
+    .quad-subtitle {
+        font-size: 11px;
+        color: var(--ink3);
+        margin-top: 1px;
+    }
+
+    .quad-count {
+        margin-left: auto;
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        color: var(--ink3);
+        background: var(--surface);
+        padding: 3px 9px;
+        border-radius: 20px;
+    }
+
+    .quad-body {
+        padding: 14px 16px;
+        min-height: 200px;
+    }
+
+    /* ITEMS */
+    .item-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .swot-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 9px 12px;
+        animation: popIn .2s ease;
+    }
+
+    @keyframes popIn {
+        from {
+            opacity: 0;
+            transform: scale(.97);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .item-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+
+    .s .item-dot {
+        background: var(--s-color);
+    }
+
+    .w .item-dot {
+        background: var(--w-color);
+    }
+
+    .o .item-dot {
+        background: var(--o-color);
+    }
+
+    .t .item-dot {
+        background: var(--t-color);
+    }
+
+    .item-text {
+        flex: 1;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--ink2);
+        background: transparent;
+        border: none;
+        outline: none;
+        resize: none;
+        min-height: 20px;
+        overflow: hidden;
+    }
+
+    .item-text[readonly] {
+        cursor: default;
+    }
+
+    .item-del {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--ink3);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .15s;
+        flex-shrink: 0;
+        opacity: 0;
+    }
+
+    .swot-item:hover .item-del {
+        opacity: 1;
+    }
+
+    .item-del:hover {
+        background: var(--w-bg);
+        color: var(--w-color);
+    }
+
+    /* ADD INPUT */
+    .add-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .add-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        border-bottom: 1.5px dashed var(--border2);
+        padding: 7px 4px;
+        font-size: 13px;
+        color: var(--ink);
+        outline: none;
+        transition: border-color .2s;
+    }
+
+    .add-input:focus {
+        border-color: var(--ink2);
+    }
+
+    .add-input::placeholder {
+        color: var(--border2);
+    }
+
+    .add-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .2s;
+        flex-shrink: 0;
+    }
+
+    .s .add-btn {
+        background: var(--s-light);
+        color: var(--s-color);
+    }
+
+    .w .add-btn {
+        background: var(--w-light);
+        color: var(--w-color);
+    }
+
+    .o .add-btn {
+        background: var(--o-light);
+        color: var(--o-color);
+    }
+
+    .t .add-btn {
+        background: var(--t-light);
+        color: var(--t-color);
+    }
+
+    .add-btn:hover {
+        filter: brightness(.9);
+        transform: scale(1.05);
+    }
+
+    /* ── SUMMARY (cliente) ── */
+    .summary-section {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    }
+
+    .summary-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 20px;
+        letter-spacing: .05em;
+        margin-bottom: 16px;
+        color: var(--ink);
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 12px;
+    }
+
+    .summary-card {
+        border-radius: 10px;
+        padding: 12px 14px;
+        border: 1px solid;
+    }
+
+    .summary-card.s {
+        background: var(--s-bg);
+        border-color: var(--s-border);
+    }
+
+    .summary-card.w {
+        background: var(--w-bg);
+        border-color: var(--w-border);
+    }
+
+    .summary-card.o {
+        background: var(--o-bg);
+        border-color: var(--o-border);
+    }
+
+    .summary-card.t {
+        background: var(--t-bg);
+        border-color: var(--t-border);
+    }
+
+    .sc-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .s .sc-label {
+        color: var(--s-color);
+    }
+
+    .w .sc-label {
+        color: var(--w-color);
+    }
+
+    .o .sc-label {
+        color: var(--o-color);
+    }
+
+    .t .sc-label {
+        color: var(--t-color);
+    }
+
+    .sc-count {
+        font-family: 'DM Mono', monospace;
+        font-size: 28px;
+        font-weight: 500;
+        color: var(--ink);
+        margin-bottom: 2px;
+    }
+
+    .sc-sub {
+        font-size: 11px;
+        color: var(--ink3);
+    }
+
+    /* READONLY QUADRANT */
+    .client-mode .add-row {
+        display: none;
+    }
+
+    .client-mode .item-del {
+        display: none !important;
+    }
+
+    .client-mode .item-text {
+        pointer-events: none;
+    }
+
+    .copy-row {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 8px;
+    }
+
+    @media (max-width: 680px) {
+        .swot-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .swot-project-bar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .swot-project-divider {
+            display: none;
+        }
+    }
+
+    .hide {
+        display: none !important;
+    }
+</style>
+
+<div class="swot-wrapper" id="swotApp">
+
+    <!-- HEADER LIST / CONTROLS -->
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <i data-lucide="layout-template" class="w-5 h-5 text-gray-400"></i>
+            Análise SWOT
+        </h3>
+
+        <div class="flex gap-2" id="swot-top-actions">
+            <!-- Buttons are injected by JS -->
+        </div>
+    </div>
+
+    <!-- VIEW: LIST OF SWOTS -->
+    <div id="swot-view-list" class="hide">
+        <div id="swot-empty-state"
+            class="col-span-full py-16 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center hide">
+            <div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 text-gray-300">
+                <i data-lucide="layout-template" class="w-8 h-8"></i>
+            </div>
+            <p class="text-sm text-gray-500 font-bold">Nenhuma análise SWOT criada ainda.</p>
+        </div>
+
+        <div id="swot-list-container" class="flex flex-col gap-3 hide">
+            <!-- Items injected here -->
+        </div>
+    </div>
+
+    <!-- VIEW: SWOT EDITOR -->
+    <div id="swot-view-editor" class="hide" id="swot-export-area">
+
+        <div class="swot-header-actions hide-on-print">
+            <div class="swot-mode-wrap" id="swot-mode-selector">
+                <button type="button" class="swot-mode-btn active" id="btn-mode-consultor"
+                    onclick="setSwotMode('consultor')">🔒 Consultor</button>
+                <button type="button" class="swot-mode-btn" id="btn-mode-cliente" onclick="setSwotMode('cliente')">👁
+                    Cliente</button>
+            </div>
+            <button class="swot-btn swot-btn-outline" onclick="copiarSwot()" id="btn-copy-main">📋 Copiar</button>
+            <button class="swot-btn swot-btn-dark" onclick="exportarSwot()">⬇ Exportar PDF</button>
+            <button class="swot-btn border border-red-200 ml-2" style="background:#fef2f2; color:#dc2626;"
+                onclick="excluirSwot()" id="btn-delete-swot" title="Excluir"><i data-lucide="trash-2"
+                    class="w-4 h-4"></i></button>
+        </div>
+
+        <div class="swot-project-bar">
+            <label>Cliente</label>
+            <input class="swot-project-input" id="swot-client-name" disabled>
+            <div class="swot-project-divider"></div>
+            <label>Contexto</label>
+            <input class="swot-project-input" id="swot-contexto" placeholder="Ex: Lançamento de produto"
+                onblur="updateSwotContext()">
+            <div class="swot-project-divider"></div>
+            <label>Data</label>
+            <input class="swot-project-input" type="date" id="swot-data" style="max-width:160px" disabled>
+        </div>
+
+        <div class="summary-section" id="summarySection">
+            <div class="summary-title text-gray-900">Visão Geral</div>
+            <div class="summary-grid">
+                <div class="summary-card s">
+                    <div class="sc-label">💪 Forças</div>
+                    <div class="sc-count" id="count-s-summary">0</div>
+                    <div class="sc-sub">pontos positivos internos</div>
+                </div>
+                <div class="summary-card w">
+                    <div class="sc-label">⚠️ Fraquezas</div>
+                    <div class="sc-count" id="count-w-summary">0</div>
+                    <div class="sc-sub">pontos negativos internos</div>
+                </div>
+                <div class="summary-card o">
+                    <div class="sc-label">🚀 Oportunidades</div>
+                    <div class="sc-count" id="count-o-summary">0</div>
+                    <div class="sc-sub">fatores externos favoráveis</div>
+                </div>
+                <div class="summary-card t">
+                    <div class="sc-label">⚡ Ameaças</div>
+                    <div class="sc-count" id="count-t-summary">0</div>
+                    <div class="sc-sub">fatores externos adversos</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="swot-grid">
+            <!-- FORÇAS -->
+            <div class="quadrant s text-left">
+                <div class="quad-head">
+                    <div class="quad-icon">💪</div>
+                    <div>
+                        <div class="quad-title">Forças</div>
+                        <div class="quad-subtitle">Vantagens internas do negócio</div>
+                    </div>
+                    <div class="quad-count" id="count-s-quad">0</div>
+                </div>
+                <div class="quad-body">
+                    <div class="item-list" id="list-S"></div>
+                    <div class="add-row">
+                        <input type="text" class="add-input w-full" id="input-S" placeholder="Adicionar força…"
+                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); addItemSwot('S'); }">
+                        <button type="button" class="add-btn" onclick="addItemSwot('S')">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FRAQUEZAS -->
+            <div class="quadrant w text-left">
+                <div class="quad-head">
+                    <div class="quad-icon">⚠️</div>
+                    <div>
+                        <div class="quad-title">Fraquezas</div>
+                        <div class="quad-subtitle">Limitações internas a superar</div>
+                    </div>
+                    <div class="quad-count" id="count-w-quad">0</div>
+                </div>
+                <div class="quad-body">
+                    <div class="item-list" id="list-W"></div>
+                    <div class="add-row">
+                        <input type="text" class="add-input w-full" id="input-W" placeholder="Adicionar fraqueza…"
+                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); addItemSwot('W'); }">
+                        <button type="button" class="add-btn" onclick="addItemSwot('W')">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OPORTUNIDADES -->
+            <div class="quadrant o text-left">
+                <div class="quad-head">
+                    <div class="quad-icon">🚀</div>
+                    <div>
+                        <div class="quad-title">Oportunidades</div>
+                        <div class="quad-subtitle">Fatores externos favoráveis</div>
+                    </div>
+                    <div class="quad-count" id="count-o-quad">0</div>
+                </div>
+                <div class="quad-body">
+                    <div class="item-list" id="list-O"></div>
+                    <div class="add-row">
+                        <input type="text" class="add-input w-full" id="input-O" placeholder="Adicionar oportunidade…"
+                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); addItemSwot('O'); }">
+                        <button type="button" class="add-btn" onclick="addItemSwot('O')">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AMEAÇAS -->
+            <div class="quadrant t text-left">
+                <div class="quad-head">
+                    <div class="quad-icon">⚡</div>
+                    <div>
+                        <div class="quad-title">Ameaças</div>
+                        <div class="quad-subtitle">Fatores externos adversos</div>
+                    </div>
+                    <div class="quad-count" id="count-t-quad">0</div>
+                </div>
+                <div class="quad-body">
+                    <div class="item-list" id="list-T"></div>
+                    <div class="add-row">
+                        <input type="text" class="add-input w-full" id="input-T" placeholder="Adicionar ameaça…"
+                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); addItemSwot('T'); }">
+                        <button type="button" class="add-btn" onclick="addItemSwot('T')">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="copy-row hide-on-print">
+            <button type="button" class="swot-btn swot-btn-outline" onclick="copiarSwot()" id="btn-copy-footer">📋
+                Copiar resumo completo</button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Inclusão do html2pdf apenas se não existir -->
+<script>
+    if (typeof html2pdf === 'undefined') {
+        let script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+        document.head.appendChild(script);
+    }
+</script>
+
+<script>
+    // SWÓT APP STATE
+    const SwotApp = {
+        clientId: '{{ client.id }}',
+        currentRole: '{{ current_user.role if current_user.role else "client" }}',
+        clientName: '{{ client.name }}',
+        activeSwotId: null,
+        userMode: 'consultor',
+        items: { S: [], W: [], O: [], T: [] },
+        apiMap: { 'S': 'forca', 'W': 'fraqueza', 'O': 'oportunidade', 'T': 'ameaca' },
+        revApiMap: { 'forca': 'S', 'fraqueza': 'W', 'oportunidade': 'O', 'ameaca': 'T' }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Inicializa o state com o papel
+        SwotApp.userMode = ['admin', 'manager'].includes(SwotApp.currentRole) ? 'consultor' : 'cliente';
+
+        // UI elements update
+        document.getElementById('swot-client-name').value = SwotApp.clientName;
+
+        // Hook on subtab open
+        document.getElementById('subtab-diag-swot')?.addEventListener('click', () => {
+            if (!SwotApp.activeSwotId) {
+                SwotApp.fetchSwots();
+            }
+        });
+    });
+
+    // Render the top actions depending on state
+    SwotApp.renderActions = function () {
+        const container = document.getElementById('swot-top-actions');
+        container.innerHTML = '';
+
+        if (this.activeSwotId) {
+            container.innerHTML = `
+            <button type="button" onclick="SwotApp.backToList()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i> Voltar à Lista
+            </button>
+        `;
+        } else if (this.currentRole !== 'client') {
+            container.innerHTML = `
+            <button type="button" onclick="SwotApp.createSwot()" class="bg-northway-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Nova Análise SWOT
+            </button>
+        `;
+        }
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Fetch swots
+    SwotApp.fetchSwots = async function () {
+        this.activeSwotId = null;
+        this.renderActions();
+        document.getElementById('swot-view-editor').classList.add('hide');
+        document.getElementById('swot-view-list').classList.remove('hide');
+
+        try {
+            const res = await fetch('/api/clients/' + this.clientId + '/swot');
+            const json = await res.json();
+
+            const listContainer = document.getElementById('swot-list-container');
+            const emptyState = document.getElementById('swot-empty-state');
+
+            listContainer.innerHTML = '';
+
+            if (json.success && json.data.length > 0) {
+                listContainer.classList.remove('hide');
+                emptyState.classList.add('hide');
+
+                json.data.forEach(s => {
+                    const dateParts = s.data_analise ? s.data_analise.split('-').reverse().join('/') : '--';
+                    const el = document.createElement('div');
+                    el.className = 'swot-list-item';
+                    el.onclick = () => SwotApp.loadSwot(s.id);
+                    el.innerHTML = `
+                    <div class="swot-list-info text-left">
+                        <div class="swot-list-title">${s.contexto || 'Diagnóstico Geral'}</div>
+                        <div class="swot-list-date">Data: ${dateParts}</div>
+                    </div>
+                    <div class="swot-list-stats">
+                        <div class="swot-stat-badge swot-stat-s">${s.stats.forcas} Forças</div>
+                        <div class="swot-stat-badge swot-stat-w">${s.stats.fraquezas} Fraq.</div>
+                        <div class="swot-stat-badge swot-stat-o">${s.stats.oportunidades} Oport.</div>
+                        <div class="swot-stat-badge swot-stat-t">${s.stats.ameacas} Amea.</div>
+                    </div>
+                `;
+                    listContainer.appendChild(el);
+                });
+            } else {
+                listContainer.classList.add('hide');
+                emptyState.classList.remove('hide');
+            }
+        } catch (e) {
+            console.error('Erro ao buscar análises SWOT', e);
+        }
+    };
+
+    SwotApp.loadSwot = async function (id) {
+        this.activeSwotId = id;
+        this.renderActions();
+        document.getElementById('swot-view-list').classList.add('hide');
+        document.getElementById('swot-view-editor').classList.remove('hide');
+
+        setSwotMode(this.userMode);
+
+        if (this.currentRole === 'client') {
+            document.getElementById('swot-mode-selector').classList.add('hide');
+            document.getElementById('btn-delete-swot').classList.add('hide');
+        }
+
+        try {
+            const res = await fetch('/api/swot/' + id);
+            const json = await res.json();
+            if (json.success) {
+                const data = json.data;
+                document.getElementById('swot-contexto').value = data.contexto || '';
+                document.getElementById('swot-data').value = data.data_analise || '';
+
+                this.items.S = data.quadrantes.forcas || [];
+                this.items.W = data.quadrantes.fraquezas || [];
+                this.items.O = data.quadrantes.oportunidades || [];
+                this.items.T = data.quadrantes.ameacas || [];
+
+                this.renderQuadrants();
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Erro ao carregar análise.');
+        }
+    };
+
+    SwotApp.createSwot = async function () {
+        try {
+            const res = await fetch('/api/clients/' + this.clientId + '/swot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contexto: 'Geral' })
+            });
+            const json = await res.json();
+            if (json.success) {
+                this.loadSwot(json.id);
+            }
+        } catch (e) {
+            alert('Erro ao criar SWOT');
+        }
+    }
+
+    SwotApp.backToList = function () {
+        this.fetchSwots();
+    }
+
+    function setSwotMode(mode) {
+        SwotApp.userMode = mode;
+        const editor = document.getElementById('swot-view-editor');
+        const ctxInput = document.getElementById('swot-contexto');
+
+        if (mode === 'cliente') {
+            editor.classList.add('client-mode');
+            ctxInput.disabled = true;
+            document.getElementById('btn-mode-cliente').classList.add('active');
+            document.getElementById('btn-mode-consultor').classList.remove('active');
+        } else {
+            editor.classList.remove('client-mode');
+            ctxInput.disabled = false;
+            document.getElementById('btn-mode-consultor').classList.add('active');
+            document.getElementById('btn-mode-cliente').classList.remove('active');
+        }
+
+        SwotApp.renderQuadrants();
+    }
+
+    async function updateSwotContext() {
+        if (!SwotApp.activeSwotId) return;
+        const ctx = document.getElementById('swot-contexto').value;
+        try {
+            await fetch('/api/swot/' + SwotApp.activeSwotId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contexto: ctx })
+            });
+        } catch (e) { }
+    }
+
+    async function excluirSwot() {
+        if (!confirm("Tem certeza que deseja excluir esta Análise SWOT?")) return;
+        try {
+            const res = await fetch('/api/swot/' + SwotApp.activeSwotId, { method: 'DELETE' });
+            const json = await res.json();
+            if (json.success) {
+                SwotApp.backToList();
+            }
+        } catch (e) {
+            alert('Erro');
+        }
+    }
+
+    // Rendering Items
+    SwotApp.renderQuadrants = function () {
+        ['S', 'W', 'O', 'T'].forEach(q => {
+            const list = document.getElementById('list-' + q);
+            list.innerHTML = '';
+
+            // Update counts
+            document.getElementById('count-' + q.toLowerCase() + '-summary').textContent = this.items[q].length;
+            document.getElementById('count-' + q.toLowerCase() + '-quad').textContent = this.items[q].length;
+
+            this.items[q].forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'swot-item';
+                el.innerHTML = `
+                <div class="item-dot"></div>
+                ${SwotApp.userMode === 'cliente'
+                        ? `<textarea class="item-text" rows="1" readonly>${item.texto}</textarea>`
+                        : `<textarea class="item-text" rows="1" onblur="updateItemSwot('${q}', '${item.id}', this)" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${item.texto}</textarea>`
+                    }
+                <button type="button" class="item-del ${SwotApp.userMode === 'cliente' ? 'hide' : ''}" onclick="deleteItemSwot('${q}', '${item.id}')" title="Remover">✕</button>
+            `;
+                list.appendChild(el);
+
+                // Auto resize textareas
+                setTimeout(() => {
+                    const ta = el.querySelector('textarea');
+                    if (ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+                }, 10);
+            });
+        });
+    };
+
+    async function addItemSwot(quad) {
+        const input = document.getElementById('input-' + quad);
+        const text = input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+
+        try {
+            const res = await fetch('/api/swot/' + SwotApp.activeSwotId + '/items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    quadrante: SwotApp.apiMap[quad],
+                    texto: text,
+                    ordem: SwotApp.items[quad].length
+                })
+            });
+            const json = await res.json();
+            if (json.success) {
+                SwotApp.items[quad].push(json.item);
+                SwotApp.renderQuadrants();
+            }
+        } catch (e) {
+            alert('Erro ao adicionar item');
+        }
+    }
+
+    async function updateItemSwot(quad, itemId, textarea) {
+        const text = textarea.value.trim();
+        if (!text) return;
+
+        const itemIdx = SwotApp.items[quad].findIndex(i => i.id === itemId);
+        if (itemIdx > -1) {
+            SwotApp.items[quad][itemIdx].texto = text;
+        }
+
+        try {
+            await fetch('/api/swot/items/' + itemId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ texto: text })
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function deleteItemSwot(quad, itemId) {
+        try {
+            const res = await fetch('/api/swot/items/' + itemId, { method: 'DELETE' });
+            if (res.ok) {
+                SwotApp.items[quad] = SwotApp.items[quad].filter(i => i.id !== itemId);
+                SwotApp.renderQuadrants();
+            }
+        } catch (e) { }
+    }
+
+    function copiarSwot() {
+        const ctx = document.getElementById('swot-contexto').value || '—';
+        const data = document.getElementById('swot-data').value || '—';
+
+        let txt = `ANÁLISE SWOT — ${SwotApp.clientName}\n`;
+        txt += `Contexto: ${ctx} | Data: ${data.split('-').reverse().join('/')}\n`;
+        txt += '='.repeat(50) + '\n\n';
+
+        const labels = { S: 'FORÇAS', W: 'FRAQUEZAS', O: 'OPORTUNIDADES', T: 'AMEAÇAS' };
+        ['S', 'W', 'O', 'T'].forEach(q => {
+            txt += `${labels[q]}:\n`;
+            if (SwotApp.items[q].length) {
+                SwotApp.items[q].forEach(i => txt += `  • ${i.texto}\n`);
+            }
+            else txt += '  (nenhum item)\n';
+            txt += '\n';
+        });
+
+        navigator.clipboard.writeText(txt).then(() => {
+            const btnM = document.getElementById('btn-copy-main');
+            const btnF = document.getElementById('btn-copy-footer');
+            const orig = "📋 Copiar";
+            if (btnM) btnM.textContent = '✅ Copiado!';
+            if (btnF) btnF.textContent = '✅ Copiado!';
+            setTimeout(() => {
+                if (btnM) btnM.textContent = orig;
+                if (btnF) btnF.textContent = orig + ' resumo completo';
+            }, 2000);
+        }).catch(() => {
+            alert("Erro ao copiar.");
+        });
+    }
+
+    function exportarSwot() {
+        const element = document.getElementById('swot-view-editor');
+        const dataExport = document.getElementById('swot-data').value;
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: `SWOT_${SwotApp.clientName}_${dataExport}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+
+        // Preparar UI para print
+        const toHide = element.querySelectorAll('.hide-on-print, .swot-header-actions, .add-row, .item-del, .swot-project-input');
+        const inputs = element.querySelectorAll('.swot-project-input');
+        const originalBorders = [];
+
+        inputs.forEach(el => {
+            originalBorders.push(el.style.border);
+            el.style.border = 'none';
+            el.style.background = 'transparent';
+            el.style.appearance = 'none';
+        });
+
+        toHide.forEach(el => {
+            el.setAttribute('data-orig-display', el.style.display || getComputedStyle(el).display);
+            if (el.classList.contains('swot-project-input')) return;
+            el.style.display = 'none';
+            el.style.setProperty('display', 'none', 'important');
+        });
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            // Restaurar UI
+            inputs.forEach((el, idx) => {
+                el.style.border = originalBorders[idx];
+                el.style.background = '';
+                el.style.appearance = '';
+            });
+            toHide.forEach(el => {
+                if (el.classList.contains('swot-project-input')) return;
+                const orig = el.getAttribute('data-orig-display');
+                el.style.display = orig === 'none' ? '' : orig;
+            });
+        });
+    }
+</script>

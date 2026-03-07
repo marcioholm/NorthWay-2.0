@@ -851,6 +851,10 @@
                                 class="px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
                                 <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Riscos (CREPI)
                             </button>
+                            <button type="button" onclick="switchDiagSubTab('swot')" id="subtab-diag-swot"
+                                class="px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                <i data-lucide="layout-template" class="w-3.5 h-3.5"></i> SWOT
+                            </button>
                         </div>
 
                         <!-- Sub-tab: General Diagnostic -->
@@ -1073,6 +1077,11 @@
                                 </div>
                                 {% endif %}
                             </div>
+                        </div>
+
+                        <!-- Sub-tab: SWOT -->
+                        <div id="diag-content-swot" class="diag-sub-content hidden">
+                            {% include 'client_swot_tab.html' %}
                         </div>
                     </div>
 

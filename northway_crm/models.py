@@ -451,6 +451,7 @@ class Client(db.Model):
     
     # Relationships
     audience_matrices = db.relationship('AudienceMatrix', backref='client', lazy=True, cascade="all, delete-orphan")
+    swot_analises = db.relationship('SwotAnalise', backref='client', lazy=True, cascade='all, delete-orphan')
 
     # Relationships
     company = db.relationship('Company', backref='clients')
@@ -1132,5 +1133,46 @@ class CREPIPremissa(db.Model):
     impacto = db.Column(db.Integer, default=0)      # 0-10
     score = db.Column(db.Integer, default=0)        # P * I
     decisao_consultor = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+class ClientChecklistItem(db.Model):
+    __tablename__ = 'client_checklist_items'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    checklist_id = db.Column(db.String(36), db.ForeignKey('client_checklists.id'), nullable=False)
+    template_step_id = db.Column(db.String(36), nullable=False)
+    template_item_id = db.Column(db.String(36), nullable=False)
+    completed = db.Column(db.Boolean, default=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    completed_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+
+# ==========================================
+# SWOT ANALYSIS MODELS
+# ==========================================
+
+class SwotAnalise(db.Model):
+    __tablename__ = 'swot_analises'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    contexto = db.Column(db.String(255), nullable=True) # produto, serviço ou momento analisado
+    data_analise = db.Column(db.Date, nullable=False, default=date.today)
+    status = db.Column(db.String(50), default='rascunho') # rascunho, concluido
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    # Relationships
+    itens = db.relationship('SwotItem', backref='analise', lazy=True, cascade='all, delete-orphan', order_by='SwotItem.ordem')
+
+class SwotItem(db.Model):
+    __tablename__ = 'swot_itens'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    swot_analise_id = db.Column(db.String(36), db.ForeignKey('swot_analises.id'), nullable=False)
+    quadrante = db.Column(db.String(50), nullable=False) # forca, fraqueza, oportunidade, ameaca
+    texto = db.Column(db.Text, nullable=False)
+    ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
