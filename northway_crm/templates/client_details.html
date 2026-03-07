@@ -2553,19 +2553,33 @@
     {% block scripts %}
     <script>
         // Existing Scripts Block...
-        // Init OS Mask
+        // Init OS Mask (Custom formatter)
         document.addEventListener('DOMContentLoaded', () => {
-            if (typeof VMasker !== 'undefined') {
-                const osValueInput = document.getElementById('osValueInput');
-                if (osValueInput) {
-                    VMasker(osValueInput).maskMoney({
-                        precision: 2,
-                        separator: ',',
-                        delimiter: '.',
-                        unit: 'R$ ',
-                        zeroCents: false
-                    });
-                }
+            const osValueInput = document.getElementById('osValueInput');
+            if (osValueInput) {
+                osValueInput.addEventListener('input', function (e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value === '') {
+                        e.target.value = '';
+                        return;
+                    }
+
+                    value = parseInt(value, 10).toString();
+                    if (value === 'NaN') {
+                        e.target.value = '';
+                        return;
+                    }
+
+                    if (value.length === 1) {
+                        value = '00' + value;
+                    } else if (value.length === 2) {
+                        value = '0' + value;
+                    }
+
+                    const amount = (parseInt(value, 10) / 100).toFixed(2);
+                    const formatted = amount.replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+                    e.target.value = formatted;
+                });
             }
         });
 
