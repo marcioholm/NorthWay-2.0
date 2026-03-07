@@ -22,7 +22,7 @@ def performance():
     # Snapshots are for everyone. Filter by company.
     # We join with Contract OR ServiceOrder to ensure we only get the company's data.
     from models import ServiceOrder
-    query_base = CommissionSnapshot.query.filter(CommissionSnapshot.competence_fechamento == competence)
+    query_base = CommissionSnapshot.query.filter(CommissionSnapshot.competencia_fechamento == competence)
     
     # Filter by Company (crucial for multitenancy)
     query_base = query_base.filter(
@@ -67,7 +67,7 @@ def performance():
             func.count(CommissionSnapshot.id).label('qty')
         ).join(CommissionSnapshot, User.id == CommissionSnapshot.beneficiario_id)\
          .filter(
-             CommissionSnapshot.competence_fechamento == competence,
+             CommissionSnapshot.competencia_fechamento == competence,
              db.or_(
                  CommissionSnapshot.contract.has(Contract.company_id == current_user.company_id),
                  CommissionSnapshot.service_order.has(ServiceOrder.company_id == current_user.company_id)

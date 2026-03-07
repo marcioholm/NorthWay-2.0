@@ -10,7 +10,7 @@ class CommissionService:
         """Counts how many closures (Contracts or SOs) a user made in a specific competence (YYYY-MM)."""
         count = CommissionSnapshot.query.filter_by(
             beneficiario_id=user_id,
-            competence_fechamento=competence
+            competencia_fechamento=competence
         ).count()
         return count
 
@@ -57,7 +57,7 @@ class CommissionService:
             regra_id=rule.id,
             modelo=rule.modelo,
             percentual_provisorio=percentual,
-            competence_fechamento=competence,
+            competencia_fechamento=competence,
             base_calculo=rule.parametros.get('base', 'valor_pago'),
             recorrente=rule.parametros.get('recorrente_lifetime', True) if contract else False
         )
@@ -78,7 +78,7 @@ class CommissionService:
         # Find all CommissionSnapshots for this user in this month
         snapshots = CommissionSnapshot.query.filter_by(
             beneficiario_id=user_id,
-            competence_fechamento=competence
+            competencia_fechamento=competence
         ).all()
 
         for snap in snapshots:
