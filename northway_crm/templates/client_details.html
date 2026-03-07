@@ -797,20 +797,27 @@
                                         <p class="text-[10px] text-gray-400 mb-3">{{
                                             os.created_at.strftime('%d/%m/%Y') }}</p>
 
-                                        {% if os.status in ['SOLICITADA', 'AGUARDANDO_ACEITE'] %}
-                                        <button onclick="approveServiceOrder('{{ os.id }}')"
-                                            class="text-xs font-bold text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 transition-colors mr-2 shadow-sm inline-flex items-center gap-1">
-                                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Aprovar OS
-                                        </button>
-                                        {% endif %}
+                                        <tr>
+                                            {% if os.status in ['SOLICITADA', 'AGUARDANDO_ACEITE'] %}
+                                            <button onclick="approveServiceOrder('{{ os.id }}')"
+                                                class="text-xs font-bold text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 transition-colors mr-2 shadow-sm inline-flex items-center gap-1">
+                                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Aprovar OS
+                                            </button>
+                                            {% endif %}
 
-                                        {% if os.status not in ['CONCLUIDA', 'CANCELADA'] %}
-                                        <button
-                                            class="open-cancel-os-modal-btn text-xs font-bold text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                                            data-os-id="{{ os.id }}" data-os-title="{{ os.title|tojson|safe }}">
-                                            Cancelar OS
-                                        </button>
-                                        {% endif %}
+                                            <a href="/service-orders/{{ os.id }}/print" target="_blank"
+                                                class="open-print-os-btn text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors mr-2 shadow-sm inline-flex items-center gap-1">
+                                                <i data-lucide="printer" class="w-3.5 h-3.5"></i> PDF
+                                            </a>
+
+                                            {% if os.status not in ['CONCLUIDA', 'CANCELADA'] %}
+                                            <button
+                                                class="open-cancel-os-modal-btn text-xs font-bold text-red-500 hover:text-red-600 hover:bg-red-50 px-2 py-1.5 rounded transition-colors"
+                                                data-os-id="{{ os.id }}" data-os-title="{{ os.title|tojson|safe }}">
+                                                Cancelar OS
+                                            </button>
+                                            {% endif %}
+                                        </tr>
                                     </div>
                                 </div>
                                 {% if os.status == 'CANCELADA' %}
@@ -2483,6 +2490,52 @@
             </div>
         </div>
     </div>
+
+    <!-- Approve OS Modal -->
+    <div id="approveOsModal"
+        class="hidden fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div
+            class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100 bg-green-50/30">
+                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                    Aprovar Ordem de Serviço
+                </h3>
+                <button onclick="toggleModal('approveOsModal')"
+                    class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-600 mb-6">
+                    A aprovação irá gerar a projeção financeira e o boleto correspondente no Asaas. Por favor, confirme
+                    a data de vencimento combinada com o cliente.
+                </p>
+                <form id="approveOsForm" onsubmit="submitApproveOs(event)" class="space-y-4">
+                    <input type="hidden" id="approveOsId" name="os_id">
+
+                    <div class="space-y-1.5">
+                        <label class="text-sm font-bold text-gray-700">Data de Vencimento do Pagamento</label>
+                        <input type="date" id="approveOsDueDate" name="due_date" required
+                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all text-sm font-medium">
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                        <button type="button" onclick="toggleModal('approveOsModal')"
+                            class="px-5 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" id="approveOsSubmitBtn"
+                            class="px-5 py-2.5 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors shadow-sm flex items-center gap-2">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Confirmar Aprovação
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- /Approve OS Modal -->
     {% endblock %}
 
     {% block scripts %}
@@ -2512,25 +2565,44 @@
             }
         }
 
-        async function approveServiceOrder(id) {
-            if (!confirm('Deseja realmente aprovar esta Ordem de Serviço? Isso gerará um boleto e uma projeção financeira automaticamente.')) return;
+        function approveServiceOrder(id) {
+            document.getElementById('approveOsId').value = id;
+
+            // Set default date to today + 3 days
+            const defaultDate = new Date();
+            defaultDate.setDate(defaultDate.getDate() + 3);
+            document.getElementById('approveOsDueDate').valueAsDate = defaultDate;
+
+            toggleModal('approveOsModal');
+        }
+
+        async function submitApproveOs(e) {
+            e.preventDefault();
+            const id = document.getElementById('approveOsId').value;
+            const dueDate = document.getElementById('approveOsDueDate').value;
+
+            if (!dueDate) {
+                alert('Por favor, selecione a data de vencimento.');
+                return;
+            }
 
             try {
-                // Show loading on the button or general 
-                const btn = event.currentTarget;
+                const btn = document.getElementById('approveOsSubmitBtn');
                 const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="lucide-loader w-3.5 h-3.5 animate-spin"></i> Aprovando...';
+                btn.innerHTML = '<i class="lucide-loader w-4 h-4 animate-spin"></i> Aprovando...';
                 btn.disabled = true;
 
                 const response = await fetch('/api/service-orders/' + id + '/approve', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ due_date: dueDate })
                 });
 
                 let result;
                 try { result = await response.json(); } catch (e) { result = null; }
 
                 if (response.ok && result && result.success) {
+                    toggleModal('approveOsModal');
                     window.location.reload();
                 } else {
                     alert('Erro ao aprovar: ' + (result?.error || 'Erro no servidor'));
@@ -2540,6 +2612,10 @@
             } catch (error) {
                 console.error(error);
                 alert('Erro de conexão ao tentar aprovar a OS.');
+                const btn = document.getElementById('approveOsSubmitBtn');
+                btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Confirmar Aprovação';
+                if (window.lucide) lucide.createIcons();
+                btn.disabled = false;
             }
         }
 

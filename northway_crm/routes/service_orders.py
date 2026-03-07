@@ -145,8 +145,16 @@ def approve_service_order(id):
             else:
                 return jsonify({'success': False, 'error': f'Falha ao criar cliente no Asaas: {err}'}), 400
 
-        # Create Transaction Check (financial projection)
-        due_date = date.today() + timedelta(days=3)
+        # Parse due_date
+        data = request.get_json() or {}
+        due_date_str = data.get('due_date')
+        if due_date_str:
+            try:
+                due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'success': False, 'error': 'Data de vencimento inválida.'}), 400
+        else:
+            due_date = date.today() + timedelta(days=3)
         
         tx = Transaction(
             client_id=client.id,
@@ -196,3 +204,13 @@ def approve_service_order(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@service_orders_bp.route('/service-orders/<int:id>/print', methods=['GET'])
+@login_required
+def print_service_order(id):
+    os_order = ServiceOrder.query.get_or_404(id)
+    
+    if os_order.company_id != current_user.company_id:
+        abort(403)
+        
+    return render_template('service_orders/print.html', os=os_order, company=current_user.company)
