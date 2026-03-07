@@ -501,11 +501,11 @@
                         } else {
                             alert(data.error || "Erro ao processar diagnóstico.");
                         }
+                        this.loading = false;
 
                     } catch (e) {
                         alert("Erro de conexão.");
                         console.error(e);
-                    } finally {
                         this.loading = false;
                     }
                 }
