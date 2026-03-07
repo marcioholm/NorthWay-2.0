@@ -288,7 +288,7 @@
 
     <div class="document-title">
         <h1>PROPOSTA DE SERVIÇO / ORÇAMENTO</h1>
-        <p>Referência: OS-{{ os.id | string | zfill(5) }} • Data: {{ os.created_at.strftime('%d/%m/%Y') }}</p>
+        <p>Referência: OS-{{ "%05d"|format(os.id) }} • Data: {{ os.created_at.strftime('%d/%m/%Y') }}</p>
     </div>
 
     <div class="section">
