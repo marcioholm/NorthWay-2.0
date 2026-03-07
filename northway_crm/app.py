@@ -364,8 +364,15 @@ def create_app():
             try: db.session.rollback()
             except: pass
             
-            # Use request ID or generic message in production
             error_msg = str(error)
+            # If it's an API request, return JSON so the frontend can parse the error
+            if request.path.startswith('/api/'):
+                return jsonify({
+                    'success': False,
+                    'error': 'Erro Interno do Servidor (500)',
+                    'message': error_msg
+                }), 500
+
             if os.environ.get('VERCEL'):
                 error_msg = "Internal Server Error. Please contact support."
                 
