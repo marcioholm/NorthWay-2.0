@@ -2689,13 +2689,16 @@
                         } else {
                             resetPremiseForm();
                         }
+                    } else {
+                        console.error("Erro loading CREPI (success=false):", data.message);
+                        alert(data.message || "Erro ao carregar diagnóstico");
                     }
                 } catch (err) {
                     console.error("Erro loading CREPI:", err);
+                    alert("Erro ao carregar diagnóstico");
                 }
             } else {
                 // New logic: creation is triggered by the "Novo Diagnóstico" button which calls this with null
-                // We'll create it via API first to get an ID
                 try {
                     const res = await fetch(`/api/clients/${pageClientId}/crepi/create`, { method: 'POST' });
                     const json = await res.json();
@@ -2709,8 +2712,12 @@
                         document.getElementById('crepi-project-name').value = crepiData.projeto_nome;
                         renderPremises();
                         resetPremiseForm();
+                    } else {
+                        console.error("Erro criando CREPI (success=false):", json.message);
+                        alert(json.message || "Erro ao criar diagnóstico.");
                     }
                 } catch (err) {
+                    console.error("Erro criando CREPI:", err);
                     alert("Erro ao criar diagnóstico.");
                 }
             }
@@ -2999,8 +3006,11 @@
                 const json = await res.json();
                 if (json.success) {
                     loadCrepiList();
+                } else {
+                    alert(json.message || "Erro ao excluir diagnóstico.");
                 }
             } catch (err) {
+                console.error("Delete CREPI Error:", err);
                 alert("Erro ao excluir.");
             }
         }
@@ -3011,9 +3021,11 @@
 
             try {
                 const res = await fetch(`/api/clients/${pageClientId}/crepi/list`);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 const json = await res.json();
+
                 if (json.success) {
-                    if (json.data.length === 0) {
+                    if (!json.data || json.data.length === 0) {
                         container.innerHTML = `
                             <div class="col-span-full py-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                                 <i data-lucide="file-warning" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
@@ -3028,8 +3040,8 @@
                                         <i data-lucide="shield-alert" class="w-6 h-6"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-gray-900">${d.projeto_nome}</h4>
-                                        <p class="text-xs text-gray-400 capitalize">${d.data} • Status: ${d.status}</p>
+                                        <h4 class="font-bold text-gray-900">${d.projeto || 'Sem nome'}</h4>
+                                        <p class="text-xs text-gray-400 capitalize">${d.created_at ? new Date(d.created_at).toLocaleDateString('pt-BR') : ''} • Status: ${d.status}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -3046,6 +3058,8 @@
                         `).join('');
                     }
                     if (typeof lucide !== 'undefined') lucide.createIcons();
+                } else {
+                    console.error("Failed to load CREPI List:", json.message);
                 }
             } catch (err) {
                 console.error("Erro loading CREPI list:", err);
@@ -4263,7 +4277,7 @@ ${dateHeader}
                         const p = palette[idx % palette.length];
                         return `
                         <div style="background:${p.bg}; border:2px solid ${p.border}; border-radius:16px; padding:28px; margin-bottom:20px; page-break-inside:avoid;">
-                            <div style="display:inline-block; background:${p.accent}; color:white; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:2px; padding:5px 14px; border-radius:30px; margin-bottom:18px;">${aud.name || 'Público ' + (idx+1)}</div>
+                            <div style="display:inline-block; background:${p.accent}; color:white; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:2px; padding:5px 14px; border-radius:30px; margin-bottom:18px;">${aud.name || 'Público ' + (idx + 1)}</div>
                             <table style="width:100%; border-collapse:collapse;">
                                 <tr>
                                     <td style="width:50%; padding:0 10px 0 0; vertical-align:top;">
