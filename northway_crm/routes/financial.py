@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, jsonify, abort, request, current_a
 from flask_login import login_required, current_user
 from models import db, Contract, Transaction, FinancialCategory, Expense, AccountsPayable, ROLE_ADMIN, ROLE_MANAGER
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import json
-from sqlalchemy import func, desc, extract
+from sqlalchemy import func, desc, extract, or_
 
 financial_bp = Blueprint('financial', __name__)
 
@@ -26,6 +26,28 @@ def dashboard():
 
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
+
+    # RECONCILIATION: Create missing snapshots for approved SOs (fallback fix)
+    try:
+        from models import ServiceOrder, CommissionSnapshot
+        from services.commission_service import CommissionService
+        
+        # Approved SOs in this month that don't have a snapshot
+        approved_sos = ServiceOrder.query.filter(
+            ServiceOrder.company_id == current_user.company_id,
+            ServiceOrder.status.in_(['EM_EXECUCAO', 'CONCLUIDA', 'AGUARDANDO_PAGAMENTO'])
+        ).all()
+        
+        for so in approved_sos:
+            existing = CommissionSnapshot.query.filter_by(service_order_id=so.id).first()
+            if not existing:
+                beneficiary = so.client.account_manager or current_user
+                CommissionService.create_snapshot(beneficiary, service_order=so)
+        db.session.commit()
+    except Exception as e:
+        print(f"⚠️ Reconciliation error: {e}")
+        db.session.rollback()
+
     return render_template('financial/dashboard.html')
 
 @financial_bp.route('/api/financial/stats')
@@ -144,35 +166,57 @@ def stats():
     chart_values = []
     for i in range(12):
         future_date = add_months(today, i)
-        # Sum transactions due in that month/year
-        month_sum = db.session.query(func.sum(Transaction.amount)).join(Contract).filter(
-            Contract.company_id == company_id,
+        
+        # Calculate range for the future month
+        m_start = future_date.replace(day=1)
+        if future_date.month == 12:
+            m_end = future_date.replace(year=future_date.year + 1, month=1, day=1) - timedelta(days=1)
+        else:
+            m_end = future_date.replace(month=future_date.month + 1, day=1) - timedelta(days=1)
+
+        # Sum transactions due in that month/year (exclude cancelled)
+        month_sum = db.session.query(func.sum(Transaction.amount)).filter(
+            Transaction.company_id == company_id,
             Transaction.status == 'pending',
-            extract('month', Transaction.due_date) == future_date.month,
-            extract('year', Transaction.due_date) == future_date.year
+            Transaction.due_date >= m_start,
+            Transaction.due_date <= m_end
         ).scalar() or 0
         
         if i == 0:
              month_sum += paid_this_month
              
         chart_labels.append(future_date.strftime('%b/%Y'))
-        chart_values.append(month_sum)
+        chart_values.append(float(month_sum))
 
     # --- NICHE STATS (New) ---
-    # Aggregate MRR by Client Niche
-    # We iterate active contracts and group by their client's niche
-    niche_buckets = {} # For MRR
-    niche_counts = {} # For Client Count
+    # Aggregate MRR expected this month by Client Niche
+    m_curr_start = today.replace(day=1)
+    if today.month == 12:
+        m_curr_end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+    else:
+        m_curr_end = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
+
+    current_month_txs = Transaction.query.options(db.joinedload(Transaction.client)).filter(
+        Transaction.company_id == company_id,
+        Transaction.status.in_(['pending', 'paid']),
+        Transaction.due_date >= m_curr_start,
+        Transaction.due_date <= m_curr_end
+    ).all()
     
-    for c in active_contracts:
+    niche_buckets = {} # For MRR Expected
+    niche_counts = {} # For Transaction / Client Count
+    
+    for tx in current_month_txs:
         try:
-            # Extract value from contract JSON
-            data = json.loads(c.form_data)
-            val_str = data.get('valor_parcela', '0')
-            val = float(val_str.replace('.', '').replace(',', '.'))
+            val = float(tx.amount)
             
             # Get Niche
-            niche = c.client.niche or "Sem Nicho"
+            niche = "Sem Nicho"
+            if tx.client:
+                niche = tx.client.niche or "Sem Nicho"
+            elif tx.contract and tx.contract.client:
+                niche = tx.contract.client.niche or "Sem Nicho"
+                
             niche = niche.strip()
             if not niche: niche = "Sem Nicho"
             

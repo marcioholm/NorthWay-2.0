@@ -673,6 +673,7 @@ class TaskEvent(db.Model):
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=True) # Now nullable for manual charges
+    service_order_id = db.Column(db.Integer, db.ForeignKey('service_order.id'), nullable=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Direct link for easier querying/manual charges
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy
     description = db.Column(db.String(200), nullable=False) # e.g. "Mensalidade 1/12"
@@ -699,6 +700,7 @@ class Transaction(db.Model):
     nfse_issued_at = db.Column(db.DateTime, nullable=True)
     
     contract = db.relationship('Contract', backref=db.backref('transactions', cascade='all, delete-orphan'))
+    service_order = db.relationship('ServiceOrder', backref=db.backref('transactions', cascade='all, delete-orphan'))
     client = db.relationship('Client', backref=db.backref('transactions', lazy=True, cascade='all, delete-orphan'))
 
 class BillingEvent(db.Model):
@@ -1027,7 +1029,8 @@ class CommissionRule(db.Model):
 class CommissionSnapshot(db.Model):
     __tablename__ = 'comissao_snapshots'
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=False)
+    contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=True) # Optional now
+    service_order_id = db.Column(db.Integer, db.ForeignKey('service_order.id'), nullable=True)
     beneficiario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     papel_comercial_id = db.Column(db.String(36), db.ForeignKey('papeis_comerciais.id'), nullable=False)
     regra_id = db.Column(db.String(36), db.ForeignKey('regras_comissao.id'), nullable=False)
@@ -1040,6 +1043,7 @@ class CommissionSnapshot(db.Model):
     recorrente = db.Column(db.Boolean, default=True)
 
     contract = db.relationship('Contract', backref=db.backref('commission_snapshot', uselist=False))
+    service_order = db.relationship('ServiceOrder', backref=db.backref('commission_snapshot', uselist=False))
     beneficiario = db.relationship('User', foreign_keys=[beneficiario_id])
 
 class AccountsPayable(db.Model):
@@ -1049,6 +1053,7 @@ class AccountsPayable(db.Model):
     tipo = db.Column(db.String(20), nullable=False) # COMISSAO, FORNECEDOR, OUTRO
     beneficiario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=True)
+    service_order_id = db.Column(db.Integer, db.ForeignKey('service_order.id'), nullable=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     asaas_payment_id = db.Column(db.String(50), nullable=True)
     competencia = db.Column(db.String(7), nullable=False) # YYYY-MM

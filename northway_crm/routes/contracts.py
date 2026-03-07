@@ -782,7 +782,7 @@ def sign_contract(id):
         # --- COMMISSION SNAPSHOT ---
         try:
             if contract.client.account_manager:
-                CommissionService.create_snapshot(contract, contract.client.account_manager)
+                CommissionService.create_snapshot(contract.client.account_manager, contract=contract)
         except Exception as comm_e:
             print(f"⚠️ Error creating commission snapshot: {comm_e}")
         

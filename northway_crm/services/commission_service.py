@@ -6,10 +6,8 @@ from decimal import Decimal
 
 class CommissionService:
     @staticmethod
-    def get_user_contracts_count(user_id, company_id, competence):
-        """Counts how many contracts a user closed in a specific competence (YYYY-MM)."""
-        # Close date is usually when the contract was signed/issued
-        # Assuming competence_fechamento reflects this.
+    def get_user_closings_count(user_id, company_id, competence):
+        """Counts how many closures (Contracts or SOs) a user made in a specific competence (YYYY-MM)."""
         count = CommissionSnapshot.query.filter_by(
             beneficiario_id=user_id,
             competence_fechamento=competence
@@ -35,9 +33,9 @@ class CommissionService:
         return 0
 
     @classmethod
-    def create_snapshot(cls, contract, user):
-        """Creates a commission snapshot when a contract is closed."""
-        if not user.papel_comercial_id or not user.regra_comissao_id:
+    def create_snapshot(cls, user, contract=None, service_order=None):
+        """Creates a commission snapshot when a contract or service order is closed."""
+        if not user or not user.papel_comercial_id or not user.regra_comissao_id:
             return None # No commercial rule for this user
 
         rule = CommissionRule.query.get(user.regra_comissao_id)
@@ -47,12 +45,13 @@ class CommissionService:
         competence = datetime.now().strftime('%Y-%m')
         
         # Current count in the month (including this one soon)
-        count = cls.get_user_contracts_count(user.id, user.company_id, competence) + 1
+        count = cls.get_user_closings_count(user.id, user.company_id, competence) + 1
         
         percentual = cls.calculate_percent_for_tier(rule, count)
 
         snapshot = CommissionSnapshot(
-            contract_id=contract.id,
+            contract_id=contract.id if contract else None,
+            service_order_id=service_order.id if service_order else None,
             beneficiario_id=user.id,
             papel_comercial_id=user.papel_comercial_id,
             regra_id=rule.id,
@@ -60,7 +59,7 @@ class CommissionService:
             percentual_provisorio=percentual,
             competence_fechamento=competence,
             base_calculo=rule.parametros.get('base', 'valor_pago'),
-            recorrente=rule.parametros.get('recorrente_lifetime', True)
+            recorrente=rule.parametros.get('recorrente_lifetime', True) if contract else False
         )
         db.session.add(snapshot)
         
@@ -174,13 +173,21 @@ class CommissionService:
         Hooked into Asaas Webhook. 
         Generates commission record when payment is confirmed.
         """
+        # Commission can come from Contract or Service Order
         contract = transaction.contract
-        if not contract:
+        service_order = transaction.service_order
+        
+        if not contract and not service_order:
             return
 
-        snapshot = CommissionSnapshot.query.filter_by(contract_id=contract.id).first()
+        # Find the snapshot for this specific close
+        if contract:
+            snapshot = CommissionSnapshot.query.filter_by(contract_id=contract.id).first()
+        else:
+            snapshot = CommissionSnapshot.query.filter_by(service_order_id=service_order.id).first()
+            
         if not snapshot:
-            return # No commission set for this contract
+            return # No commission set for this closure
 
         # 1. Base Logic: Only Contract Value
         valor_base = Decimal(str(transaction.amount)) # valor nominal da parcela
@@ -203,11 +210,11 @@ class CommissionService:
             tenant_id=transaction.company_id,
             tipo='COMISSAO',
             beneficiario_id=snapshot.beneficiario_id,
-            contract_id=contract.id,
-            cliente_id=contract.client_id,
+            contract_id=contract.id if contract else None,
+            service_order_id=service_order.id if service_order else None,
+            cliente_id=contract.client_id if contract else service_order.client_id,
             asaas_payment_id=transaction.asaas_id,
-            competencia=datetime.now().strftime('%Y-%m'), # Use current month as payment competence or contract close?
-            # User wants competence = month analyzed usually.
+            competencia=datetime.now().strftime('%Y-%m'), 
             
             valor_base_contratual=valor_base,
             valor_pago_cliente_total=valor_total_pago,

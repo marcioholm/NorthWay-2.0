@@ -19,14 +19,21 @@ def performance():
     collaborator_id = request.args.get('collaborator_id')
 
     # Base Metrics
-    query_base = CommissionSnapshot.query.filter_by(competencia_fechamento=competence)
+    # Snapshots are for everyone. Filter by company.
+    # We join with Contract OR ServiceOrder to ensure we only get the company's data.
+    from models import ServiceOrder
+    query_base = CommissionSnapshot.query.filter(CommissionSnapshot.competence_fechamento == competence)
+    
+    # Filter by Company (crucial for multitenancy)
+    query_base = query_base.filter(
+        db.or_(
+            CommissionSnapshot.contract.has(Contract.company_id == current_user.company_id),
+            CommissionSnapshot.service_order.has(ServiceOrder.company_id == current_user.company_id)
+        )
+    )
+
     if collaborator_id:
         query_base = query_base.filter_by(beneficiario_id=int(collaborator_id))
-    else:
-        # If no collaborator filtered, we might want to sum for lead/owner or just everyone in company
-        # Actually snapshots are for everyone. We should probably filter by company too?
-        # Snapshots are linked to contracts which have company_id.
-        query_base = query_base.join(Contract).filter(Contract.company_id == current_user.company_id)
 
     snapshots = query_base.all()
     
@@ -53,13 +60,19 @@ def performance():
     # Chart Data (Summary by beneficiary if collaborator_id not set)
     chart_data = []
     if not collaborator_id:
-        # Group by beneficiary
+        # Group by beneficiary (summing counts of SOs and Contracts)
+        from models import ServiceOrder
         beneficiaries_stats = db.session.query(
             User.name,
             func.count(CommissionSnapshot.id).label('qty')
         ).join(CommissionSnapshot, User.id == CommissionSnapshot.beneficiario_id)\
-         .join(Contract, CommissionSnapshot.contract_id == Contract.id)\
-         .filter(Contract.company_id == current_user.company_id, CommissionSnapshot.competencia_fechamento == competence)\
+         .filter(
+             CommissionSnapshot.competence_fechamento == competence,
+             db.or_(
+                 CommissionSnapshot.contract.has(Contract.company_id == current_user.company_id),
+                 CommissionSnapshot.service_order.has(ServiceOrder.company_id == current_user.company_id)
+             )
+         )\
          .group_by(User.id).all()
         
         chart_data = [{'name': b[0], 'qty': b[1]} for b in beneficiaries_stats]

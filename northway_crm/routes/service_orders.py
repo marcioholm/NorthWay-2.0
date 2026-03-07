@@ -179,6 +179,7 @@ def approve_service_order(id):
         
         tx = Transaction(
             client_id=client.id,
+            service_order_id=os_order.id,
             company_id=current_user.company_id,
             description=f"Ordem de Serviço: {os_order.title}",
             amount=os_order.value,
@@ -215,6 +216,15 @@ def approve_service_order(id):
             warnings.append("Boleto Asaas não gerado (integração não configurada).")
 
         os_order.status = 'AGUARDANDO_PAGAMENTO'
+        
+        # --- COMMISSION SNAPSHOT ---
+        try:
+            from services.commission_service import CommissionService
+            beneficiary = client.account_manager or current_user
+            CommissionService.create_snapshot(beneficiary, service_order=os_order)
+        except Exception as comm_e:
+            print(f"⚠️ Error creating commission snapshot for SO: {comm_e}")
+
         db.session.commit()
         
         return jsonify({
