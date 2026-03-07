@@ -2619,6 +2619,10 @@
 
                 if (response.ok && result && result.success) {
                     toggleModal('approveOsModal');
+
+                    // Show success message and wait a little before reloading
+                    alert('✅ Ordem de Serviço aprovada!\n\nA projeção financeira e o boleto foram gerados com sucesso no Asaas.');
+
                     window.location.reload();
                 } else {
                     alert('Erro ao aprovar: ' + (result?.error || 'Erro no servidor'));
