@@ -2554,7 +2554,7 @@
     <script>
         // Existing Scripts Block...
         // Init OS Mask (Custom formatter)
-        document.addEventListener('DOMContentLoaded', () => {
+        (function () {
             const osValueInput = document.getElementById('osValueInput');
             if (osValueInput) {
                 osValueInput.addEventListener('input', function (e) {
@@ -2581,7 +2581,7 @@
                     e.target.value = formatted;
                 });
             }
-        });
+        })();
 
         async function submitServiceOrder(e) {
             e.preventDefault();
