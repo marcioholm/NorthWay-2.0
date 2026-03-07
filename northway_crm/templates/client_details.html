@@ -2520,6 +2520,18 @@
                             class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all text-sm font-medium">
                     </div>
 
+                    <div class="space-y-1.5 mt-4">
+                        <label
+                            class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                            <input type="checkbox" id="approveOsGenerateNf" name="generate_nf"
+                                class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-gray-700">Emitir Nota Fiscal (Asaas)</span>
+                                <span class="text-xs text-gray-500">Gera a NF-e de Serviço junto ao faturamento</span>
+                            </div>
+                        </label>
+                    </div>
+
                     <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
                         <button type="button" onclick="toggleModal('approveOsModal')"
                             class="px-5 py-2.5 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
@@ -2580,6 +2592,7 @@
             e.preventDefault();
             const id = document.getElementById('approveOsId').value;
             const dueDate = document.getElementById('approveOsDueDate').value;
+            const generateNf = document.getElementById('approveOsGenerateNf').checked;
 
             if (!dueDate) {
                 alert('Por favor, selecione a data de vencimento.');
@@ -2595,7 +2608,10 @@
                 const response = await fetch('/api/service-orders/' + id + '/approve', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ due_date: dueDate })
+                    body: JSON.stringify({
+                        due_date: dueDate,
+                        generate_nf: generateNf
+                    })
                 });
 
                 let result;

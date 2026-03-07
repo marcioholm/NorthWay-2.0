@@ -145,7 +145,7 @@ def approve_service_order(id):
             else:
                 return jsonify({'success': False, 'error': f'Falha ao criar cliente no Asaas: {err}'}), 400
 
-        # Parse due_date
+        # Parse due_date & generate_nf
         data = request.get_json() or {}
         due_date_str = data.get('due_date')
         if due_date_str:
@@ -155,6 +155,8 @@ def approve_service_order(id):
                 return jsonify({'success': False, 'error': 'Data de vencimento inválida.'}), 400
         else:
             due_date = date.today() + timedelta(days=3)
+            
+        generate_nf = data.get('generate_nf', False)
         
         tx = Transaction(
             client_id=client.id,
@@ -177,7 +179,8 @@ def approve_service_order(id):
                 due_date=due_date.strftime('%Y-%m-%d'),
                 description=f"OS: {os_order.title}",
                 external_ref=tx.id,
-                api_key=tenant_api_key
+                api_key=tenant_api_key,
+                update_pending_nfs=generate_nf
             )
             if payment:
                 tx.asaas_id = payment.get('id')

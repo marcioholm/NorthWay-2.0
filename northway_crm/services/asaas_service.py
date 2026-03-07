@@ -142,7 +142,7 @@ def cancel_payment(payment_id, api_key=None):
     except Exception as e:
         return False, str(e)
 
-def create_payment(customer_id, value, due_date, description, external_ref=None, api_key=None, disable_notifications=False):
+def create_payment(customer_id, value, due_date, description, external_ref=None, api_key=None, disable_notifications=False, update_pending_nfs=False):
     """
     Creates a single payment (cobranca avulsa) - BOLETO/PIX.
     """
@@ -153,7 +153,8 @@ def create_payment(customer_id, value, due_date, description, external_ref=None,
         "dueDate": due_date,
         "description": description,
         "externalReference": str(external_ref) if external_ref else None,
-        "notificationDisabled": disable_notifications
+        "notificationDisabled": disable_notifications,
+        "updatePendingNfs": update_pending_nfs
     }
     
     try:
