@@ -13,7 +13,11 @@ def create_service_order():
         data = request.get_json()
         client_id = data.get('client_id')
         title = data.get('title')
-        value = data.get('value', 0.0)
+        value_str = data.get('value', '0')
+        try:
+            value = float(str(value_str).replace('R$', '').replace('.', '').replace(',', '.'))
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Valor em formato inválido'}), 400
         description = data.get('description')
         
         if not client_id or not title:
@@ -31,7 +35,7 @@ def create_service_order():
             client_id=client_id,
             title=title,
             description=description,
-            value=float(value),
+            value=value,
             status='SOLICITADA'
         )
         
@@ -55,7 +59,7 @@ def cancel_service_order(id):
         # Permission Check (Admin/Financeiro/Manager)
         # Assuming current_user has role or is_admin logic. 
         # Using simplified check for now based on ROLE enum.
-        if not current_user.has_permission('financial') and not current_user.user_role.name in [ROLE_ADMIN, ROLE_MANAGER]:
+        if not current_user.has_permission('financial') and current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
              # Allow if user created it? OR strict role?
              # User requested: Admin/Financeiro.
              pass
