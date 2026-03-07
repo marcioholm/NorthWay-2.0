@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify, render_template, abort, flash, redirect, url_for
 from flask_login import login_required, current_user
-from models import db, ServiceOrder, Client, User, ROLE_ADMIN, ROLE_MANAGER
-from services.asaas_service import cancel_payment
-from datetime import datetime
+from models import db, ServiceOrder, Client, User, ROLE_ADMIN, ROLE_MANAGER, Transaction, Integration
+from services.asaas_service import cancel_payment, create_payment, create_customer
+from datetime import datetime, timedelta, date
 
 service_orders_bp = Blueprint('service_orders', __name__)
 
@@ -100,6 +100,97 @@ def cancel_service_order(id):
             'message': 'Ordem de Serviço cancelada.',
             'warnings': warnings,
             'new_status': 'CANCELADA'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@service_orders_bp.route('/api/service-orders/<int:id>/approve', methods=['POST'])
+@login_required
+def approve_service_order(id):
+    try:
+        os_order = ServiceOrder.query.get_or_404(id)
+        
+        if os_order.company_id != current_user.company_id:
+            return jsonify({'success': False, 'error': 'Permission denied'}), 403
+
+        if not current_user.has_permission('financial') and not current_user.user_role.name in [ROLE_ADMIN, ROLE_MANAGER]:
+            return jsonify({'success': False, 'error': 'O usuário não tem permissão financeira para aprovar.'}), 403
+
+        if os_order.status not in ['SOLICITADA', 'AGUARDANDO_ACEITE']:
+            return jsonify({'success': False, 'error': 'Esta OS não pode ser aprovada no status atual.'}), 400
+
+        # Asaas Integration
+        tenant_integration = Integration.query.filter_by(
+            company_id=current_user.company_id, 
+            service='asaas', 
+            is_active=True
+        ).first()
+
+        tenant_api_key = tenant_integration.api_key if tenant_integration else None
+        client = os_order.client
+
+        if tenant_api_key and not client.asaas_customer_id:
+            asaas_cust, err = create_customer(
+                name=client.name,
+                email=client.email,
+                cpf_cnpj=client.document,
+                phone=client.phone,
+                external_id=client.id,
+                api_key=tenant_api_key
+            )
+            if asaas_cust:
+                client.asaas_customer_id = asaas_cust
+            else:
+                return jsonify({'success': False, 'error': f'Falha ao criar cliente no Asaas: {err}'}), 400
+
+        # Create Transaction Check (financial projection)
+        due_date = date.today() + timedelta(days=3)
+        
+        tx = Transaction(
+            client_id=client.id,
+            company_id=current_user.company_id,
+            description=f"Ordem de Serviço: {os_order.title}",
+            amount=os_order.value,
+            due_date=due_date,
+            status='pending',
+            installment_number=1,
+            total_installments=1
+        )
+        db.session.add(tx)
+        db.session.flush()
+
+        warnings = []
+        if tenant_api_key and client.asaas_customer_id:
+            payment, err = create_payment(
+                customer_id=client.asaas_customer_id,
+                value=os_order.value,
+                due_date=due_date.strftime('%Y-%m-%d'),
+                description=f"OS: {os_order.title}",
+                external_ref=tx.id,
+                api_key=tenant_api_key
+            )
+            if payment:
+                tx.asaas_id = payment.get('id')
+                tx.asaas_invoice_url = payment.get('invoiceUrl') or payment.get('bankSlipUrl')
+                os_order.asaas_payment_id = payment.get('id')
+                os_order.asaas_invoice_url = tx.asaas_invoice_url
+            else:
+                # Se falhar gerar boleto, optei por aprovar a OS mas salvar na transação e listar no warning. Ou dar rollback.
+                # O usuário pediu "gerar boleto", então se falhar o boleto devemos falhar? Sim.
+                db.session.rollback()
+                return jsonify({'success': False, 'error': f'Falha ao gerar boleto no Asaas: {err}'}), 400
+        else:
+            warnings.append("Boleto Asaas não gerado (integração não configurada).")
+
+        os_order.status = 'AGUARDANDO_PAGAMENTO'
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Ordem de Serviço aprovada com sucesso.',
+            'warnings': warnings
         })
 
     except Exception as e:

@@ -797,6 +797,13 @@
                                         <p class="text-[10px] text-gray-400 mb-3">{{
                                             os.created_at.strftime('%d/%m/%Y') }}</p>
 
+                                        {% if os.status in ['SOLICITADA', 'AGUARDANDO_ACEITE'] %}
+                                        <button onclick="approveServiceOrder('{{ os.id }}')"
+                                            class="text-xs font-bold text-green-600 hover:text-green-700 hover:bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 transition-colors mr-2 shadow-sm inline-flex items-center gap-1">
+                                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Aprovar OS
+                                        </button>
+                                        {% endif %}
+
                                         {% if os.status not in ['CONCLUIDA', 'CANCELADA'] %}
                                         <button
                                             class="open-cancel-os-modal-btn text-xs font-bold text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors"
@@ -2502,6 +2509,37 @@
                 }
             } catch (err) {
                 alert('Erro de conexão.');
+            }
+        }
+
+        async function approveServiceOrder(id) {
+            if (!confirm('Deseja realmente aprovar esta Ordem de Serviço? Isso gerará um boleto e uma projeção financeira automaticamente.')) return;
+
+            try {
+                // Show loading on the button or general 
+                const btn = event.currentTarget;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="lucide-loader w-3.5 h-3.5 animate-spin"></i> Aprovando...';
+                btn.disabled = true;
+
+                const response = await fetch('/api/service-orders/' + id + '/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                let result;
+                try { result = await response.json(); } catch (e) { result = null; }
+
+                if (response.ok && result && result.success) {
+                    window.location.reload();
+                } else {
+                    alert('Erro ao aprovar: ' + (result?.error || 'Erro no servidor'));
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Erro de conexão ao tentar aprovar a OS.');
             }
         }
 
