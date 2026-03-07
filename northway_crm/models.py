@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 import uuid
