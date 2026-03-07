@@ -955,14 +955,34 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contexto: 'Geral' })
             });
+
+            // Handling both generic HTML 500 errors and our JSON formatted 500 errors
+            if (!res.ok) {
+                try {
+                    const errorJson = await res.json();
+                    if (errorJson.error) {
+                        alert('Erro ao criar SWOT: ' + errorJson.error);
+                        return;
+                    }
+                } catch (parseError) {
+                    const text = await res.text();
+                    alert('Status HTTP: ' + res.status + '\\n' + text.substring(0, 100));
+                    return;
+                }
+            }
+
             const json = await res.json();
             if (json.success) {
-                this.loadSwot(json.id);
+                // Await loadSwot to catch any internal loading errors
+                await this.loadSwot(json.id);
+            } else {
+                alert('Erro ao criar SWOT: ' + (json.message || json.error || 'Desconhecido'));
             }
         } catch (e) {
-            alert('Erro ao criar SWOT');
+            console.error(e);
+            alert('Falha total na requisição: ' + e.message);
         }
-    }
+    };
 
     SwotApp.backToList = function () {
         this.fetchSwots();

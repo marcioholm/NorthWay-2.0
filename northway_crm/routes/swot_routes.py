@@ -91,27 +91,35 @@ def get_swot(analise_id):
 @swot_bp.route('/api/clients/<int:client_id>/swot', methods=['POST'])
 @login_required
 def create_swot(client_id):
-    client = Client.query.get_or_404(client_id)
-    if client.company_id != current_user.company_id:
-        abort(403)
+    try:
+        client = Client.query.get_or_404(client_id)
+        if client.company_id != current_user.company_id:
+            abort(403)
+            
+        data = request.get_json() or {}
         
-    data = request.get_json() or {}
-    
-    new_analise = SwotAnalise(
-        client_id=client_id,
-        contexto=data.get('contexto', ''),
-        data_analise=date.today(),
-        status='rascunho'
-    )
-    
-    db.session.add(new_analise)
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'id': new_analise.id,
-        'message': 'Análise SWOT iniciada com sucesso'
-    }), 201
+        new_analise = SwotAnalise(
+            client_id=client_id,
+            contexto=data.get('contexto', ''),
+            data_analise=date.today(),
+            status='rascunho'
+        )
+        
+        db.session.add(new_analise)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'id': new_analise.id,
+            'message': 'Análise SWOT iniciada com sucesso'
+        }), 201
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 
 @swot_bp.route('/api/swot/<analise_id>', methods=['PUT', 'DELETE'])
 @login_required
