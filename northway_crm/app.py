@@ -674,6 +674,9 @@ def create_app():
         # Critical for Vercel/Ephemeral environments
         with app.app_context():
             try:
+                # Force SQLAlchemy to know about new models before create_all
+                from models import SwotAnalise, SwotItem, CREPIDiagnostico, CREPIPremissa, AudienceMatrix
+
                 # 1. Simple Table Creation
                 db.create_all()
                 print("✅ Tables created (if missing).")
