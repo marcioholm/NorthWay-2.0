@@ -14,9 +14,55 @@ def performance():
     if not current_user.company_id:
         return "Unauthorized", 403
 
-    # Filros
+    # Filtros
     competence = request.args.get('competence', datetime.now().strftime('%Y-%m'))
     collaborator_id = request.args.get('collaborator_id')
+
+    # RECONCILIATION: Ensure snapshots exist for already closed deals this month
+    try:
+        from models import ServiceOrder, Contract, CommissionSnapshot
+        from services.commission_service import CommissionService
+        from datetime import date, timedelta
+        
+        y, m = map(int, competence.split('-'))
+        m_start = datetime(y, m, 1)
+        if m == 12:
+            m_end = datetime(y + 1, 1, 1) - timedelta(seconds=1)
+        else:
+            m_end = datetime(y, m + 1, 1) - timedelta(seconds=1)
+
+        # 1. Reconcile Contracts signed in this month but missing snapshots
+        contracts = Contract.query.filter(
+            Contract.company_id == current_user.company_id,
+            Contract.status.in_(['signed', 'active']),
+            Contract.created_at >= m_start,
+            Contract.created_at <= m_end
+        ).all()
+        
+        for c in contracts:
+            existing = CommissionSnapshot.query.filter_by(contract_id=c.id).first()
+            if not existing:
+                beneficiary = c.client.account_manager or current_user
+                CommissionService.create_snapshot(beneficiary, contract=c)
+                
+        # 2. Reconcile Service Orders approved in this month but missing snapshots
+        sos = ServiceOrder.query.filter(
+            ServiceOrder.company_id == current_user.company_id,
+            ServiceOrder.status.in_(['EM_EXECUCAO', 'CONCLUIDA', 'AGUARDANDO_PAGAMENTO']),
+            ServiceOrder.created_at >= m_start,
+            ServiceOrder.created_at <= m_end
+        ).all()
+        
+        for so in sos:
+            existing = CommissionSnapshot.query.filter_by(service_order_id=so.id).first()
+            if not existing:
+                beneficiary = so.client.account_manager or current_user
+                CommissionService.create_snapshot(beneficiary, service_order=so)
+                
+        db.session.commit()
+    except Exception as e:
+        print(f"⚠️ Reconciliation Error: {e}")
+        db.session.rollback()
 
     # Base Metrics
     # Snapshots are for everyone. Filter by company.
@@ -54,6 +100,22 @@ def performance():
     paid_comm = sum(p.valor_final_pago_colaborador or 0 for p in all_payables if p.status == 'PAGO')
     pending_comm = sum(p.valor_comissao_calculado for p in all_payables if p.status == 'A_PAGAR')
 
+    # GOALS (Metas)
+    from models import Goal
+    try:
+        y, m = map(int, competence.split('-'))
+        # If collaborator filtered, find user goal. Otherwise company goal (user_id=None)
+        g_query = Goal.query.filter_by(company_id=current_user.company_id, year=y, month=m)
+        if collaborator_id:
+            g_query = g_query.filter_by(user_id=int(collaborator_id))
+        else:
+            g_query = g_query.filter_by(user_id=None)
+        
+        goal_obj = g_query.first()
+        target_amount = float(goal_obj.target_amount) if goal_obj else 0.0
+    except:
+        target_amount = 0.0
+
     # Collaborators for Filter
     collaborators = User.query.filter_by(company_id=current_user.company_id).all()
     
@@ -88,6 +150,8 @@ def performance():
                                'adjustments': total_adjustments,
                                'comm_final': total_comm_final,
                                'paid': paid_comm,
-                               'pending': pending_comm
+                               'pending': pending_comm,
+                               'goal': target_amount,
+                               'percent': (total_revenue_base / target_amount * 100) if target_amount > 0 else 0
                            },
                            chart_data=chart_data)

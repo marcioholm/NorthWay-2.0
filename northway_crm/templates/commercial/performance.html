@@ -31,14 +31,36 @@
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="card-premium p-6 border-l-4 border-l-blue-500">
-            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Contratos Fechados</p>
+            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Fechamentos (Contratos + SO)</p>
             <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.contracts }}</p>
             <p class="text-xs text-blue-400 mt-1">Somas do mês selecionado</p>
         </div>
         <div class="card-premium p-6 border-l-4 border-l-green-500">
-            <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Base Contratual Total</p>
-            <p class="text-3xl font-bold text-gray-900 mt-2">R$ {{ "%.2f"|format(stats.revenue|float) }}</p>
-            <p class="text-xs text-gray-500 mt-1">Excluindo juros e multas</p>
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Vendas Realizadas</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">R$ {{ "%.2f"|format(stats.revenue|float) }}</p>
+                </div>
+                {% if stats.goal > 0 %}
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Meta</p>
+                    <p class="text-sm font-bold text-gray-400 mt-1">R$ {{ "%.0f"|format(stats.goal) }}</p>
+                    <p
+                        class="text-xs font-bold {{ 'text-green-400' if stats.percent >= 100 else 'text-orange-400' }} mt-1">
+                        {{ stats.percent|round|int }}%
+                    </p>
+                </div>
+                {% else %}
+                <a href="{{ url_for('goals.dashboard') }}"
+                    class="text-[10px] font-bold text-northway-red hover:underline uppercase">Definir Meta</a>
+                {% endif %}
+            </div>
+            {% if stats.goal > 0 %}
+            <div class="w-full bg-white/5 h-1.5 rounded-full mt-4 overflow-hidden">
+                <div class="h-full bg-green-500 transition-all duration-1000"
+                    style="width: {{ [stats.percent, 100]|min }}%"></div>
+            </div>
+            {% endif %}
         </div>
         <div class="card-premium p-6 border-l-4 border-l-orange-500">
             <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Comissão Final (c/ Ajustes)</p>
@@ -82,12 +104,21 @@
                         {% for s in snapshots %}
                         <tr class="text-sm">
                             <td class="py-4">
-                                <p class="font-semibold text-gray-900">#{{ s.contract_id }}</p>
+                                <p class="font-semibold text-gray-900">
+                                    {% if s.contract_id %}
+                                    #CONTRATO-{{ s.contract_id }}
+                                    {% elif s.service_order_id %}
+                                    #SO-{{ s.service_order_id }}
+                                    {% else %}
+                                    #FECHAMENTO-{{ s.id }}
+                                    {% endif %}
+                                </p>
                                 <p class="text-xs text-gray-500">{{ s.data_fechamento.strftime('%d/%m/%Y') }}</p>
                             </td>
                             <td class="py-4 text-gray-300">{{ s.beneficiario.name }}</td>
-                            <td class="py-4 text-right text-gray-900">R$ {{ "%.2f"|format(s.contract.amount|float) if
-                                s.contract else '0.00' }}</td>
+                            <td class="py-4 text-right text-gray-900">
+                                R$ {{ "%.2f"|format(s.valor_base_contratual|float) }}
+                            </td>
                             <td class="py-4 text-center">
                                 <span
                                     class="text-[10px] bg-white/5 px-2 py-1 rounded text-gray-400 font-bold uppercase">{{
