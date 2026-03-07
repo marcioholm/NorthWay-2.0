@@ -13,7 +13,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.pool import NullPool
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
-from models import db, User, Task, Role, AudienceMatrix, CREPIDiagnostico, CREPIPremissa
+from models import db, User, Task, Role, AudienceMatrix, CREPIDiagnostico, CREPIPremissa, SwotAnalise, SwotItem
 import json
 # Blueprint imports moved to create_app to prevent global import crashes
 from services.supabase_service import init_supabase
