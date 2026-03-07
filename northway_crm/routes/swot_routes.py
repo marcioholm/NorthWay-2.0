@@ -119,7 +119,7 @@ def create_swot(client_id):
             'success': False,
             'error': str(e),
             'traceback': traceback.format_exc()
-        }), 500
+        }), 400
 
 @swot_bp.route('/api/swot/<analise_id>', methods=['PUT', 'DELETE'])
 @login_required
