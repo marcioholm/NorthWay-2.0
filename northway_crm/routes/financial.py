@@ -287,9 +287,30 @@ def stats():
         'transactions': tx_list
     })
 
-    t.paid_date = date.today()
-    db.session.commit()
-    return jsonify({'success': True})
+@financial_bp.route('/api/transactions/<int:id>/pay', methods=['POST'])
+@login_required
+def pay_transaction(id):
+    if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
+        return jsonify({'success': False, 'error': 'Acesso negado. Apenas Admin/Gerente podem baixar pagamentos.'}), 403
+    
+    tx = Transaction.query.filter_by(id=id, company_id=current_user.company_id).first()
+    if not tx:
+        return jsonify({'success': False, 'error': 'Transação não encontrada.'}), 404
+        
+    try:
+        tx.status = 'paid'
+        tx.paid_date = date.today()
+        
+        # Update client summary status
+        if tx.client_id:
+            from utils import update_client_payment_status
+            update_client_payment_status(tx.client_id)
+            
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @financial_bp.route('/financial/dre')
 @login_required
