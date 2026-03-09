@@ -103,8 +103,8 @@ def new_user():
         flash('Usuário criado e convite enviado por e-mail!', 'success')
         return redirect(url_for('admin.users'))
         
-    papeis = CommercialRole.query.filter_by(company_id=current_user.company_id, active=True).all()
-    regras = CommissionRule.query.filter_by(company_id=current_user.company_id, active=True).all()
+    papeis = CommercialRole.query.filter_by(tenant_id=current_user.company_id, ativo=True).all()
+    regras = CommissionRule.query.filter_by(tenant_id=current_user.company_id, ativo=True).all()
     
     return render_template('admin/user_form.html', user=None, papeis=papeis, regras=regras)
 
@@ -134,8 +134,8 @@ def edit_user(user_id):
         flash('Usuário atualizado com sucesso!', 'success')
         return redirect(url_for('admin.users'))
         
-    papeis = CommercialRole.query.filter_by(company_id=current_user.company_id, active=True).all()
-    regras = CommissionRule.query.filter_by(company_id=current_user.company_id, active=True).all()
+    papeis = CommercialRole.query.filter_by(tenant_id=current_user.company_id, ativo=True).all()
+    regras = CommissionRule.query.filter_by(tenant_id=current_user.company_id, ativo=True).all()
     
     return render_template('admin/user_form.html', user=user, papeis=papeis, regras=regras)
 
