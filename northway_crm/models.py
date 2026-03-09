@@ -761,6 +761,7 @@ class ProcessTemplate(db.Model):
     created_at = db.Column(db.DateTime, default=get_now_br)
 
 class ClientChecklist(db.Model):
+    __tablename__ = 'client_checklists'
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     template_id = db.Column(db.Integer, db.ForeignKey('process_template.id'), nullable=True)
@@ -1145,12 +1146,12 @@ class ClientChecklistItem(db.Model):
     __tablename__ = 'client_checklist_items'
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    checklist_id = db.Column(db.String(36), db.ForeignKey('client_checklists.id'), nullable=False)
+    checklist_id = db.Column(db.Integer, db.ForeignKey('client_checklists.id'), nullable=False)
     template_step_id = db.Column(db.String(36), nullable=False)
     template_item_id = db.Column(db.String(36), nullable=False)
     completed = db.Column(db.Boolean, default=False)
     completed_at = db.Column(db.DateTime, nullable=True)
-    completed_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    completed_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     notes = db.Column(db.Text, nullable=True)
 
 # ==========================================
