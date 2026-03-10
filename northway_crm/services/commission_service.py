@@ -16,20 +16,31 @@ class CommissionService:
 
     @staticmethod
     def calculate_percent_for_tier(rule, count):
-        """Calculates the percentage based on FAIXA_MENSAL_UNICA parameters."""
+        """Calculates the percentage based on PROGRESSAO_MENSAL parameters (quantity of contracts)."""
         params = rule.parametros
-        if rule.modelo == 'FAIXA_MENSAL_UNICA':
-            faixas = params.get('faixas_por_quantidade', [])
-            # Sort faixas by min just in case
-            faixas = sorted(faixas, key=lambda x: x['min'])
+        if rule.modelo == 'PROGRESSAO_MENSAL':
+            faixas = params.get('faixas', [])
+            # Sort faixas by min to ensure correct iteration
+            faixas = sorted(faixas, key=lambda x: int(x.get('min', 0)))
             
             percentual = 0
             for faixa in faixas:
-                if count >= faixa['min'] and count <= faixa.get('max', 999999):
-                    percentual = faixa['percentual']
+                f_min = int(faixa.get('min', 0))
+                f_max = faixa.get('max')
+                
+                # If there's no max, treat it as infinity
+                if f_max is None or f_max == '':
+                     if count >= f_min:
+                         percentual = float(faixa.get('percentual', 0))
+                else:
+                     if count >= f_min and count <= int(f_max):
+                         percentual = float(faixa.get('percentual', 0))
+                         
             return percentual
-        elif rule.modelo == 'PERCENTUAL_FIXO_LIFETIME':
-            return params.get('percentual', 0)
+            
+        elif rule.modelo == 'PERCENTUAL_FIXO_LIFETIME' or rule.modelo == 'PERCENTUAL_FIXO_UNICO':
+            return float(params.get('percentual_fixo', 0))
+            
         return 0
 
     @classmethod
@@ -58,13 +69,13 @@ class CommissionService:
             modelo=rule.modelo,
             percentual_provisorio=percentual,
             competencia_fechamento=competence,
-            base_calculo=rule.parametros.get('base', 'valor_pago'),
-            recorrente=rule.parametros.get('recorrente_lifetime', True) if contract else False
+            base_calculo='valor_pago', # User rule specifies net value paid
+            recorrente=True if contract else False # Recurrent only for contracts, not single SOs
         )
         db.session.add(snapshot)
         
-        # Trigger Adjustment Check
-        if rule.modelo == 'FAIXA_MENSAL_UNICA' and rule.parametros.get('modo_ajuste') == 'AJUSTE_AUTOMATICO':
+        # Check for adjustments if it's progressive
+        if rule.modelo == 'PROGRESSAO_MENSAL':
             cls.check_and_generate_adjustments(user.id, competence, percentual)
 
         return snapshot
@@ -82,17 +93,18 @@ class CommissionService:
         ).all()
 
         for snap in snapshots:
-            # Update snapshot definitively if not already higher
-            if snap.percentual_provisorio < new_percent:
-                old_percent = snap.percentual_provisorio
+            # Update snapshot definitively if the new percent is higher
+            if snap.percentual_provisorio < new_percent and (not snap.percentual_definitivo or snap.percentual_definitivo < new_percent):
                 snap.percentual_definitivo = new_percent
                 
-                # Check all PAID commissions (AccountsPayable) for this contract in this competence
-                # that were calculated with the old percentage.
+                # We need to find all PAID or pending AccountsPayable for this contract
+                # in this competence that were calculated with the old percentage.
+                # However, the user rule states "comissão somente nasce após o efetivo recebimento"
+                # so we might be adjusting AccountsPayable that are 'A_PAGAR' or 'PAGO'.
                 payables = AccountsPayable.query.filter_by(
                     beneficiario_id=user_id,
                     contract_id=snap.contract_id,
-                    competence=competence,
+                    competencia=competence,
                     eh_ajuste=False
                 ).all()
 
@@ -108,6 +120,7 @@ class CommissionService:
                                 tipo='COMISSAO',
                                 beneficiario_id=user_id,
                                 contract_id=snap.contract_id,
+                                service_order_id=snap.service_order_id,
                                 cliente_id=p.cliente_id,
                                 competencia=competence,
                                 valor_base_contratual=p.valor_base_contratual,
@@ -119,9 +132,6 @@ class CommissionService:
                                 status='A_PAGAR'
                             )
                             db.session.add(adjustment)
-                            
-                            # Update p.percentual_aplicado? 
-                            # No, we keep it as reference. The sum of p + adjustments = final commission.
                             
                             # Create Task for adjustment
                             cls.create_finance_task(adjustment, is_adjustment=True)
@@ -202,6 +212,16 @@ class CommissionService:
         percentual = snapshot.percentual_provisorio
         if snapshot.percentual_definitivo:
             percentual = snapshot.percentual_definitivo
+            
+        # Check if we already paid/generated commission for this exact transaction
+        existing_payable = AccountsPayable.query.filter_by(
+            asaas_payment_id=transaction.asaas_id,
+            beneficiario_id=snapshot.beneficiario_id
+        ).first()
+        
+        if existing_payable:
+            # Prevent double generation
+            return
         
         valor_comissao = valor_base * (Decimal(str(percentual)) / Decimal('100'))
 
