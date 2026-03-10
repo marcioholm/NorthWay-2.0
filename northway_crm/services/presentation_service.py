@@ -20,7 +20,7 @@ class PresentationPDF(FPDF):
         if self.page_no() > 1:
             self.set_y(-15)
             self.set_font('Helvetica', 'I', 8)
-            self.set_text_color(*self.secondary_text)
+            self.set_text_color(self.secondary_text[0], self.secondary_text[1], self.secondary_text[2])
             self.cell(0, 10, f'NorthWay CRM - Inteligência de Vendas | Página {self.page_no()}', 0, 0, 'C')
 
     def add_presentation_page(self, title, subtitle=None):

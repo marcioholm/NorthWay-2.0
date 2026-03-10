@@ -732,7 +732,7 @@ def create_app():
         with app.app_context():
             try:
                 # Force SQLAlchemy to know about new models before create_all
-                from models import SwotAnalise, SwotItem, CREPIDiagnostico, CREPIPremissa, AudienceMatrix, CommercialPresentation
+                from models import SwotAnalise, SwotItem, CREPIDiagnostico, CREPIPremissa, AudienceMatrix, CommercialPresentation, LibraryBook
 
                 # 1. Simple Table Creation
                 db.create_all()

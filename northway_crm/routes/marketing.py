@@ -45,7 +45,7 @@ def generate_presentation():
         if hasattr(current_app, 'supabase') and current_app.supabase:
             try:
                 # Content type is important for browser viewing
-                current_app.supabase.storage.from_(bucket).upload(path, pdf_bytes, {"content-type": "application/pdf"})
+                current_app.supabase.storage.from_(bucket).upload(path, bytes(pdf_bytes), {"content-type": "application/pdf"})
                 pdf_url = current_app.supabase.storage.from_(bucket).get_public_url(path)
                 print(f"✅ Presentation uploaded: {pdf_url}")
             except Exception as e:
