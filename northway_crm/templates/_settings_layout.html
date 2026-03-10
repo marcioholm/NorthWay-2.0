@@ -24,6 +24,14 @@
                 Equipe
             </a>
 
+            <!-- Commercial Roles & Commissions -->
+            <a href="{{ url_for('admin.settings_commissions') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_commissions' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="trending-up" class="w-4 h-4" aria-hidden="true"></i>
+                Carreiras & Comissões
+            </a>
+
+
             <!-- Permissions -->
             <a href="{{ url_for('roles.settings_permissions') }}"
                 class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'settings_permissions' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
@@ -72,6 +80,10 @@
         <a href="{{ url_for('admin.users') }}"
             class="p-2 {{ 'text-northway-red' if 'settings_team' in request.endpoint else 'text-gray-500' }}">
             <i data-lucide="users" class="w-5 h-5"></i>
+        </a>
+        <a href="{{ url_for('admin.settings_commissions') }}"
+            class="p-2 {{ 'text-northway-red' if 'settings_commissions' in request.endpoint else 'text-gray-500' }}">
+            <i data-lucide="trending-up" class="w-5 h-5"></i>
         </a>
         <a href="{{ url_for('roles.settings_permissions') }}"
             class="p-2 {{ 'text-northway-red' if 'settings_permissions' in request.endpoint else 'text-gray-500' }}">

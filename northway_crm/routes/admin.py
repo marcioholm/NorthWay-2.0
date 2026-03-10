@@ -139,6 +139,109 @@ def edit_user(user_id):
     
     return render_template('admin/user_form.html', user=user, papeis=papeis, regras=regras)
 
+@admin_bp.route('/settings/commissions')
+@login_required
+def settings_commissions():
+    from models import CommercialRole, CommissionRule
+    roles = CommercialRole.query.filter_by(tenant_id=current_user.company_id).all()
+    rules = CommissionRule.query.filter_by(tenant_id=current_user.company_id).all()
+    return render_template('admin/commissions_settings.html', roles=roles, rules=rules)
+
+
+@admin_bp.route('/settings/commercial-roles/new', methods=['GET', 'POST'])
+@login_required
+def new_commercial_role():
+    from models import db, CommercialRole
+    if request.method == 'POST':
+        role = CommercialRole(
+            tenant_id=current_user.company_id,
+            nome=request.form.get('nome'),
+            descricao=request.form.get('descricao'),
+            tipo_vinculo=request.form.get('tipo_vinculo'),
+            ativo=True if request.form.get('ativo') else False
+        )
+        db.session.add(role)
+        db.session.commit()
+        flash('Papel Comercial criado com sucesso.', 'success')
+        return redirect(url_for('admin.settings_commissions'))
+        
+    return render_template('admin/role_form.html', role=None)
+
+@admin_bp.route('/settings/commercial-roles/<string:role_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_commercial_role(role_id):
+    from models import db, CommercialRole
+    role = CommercialRole.query.get_or_404(role_id)
+    
+    if role.tenant_id != current_user.company_id:
+        abort(403)
+        
+    if request.method == 'POST':
+        role.nome = request.form.get('nome')
+        role.descricao = request.form.get('descricao')
+        role.tipo_vinculo = request.form.get('tipo_vinculo')
+        role.ativo = True if request.form.get('ativo') else False
+        
+        db.session.commit()
+        flash('Papel Comercial atualizado.', 'success')
+        return redirect(url_for('admin.settings_commissions'))
+        
+    return render_template('admin/role_form.html', role=role)
+
+@admin_bp.route('/settings/commission-rules/new', methods=['GET', 'POST'])
+@login_required
+def new_commission_rule():
+    from models import db, CommissionRule, CommercialRole
+    import json
+    
+    if request.method == 'POST':
+        parametros_json = request.form.get('parametros')
+        
+        rule = CommissionRule(
+            tenant_id=current_user.company_id,
+            papel_comercial_id=request.form.get('papel_comercial_id'),
+            modelo=request.form.get('modelo'),
+            parametros=json.loads(parametros_json) if parametros_json else {},
+            ativo=True if request.form.get('ativo') else False
+        )
+        db.session.add(rule)
+        db.session.commit()
+        flash('Regra de Comissão criada com sucesso.', 'success')
+        return redirect(url_for('admin.settings_commissions'))
+        
+    papeis = CommercialRole.query.filter_by(tenant_id=current_user.company_id, ativo=True).all()
+    return render_template('admin/rule_form.html', rule=None, papeis=papeis)
+
+@admin_bp.route('/settings/commission-rules/<string:rule_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_commission_rule(rule_id):
+    from models import db, CommissionRule, CommercialRole
+    import json
+    
+    rule = CommissionRule.query.get_or_404(rule_id)
+    
+    if rule.tenant_id != current_user.company_id:
+        abort(403)
+        
+    if request.method == 'POST':
+        parametros_json = request.form.get('parametros')
+        
+        rule.papel_comercial_id = request.form.get('papel_comercial_id')
+        rule.modelo = request.form.get('modelo')
+        rule.parametros = json.loads(parametros_json) if parametros_json else {}
+        rule.ativo = True if request.form.get('ativo') else False
+        
+        db.session.commit()
+        flash('Regra de Comissão atualizada.', 'success')
+        return redirect(url_for('admin.settings_commissions'))
+        
+    papeis = CommercialRole.query.filter_by(tenant_id=current_user.company_id, ativo=True).all()
+    return render_template('admin/rule_form.html', rule=rule, papeis=papeis)
+
+
+
+
+
 @admin_bp.route('/settings/company', methods=['GET', 'POST'])
 def company_settings():
     from models import db, Company

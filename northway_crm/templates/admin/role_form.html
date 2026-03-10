@@ -1,0 +1,80 @@
+{% extends "_settings_layout.html" %}
+
+{% block settings_content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-8">
+        <a href="{{ url_for('admin.settings_commissions') }}"
+            class="text-gray-400 hover:text-gray-900 mb-4 inline-flex items-center transition-colors text-sm font-medium">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Voltar para Carreiras & Comissões
+        </a>
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
+            {% if role %}Editar Papel Comercial{% else %}Novo Papel Comercial{% endif %}
+        </h1>
+        <p class="text-gray-500 text-sm mt-1">Configure o cargo e o tipo de vínculo para sua equipe.</p>
+    </div>
+
+    <div class="bg-white rounded-3xl p-8 border border-gray-200 shadow-sm">
+        <form method="POST">
+            <div class="space-y-6">
+                <!-- Nome -->
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nome do
+                        Papel</label>
+                    <input type="text" name="nome" value="{{ role.nome if role else '' }}" required
+                        placeholder="Ex: Closer Sênior"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all placeholder-gray-400 text-sm">
+                </div>
+
+                <!-- Descrição -->
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Descrição
+                        (Opcional)</label>
+                    <textarea name="descricao" rows="3" placeholder="Quais as responsabilidades deste papel?"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none transition-all placeholder-gray-400 text-sm">{{ role.descricao if role else '' }}</textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Tipo Vínculo -->
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Tipo de
+                            Vínculo Padrão</label>
+                        <select name="tipo_vinculo"
+                            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red outline-none text-sm appearance-none">
+                            <option value="PJ" {% if role and role.tipo_vinculo=='PJ' %}selected{% endif %}>PJ /
+                                Parceiro</option>
+                            <option value="CLT" {% if role and role.tipo_vinculo=='CLT' %}selected{% endif %}>CLT
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label
+                            class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
+                        <div class="flex items-center h-[50px]">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="ativo" value="1" class="sr-only peer" {% if not role or
+                                    role.ativo %}checked{% endif %}>
+                                <div
+                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-northway-red">
+                                </div>
+                                <span class="ml-3 text-sm font-medium text-gray-700">Papel Ativo</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Divider -->
+            <div class="pt-6 mt-6 border-t border-gray-100">
+                <button type="submit"
+                    class="w-full bg-northway-red text-white px-6 py-4 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 flex justify-center items-center gap-2">
+                    <i data-lucide="save" class="w-5 h-5"></i>
+                    {% if role %}Salvar Alterações{% else %}Criar Papel Comercial{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -90,7 +90,7 @@
                         <option value="">Nenhum</option>
                         {% for p in papeis %}
                         <option value="{{ p.id }}" {% if user and user.papel_comercial_id==p.id %}selected{% endif %}>{{
-                            p.name }}</option>
+                            p.nome }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -102,7 +102,7 @@
                         <option value="">Nenhuma</option>
                         {% for r in regras %}
                         <option value="{{ r.id }}" {% if user and user.regra_comissao_id==r.id %}selected{% endif %}>{{
-                            r.name }}</option>
+                            r.modelo | replace('_', ' ') | title }}</option>
                         {% endfor %}
                     </select>
                 </div>
