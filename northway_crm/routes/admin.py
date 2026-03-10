@@ -44,9 +44,10 @@ def users():
 def new_user():
     from models import db, User, CommercialRole, CommissionRule # Lazy Import
     if request.method == 'POST':
+        import secrets
         name = request.form.get('name')
         email = request.form.get('email')
-        password = request.form.get('password')
+        password = request.form.get('password') or secrets.token_urlsafe(16)
         role = request.form.get('role', 'vendedor') # Default value
         
         if User.query.filter_by(email=email).first():
