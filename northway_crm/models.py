@@ -1200,3 +1200,30 @@ class CommercialPresentation(db.Model):
     # Relationships
     consultor = db.relationship('User', backref=db.backref('presentations', lazy=True))
     company = db.relationship('Company', backref=db.backref('presentations', lazy=True))
+
+# ==========================================
+# PROCESS BUILDER MODELS
+# ==========================================
+
+class ClientProcess(db.Model):
+    __tablename__ = 'client_processes'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    
+    # tool_type: 'fluxograma' or 'linear'
+    tool_type = db.Column(db.String(50), nullable=False)
+    
+    # mode: 'atual' or 'ideal'
+    mode = db.Column(db.String(50), nullable=False)
+    
+    # Stores the raw JSON configuration for the canvas or timeline
+    data = db.Column(db.JSON, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    # Relationships
+    client = db.relationship('Client', backref=db.backref('processes', cascade='all, delete-orphan'))
+    company = db.relationship('Company', backref='processes')

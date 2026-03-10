@@ -816,6 +816,28 @@ def create_app():
                                             print(f"⚠️ MIGRATION FAILED for user.{col}: {e_user}")
                         except Exception as e_user_mig:
                             print(f"⚠️ USER MIGRATION ERROR: {e_user_mig}")
+                            print(f"⚠️ USER MIGRATION ERROR: {e_user_mig}")
+                            
+                        # Added ClientProcess Table Creation
+                        try:
+                            if not inspector.has_table("client_processes"):
+                                print("🛠️ MIGRATION: Creating client_processes table...")
+                                conn.execute(text("""
+                                    CREATE TABLE client_processes (
+                                        id VARCHAR(36) PRIMARY KEY,
+                                        client_id INTEGER NOT NULL REFERENCES client(id) ON DELETE CASCADE,
+                                        company_id INTEGER NOT NULL REFERENCES company(id),
+                                        tool_type VARCHAR(50) NOT NULL,
+                                        mode VARCHAR(50) NOT NULL,
+                                        data TEXT,
+                                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                                    )
+                                """))
+                                conn.commit()
+                        except Exception as e_cp_mig:
+                            print(f"⚠️ CLIENT PROCESS MIGRATION ERROR: {e_cp_mig}")
+
                 except Exception as e_mig:
                     print(f"⚠️ MIGRATION NOTICE (Non-critical if already exists): {e_mig}")
                 

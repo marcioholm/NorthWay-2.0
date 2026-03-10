@@ -786,6 +786,7 @@ def bulk_delete_drive_files(id):
         
         service = GoogleDriveService(company_id=current_user.company_id)
         
+        
         deleted_count = 0
         for file_id in file_ids:
             try:
@@ -797,6 +798,73 @@ def bulk_delete_drive_files(id):
     except Exception as e:
         flash(f'Erro ao excluir arquivos do Google Drive: {str(e)}', 'error')
         return redirect(url_for('clients.client_details', id=id))
+
+# ==========================================
+# PROCESS BUILDER ROUTES
+# ==========================================
+
+@clients_bp.route('/clients/<int:id>/process-builder')
+@login_required
+def process_builder_view(id):
+    client = Client.query.get_or_404(id)
+    if client.company_id != current_user.company_id:
+        return "Unauthorized", 403
+    return render_template('clients/process_builder.html', client=client)
+
+@clients_bp.route('/api/clients/<int:id>/processes/<string:tool_type>/<string:mode>', methods=['GET'])
+@login_required
+def get_client_process(id, tool_type, mode):
+    from models import ClientProcess
+    client = Client.query.get_or_404(id)
+    if client.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    process = ClientProcess.query.filter_by(
+        client_id=id,
+        company_id=current_user.company_id,
+        tool_type=tool_type,
+        mode=mode
+    ).first()
+    
+    if not process:
+        return jsonify(None)
+        
+    return jsonify(process.data)
+
+@clients_bp.route('/api/clients/<int:id>/processes/<string:tool_type>/<string:mode>', methods=['POST'])
+@login_required
+def save_client_process(id, tool_type, mode):
+    from models import db, ClientProcess
+    client = Client.query.get_or_404(id)
+    if client.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    data = request.json
+    
+    process = ClientProcess.query.filter_by(
+        client_id=id,
+        company_id=current_user.company_id,
+        tool_type=tool_type,
+        mode=mode
+    ).first()
+    
+    if not process:
+        # Create new
+        process = ClientProcess(
+            client_id=id,
+            company_id=current_user.company_id,
+            tool_type=tool_type,
+            mode=mode,
+            data=data
+        )
+        db.session.add(process)
+    else:
+        # Update existing
+        process.data = data
+        process.updated_at = datetime.utcnow()
+        
+    db.session.commit()
+    return jsonify({'success': True})
     
     # Delete events from database
     DriveFileEvent.query.filter(

@@ -1,0 +1,947 @@
+{% extends "_layout.html" %}
+
+{% block content %}
+<!-- Minimalist Topbar dedicated to Process Builder -->
+<div
+    class="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-40 md:left-64 flex items-center justify-between px-6 h-16">
+    <div class="flex items-center gap-4">
+        <!-- NorthWay Logo Icon -->
+        <div class="w-8 h-8 rounded bg-northway-red flex items-center justify-center text-white font-black text-sm">
+            N
+        </div>
+        <div class="hidden md:block">
+            <h1 class="text-sm font-bold text-gray-900">NorthWay / Process Builder</h1>
+            <p class="text-[10px] text-gray-500 font-medium">Cliente: <span class="text-gray-900 font-bold">{{
+                    client.name }}</span></p>
+        </div>
+    </div>
+
+    <!-- Mode Toggles (Atual vs Ideal) -->
+    <div class="flex items-center gap-6 h-full">
+        <button onclick="setMode('atual')" id="toggle-mode-atual"
+            class="h-full border-b-2 font-semibold text-sm transition-colors border-northway-red text-northway-red">
+            Processo Atual
+            <span class="text-[10px] block font-normal text-northway-red/70 -mt-1">(Como está hoje)</span>
+        </button>
+        <button onclick="setMode('ideal')" id="toggle-mode-ideal"
+            class="h-full border-b-2 border-transparent font-medium text-sm transition-colors text-gray-400 hover:text-gray-900">
+            Processo Ideal
+            <span class="text-[10px] block font-normal text-gray-400 -mt-1">(Como deve ficar)</span>
+        </button>
+    </div>
+
+    <!-- Tool Toggles (Fluxograma vs Linear) -->
+    <div class="flex items-center gap-4">
+        <div class="bg-gray-100 p-1 rounded-lg flex items-center">
+            <button onclick="setTool('fluxograma')" id="toggle-tool-fluxograma"
+                class="px-4 py-1.5 text-sm font-bold rounded-md bg-white text-gray-900 shadow-sm transition-all">
+                Fluxograma
+            </button>
+            <button onclick="setTool('linear')" id="toggle-tool-linear"
+                class="px-4 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-900 transition-all">
+                Processo Linear
+            </button>
+        </div>
+        <div id="status-badge"
+            class="px-3 py-1 rounded bg-orange-100 text-orange-700 text-xs font-bold border border-orange-200">
+            {{ client.name }} • Atual
+        </div>
+    </div>
+</div>
+
+<!-- Main Canvas/Container -->
+<div class="pt-16 min-h-screen bg-[#F8F7F4] relative overflow-hidden" id="builder-container">
+
+    <!-- Loader -->
+    <div id="loader" class="absolute inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+        <i data-lucide="loader-2" class="w-8 h-8 text-northway-red animate-spin"></i>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state"
+        class="absolute inset-0 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="w-24 h-24 mb-6 text-gray-300">
+            <i data-lucide="workflow" class="w-full h-full stroke-[1]"></i>
+        </div>
+        <h2 class="text-2xl font-black text-gray-900 mb-2">Nenhum processo ainda</h2>
+        <p class="text-gray-500 mb-8" id="empty-state-subtitle">Crie o primeiro processo para {{ client.name }}</p>
+        <button onclick="initNewProcess()"
+            class="bg-gray-900 text-white px-8 py-3 rounded-lg font-bold hover:bg-black transition-colors shadow-lg shadow-black/10 flex items-center gap-2">
+            <i data-lucide="plus" class="w-5 h-5"></i> Criar primeiro processo
+        </button>
+    </div>
+
+    <!-- Linear Process Container -->
+    <div id="linear-container"
+        class="absolute inset-0 overflow-y-auto hidden opacity-0 transition-opacity duration-300">
+        <div class="max-w-[680px] mx-auto py-12 px-6">
+            <!-- Progress Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-8">
+                <div class="flex items-end justify-between mb-4">
+                    <div>
+                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Progresso</h3>
+                        <div class="text-3xl font-black text-gray-900" id="linear-progress-text">0%</div>
+                    </div>
+                    <div class="text-sm font-bold text-gray-500" id="linear-progress-count">0 de 0 concluídas</div>
+                </div>
+                <!-- Progress bar -->
+                <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden mb-3">
+                    <div id="linear-progress-bar"
+                        class="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500"
+                        style="width: 0%"></div>
+                </div>
+                <!-- Mini legends -->
+                <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>Concluído (<span
+                            id="count-concluido">0</span>)
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-blue-500"></div>Em andamento (<span
+                            id="count-andamento">0</span>)
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-gray-300"></div>Pendente (<span
+                            id="count-pendente">0</span>)
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-red-500"></div>Bloqueado (<span
+                            id="count-bloqueado">0</span>)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline List -->
+            <div id="linear-steps-list" class="space-y-0 relative">
+                <!-- Line background -->
+                <div class="absolute left-[19px] top-4 bottom-4 w-0.5 bg-gray-200 z-0"></div>
+            </div>
+
+            <!-- Add Step Button / Form -->
+            <div class="mt-6 relative z-10 pl-12">
+                <button id="btn-show-add-step" onclick="showAddStepForm()"
+                    class="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-bold hover:border-gray-900 hover:text-gray-900 transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="plus" class="w-5 h-5"></i> Adicionar etapa
+                </button>
+
+                <div id="form-add-step" class="hidden bg-white p-6 rounded-xl border border-gray-200 shadow-lg mt-2">
+                    <div class="space-y-4">
+                        <input type="text" id="step-name" placeholder="Nome da etapa (Ex: Qualificar Lead)"
+                            class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm font-bold text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none">
+                        <textarea id="step-desc" placeholder="Descrição clara da ação..." rows="2"
+                            class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-gray-900 outline-none resize-none"></textarea>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="step-resp" placeholder="Responsável (Ex: Marcio)"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none">
+                            <select id="step-status"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-gray-900 outline-none">
+                                <option value="pendente">Pendente</option>
+                                <option value="andamento">Em andamento</option>
+                                <option value="concluido">Concluído</option>
+                                <option value="bloqueado">Bloqueado</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center gap-3 pt-2">
+                            <button onclick="saveLinearStep()"
+                                class="bg-gray-900 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-black transition-colors">Adicionar
+                                etapa</button>
+                            <button onclick="hideAddStepForm()"
+                                class="text-gray-500 hover:text-gray-900 text-sm font-bold px-4 py-2">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flowchart Container -->
+    <div id="flowchart-container"
+        class="absolute inset-0 overflow-hidden hidden opacity-0 transition-opacity duration-300"
+        style="background-image: radial-gradient(#D1D5DB 1px, transparent 1px); background-size: 28px 28px;">
+
+        <!-- Toolbar -->
+        <div
+            class="absolute top-6 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-lg border border-gray-200 p-2 flex items-center gap-2 z-20">
+            <div class="flex items-center bg-gray-50 rounded-lg p-1 mr-2">
+                <button onclick="addFlowNode('inicio')"
+                    class="px-3 py-1.5 text-xs font-bold rounded-md hover:bg-white hover:shadow-sm text-green-700 transition-all">Início</button>
+                <button onclick="addFlowNode('fim')"
+                    class="px-3 py-1.5 text-xs font-bold rounded-md hover:bg-white hover:shadow-sm text-red-700 transition-all">Fim</button>
+                <button onclick="addFlowNode('processo')"
+                    class="px-3 py-1.5 text-xs font-bold rounded-md hover:bg-white hover:shadow-sm text-gray-700 transition-all">Processo</button>
+                <button onclick="addFlowNode('decisao')"
+                    class="px-3 py-1.5 text-xs font-bold rounded-md hover:bg-white hover:shadow-sm text-amber-700 transition-all">Decisão</button>
+            </div>
+
+            <div class="w-px h-6 bg-gray-200"></div>
+
+            <button id="btn-flow-delete" onclick="deleteSelectedNode()"
+                class="px-3 py-1.5 text-xs font-bold rounded-lg text-red-600 hover:bg-red-50 transition-colors opacity-50 cursor-not-allowed hidden">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+            <button onclick="saveProcess()"
+                class="bg-gray-900 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-black transition-colors shadow-sm ml-2">Salvar</button>
+        </div>
+
+        <!-- SVG Edge Layer -->
+        <svg id="edges-layer" class="absolute inset-0 w-full h-full pointer-events-none z-0">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#9CA3AF" />
+                </marker>
+            </defs>
+            <g id="edges-group"></g>
+            <path id="drag-line" class="hidden" fill="none" stroke="#E8191A" stroke-width="2" stroke-dasharray="5,5" />
+        </svg>
+
+        <!-- Nodes Canvas -->
+        <div id="nodes-canvas" class="absolute inset-0 z-10 origin-top-left">
+            <!-- Nodes will be injected here via JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const CLIENT_ID = {{ client.id }};
+    const CLIENT_NAME = "{{ client.name }}";
+
+    // Application state
+    let state = {
+        mode: 'atual', // atual, ideal
+        tool: 'fluxograma', // fluxograma, linear
+        data: null // Raw payload fetched from API
+    };
+
+    let isLoading = true;
+    let autoSaveTimeout = null;
+
+    // Linear Tool State
+    let linearSteps = [];
+    let editingStepId = null;
+
+    // Flowchart Tool State
+    let flowNodes = [];
+    let flowEdges = [];
+    let selectedNodeId = null;
+    let selectedEdgeId = null;
+
+    // Dragging state
+    let isDraggingNode = false;
+    let draggedNode = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    // Connecting state
+    let isConnecting = false;
+    let connectSourceId = null;
+
+    // Wait for DOM
+    document.addEventListener("DOMContentLoaded", () => {
+        // Initial setup
+        updateUIState();
+        fetchProcessData();
+
+        // Setup Flowchart Canvas Dragging (Pan)
+        // Leaving pan/zoom out for strict MVP unless required later, using simple drag for nodes.
+        const nodesCanvas = document.getElementById('nodes-canvas');
+        nodesCanvas.addEventListener('mousemove', handleCanvasMouseMove);
+        nodesCanvas.addEventListener('mouseup', handleCanvasMouseUp);
+        nodesCanvas.addEventListener('click', (e) => {
+            if (e.target.id === 'nodes-canvas') {
+                clearSelection();
+            }
+        });
+    });
+
+    // --- State Management ---
+
+    function setMode(newMode) {
+        if (state.mode === newMode) return;
+        state.mode = newMode;
+        updateUIState();
+        fetchProcessData();
+    }
+
+    function setTool(newTool) {
+        if (state.tool === newTool) return;
+        state.tool = newTool;
+        updateUIState();
+        fetchProcessData();
+    }
+
+    function updateUIState() {
+        // Toggles
+        document.getElementById('toggle-mode-atual').className = state.mode === 'atual'
+            ? 'h-full border-b-2 font-semibold text-sm transition-colors border-northway-red text-northway-red'
+            : 'h-full border-b-2 border-transparent font-medium text-sm transition-colors text-gray-400 hover:text-gray-900';
+
+        document.getElementById('toggle-mode-ideal').className = state.mode === 'ideal'
+            ? 'h-full border-b-2 font-semibold text-sm transition-colors border-northway-red text-northway-red'
+            : 'h-full border-b-2 border-transparent font-medium text-sm transition-colors text-gray-400 hover:text-gray-900';
+
+        document.getElementById('toggle-tool-fluxograma').className = state.tool === 'fluxograma'
+            ? 'px-4 py-1.5 text-sm font-bold rounded-md bg-white text-gray-900 shadow-sm transition-all'
+            : 'px-4 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-900 transition-all';
+
+        document.getElementById('toggle-tool-linear').className = state.tool === 'linear'
+            ? 'px-4 py-1.5 text-sm font-bold rounded-md bg-white text-gray-900 shadow-sm transition-all'
+            : 'px-4 py-1.5 text-sm font-medium rounded-md text-gray-500 hover:text-gray-900 transition-all';
+
+        // Badge
+        const badge = document.getElementById('status-badge');
+        badge.innerHTML = `${CLIENT_NAME} \u2022 ${state.mode === 'atual' ? 'Atual' : 'Ideal'}`;
+        badge.className = `px-3 py-1 rounded text-xs font-bold border transition-colors ${state.mode === 'atual' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200'
+            }`;
+
+        // Containers visibility
+        const emptyState = document.getElementById('empty-state');
+        const linearContainer = document.getElementById('linear-container');
+        const flowchartContainer = document.getElementById('flowchart-container');
+
+        // Hide all initially
+        emptyState.classList.add('opacity-0', 'pointer-events-none');
+        linearContainer.classList.add('opacity-0', 'hidden');
+        flowchartContainer.classList.add('opacity-0', 'hidden');
+
+        if (!isLoading) {
+            if (!state.data) {
+                // Show Empty State
+                emptyState.classList.remove('hidden');
+                setTimeout(() => {
+                    emptyState.classList.remove('opacity-0', 'pointer-events-none');
+                }, 50);
+            } else {
+                // Show active tool container
+                const activeContainer = state.tool === 'linear' ? linearContainer : flowchartContainer;
+                activeContainer.classList.remove('hidden');
+                setTimeout(() => {
+                    activeContainer.classList.remove('opacity-0');
+                    if (state.tool === 'linear') renderLinear();
+                    if (state.tool === 'fluxograma') renderFlowchart();
+                }, 50);
+            }
+        }
+    }
+
+    // --- API Calls ---
+
+    async function fetchProcessData() {
+        isLoading = true;
+        document.getElementById('loader').classList.remove('hidden');
+        updateUIState(); // Hydrate loader
+
+        try {
+            const res = await fetch(`/api/clients/${CLIENT_ID}/processes/${state.tool}/${state.mode}`);
+            const data = await res.json();
+
+            state.data = data; // Could be null
+
+            // Hydrate local structures based on tool
+            if (state.tool === 'linear') {
+                linearSteps = state.data ? state.data.steps || [] : [];
+            } else if (state.tool === 'fluxograma') {
+                flowNodes = state.data ? state.data.nodes || [] : [];
+                flowEdges = state.data ? state.data.edges || [] : [];
+                clearSelection();
+            }
+
+            isLoading = false;
+            document.getElementById('loader').classList.add('hidden');
+            updateUIState();
+
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao carregar processo.");
+            isLoading = false;
+            document.getElementById('loader').classList.add('hidden');
+        }
+    }
+
+    async function saveProcess() {
+        // Collect data based on active tool
+        const payloadData = {};
+        if (state.tool === 'linear') {
+            payloadData.steps = linearSteps;
+        } else if (state.tool === 'fluxograma') {
+            payloadData.nodes = flowNodes;
+            payloadData.edges = flowEdges;
+        }
+
+        // Update local state early for optimistic UI
+        state.data = payloadData;
+
+        try {
+            const res = await fetch(`/api/clients/${CLIENT_ID}/processes/${state.tool}/${state.mode}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payloadData)
+            });
+            const result = await res.json();
+            if (!result.success) throw new Error("API Save Error");
+        } catch (err) {
+            console.error(err);
+            // Optionally notify user of save failure
+        }
+    }
+
+    function requestAutoSave() {
+        if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(() => {
+            saveProcess();
+        }, 800); // 800ms debounce
+    }
+
+    function initNewProcess() {
+        // Transitions empty state to active tool with empty arrays
+        state.data = {}; // Trigger active mode
+        if (state.tool === 'linear') linearSteps = [];
+        if (state.tool === 'fluxograma') { flowNodes = []; flowEdges = []; }
+
+        updateUIState();
+        saveProcess(); // Create initial record in db
+    }
+
+    // ===============================================
+    // LINEAR PROCESS ENGINE
+    // ===============================================
+
+    function renderLinear() {
+        const listEl = document.getElementById('linear-steps-list');
+        listEl.innerHTML = ''; // Clear
+
+        // Re-inject the background line
+        const bgLine = document.createElement('div');
+        bgLine.className = 'absolute left-[19px] top-4 bottom-4 w-0.5 bg-gray-200 z-0';
+        listEl.appendChild(bgLine);
+
+        let total = linearSteps.length;
+        let completed = 0;
+        let andamento = 0;
+        let pendente = 0;
+        let bloqueado = 0;
+
+        linearSteps.forEach((step, index) => {
+            // Stats
+            if (step.status === 'concluido') completed++;
+            else if (step.status === 'andamento') andamento++;
+            else if (step.status === 'bloqueado') bloqueado++;
+            else pendente++;
+
+            // Rendering Logic
+            let colorAccent = 'gray'; // pendente default
+            let iconRing = '';
+            let lineAbove = index > 0 && linearSteps[index - 1].status === 'concluido' ? 'bg-green-500' : 'bg-gray-200';
+            let lineBelow = step.status === 'concluido' ? 'bg-green-500' : 'bg-gray-200';
+
+            if (step.status === 'concluido') { colorAccent = 'green'; }
+            if (step.status === 'andamento') { colorAccent = 'blue'; iconRing = 'ring-4 ring-blue-100'; }
+            if (step.status === 'bloqueado') { colorAccent = 'red'; }
+
+            const colorMap = {
+                'gray': { class: 'border-l-gray-300', bg: 'bg-white', text: 'text-gray-500', fill: 'bg-white border-2 border-gray-300' },
+                'green': { class: 'border-l-green-500', bg: 'bg-green-50', text: 'text-green-700', fill: 'bg-green-500 text-white font-bold' },
+                'blue': { class: 'border-l-blue-500', bg: 'bg-blue-50', text: 'text-blue-700', fill: 'bg-blue-500 text-white font-bold' },
+                'red': { class: 'border-l-red-500', bg: 'bg-red-50', text: 'text-red-700', fill: 'bg-red-500 text-white font-bold' }
+            };
+            const theme = colorMap[colorAccent];
+
+            // Badge text
+            const statusLabels = { 'pendente': 'Pendente', 'andamento': 'Em andamento', 'concluido': 'Concluído', 'bloqueado': 'Bloqueado' };
+
+            const stepHtml = `
+            <div class="relative flex gap-6 items-start group mb-6 z-10">
+                <!-- Timeline Node -->
+                <div class="flex flex-col items-center mt-1">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-xs z-10 transition-all ${theme.fill} ${iconRing}">
+                        ${index + 1}
+                    </div>
+                </div>
+
+                <!-- Card -->
+                <div class="flex-1 bg-white rounded-xl border-l-4 ${theme.class} border-t border-b border-r border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow relative">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-3">
+                            <h4 class="font-bold text-gray-900 text-base mb-0">${step.name}</h4>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${theme.bg} ${theme.text}">${statusLabels[step.status]}</span>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                            <button onclick="editLinearStep('${step.id}')" class="p-1.5 text-gray-400 hover:text-blue-600 rounded bg-gray-50 hover:bg-blue-50" title="Editar">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteLinearStep('${step.id}')" class="p-1.5 text-gray-400 hover:text-red-600 rounded bg-gray-50 hover:bg-red-50" title="Remover">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <p class="text-sm text-gray-500 font-medium mb-3">${step.description}</p>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-gray-400">
+                            <i data-lucide="user" class="w-3 h-3"></i> ${step.resp}
+                        </div>
+                        
+                        <!-- Next Status quick action -->
+                        <button onclick="cycleStatus('${step.id}')" class="text-xs font-bold text-gray-400 hover:text-gray-900 flex items-center gap-1 transition-colors">
+                            <i data-lucide="refresh-cw" class="w-3 h-3"></i> Mudar status
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = stepHtml.trim();
+            listEl.appendChild(tempDiv.firstChild);
+        });
+
+        // Update Progress UI
+        const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
+        document.getElementById('linear-progress-text').innerText = `${pct}%`;
+        document.getElementById('linear-progress-count').innerText = `${completed} de ${total} concluídas`;
+        document.getElementById('linear-progress-bar').style.width = `${pct}%`;
+
+        document.getElementById('count-concluido').innerText = completed;
+        document.getElementById('count-andamento').innerText = andamento;
+        document.getElementById('count-pendente').innerText = pendente;
+        document.getElementById('count-bloqueado').innerText = bloqueado;
+
+        lucide.createIcons();
+    }
+
+    function showAddStepForm(isEdit = false) {
+        document.getElementById('btn-show-add-step').classList.add('hidden');
+        document.getElementById('form-add-step').classList.remove('hidden');
+        if (!isEdit) {
+            document.getElementById('step-name').value = '';
+            document.getElementById('step-desc').value = '';
+            document.getElementById('step-resp').value = '';
+            document.getElementById('step-status').value = 'pendente';
+            editingStepId = null;
+        }
+        document.getElementById('step-name').focus();
+    }
+
+    function hideAddStepForm() {
+        document.getElementById('btn-show-add-step').classList.remove('hidden');
+        document.getElementById('form-add-step').classList.add('hidden');
+        editingStepId = null;
+    }
+
+    function saveLinearStep() {
+        const name = document.getElementById('step-name').value.trim();
+        const desc = document.getElementById('step-desc').value.trim();
+        const resp = document.getElementById('step-resp').value.trim();
+        const status = document.getElementById('step-status').value;
+
+        if (!name) return alert("Etapa precisa de um nome.");
+
+        if (editingStepId) {
+            const step = linearSteps.find(s => s.id === editingStepId);
+            if (step) {
+                step.name = name;
+                step.description = desc;
+                step.resp = resp;
+                step.status = status;
+            }
+        } else {
+            linearSteps.push({
+                id: 'step_' + Date.now() + Math.random().toString().substr(2, 5),
+                name: name,
+                description: desc,
+                resp: resp,
+                status: status
+            });
+        }
+
+        hideAddStepForm();
+        renderLinear();
+        requestAutoSave();
+    }
+
+    function editLinearStep(id) {
+        const step = linearSteps.find(s => s.id === id);
+        if (!step) return;
+
+        document.getElementById('step-name').value = step.name;
+        document.getElementById('step-desc').value = step.description;
+        document.getElementById('step-resp').value = step.resp;
+        document.getElementById('step-status').value = step.status;
+        editingStepId = step.id;
+        showAddStepForm(true);
+    }
+
+    function deleteLinearStep(id) {
+        if (!confirm("Remover etapa?")) return;
+        linearSteps = linearSteps.filter(s => s.id !== id);
+        renderLinear();
+        requestAutoSave();
+    }
+
+    function cycleStatus(id) {
+        const step = linearSteps.find(s => s.id === id);
+        if (!step) return;
+        const sequence = ['pendente', 'andamento', 'concluido', 'bloqueado'];
+        let nextIdx = sequence.indexOf(step.status) + 1;
+        if (nextIdx >= sequence.length) nextIdx = 0;
+        step.status = sequence[nextIdx];
+        renderLinear();
+        requestAutoSave();
+    }
+
+    // ===============================================
+    // FLOWCHART ENGINE
+    // ===============================================
+
+    function renderFlowchart() {
+        const canvas = document.getElementById('nodes-canvas');
+        canvas.innerHTML = '';
+        renderEdges();
+
+        flowNodes.forEach(node => {
+            const el = document.createElement('div');
+            el.id = `node-${node.id}`;
+            el.className = `absolute cursor-grab select-none shadow-sm flex flex-col items-center justify-center transition-all px-4 py-2 text-sm font-bold border-2`;
+
+            // Positioning
+            el.style.left = node.x + 'px';
+            el.style.top = node.y + 'px';
+
+            // Styling based on type
+            let bgClass = "bg-white", borderClass = "border-gray-300", roundedClass = "rounded-xl";
+            let typeTag = "";
+
+            if (node.type === 'inicio') {
+                bgClass = "bg-green-50 text-green-800"; borderClass = "border-green-400"; roundedClass = "rounded-full px-6 py-2";
+            } else if (node.type === 'fim') {
+                bgClass = "bg-red-50 text-red-800"; borderClass = "border-red-400"; roundedClass = "rounded-full px-6 py-2";
+            } else if (node.type === 'processo') {
+                typeTag = `<span class="absolute -top-2 -left-2 bg-gray-200 text-gray-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm">PROCESSO</span>`;
+            } else if (node.type === 'decisao') {
+                // Diamond shape illusion using clip-path or simple rotation.
+                // For simplicity & readability in text, we use a distinct color and slightly sharp corners + tag
+                bgClass = "bg-amber-50 text-amber-900"; borderClass = "border-amber-400"; roundedClass = "rounded-lg";
+                typeTag = `<span class="absolute -top-2 -left-2 bg-amber-200 text-amber-800 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm">DECISÃO?</span>`;
+            }
+
+            // Selection state
+            if (node.id === selectedNodeId) {
+                borderClass = "border-red-500 shadow-md";
+                // Add connection ports
+                const ports = `
+                    <div class="port absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)]" data-pos="top"></div>
+                    <div class="port absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)]" data-pos="bottom"></div>
+                    <div class="port absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)]" data-pos="left"></div>
+                    <div class="port absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)]" data-pos="right"></div>
+                `;
+                el.innerHTML = typeTag + `<span class="pointer-events-none">${node.label}</span>` + ports;
+            } else {
+                el.innerHTML = typeTag + `<span class="pointer-events-none">${node.label}</span>`;
+            }
+
+            el.className += ` ${bgClass} ${borderClass} ${roundedClass}`;
+
+            // Event Listeners for dragging and double clicking
+            el.addEventListener('mousedown', (e) => handleNodeMouseDown(e, node));
+            el.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                const newLabel = prompt("Editar nome:", node.label);
+                if (newLabel && newLabel.trim()) {
+                    node.label = newLabel.trim();
+                    renderFlowchart();
+                    requestAutoSave();
+                }
+            });
+
+            canvas.appendChild(el);
+        });
+
+        // Update toolbar
+        const btnDelete = document.getElementById('btn-flow-delete');
+        if (selectedNodeId) {
+            btnDelete.classList.remove('opacity-50', 'cursor-not-allowed', 'hidden');
+        } else {
+            btnDelete.classList.add('opacity-50', 'cursor-not-allowed', 'hidden');
+        }
+    }
+
+    function renderEdges() {
+        const group = document.getElementById('edges-group');
+        group.innerHTML = '';
+
+        flowEdges.forEach(edge => {
+            const startNode = flowNodes.find(n => n.id === edge.source);
+            const endNode = flowNodes.find(n => n.id === edge.target);
+            if (!startNode || !endNode) return;
+
+            // Simple center-to-center pathing for MVP
+            // We use DOM metrics if available, or fallback constraints
+
+            // To be accurate, we need the rendered width/height. 
+            // In a real robust system, dimensions are cached.
+            const sRect = { x: startNode.x, y: startNode.y, w: 100, h: 40 };
+            const tRect = { x: endNode.x, y: endNode.y, w: 100, h: 40 };
+
+            // We grab bounding rect of active DOM if present, otherwise guess center.
+            const sDOM = document.getElementById(`node-${edge.source}`);
+            if (sDOM) { sRect.w = sDOM.offsetWidth; sRect.h = sDOM.offsetHeight; }
+            const tDOM = document.getElementById(`node-${edge.target}`);
+            if (tDOM) { tRect.w = tDOM.offsetWidth; tRect.h = tDOM.offsetHeight; }
+
+            const sx = sRect.x + sRect.w / 2;
+            const sy = sRect.y + sRect.h / 2;
+            const ex = tRect.x + tRect.w / 2;
+            const ey = tRect.y + tRect.h / 2;
+
+            // Path math (Bezier curve for smoothness)
+            // Control points pull outwards horizontally
+            const deltaX = Math.abs(ex - sx) * 0.5;
+            const pathData = `M ${sx} ${sy} C ${sx} ${sy + 40}, ${ex} ${ey - 40}, ${ex} ${ey}`;
+
+            const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathEl.setAttribute('d', pathData);
+            pathEl.setAttribute('fill', 'none');
+            // If selected edge (if we implement it) make it red
+            pathEl.setAttribute('stroke', edge.id === selectedEdgeId ? '#E8191A' : '#9CA3AF');
+            pathEl.setAttribute('stroke-width', '2');
+            pathEl.setAttribute('marker-end', 'url(#arrowhead)');
+
+            // Interaction to delete edge
+            pathEl.style.cursor = 'pointer';
+            pathEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Remover ligação?')) {
+                    flowEdges = flowEdges.filter(eItem => eItem.id !== edge.id);
+                    renderFlowchart();
+                    requestAutoSave();
+                }
+            });
+
+            group.appendChild(pathEl);
+
+            // Label for Decisions
+            if (edge.label) {
+                // Approximate midpoint
+                const mx = (sx + ex) / 2;
+                const my = (sy + ey) / 2;
+
+                const gLabel = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+                const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                bg.setAttribute('fill', '#FFFFFF');
+                bg.setAttribute('stroke', '#E5E7EB');
+                bg.setAttribute('rx', '4');
+                bg.setAttribute('x', mx - 20);
+                bg.setAttribute('y', my - 10);
+                bg.setAttribute('width', '40');
+                bg.setAttribute('height', '20');
+
+                const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                txt.setAttribute('x', mx);
+                txt.setAttribute('y', my + 4); // baseline tweak
+                txt.setAttribute('text-anchor', 'middle');
+                txt.setAttribute('font-size', '10');
+                txt.setAttribute('font-family', 'Inter, sans-serif');
+                txt.setAttribute('font-weight', 'bold');
+                txt.setAttribute('fill', '#4B5563');
+                txt.textContent = edge.label;
+
+                gLabel.appendChild(bg);
+                gLabel.appendChild(txt);
+                gLabel.style.cursor = 'pointer';
+                gLabel.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const nL = prompt("Editar ligação (Sim / Não):", edge.label);
+                    if (nL !== null) {
+                        edge.label = nL;
+                        renderFlowchart();
+                        requestAutoSave();
+                    }
+                });
+
+                group.appendChild(gLabel);
+            }
+        });
+    }
+
+    function addFlowNode(type) {
+        const labels = {
+            'inicio': 'INÍCIO',
+            'fim': 'FIM',
+            'processo': 'Nova Etapa',
+            'decisao': 'Tem perfil?'
+        };
+
+        flowNodes.push({
+            id: 'node_' + Date.now(),
+            type: type,
+            label: labels[type],
+            x: 100 + (flowNodes.length * 20),
+            y: 100 + (flowNodes.length * 20)
+        });
+
+        renderFlowchart();
+        requestAutoSave();
+    }
+
+    // --- Interaction Handlers ---
+
+    function clearSelection() {
+        selectedNodeId = null;
+        selectedEdgeId = null;
+        renderFlowchart();
+    }
+
+    function deleteSelectedNode() {
+        if (!selectedNodeId) return;
+        if (!confirm("Remover processo selecionado?")) return;
+
+        // Remove node
+        flowNodes = flowNodes.filter(n => n.id !== selectedNodeId);
+        // Remove connected edges
+        flowEdges = flowEdges.filter(e => e.source !== selectedNodeId && e.target !== selectedNodeId);
+
+        selectedNodeId = null;
+        renderFlowchart();
+        requestAutoSave();
+    }
+
+    function handleNodeMouseDown(e, node) {
+        e.stopPropagation(); // Prevent canvas click clear selection
+
+        // Check if clicked on a port
+        if (e.target.classList.contains('port')) {
+            isConnecting = true;
+            connectSourceId = node.id;
+
+            // Setup visual line
+            const dragLine = document.getElementById('drag-line');
+            dragLine.classList.remove('hidden');
+
+            // Get center of source
+            const domNode = document.getElementById(`node-${node.id}`);
+            const sx = node.x + domNode.offsetWidth / 2;
+            const sy = node.y + domNode.offsetHeight / 2;
+
+            dragLine.setAttribute('d', `M ${sx} ${sy} L ${e.clientX} ${e.clientY}`);
+            return;
+        }
+
+        // Otherwise Dragging Node
+        selectedNodeId = node.id;
+        draggedNode = node;
+        isDraggingNode = true;
+
+        const domNode = document.getElementById(`node-${node.id}`);
+        dragOffset.x = e.clientX - node.x;
+        dragOffset.y = e.clientY - node.y;
+
+        domNode.style.cursor = 'grabbing';
+        renderFlowchart(); // re-render to update selection UI
+    }
+
+    function handleCanvasMouseMove(e) {
+        if (isDraggingNode && draggedNode) {
+            // Apply grid snapping (28px)
+            const snap = 28;
+            let nx = e.clientX - dragOffset.x;
+            let ny = e.clientY - dragOffset.y;
+
+            // Grid Snapping logic
+            nx = Math.round(nx / snap) * snap;
+            ny = Math.round(ny / snap) * snap;
+
+            draggedNode.x = Math.max(0, nx);
+            draggedNode.y = Math.max(0, ny);
+
+            const domNode = document.getElementById(`node-${draggedNode.id}`);
+            domNode.style.left = draggedNode.x + 'px';
+            domNode.style.top = draggedNode.y + 'px';
+
+            renderEdges(); // Update lines live
+        }
+
+        if (isConnecting) {
+            const dragLine = document.getElementById('drag-line');
+            const sourceNode = flowNodes.find(n => n.id === connectSourceId);
+            const sDOM = document.getElementById(`node-${sourceNode.id}`);
+            const sx = sourceNode.x + sDOM.offsetWidth / 2;
+            const sy = sourceNode.y + sDOM.offsetHeight / 2;
+
+            // Get canvas rect for accurate mouse pos mapping
+            const canvasRect = document.getElementById('flowchart-container').getBoundingClientRect();
+            const mouseX = e.clientX - canvasRect.left;
+            const mouseY = e.clientY - canvasRect.top;
+
+            dragLine.setAttribute('d', `M ${sx} ${sy} L ${mouseX} ${mouseY}`);
+        }
+    }
+
+    function handleCanvasMouseUp(e) {
+        if (isDraggingNode) {
+            isDraggingNode = false;
+            if (draggedNode) {
+                const domNode = document.getElementById(`node-${draggedNode.id}`);
+                if (domNode) domNode.style.cursor = 'grab';
+            }
+            draggedNode = null;
+            requestAutoSave();
+        }
+
+        if (isConnecting) {
+            const dragLine = document.getElementById('drag-line');
+            dragLine.classList.add('hidden');
+
+            // Detect collision with another node
+            // Easiest way in Vanilla JS on drop: point math
+            const canvasRect = document.getElementById('flowchart-container').getBoundingClientRect();
+            const mouseX = e.clientX - canvasRect.left;
+            const mouseY = e.clientY - canvasRect.top;
+
+            let targetNodeId = null;
+            // Iterate reverse to get top-most element conceptually
+            for (let i = flowNodes.length - 1; i >= 0; i--) {
+                const node = flowNodes[i];
+                if (node.id === connectSourceId) continue; // no self link
+
+                const domNode = document.getElementById(`node-${node.id}`);
+                const bRect = { x: node.x, y: node.y, w: domNode.offsetWidth, h: domNode.offsetHeight };
+
+                if (mouseX >= bRect.x && mouseX <= bRect.x + bRect.w &&
+                    mouseY >= bRect.y && mouseY <= bRect.y + bRect.h) {
+                    targetNodeId = node.id;
+                    break;
+                }
+            }
+
+            if (targetNodeId) {
+                // Check if connection exists
+                const exists = flowEdges.find(ed => ed.source === connectSourceId && ed.target === targetNodeId);
+                if (!exists) {
+                    // Pre-fill label if source is a decision
+                    const sourceNode = flowNodes.find(n => n.id === connectSourceId);
+                    let initialLabel = '';
+                    if (sourceNode.type === 'decisao') {
+                        initialLabel = 'Sim'; // Or prompt immediately
+                    }
+
+                    flowEdges.push({
+                        id: 'edge_' + Date.now(),
+                        source: connectSourceId,
+                        target: targetNodeId,
+                        label: initialLabel
+                    });
+                    renderFlowchart();
+                    requestAutoSave();
+                }
+            }
+
+            isConnecting = false;
+            connectSourceId = null;
+        }
+    }
+</script>
+{% endblock %}

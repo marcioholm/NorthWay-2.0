@@ -1449,6 +1449,11 @@
                                 <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
                                 Processos & Serviços
                             </h3>
+                            <a href="{{ url_for('clients.process_builder_view', id=client.id) }}"
+                                class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2 mr-2">
+                                <i data-lucide="git-merge" class="w-4 h-4"></i>
+                                Process Builder
+                            </a>
                             <button type="button" onclick="toggleModal('addProcessModal')"
                                 class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
