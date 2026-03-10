@@ -208,7 +208,11 @@ def sync_library():
             
         # --- CLEANUP: Remove old PDF-based books as requested ---
         old_titles = ['Apresentação Oficial NorthWay CRM', 'Manual de Funcionalidades CRM']
-        LibraryBook.query.filter(LibraryBook.title.in_(old_titles)).delete(synchronize_session=False)
+        old_books = LibraryBook.query.filter(LibraryBook.title.in_(old_titles)).all()
+        for ob in old_books:
+            ob.allowed_companies = [] # Clear associations first
+            db.session.delete(ob)
+        db.session.flush()
         results.append("Old PDF materials removed (standby)")
         
         # --- REGISTER: New Interactive Presentation ---
