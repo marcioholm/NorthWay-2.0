@@ -190,21 +190,32 @@ def manual_edicao():
 @docs_bp.route('/api/docs/sync-library')
 @login_required
 def sync_library():
-    # Emergency relaxation: allow admin role too if super_admin is not set
-    is_super = getattr(current_user, 'is_super_admin', False)
-    is_admin = getattr(current_user, 'role', '') == 'admin'
-    
-    if not (is_super or is_admin):
-        return jsonify({'error': 'Unauthorized', 'is_super': is_super, 'role': getattr(current_user, 'role', '')}), 403
-        
     import traceback
     results = []
     try:
-        from models import db, LibraryBook, Company
+        from models import db, LibraryBook, Company, User
         
-        # 0. Emergency Schema Sync
+        # 0. Emergency Schema Sync (Tables)
         db.create_all()
         results.append("Schema synced via create_all()")
+        
+        # 1. PERMISSION CHECK (Deeper/Safer)
+        # We check this AFTER create_all just in case columns were missing
+        is_super = False
+        try:
+             is_super = getattr(current_user, 'is_super_admin', False)
+        except: 
+             results.append("Warning: Could not access is_super_admin attribute")
+             
+        is_admin = getattr(current_user, 'role', '') == 'admin'
+        
+        if not (is_super or is_admin):
+            return jsonify({
+                'error': 'Unauthorized', 
+                'is_super': is_super, 
+                'role': getattr(current_user, 'role', ''),
+                'explanation': 'This route requires Super Admin or Admin role.'
+            }), 403
         
         # --- BOOK 1: APRESENTAÇÃO ---
         html_presentation = """

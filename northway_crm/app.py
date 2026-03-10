@@ -786,6 +786,32 @@ def create_app():
                                             conn.commit()
                                         except Exception as e_lead:
                                             print(f"⚠️ MIGRATION FAILED for lead.{col}: {e_lead}")
+                        
+                        # Added User Repairs
+                        try:
+                            if inspector.has_table("user"):
+                                user_cols = [c['name'] for c in inspector.get_columns("user")]
+                                user_repairs = [
+                                    ('is_super_admin', "BOOLEAN DEFAULT FALSE"),
+                                    ('role_id', "INTEGER"),
+                                    ('supabase_uid', "VARCHAR(100)"),
+                                    ('funcao_comercial', "VARCHAR(100)"),
+                                    ('tipo_vinculo', "VARCHAR(20)"),
+                                    ('profile_image', "VARCHAR(150)"),
+                                    ('phone', "VARCHAR(20)"),
+                                    ('status_message', "VARCHAR(100)"),
+                                    ('onboarding_dismissed', "BOOLEAN DEFAULT FALSE")
+                                ]
+                                for col, dtype in user_repairs:
+                                    if col not in user_cols:
+                                        try:
+                                            print(f"🛠️ MIGRATION: Adding {col} to user...")
+                                            conn.execute(text(f"ALTER TABLE \"user\" ADD COLUMN {col} {dtype}"))
+                                            conn.commit()
+                                        except Exception as e_user:
+                                            print(f"⚠️ MIGRATION FAILED for user.{col}: {e_user}")
+                        except Exception as e_user_mig:
+                            print(f"⚠️ USER MIGRATION ERROR: {e_user_mig}")
                         except Exception as e_lead_mig:
                             print(f"⚠️ LEAD MIGRATION ERROR: {e_lead_mig}")
                 except Exception as e_mig:
