@@ -786,7 +786,9 @@ def create_app():
                                             conn.commit()
                                         except Exception as e_lead:
                                             print(f"⚠️ MIGRATION FAILED for lead.{col}: {e_lead}")
-                        
+                        except Exception as e_lead_mig:
+                            print(f"⚠️ LEAD MIGRATION ERROR: {e_lead_mig}")
+
                         # Added User Repairs
                         try:
                             if inspector.has_table("user"):
@@ -812,8 +814,6 @@ def create_app():
                                             print(f"⚠️ MIGRATION FAILED for user.{col}: {e_user}")
                         except Exception as e_user_mig:
                             print(f"⚠️ USER MIGRATION ERROR: {e_user_mig}")
-                        except Exception as e_lead_mig:
-                            print(f"⚠️ LEAD MIGRATION ERROR: {e_lead_mig}")
                 except Exception as e_mig:
                     print(f"⚠️ MIGRATION NOTICE (Non-critical if already exists): {e_mig}")
                 
