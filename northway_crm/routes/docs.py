@@ -188,6 +188,7 @@ def guide_captacao():
 def manual_edicao():
     return render_template('docs/manual_edicao.html')
 @docs_bp.route('/api/docs/sync-library')
+@docs_bp.route('/master/api/docs/sync-library')
 @login_required
 def sync_library():
     import traceback
