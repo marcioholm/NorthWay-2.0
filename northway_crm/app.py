@@ -626,7 +626,21 @@ def create_app():
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         );""",
                         "ALTER TABLE lead ADD COLUMN diagnostic_status VARCHAR(20) DEFAULT 'pending';",
-                        "ALTER TABLE company ADD COLUMN features TEXT DEFAULT '{}';"
+                        "ALTER TABLE company ADD COLUMN features TEXT DEFAULT '{}';",
+                        """CREATE TABLE IF NOT EXISTS commercial_presentations (
+                            id TEXT PRIMARY KEY,
+                            consultor_id INTEGER REFERENCES users(id),
+                            company_id INTEGER REFERENCES companies(id),
+                            prospect_name TEXT NOT NULL,
+                            prospect_logo TEXT,
+                            observacao TEXT,
+                            pdf_url TEXT,
+                            token TEXT UNIQUE,
+                            gerado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            expira_em TIMESTAMP,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );"""
                     ]
 
                 for q in queries:
