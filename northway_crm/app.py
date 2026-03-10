@@ -583,6 +583,20 @@ def create_app():
                             ordem INTEGER DEFAULT 0,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );""",
+                        """CREATE TABLE IF NOT EXISTS commercial_presentations (
+                            id VARCHAR(36) PRIMARY KEY,
+                            consultor_id INTEGER REFERENCES users(id),
+                            company_id INTEGER REFERENCES companies(id),
+                            prospect_name VARCHAR(200) NOT NULL,
+                            prospect_logo VARCHAR(500),
+                            observacao TEXT,
+                            pdf_url TEXT,
+                            token VARCHAR(100) UNIQUE,
+                            gerado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            expira_em TIMESTAMP,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         );"""
                     ]
                 else:
