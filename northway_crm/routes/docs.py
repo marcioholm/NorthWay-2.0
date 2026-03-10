@@ -220,24 +220,47 @@ def sync_library():
         
         # --- BOOK 1: APRESENTAÇÃO ---
         html_presentation = """
-        <div class="presentation-header text-center mb-12">
-            <h1 style="color: #fa0102; font-size: 3rem; font-weight: 900; margin-bottom: 0.5rem;">NORTHWAY CRM</h1>
-            <p style="color: #666; font-size: 1.25rem;">Ecossistema Completo de Vendas, Operações e Inteligência</p>
-        </div>
-        <div style="background: #000; color: #fff; padding: 3rem; border-radius: 2rem; text-align: center; margin-top: 2rem;">
-            <h2 style="font-weight: 900; margin-bottom: 1rem;">PREPARADO PARA ESCALAR?</h2>
-            <a href="/static/library/apresentacao_crm_oficial.pdf" target="_blank" style="background: #fa0102; color: white; padding: 1rem 2.5rem; border-radius: 1rem; font-weight: bold; text-decoration: none;"> BAIXAR PDF COMPLETO </a>
+        <div class="not-prose bg-[#0f0518] rounded-[2rem] p-12 text-center border border-white/5 relative overflow-hidden">
+            <!-- Glow Effect -->
+            <div class="absolute -top-24 -left-24 w-64 h-64 bg-red-600/10 rounded-full blur-[80px]"></div>
+            <div class="relative z-10">
+                <h1 class="text-4xl font-display font-black text-white mb-4 uppercase tracking-tighter">
+                    NorthWay <span class="text-[#fa0102]">CRM</span>
+                </h1>
+                <p class="text-gray-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
+                    Sua jornada para o próximo nível começa aqui. Acesse o material completo e domine o ecossistema.
+                </p>
+                <a href="/static/library/apresentacao_crm_oficial.pdf" target="_blank" 
+                   class="inline-block bg-[#fa0102] text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-[0_0_20px_rgba(250,1,2,0.4)] hover:shadow-[0_0_30px_rgba(250,1,2,0.6)]">
+                   Baixar Apresentação PDF
+                </a>
+            </div>
         </div>
         """
         
         # --- BOOK 2: MANUAL ---
         html_manual = """
-        <div class="presentation-header text-center mb-12">
-            <h1 style="color: #fa0102; font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Manual de Funcionalidades</h1>
-            <p style="color: #666;">Guia Completo do Ecossistema NorthWay</p>
-        </div>
-        <div style="background: #fa0102; color: #fff; padding: 2rem; border-radius: 1rem; text-align: center; margin-top: 2rem;">
-            <a href="/static/library/manual_crm_northway.pdf" target="_blank" style="color: white; font-weight: bold; text-decoration: none;"> → BAIXAR MANUAL EM PDF </a>
+        <div class="not-prose bg-white rounded-3xl p-12 border border-blue-50 relative overflow-hidden shadow-2xl">
+            <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-blue-600/5 rounded-full blur-[80px]"></div>
+            <div class="relative z-10 flex flex-col md:flex-row items-center gap-10">
+                <div class="flex-1 text-left">
+                    <h1 class="text-3xl font-display font-black text-gray-900 mb-4 tracking-tight uppercase">
+                        Manual de <span class="text-blue-600">Funcionalidades</span>
+                    </h1>
+                    <p class="text-gray-500 text-lg mb-8 leading-relaxed">
+                        Aprenda a configurar e extrair o máximo de performance da sua plataforma com nosso guia prático.
+                    </p>
+                    <a href="/static/library/manual_crm_northway.pdf" target="_blank" 
+                       class="inline-block bg-gray-900 text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-black transition-all shadow-xl">
+                       Acessar Manual do Usuário
+                    </a>
+                </div>
+                <div class="hidden md:block w-32 h-32 bg-blue-50 rounded-2xl flex items-center justify-center">
+                    <svg class="w-16 h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.754 18 18.168 18.477 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+            </div>
         </div>
         """
         
