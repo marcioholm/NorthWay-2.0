@@ -697,7 +697,6 @@ def create_app():
             ('routes.pdf_routes', 'pdf_bp', 'pdf_bp', None),
             ('routes.financial_payable', 'payable_bp', 'payable_bp', None),
             ('routes.commercial_performance', 'commercial_bp', 'commercial_bp', None),
-            ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None),
             ('routes.matrix_routes', 'matrix_bp', 'matrix_bp', None),
             ('routes.crepi_routes', 'crepi_bp', 'crepi_bp', None),
             ('routes.swot_routes', 'swot_bp', 'swot_bp', None),

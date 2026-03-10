@@ -26,23 +26,23 @@ class PresentationPDF(FPDF):
     def add_presentation_page(self, title, subtitle=None):
         self.add_page()
         # Dark Background
-        self.set_fill_color(*self.bg_color)
+        self.set_fill_color(self.bg_color[0], self.bg_color[1], self.bg_color[2])
         self.rect(0, 0, 210, 297, 'F')
         
         # Decorative Elements (Glassmorphism inspired)
-        self.set_draw_color(*self.primary_color)
+        self.set_draw_color(self.primary_color[0], self.primary_color[1], self.primary_color[2])
         self.set_line_width(0.5)
         self.line(10, 25, 60, 25)
         
         # Title
         self.set_xy(10, 30)
         self.set_font('Helvetica', 'B', 24)
-        self.set_text_color(*self.text_color)
+        self.set_text_color(self.text_color[0], self.text_color[1], self.text_color[2])
         self.cell(0, 15, title.upper(), 0, 1, 'L')
         
         if subtitle:
             self.set_font('Helvetica', '', 12)
-            self.set_text_color(*self.secondary_text)
+            self.set_text_color(self.secondary_text[0], self.secondary_text[1], self.secondary_text[2])
             self.cell(0, 10, subtitle, 0, 1, 'L')
             self.ln(10)
 
@@ -215,4 +215,4 @@ class PresentationService:
         pdf.multi_cell(0, 8, "Estamos prontos para transformar sua operação comercial. "
                               "Escaneie o QR Code no seu dashboard ou entre em contato direto pelo WhatsApp.", 0, 'C')
 
-        return bytes(pdf.output())
+        return pdf.output()
