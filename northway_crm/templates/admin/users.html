@@ -83,7 +83,15 @@
                                 {{ user.role }}
                             </span>
                         </td>
-                        <td class="p-6 text-right">
+                        <td class="p-6 text-right space-x-2">
+                            <form action="{{ url_for('admin.resend_invite', user_id=user.id) }}" method="POST"
+                                class="inline">
+                                <button type="submit"
+                                    class="inline-flex items-center justify-center px-4 py-2 text-gray-500 hover:text-northway-red hover:bg-red-50 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest"
+                                    title="Reenviar e-mail de primeiro acesso">
+                                    <i data-lucide="mail" class="w-3.5 h-3.5 mr-2"></i> Reenviar
+                                </button>
+                            </form>
                             <a href="{{ url_for('admin.edit_user', user_id=user.id) }}"
                                 class="inline-flex items-center justify-center px-4 py-2 text-gray-500 hover:text-northway-red hover:bg-red-50 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest">
                                 <i data-lucide="edit-3" class="w-3.5 h-3.5 mr-2"></i> Editar

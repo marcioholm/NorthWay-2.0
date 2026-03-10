@@ -140,6 +140,44 @@ def edit_user(user_id):
     
     return render_template('admin/user_form.html', user=user, papeis=papeis, regras=regras)
 
+@admin_bp.route('/admin/users/<int:user_id>/resend_invite', methods=['POST'])
+def resend_invite(user_id):
+    from models import db, User, PasswordResetToken, EMAIL_TEMPLATES
+    from services.email_service import EmailService
+    import secrets
+    import hashlib
+    from datetime import timedelta
+    from utils import get_now_br
+
+    user = User.query.get_or_404(user_id)
+    if user.company_id != current_user.company_id:
+        abort(403)
+        
+    token_raw = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token_raw.encode()).hexdigest()
+    
+    reset_token = PasswordResetToken(
+        user_id=user.id,
+        token_hash=token_hash,
+        expires_at=get_now_br() + timedelta(hours=48)
+    )
+    db.session.add(reset_token)
+    db.session.commit()
+    
+    invite_url = url_for('auth.reset_password', token=token_raw, _external=True)
+    
+    EmailService.send_email(
+        to=user.email,
+        subject=f"Convite para acessar a plataforma da {current_user.company.name}",
+        template=EMAIL_TEMPLATES.invite_user,
+        context={'user': user, 'company': current_user.company, 'invite_url': invite_url},
+        company_id=current_user.company_id,
+        user_id=user.id
+    )
+    
+    flash('Convite reenviado com sucesso!', 'success')
+    return redirect(url_for('admin.users'))
+
 @admin_bp.route('/settings/commissions')
 @login_required
 def settings_commissions():
