@@ -672,7 +672,8 @@ def create_app():
             ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None),
             ('routes.matrix_routes', 'matrix_bp', 'matrix_bp', None),
             ('routes.crepi_routes', 'crepi_bp', 'crepi_bp', None),
-            ('routes.swot_routes', 'swot_bp', 'swot_bp', None)
+            ('routes.swot_routes', 'swot_bp', 'swot_bp', None),
+            ('routes.marketing', 'marketing_bp', 'marketing_bp', None)
         ]
 
         import importlib
@@ -704,7 +705,7 @@ def create_app():
         with app.app_context():
             try:
                 # Force SQLAlchemy to know about new models before create_all
-                from models import SwotAnalise, SwotItem, CREPIDiagnostico, CREPIPremissa, AudienceMatrix
+                from models import SwotAnalise, SwotItem, CREPIDiagnostico, CREPIPremissa, AudienceMatrix, CommercialPresentation
 
                 # 1. Simple Table Creation
                 db.create_all()

@@ -1182,3 +1182,21 @@ class SwotItem(db.Model):
     ordem = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+class CommercialPresentation(db.Model):
+    __tablename__ = 'commercial_presentations'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    consultor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    prospect_name = db.Column(db.String(255), nullable=False)
+    prospect_logo = db.Column(db.Text, nullable=True) # URL
+    observacao = db.Column(db.String(200), nullable=True)
+    pdf_url = db.Column(db.Text, nullable=True)
+    token = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
+    expira_em = db.Column(db.DateTime, nullable=False)
+    gerado_em = db.Column(db.DateTime, default=get_now_br)
+
+    # Relationships
+    consultor = db.relationship('User', backref=db.backref('presentations', lazy=True))
+    company = db.relationship('Company', backref=db.backref('presentations', lazy=True))
