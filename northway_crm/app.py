@@ -802,7 +802,9 @@ def create_app():
                                     ('profile_image', "VARCHAR(150)"),
                                     ('phone', "VARCHAR(20)"),
                                     ('status_message', "VARCHAR(100)"),
-                                    ('onboarding_dismissed', "BOOLEAN DEFAULT FALSE")
+                                    ('onboarding_dismissed', "BOOLEAN DEFAULT FALSE"),
+                                    ('papel_comercial_id', "VARCHAR(36)"),
+                                    ('regra_comissao_id', "VARCHAR(36)")
                                 ]
                                 for col, dtype in user_repairs:
                                     if col not in user_cols:
