@@ -168,15 +168,10 @@ def view_book(id):
         
     return render_template('docs/view_book.html', book=book)
 
-@docs_bp.route('/briefing-aquisicao')
+@docs_bp.route('/apresentacao-crm-v2')
 @login_required
-def briefing_northway():
-    return render_template('docs/briefing_northway.html')
-
-@docs_bp.route('/scripts-vendas')
-@login_required
-def scripts_northway():
-    return render_template('docs/scripts_northway.html')
+def presentation_crm_v2():
+    return render_template('docs/presentation_crm_v2.html')
 
 @docs_bp.route('/guide-captacao')
 @login_required
@@ -201,92 +196,47 @@ def sync_library():
         results.append("Schema synced via create_all()")
         
         # 1. PERMISSION CHECK (Deeper/Safer)
-        # We check this AFTER create_all just in case columns were missing
-        is_super = False
-        try:
-             is_super = getattr(current_user, 'is_super_admin', False)
-        except: 
-             results.append("Warning: Could not access is_super_admin attribute")
-             
+        is_super = getattr(current_user, 'is_super_admin', False)
         is_admin = getattr(current_user, 'role', '') == 'admin'
         
         if not (is_super or is_admin):
             return jsonify({
+                'success': False,
                 'error': 'Unauthorized', 
-                'is_super': is_super, 
-                'role': getattr(current_user, 'role', ''),
                 'explanation': 'This route requires Super Admin or Admin role.'
             }), 403
+            
+        # --- CLEANUP: Remove old PDF-based books as requested ---
+        old_titles = ['Apresentação Oficial NorthWay CRM', 'Manual de Funcionalidades CRM']
+        LibraryBook.query.filter(LibraryBook.title.in_(old_titles)).delete(synchronize_session=False)
+        results.append("Old PDF materials removed (standby)")
         
-        # --- BOOK 1: APRESENTAÇÃO ---
-        html_presentation = """
-        <div class="not-prose bg-[#0f0518] rounded-[2rem] p-12 text-center border border-white/5 relative overflow-hidden">
-            <!-- Glow Effect -->
-            <div class="absolute -top-24 -left-24 w-64 h-64 bg-red-600/10 rounded-full blur-[80px]"></div>
-            <div class="relative z-10">
-                <h1 class="text-4xl font-display font-black text-white mb-4 uppercase tracking-tighter">
-                    NorthWay <span class="text-[#fa0102]">CRM</span>
-                </h1>
-                <p class="text-gray-400 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
-                    Sua jornada para o próximo nível começa aqui. Acesse o material completo e domine o ecossistema.
-                </p>
-                <a href="/static/library/apresentacao_crm_oficial.pdf" target="_blank" 
-                   class="inline-block bg-[#fa0102] text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-[0_0_20px_rgba(250,1,2,0.4)] hover:shadow-[0_0_30px_rgba(250,1,2,0.6)]">
-                   Baixar Apresentação PDF
-                </a>
-            </div>
-        </div>
-        """
+        # --- REGISTER: New Interactive Presentation ---
+        title = "NorthWay CRM: Apresentação Oficial 2.0"
+        desc = "Apresentação interativa de alta performance do ecossistema NorthWay."
+        cat = "Apresentação"
         
-        # --- BOOK 2: MANUAL ---
-        html_manual = """
-        <div class="not-prose bg-white rounded-3xl p-12 border border-blue-50 relative overflow-hidden shadow-2xl">
-            <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-blue-600/5 rounded-full blur-[80px]"></div>
-            <div class="relative z-10 flex flex-col md:flex-row items-center gap-10">
-                <div class="flex-1 text-left">
-                    <h1 class="text-3xl font-display font-black text-gray-900 mb-4 tracking-tight uppercase">
-                        Manual de <span class="text-blue-600">Funcionalidades</span>
-                    </h1>
-                    <p class="text-gray-500 text-lg mb-8 leading-relaxed">
-                        Aprenda a configurar e extrair o máximo de performance da sua plataforma com nosso guia prático.
-                    </p>
-                    <a href="/static/library/manual_crm_northway.pdf" target="_blank" 
-                       class="inline-block bg-gray-900 text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-black transition-all shadow-xl">
-                       Acessar Manual do Usuário
-                    </a>
-                </div>
-                <div class="hidden md:block w-32 h-32 bg-blue-50 rounded-2xl flex items-center justify-center">
-                    <svg class="w-16 h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.754 18 18.168 18.477 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-        """
-        
-        books_to_add = [
-            ('Apresentação Oficial NorthWay CRM', 'Apresentação completa de ponta a ponta.', 'Comercial', html_presentation),
-            ('Manual de Funcionalidades CRM', 'Guia prático de utilização.', 'Processos', html_manual)
-        ]
-        
-        companies = Company.query.all()
-        results.append(f"Found {len(companies)} companies")
-        
-        for title, desc, cat, content in books_to_add:
-            existing = LibraryBook.query.filter_by(title=title).first()
-            if existing:
-                existing.content = content
-                existing.description = desc
-                results.append(f"Updated: {title}")
-            else:
-                book = LibraryBook(title=title, description=desc, category=cat, content=content, active=True)
-                db.session.add(book)
-                db.session.flush()
-                for company in companies:
-                    # Check if already has access (prevent unique constraint violations if any)
-                    if company not in book.allowed_companies:
-                        book.allowed_companies.append(company)
-                results.append(f"Created: {title}")
+        existing = LibraryBook.query.filter_by(title=title).first()
+        if not existing:
+            new_book = LibraryBook(
+                title=title, 
+                description=desc, 
+                category=cat, 
+                route_name='docs.presentation_crm_v2', 
+                active=True
+            )
+            db.session.add(new_book)
+            db.session.flush()
+            
+            companies = Company.query.all()
+            for company in companies:
+                if company not in new_book.allowed_companies:
+                    new_book.allowed_companies.append(company)
+            results.append(f"Registered: {title}")
+        else:
+            existing.description = desc
+            existing.route_name = 'docs.presentation_crm_v2'
+            results.append(f"Updated: {title}")
                 
         db.session.commit()
         return jsonify({
