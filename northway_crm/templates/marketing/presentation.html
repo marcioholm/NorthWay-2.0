@@ -1,136 +1,208 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="px-6 py-8">
+<div class="min-h-screen bg-[#0f0518] -mx-6 -my-8 px-6 py-8 text-white">
+    <!-- Custom Premium Styles -->
+    <style>
+        .glass-premium {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-input:focus {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: #fa0102;
+            box-shadow: 0 0 15px rgba(250, 1, 2, 0.2);
+        }
+
+        .premium-shadow {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
     <!-- Header -->
-    <div class="mb-8 flex justify-between items-center">
+    <div class="mb-10 flex justify-between items-end">
         <div>
-            <h1 class="text-2xl font-bold text-white mb-2">Apresentação Comercial</h1>
-            <p class="text-white/60">Gere apresentações profissionais e personalizadas para seus prospects.</p>
+            <div class="flex items-center gap-2 mb-2">
+                <span
+                    class="px-2 py-0.5 bg-northway-red/20 text-northway-red text-[10px] font-bold rounded-full border border-northway-red/30 tracking-widest uppercase">Marketing
+                    Hub</span>
+            </div>
+            <h1 class="text-4xl font-black tracking-tight text-white mb-2">Material Comercial</h1>
+            <p class="text-white/40 font-medium">Gere apresentações PDF de alto impacto em segundos.</p>
         </div>
         <div class="flex gap-4">
             <button onclick="window.location.reload()"
-                class="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-white/10 text-white/60 hover:text-white">
-                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                class="w-12 h-12 flex items-center justify-center glass-premium hover:bg-white/5 rounded-2xl transition-all group">
+                <i data-lucide="refresh-cw"
+                    class="w-5 h-5 text-white/40 group-hover:text-white group-hover:rotate-180 transition-transform duration-500"></i>
             </button>
         </div>
     </div>
 
     <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 mb-12">
 
-        <!-- Left Panel: Form -->
+        <!-- Left Panel: Form (Col 7) -->
         <div
-            class="glass shadow-2xl rounded-3xl border border-white/10 overflow-hidden flex flex-col h-full anim-slide-up">
-            <div class="p-6 border-b border-white/10 bg-white/5">
-                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                    <i data-lucide="edit-3" class="w-5 h-5 text-northway-red"></i>
-                    Personalizar Apresentação
-                </h2>
+            class="xl:col-span-7 glass-premium premium-shadow rounded-[2.5rem] overflow-hidden flex flex-col h-full border-white/5">
+            <div class="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 bg-northway-red rounded-2xl flex items-center justify-center shadow-lg shadow-red-600/20">
+                        <i data-lucide="sparkles" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-white leading-tight">Personalização</h2>
+                        <p class="text-xs text-white/40">Preencha os dados do seu prospect</p>
+                    </div>
+                </div>
+                <div
+                    class="px-3 py-1 bg-white/5 rounded-full text-[10px] text-white/40 font-bold uppercase tracking-tighter border border-white/5">
+                    Draft Mode</div>
             </div>
 
-            <form id="presentation-form" class="p-8 space-y-6 flex-1 overflow-y-auto no-scrollbar"
-                style="max-height: 600px;">
+            <form id="presentation-form" class="p-10 space-y-8 flex-1">
                 <!-- Section: Prospect Info -->
-                <div class="space-y-4">
-                    <label class="block text-xs font-bold text-white/40 uppercase tracking-widest">Informações do
-                        Prospect</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-sm text-white/60">Nome da Empresa</label>
-                            <input type="text" name="prospect_name" required placeholder="Ex: Acme Corp"
-                                class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-northway-red focus:ring-1 focus:ring-northway-red outline-none transition-all placeholder:text-white/20">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm text-white/60">Logo do Cliente (URL opcional)</label>
-                            <input type="url" name="prospect_logo" placeholder="https://imagem.com/logo.png"
-                                class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-northway-red focus:ring-1 focus:ring-northway-red outline-none transition-all placeholder:text-white/20">
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-3">
+                        <label class="text-xs font-black text-white/30 uppercase tracking-[0.2em]">Prospect Name</label>
+                        <input type="text" name="prospect_name" required placeholder="Ex: Nome da Empresa ou Cliente"
+                            class="w-full glass-input rounded-2xl px-5 py-4 text-white placeholder:text-white/10 outline-none">
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-xs font-black text-white/30 uppercase tracking-[0.2em]">Client Logo
+                            URL</label>
+                        <input type="url" name="prospect_logo" placeholder="https://..."
+                            class="w-full glass-input rounded-2xl px-5 py-4 text-white placeholder:text-white/10 outline-none">
                     </div>
                 </div>
 
-                <!-- Section: Consultant Info (Auto-filled but editable) -->
-                <div class="space-y-4">
-                    <label class="block text-xs font-bold text-white/40 uppercase tracking-widest">Seus Dados
-                        (Consultor)</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-sm text-white/60">Seu Nome</label>
-                            <input type="text" name="consultant_name" value="{{ current_user.name }}" required
-                                class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-northway-red focus:ring-1 focus:ring-northway-red outline-none transition-all">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm text-white/60">Sua Função</label>
-                            <input type="text" name="consultant_title"
-                                value="{{ current_user.funcao_comercial or 'Consultor Comercial' }}" required
-                                class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-northway-red focus:ring-1 focus:ring-northway-red outline-none transition-all">
-                        </div>
+                <!-- Section: Consultant Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-3">
+                        <label class="text-xs font-black text-white/30 uppercase tracking-[0.2em]">Your Name</label>
+                        <input type="text" name="consultant_name" value="{{ current_user.name }}" required
+                            class="w-full glass-input rounded-2xl px-5 py-4 text-white outline-none">
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-xs font-black text-white/30 uppercase tracking-[0.2em]">Your Title</label>
+                        <input type="text" name="consultant_title"
+                            value="{{ current_user.funcao_comercial or 'Consultor Comercial' }}" required
+                            class="w-full glass-input rounded-2xl px-5 py-4 text-white outline-none">
                     </div>
                 </div>
 
-                <!-- Section: Message -->
-                <div class="space-y-2">
-                    <label class="block text-xs font-bold text-white/40 uppercase tracking-widest">Observação
-                        Personalizada (Capa)</label>
-                    <textarea name="observacao" maxlength="200" rows="3"
-                        placeholder="Uma mensagem curta para surpreender o cliente na capa..."
-                        class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-northway-red focus:ring-1 focus:ring-northway-red outline-none transition-all placeholder:text-white/20 resize-none"></textarea>
-                    <div class="text-right text-[10px] text-white/40"><span id="char-count">0</span>/200</div>
+                <!-- Section: Cover Message -->
+                <div class="space-y-3">
+                    <label class="text-xs font-black text-white/30 uppercase tracking-[0.2em]">Cover Message</label>
+                    <div class="relative">
+                        <textarea name="observacao" maxlength="200" rows="3"
+                            placeholder="Uma mensagem curta para surpreender o cliente na capa..."
+                            class="w-full glass-input rounded-2xl px-5 py-4 text-white placeholder:text-white/10 outline-none resize-none"></textarea>
+                        <div class="absolute bottom-4 right-5 text-[10px] text-white/20 font-bold"><span
+                                id="char-count">0</span>/200</div>
+                    </div>
                 </div>
 
-                <!-- Submit Button -->
+                <!-- Action Button -->
                 <div class="pt-4">
                     <button type="submit" id="btn-generate"
-                        class="w-full bg-northway-red hover:bg-red-700 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-red-600/20 active:scale-[0.98]">
-                        <i data-lucide="file-output" class="w-5 h-5"></i>
-                        GERAR E BAIXAR APRESENTAÇÃO (PDF)
+                        class="w-full bg-northway-red hover:bg-red-600 text-white font-black py-5 rounded-[1.5rem] transition-all flex items-center justify-center gap-4 shadow-2xl shadow-red-600/40 hover:-translate-y-1 active:scale-[0.98]">
+                        <i data-lucide="zap" class="w-6 h-6 fill-white"></i>
+                        GERAR APRESENTAÇÃO PREMIUM (PDF)
                     </button>
-                    <p class="text-center text-[10px] text-white/40 mt-4">O PDF terá aproximadamente 10 páginas com
-                        funcionalidades e diferenciais da NorthWay.</p>
+                    <div class="mt-6 flex items-center justify-center gap-6 text-white/20">
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3"></i> <span
+                                class="text-[10px] font-bold uppercase tracking-widest">10 Páginas</span></div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3"></i> <span
+                                class="text-[10px] font-bold uppercase tracking-widest">Design Premium</span></div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-3 h-3"></i> <span
+                                class="text-[10px] font-bold uppercase tracking-widest">Link Expirável</span></div>
+                    </div>
                 </div>
             </form>
         </div>
 
-        <!-- Right Panel: Preview & Link -->
-        <div class="flex flex-col gap-6 anim-slide-up" style="animation-delay: 0.1s;">
-            <!-- Info Card -->
-            <div
-                class="glass shadow-xl rounded-3xl border border-white/10 p-8 flex items-center gap-6 bg-gradient-to-br from-white/5 to-transparent">
-                <div class="w-16 h-16 bg-northway-red/20 rounded-2xl flex items-center justify-center">
-                    <i data-lucide="file-text" class="w-8 h-8 text-northway-red"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-white">Preview Visual</h3>
-                    <p class="text-sm text-white/60">A apresentação segue o design system premium da NorthWay com
-                        Glassmorphism e tons escuros.</p>
-                </div>
-            </div>
-
-            <!-- Static Preview Image Placeholder -->
-            <div class="flex-1 glass shadow-2xl rounded-3xl border border-white/10 overflow-hidden relative group">
-                <div class="absolute inset-0 bg-cover bg-center opacity-40 transition-transform duration-700 group-hover:scale-110"
-                    style="background-image: url('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1000');">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-
-                <div class="absolute inset-0 flex flex-col justify-end p-8">
-                    <div class="flex items-center gap-2 mb-4">
-                        <span
-                            class="px-2 py-1 bg-northway-red text-[10px] font-black rounded uppercase tracking-tighter">Premium</span>
-                        <span
-                            class="px-2 py-1 bg-white/20 backdrop-blur-md text-[10px] font-black rounded uppercase tracking-tighter">10
-                            Páginas</span>
-                    </div>
-                    <h4 class="text-2xl font-black text-white mb-2 italic">NORTHWAY CRM</h4>
-                    <p class="text-white/60 text-sm max-w-sm">Estratégia, automação e inteligência de vendas em uma
-                        única apresentação de alto impacto.</p>
-                </div>
-
-                <!-- Overlay Actions -->
+        <!-- Right Panel: Smart Preview Mockup (Col 5) -->
+        <div class="xl:col-span-5 flex flex-col gap-8 h-full">
+            <!-- Mockup Container -->
+            <div class="flex-1 glass-premium rounded-[2.5rem] overflow-hidden relative group premium-shadow">
+                <!-- Animated Background Gradient -->
                 <div
-                    class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-sm pointer-events-none">
-                    <div class="transform scale-90 group-hover:scale-100 transition-transform duration-300">
-                        <i data-lucide="eye" class="w-12 h-12 text-white/50"></i>
+                    class="absolute inset-0 bg-gradient-to-br from-red-600/20 via-transparent to-purple-600/10 opacity-30">
+                </div>
+
+                <!-- Mockup Content -->
+                <div class="relative h-full flex flex-col p-10">
+                    <div class="flex justify-between items-start mb-12">
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-2xl">
+                            <span class="text-black font-black text-xl italic">NW</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Commercial
+                                Deck v2.0</span>
+                            <span class="text-[10px] font-bold text-northway-red">PROPRIETARY STRATEGY</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-8 flex-1">
+                        <div class="space-y-2">
+                            <h3 class="text-4xl font-black italic tracking-tighter leading-none">PREVIEW<br><span
+                                    class="text-northway-red">VISUAL</span></h3>
+                            <div class="h-1 w-20 bg-northway-red rounded-full"></div>
+                        </div>
+
+                        <!-- Mini Page Skelettons -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="aspect-video glass-input rounded-xl p-3 flex flex-col gap-2">
+                                <div class="h-2 w-1/2 bg-white/10 rounded"></div>
+                                <div class="h-2 w-full bg-white/5 rounded"></div>
+                                <div class="mt-auto h-4 w-full bg-red-500/10 rounded flex items-center justify-center">
+                                    <div class="h-1 w-1/2 bg-red-500/20 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="aspect-video glass-input rounded-xl p-3 flex flex-col gap-2 opacity-60">
+                                <div class="h-2 w-1/3 bg-white/10 rounded"></div>
+                                <div class="flex gap-2">
+                                    <div class="h-8 w-8 bg-white/5 rounded-full"></div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-2 w-full bg-white/5 rounded"></div>
+                                        <div class="h-2 w-2/3 bg-white/5 rounded"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-12 bg-white/5 backdrop-blur-md rounded-2xl p-6 border border-white/5">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                                <i data-lucide="monitor" class="w-5 h-5 text-white/40"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold">Experiência Imersiva</h4>
+                                <p class="text-[10px] text-white/40 italic">O prospect recebe um link profissional
+                                    pronto para visualização em qualquer dispositivo.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -138,65 +210,75 @@
     </div>
 
     <!-- History Section -->
-    <div class="glass shadow-2xl rounded-3xl border border-white/10 overflow-hidden anim-slide-up"
-        style="animation-delay: 0.2s;">
-        <div class="p-6 border-b border-white/10 bg-white/5 flex justify-between items-center">
-            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                <i data-lucide="history" class="w-5 h-5 text-northway-red"></i>
-                Últimas 20 Apresentações
+    <div class="glass-premium rounded-[2.5rem] overflow-hidden premium-shadow border-white/5">
+        <div class="p-8 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                <i data-lucide="layers" class="w-6 h-6 text-northway-red"></i>
+                Histórico de Apresentações
             </h2>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left">
                 <thead>
-                    <tr class="bg-black/20 text-white/40 text-[10px] uppercase font-bold tracking-widest">
-                        <th class="px-6 py-4">Prospect / Empresa</th>
-                        <th class="px-6 py-4">Status / Link</th>
-                        <th class="px-6 py-4">Expira em</th>
-                        <th class="px-6 py-4">Data</th>
-                        <th class="px-6 py-4 text-center">Ações</th>
+                    <tr class="text-[10px] uppercase tracking-[0.2em] text-white/30 border-b border-white/5">
+                        <th class="px-10 py-6 font-black">Prospect / Consultor</th>
+                        <th class="px-10 py-6 font-black">Link Público</th>
+                        <th class="px-10 py-6 font-black">Data de Geração</th>
+                        <th class="px-10 py-6 font-black">Status</th>
+                        <th class="px-10 py-6 font-black text-right">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-white/5">
                     {% for p in presentations %}
-                    <tr class="hover:bg-white/5 transition-colors group">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
+                    <tr class="group hover:bg-white/[0.02] transition-colors">
+                        <td class="px-10 py-8">
+                            <div class="flex items-center gap-4">
                                 <div
-                                    class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-bold text-white">
-                                    {{ p.prospect_name[:1].upper() }}
+                                    class="w-12 h-12 glass-input rounded-2xl flex items-center justify-center group-hover:border-northway-red/30 transition-colors">
+                                    <i data-lucide="building-2" class="w-5 h-5 text-white/40"></i>
                                 </div>
                                 <div>
-                                    <div class="text-sm font-semibold text-white">{{ p.prospect_name }}</div>
-                                    <div class="text-[10px] text-white/40">{{ p.consultor.name }}</div>
+                                    <div class="text-sm font-black text-white tracking-tight">{{ p.prospect_name }}
+                                    </div>
+                                    <div class="text-[10px] font-bold text-white/20 uppercase tracking-widest">{{
+                                        p.consultor.name }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <button
-                                    onclick="copyToClipboard('{{ url_for('marketing.public_presentation', token=p.token, _external=True) }}')"
-                                    class="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors bg-blue-400/10 px-2 py-1 rounded-md border border-blue-400/20">
-                                    <i data-lucide="link" class="w-3 h-3"></i>
-                                    Copiar Link
-                                </button>
-                                <a href="{{ p.pdf_url }}" target="_blank"
-                                    class="p-1 hover:text-white text-white/40 transition-all">
-                                    <i data-lucide="external-link" class="w-4 h-4"></i>
-                                </a>
+                        <td class="px-10 py-8">
+                            <button
+                                data-copy-url="{{ url_for('marketing.public_presentation', token=p.token, _external=True) }}"
+                                class="btn-copy-link flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-[#4d94ff] hover:text-[#80b3ff] transition-colors bg-blue-500/10 px-4 py-2 rounded-xl border border-blue-500/20">
+                                <i data-lucide="copy" class="w-3 h-3"></i>
+                                COPIAR LINK
+                            </button>
+                        </td>
+                        <td class="px-10 py-8">
+                            <div class="text-xs font-bold text-white/60">{{ p.gerado_em.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                            <div class="text-[10px] text-white/20">Expira em: {{ p.expira_em.strftime('%d/%m/%Y') }}
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-xs text-white/60">
-                            {{ p.expira_em.strftime('%d/%m/%Y') }}
+                        <td class="px-10 py-8">
+                            {% if p.expira_em > now %}
+                            <span
+                                class="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-black rounded-full border border-emerald-500/20 uppercase tracking-tighter">Ativo</span>
+                            {% else %}
+                            <span
+                                class="px-3 py-1 bg-red-500/10 text-red-500 text-[10px] font-black rounded-full border border-red-500/20 uppercase tracking-tighter">Expirado</span>
+                            {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-xs text-white/40">
-                            {{ p.gerado_em.strftime('%d/%m %H:%M') }}
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex justify-center gap-2">
+                        <td class="px-10 py-8 text-right">
+                            <div class="flex items-center justify-end gap-3">
+                                <a href="{{ p.pdf_url }}" target="_blank"
+                                    class="w-10 h-10 glass-input rounded-xl flex items-center justify-center hover:bg-white/10 transition-all text-white/40 hover:text-white"
+                                    title="Abrir PDF">
+                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                                </a>
                                 <button onclick="deletePresentation('{{ p.id }}')"
-                                    class="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all">
+                                    class="w-10 h-10 glass-input rounded-xl flex items-center justify-center hover:bg-red-500/20 transition-all text-white/40 hover:text-red-500"
+                                    title="Excluir">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -204,10 +286,13 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-white/20">
-                            <div class="flex flex-col items-center gap-2">
-                                <i data-lucide="inbox" class="w-8 h-8 opacity-20"></i>
-                                <span>Nenhuma apresentação gerada recentemente</span>
+                        <td colspan="5" class="px-6 py-20 text-center text-white/20">
+                            <div class="flex flex-col items-center gap-4">
+                                <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center">
+                                    <i data-lucide="inbox" class="w-8 h-8 opacity-20"></i>
+                                </div>
+                                <span class="text-xs font-bold uppercase tracking-widest">Nenhuma apresentação gerada
+                                    recentemente</span>
                             </div>
                         </td>
                     </tr>
@@ -287,9 +372,22 @@
         } catch (e) { if (window.showToast) showToast('Erro ao excluir', 'error'); }
     }
 
+    // Copy Link Logic
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-copy-link');
+        if (btn) {
+            const url = btn.getAttribute('data-url') || btn.getAttribute('data-copy-url');
+            if (url) {
+                copyToClipboard(url);
+            }
+        }
+    });
+
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
             if (window.showToast) showToast('Link copiado!');
+        });
+    }
         });
     }
 </script>

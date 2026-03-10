@@ -17,7 +17,7 @@ def presentation():
     # Get last 20 presentations
     presentations = CommercialPresentation.query.filter_by(company_id=current_user.company_id).order_by(CommercialPresentation.gerado_em.desc()).limit(20).all()
     
-    return render_template('marketing/presentation.html', presentations=presentations)
+    return render_template('marketing/presentation.html', presentations=presentations, now=datetime.utcnow())
 
 @marketing_bp.route('/api/marketing/presentation/generate', methods=['POST'])
 @login_required
