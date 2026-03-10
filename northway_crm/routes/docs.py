@@ -191,54 +191,75 @@ def manual_edicao():
 @login_required
 def sync_library():
     if not getattr(current_user, 'is_super_admin', False):
-        return "Unauthorized", 403
+        return jsonify({'error': 'Unauthorized', 'is_super': getattr(current_user, 'is_super_admin', False)}), 403
         
-    from models import db, LibraryBook, Company
-    
-    # --- BOOK 1: APRESENTAÇÃO ---
-    html_presentation = """
-    <div class="presentation-header text-center mb-12">
-        <h1 style="color: #fa0102; font-size: 3rem; font-weight: 900; margin-bottom: 0.5rem;">NORTHWAY CRM</h1>
-        <p style="color: #666; font-size: 1.25rem;">Ecossistema Completo de Vendas, Operações e Inteligência</p>
-    </div>
-    <div style="background: #000; color: #fff; padding: 3rem; border-radius: 2rem; text-align: center; margin-top: 2rem;">
-        <h2 style="font-weight: 900; margin-bottom: 1rem;">PREPARADO PARA ESCALAR?</h2>
-        <a href="/static/library/apresentacao_crm_oficial.pdf" target="_blank" style="background: #fa0102; color: white; padding: 1rem 2.5rem; border-radius: 1rem; font-weight: bold; text-decoration: none;"> BAIXAR PDF COMPLETO </a>
-    </div>
-    """
-    
-    # --- BOOK 2: MANUAL ---
-    html_manual = """
-    <div class="presentation-header text-center mb-12">
-        <h1 style="color: #fa0102; font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Manual de Funcionalidades</h1>
-        <p style="color: #666;">Guia Completo do Ecossistema NorthWay</p>
-    </div>
-    <div style="background: #fa0102; color: #fff; padding: 2rem; border-radius: 1rem; text-align: center; margin-top: 2rem;">
-        <a href="/static/library/manual_crm_northway.pdf" target="_blank" style="color: white; font-weight: bold; text-decoration: none;"> → BAIXAR MANUAL EM PDF </a>
-    </div>
-    """
-    
-    books_to_add = [
-        ('Apresentação Oficial NorthWay CRM', 'Apresentação completa de ponta a ponta.', 'Comercial', html_presentation),
-        ('Manual de Funcionalidades CRM', 'Guia prático de utilização.', 'Processos', html_manual)
-    ]
-    
+    import traceback
     results = []
-    companies = Company.query.all()
-    
-    for title, desc, cat, content in books_to_add:
-        existing = LibraryBook.query.filter_by(title=title).first()
-        if existing:
-            existing.content = content
-            existing.description = desc
-            results.append(f"Updated: {title}")
-        else:
-            book = LibraryBook(title=title, description=desc, category=cat, content=content, active=True)
-            db.session.add(book)
-            db.session.flush()
-            for company in companies:
-                book.allowed_companies.append(company)
-            results.append(f"Created: {title}")
-            
-    db.session.commit()
-    return f"Sync successful: {', '.join(results)}"
+    try:
+        from models import db, LibraryBook, Company
+        
+        # 0. Emergency Schema Sync
+        db.create_all()
+        results.append("Schema synced via create_all()")
+        
+        # --- BOOK 1: APRESENTAÇÃO ---
+        html_presentation = """
+        <div class="presentation-header text-center mb-12">
+            <h1 style="color: #fa0102; font-size: 3rem; font-weight: 900; margin-bottom: 0.5rem;">NORTHWAY CRM</h1>
+            <p style="color: #666; font-size: 1.25rem;">Ecossistema Completo de Vendas, Operações e Inteligência</p>
+        </div>
+        <div style="background: #000; color: #fff; padding: 3rem; border-radius: 2rem; text-align: center; margin-top: 2rem;">
+            <h2 style="font-weight: 900; margin-bottom: 1rem;">PREPARADO PARA ESCALAR?</h2>
+            <a href="/static/library/apresentacao_crm_oficial.pdf" target="_blank" style="background: #fa0102; color: white; padding: 1rem 2.5rem; border-radius: 1rem; font-weight: bold; text-decoration: none;"> BAIXAR PDF COMPLETO </a>
+        </div>
+        """
+        
+        # --- BOOK 2: MANUAL ---
+        html_manual = """
+        <div class="presentation-header text-center mb-12">
+            <h1 style="color: #fa0102; font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Manual de Funcionalidades</h1>
+            <p style="color: #666;">Guia Completo do Ecossistema NorthWay</p>
+        </div>
+        <div style="background: #fa0102; color: #fff; padding: 2rem; border-radius: 1rem; text-align: center; margin-top: 2rem;">
+            <a href="/static/library/manual_crm_northway.pdf" target="_blank" style="color: white; font-weight: bold; text-decoration: none;"> → BAIXAR MANUAL EM PDF </a>
+        </div>
+        """
+        
+        books_to_add = [
+            ('Apresentação Oficial NorthWay CRM', 'Apresentação completa de ponta a ponta.', 'Comercial', html_presentation),
+            ('Manual de Funcionalidades CRM', 'Guia prático de utilização.', 'Processos', html_manual)
+        ]
+        
+        companies = Company.query.all()
+        results.append(f"Found {len(companies)} companies")
+        
+        for title, desc, cat, content in books_to_add:
+            existing = LibraryBook.query.filter_by(title=title).first()
+            if existing:
+                existing.content = content
+                existing.description = desc
+                results.append(f"Updated: {title}")
+            else:
+                book = LibraryBook(title=title, description=desc, category=cat, content=content, active=True)
+                db.session.add(book)
+                db.session.flush()
+                for company in companies:
+                    # Check if already has access (prevent unique constraint violations if any)
+                    if company not in book.allowed_companies:
+                        book.allowed_companies.append(company)
+                results.append(f"Created: {title}")
+                
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'results': results
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc(),
+            'partial_results': results
+        }), 500
