@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify
 from flask_login import login_required
 
 docs_bp = Blueprint('docs', __name__)
@@ -190,8 +190,12 @@ def manual_edicao():
 @docs_bp.route('/api/docs/sync-library')
 @login_required
 def sync_library():
-    if not getattr(current_user, 'is_super_admin', False):
-        return jsonify({'error': 'Unauthorized', 'is_super': getattr(current_user, 'is_super_admin', False)}), 403
+    # Emergency relaxation: allow admin role too if super_admin is not set
+    is_super = getattr(current_user, 'is_super_admin', False)
+    is_admin = getattr(current_user, 'role', '') == 'admin'
+    
+    if not (is_super or is_admin):
+        return jsonify({'error': 'Unauthorized', 'is_super': is_super, 'role': getattr(current_user, 'role', '')}), 403
         
     import traceback
     results = []
