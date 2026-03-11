@@ -322,7 +322,12 @@
             class="bg-northway-red hover:bg-red-700 text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center flex items-center gap-2 whitespace-nowrap transition-colors">
             <i data-lucide="check" class="w-4 h-4"></i> Aplicar
         </button>
-        <button onclick="clearSelection()" class="text-gray-400 hover:text-white p-2">
+        <div class="w-px h-6 bg-gray-700 mx-2"></div>
+        <button onclick="rescuePhones()" id="massRescueBtn"
+            class="bg-gray-800 border border-gray-700 hover:border-blue-500 hover:text-blue-400 text-gray-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center flex items-center gap-2 whitespace-nowrap transition-all">
+            <i data-lucide="search" class="w-4 h-4" id="massRescueIcon"></i> Resgatar Telefones
+        </button>
+        <button onclick="clearSelection()" class="text-gray-400 hover:text-white p-2 ml-2">
             <i data-lucide="x" class="w-5 h-5"></i>
         </button>
     </div>
@@ -627,6 +632,43 @@
                 alert('Erro de conexão ao processar massa.');
                 btn.innerHTML = icon;
                 btn.disabled = false;
+            }
+        };
+
+        window.rescuePhones = async function () {
+            const selectedIds = Array.from(document.querySelectorAll('.lead-checkbox:checked')).map(cb => parseInt(cb.value));
+
+            if (selectedIds.length === 0) return;
+            if (!confirm(`Tem certeza que deseja tentar resgatar os telefones no Google para os ${selectedIds.length} leads selecionados?`)) return;
+
+            const btn = document.getElementById('massRescueBtn');
+            const icon = document.getElementById('massRescueIcon');
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-blue-400"></i> Buscando...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/prospecting/backfill-phones', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lead_ids: selectedIds })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert(`Operação concluída!\n\n${data.data.updated_count} telefones resgatados de ${data.data.total_scanned} leads verificados.`);
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao tentar resgatar telefones.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                if (window.lucide) lucide.createIcons();
             }
         };
     });

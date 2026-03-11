@@ -290,13 +290,21 @@ def backfill_phones():
 
     if not api_key:
         return api_response(success=False, error='API Key not configured', status=500)
+        
+    data = request.json or {}
+    lead_ids = data.get('lead_ids', [])
 
     # Find leads that have a google place id but NO phone
-    leads = Lead.query.filter(
+    query = Lead.query.filter(
         Lead.company_id == current_user.company_id,
         Lead.google_place_id != None,
         (Lead.phone == None) | (Lead.phone == '')
-    ).all()
+    )
+    
+    if lead_ids:
+        query = query.filter(Lead.id.in_(lead_ids))
+        
+    leads = query.all()
 
     import requests
     import time
