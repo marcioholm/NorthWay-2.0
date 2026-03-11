@@ -221,12 +221,37 @@ def import_lead():
             first_s = PipelineStage.query.filter_by(pipeline_id=default_p.id).order_by(PipelineStage.order).first()
             if first_s: target_stage_id = first_s.id
 
+    from models import Integration
+    integration = Integration.query.filter_by(company_id=current_user.company_id, service='google_maps').first()
+    api_key = integration.api_key if integration and integration.is_active else None
+
     imported_count = 0
     errors = []
     
     for p in places:
         place_id = p.get('place_id')
         if not place_id: continue
+        
+        phone = p.get('phone')
+        website = p.get('website')
+        
+        # Hydrate missing phone data via Place Details API if possible
+        if api_key and not phone:
+            try:
+                import requests
+                details_url = "https://maps.googleapis.com/maps/api/place/details/json"
+                details_params = {
+                    'place_id': place_id,
+                    'fields': 'formatted_phone_number,international_phone_number,website',
+                    'key': api_key
+                }
+                res = requests.get(details_url, params=details_params, timeout=5).json()
+                if res.get('status') == 'OK':
+                    result_data = res.get('result', {})
+                    phone = result_data.get('international_phone_number') or result_data.get('formatted_phone_number') or phone
+                    website = result_data.get('website') or website
+            except:
+                pass
         
         try:
             if Lead.query.filter_by(company_id=current_user.company_id, google_place_id=place_id).first():
@@ -240,8 +265,8 @@ def import_lead():
                 pipeline_id=target_pipeline_id,
                 pipeline_stage_id=target_stage_id,
                 source='google_maps',
-                phone=p.get('phone'),
-                website=p.get('website'),
+                phone=phone,
+                website=website,
                 address=p.get('formatted_address'),
                 google_place_id=place_id,
                 gmb_rating=p.get('rating', 0),
