@@ -61,6 +61,11 @@ def presentation_diagnostic_combined():
 def presentation_playbook_bdr():
     return render_template('docs/playbook_bdr.html')
 
+@docs_bp.route('/presentation-bdr')
+@login_required
+def presentation_bdr():
+    return render_template('docs/presentation_bdr.html')
+
 @docs_bp.route('/onboarding-institucional')
 @login_required
 def presentation_onboarding():

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apresentação BDR | NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            dark: '#0f0f0f',
+                            gray: '#1a1a1a',
+                            light: '#f9fafb'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background-color: #000;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 5rem 10%;
+            position: relative;
+            background-color: #0b0b0b;
+            color: white;
+            border-bottom: 4px solid #111;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .highlight {
+            color: #fa0102;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 3rem;
+            right: 3rem;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #333;
+            letter-spacing: 0.2em;
+        }
+
+        .footer-logo {
+            position: absolute;
+            bottom: 3rem;
+            left: 3rem;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(rgba(26, 26, 26, .5) 1px, transparent 1px), linear-gradient(90deg, rgba(26, 26, 26, .5) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 2rem;
+            padding: 3rem;
+            transition: all 0.4s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(250, 1, 2, 0.3);
+            background: rgba(250, 1, 2, 0.02);
+        }
+
+        @media print {
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+
+            *,
+            *::before,
+            *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+                backdrop-filter: none !important;
+            }
+
+            body {
+                background-color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .slide {
+                height: 100vh !important;
+                break-after: page;
+                page-break-after: always;
+            }
+
+            #controls,
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-black">
+
+    <div id="controls" class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference">
+        <a href="{{ url_for('docs.library') }}"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar
+        </a>
+        <button onclick="window.print()"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+        </button>
+    </div>
+
+    <!-- SLIDE 1: CAPA -->
+    <section class="slide grid-bg !p-0 overflow-hidden relative">
+        <div class="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-[#120000] opacity-90"></div>
+        <div class="slide-content relative z-10 text-center flex flex-col items-center">
+            <div class="w-16 h-1 bg-northway-red mb-12 animate-pulse"></div>
+            <h1 class="text-6xl md:text-[100px] font-black tracking-tighter uppercase italic leading-none mb-4">
+                Performance <br>
+                <span class="text-northway-red">BDR</span>
+            </h1>
+            <div class="h-px bg-white/10 w-full max-w-2xl mb-8"></div>
+            <p class="text-xl md:text-3xl font-light tracking-[0.1em] text-gray-400 uppercase">
+                A máquina de <span class="text-white font-bold">geração de demanda</span> previsível.
+            </p>
+        </div>
+        <div class="footer-logo">Northway Company</div>
+        <span class="slide-number">#01</span>
+    </section>
+
+    <!-- SLIDE 2: BASE DA OPERAÇÃO -->
+    <section class="slide bg-black">
+        <div class="slide-content text-center">
+            <h2 class="text-4xl md:text-6xl font-black uppercase italic mb-12">Base da <span
+                    class="highlight">Operação</span></h2>
+            <div class="card max-w-2xl mx-auto space-y-8">
+                <div class="flex justify-between items-center border-b border-white/5 pb-6">
+                    <span class="text-gray-400 uppercase tracking-widest font-bold">Cada BDR trabalha</span>
+                    <span class="text-3xl font-black text-white">60 <span
+                            class="text-sm font-normal text-gray-500">contatos/dia</span></span>
+                </div>
+                <div class="flex justify-between items-center border-b border-white/5 pb-6">
+                    <span class="text-gray-400 uppercase tracking-widest font-bold">Dias Úteis</span>
+                    <span class="text-3xl font-black text-white">20 <span
+                            class="text-sm font-normal text-gray-500">dias/mês</span></span>
+                </div>
+                <div class="bg-northway-red/10 p-8 rounded-xl border border-northway-red/20 mt-8">
+                    <p class="text-gray-400 uppercase tracking-tighter text-sm mb-2">Total Mensal</p>
+                    <p class="text-6xl font-black text-white">1.200</p>
+                    <p class="text-northway-red font-bold uppercase tracking-widest mt-2">Empresas abordadas</p>
+                </div>
+                <p class="text-2xl italic text-gray-500 mt-6">"Esse é o combustível da máquina."</p>
+            </div>
+        </div>
+        <div class="footer-logo">Northway Company</div>
+        <span class="slide-number">#02</span>
+    </section>
+
+    <!-- SLIDE 3: FUNIL COMERCIAL -->
+    <section class="slide bg-[#050505] grid-bg">
+        <div class="slide-content">
+            <h2 class="text-4xl md:text-5xl font-black uppercase italic mb-12 text-center">Funil Comercial <span
+                    class="highlight">NorthWay</span></h2>
+
+            <div class="flex flex-col items-center">
+                <div class="relative w-full max-w-2xl">
+                    <svg viewBox="0 0 800 500" class="w-full h-auto drop-shadow-[0_0_30px_rgba(250,1,2,0.2)]">
+                        <path d="M50 0 L750 0 L680 100 L120 100 Z" fill="#fa0102" opacity="1" />
+                        <path d="M120 100 L680 100 L610 200 L190 200 Z" fill="#fa0102" opacity="0.8" />
+                        <path d="M190 200 L610 200 L540 300 L260 300 Z" fill="#fa0102" opacity="0.6" />
+                        <path d="M260 300 L540 300 L470 400 L330 400 Z" fill="#fa0102" opacity="0.4" />
+                        <path d="M330 400 L470 400 L430 500 L370 500 Z" fill="#fa0102" opacity="0.2" />
+
+                        <text x="400" y="55" fill="white" text-anchor="middle" font-weight="900" font-size="24"
+                            class="uppercase">Empresas Abordadas</text>
+                        <text x="400" y="155" fill="white" text-anchor="middle" font-weight="900" font-size="24"
+                            class="uppercase">Respostas</text>
+                        <text x="400" y="255" fill="white" text-anchor="middle" font-weight="900" font-size="24"
+                            class="uppercase">Diagnósticos Agendados</text>
+                        <text x="400" y="355" fill="white" text-anchor="middle" font-weight="900" font-size="24"
+                            class="uppercase">Reuniões Realizadas</text>
+                        <text x="400" y="465" fill="white" text-anchor="middle" font-weight="900" font-size="24"
+                            class="uppercase">Clientes Fechados</text>
+                    </svg>
+                </div>
+                <p class="text-xl text-gray-500 mt-12 italic text-center">"Cada etapa tem uma taxa de conversão que dita
+                    o resultado final."</p>
+            </div>
+        </div>
+        <div class="footer-logo">Northway Company</div>
+        <span class="slide-number">#03</span>
+    </section>
+
+    <!-- SLIDE 4: CENÁRIOS DE CONVERSÃO -->
+    <section class="slide bg-black">
+        <div class="slide-content">
+            <h2 class="text-4xl md:text-5xl font-black uppercase italic mb-12 text-center">Cenários de <span
+                    class="highlight">Conversão</span></h2>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Conservador -->
+                <div class="card !bg-white/5 border-white/10 scale-95 opacity-80">
+                    <h3 class="text-xl font-bold uppercase mb-4 text-gray-500">Conservador</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between"><span>Abordagens</span><span
+                                class="font-bold text-white">1.200</span></div>
+                        <div class="flex justify-between"><span>Respostas (8%)</span><span
+                                class="font-bold text-white">96</span></div>
+                        <div class="flex justify-between"><span>Diagnósticos (3%)</span><span
+                                class="font-bold text-white">36</span></div>
+                        <div class="flex justify-between border-t border-white/5 pt-2"><span>Clientes</span><span
+                                class="font-bold text-white">05</span></div>
+                        <div class="flex justify-between text-northway-red font-black pt-2">
+                            <span>Comissão</span><span>R$ 1.125</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Realista -->
+                <div class="card !bg-northway-red/10 border-northway-red/30 relative overflow-hidden">
+                    <div
+                        class="absolute top-2 right-2 bg-northway-red text-[10px] px-2 py-1 font-black rounded uppercase">
+                        Meta</div>
+                    <h3 class="text-2xl font-black uppercase mb-4 text-white">Realista</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between"><span>Abordagens</span><span
+                                class="font-bold text-white">1.200</span></div>
+                        <div class="flex justify-between"><span>Respostas (12%)</span><span
+                                class="font-bold text-white">144</span></div>
+                        <div class="flex justify-between"><span>Diagnósticos (5%)</span><span
+                                class="font-bold text-white">60</span></div>
+                        <div class="flex justify-between border-t border-white/10 pt-2 text-xl font-black">
+                            <span>Clientes</span><span class="text-northway-red">10</span>
+                        </div>
+                        <div class="flex justify-between text-2xl font-black pt-2 bg-northway-red/20 -mx-6 px-6 py-2">
+                            <span>Comissão</span><span class="text-white">R$ 2.250</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ambicioso -->
+                <div class="card !bg-yellow-500/5 border-yellow-500/20 scale-95 opacity-80">
+                    <h3 class="text-xl font-bold uppercase mb-4 text-yellow-600">Ambicioso</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between"><span>Abordagens</span><span
+                                class="font-bold text-white">1.200</span></div>
+                        <div class="flex justify-between"><span>Respostas (18%)</span><span
+                                class="font-bold text-white">216</span></div>
+                        <div class="flex justify-between"><span>Diagnósticos (8%)</span><span
+                                class="font-bold text-white">96</span></div>
+                        <div class="flex justify-between border-t border-white/5 pt-2"><span>Clientes</span><span
+                                class="font-bold text-white">22</span></div>
+                        <div class="flex justify-between text-yellow-500 font-black pt-2"><span>Comissão</span><span>R$
+                                4.950</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-logo">Northway Company</div>
+        <span class="slide-number">#04</span>
+    </section>
+
+    <!-- SLIDE 5: ALAVANCAS DE CRESCIMENTO -->
+    <section class="slide bg-[#080808] grid-bg">
+        <div class="slide-content">
+            <h2 class="text-4xl md:text-5xl font-black uppercase italic mb-8">Onde melhorar o <span
+                    class="highlight">funil?</span></h2>
+            <p class="text-xl text-gray-500 mb-12 italic">Existem três alavancas principais para crescer rápido:</p>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card space-y-4 hover:bg-white/5 transition-colors">
+                    <div
+                        class="w-12 h-12 bg-northway-red text-white rounded-full flex items-center justify-center font-black text-2xl">
+                        1</div>
+                    <h3 class="text-2xl font-black uppercase text-white">Taxa de Resposta</h3>
+                    <p class="text-gray-500 text-sm">Melhoria contínua dos scripts e personalização na primeira
+                        abordagem.</p>
+                </div>
+                <div class="card space-y-4 hover:bg-white/5 transition-colors">
+                    <div
+                        class="w-12 h-12 bg-northway-red text-white rounded-full flex items-center justify-center font-black text-2xl">
+                        2</div>
+                    <h3 class="text-2xl font-black uppercase text-white">Taxa de Diagnóstico</h3>
+                    <p class="text-gray-500 text-sm">Qualificação afiada do BDR para identificar dores e gerar urgência.
+                    </p>
+                </div>
+                <div class="card space-y-4 hover:bg-white/5 transition-colors">
+                    <div
+                        class="w-12 h-12 bg-northway-red text-white rounded-full flex items-center justify-center font-black text-2xl">
+                        3</div>
+                    <h3 class="text-2xl font-black uppercase text-white">Taxa de Fechamento</h3>
+                    <p class="text-gray-500 text-sm">Poder de conversão do especialista (Closer) na reunião estratégica.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-logo">Northway Company</div>
+        <span class="slide-number">#05</span>
+    </section>
+
+    <!-- SLIDE 6: IMPACTO E MENTALIDADE -->
+    <section class="slide bg-black">
+        <div class="slide-content">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="space-y-12">
+                    <div>
+                        <h2 class="text-5xl font-black uppercase italic mb-6">Impacto <br><span
+                                class="highlight">Exponencial</span></h2>
+                        <p class="text-lg text-gray-400 mb-8 font-light italic">Se tivermos 2 BDRs no cenário realista:
+                        </p>
+                        <div class="p-6 bg-northway-red/20 border border-northway-red/40 rounded-2xl">
+                            <p class="text-gray-500 uppercase font-black text-xs tracking-widest mb-2">Faturamento
+                                Recorrente Novo</p>
+                            <p class="text-4xl font-black text-white">R$ 30.000 <span
+                                    class="text-sm font-normal text-gray-500">/mês</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center md:text-left">
+                    <i data-lucide="zap" class="w-16 h-16 text-northway-red mb-6 mx-auto md:mx-0"></i>
+                    <h2 class="text-5xl font-black uppercase italic mb-8">Mentalidade <span
+                            class="highlight">NorthWay</span></h2>
+                    <p class="text-2xl font-light text-gray-400 mb-12 uppercase italic">Prospecção é um <span
+                            class="text-white font-bold underline decoration-northway-red decoration-4">jogo de
+                            volume.</span></p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-logo">Northway Company</div>
+        <span class="slide-number">#06</span>
+    </section>
+
+    <!-- SLIDE 7: ENCERRAMENTO PADRÃO -->
+    <section class="slide bg-black border-t border-gray-900">
+        <div class="slide-content text-center">
+            <div class="flex flex-col items-center gap-6">
+                <!-- Links -->
+                <div
+                    class="flex flex-wrap justify-center gap-8 md:gap-12 text-sm font-bold tracking-widest uppercase text-gray-500">
+                    <a href="https://www.northwaycompany.com.br/" target="_blank"
+                        class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                        <i data-lucide="globe" class="w-4 h-4"></i> Site
+                    </a>
+                    <a href="https://www.instagram.com/northway.mkt/" target="_blank"
+                        class="hover:text-[#fa0102] transition-colors flex items-center gap-2">
+                        <i data-lucide="instagram" class="w-4 h-4"></i> Instagram
+                    </a>
+                </div>
+
+                <p class="text-xs text-center text-gray-800 mt-8 max-w-md mx-auto">
+                    © NorthWay Company. Todos os direitos reservados.
+                </p>
+            </div>
+        </div>
+        <div class="footer-logo">Northway Company</div>
+        <span class="slide-number">#07</span>
+    </section>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

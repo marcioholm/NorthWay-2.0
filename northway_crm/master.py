@@ -2324,10 +2324,10 @@ def migrate_library_v9():
             )
             db.session.add(book)
             db.session.flush() # Get ID
-        else:
-            book.title = "Playbook BDR"
+        if book:
+            book.title = "Playbook BDR: Cadência e Scripts"
+            book.description = "Manual completo com scripts de WhatsApp, áudios e cadência de 18 dias."
             book.category = "Vendas (Interno)"
-            book.cover_image = "sdr-bg.png"
 
         # 2. Automatically associate with the Master company (and current user's company just in case)
         master_comp = Company.query.filter(Company.name.like('%NorthWay%')).first()
@@ -2335,6 +2335,45 @@ def migrate_library_v9():
             book.allowed_companies.append(master_comp)
             
         db.session.commit()
-        return f"Migration V9 Successful! 'Playbook BDR' registered. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
+        return f"Migration V9 Updated! <a href='{url_for('master.migrate_library_v10', secret='northway_super_diagnostic_99')}'>Run Migration V10 to add Presentation</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+@master.route('/master/force-library-migration-v10', methods=['GET'])
+def migrate_library_v10():
+    """
+    Migration V10: Add BDR Performance Presentation to Library
+    """
+    if request.args.get('secret') != 'northway_super_diagnostic_99':
+        return "Forbidden", 403
+    
+    try:
+        from models import LibraryBook, Company
+        from datetime import datetime
+        
+        # 1. Register "Apresentação: Performance BDR"
+        route = 'docs.presentation_bdr'
+        book = LibraryBook.query.filter_by(route_name=route).first()
+        
+        if not book:
+            book = LibraryBook(
+                title='Apresentação: Performance BDR',
+                description='Slides de performance, funil comercial e cenários de conversão.',
+                category='Vendas (Interno)',
+                cover_image='sdr-bg.png',
+                route_name=route,
+                active=True,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(book)
+            db.session.flush()
+        
+        # 2. Associate with NorthWay Master
+        master_comp = Company.query.filter(Company.name.like('%NorthWay%')).first()
+        if master_comp and master_comp not in book.allowed_companies:
+            book.allowed_companies.append(master_comp)
+            
+        db.session.commit()
+        return f"Migration V10 Successful! BDR Presentation added. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
     except Exception as e:
         return f"Error: {str(e)}"
