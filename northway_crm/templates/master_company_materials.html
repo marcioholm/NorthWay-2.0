@@ -67,7 +67,8 @@
                                         Adicionado em: {{ book.created_at.strftime('%d/%m/%Y') if book.created_at else
                                         'N/A' }}
                                     </p>
-                                    {% if book.created_at and (now - book.created_at).days < 7 %} <span
+                                    {% if book.created_at and now and (now.replace(tzinfo=None) -
+                                    book.created_at.replace(tzinfo=None)).days < 7 %} <span
                                         class="bg-green-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded animate-pulse uppercase tracking-wider">
                                         Novo</span>
                                         {% endif %}

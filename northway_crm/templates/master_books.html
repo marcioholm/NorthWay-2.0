@@ -47,7 +47,8 @@
                     class="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur text-xs font-bold rounded shadow-sm text-gray-700">
                     {{ book.category }}
                 </span>
-                {% if book.created_at and (now - book.created_at).days < 7 %} <span
+                {% if book.created_at and now and (now.replace(tzinfo=None) - book.created_at.replace(tzinfo=None)).days
+                < 7 %} <span
                     class="absolute top-2 left-2 px-2 py-1 bg-green-500 text-white text-[10px] font-black rounded shadow-sm animate-pulse uppercase tracking-widest">
                     Novo
                     </span>
