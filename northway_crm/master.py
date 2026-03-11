@@ -2377,3 +2377,41 @@ def migrate_library_v10():
         return f"Migration V10 Successful! BDR Presentation added. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
     except Exception as e:
         return f"Error: {str(e)}"
+@master.route('/master/force-library-migration-v11', methods=['GET'])
+def migrate_library_v11():
+    """
+    Migration V11: Associate all Master materials with all NorthWay companies
+    """
+    if request.args.get('secret') != 'northway_super_diagnostic_99':
+        return "Forbidden", 403
+    
+    try:
+        from models import LibraryBook, Company
+        from datetime import datetime
+        
+        # 1. Broadly identify Northway-related companies
+        # IDs confirmed from DB check: 1, 4, 5, 6, 7
+        target_company_ids = [1, 4, 5, 6, 7]
+        target_companies = Company.query.filter(Company.id.in_(target_company_ids)).all()
+        
+        # 2. Identify materials to sync
+        # Including the new split BDR materials and the CRM 2.0 presentation
+        book_routes = [
+            'docs.presentation_playbook_bdr',
+            'docs.presentation_bdr',
+            'docs.presentation_crm_v2'
+        ]
+        
+        updated_count = 0
+        for route_name in book_routes:
+            book = LibraryBook.query.filter_by(route_name=route_name).first()
+            if book:
+                for company in target_companies:
+                    if company not in book.allowed_companies:
+                        book.allowed_companies.append(company)
+                updated_count += 1
+        
+        db.session.commit()
+        return f"Migration V11 Successful! Updated {updated_count} materials for {len(target_companies)} companies. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"
