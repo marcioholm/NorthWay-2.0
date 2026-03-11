@@ -16,7 +16,7 @@ def check_master_access():
         'master.company_materials', 'master.run_library_migration', 
         'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 
         'master.refresh_roles', 'master.sync_schema', 'master.diagnostic_access',
-        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5', 'master.migrate_library_v6', 'master.migrate_library_v7', 'master.migrate_library_v8'
+        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5', 'master.migrate_library_v6', 'master.migrate_library_v7', 'master.migrate_library_v8', 'master.migrate_library_v9'
     ]
     
     if request.endpoint in whitelist:
@@ -2293,5 +2293,48 @@ def migrate_library_v8():
                 
         db.session.commit()
         return f"Migration V8 Successful! Updated {updated_count} books with Covers & Categories. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+@master.route('/master/force-library-migration-v9', methods=['GET'])
+def migrate_library_v9():
+    """
+    Migration V9: Add BDR Playbook to Library
+    """
+    if request.args.get('secret') != 'northway_super_diagnostic_99':
+        return "Forbidden", 403
+    
+    try:
+        from models import LibraryBook, Company
+        from datetime import datetime
+        
+        # 1. Create the Book if missing
+        route = 'docs.presentation_playbook_bdr'
+        book = LibraryBook.query.filter_by(route_name=route).first()
+        
+        if not book:
+            book = LibraryBook(
+                title="Playbook BDR",
+                description="Scripts de cadência de 18 dias, áudios e estratégia de prospecção.",
+                category="Vendas (Interno)",
+                cover_image="sdr-bg.png",
+                route_name=route,
+                active=True,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(book)
+            db.session.flush() # Get ID
+        else:
+            book.title = "Playbook BDR"
+            book.category = "Vendas (Interno)"
+            book.cover_image = "sdr-bg.png"
+
+        # 2. Automatically associate with the Master company (and current user's company just in case)
+        master_comp = Company.query.filter(Company.name.like('%NorthWay%')).first()
+        if master_comp and master_comp not in book.allowed_companies:
+            book.allowed_companies.append(master_comp)
+            
+        db.session.commit()
+        return f"Migration V9 Successful! 'Playbook BDR' registered. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
     except Exception as e:
         return f"Error: {str(e)}"
