@@ -705,9 +705,18 @@
             const ey = tRect.y + tRect.h / 2;
 
             // Path math (Bezier curve for smoothness)
-            // Control points pull outwards horizontally
-            const deltaX = Math.abs(ex - sx) * 0.5;
-            const pathData = `M ${sx} ${sy} C ${sx} ${sy + 40}, ${ex} ${ey - 40}, ${ex} ${ey}`;
+            let pathData = '';
+
+            // If they are roughly horizontally aligned
+            if (Math.abs(ey - sy) < 40) {
+                // Horizontal bezier
+                const ctrlX = (sx + ex) / 2;
+                pathData = `M ${sx} ${sy} C ${ctrlX} ${sy}, ${ctrlX} ${ey}, ${ex} ${ey}`;
+            } else {
+                // Vertical bezier (standard)
+                const ctrlY = (sy + ey) / 2;
+                pathData = `M ${sx} ${sy} C ${sx} ${ctrlY}, ${ex} ${ctrlY}, ${ex} ${ey}`;
+            }
 
             const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             pathEl.setAttribute('d', pathData);
@@ -842,12 +851,16 @@
             const dragLine = document.getElementById('drag-line');
             dragLine.classList.remove('hidden');
 
-            // Get center of source
+            // Get center of source, ensuring we account for diamond offset if needed
             const domNode = document.getElementById(`node-${node.id}`);
             const sx = node.x + domNode.offsetWidth / 2;
             const sy = node.y + domNode.offsetHeight / 2;
 
-            dragLine.setAttribute('d', `M ${sx} ${sy} L ${e.clientX} ${e.clientY}`);
+            const canvasRect = document.getElementById('flowchart-container').getBoundingClientRect();
+            const absoluteMouseX = e.clientX - canvasRect.left;
+            const absoluteMouseY = e.clientY - canvasRect.top;
+
+            dragLine.setAttribute('d', `M ${sx} ${sy} L ${absoluteMouseX} ${absoluteMouseY}`);
             return;
         }
 
@@ -917,7 +930,17 @@
             const mouseX = e.clientX - canvasRect.left;
             const mouseY = e.clientY - canvasRect.top;
 
-            dragLine.setAttribute('d', `M ${sx} ${sy} L ${mouseX} ${mouseY}`);
+            // Curve it live like the static edges
+            let pathData = '';
+            if (Math.abs(mouseY - sy) < 40) {
+                const ctrlX = (sx + mouseX) / 2;
+                pathData = `M ${sx} ${sy} C ${ctrlX} ${sy}, ${ctrlX} ${mouseY}, ${mouseX} ${mouseY}`;
+            } else {
+                const ctrlY = (sy + mouseY) / 2;
+                pathData = `M ${sx} ${sy} C ${sx} ${ctrlY}, ${mouseX} ${ctrlY}, ${mouseX} ${mouseY}`;
+            }
+
+            dragLine.setAttribute('d', pathData);
         }
     }
 
