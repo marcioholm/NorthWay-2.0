@@ -47,9 +47,19 @@
                     class="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur text-xs font-bold rounded shadow-sm text-gray-700">
                     {{ book.category }}
                 </span>
+                {% if book.created_at and (now - book.created_at).days < 7 %} <span
+                    class="absolute top-2 left-2 px-2 py-1 bg-green-500 text-white text-[10px] font-black rounded shadow-sm animate-pulse uppercase tracking-widest">
+                    Novo
+                    </span>
+                    {% endif %}
             </div>
 
-            <h3 class="text-lg font-bold text-gray-900 mb-1 truncate" title="{{ book.title }}">{{ book.title }}</h3>
+            <div class="flex items-center justify-between mb-1">
+                <h3 class="text-lg font-bold text-gray-900 truncate" title="{{ book.title }}">{{ book.title }}</h3>
+            </div>
+            <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mb-2">
+                Adicionado: {{ book.created_at.strftime('%d/%m/%Y') if book.created_at else 'N/A' }}
+            </p>
             <p class="text-xs text-gray-400 mb-4 line-clamp-2 h-8">{{ book.description or 'Sem descrição' }}</p>
 
             <div class="flex items-center gap-2 mb-4">

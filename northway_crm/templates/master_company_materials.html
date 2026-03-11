@@ -59,8 +59,19 @@
                             <div class="ml-5 flex-1">
                                 <p class="font-bold text-gray-200 group-hover:text-white transition-colors">{{
                                     book.title }}</p>
-                                <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">{{
-                                    book.category }}</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest">{{
+                                        book.category }}</p>
+                                    <span class="text-[10px] text-gray-600">•</span>
+                                    <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest">
+                                        Adicionado em: {{ book.created_at.strftime('%d/%m/%Y') if book.created_at else
+                                        'N/A' }}
+                                    </p>
+                                    {% if book.created_at and (now - book.created_at).days < 7 %} <span
+                                        class="bg-green-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded animate-pulse uppercase tracking-wider">
+                                        Novo</span>
+                                        {% endif %}
+                                </div>
                             </div>
 
                             {% if company in book.allowed_companies %}
@@ -171,7 +182,8 @@
                                 <option value="">Nenhum Padrão</option>
                                 {% for t in global_drive_templates %}
                                 <option value="{{ t.id }}" {% if company.default_template_id==t.id %}selected{% endif
-                                    %}>{{ t.name }}</option>
+                                    %}>{{
+                                    t.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>

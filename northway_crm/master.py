@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, session, abort, flash, request
 from flask_login import login_required, current_user, login_user
-from models import db, User, Company, ROLE_ADMIN, ContractTemplate, template_company_association, DriveFolderTemplate
+from models import db, User, Company, ROLE_ADMIN, ContractTemplate, template_company_association, DriveFolderTemplate, LibraryTemplate, LibraryTemplateGrant, LibraryBook
 from utils import get_now_br
 from datetime import datetime, date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,7 +16,8 @@ def check_master_access():
         'master.company_materials', 'master.run_library_migration', 
         'master.revoke_self', 'master.system_reset', 'master.migrate_saas', 
         'master.refresh_roles', 'master.sync_schema', 'master.diagnostic_access',
-        'master.diagnostic_access_v2', 'master.migrate_library_v3', 'master.migrate_library_v4', 'master.migrate_library_v5', 'master.migrate_library_v6', 'master.migrate_library_v7', 'master.migrate_library_v8', 'master.migrate_library_v9'
+        'master.migrate_library_v10', 'master.migrate_library_v11',
+        'master.migrate_library_v7', 'master.migrate_library_v8', 'master.migrate_library_v9'
     ]
     
     if request.endpoint in whitelist:
@@ -351,8 +352,8 @@ def company_materials(company_id):
         flash(f"Permissões de materiais para {company.name} atualizadas!", "success")
         return redirect(url_for('master.dashboard'))
         
-    from models import LibraryBook, ContractTemplate, LibraryTemplate, LibraryTemplateGrant, DriveFolderTemplate
-    books = LibraryBook.query.filter_by(active=True).all()
+    from models import ContractTemplate, LibraryTemplate, LibraryTemplateGrant, DriveFolderTemplate
+    books = LibraryBook.query.filter_by(active=True).order_by(LibraryBook.created_at.desc()).all()
     templates = ContractTemplate.query.filter_by(active=True).all()
     global_drive_templates = DriveFolderTemplate.query.filter_by(scope='global').all()
     
@@ -371,7 +372,8 @@ def company_materials(company_id):
                            books=books, 
                            templates=templates,
                            global_drive_templates=global_drive_templates,
-                           diagnostic_active=diagnostic_active)
+                           diagnostic_active=diagnostic_active,
+                           now=get_now_br())
 
 @master.route('/master/templates/global', methods=['GET', 'POST'])
 @login_required
@@ -1249,7 +1251,7 @@ from models import LibraryBook, library_book_company_association
 def books():
     # List all library books
     books = LibraryBook.query.order_by(LibraryBook.created_at.desc()).all()
-    return render_template('master_books.html', books=books)
+    return render_template('master_books.html', books=books, now=get_now_br())
 
 @master.route('/master/books/new', methods=['GET', 'POST'])
 def books_new():
@@ -2394,22 +2396,52 @@ def migrate_library_v11():
         target_company_ids = [1, 4, 5, 6, 7]
         target_companies = Company.query.filter(Company.id.in_(target_company_ids)).all()
         
-        # 2. Identify materials to sync
-        # Including the new split BDR materials and the CRM 2.0 presentation
-        book_routes = [
-            'docs.presentation_playbook_bdr',
-            'docs.presentation_bdr',
-            'docs.presentation_crm_v2'
+        # 2. Identify materials to sync with their definitions
+        book_definitions = [
+            {
+                'route': 'docs.presentation_playbook_bdr', 
+                'title': 'Playbook BDR: Cadência e Scripts',
+                'category': 'Vendas (Interno)'
+            },
+            {
+                'route': 'docs.presentation_bdr', 
+                'title': 'Apresentação: Performance e Projeções BDR',
+                'category': 'Vendas (Interno)'
+            },
+            {
+                'route': 'docs.presentation_crm_v2', 
+                'title': 'Apresentação Interativa CRM 2.0',
+                'category': 'Apresentação'
+            }
         ]
         
         updated_count = 0
-        for route_name in book_routes:
+        for defn in book_definitions:
+            route_name = defn['route']
             book = LibraryBook.query.filter_by(route_name=route_name).first()
-            if book:
-                for company in target_companies:
-                    if company not in book.allowed_companies:
-                        book.allowed_companies.append(company)
-                updated_count += 1
+            
+            # Create if missing
+            if not book:
+                book = LibraryBook(
+                    title=defn['title'],
+                    route_name=route_name,
+                    category=defn['category'],
+                    active=True
+                )
+                db.session.add(book)
+                # We need a flush to get the ID if needed elsewhere, but here 
+                # we just use the object for relationships
+            else:
+                # Update existing (ensure title and category are correct)
+                book.title = defn['title']
+                book.category = defn['category']
+                book.active = True
+            
+            # Associate with companies
+            for company in target_companies:
+                if company not in book.allowed_companies:
+                    book.allowed_companies.append(company)
+            updated_count += 1
         
         db.session.commit()
         return f"Migration V11 Successful! Updated {updated_count} materials for {len(target_companies)} companies. <a href='{url_for('master.dashboard')}'>Go to Dashboard</a>"
