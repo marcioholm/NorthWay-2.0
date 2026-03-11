@@ -12,6 +12,14 @@
                 Places.</p>
         </div>
         <div class="flex items-center gap-4">
+            <button onclick="backfillPhones()" id="backfillBtn"
+                class="flex items-center gap-2 bg-gray-100/50 hover:bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200 shadow-sm transition-all hover:shadow-md group">
+                <i data-lucide="refresh-cw"
+                    class="w-3.5 h-3.5 text-gray-500 group-hover:text-northway-red transition-colors"
+                    id="backfillIcon"></i>
+                <span class="text-[10px] font-bold text-gray-600 uppercase tracking-wider group-hover:text-gray-900"
+                    id="backfillText">Resgatar Contatos Antigos</span>
+            </button>
             <div
                 class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 shadow-sm transition-all hover:shadow-md cursor-default">
                 <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
@@ -791,6 +799,33 @@
                 `).join('');
             }
         } catch (e) { }
+    }
+
+    // --- Developer Utilities ---
+    async function backfillPhones() {
+        const btnText = document.getElementById('backfillText');
+        const icon = document.getElementById('backfillIcon');
+
+        btnText.innerText = "Resgatando...";
+        icon.classList.add('animate-spin');
+        icon.classList.replace('text-gray-500', 'text-northway-red');
+
+        try {
+            const resp = await fetch('/api/prospecting/backfill-phones', { method: 'POST' });
+            const data = await resp.json();
+
+            if (data.success) {
+                alert(`Resgate concluído!\n\n${data.data.updated_count} telefones resgatados de ${data.data.total_scanned} leads verificados.`);
+            } else {
+                alert("Erro ao resgatar contatos: " + data.error);
+            }
+        } catch (error) {
+            alert("Erro de conexão ao resgatar telefones.");
+        } finally {
+            btnText.innerText = "Resgatar Contatos Antigos";
+            icon.classList.remove('animate-spin');
+            icon.classList.replace('text-northway-red', 'text-gray-500');
+        }
     }
 </script>
 {% endblock %}

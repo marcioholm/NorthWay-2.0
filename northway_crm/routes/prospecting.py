@@ -280,6 +280,58 @@ def import_lead():
 
     db.session.commit()
     return api_response(data={'imported_count': imported_count, 'errors': errors})
+
+@prospecting_bp.route('/api/prospecting/backfill-phones', methods=['POST'])
+@login_required
+def backfill_phones():
+    from models import Integration, Lead
+    integration = Integration.query.filter_by(company_id=current_user.company_id, service='google_maps').first()
+    api_key = integration.api_key if integration and integration.is_active else None
+
+    if not api_key:
+        return api_response(success=False, error='API Key not configured', status=500)
+
+    # Find leads that have a google place id but NO phone
+    leads = Lead.query.filter(
+        Lead.company_id == current_user.company_id,
+        Lead.google_place_id != None,
+        (Lead.phone == None) | (Lead.phone == '')
+    ).all()
+
+    import requests
+    import time
+    
+    updated_count = 0
+    errors = []
+
+    for lead in leads:
+        try:
+            details_url = "https://maps.googleapis.com/maps/api/place/details/json"
+            details_params = {
+                'place_id': lead.google_place_id,
+                'fields': 'formatted_phone_number,international_phone_number,website',
+                'key': api_key
+            }
+            res = requests.get(details_url, params=details_params, timeout=10).json()
+            if res.get('status') == 'OK':
+                result_data = res.get('result', {})
+                phone = result_data.get('international_phone_number') or result_data.get('formatted_phone_number')
+                website = result_data.get('website')
+                
+                if phone:
+                    lead.phone = phone
+                    updated_count += 1
+                if website and not lead.website:
+                    lead.website = website
+            
+            # Sleep slightly to avoid rate limit spikes
+            time.sleep(0.3)
+        except Exception as e:
+            errors.append(f"Error {lead.id}: {str(e)}")
+
+    db.session.commit()
+    return api_response(data={'updated_count': updated_count, 'errors': errors, 'total_scanned': len(leads)})
+
 def api_response(success=True, data=None, error=None, status=200):
     return jsonify({
         'success': success,
