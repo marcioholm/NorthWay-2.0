@@ -619,42 +619,50 @@
             } else if (node.type === 'fim') {
                 bgClass = "bg-red-50 text-red-800"; borderClass = "border-red-400"; roundedClass = "rounded-full px-6 py-2";
             } else if (node.type === 'processo') {
+                bgClass = "bg-white text-gray-900"; borderClass = "border-gray-300"; roundedClass = "rounded-xl px-4 py-3 min-w-[120px]";
                 typeTag = `<span class="absolute -top-2 -left-2 bg-gray-200 text-gray-600 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm">PROCESSO</span>`;
             } else if (node.type === 'decisao') {
-                // Diamond shape illusion using clip-path or simple rotation.
-                // For simplicity & readability in text, we use a distinct color and slightly sharp corners + tag
-                bgClass = "bg-amber-50 text-amber-900"; borderClass = "border-amber-400"; roundedClass = "rounded-lg";
-                typeTag = `<span class="absolute -top-2 -left-2 bg-amber-200 text-amber-800 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm">DECISÃO?</span>`;
+                bgClass = "bg-amber-50 text-amber-900"; borderClass = "border-amber-400";
+                // Creating a diamond shape using CSS transform on a pseudo-element or just a standard rotated square
+                roundedClass = "rounded-lg aspect-square flex items-center justify-center p-4 min-w-[100px] transform rotate-45";
+                typeTag = `<span class="absolute -top-6 left-1/2 -translate-x-1/2 min-w-max transform -rotate-45 bg-amber-200 text-amber-800 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm z-20">DECISÃO?</span>`;
             }
 
             // Selection state
             if (node.id === selectedNodeId) {
-                borderClass = "border-red-500 shadow-md";
+                borderClass = borderClass.replace(/border-\w+-\d+/, 'border-red-500 shadow-md');
                 // Add connection ports
                 const ports = `
-                    <div class="port absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)]" data-pos="top"></div>
-                    <div class="port absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)]" data-pos="bottom"></div>
-                    <div class="port absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)]" data-pos="left"></div>
-                    <div class="port absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)]" data-pos="right"></div>
+                    <div class="port absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)] z-20" data-pos="top" ${node.type === 'decisao' ? 'style="transform: rotate(-45deg);"' : ''}></div>
+                    <div class="port absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)] z-20" data-pos="bottom" ${node.type === 'decisao' ? 'style="transform: rotate(-45deg);"' : ''}></div>
+                    <div class="port absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)] z-20" data-pos="left" ${node.type === 'decisao' ? 'style="transform: rotate(-45deg);"' : ''}></div>
+                    <div class="port absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full cursor-crosshair shadow-[0_0_8px_rgba(232,25,26,0.5)] z-20" data-pos="right" ${node.type === 'decisao' ? 'style="transform: rotate(-45deg);"' : ''}></div>
                 `;
-                el.innerHTML = typeTag + `<span class="pointer-events-none">${node.label}</span>` + ports;
+                // If decision, un-rotate the text content so it reads horizontally
+                const innerContent = node.type === 'decisao'
+                    ? `<div class="transform -rotate-45 text-center flex items-center justify-center w-full h-full"><span class="outline-none" contenteditable="true" spellcheck="false" onblur="updateNodeLabel('${node.id}', this.innerText)" onkeydown="if(event.key === 'Enter'){this.blur(); event.preventDefault();}">${node.label}</span></div>`
+                    : `<span class="outline-none" contenteditable="true" spellcheck="false" onblur="updateNodeLabel('${node.id}', this.innerText)" onkeydown="if(event.key === 'Enter'){this.blur(); event.preventDefault();}">${node.label}</span>`;
+
+                el.innerHTML = typeTag + innerContent + ports;
             } else {
-                el.innerHTML = typeTag + `<span class="pointer-events-none">${node.label}</span>`;
+                const innerContent = node.type === 'decisao'
+                    ? `<div class="transform -rotate-45 text-center flex items-center justify-center w-full h-full pointer-events-none"><span>${node.label}</span></div>`
+                    : `<span class="pointer-events-none">${node.label}</span>`;
+                el.innerHTML = typeTag + innerContent;
             }
 
             el.className += ` ${bgClass} ${borderClass} ${roundedClass}`;
 
-            // Event Listeners for dragging and double clicking
+            // Event Listeners for dragging
             el.addEventListener('mousedown', (e) => handleNodeMouseDown(e, node));
-            el.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                const newLabel = prompt("Editar nome:", node.label);
-                if (newLabel && newLabel.trim()) {
-                    node.label = newLabel.trim();
-                    renderFlowchart();
-                    requestAutoSave();
-                }
-            });
+
+            // Prevent drag when clicking on editable text
+            const editableSpan = el.querySelector('[contenteditable="true"]');
+            if (editableSpan) {
+                editableSpan.addEventListener('mousedown', (e) => {
+                    e.stopPropagation(); // Allow text selection, don't trigger drag
+                });
+            }
 
             canvas.appendChild(el);
         });
@@ -789,6 +797,16 @@
 
     // --- Interaction Handlers ---
 
+    function updateNodeLabel(nodeId, newText) {
+        const node = flowNodes.find(n => n.id === nodeId);
+        if (node && newText.trim() !== '') {
+            node.label = newText.trim();
+            requestAutoSave();
+        } else if (node) {
+            renderFlowchart(); // Revert if empty
+        }
+    }
+
     function clearSelection() {
         selectedNodeId = null;
         selectedEdgeId = null;
@@ -812,10 +830,13 @@
     function handleNodeMouseDown(e, node) {
         e.stopPropagation(); // Prevent canvas click clear selection
 
-        // Check if clicked on a port
+        // Check if clicked exactly on the node to select/drag, ignore pseudo-elements inside if port
         if (e.target.classList.contains('port')) {
             isConnecting = true;
             connectSourceId = node.id;
+
+            // Prevent default drag
+            e.preventDefault();
 
             // Setup visual line
             const dragLine = document.getElementById('drag-line');
@@ -836,19 +857,39 @@
         isDraggingNode = true;
 
         const domNode = document.getElementById(`node-${node.id}`);
-        dragOffset.x = e.clientX - node.x;
-        dragOffset.y = e.clientY - node.y;
+
+        // Exact offset to prevent jumping
+        const canvasRect = document.getElementById('flowchart-container').getBoundingClientRect();
+        const absoluteMouseX = e.clientX - canvasRect.left;
+        const absoluteMouseY = e.clientY - canvasRect.top;
+
+        dragOffset.x = absoluteMouseX - node.x;
+        dragOffset.y = absoluteMouseY - node.y;
 
         domNode.style.cursor = 'grabbing';
         renderFlowchart(); // re-render to update selection UI
+
+        // Ensure editable text is focused if clicking on the span directly
+        setTimeout(() => {
+            const span = domNode.querySelector('[contenteditable="true"]');
+            if (span && e.target === span) {
+                span.focus();
+                isDraggingNode = false; // Cancel drag if intentionally clicking text
+                domNode.style.cursor = 'text';
+            }
+        }, 10);
     }
 
     function handleCanvasMouseMove(e) {
+        const canvasRect = document.getElementById('flowchart-container').getBoundingClientRect();
+        const mouseX = e.clientX - canvasRect.left;
+        const mouseY = e.clientY - canvasRect.top;
+
         if (isDraggingNode && draggedNode) {
             // Apply grid snapping (28px)
             const snap = 28;
-            let nx = e.clientX - dragOffset.x;
-            let ny = e.clientY - dragOffset.y;
+            let nx = mouseX - dragOffset.x;
+            let ny = mouseY - dragOffset.y;
 
             // Grid Snapping logic
             nx = Math.round(nx / snap) * snap;
