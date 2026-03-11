@@ -155,27 +155,6 @@ def blocked_account():
 @auth.route('/login', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
 def login():
-    try:
-        from models import db, Company, Pipeline, PipelineStage
-        companies = Company.query.all()
-        for company in companies:
-            existing_fu = Pipeline.query.filter_by(company_id=company.id, name='Follow-up (12 Dias)').first()
-            if not existing_fu:
-                try:
-                    fu_pipeline = Pipeline(name='Follow-up (12 Dias)', company_id=company.id)
-                    db.session.add(fu_pipeline)
-                    db.session.flush() # get ID
-                    
-                    fu_stages = ['Dia 1', 'Dia 2', 'Dia 4', 'Dia 7', 'Dia 12', 'Perdido/Sem Resposta']
-                    for i, fu_name in enumerate(fu_stages):
-                        fu_stage = PipelineStage(name=fu_name, order=i, pipeline_id=fu_pipeline.id, company_id=company.id)
-                        db.session.add(fu_stage)
-                except Exception as ce:
-                    db.session.rollback()
-        db.session.commit()
-    except Exception as e:
-        print(f"MIGRATION ERROR: {e}")
-
     if current_user.is_authenticated:
         if getattr(current_user, 'is_super_admin', False):
             return redirect(url_for('master.dashboard'))
