@@ -182,9 +182,17 @@
                     </div>
 
                     <div class="mt-3 flex items-center justify-between">
-                        <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">
-                            {{ lead.created_at.strftime('%d/%m') }}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">
+                                {{ lead.created_at.strftime('%d/%m') }}
+                            </span>
+                            <span
+                                class="text-[9px] font-black text-northway-red uppercase bg-red-50 px-1.5 py-0.5 rounded border border-red-100 flex items-center gap-1"
+                                title="Responsável">
+                                <i data-lucide="user" class="w-2.5 h-2.5"></i>
+                                {{ lead.assigned_user.name.split(' ')[0] if lead.assigned_user else '---' }}
+                            </span>
+                        </div>
 
                         <div
                             class="flex items-center gap-1.5 text-[10px] {{ 'text-orange-600 font-bold' if lead.days_inactive > 3 else 'text-gray-400' }}">
