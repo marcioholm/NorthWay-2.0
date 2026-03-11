@@ -837,6 +837,14 @@ def import_leads():
         
     if file:
         try:
+            from models import Pipeline, PipelineStage
+            default_p = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+            target_pipeline_id = default_p.id if default_p else None
+            target_stage_id = None
+            if default_p:
+               first_s = PipelineStage.query.filter_by(pipeline_id=default_p.id).order_by(PipelineStage.order).first()
+               if first_s: target_stage_id = first_s.id
+
             # Read content first to detect delimiter
             content = file.stream.read().decode("UTF8")
             stream = io.StringIO(content, newline=None)
@@ -888,6 +896,8 @@ def import_leads():
                     cnpj=cnpj,
                     company_id=current_user.company_id,
                     status='new',
+                    pipeline_id=target_pipeline_id,
+                    pipeline_stage_id=target_stage_id,
                     assigned_to_id=current_user.id
                 )
                 db.session.add(lead)
@@ -908,6 +918,35 @@ def import_leads():
 @leads_bp.route('/leads/fix-orphans')
 @login_required
 def fix_orphans():
+    # Placeholder for the original fix orphans
+    pass
+
+@leads_bp.route('/api/leads/mass-update-stage', methods=['POST'])
+@login_required
+def mass_update_stage():
+    data = request.json
+    lead_ids = data.get('lead_ids', [])
+    stage_id = data.get('stage_id')
+
+    if not lead_ids or not stage_id:
+        return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+    from models import PipelineStage
+    stage = PipelineStage.query.get(stage_id)
+    if not stage or stage.company_id != current_user.company_id:
+        return jsonify({'success': False, 'error': 'Invalid stage'}), 400
+
+    leads = Lead.query.filter(Lead.id.in_(lead_ids), Lead.company_id == current_user.company_id).all()
+    updated = 0
+    from models import LEAD_STATUS_IN_PROGRESS
+    for lead in leads:
+        lead.pipeline_stage_id = stage.id
+        lead.pipeline_id = stage.pipeline_id
+        lead.status = LEAD_STATUS_IN_PROGRESS
+        updated += 1
+        
+    db.session.commit()
+    return jsonify({'success': True, 'updated': updated})
     # 1. Get or Create Default Pipeline
     pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
     if not pipeline:

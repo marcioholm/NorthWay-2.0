@@ -208,9 +208,16 @@ def import_lead():
 
     from models import Pipeline, PipelineStage
     target_stage_id = stage_id
-    if not target_stage_id:
+    target_pipeline_id = None
+    
+    if target_stage_id:
+        s = PipelineStage.query.get(target_stage_id)
+        if s: target_pipeline_id = s.pipeline_id
+
+    if not target_stage_id or not target_pipeline_id:
         default_p = Pipeline.query.filter_by(company_id=current_user.company_id).first()
         if default_p:
+            target_pipeline_id = default_p.id
             first_s = PipelineStage.query.filter_by(pipeline_id=default_p.id).order_by(PipelineStage.order).first()
             if first_s: target_stage_id = first_s.id
 
@@ -230,6 +237,7 @@ def import_lead():
                 company_id=current_user.company_id,
                 assigned_to_id=current_user.id,
                 status='new',
+                pipeline_id=target_pipeline_id,
                 pipeline_stage_id=target_stage_id,
                 source='google_maps',
                 phone=p.get('phone'),

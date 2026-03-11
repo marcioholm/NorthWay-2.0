@@ -148,6 +148,10 @@
             <table class="w-full min-w-[800px] divide-y divide-gray-100">
                 <thead>
                     <tr class="bg-gray-50/50">
+                        <th scope="col" class="px-4 py-4 w-12 text-center">
+                            <input type="checkbox" id="selectAllLeads"
+                                class="rounded border-gray-300 text-northway-red focus:ring-northway-red">
+                        </th>
                         <th scope="col"
                             class="px-4 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">
                             Nome / Empresa
@@ -182,6 +186,13 @@
                     {% for lead in leads %}
                     <tr class="group hover:bg-slate-50/80 transition-all duration-200 cursor-pointer clickable-row"
                         data-href="{{ url_for('leads.lead_details', id=lead.id) }}">
+                        <!-- Selection Checkbox -->
+                        <td class="px-4 py-4 whitespace-nowrap text-center stop-propagation">
+                            <input type="checkbox"
+                                class="lead-checkbox rounded border-gray-300 text-northway-red focus:ring-northway-red"
+                                value="{{ lead.id }}">
+                        </td>
+
                         <!-- Name & Avatar -->
                         <td class="px-4 py-4 whitespace-nowrap">
                             <div class="flex items-center">
@@ -263,7 +274,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="px-6 py-24 text-center">
+                        <td colspan="8" class="px-6 py-24 text-center">
                             <div class="flex flex-col items-center justify-center">
                                 <div
                                     class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
@@ -286,6 +297,34 @@
             </table>
         </div>
         {{ render_pagination(pagination, 'leads.leads') }}
+    </div>
+</div>
+
+<!-- Floating Mass Action Bar -->
+<div id="massActionBar"
+    class="fixed bottom-0 left-0 right-0 md:left-64 bg-gray-900/95 backdrop-blur-md border-t border-gray-800 text-white p-4 transform translate-y-full transition-transform duration-300 ease-in-out z-40 flex justify-between items-center shadow-2xl">
+    <div class="flex items-center gap-4 px-4 md:px-8">
+        <span id="selectedCount" class="font-bold text-lg bg-gray-800 px-3 py-1 rounded-lg">0</span>
+        <span class="text-gray-300 text-sm">Leads selecionados</span>
+    </div>
+
+    <div class="flex items-center gap-3 px-4 md:px-8">
+        <select id="massStageSelect"
+            class="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg focus:ring-northway-red focus:border-northway-red block w-full p-2.5">
+            <option value="">Mover para Etapa...</option>
+            {% if stages %}
+            {% for stage in stages %}
+            <option value="{{ stage.id }}">{{ stage.name }}</option>
+            {% endfor %}
+            {% endif %}
+        </select>
+        <button onclick="applyMassAction()"
+            class="bg-northway-red hover:bg-red-700 text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center flex items-center gap-2 whitespace-nowrap transition-colors">
+            <i data-lucide="check" class="w-4 h-4"></i> Aplicar
+        </button>
+        <button onclick="clearSelection()" class="text-gray-400 hover:text-white p-2">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
     </div>
 </div>
 
@@ -510,6 +549,86 @@
                 e.stopPropagation();
             });
         });
+
+        // Bulk Selection Logic
+        const selectAllCheckbox = document.getElementById('selectAllLeads');
+        const leadCheckboxes = document.querySelectorAll('.lead-checkbox');
+        const massActionBar = document.getElementById('massActionBar');
+        const selectedCountEl = document.getElementById('selectedCount');
+
+        function updateMassActionBar() {
+            const selectedCount = document.querySelectorAll('.lead-checkbox:checked').length;
+            selectedCountEl.textContent = selectedCount;
+
+            if (selectedCount > 0) {
+                massActionBar.classList.remove('translate-y-full');
+            } else {
+                massActionBar.classList.add('translate-y-full');
+            }
+        }
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function (e) {
+                leadCheckboxes.forEach(cb => {
+                    cb.checked = e.target.checked;
+                });
+                updateMassActionBar();
+            });
+        }
+
+        leadCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function (e) {
+                updateMassActionBar();
+            });
+        });
+
+        window.clearSelection = function () {
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            leadCheckboxes.forEach(cb => cb.checked = false);
+            updateMassActionBar();
+        };
+
+        window.applyMassAction = async function () {
+            const stageId = document.getElementById('massStageSelect').value;
+            if (!stageId) {
+                alert('Selecione uma etapa para mover os leads.');
+                return;
+            }
+
+            const selectedIds = Array.from(document.querySelectorAll('.lead-checkbox:checked')).map(cb => parseInt(cb.value));
+
+            if (selectedIds.length === 0) return;
+
+            const btn = event.currentTarget;
+            const icon = btn.innerHTML;
+            btn.innerHTML = 'Processando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/leads/mass-update-stage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lead_ids: selectedIds,
+                        stage_id: stageId
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + data.error);
+                    btn.innerHTML = icon;
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão ao processar massa.');
+                btn.innerHTML = icon;
+                btn.disabled = false;
+            }
+        };
     });
     async function checkCnpjDuplicate() {
         const cnpjInput = document.getElementById('create_lead_cnpj');
