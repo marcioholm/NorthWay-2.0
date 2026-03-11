@@ -131,8 +131,10 @@ def leads():
     stages = []
     if pipeline:
          stages = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).all()
+         
+    pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
     
-    return render_template('leads.html', leads=leads_list, pagination=pagination, users=users, stages=stages)
+    return render_template('leads.html', leads=leads_list, pagination=pagination, users=users, stages=stages, pipelines=pipelines)
 
 @leads_bp.route('/leads/<int:id>')
 @login_required
@@ -954,6 +956,38 @@ def mass_update_stage():
     for lead in leads:
         lead.pipeline_stage_id = stage.id
         lead.pipeline_id = stage.pipeline_id
+        lead.status = LEAD_STATUS_IN_PROGRESS
+        updated += 1
+        
+    db.session.commit()
+    return jsonify({'success': True, 'updated': updated})
+
+@leads_bp.route('/api/leads/mass-update-pipeline', methods=['POST'])
+@login_required
+def mass_update_pipeline():
+    data = request.json
+    lead_ids = data.get('lead_ids', [])
+    pipeline_id = data.get('pipeline_id')
+
+    if not lead_ids or not pipeline_id:
+        return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+    from models import Pipeline, PipelineStage
+    pipeline = Pipeline.query.get(pipeline_id)
+    if not pipeline or pipeline.company_id != current_user.company_id:
+        return jsonify({'success': False, 'error': 'Invalid pipeline'}), 400
+        
+    # Find the very first stage in the target pipeline
+    first_stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).first()
+    if not first_stage:
+        return jsonify({'success': False, 'error': 'Pipeline tem nenhuma etapa cadastrada.'}), 400
+
+    leads = Lead.query.filter(Lead.id.in_(lead_ids), Lead.company_id == current_user.company_id).all()
+    updated = 0
+    from models import LEAD_STATUS_IN_PROGRESS
+    for lead in leads:
+        lead.pipeline_id = pipeline.id
+        lead.pipeline_stage_id = first_stage.id
         lead.status = LEAD_STATUS_IN_PROGRESS
         updated += 1
         
