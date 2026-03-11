@@ -327,16 +327,28 @@ def register():
         db.session.flush()
         user.role_id = admin_role.id
 
-        # 3.4 Bootstrap Minimals (Pipeline)
+        # 3.4 Bootstrap Minimals (Pipelines)
         pipeline = Pipeline(name='Funil de Vendas', company_id=company.id)
         db.session.add(pipeline)
+        
+        # Follow-Up Pipeline
+        followup_pipeline = Pipeline(name='Follow-up (12 Dias)', company_id=company.id)
+        db.session.add(followup_pipeline)
+        
         db.session.flush()
         
         stages = ['Novo', 'Qualificação', 'Proposta', 'Negociação', 'Fechado']
         for i, s_name in enumerate(stages):
             stage = PipelineStage(name=s_name, order=i, pipeline_id=pipeline.id, company_id=company.id)
             db.session.add(stage)
+            
+        fu_stages = ['Dia 1', 'Dia 2', 'Dia 4', 'Dia 7', 'Dia 12', 'Perdido/Sem Resposta']
+        for i, fu_name in enumerate(fu_stages):
+            fu_stage = PipelineStage(name=fu_name, order=i, pipeline_id=followup_pipeline.id, company_id=company.id)
+            db.session.add(fu_stage)
+            
         user.allowed_pipelines.append(pipeline)
+        user.allowed_pipelines.append(followup_pipeline)
 
         # 3.5 Initial Access Tracking
         user.last_login = get_now_br()
@@ -416,6 +428,11 @@ def setup_company():
         # Default Pipeline
         pipeline = Pipeline(name='Funil de Vendas', company_id=company.id)
         db.session.add(pipeline)
+        
+        # Follow-Up Pipeline
+        followup_pipeline = Pipeline(name='Follow-up (12 Dias)', company_id=company.id)
+        db.session.add(followup_pipeline)
+        
         db.session.flush()
         
         stages = ['Novo', 'Qualificação', 'Proposta', 'Negociação', 'Fechado']
@@ -423,7 +440,13 @@ def setup_company():
             stage = PipelineStage(name=s_name, order=i, pipeline_id=pipeline.id, company_id=company.id)
             db.session.add(stage)
             
+        fu_stages = ['Dia 1', 'Dia 2', 'Dia 4', 'Dia 7', 'Dia 12', 'Perdido/Sem Resposta']
+        for i, fu_name in enumerate(fu_stages):
+            fu_stage = PipelineStage(name=fu_name, order=i, pipeline_id=followup_pipeline.id, company_id=company.id)
+            db.session.add(fu_stage)
+            
         current_user.allowed_pipelines.append(pipeline)
+        current_user.allowed_pipelines.append(followup_pipeline)
         
         # Default Financial Categories
         cats = [

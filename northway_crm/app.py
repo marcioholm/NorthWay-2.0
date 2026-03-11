@@ -1400,11 +1400,46 @@ def sys_migrate_drive():
             except Exception as e:
                 results.append(f"⚠️ client.{col}: {e}")
 
-        conn.commit()
         conn.close()
         return jsonify({"status": "completed", "log": results})
         
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/sys_admin/migrate_followup_pipeline')
+def sys_migrate_followup_pipeline():
+    try:
+        from models import Company, Pipeline, PipelineStage
+        results = []
+        
+        # We need app context for full ORM if we want to use the models easily
+        companies = Company.query.all()
+        for company in companies:
+            # Check if it already has the follow-up pipeline
+            existing_fu = Pipeline.query.filter_by(company_id=company.id, name='Follow-up (12 Dias)').first()
+            if not existing_fu:
+                try:
+                    fu_pipeline = Pipeline(name='Follow-up (12 Dias)', company_id=company.id)
+                    db.session.add(fu_pipeline)
+                    db.session.flush() # get ID
+                    
+                    fu_stages = ['Dia 1', 'Dia 2', 'Dia 4', 'Dia 7', 'Dia 12', 'Perdido/Sem Resposta']
+                    for i, fu_name in enumerate(fu_stages):
+                        fu_stage = PipelineStage(name=fu_name, order=i, pipeline_id=fu_pipeline.id, company_id=company.id)
+                        db.session.add(fu_stage)
+                        
+                    results.append(f"✅ Created Follow-up pipeline for Company ID {company.id}")
+                except Exception as ce:
+                    db.session.rollback()
+                    results.append(f"❌ Failed for Company ID {company.id}: {str(ce)}")
+            else:
+                results.append(f"⚠️ Company ID {company.id} already has Follow-up pipeline")
+                
+        db.session.commit()
+        return jsonify({"status": "completed", "log": results})
+        
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/checkout')

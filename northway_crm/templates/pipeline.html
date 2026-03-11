@@ -141,6 +141,7 @@
                     data-diag-score="{{ lead.diagnostic_score or 0 }}"
                     data-diag-class="{{ lead.diagnostic_classification or '' }}"
                     data-responsible-id="{{ lead.assigned_to_id or '' }}"
+                    data-pipeline-id="{{ lead.pipeline_id or '' }}"
                     data-estimated-value="{{ lead.estimated_value or 0 }}"
                     class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-l-orange-500' if lead.days_inactive > 3 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
 
@@ -347,6 +348,17 @@
                                 <option value="Site">Site</option>
                                 <option value="Feira/Evento">Feira/Evento</option>
                                 <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+
+                        <!-- Pipeline Select -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1 uppercase">Funil</label>
+                            <select name="pipeline_id" id="modalInputPipeline"
+                                class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none bg-white font-medium text-northway-red">
+                                {% for p in pipelines %}
+                                <option value="{{ p.id }}">{{ p.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
 
@@ -810,6 +822,7 @@
                 bant_authority: input.dataset.bantAuthority,
                 bant_need: input.dataset.bantNeed,
                 bant_timeline: input.dataset.bantTimeline,
+                pipeline_id: input.dataset.pipelineId,
             };
         }
         currentLeadId = lead.id;
@@ -840,6 +853,7 @@
         document.getElementById('modalInputWebsite').value = lead.website || '';
         document.getElementById('modalInputAddress').value = lead.address || '';
         document.getElementById('modalInputSource').value = lead.source || '';
+        document.getElementById('modalInputPipeline').value = lead.pipeline_id || '';
         document.getElementById('modalInputInterest').value = lead.interest || '';
         document.getElementById('modalInputEstimatedValue').value = input.dataset.estimatedValue || 0;
         document.getElementById('bantBudget').value = lead.bant_budget || '';

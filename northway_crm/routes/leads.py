@@ -607,6 +607,18 @@ def update_lead_info(id):
     if pipeline_stage_id:
         lead.pipeline_stage_id = int(pipeline_stage_id)
         lead.status = LEAD_STATUS_IN_PROGRESS
+        
+    # Pipeline Transfer
+    new_pipeline_id = request.form.get('pipeline_id')
+    if new_pipeline_id and str(new_pipeline_id) != str(lead.pipeline_id):
+        # User wants to move to a different pipeline
+        target_pipeline = Pipeline.query.get(int(new_pipeline_id))
+        if target_pipeline and target_pipeline.company_id == current_user.company_id:
+            lead.pipeline_id = target_pipeline.id
+            first_new_stage = PipelineStage.query.filter_by(pipeline_id=target_pipeline.id).order_by(PipelineStage.order).first()
+            if first_new_stage:
+                lead.pipeline_stage_id = first_new_stage.id
+                lead.status = LEAD_STATUS_IN_PROGRESS
     
     # Handle Assignment
     assigned_id = request.form.get('assigned_to_id')
