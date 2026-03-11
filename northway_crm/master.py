@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, session, abort, flash, request
 from flask_login import login_required, current_user, login_user
-from models import db, User, Company, ROLE_ADMIN, ContractTemplate, template_company_association, DriveFolderTemplate, LibraryTemplate, LibraryTemplateGrant, LibraryBook
+from models import db, User, Company, ROLE_ADMIN, ContractTemplate, template_company_association, DriveFolderTemplate, LibraryTemplate, LibraryTemplateGrant, LibraryBook, library_book_company_association
 from utils import get_now_br
 from datetime import datetime, date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -268,91 +268,90 @@ def company_materials(company_id):
     company = Company.query.get_or_404(company_id)
     
     if request.method == 'POST':
-        # 1. Update Library Books
-        allowed_book_ids = request.form.getlist('books')
-        from models import LibraryBook
-        
-        all_books = LibraryBook.query.all()
-        for book in all_books:
-            if str(book.id) in allowed_book_ids:
-                if company not in book.allowed_companies:
-                    book.allowed_companies.append(company)
-            else:
-                if company in book.allowed_companies:
-                    book.allowed_companies.remove(company)
-
-        # 2. Update Contract Templates
-        allowed_template_ids = request.form.getlist('templates')
-        from models import ContractTemplate
-        
-        all_templates = ContractTemplate.query.all()
-        for tmpl in all_templates:
-            if str(tmpl.id) in allowed_template_ids:
-                if company not in tmpl.allowed_companies:
-                    tmpl.allowed_companies.append(company)
-            else:
-                if company in tmpl.allowed_companies:
-                    tmpl.allowed_companies.remove(company)
-                    
-        # 3. Update Diagnostic Access
-        diagnostic_enabled = request.form.get('diagnostic_enabled') == 'on'
-        from models import LibraryTemplate, LibraryTemplateGrant, User, ROLE_ADMIN
-        
-        # Get the Diagnostic Template
-        diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
-        
-        if diag_template:
-            # 3.1 Get Company Admins
-            company_admins = User.query.filter_by(company_id=company.id, role=ROLE_ADMIN).all()
-            
-            if diagnostic_enabled:
-                # Grant active access to all admins if not already granted
-                for admin in company_admins:
-                    grant = LibraryTemplateGrant.query.filter_by(
-                        user_id=admin.id,
-                        template_id=diag_template.id
-                    ).first()
-                    
-                    if not grant:
-                        # Create new grant
-                        grant = LibraryTemplateGrant(
-                            tenant_id=company.id,
-                            template_id=diag_template.id,
-                            user_id=admin.id,
-                            granted_by_user_id=current_user.id,
-                            status='active'
-                        )
-                        db.session.add(grant)
-                    elif grant.status != 'active':
-                        # Reactivate
-                        grant.status = 'active'
-            else:
-                # Revoke access for ALL users in this company (not just admins, to be safe)
-                all_company_grants = LibraryTemplateGrant.query.filter_by(
-                    tenant_id=company.id,
-                    template_id=diag_template.id
-                ).all()
-                
-                for grant in all_company_grants:
-                    grant.status = 'revoked'
-                    
-        # 4. Update Global Drive Templates
-        allowed_global_ids = request.form.getlist('allowed_global_templates')
-        default_global_id = request.form.get('default_template_id')
-        auto_create = request.form.get('auto_create_subfolders') == 'on'
-        
         try:
+            # 1. Update Library Books
+            allowed_book_ids = request.form.getlist('books')
+            
+            all_books = LibraryBook.query.all()
+            for book in all_books:
+                if str(book.id) in allowed_book_ids:
+                    if company not in book.allowed_companies:
+                        book.allowed_companies.append(company)
+                else:
+                    if company in book.allowed_companies:
+                        book.allowed_companies.remove(company)
+
+            # 2. Update Contract Templates
+            allowed_template_ids = request.form.getlist('templates')
+            
+            all_templates = ContractTemplate.query.all()
+            for tmpl in all_templates:
+                if str(tmpl.id) in allowed_template_ids:
+                    if company not in tmpl.allowed_companies:
+                        tmpl.allowed_companies.append(company)
+                else:
+                    if company in tmpl.allowed_companies:
+                        tmpl.allowed_companies.remove(company)
+                        
+            # 3. Update Diagnostic Access
+            diagnostic_enabled = request.form.get('diagnostic_enabled') == 'on'
+            
+            # Get the Diagnostic Template
+            diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
+            
+            if diag_template:
+                # 3.1 Get Company Admins
+                company_admins = User.query.filter_by(company_id=company.id, role=ROLE_ADMIN).all()
+                
+                if diagnostic_enabled:
+                    # Grant active access to all admins if not already granted
+                    for admin in company_admins:
+                        grant = LibraryTemplateGrant.query.filter_by(
+                            user_id=admin.id,
+                            template_id=diag_template.id
+                        ).first()
+                        
+                        if not grant:
+                            # Create new grant
+                            grant = LibraryTemplateGrant(
+                                tenant_id=company.id,
+                                template_id=diag_template.id,
+                                user_id=admin.id,
+                                granted_by_user_id=current_user.id,
+                                status='active'
+                            )
+                            db.session.add(grant)
+                        elif grant.status != 'active':
+                            # Reactivate
+                            grant.status = 'active'
+                else:
+                    # Revoke access for ALL users in this company (not just admins, to be safe)
+                    all_company_grants = LibraryTemplateGrant.query.filter_by(
+                        tenant_id=company.id,
+                        template_id=diag_template.id
+                    ).all()
+                    
+                    for grant in all_company_grants:
+                        grant.status = 'revoked'
+                        
+            # 4. Update Global Drive Templates
+            allowed_global_ids = request.form.getlist('allowed_global_templates')
+            default_global_id = request.form.get('default_template_id')
+            auto_create = request.form.get('auto_create_subfolders') == 'on'
+            
             company.allowed_global_template_ids = [int(i) for i in allowed_global_ids]
             company.default_template_id = int(default_global_id) if default_global_id else None
             company.auto_create_subfolders = auto_create
-        except Exception as e:
-            print(f"Error updating global templates for company: {e}")
 
-        db.session.commit()
-        flash(f"Permissões de materiais para {company.name} atualizadas!", "success")
-        return redirect(url_for('master.dashboard'))
+            db.session.commit()
+            flash(f"Permissões de materiais para {company.name} atualizadas!", "success")
+            return redirect(url_for('master.dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"CRITICAL ERROR in company_materials: {e}")
+            flash(f"Erro ao salvar permissões: {str(e)}", "error")
+            return redirect(url_for('master.company_materials', company_id=company.id))
         
-    from models import ContractTemplate, LibraryTemplate, LibraryTemplateGrant, DriveFolderTemplate
     books = LibraryBook.query.filter_by(active=True).order_by(LibraryBook.created_at.desc()).all()
     templates = ContractTemplate.query.filter_by(active=True).all()
     global_drive_templates = DriveFolderTemplate.query.filter_by(scope='global').all()
