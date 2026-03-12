@@ -21,7 +21,7 @@
             background: #d1d5db;
         }
     </style>
-    <div class="max-w-7xl mx-auto pb-20">
+    <div class="max-w-[1700px] mx-auto pb-20">
 
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
@@ -178,9 +178,9 @@
     {% endif %}
 
     <form action="{{ url_for('clients.update_client', id=client.id) }}" method="POST" id="clientForm">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- Main Info Column -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="lg:col-span-9 space-y-6">
 
                 <!-- Registration Data Card -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
@@ -1857,10 +1857,10 @@
             </div>
         </div>
 
-</div> <!-- Close lg:col-span-2 -->
+</div> <!-- Close lg:col-span-9 -->
 
 <!-- Sidebar Info Column -->
-<div class="space-y-6">
+<div class="lg:col-span-3 space-y-6">
     <!-- Diagnostic Card (Access Control) -->
     {% if diag_instance %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
