@@ -514,21 +514,28 @@ def create_app():
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'em_dia';",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS niche VARCHAR(100);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS document VARCHAR(20);",
-                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_street VARCHAR(150);",
-                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_number VARCHAR(20);",
-                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_neighborhood VARCHAR(100);",
-                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_city VARCHAR(100);",
-                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_state VARCHAR(2);",
-                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS address_zip VARCHAR(10);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS representative VARCHAR(100);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS representative_cpf VARCHAR(20);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS email_contact VARCHAR(120);",
                         "ALTER TABLE client ADD COLUMN IF NOT EXISTS asaas_customer_id VARCHAR(50);",
+                        
+                        # Task Updates (BDR Cadence)
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS description TEXT;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS source_type VARCHAR(50);",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS auto_generated BOOLEAN DEFAULT FALSE;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS is_urgent BOOLEAN DEFAULT FALSE;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS is_important BOOLEAN DEFAULT FALSE;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS task_type VARCHAR(50);",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS origin_stage_id INTEGER REFERENCES pipeline_stage(id);",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS observation TEXT;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES user(id);",
+
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS stars FLOAT;",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS classification VARCHAR(100);",
                         "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
-                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
                         "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '{}';",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS amount FLOAT DEFAULT 0.0;",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS billing_type VARCHAR(20) DEFAULT 'BOLETO';",
@@ -537,6 +544,16 @@ def create_app():
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_service_code VARCHAR(20);",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_iss_rate FLOAT;",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_desc VARCHAR(255);",
+
+                        """CREATE TABLE IF NOT EXISTS pipeline_stage_task_template (
+                            id SERIAL PRIMARY KEY,
+                            stage_id INTEGER NOT NULL REFERENCES pipeline_stage(id),
+                            company_id INTEGER NOT NULL REFERENCES company(id),
+                            task_type VARCHAR(50) NOT NULL,
+                            title VARCHAR(200) NOT NULL,
+                            script TEXT,
+                            delay_hours INTEGER DEFAULT 0
+                        );""",
                         """CREATE TABLE IF NOT EXISTS tenant_integration (
                             id SERIAL PRIMARY KEY,
                             company_id INTEGER NOT NULL REFERENCES company(id),
@@ -732,7 +749,7 @@ def create_app():
         with app.app_context():
             try:
                 # Force SQLAlchemy to know about new models before create_all
-                from models import SwotAnalise, SwotItem, CREPIDiagnostico, CREPIPremissa, AudienceMatrix, CommercialPresentation, LibraryBook
+                from models import PipelineStageTaskTemplate, SwotAnalise, SwotItem, CREPIDiagnostico, CREPIPremissa, AudienceMatrix, CommercialPresentation, LibraryBook
 
                 # 1. Simple Table Creation
                 db.create_all()
