@@ -278,6 +278,17 @@ class PipelineStage(db.Model):
     # company_id is technically redundant but useful for easy filtering
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
 
+class PipelineStageTaskTemplate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    task_type = db.Column(db.String(50), nullable=False) # whatsapp, ligacao, audio, email, reuniao
+    title = db.Column(db.String(200), nullable=False)
+    script = db.Column(db.Text, nullable=True)
+    delay_hours = db.Column(db.Integer, default=0)
+    
+    stage = db.relationship('PipelineStage', backref=db.backref('task_templates', cascade="all, delete-orphan"))
+
 class Lead(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -354,13 +365,19 @@ class Lead(db.Model):
 
     @property
     def task_progress(self):
-        total = len(self.tasks)
-        if total == 0: return {'total': 0, 'completed': 0, 'percent': 0}
-        completed = len([t for t in self.tasks if t.status == 'concluida'])
+        tasks = [t for t in self.tasks if not t.is_recurring] # Only count one-off tasks for progress usually
+        total = len(tasks)
+        if total == 0: return {'total': 0, 'completed': 0, 'percent': 0, 'overdue': 0}
+        
+        now = get_now_br()
+        completed = len([t for t in tasks if t.status in ['concluida', 'feito']])
+        overdue = len([t for t in tasks if t.status == 'pendente' and t.due_date and t.due_date < now])
+        
         return {
             'total': total,
             'completed': completed,
-            'percent': int((completed / total) * 100)
+            'percent': int((completed / total) * 100),
+            'overdue': overdue
         }
 
     @property
@@ -628,6 +645,7 @@ class Task(db.Model):
     priority = db.Column(db.String(20), default='media') # baixa, media, alta, urgente
     status = db.Column(db.String(20), default='pendente') # pendente, a_fazer, em_andamento, aguardando, validacao, concluida
     reminder_sent = db.Column(db.Boolean, default=False)
+    overdue_reminder_sent = db.Column(db.Boolean, default=False)
     is_recurring = db.Column(db.Boolean, default=False)
     recurrence = db.Column(db.String(20)) # 'mensal'
     completed_at = db.Column(db.DateTime) # New column for sorting
@@ -639,6 +657,11 @@ class Task(db.Model):
     # Eisenhower Matrix / Priority Matrix
     is_urgent = db.Column(db.Boolean, default=False)
     is_important = db.Column(db.Boolean, default=False)
+    
+    # New Fields for BDR Automation
+    task_type = db.Column(db.String(50), nullable=True) # whatsapp, ligacao, audio, email, reuniao
+    origin_stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'), nullable=True)
+    observation = db.Column(db.Text, nullable=True) # Field for BDR notes
     
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Link to client

@@ -130,6 +130,7 @@
             <!-- Cards Container -->
             <div class="flex-1 overflow-y-auto p-3 space-y-3 cards-container">
                 {% for lead in leads_by_stage[stage.id] %}
+                {% set t_prog = lead.task_progress %}
                 <div draggable="true" onclick="openLeadModal(this)" data-id="{{ lead.id }}" data-name="{{ lead.name }}"
                     data-phone="{{ lead.phone or '' }}" data-email="{{ lead.email or '' }}"
                     data-website="{{ lead.website or '' }}" data-address="{{ lead.address or '' }}"
@@ -144,6 +145,13 @@
                     data-pipeline-id="{{ lead.pipeline_id or '' }}"
                     data-estimated-value="{{ lead.estimated_value or 0 }}"
                     class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-l-orange-500' if lead.days_inactive > 3 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
+
+                    {% if t_prog.overdue > 0 %}
+                    <div class="absolute -top-2 -left-2 bg-red-600 text-white w-6 h-6 flex items-center justify-center rounded-full shadow-lg z-20 border-2 border-white text-[10px] font-bold"
+                        title="{{ t_prog.overdue }} tarefas atrasadas!">
+                        {{ t_prog.overdue }}
+                    </div>
+                    {% endif %}
 
                     {% if lead.days_inactive > 5 %}
                     <div class="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md z-10"
@@ -172,12 +180,28 @@
                         {% endif %}
                     </div>
 
-                    <div class="mt-2 flex gap-2 text-xs text-gray-400">
+                    <div class="mt-2 flex items-center gap-2 text-xs text-gray-400">
                         {% if lead.website %}
                         <i data-lucide="globe" class="w-3 h-3 text-blue-400" title="Possui Site"></i>
                         {% endif %}
                         {% if lead.address %}
                         <i data-lucide="map-pin" class="w-3 h-3 text-red-400" title="Possui Endereço"></i>
+                        {% endif %}
+
+                        {% if t_prog.total > 0 %}
+                        <div class="flex-1 ml-1">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <span class="text-[9px] font-bold text-gray-400">{{ t_prog.completed }}/{{ t_prog.total
+                                    }} tarefas</span>
+                                <span
+                                    class="text-[9px] font-bold {{ 'text-green-600' if t_prog.percent == 100 else 'text-gray-400' }}">{{
+                                    t_prog.percent }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+                                <div class="h-full {{ 'bg-green-500' if t_prog.percent == 100 else 'bg-northway-red' }} transition-all"
+                                    style="width: {{ t_prog.percent }}%"></div>
+                            </div>
+                        </div>
                         {% endif %}
                     </div>
 
@@ -284,6 +308,10 @@
             <button onclick="switchTab('diagnostic')" id="tab-diagnostic"
                 class="py-2 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
                 <i data-lucide="line-chart" class="w-4 h-4"></i> Diagnóstico
+            </button>
+            <button onclick="switchTab('tasks')" id="tab-tasks"
+                class="py-2 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
+                <i data-lucide="check-square" class="w-4 h-4"></i> Tarefas
             </button>
         </div>
 
@@ -531,6 +559,58 @@
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Tasks Tab -->
+            <div id="content-tasks" class="hidden space-y-4">
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <h4 class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                        <i data-lucide="list-todo" class="w-4 h-4 text-northway-red"></i>
+                        Checklist da Etapa
+                    </h4>
+                    <button onclick="toggleManualTaskForm()"
+                        class="text-[10px] font-bold uppercase tracking-wider bg-northway-red text-white px-2 py-1 rounded hover:bg-red-700 transition-colors flex items-center gap-1">
+                        <i data-lucide="plus" class="w-3 h-3"></i> Adicionar Manual
+                    </button>
+                </div>
+
+                <!-- Manual Task Form (Collapsible) -->
+                <form id="manualTaskForm"
+                    class="hidden bg-white p-4 rounded-lg border border-red-100 shadow-sm space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2">
+                            <input type="text" id="manualTaskTitle" placeholder="Título da tarefa..."
+                                class="w-full text-sm border-gray-200 rounded focus:ring-northway-red">
+                        </div>
+                        <div>
+                            <select id="manualTaskType"
+                                class="w-full text-xs border-gray-200 rounded focus:ring-northway-red">
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="ligacao">Ligação</option>
+                                <option value="audio">Áudio</option>
+                                <option value="email">E-mail</option>
+                                <option value="reuniao">Reunião</option>
+                            </select>
+                        </div>
+                        <div>
+                            <input type="datetime-local" id="manualTaskDue"
+                                class="w-full text-xs border-gray-200 rounded focus:ring-northway-red">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" onclick="toggleManualTaskForm()"
+                            class="text-xs text-gray-400">Cancelar</button>
+                        <button type="button" onclick="saveManualTask()"
+                            class="text-xs bg-northway-red text-white px-3 py-1 rounded font-bold">Criar Tarefa</button>
+                    </div>
+                </form>
+
+                <div id="tasks-container" class="space-y-3">
+                    <!-- Tasks will be loaded here via JS -->
+                    <div class="flex justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-northway-red"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -691,9 +771,140 @@
             whatsappTab.classList.add('text-gray-500', 'border-transparent');
             diagTab.classList.add('text-northway-red', 'border-northway-red');
             diagTab.classList.remove('text-gray-500', 'border-transparent');
+            document.getElementById('tab-tasks').classList.remove('text-northway-red', 'border-northway-red');
+            document.getElementById('tab-tasks').classList.add('text-gray-500', 'border-transparent');
             contentDetails.classList.add('hidden');
             contentWhatsapp.classList.add('hidden');
             contentDiag.classList.remove('hidden');
+            document.getElementById('content-tasks').classList.add('hidden');
+        } else if (tabName === 'tasks') {
+            detailsTab.classList.remove('text-northway-red', 'border-northway-red');
+            detailsTab.classList.add('text-gray-500', 'border-transparent');
+            whatsappTab.classList.remove('text-green-600', 'border-green-600');
+            whatsappTab.classList.add('text-gray-500', 'border-transparent');
+            diagTab.classList.remove('text-northway-red', 'border-northway-red');
+            diagTab.classList.add('text-gray-500', 'border-transparent');
+            const tasksTab = document.getElementById('tab-tasks');
+            tasksTab.classList.add('text-northway-red', 'border-northway-red');
+            tasksTab.classList.remove('text-gray-500', 'border-transparent');
+
+            contentDetails.classList.add('hidden');
+            contentWhatsapp.classList.add('hidden');
+            contentDiag.classList.add('hidden');
+            document.getElementById('content-tasks').classList.remove('hidden');
+            loadLeadTasks(currentLeadId);
+        }
+    }
+
+    async function loadLeadTasks(leadId) {
+        if (!leadId) return;
+        const container = document.getElementById('tasks-container');
+        container.innerHTML = `<div class="flex justify-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-northway-red"></div></div>`;
+
+        try {
+            const response = await fetch(`/api/leads/${leadId}/tasks`);
+            const data = await response.json();
+
+            if (data.error) throw new Error(data.error);
+
+            if (data.tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                        <i data-lucide="check-circle" class="w-10 h-10 text-gray-300 mx-auto mb-2"></i>
+                        <p class="text-gray-500 text-sm font-medium">Nenhuma tarefa para este lead.</p>
+                        <p class="text-xs text-gray-400 mt-1">Mova o lead ou adicione uma tarefa manual.</p>
+                    </div>`;
+            } else {
+                container.innerHTML = data.tasks.map(task => {
+                    const isDone = task.status === 'concluida' || task.status === 'feito';
+                    const iconMap = {
+                        'whatsapp': 'message-circle',
+                        'ligacao': 'phone',
+                        'audio': 'mic',
+                        'email': 'mail',
+                        'reuniao': 'calendar'
+                    };
+                    const icon = iconMap[task.task_type] || 'check-square';
+                    const dateStr = task.due_date ? new Date(task.due_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+
+                    return `
+                    <div class="group flex items-start gap-3 p-3 bg-white border ${isDone ? 'border-gray-100 bg-gray-50/50' : 'border-gray-200'} rounded-lg hover:shadow-sm transition-all">
+                        <button onclick="toggleTaskStatus(${task.id})" class="mt-1 flex-shrink-0 w-5 h-5 rounded border ${isDone ? 'bg-green-500 border-green-500' : 'border-gray-300 hover:border-northway-red'} flex items-center justify-center transition-colors">
+                            ${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>' : ''}
+                        </button>
+                        
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <h5 class="text-sm font-bold ${isDone ? 'text-gray-400 line-through' : 'text-gray-900'}">${task.title}</h5>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase flex items-center gap-1 ${task.is_overdue ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}">
+                                        <i data-lucide="clock" class="w-2.5 h-2.5"></i> ${dateStr}
+                                    </span>
+                                    <i data-lucide="${icon}" class="w-4 h-4 text-gray-400"></i>
+                                </div>
+                            </div>
+                            ${task.description ? `<p class="text-xs ${isDone ? 'text-gray-300' : 'text-gray-600'} line-clamp-2">${task.description}</p>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+            if (window.lucide) lucide.createIcons();
+        } catch (e) {
+            container.innerHTML = `<p class="text-center text-red-500 text-xs p-4">Erro ao carregar tarefas: ${e.message}</p>`;
+        }
+    }
+
+    async function toggleTaskStatus(taskId) {
+        try {
+            // Using existing toggle endpoint (needs post)
+            const response = await fetch(`/tasks/${taskId}/toggle`, { method: 'POST' });
+            // Since the existing endpoint returns a redirect, we'll just reload the task list
+            loadLeadTasks(currentLeadId);
+
+            // Also notify the pipeline to refresh progress bars if possible, 
+            // but for now a modal reload is enough for data consistency.
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function toggleManualTaskForm() {
+        const form = document.getElementById('manualTaskForm');
+        form.classList.toggle('hidden');
+    }
+
+    async function saveManualTask() {
+        const title = document.getElementById('manualTaskTitle').value;
+        const type = document.getElementById('manualTaskType').value;
+        const due = document.getElementById('manualTaskDue').value;
+
+        if (!title) {
+            alert('Por favor, informe um título para a tarefa.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/tasks/create_api', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title,
+                    task_type: type,
+                    due_date: due,
+                    lead_id: currentLeadId,
+                    company_id: parseInt('{{ current_user.company_id }}'),
+                    priority: 'media'
+                })
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            // Reset and reload
+            document.getElementById('manualTaskTitle').value = '';
+            document.getElementById('manualTaskForm').classList.add('hidden');
+            loadLeadTasks(currentLeadId);
+        } catch (e) {
+            alert('Erro ao criar tarefa: ' + e.message);
         }
     }
 

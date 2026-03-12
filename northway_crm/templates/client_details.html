@@ -1497,14 +1497,14 @@
                             <template x-for="(script, index) in openScripts" :key="script.id">
                                 <button type="button" @click="activeScriptId = script.id"
                                     class="flex items-center gap-3 px-5 py-2.5 rounded-xl transition-all border shrink-0 group relative overflow-hidden"
-                                    :class="activeScriptId === script.id ? 'bg-white border-gray-200 shadow-md text-gray-900 font-bold scale-105' : 'bg-transparent border-transparent text-gray-400 hover:text-gray-600 font-medium hover:bg-gray-50'">
-                                    <div x-show="script.dirty" class="absolute top-0 left-0 w-full h-0.5 bg-[#fa0102]">
+                                    :class="activeScriptId === script.id ? 'bg-[#fa0102] border-transparent shadow-lg shadow-red-500/20 text-white font-bold scale-105' : 'bg-white border-gray-100 text-gray-400 hover:text-gray-900 font-medium hover:bg-gray-50'">
+                                    <div x-show="script.dirty" class="absolute top-0 left-0 w-full h-0.5 bg-black/20">
                                     </div>
-                                    <i data-lucide="file-text" class="w-3.5 h-3.5"
-                                        :class="activeScriptId === script.id ? 'text-[#fa0102]' : 'text-gray-300'"></i>
+                                    <i data-lucide="video" class="w-3.5 h-3.5"
+                                        :class="activeScriptId === script.id ? 'text-white' : 'text-gray-300'"></i>
                                     <span x-text="script.name || 'Sem nome'" class="truncate max-w-[120px]"></span>
                                     <span @click.stop="closeScript(index)"
-                                        class="hover:bg-red-50 hover:text-red-500 p-1 rounded-lg transition-all ml-1 opacity-0 group-hover:opacity-100">
+                                        class="hover:bg-black/10 p-1 rounded-lg transition-all ml-1 opacity-0 group-hover:opacity-100">
                                         <i data-lucide="x" class="w-3 h-3"></i>
                                     </span>
                                 </button>
@@ -1567,42 +1567,56 @@
                                 class="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between gap-6">
                                 <div class="flex items-center gap-6 flex-1 min-w-0">
                                     <!-- Script Name -->
-                                    <div class="flex flex-col flex-1 min-w-[150px]">
+                                    <div class="flex flex-col flex-1 min-w-[200px]">
                                         <input type="text" x-model="currentScript.name"
                                             @input="currentScript.dirty = true; saveToLocal()"
                                             class="border-none p-0 focus:ring-0 text-lg font-black text-gray-900 placeholder-gray-300 bg-transparent"
-                                            placeholder="Nomes do Script...">
+                                            placeholder="Nome do vídeo/projeto...">
                                         <div class="flex items-center gap-2 mt-1">
                                             <select x-model="currentScript.channel"
                                                 @change="currentScript.dirty = true; saveToLocal()"
                                                 class="text-[10px] font-black uppercase tracking-widest text-gray-400 border-none p-0 bg-transparent focus:ring-0 cursor-pointer hover:text-gray-600">
-                                                <option value="WhatsApp">WhatsApp</option>
-                                                <option value="Cold Call">Cold Call</option>
-                                                <option value="Email">Email</option>
+                                                <option value="Reels/Shorts">Reels/Shorts</option>
+                                                <option value="TikTok">TikTok</option>
+                                                <option value="YouTube">YouTube</option>
+                                                <option value="Instagram">Instagram</option>
                                                 <option value="LinkedIn">LinkedIn</option>
+                                                <option value="Ads">Ads</option>
                                             </select>
                                             <span class="w-1 h-1 bg-gray-200 rounded-full"></span>
                                             <select x-model="currentScript.type"
                                                 @change="currentScript.dirty = true; saveToLocal()"
                                                 class="text-[10px] font-black uppercase tracking-widest text-gray-400 border-none p-0 bg-transparent focus:ring-0 cursor-pointer hover:text-gray-600">
-                                                <option value="Prospecção">Prospecção</option>
-                                                <option value="Follow-up">Follow-up</option>
-                                                <option value="Fechamento">Fechamento</option>
-                                                <option value="Retenção">Retenção</option>
+                                                <option value="Conteúdo">Conteúdo</option>
+                                                <option value="Criativo">Criativo</option>
+                                                <option value="Vendas">Vendas</option>
+                                                <option value="Institucional">Institucional</option>
                                             </select>
                                         </div>
                                     </div>
 
                                     <div class="h-8 w-px bg-gray-100 flex-shrink-0"></div>
 
-                                    <!-- Objective -->
-                                    <div class="flex flex-col flex-1 min-w-0">
-                                        <span
-                                            class="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-1">Objetivo</span>
-                                        <input type="text" x-model="currentScript.objective"
-                                            @input="currentScript.dirty = true; saveToLocal()"
-                                            class="border-none p-0 focus:ring-0 text-sm font-bold text-gray-700 placeholder-gray-300 bg-transparent"
-                                            placeholder="Qual o objetivo desse script?">
+                                    <!-- Duration & Objective -->
+                                    <div class="flex items-center gap-6 flex-1 min-w-0">
+                                        <div class="flex flex-col w-32 flex-shrink-0">
+                                            <span
+                                                class="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-1">Duração
+                                                Est.</span>
+                                            <input type="text" x-model="currentScript.duration"
+                                                @input="currentScript.dirty = true; saveToLocal()"
+                                                class="border-none p-0 focus:ring-0 text-sm font-bold text-red-600 placeholder-gray-300 bg-transparent"
+                                                placeholder="Ex: 45s">
+                                        </div>
+                                        <div class="flex flex-col flex-1 min-w-0">
+                                            <span
+                                                class="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-1">Objetivo
+                                                Estratégico</span>
+                                            <input type="text" x-model="currentScript.objective"
+                                                @input="currentScript.dirty = true; saveToLocal()"
+                                                class="border-none p-0 focus:ring-0 text-sm font-bold text-gray-700 placeholder-gray-300 bg-transparent"
+                                                placeholder="O que esse vídeo deve alcançar?">
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1692,45 +1706,50 @@
                                     </div>
                                 </div>
 
-                                <!-- Column 2: Development -->
+                                <!-- Column 2: Content Body -->
                                 <div
                                     class="px-8 py-10 border-r border-gray-100 bg-gradient-to-b from-[#F9FBFF] to-white">
                                     <div class="flex items-center justify-between mb-10">
                                         <div>
                                             <div class="flex items-center gap-2 mb-2">
-                                                <span class="w-8 h-[2px] bg-[#1A4FE8]"></span>
+                                                <span class="w-8 h-[2px] bg-black"></span>
                                                 <h4
-                                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-[#1A4FE8]">
+                                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-black">
                                                     Passo 02</h4>
                                             </div>
                                             <h3
                                                 class="text-2xl font-serif font-black italic text-gray-900 tracking-tight">
-                                                Desenvolvimento</h3>
+                                                Roteiro Base</h3>
                                         </div>
                                         <div
-                                            class="w-10 h-10 rounded-xl bg-[#1A4FE8]/5 border border-[#1A4FE8]/10 text-[#1A4FE8] flex items-center justify-center shadow-sm">
-                                            <i data-lucide="book-open" class="w-5 h-5"></i>
+                                            class="w-10 h-10 rounded-xl bg-black/5 border border-black/10 text-black flex items-center justify-center shadow-sm">
+                                            <i data-lucide="align-left" class="w-5 h-5"></i>
                                         </div>
                                     </div>
 
                                     <div
-                                        class="bg-white px-8 py-10 rounded-3xl border border-gray-100 h-fit sticky top-28 min-h-[450px] flex flex-col shadow-sm hover:shadow-xl transition-all hover:border-[#1A4FE8]/20">
+                                        class="bg-white px-8 py-10 rounded-3xl border border-gray-100 h-fit sticky top-28 min-h-[500px] flex flex-col shadow-sm hover:shadow-xl transition-all hover:border-black/20">
                                         <div class="flex items-center gap-3 mb-8">
                                             <span
-                                                class="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A4FE8]">Estrutura
-                                                Sugerida</span>
+                                                class="text-[9px] font-black uppercase tracking-[0.2em] text-black">Desenvolvimento
+                                                do Vídeo</span>
                                             <div class="h-[1px] flex-1 bg-gradient-to-r from-gray-100 to-transparent">
                                             </div>
                                         </div>
                                         <textarea x-model="currentScript.body"
                                             @input="currentScript.dirty = true; saveToLocal()"
                                             class="flex-1 w-full border-none p-0 focus:ring-0 text-gray-700 text-sm leading-[2.2] placeholder-gray-300 bg-transparent resize-none font-medium"
-                                            placeholder="Apresente o problema sob a ótica do cliente, introduza sua solução única e valide com uma prova social ou autoridade rápida..."></textarea>
+                                            placeholder="Descreve aqui o conteúdo principal do seu vídeo. Lembre-se de manter a energia alta e os cortes dinâmicos..."></textarea>
 
-                                        <div class="mt-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/30">
-                                            <p class="text-[10px] text-blue-600 font-bold leading-relaxed">
-                                                💡 Use parágrafos curtos. O cérebro humano escaneia antes de ler.
-                                            </p>
+                                        <div class="mt-8 p-6 bg-black text-white rounded-2xl hidden lg:block">
+                                            <p
+                                                class="text-[10px] text-gray-300 font-bold uppercase tracking-widest mb-3">
+                                                Notas de Cena / Direção</p>
+                                            <textarea x-model="currentScript.scene_notes"
+                                                @input="currentScript.dirty = true; saveToLocal()"
+                                                class="w-full border-none p-0 focus:ring-0 text-white text-xs leading-relaxed placeholder-gray-600 bg-transparent resize-none italic"
+                                                rows="2"
+                                                placeholder="Ex: CLOSE-UP na expressão facial | Música de fundo inspiradora..."></textarea>
                                         </div>
                                     </div>
                                 </div>
@@ -4958,56 +4977,67 @@ ${dateHeader}
             isPrinting: false,
             templates: [
                 {
-                    name: 'Academia de Alta Performance',
-                    description: 'Script focado em conversão de leads para academias e centros fitness.',
-                    icon: 'dumbbell',
-                    channel: 'WhatsApp',
-                    niche: 'Fitness / Wellness',
+                    name: 'Dobra de Conversão (Reels/Shorts)',
+                    description: 'Roteiro de alto impacto para os primeiros 3 segundos, focado em retenção e viralização.',
+                    icon: 'video',
+                    channel: 'Reels/Shorts',
+                    niche: 'Conteúdo Vertical',
                     hooks: [
-                        'Cansado de promessas vazias? Aqui o resultado é garantido.',
-                        'Descubra como transformar seu corpo em 12 semanas.'
+                        'O segredo que ninguém te conta sobre [Tópico]...',
+                        'Pare de cometer esse erro se você quer [Resultado].',
+                        '3 ferramentas gratuitas que vão mudar seu jogo em 2024.'
                     ],
-                    body: 'Papo reto: a maioria das pessoas desiste da academia porque não vê resultado rápido. Nosso método é focado em performance real desde o primeiro dia.',
-                    cta: 'Bora marcar uma aula experimental gratuita hoje?'
+                    body: 'Exposição rápida do problema. Demonstração visual ou prova social. A entrega do valor prometido no gancho de forma direta e sem enrolação.',
+                    cta: 'Comenta "EU QUERO" que te mando o link no direct!',
+                    duration: '45s',
+                    scene_notes: 'Corte rápido a cada 2-3 segundos. Legendas dinâmicas no centro da tela.'
                 },
                 {
-                    name: 'Energia Solar Sustentável',
-                    description: 'Script para venda de placas solares com foco em economia.',
-                    icon: 'sun',
-                    channel: 'Cold Call',
-                    niche: 'Energia / Tech',
+                    name: 'Criativo de Performance (Direct Response)',
+                    description: 'Focado em anúncios (Ads) com estrutura de vendas direta e quebra de objeções.',
+                    icon: 'zap',
+                    channel: 'Ads',
+                    niche: 'Vendas/Performance',
                     hooks: [
-                        'Você sabia que sua conta de luz pode cair 95%?',
-                        'Pare de pagar para a distribuidora e comece a investir no seu teto.'
+                        'Cansado de jogar dinheiro fora com [Problema]?',
+                        'Como escala seu negócio sem depender de indicação.',
+                        'O método NorthWay para dobrar sua conversão em 30 dias.'
                     ],
-                    body: 'O custo da energia só sobe. Com placas solares, você congela seu custo e ainda valoriza seu imóvel em até 10%.',
-                    cta: 'Posso te enviar uma simulação de economia personalizada pelo WhatsApp?'
+                    body: 'Apresentação da solução única. Por que o método tradicional falha. Janela de oportunidade exclusiva e escassez real.',
+                    cta: 'Clique no botão Saiba Mais e garanta sua vaga.',
+                    duration: '60s',
+                    scene_notes: 'B-roll de alta qualidade alternando com fala direta para a câmera. Trilha sonora de suspense que cresce no final.'
                 },
                 {
-                    name: 'Móveis Planejados de Luxo',
-                    description: 'Abordagem premium para arquitetos e clientes finais.',
-                    icon: 'sofa',
+                    name: 'Conteúdo Educativo Estruturado',
+                    description: 'Roteiro para vídeos longos ou carrosséis em vídeo, focado em autoridade e ensino.',
+                    icon: 'book-open',
+                    channel: 'YouTube',
+                    niche: 'Autoridade/Infoproduto',
+                    hooks: [
+                        'Aula completa: Como dominar [Habilidade] do zero.',
+                        'O guia definitivo para [Objetivo] na prática.',
+                        'Tudo o que você precisa saber sobre [Assunto] antes de começar.'
+                    ],
+                    body: 'Introdução contextualizada. Passo a passo detalhado (Ponto 1, 2 e 3). Resumo dos aprendizados fundamentais.',
+                    cta: 'Se inscreva no canal para não perder a parte 2!',
+                    duration: '5-10min',
+                    scene_notes: 'Uso de tela dividida com slides ou demonstração prática. Tom de voz calmo e didático.'
+                },
+                {
+                    name: 'Roteiro Institucional NorthWay',
+                    description: 'Apresentação premium da marca, focada em valores e posicionamento de mercado.',
+                    icon: 'award',
                     channel: 'Instagram',
-                    niche: 'Casa / Decoração',
+                    niche: 'Branding',
                     hooks: [
-                        'Sua casa merece o design que você sempre sonhou.',
-                        'Móveis que contam histórias. Conheça nossa nova coleção.'
+                        'Na NorthWay, não entregamos apenas scripts, entregamos resultados.',
+                        'Excelência não é um ato, é um hábito. Conheça nossa cultura.'
                     ],
-                    body: 'Trabalhamos com materiais de altíssima qualidade e acabamentos que você não encontra em lojas comuns. Design exclusivo para pessoas exigentes.',
-                    cta: 'Vamos agendar uma visita técnica sem compromisso?'
-                },
-                {
-                    name: 'Script Genérico NorthWay',
-                    description: 'Base sólida para qualquer tipo de prospecção B2B.',
-                    icon: 'briefcase',
-                    channel: 'Email',
-                    niche: 'Geral',
-                    hooks: [
-                        'Vi que vocês estão crescendo e queria propor uma parceria.',
-                        'Como vocês estão lidando com a aquisição de novos clientes hoje?'
-                    ],
-                    body: 'A NorthWay ajuda empresas a escalarem seus resultados comerciais através de processos validados e tecnologia de ponta.',
-                    cta: 'Teria 10 minutos na quinta-feira para uma conversa rápida?'
+                    body: 'Manifesto da marca. Nossa visão sobre o futuro do mercado. Convite para fazer parte da elite do setor.',
+                    cta: 'Link na Bio para agendar uma consultoria estratégica.',
+                    duration: '90s',
+                    scene_notes: 'Cinematográfico. Imagens de equipe, escritório e resultados. Voice-over profissional e impactante.'
                 }
             ],
 
@@ -5023,13 +5053,15 @@ ${dateHeader}
                 const id = Date.now();
                 const newScript = {
                     id: id,
-                    name: 'Novo Script',
-                    channel: 'WhatsApp',
-                    type: 'Prospecção',
+                    name: 'Novo Roteiro de Vídeo',
+                    channel: 'Reels/Shorts',
+                    type: 'Conteúdo',
                     objective: '',
                     hooks: [''],
                     body: '',
                     cta: '',
+                    duration: '',
+                    scene_notes: '',
                     dirty: true
                 };
                 this.openScripts.push(newScript);
@@ -5070,11 +5102,13 @@ ${dateHeader}
                     id: id,
                     name: tpl.name,
                     channel: tpl.channel,
-                    type: 'Prospecção',
+                    type: tpl.channel === 'Ads' ? 'Criativo' : 'Conteúdo',
                     objective: tpl.description,
                     hooks: [...tpl.hooks],
                     body: tpl.body,
                     cta: tpl.cta,
+                    duration: tpl.duration || '',
+                    scene_notes: tpl.scene_notes || '',
                     dirty: true
                 };
                 this.openScripts.push(newScript);
@@ -5163,7 +5197,7 @@ ${dateHeader}
                             .header-print { 
                                 display: flex; 
                                 justify-content: space-between; 
-                                border-bottom: 4px solid #E8191A; 
+                                border-bottom: 4px solid #fa0102; 
                                 padding-bottom: 25px; 
                                 margin-bottom: 40px; 
                                 align-items: flex-end; 
@@ -5172,7 +5206,7 @@ ${dateHeader}
                             .logo-section h1 { 
                                 font-family: 'DM Serif Display', serif; 
                                 font-style: italic; 
-                                color: #E8191A; 
+                                color: #fa0102; 
                                 margin: 0; 
                                 font-size: 36px;
                                 line-height: 1;
@@ -5180,9 +5214,18 @@ ${dateHeader}
                             
                             .script-name { 
                                 font-size: 18px; 
-                                color: #4b5563; 
+                                color: #000; 
                                 margin: 10px 0 0; 
+                                font-weight: 900;
+                            }
+
+                            .script-meta {
+                                font-size: 10px;
+                                color: #6b7280;
+                                text-transform: uppercase;
+                                letter-spacing: 1px;
                                 font-weight: 700;
+                                margin-top: 5px;
                             }
                             
                             .client-info { text-align: right; }
@@ -5209,7 +5252,6 @@ ${dateHeader}
                                 page-break-inside: avoid; 
                                 background: #fff; 
                                 border-left: 8px solid #ccc;
-                                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
                             }
                             
                             .step-label { 
@@ -5232,7 +5274,7 @@ ${dateHeader}
                             }
                             
                             .hook-id {
-                                color: #E8191A;
+                                color: #fa0102;
                                 font-weight: 900;
                                 margin-right: 8px;
                             }
@@ -5241,6 +5283,7 @@ ${dateHeader}
                                 font-size: 15px; 
                                 color: #374151; 
                                 white-space: pre-wrap;
+                                line-height: 1.8;
                             }
                             
                             .content-cta {
@@ -5251,6 +5294,26 @@ ${dateHeader}
                                 white-space: pre-wrap;
                             }
 
+                            .scene-notes {
+                                margin-top: 25px;
+                                padding: 20px;
+                                background: #000;
+                                color: #fff;
+                                border-radius: 12px;
+                                font-size: 12px;
+                                font-style: italic;
+                            }
+
+                            .scene-notes-label {
+                                font-size: 9px;
+                                font-weight: 900;
+                                text-transform: uppercase;
+                                letter-spacing: 2px;
+                                color: #6b7280;
+                                margin-bottom: 10px;
+                                display: block;
+                            }
+                            
                             .footer {
                                 margin-top: 60px;
                                 border-top: 1px solid #f3f4f6;
@@ -5272,6 +5335,7 @@ ${dateHeader}
                                 <div class="logo-section">
                                     <h1>NorthWay / SCRIPT STUDIO</h1>
                                     <p class="script-name">${this.currentScript.name || 'Script sem nome'}</p>
+                                    <p class="script-meta">${this.currentScript.channel} | ${this.currentScript.type} | DURAÇÃO: ${this.currentScript.duration || 'N/A'}</p>
                                 </div>
                                 <div class="client-info">
                                     <p class="client-name">{{ client.name }}</p>
@@ -5279,8 +5343,8 @@ ${dateHeader}
                                 </div>
                             </div>
 
-                            <div class="print-card" style="border-left-color: #E8191A;">
-                                <span class="step-label" style="color: #E8191A;">Passo 01: Ganchos (Hooks)</span>
+                            <div class="print-card" style="border-left-color: #fa0102;">
+                                <span class="step-label" style="color: #fa0102;">Passo 01: Ganchos (Hooks)</span>
                                 ${this.currentScript.hooks.map((h, i) => `
                                     <div class="hook-variation">
                                         <span class="hook-id">${String.fromCharCode(65 + i)}:</span> ${h || '...'}
@@ -5288,13 +5352,19 @@ ${dateHeader}
                                 `).join('')}
                             </div>
 
-                            <div class="print-card" style="border-left-color: #1A4FE8;">
-                                <span class="step-label" style="color: #1A4FE8;">Passo 02: Desenvolvimento</span>
+                            <div class="print-card" style="border-left-color: #000;">
+                                <span class="step-label" style="color: #000;">Passo 02: Roteiro Base</span>
                                 <div class="content-body">${this.currentScript.body || '...'}</div>
+                                ${this.currentScript.scene_notes ? `
+                                    <div class="scene-notes">
+                                        <span class="scene-notes-label">Notas de Cena / Direção</span>
+                                        ${this.currentScript.scene_notes}
+                                    </div>
+                                ` : ''}
                             </div>
 
-                            <div class="print-card" style="border-left-color: #1A7A3C;">
-                                <span class="step-label" style="color: #1A7A3C;">Passo 03: Chamada p/ Ação (CTA)</span>
+                            <div class="print-card" style="border-left-color: #fa0102;">
+                                <span class="step-label" style="color: #fa0102;">Passo 03: Chamada p/ Ação (CTA)</span>
                                 <div class="content-cta">${this.currentScript.cta || '...'}</div>
                             </div>
 

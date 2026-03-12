@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, current_app
-from models import db, TenantIntegration, Client, DriveFileEvent, Lead
+from models import db, TenantIntegration, Client, DriveFileEvent, Lead, Task, Notification
 from services.google_drive_service import GoogleDriveService
 from datetime import datetime, timedelta
+from utils import create_notification, get_now_br
 
 jobs_bp = Blueprint('jobs_bp', __name__)
 
@@ -109,4 +110,60 @@ def drive_sync_job():
             results['errors'].append(err_msg)
             db.session.commit()
 
+    return jsonify(results)
+
+@jobs_bp.route('/api/cron/task-reminders', methods=['GET', 'POST'])
+def task_reminders_job():
+    """
+    Cron job to send notifications for upcoming and overdue tasks.
+    Should be called every ~15-30 minutes.
+    """
+    now = get_now_br()
+    results = {'upcoming_alerts': 0, 'overdue_alerts': 0, 'errors': []}
+    
+    # 1. Upcoming Tasks (Due in next 45 min, not yet reminded)
+    upcoming_limit = now + timedelta(minutes=45)
+    upcoming_tasks = Task.query.filter(
+        Task.status == 'pendente',
+        Task.due_date <= upcoming_limit,
+        Task.due_date > now,
+        Task.reminder_sent == False
+    ).all()
+    
+    for task in upcoming_tasks:
+        try:
+            create_notification(
+                user_id=task.assigned_to_id,
+                company_id=task.company_id,
+                type='task_reminder',
+                title=f"Tarefa em breve: {task.title}",
+                message=f"Sua tarefa para o lead {task.lead.name if task.lead else '---'} vence em breve ({task.due_date.strftime('%H:%M')})."
+            )
+            task.reminder_sent = True
+            results['upcoming_alerts'] += 1
+        except Exception as e:
+            results['errors'].append(f"Error reminding task {task.id}: {str(e)}")
+
+    # 2. Overdue Tasks (Due in the past, not yet reminded as overdue)
+    overdue_tasks = Task.query.filter(
+        Task.status == 'pendente',
+        Task.due_date < now,
+        Task.overdue_reminder_sent == False
+    ).all()
+    
+    for task in overdue_tasks:
+        try:
+            create_notification(
+                user_id=task.assigned_to_id,
+                company_id=task.company_id,
+                type='task_overdue',
+                title=f"TAREFA ATRASADA: {task.title}",
+                message=f"Atenção! A tarefa para {task.lead.name if task.lead else '---'} está atrasada desde {task.due_date.strftime('%d/%m %H:%M')}."
+            )
+            task.overdue_reminder_sent = True
+            results['overdue_alerts'] += 1
+        except Exception as e:
+            results['errors'].append(f"Error overdue alert for task {task.id}: {str(e)}")
+            
+    db.session.commit()
     return jsonify(results)

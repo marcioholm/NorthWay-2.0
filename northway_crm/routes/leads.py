@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, ClientChecklist, Task, Interaction, WhatsAppMessage, LEAD_STATUS_WON, LEAD_STATUS_NEW, LEAD_STATUS_IN_PROGRESS, LEAD_STATUS_LOST, User, LibraryTemplate, FormInstance, DriveFolderTemplate
 from utils import create_notification
+from tasks_utils import generate_tasks_for_stage
 from datetime import datetime, timedelta
 
 leads_bp = Blueprint('leads', __name__)
@@ -285,6 +286,10 @@ def move_lead(id, direction):
         lead.pipeline_stage_id = stages[current_idx - 1].id
  
     db.session.commit()
+    
+    # Generate Automated Tasks
+    generate_tasks_for_stage(lead.id, lead.pipeline_stage_id)
+    
     return redirect(url_for('leads.pipeline', pipeline_id=lead.pipeline_id))
 
 @leads_bp.route('/api/leads/<int:id>/update_stage', methods=['POST'])
@@ -306,6 +311,10 @@ def update_lead_stage_api(id):
          
     lead.pipeline_stage_id = stage.id
     db.session.commit()
+    
+    # Generate Automated Tasks
+    generate_tasks_for_stage(lead.id, lead.pipeline_stage_id)
+    
     return jsonify({'success': True, 'message': 'Lead moved successfully'})
 
 @leads_bp.route('/leads/<int:id>/convert', methods=['POST'])
@@ -1079,3 +1088,27 @@ def quick_add_lead():
         return jsonify({'success': True, 'lead_id': lead.id})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@leads_bp.route('/api/leads/<int:id>/tasks')
+@login_required
+def get_lead_tasks(id):
+    from models import Task
+    from datetime import datetime
+    lead = Lead.query.get_or_404(id)
+    if lead.company_id != current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    tasks = Task.query.filter_by(lead_id=id).order_by(Task.due_date.asc()).all()
+    
+    return jsonify({
+        'success': True,
+        'tasks': [{
+            'id': t.id,
+            'title': t.title,
+            'description': t.description,
+            'status': t.status,
+            'task_type': t.task_type,
+            'due_date': t.due_date.isoformat() if t.due_date else None,
+            'is_overdue': t.due_date < datetime.utcnow() if (t.due_date and t.status == 'pendente') else False
+        } for t in tasks]
+    })
