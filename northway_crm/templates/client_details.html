@@ -2,7 +2,7 @@
 {% from "macros.html" import user_avatar %}
 
 {% block content %}
-<div class="flex-1 overflow-y-auto bg-gray-100 p-8">
+<div id="page-content-wrapper" class="flex-1 overflow-y-auto bg-gray-100 p-8">
     <style>
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
@@ -180,7 +180,7 @@
     <form action="{{ url_for('clients.update_client', id=client.id) }}" method="POST" id="clientForm">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- Main Info Column -->
-            <div class="lg:col-span-9 space-y-6">
+            <div id="main-content-column" class="lg:col-span-9 space-y-6">
 
                 <!-- Registration Data Card -->
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
@@ -1624,7 +1624,8 @@
                             <!-- Columns Workspace -->
                             <div class="grid grid-cols-1 lg:grid-cols-3 min-h-[calc(100vh-140px)] bg-white">
                                 <!-- Column 1: Hooks -->
-                                <div class="p-10 border-r border-gray-100 bg-gradient-to-b from-[#FFF9F9] to-white">
+                                <div
+                                    class="px-8 py-10 border-r border-gray-100 bg-gradient-to-b from-[#FFF9F9] to-white">
                                     <div class="flex items-center justify-between mb-10">
                                         <div>
                                             <div class="flex items-center gap-2 mb-2">
@@ -1684,7 +1685,8 @@
                                 </div>
 
                                 <!-- Column 2: Development -->
-                                <div class="p-10 border-r border-gray-100 bg-gradient-to-b from-[#F9FBFF] to-white">
+                                <div
+                                    class="px-8 py-10 border-r border-gray-100 bg-gradient-to-b from-[#F9FBFF] to-white">
                                     <div class="flex items-center justify-between mb-10">
                                         <div>
                                             <div class="flex items-center gap-2 mb-2">
@@ -1704,7 +1706,7 @@
                                     </div>
 
                                     <div
-                                        class="bg-white p-10 rounded-3xl border border-gray-100 h-fit sticky top-28 min-h-[450px] flex flex-col shadow-sm hover:shadow-xl transition-all hover:border-[#1A4FE8]/20">
+                                        class="bg-white px-8 py-10 rounded-3xl border border-gray-100 h-fit sticky top-28 min-h-[450px] flex flex-col shadow-sm hover:shadow-xl transition-all hover:border-[#1A4FE8]/20">
                                         <div class="flex items-center gap-3 mb-8">
                                             <span
                                                 class="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A4FE8]">Estrutura
@@ -1726,7 +1728,7 @@
                                 </div>
 
                                 <!-- Column 3: CTA -->
-                                <div class="p-10 bg-gradient-to-b from-[#F9FFF9] to-white">
+                                <div class="px-8 py-10 bg-gradient-to-b from-[#F9FFF9] to-white">
                                     <div class="flex items-center justify-between mb-10">
                                         <div>
                                             <div class="flex items-center gap-2 mb-2">
@@ -1746,7 +1748,7 @@
                                     </div>
 
                                     <div
-                                        class="bg-white p-10 rounded-3xl border border-gray-100 h-fit sticky top-28 min-h-[320px] shadow-sm hover:shadow-xl transition-all hover:border-[#1A7A3C]/20">
+                                        class="bg-white px-8 py-10 rounded-3xl border border-gray-100 h-fit sticky top-28 min-h-[320px] shadow-sm hover:shadow-xl transition-all hover:border-[#1A7A3C]/20">
                                         <div class="flex items-center gap-3 mb-8">
                                             <span
                                                 class="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A7A3C]">Conversão</span>
@@ -1861,7 +1863,7 @@
 </div> <!-- Close lg:col-span-9 -->
 
 <!-- Sidebar Info Column -->
-<div class="lg:col-span-3 space-y-6">
+<div id="side-info-column" class="lg:col-span-3 space-y-6">
     <!-- Diagnostic Card (Access Control) -->
     {% if diag_instance %}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -3119,6 +3121,33 @@
         function switchClientTab(tabName) {
             // console.log("Switching to tab:", tabName);
             try {
+                // Layout expansion for Script Studio
+                const mainCol = document.getElementById('main-content-column');
+                const sideCol = document.getElementById('side-info-column');
+                const pageWrapper = document.getElementById('page-content-wrapper');
+
+                if (tabName === 'script-studio') {
+                    if (mainCol) {
+                        mainCol.classList.remove('lg:col-span-9');
+                        mainCol.classList.add('lg:col-span-12');
+                    }
+                    if (sideCol) sideCol.classList.add('hidden');
+                    if (pageWrapper) {
+                        pageWrapper.classList.remove('p-8');
+                        pageWrapper.classList.add('p-0', 'pb-10');
+                    }
+                } else {
+                    if (mainCol) {
+                        mainCol.classList.add('lg:col-span-9');
+                        mainCol.classList.remove('lg:col-span-12');
+                    }
+                    if (sideCol) sideCol.classList.remove('hidden');
+                    if (pageWrapper) {
+                        pageWrapper.classList.add('p-8');
+                        pageWrapper.classList.remove('p-0', 'pb-10');
+                    }
+                }
+
                 // Updated list of tabs
                 const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic-tab', 'archivos', 'processes', 'script-studio'];
 
