@@ -147,6 +147,11 @@
                     class="p-1 text-red-600 hover:bg-red-50 transition-colors hidden" title="Excluir Selecionado">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
+                <div class="w-px h-5 bg-gray-200"></div>
+                <button type="button" onclick="printProcess()"
+                    class="p-1 text-gray-600 hover:bg-gray-50 transition-colors" title="Exportar PDF/Imprimir">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                </button>
                 <button type="button" onclick="saveProcBuilder()"
                     class="bg-gray-900 text-white px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-black transition-colors shadow-sm ml-1">Salvar</button>
             </div>
@@ -171,9 +176,42 @@
     </div>
 </div>
 
+<!-- Print Styles -->
+<style>
+    @media print {
+        body * {
+            visibility: hidden !important;
+        }
+
+        #process-builder-scope,
+        #process-builder-scope * {
+            visibility: visible !important;
+        }
+
+        #process-builder-scope {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            border: none !important;
+            min-height: unset !important;
+        }
+
+        .no-print,
+        .port {
+            display: none !important;
+        }
+
+        #proc-nodes-canvas {
+            transform: scale(0.9);
+            transform-origin: top left;
+        }
+    }
+</style>
+
 <script>
     // Builder context constants
-    const BUILDER_CLIENT_ID = {{ client.id }};
+    const BUILDER_CLIENT_ID = parseInt('{{ client.id }}');
     const BUILDER_CLIENT_NAME = "{{ client.name }}";
 
     // Application state for the builder
@@ -214,6 +252,14 @@
             canvas.addEventListener('mouseup', handleBuilderCanvasMouseUp);
             canvas.addEventListener('click', (e) => {
                 if (e.target.id === 'proc-nodes-canvas') clearBuilderSelection();
+            });
+            canvas.addEventListener('dblclick', (e) => {
+                if (e.target.id === 'proc-nodes-canvas') {
+                    const rect = document.getElementById('proc-flowchart-container').getBoundingClientRect();
+                    const mx = Math.round((e.clientX - rect.left) / 14) * 14;
+                    const my = Math.round((e.clientY - rect.top) / 14) * 14;
+                    addProcFlowNode('processo', mx, my);
+                }
             });
         }
     }
@@ -325,6 +371,10 @@
     function reqBuilderAutoSave() {
         if (bAutoSaveTimer) clearTimeout(bAutoSaveTimer);
         bAutoSaveTimer = setTimeout(saveProcBuilder, 1000);
+    }
+
+    function printProcess() {
+        window.print();
     }
 
     function initNewProcessBuilder() {
@@ -454,7 +504,7 @@
         bFlowNodes.forEach(node => {
             const el = document.createElement('div');
             el.id = `proc-n-${node.id}`;
-            el.className = `absolute cursor-grab select-none shadow-sm flex flex-col items-center justify-center px-3 py-1.5 text-[11px] font-bold border-2 transition-shadow`;
+            el.className = `absolute cursor-grab select-none shadow-sm flex flex-col items-center justify-center px-3 py-1.5 text-[11px] font-bold border-2 transition-all duration-200`;
             el.style.left = node.x + 'px';
             el.style.top = node.y + 'px';
 
@@ -463,26 +513,33 @@
             else if (node.type === 'fim') theme = "bg-red-50 text-red-800 border-red-400 rounded-full px-4";
             else if (node.type === 'decisao') theme = "bg-amber-50 text-amber-900 border-amber-400 rounded-md rotate-45 w-20 h-20";
 
-            if (node.id === bSelectedNodeId) theme += " ring-2 ring-red-500 ring-offset-2";
+            if (node.id === bSelectedNodeId) theme += " ring-2 ring-red-500 ring-offset-4 shadow-xl scale-105 z-30";
 
             el.className += " " + theme;
 
             const labelContent = node.type === 'decisao'
-                ? `<div class="-rotate-45 text-center px-1"><span contenteditable="true" onblur="updateProcNodeLabel('${node.id}', this.innerText)">${node.label}</span></div>`
-                : `<span contenteditable="true" onblur="updateProcNodeLabel('${node.id}', this.innerText)">${node.label}</span>`;
+                ? `<div class="-rotate-45 text-center px-1"><span class="outline-none" contenteditable="true" onblur="updateProcNodeLabel('${node.id}', this.innerText)" onmousedown="event.stopPropagation()">${node.label}</span></div>`
+                : `<span class="outline-none" contenteditable="true" onblur="updateProcNodeLabel('${node.id}', this.innerText)" onmousedown="event.stopPropagation()">${node.label}</span>`;
 
             el.innerHTML = labelContent;
 
             if (node.id === bSelectedNodeId) {
                 el.insertAdjacentHTML('beforeend', `
-                    <div class="port absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full" data-p="t"></div>
-                    <div class="port absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full" data-p="b"></div>
-                    <div class="port absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full" data-p="l"></div>
-                    <div class="port absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full" data-p="r"></div>
+                    <div class="port absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full border-2 border-white cursor-crosshair hover:scale-125 transition-transform" data-p="t"></div>
+                    <div class="port absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full border-2 border-white cursor-crosshair hover:scale-125 transition-transform" data-p="b"></div>
+                    <div class="port absolute top-1/2 -left-2 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full border-2 border-white cursor-crosshair hover:scale-125 transition-transform" data-p="l"></div>
+                    <div class="port absolute top-1/2 -right-2 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full border-2 border-white cursor-crosshair hover:scale-125 transition-transform" data-p="r"></div>
                 `);
             }
 
-            el.addEventListener('mousedown', (e) => handleProcNodeMouseDown(e, node));
+            el.addEventListener('mousedown', (e) => {
+                if (e.target.hasAttribute('contenteditable')) return;
+                handleProcNodeMouseDown(e, node);
+            });
+            el.addEventListener('dblclick', (e) => {
+                const span = el.querySelector('span');
+                if (span) span.focus();
+            });
             canvas.appendChild(el);
         });
 
@@ -509,6 +566,9 @@
 
             let d = `M ${sx} ${sy} C ${sx} ${(sy + ey) / 2}, ${ex} ${(sy + ey) / 2}, ${ex} ${ey}`;
 
+            const pathGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            pathGroup.setAttribute('class', 'group');
+
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('d', d);
             path.setAttribute('fill', 'none');
@@ -517,15 +577,66 @@
             path.setAttribute('marker-end', 'url(#proc-arrowhead)');
             path.style.pointerEvents = 'auto';
             path.style.cursor = 'pointer';
-            path.onclick = () => { if (confirm("Remover link?")) { bFlowEdges = bFlowEdges.filter(x => x.id !== edge.id); renderBuilderFlowchart(); reqBuilderAutoSave(); } };
 
-            group.appendChild(path);
+            // Interaction to delete or label
+            path.onclick = (e) => {
+                if (e.altKey) {
+                    if (confirm("Remover link?")) {
+                        bFlowEdges = bFlowEdges.filter(x => x.id !== edge.id);
+                        renderBuilderFlowchart();
+                        reqBuilderAutoSave();
+                    }
+                } else {
+                    const label = prompt("Texto do link (ex: Sim, Não):", edge.label || "");
+                    edge.label = label !== null ? label : edge.label;
+                    renderBuilderFlowchart();
+                    reqBuilderAutoSave();
+                }
+            };
+
+            pathGroup.appendChild(path);
+
+            // Add label background and text
+            if (edge.label) {
+                const mx = (sx + ex) / 2;
+                const my = (sy + ey) / 2;
+
+                const labelRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                labelRect.setAttribute('x', mx - 15);
+                labelRect.setAttribute('y', my - 8);
+                labelRect.setAttribute('width', 30);
+                labelRect.setAttribute('height', 16);
+                labelRect.setAttribute('rx', 4);
+                labelRect.setAttribute('fill', 'white');
+                labelRect.setAttribute('stroke', '#E5E7EB');
+                labelRect.setAttribute('stroke-width', '1');
+
+                const labelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                labelText.setAttribute('x', mx);
+                labelText.setAttribute('y', my);
+                labelText.setAttribute('dominant-baseline', 'middle');
+                labelText.setAttribute('text-anchor', 'middle');
+                labelText.setAttribute('font-size', '10px');
+                labelText.setAttribute('font-weight', 'bold');
+                labelText.setAttribute('fill', '#4B5563');
+                labelText.textContent = edge.label;
+                labelText.style.pointerEvents = 'none';
+
+                // Auto-size rect based on text? For now constant
+                if (edge.label.length > 3) labelRect.setAttribute('width', edge.label.length * 7);
+                labelRect.setAttribute('x', mx - (labelRect.getAttribute('width') / 2));
+
+                pathGroup.appendChild(labelRect);
+                pathGroup.appendChild(labelText);
+            }
+
+            group.appendChild(pathGroup);
         });
     }
 
-    function addProcFlowNode(type) {
+    function addProcFlowNode(type, x = 50, y = 50) {
         const labels = { inicio: 'Início', fim: 'Fim', processo: 'Ação', decisao: '?' };
-        bFlowNodes.push({ id: 'n' + Date.now(), type, label: labels[type], x: 50, y: 50 });
+        bFlowNodes.push({ id: 'n' + Date.now(), type, label: labels[type], x: x, y: y });
         renderBuilderFlowchart();
         reqBuilderAutoSave();
     }
