@@ -1456,8 +1456,8 @@
                     x-data="scriptStudio()">
                     <!-- Top Navigation Bar -->
                     <div
-                        class="bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-                        <div class="flex items-center gap-10">
+                        class="bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm gap-4">
+                        <div class="flex items-center gap-6 flex-shrink-0">
                             <!-- Logo -->
                             <div class="flex items-center gap-3 group cursor-default">
                                 <div
@@ -1485,7 +1485,7 @@
                         </div>
 
                         <!-- Tabs -->
-                        <div class="flex-1 flex items-center gap-2 px-8 overflow-x-auto no-scrollbar">
+                        <div class="flex-1 flex items-center gap-2 px-4 overflow-x-auto no-scrollbar min-w-0">
                             <template x-for="(script, index) in openScripts" :key="script.id">
                                 <button type="button" @click="activeScriptId = script.id"
                                     class="flex items-center gap-3 px-5 py-2.5 rounded-xl transition-all border shrink-0 group relative overflow-hidden"
@@ -1504,7 +1504,7 @@
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-3 flex-shrink-0">
                             <button type="button" @click="showTemplates = true"
                                 class="px-5 py-2.5 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all flex items-center gap-2">
                                 <i data-lucide="layout" class="w-4 h-4"></i>
@@ -1555,10 +1555,11 @@
                     <template x-if="activeScriptId">
                         <div class="animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <!-- Metadata Bar -->
-                            <div class="bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between">
-                                <div class="flex items-center gap-6">
+                            <div
+                                class="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between gap-6">
+                                <div class="flex items-center gap-6 flex-1 min-w-0">
                                     <!-- Script Name -->
-                                    <div class="flex flex-col min-w-[200px]">
+                                    <div class="flex flex-col flex-1 min-w-[150px]">
                                         <input type="text" x-model="currentScript.name"
                                             @input="currentScript.dirty = true; saveToLocal()"
                                             class="border-none p-0 focus:ring-0 text-lg font-black text-gray-900 placeholder-gray-300 bg-transparent"
@@ -1584,10 +1585,10 @@
                                         </div>
                                     </div>
 
-                                    <div class="h-8 w-px bg-gray-100"></div>
+                                    <div class="h-8 w-px bg-gray-100 flex-shrink-0"></div>
 
                                     <!-- Objective -->
-                                    <div class="flex flex-col">
+                                    <div class="flex flex-col flex-1 min-w-0">
                                         <span
                                             class="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-1">Objetivo</span>
                                         <input type="text" x-model="currentScript.objective"
@@ -1607,10 +1608,10 @@
                                         title="Copiar Script">
                                         <i data-lucide="copy" class="w-4.5 h-4.5"></i>
                                     </button>
-                                    <button type="button" @click="printScript"
-                                        class="px-5 py-2.5 border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm">
+                                    <button type="button" @click="printScript" id="pdfBtn"
+                                        class="px-5 py-2.5 border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-wait">
                                         <i data-lucide="download" class="w-4 h-4"></i>
-                                        PDF
+                                        <span x-text="isPrinting ? 'Gerando...' : 'PDF'"></span>
                                     </button>
                                     <button type="button" @click="saveMain()"
                                         class="px-5 py-2 rounded-lg text-sm font-bold transition-all"
@@ -4914,6 +4915,7 @@ ${dateHeader}
                 openScripts: [],
                 activeScriptId: null,
                 showTemplates: false,
+                isPrinting: false,
                 templates: [
                     {
                         name: 'Academia de Alta Performance',
@@ -5087,46 +5089,70 @@ ${dateHeader}
                 },
 
                 printScript() {
-                    const printSection = document.createElement('div');
-                    printSection.id = 'script-print-area';
-                    printSection.innerHTML = `
+                    if (this.isPrinting) return;
+                    this.isPrinting = true;
+
+                    // Create hidden iframe for robust printing
+                    const iframe = document.createElement('iframe');
+                    iframe.style.position = 'fixed';
+                    iframe.style.right = '100%';
+                    iframe.style.bottom = '100%';
+                    iframe.style.width = '0';
+                    iframe.style.height = '0';
+                    iframe.style.border = 'none';
+
+                    document.body.appendChild(iframe);
+
+                    const doc = iframe.contentWindow.document;
+                    const style = `
                         <style>
-                            @media print {
-                                body * { visibility: hidden !important; }
-                                #script-print-area, #script-print-area * { visibility: visible !important; }
-                                #script-print-area { position: absolute !important; left: 0; top: 0; width: 100%; padding: 40px; }
-                                .print-card { border: 1px solid #eee; padding: 25px; margin-bottom: 25px; border-radius: 12px; page-break-inside: avoid; background: white; }
-                                .header-print { display: flex; justify-content: space-between; border-bottom: 3px solid #E8191A; padding-bottom: 20px; margin-bottom: 40px; align-items: flex-end; }
-                                .hook-variation { background: #FFF9F9; border: 1px solid #FFE5E5; padding: 15px; margin-bottom: 12px; border-radius: 8px; font-size: 14px; }
-                                .column-label { font-size: 10px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; display: block; }
-                            }
+                            @page { size: A4; margin: 0; }
+                            body { font-family: 'DM Sans', sans-serif; padding: 40px; color: #111; }
+                            .header-print { display: flex; justify-content: space-between; border-bottom: 3px solid #E8191A; padding-bottom: 20px; margin-bottom: 40px; align-items: flex-end; }
+                            .print-card { border: 1px solid #eee; padding: 25px; margin-bottom: 25px; border-radius: 12px; page-break-inside: avoid; background: white; border-left: 6px solid #ccc; }
+                            .hook-variation { background: #FFF9F9; border: 1px solid #FFE5E5; padding: 15px; margin-bottom: 12px; border-radius: 8px; font-size: 14px; }
+                            .column-label { font-size: 10px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; display: block; }
+                            .script-name { font-size: 16px; color: #333; margin: 8px 0 0; font-weight: bold; }
                         </style>
+                    `;
+
+                    const content = `
+                        \${style}
                         <div class="header-print">
                             <div>
-                                <h1 style="font-family: 'DM Serif Display', serif; font-style: italic; color: #E8191A; margin: 0; font-size: 32px;">NorthWay / SCRIPT STUDIO</h1>
-                                <p style="font-size: 16px; color: #333; margin: 8px 0 0; font-weight: bold;">${this.currentScript.name}</p>
+                                <h1 style="font-family: 'serif'; font-style: italic; color: #E8191A; margin: 0; font-size: 32px;">NorthWay / SCRIPT STUDIO</h1>
+                                <p class="script-name">\${this.currentScript.name}</p>
                             </div>
                             <div style="text-align: right;">
                                 <p style="font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">{{ client.name }}</p>
-                                <p style="font-size: 12px; color: #999; margin: 5px 0 0;">${new Date().toLocaleDateString()}</p>
+                                <p style="font-size: 12px; color: #999; margin: 5px 0 0;">\${new Date().toLocaleDateString()}</p>
                             </div>
                         </div>
-                        <div class="print-card" style="border-left: 6px solid #E8191A; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+                        <div class="print-card" style="border-left-color: #E8191A;">
                             <span class="column-label" style="color: #E8191A;">Passo 01: Ganchos (Hooks)</span>
-                            ${this.currentScript.hooks.map((h, i) => `<div class="hook-variation"><strong>${String.fromCharCode(65 + i)}:</strong> ${h}</div>`).join('')}
+                            \${this.currentScript.hooks.map((h, i) => \`<div class="hook-variation"><strong>\${String.fromCharCode(65 + i)}:</strong> \${h}</div>\`).join('')}
                         </div>
-                        <div class="print-card" style="border-left: 6px solid #1A4FE8;">
+                        <div class="print-card" style="border-left-color: #1A4FE8;">
                             <span class="column-label" style="color: #1A4FE8;">Passo 02: Desenvolvimento</span>
-                            <div style="line-height: 1.8; white-space: pre-wrap; font-size: 14px; color: #374151;">${this.currentScript.body}</div>
+                            <div style="line-height: 1.8; white-space: pre-wrap; font-size: 14px; color: #374151;">\${this.currentScript.body}</div>
                         </div>
-                        <div class="print-card" style="border-left: 6px solid #1A7A3C;">
+                        <div class="print-card" style="border-left-color: #1A7A3C;">
                             <span class="column-label" style="color: #1A7A3C;">Passo 03: Chamada p/ Ação (CTA)</span>
-                            <div style="font-weight: bold; line-height: 1.8; white-space: pre-wrap; font-size: 15px; color: #111827;">${this.currentScript.cta}</div>
+                            <div style="font-weight: bold; line-height: 1.8; white-space: pre-wrap; font-size: 15px; color: #111827;">\${this.currentScript.cta}</div>
                         </div>
                     `;
-                    document.body.appendChild(printSection);
-                    window.print();
-                    document.body.removeChild(printSection);
+
+                    doc.open();
+                    doc.write(content);
+                    doc.close();
+
+                    // Wait for styles/images and then print
+                    setTimeout(() => {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                        document.body.removeChild(iframe);
+                        this.isPrinting = false;
+                    }, 500);
                 }
             }
         }
