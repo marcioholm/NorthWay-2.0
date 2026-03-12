@@ -2002,9 +2002,16 @@
                                                 class="p-3 bg-white rounded-xl shadow-sm group-hover:bg-[#E8191A] group-hover:text-white transition-colors">
                                                 <i :data-lucide="tpl.icon" class="w-6 h-6"></i>
                                             </div>
-                                            <span
-                                                class="text-[10px] font-black uppercase tracking-widest text-gray-300 group-hover:text-[#E8191A]"
-                                                x-text="tpl.channel"></span>
+                                            <div class="flex items-center gap-2">
+                                                <template
+                                                    x-if="tpl.name.includes('Tricot') && pageClientName.includes('Tricot')">
+                                                    <span
+                                                        class="px-2 py-0.5 rounded-full bg-red-100 text-[#fa0102] text-[8px] font-black uppercase tracking-widest animate-pulse">Sugerido</span>
+                                                </template>
+                                                <span
+                                                    class="text-[10px] font-black uppercase tracking-widest text-gray-300 group-hover:text-[#E8191A]"
+                                                    x-text="tpl.channel"></span>
+                                            </div>
                                         </div>
                                         <h4 class="text-lg font-bold text-gray-900 mb-2" x-text="tpl.name"></h4>
                                         <p class="text-xs text-gray-500 leading-relaxed mb-6 line-clamp-2"
@@ -3286,6 +3293,7 @@
 
     // --- WhatsApp Logic (Client) ---
     const pageClientId = parseInt("{{ client.id }}");
+    const pageClientName = "{{ client.name }}";
 
     function switchClientTab(tabName) {
         // console.log("Switching to tab:", tabName);
@@ -5181,7 +5189,8 @@ ${dateHeader}
                     cta: 'Link na Bio para agendar uma consultoria estratégica.',
                     duration: '90s',
                     scene_notes: 'Cinematográfico. Imagens de equipe, escritório e resultados. Voice-over profissional e impactante.'
-                }
+                },
+                // Video templates logic handled below with tricotGardenPack seeding
             ],
 
             get currentScript() {
@@ -5274,12 +5283,49 @@ ${dateHeader}
             loadFromLocal() {
                 const storageKey = `script_studio_${pageClientId}`;
                 const stored = localStorage.getItem(storageKey);
-                if (stored) {
+
+                if (!stored && pageClientName.includes('Tricot')) {
+                    // AUTO-SEEDING FOR TRICOT GARDEN
+                    const tricotPack = [
+                        { name: "1. O Que Está Por Baixo", hooks: ["A maioria das pessoas compra móvel olhando só pra cor. Erro."], body: "O que garante 10, 15 anos de durabilidade está aqui embaixo — olha essa estrutura. Alumínio maciço, sem solda exposta, sem parafuso que enferruja. É isso que separa um móvel bonito de um móvel bom.", cta: "Chama no WhatsApp e faz um orçamento hoje — link fixo na bio.", scene: "Vire uma poltrona de cabeça pra baixo mostrando a estrutura em alumínio. Bata com os dedos na estrutura. Vire de volta e sente-se com confiança.", axis: "EIXO 1" },
+                        { name: "2. Os 3 Inimigos da Área Externa", hooks: ["Todo móvel externo tem três inimigos. E a maioria não sobrevive nem a um deles."], body: "O sol descolore e resseca. A chuva apodrece e enferruja. A maresia corrói em meses. Na Tricot Garden, a corda tem proteção UV, a estrutura é alumínio e o tecido é impermeável. Cada detalhe pensado pra derrotar os três.", cta: "Segue a loja e vê todas as nossas coleções.", scene: "Levante três dedos, abaixando um a um enquanto nomeia cada inimigo. Ao final, passe a mão na corda do móvel como quem demonstra a solução.", axis: "EIXO 1" },
+                        { name: "3. O Toque do Artesão", hooks: ["Parece só estética. Mas não é."], body: "Olha essa trama — feita à mão, com corda que não resseca, não estoura e não perde a tensão com o sol. Esse acabamento é o que garante que daqui a dez anos o móvel vai continuar firme e bonito. Não é decoração. É engenharia.", cta: "Vem visitar a loja e sente a diferença com as suas primeiras mãos.", scene: "Câmera bem de perto nas mãos tocando a trama da corda. Movimentos lentos sobre cada detalhe. Termine mostrando o produto completo.", axis: "EIXO 1" },
+                        { name: "4. O Detalhe que o Olho Não Vê", hooks: ["Olha de perto aqui. Isso muda tudo."], body: "Cada fibra dessa corda tem proteção UV embutida — não é tinta por cima, é no material. É o que impede de ressecar, estourar e perder a cor. A diferença entre um móvel que dura dois verões e um que dura décadas está exatamente nesse detalhe.", cta: "Manda 'catálogo' no Direct e eu te envio todas as opções.", scene: "Câmera bem próxima da corda. Passe o dedo ao longo da trama. Depois mostre a corda contra a luz para evidenciar a textura.", axis: "EIXO 1" },
+                        { name: "5. Checklist do Especialista", hooks: ["Antes de comprar móvel externo, checa três coisas. Anota."], body: "Um — a estrutura é alumínio? Dois — o tecido é impermeável? Três — a marca tem tradição? Na Tricot Garden, os três são garantidos. 35 anos de fábrica própria não é coincidência.", cta: "Salva esse vídeo antes de ir às compras.", scene: "Caminhe pela loja parando em 3 pontos: (1) base de um móvel, (2) almofada, (3) logo da marca.", axis: "EIXO 1" },
+                        { name: "6. Upgrade de Varanda", hooks: ["Você não precisa de reforma pra transformar sua varanda."], body: "De espaço vazio a refúgio de resort — só com os móveis certos. Essa transformação acontece na sua casa também, e a gente te ajuda a montar a composição ideal: cores, tamanhos e disposição pro seu espaço.", cta: "Manda uma foto da sua varanda no WhatsApp — link na bio — e a gente projeta de graça.", scene: "Começa mostrando um canto vazio da loja. Corte rápido para o mesmo canto com um conjunto completo montado. Afaste devagar enquanto fala.", axis: "EIXO 2" },
+                        { name: "7. A Mesa do Final de Semana", hooks: ["Sabe aquele almoço de domingo que a família inteira aparece? Sua mesa tá preparada?"], body: "Essa aqui — olha o tampo, olha a estrutura — é feita pra aguentar sol, chuva e anos de uso sem perder a elegância. Porque os momentos que importam merecem um cenário bonito.", cta: "Fala com a gente e garante a sua mesa antes do próximo verão.", scene: "Fique em pé ao lado da mesa externa. Passe a mão pela superfície. Ao final, olhe a mesa de cima e depois direto pra câmera.", axis: "EIXO 2" },
+                        { name: "8. Vitrine de Cores 2026", hooks: ["Esquece o branco e o cinza. Área externa em 2026 tem personalidade."], body: "Terracota, verde militar, azul naval — qual dessas combina com o revestimento da sua piscina? A gente tem todas, e você ainda pode combinar cores diferentes na mesma composição.", cta: "Comenta aqui a sua favorita — te mando o preço na hora.", scene: "Passe a câmera por várias cores disponíveis — Verde militar, Terracota, Azul naval, Fendi — com transições rápidas e zoom nos detalhes.", axis: "EIXO 2" },
+                        { name: "9. Teste do Conforto", hooks: ["Espera — deixa eu te mostrar uma coisa."], body: "Essa é o conforto de sala de estar, só que feito pra ficar na chuva. Almofada com enchimento de secagem rápida, toque macio e impermeabilidade total. Você não vai querer sair daqui.", cta: "Vem pra Tricot Garden e sente isso pessoalmente. Endereço na bio.", scene: "Se jogue no sofá. Feche os olhos, respire fundo, sorria. Fique 2 segundos em silêncio antes de começar a falar.", axis: "EIXO 2" },
+                        { name: "10. O Detalhe que Assina o Projeto", hooks: ["(SEM LOCUÇÃO — texto na tela:) 'O que dura, não precisa gritar.'"], body: "(Continua sem locução — texto na tela:) 'Cada nó. Cada detalhe. Cada ano.'", cta: "'Tricot Garden — 35 anos de design que resiste ao tempo.' | Link na bio.", scene: "Vídeo cinematográfico sem locução. Movimentos macro lentos: nós da corda, pés de alumínio, textura da almofada, reflexo da luz no metal. Apenas música elegante e texto na tela.", axis: "EIXO 2" },
+                        { name: "11. Solução para Quem Mora na Praia", hooks: ["Tem casa na praia e troca de móvel todo ano por causa da maresia?"], body: "Eu tenho uma noticia boa. Alumínio náutico não enferruja. Corda com tratamento anti-sal não resseca. Você para de trocar todo ano e começa a investir uma vez só.", cta: "Pede um orçamento pra sua casa de praia — WhatsApp no link da bio.", scene: "Posicione um móvel próximo à entrada aproveitando luz natural. Tom de quem acabou de resolver um problema real.", axis: "EIXO 3" },
+                        { name: "12. Recado para Arquitetos e Decoradores", hooks: ["Arquiteto, esse vídeo é pra você."], body: "Eu sei que o seu maior medo é o móvel dar problema no pós-obra. Com 35 anos de fábrica própria, prazo cumprido e assistência técnica real, a Tricot Garden é a parceira que protege o seu projeto — e a sua reputação.", cta: "Chama no Direct pra condições exclusivas pra profissionais.", scene: "Segure um mostruário de cordas ou folheie um catálogo técnico na mesa da loja. Tom profissional e direto.", axis: "EIXO 3" },
+                        { name: "13. Manutenção na Prática", hooks: ["Pergunta frequente aqui na loja: 'é difícil de limpar?'"], body: "Olha só — água morna, sabão neutro e um paninho. Cinco minutos e os móveis ficam como novos. Não tem segredo. A manutenção mais difícil que você vai ter é decidir qual cor escolher.", cta: "Segue a gente pra mais dicas de conservação.", scene: "Simule a limpeza: jogue um pouco de água e passe um pano seco. Tom leve e descontraído.", axis: "EIXO 3" },
+                        { name: "14. 35 Anos — A Prova Mais Difícil de Falsificar", hooks: ["Marca de móvel nasce todo dia. A maioria não passa de cinco anos."], body: "A Tricot Garden está aqui há 35. Isso significa que se seu móvel precisar de assistência daqui a dez anos, a gente ainda vai estar aqui. Você não fica sozinho depois da compra.", cta: "Compra de quem você pode confiar. Vem conhecer a loja.", scene: "Caminhe pela loja mostrando a amplitude do showroom. Pare em frente ao logo da marca.", axis: "EIXO 3" },
+                        { name: "15. Consultoria Gratuita de Varanda", hooks: ["Quer mobiliar a varanda mas não sabe por onde começar?"], body: "É exatamente pra isso que a gente existe. Manda uma foto do seu espaço pro nosso WhatsApp e a nossa equipe monta a composição ideal — cores, tamanhos e disposição. Sem compromisso.", cta: "Clica no botão Saiba Mais e começa seu projeto agora.", scene: "Sente-se em uma mesa de atendimento com tablet ou projeto aberto. Fale olhando diretamente pra câmera.", axis: "EIXO 3" }
+                    ];
+
+                    this.openScripts = tricotPack.map((s, i) => ({
+                        id: Date.now() + i,
+                        name: s.name,
+                        channel: 'Reels/Shorts',
+                        type: 'Conteúdo',
+                        objective: s.axis,
+                        hooks: s.hooks,
+                        body: s.body,
+                        cta: s.cta,
+                        duration: '30-45s',
+                        scene_notes: s.scene,
+                        created_at: new Date().toLocaleDateString('pt-BR'),
+                        dirty: false
+                    }));
+                    this.activeScriptId = this.openScripts[0].id;
+                    this.saveToLocal();
+                } else if (stored) {
                     const data = JSON.parse(stored);
                     this.openScripts = data.openScripts || [];
                     this.activeScriptId = data.activeScriptId;
-                    this.$nextTick(() => { lucide.createIcons(); });
                 }
+                this.$nextTick(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); });
             },
 
             saveMain() {
