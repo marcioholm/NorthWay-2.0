@@ -1447,6 +1447,102 @@
                             </p>
                         </div>
                     </div>
+
+                    <!-- Processes Content (New Tab) -->
+                    <div id="content-client-processes" class="hidden p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <i data-lucide="list-checks" class="w-5 h-5 text-gray-400"></i>
+                                Processos & Serviços
+                            </h3>
+                            <button type="button" onclick="toggleModal('addProcessModal')"
+                                class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Adicionar Processo
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            {% for checklist in client.checklists|sort(attribute='created_at', reverse=True) %}
+                            <div class="border border-gray-200 rounded-xl overflow-hidden process-card">
+                                <!-- Header / Summary -->
+                                <div class="bg-gray-50 px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors"
+                                    onclick="toggleProcess('{{ checklist.id }}')">
+                                    <div class="flex items-center gap-3">
+                                        <div class="circular-chart-xs" data-percent="{{ checklist.percent or 0 }}">
+                                            <svg viewBox="0 0 36 36" class="w-8 h-8 transform -rotate-90">
+                                                <path class="text-gray-200"
+                                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                    fill="none" stroke="currentColor" stroke-width="4" />
+                                                <path class="text-northway-red progress-ring" stroke-dasharray="0, 100"
+                                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                    fill="none" stroke="currentColor" stroke-width="4"
+                                                    id="ring-{{ checklist.id }}" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-900">{{ checklist.name }}</h4>
+                                            <p class="text-xs text-gray-500">Iniciado em {{
+                                                checklist.created_at.strftime('%d/%m/%Y') }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <!-- Delegate Button -->
+                                        <button
+                                            onclick='openDelegateModal("{{ checklist.id }}", {{ checklist.name|tojson|safe }}, "{{ checklist.assigned_to_id or "" }}"); event.stopPropagation();'
+                                            class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Delegar Processo">
+                                            {% if checklist.assigned_to %}
+                                            {{ user_avatar(checklist.assigned_to, size='xs', show_name=False) }}
+                                            {% else %}
+                                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                            {% endif %}
+                                        </button>
+                                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transition-transform"
+                                            id="arrow-{{ checklist.id }}"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Expanded Content -->
+                                <div id="process-content-{{ checklist.id }}"
+                                    class="hidden border-t border-gray-200 bg-white p-4 space-y-6">
+                                    {% for step in checklist.progress %}
+                                    {% set step_index = loop.index0 %}
+                                    <div class="step-group">
+                                        <h5
+                                            class="font-bold text-gray-800 text-sm uppercase tracking-wide mb-3 pl-1 border-l-4 border-northway-red/20 py-0.5">
+                                            {{ step.title }}</h5>
+                                        <div class="space-y-2 pl-2">
+                                            {% for item in step['items'] %}
+                                            <label
+                                                class="flex items-start gap-3 group cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                                                <input type="checkbox"
+                                                    onchange="toggleChecklistItem('{{ checklist.id }}', '{{ loop.index0 }}', '{{ step_index }}', this)"
+                                                    {% if item.done %}checked{% endif %}
+                                                    class="mt-1 w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red cursor-pointer">
+                                                <span
+                                                    class="text-sm text-gray-700 group-hover:text-gray-900 {{ 'line-through text-gray-400' if item.done else '' }} item-text">{{
+                                                    item.text }}</span>
+                                            </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+
+                                    <div class="pt-4 border-t border-gray-100 flex justify-end">
+                                        <button type="button" onclick="deleteChecklist('{{ checklist.id }}')"
+                                            class="text-xs text-red-500 hover:text-red-700 underline">Excluir
+                                            Processo</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <p class="text-sm text-gray-400 italic text-center py-4">Nenhum processo ativo para este
+                                cliente.
+                            </p>
+                            {% endfor %}
+                        </div>
+                    </div>
                     <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
 
                 </div>
