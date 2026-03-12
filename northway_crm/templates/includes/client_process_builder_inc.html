@@ -1,0 +1,605 @@
+<div id="process-builder-scope"
+    class="relative overflow-hidden bg-[#F8F7F4] rounded-xl border border-gray-200 min-h-[600px] flex flex-col">
+    <!-- Builder Header / Toolbar -->
+    <div class="bg-white border-b border-gray-200 flex items-center justify-between px-6 h-14 shrink-0 z-20">
+        <!-- Mode Toggles (Atual vs Ideal) -->
+        <div class="flex items-center gap-6 h-full">
+            <button type="button" onclick="setProcessMode('atual')" id="proc-toggle-mode-atual"
+                class="h-full border-b-2 font-semibold text-xs transition-colors border-northway-red text-northway-red">
+                Processo Atual
+            </button>
+            <button type="button" onclick="setProcessMode('ideal')" id="proc-toggle-mode-ideal"
+                class="h-full border-b-2 border-transparent font-medium text-xs transition-colors text-gray-400 hover:text-gray-900">
+                Processo Ideal
+            </button>
+        </div>
+
+        <!-- Tool Toggles (Fluxograma vs Linear) -->
+        <div class="flex items-center gap-4">
+            <div class="bg-gray-100 p-1 rounded-lg flex items-center">
+                <button type="button" onclick="setProcessTool('fluxograma')" id="proc-toggle-tool-fluxograma"
+                    class="px-3 py-1 text-xs font-bold rounded-md bg-white text-gray-900 shadow-sm transition-all">
+                    Fluxograma
+                </button>
+                <button type="button" onclick="setProcessTool('linear')" id="proc-toggle-tool-linear"
+                    class="px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-900 transition-all">
+                    Lista Linear
+                </button>
+            </div>
+            <div id="proc-status-badge"
+                class="px-2 py-0.5 rounded bg-orange-100 text-orange-700 text-[10px] font-bold border border-orange-200">
+                Atual
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Builder Area -->
+    <div class="flex-1 relative overflow-hidden" id="proc-builder-canvas-container">
+        <!-- Loader -->
+        <div id="proc-loader"
+            class="absolute inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+            <i data-lucide="loader-2" class="w-6 h-6 text-northway-red animate-spin"></i>
+        </div>
+
+        <!-- Empty State -->
+        <div id="proc-empty-state"
+            class="absolute inset-0 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 z-10 hidden">
+            <div class="w-16 h-16 mb-4 text-gray-300">
+                <i data-lucide="workflow" class="w-full h-full stroke-[1]"></i>
+            </div>
+            <h2 class="text-lg font-black text-gray-900 mb-1">Inicie o Fluxo</h2>
+            <p class="text-xs text-gray-500 mb-6">Comece a construir o processo para este cliente</p>
+            <button type="button" onclick="initNewProcessBuilder()"
+                class="bg-gray-900 text-white px-6 py-2 rounded-lg font-bold hover:bg-black transition-colors shadow-lg shadow-black/10 flex items-center gap-2 text-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i> Criar Processo
+            </button>
+        </div>
+
+        <!-- Linear Process Container -->
+        <div id="proc-linear-container"
+            class="absolute inset-0 overflow-y-auto hidden opacity-0 transition-opacity duration-300 p-6">
+            <div class="max-w-[600px] mx-auto">
+                <!-- Progress Card -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
+                    <div class="flex items-end justify-between mb-3">
+                        <div>
+                            <h3 class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">Progresso
+                            </h3>
+                            <div class="text-2xl font-black text-gray-900" id="proc-linear-progress-text">0%</div>
+                        </div>
+                        <div class="text-[10px] font-bold text-gray-500" id="proc-linear-progress-count">0 de 0
+                            concluídas</div>
+                    </div>
+                    <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-3">
+                        <div id="proc-linear-progress-bar"
+                            class="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-500"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Timeline List -->
+                <div id="proc-linear-steps-list" class="space-y-0 relative min-h-[100px]">
+                    <!-- Line background -->
+                    <div class="absolute left-[15px] top-4 bottom-4 w-0.5 bg-gray-200 z-0"></div>
+                </div>
+
+                <!-- Add Step Button / Form -->
+                <div class="mt-6 relative z-10 pl-10">
+                    <button type="button" id="proc-btn-show-add-step" onclick="showProcAddStepForm()"
+                        class="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-bold hover:border-gray-900 hover:text-gray-900 transition-colors flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Adicionar etapa
+                    </button>
+
+                    <div id="proc-form-add-step"
+                        class="hidden bg-white p-4 rounded-xl border border-gray-200 shadow-lg mt-2">
+                        <div class="space-y-3">
+                            <input type="text" id="proc-step-name" placeholder="Nome da etapa"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold text-gray-900 focus:ring-1 focus:ring-gray-900 outline-none">
+                            <textarea id="proc-step-desc" placeholder="Descrição..." rows="2"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 focus:ring-1 focus:ring-gray-900 outline-none resize-none"></textarea>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" id="proc-step-resp" placeholder="Responsável"
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-900 focus:ring-1 focus:ring-gray-900 outline-none">
+                                <select id="proc-step-status"
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-900 focus:ring-1 focus:ring-gray-900 outline-none">
+                                    <option value="pendente">Pendente</option>
+                                    <option value="andamento">Em andamento</option>
+                                    <option value="concluido">Concluído</option>
+                                    <option value="bloqueado">Bloqueado</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center gap-3 pt-1">
+                                <button type="button" onclick="saveProcLinearStep()"
+                                    class="bg-gray-900 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-black transition-colors">Salvar</button>
+                                <button type="button" onclick="hideProcAddStepForm()"
+                                    class="text-gray-500 hover:text-gray-900 text-xs font-bold px-3 py-1.5">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flowchart Container -->
+        <div id="proc-flowchart-container"
+            class="absolute inset-0 overflow-hidden hidden opacity-0 transition-opacity duration-300"
+            style="background-image: radial-gradient(#D1D5DB 1px, transparent 1px); background-size: 28px 28px;">
+
+            <!-- Toolbar -->
+            <div
+                class="absolute top-4 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-lg border border-gray-200 p-1.5 flex items-center gap-2 z-20 scale-90 md:scale-100">
+                <div class="flex items-center bg-gray-50 rounded-lg h-8 px-1 mr-1">
+                    <button type="button" onclick="addProcFlowNode('inicio')"
+                        class="px-2 py-1 text-[10px] font-bold rounded-md hover:bg-white hover:shadow-sm text-green-700 transition-all">Início</button>
+                    <button type="button" onclick="addProcFlowNode('fim')"
+                        class="px-2 py-1 text-[10px] font-bold rounded-md hover:bg-white hover:shadow-sm text-red-700 transition-all">Fim</button>
+                    <button type="button" onclick="addProcFlowNode('processo')"
+                        class="px-2 py-1 text-[10px] font-bold rounded-md hover:bg-white hover:shadow-sm text-gray-700 transition-all">Processo</button>
+                    <button type="button" onclick="addProcFlowNode('decisao')"
+                        class="px-2 py-1 text-[10px] font-bold rounded-md hover:bg-white hover:shadow-sm text-amber-700 transition-all">Decisão</button>
+                </div>
+
+                <div class="w-px h-5 bg-gray-200"></div>
+
+                <button type="button" id="proc-btn-flow-delete" onclick="deleteSelectedProcNode()"
+                    class="p-1 text-red-600 hover:bg-red-50 transition-colors hidden" title="Excluir Selecionado">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+                <button type="button" onclick="saveProcBuilder()"
+                    class="bg-gray-900 text-white px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-black transition-colors shadow-sm ml-1">Salvar</button>
+            </div>
+
+            <!-- SVG Edge Layer -->
+            <svg id="proc-edges-layer" class="absolute inset-0 w-full h-full pointer-events-none z-0">
+                <defs>
+                    <marker id="proc-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#9CA3AF" />
+                    </marker>
+                </defs>
+                <g id="proc-edges-group"></g>
+                <path id="proc-drag-line" class="hidden" fill="none" stroke="#E8191A" stroke-width="2"
+                    stroke-dasharray="5,5" />
+            </svg>
+
+            <!-- Nodes Canvas -->
+            <div id="proc-nodes-canvas" class="absolute inset-0 z-10 origin-top-left">
+                <!-- Nodes injected via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Builder context constants
+    const BUILDER_CLIENT_ID = {{ client.id }};
+    const BUILDER_CLIENT_NAME = "{{ client.name }}";
+
+    // Application state for the builder
+    let bState = {
+        mode: 'atual', // atual, ideal
+        tool: 'fluxograma', // fluxograma, linear
+        data: null
+    };
+
+    let bIsLoading = false;
+    let bAutoSaveTimer = null;
+
+    // Local structures
+    let bLinearSteps = [];
+    let bEditingStepId = null;
+    let bFlowNodes = [];
+    let bFlowEdges = [];
+    let bSelectedNodeId = null;
+    let bSelectedEdgeId = null;
+
+    // Dragging/Interaction state
+    let bIsDraggingNode = false;
+    let bDraggedNode = null;
+    let bDragOffset = { x: 0, y: 0 };
+    let bIsConnecting = false;
+    let bConnectSourceId = null;
+
+    // Initialize Builder when tab is shown
+    function initProcessBuilderTab() {
+        console.log("Initializing Process Builder Tab...");
+        updateBuilderUI();
+        fetchBuilderData();
+
+        // Setup Flowchart Canvas events
+        const canvas = document.getElementById('proc-nodes-canvas');
+        if (canvas) {
+            canvas.addEventListener('mousemove', handleBuilderCanvasMouseMove);
+            canvas.addEventListener('mouseup', handleBuilderCanvasMouseUp);
+            canvas.addEventListener('click', (e) => {
+                if (e.target.id === 'proc-nodes-canvas') clearBuilderSelection();
+            });
+        }
+    }
+
+    async function fetchBuilderData() {
+        bIsLoading = true;
+        document.getElementById('proc-loader').classList.remove('hidden');
+
+        try {
+            const res = await fetch(`/api/clients/${BUILDER_CLIENT_ID}/processes/${bState.tool}/${bState.mode}`);
+            const data = await res.json();
+
+            bState.data = data;
+            if (bState.tool === 'linear') {
+                bLinearSteps = bState.data ? bState.data.steps || [] : [];
+            } else {
+                bFlowNodes = bState.data ? bState.data.nodes || [] : [];
+                bFlowEdges = bState.data ? bState.data.edges || [] : [];
+                bSelectedNodeId = null;
+            }
+
+            bIsLoading = false;
+            document.getElementById('proc-loader').classList.add('hidden');
+            updateBuilderUI();
+        } catch (err) {
+            console.error("Error fetching process data:", err);
+            bIsLoading = false;
+            document.getElementById('proc-loader').classList.add('hidden');
+        }
+    }
+
+    function setProcessMode(mode) {
+        if (bState.mode === mode) return;
+        bState.mode = mode;
+        updateBuilderUI();
+        fetchBuilderData();
+    }
+
+    function setProcessTool(tool) {
+        if (bState.tool === tool) return;
+        bState.tool = tool;
+        updateBuilderUI();
+        fetchBuilderData();
+    }
+
+    function updateBuilderUI() {
+        // Handle Button Toggles
+        document.getElementById('proc-toggle-mode-atual').className = bState.mode === 'atual'
+            ? 'h-full border-b-2 font-semibold text-xs transition-colors border-northway-red text-northway-red'
+            : 'h-full border-b-2 border-transparent font-medium text-xs transition-colors text-gray-400 hover:text-gray-900';
+
+        document.getElementById('proc-toggle-mode-ideal').className = bState.mode === 'ideal'
+            ? 'h-full border-b-2 font-semibold text-xs transition-colors border-northway-red text-northway-red'
+            : 'h-full border-b-2 border-transparent font-medium text-xs transition-colors text-gray-400 hover:text-gray-900';
+
+        document.getElementById('proc-toggle-tool-fluxograma').className = bState.tool === 'fluxograma'
+            ? 'px-3 py-1 text-xs font-bold rounded-md bg-white text-gray-900 shadow-sm transition-all'
+            : 'px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-900 transition-all';
+
+        document.getElementById('proc-toggle-tool-linear').className = bState.tool === 'linear'
+            ? 'px-3 py-1 text-xs font-bold rounded-md bg-white text-gray-900 shadow-sm transition-all'
+            : 'px-3 py-1 text-xs font-medium rounded-md text-gray-500 hover:text-gray-900 transition-all';
+
+        // Update Badge
+        const badge = document.getElementById('proc-status-badge');
+        badge.innerText = bState.mode === 'atual' ? 'Atual' : 'Ideal';
+        badge.className = `px-2 py-0.5 rounded text-[10px] font-bold border ${bState.mode === 'atual' ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200'}`;
+
+        // Visibility
+        const emptyState = document.getElementById('proc-empty-state');
+        const linearContainer = document.getElementById('proc-linear-container');
+        const flowchartContainer = document.getElementById('proc-flowchart-container');
+
+        [emptyState, linearContainer, flowchartContainer].forEach(el => el.classList.add('hidden', 'opacity-0'));
+
+        if (!bIsLoading) {
+            if (!bState.data) {
+                emptyState.classList.remove('hidden');
+                setTimeout(() => emptyState.classList.remove('opacity-0', 'pointer-events-none'), 50);
+            } else {
+                const active = bState.tool === 'linear' ? linearContainer : flowchartContainer;
+                active.classList.remove('hidden');
+                setTimeout(() => {
+                    active.classList.remove('opacity-0');
+                    if (bState.tool === 'linear') renderBuilderLinear();
+                    else renderBuilderFlowchart();
+                }, 50);
+            }
+        }
+    }
+
+    async function saveProcBuilder() {
+        const payload = {};
+        if (bState.tool === 'linear') payload.steps = bLinearSteps;
+        else { payload.nodes = bFlowNodes; payload.edges = bFlowEdges; }
+
+        bState.data = payload;
+        try {
+            await fetch(`/api/clients/${BUILDER_CLIENT_ID}/processes/${bState.tool}/${bState.mode}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (e) {
+            console.error("Save failure", e);
+        }
+    }
+
+    function reqBuilderAutoSave() {
+        if (bAutoSaveTimer) clearTimeout(bAutoSaveTimer);
+        bAutoSaveTimer = setTimeout(saveProcBuilder, 1000);
+    }
+
+    function initNewProcessBuilder() {
+        bState.data = {};
+        if (bState.tool === 'linear') bLinearSteps = [];
+        else { bFlowNodes = []; bFlowEdges = []; }
+        updateBuilderUI();
+        saveProcBuilder();
+    }
+
+    // --- LINEAR ENGINE ---
+    function renderBuilderLinear() {
+        const listEl = document.getElementById('proc-linear-steps-list');
+        listEl.innerHTML = '<div class="absolute left-[15px] top-4 bottom-4 w-0.5 bg-gray-200 z-0"></div>';
+
+        let completed = 0;
+        bLinearSteps.forEach((step, idx) => {
+            if (step.status === 'concluido') completed++;
+
+            const colorMap = {
+                'pendente': 'border-l-gray-300 bg-white text-gray-500 fill-bg-white border-2 border-gray-300',
+                'andamento': 'border-l-blue-500 bg-blue-50 text-blue-700 fill-bg-blue-500 ring-4 ring-blue-100',
+                'concluido': 'border-l-green-500 bg-green-50 text-green-700 fill-bg-green-500',
+                'bloqueado': 'border-l-red-500 bg-red-50 text-red-700 fill-bg-red-500'
+            };
+            const theme = colorMap[step.status] || colorMap.pendente;
+            const fillClass = step.status === 'pendente' ? 'bg-white border-2 border-gray-300 text-gray-500' : theme.split('fill-')[1].split(' ')[0] + ' text-white font-bold';
+
+            const html = `
+                <div class="relative flex gap-4 items-start group mb-4 z-10">
+                    <div class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[10px] z-10 ${fillClass} ${step.status === 'andamento' ? 'ring-4 ring-blue-50' : ''}">
+                        ${idx + 1}
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl border-l-4 ${theme.split(' ')[0]} border shadow-sm p-4 hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start mb-1">
+                            <h4 class="font-bold text-gray-900 text-xs">${step.name}</h4>
+                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button type="button" onclick="editProcLinearStep('${step.id}')" class="p-1 hover:text-blue-600"><i data-lucide="pencil" class="w-3 h-3"></i></button>
+                                <button type="button" onclick="deleteProcLinearStep('${step.id}')" class="p-1 hover:text-red-600"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mb-2">${step.description}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-bold text-gray-400">@${step.resp || 'Sem resp.'}</span>
+                            <button type="button" onclick="cycleProcStatus('${step.id}')" class="text-[9px] font-bold text-gray-400 hover:text-gray-900 flex items-center gap-1">
+                                <i data-lucide="refresh-cw" class="w-2.5 h-2.5"></i> Mudar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            listEl.insertAdjacentHTML('beforeend', html);
+        });
+
+        const pct = bLinearSteps.length ? Math.round((completed / bLinearSteps.length) * 100) : 0;
+        document.getElementById('proc-linear-progress-text').innerText = pct + '%';
+        document.getElementById('proc-linear-progress-count').innerText = `${completed} de ${bLinearSteps.length} concluídas`;
+        document.getElementById('proc-linear-progress-bar').style.width = pct + '%';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function showProcAddStepForm() {
+        document.getElementById('proc-btn-show-add-step').classList.add('hidden');
+        document.getElementById('proc-form-add-step').classList.remove('hidden');
+        document.getElementById('proc-step-name').focus();
+    }
+
+    function hideProcAddStepForm() {
+        document.getElementById('proc-btn-show-add-step').classList.remove('hidden');
+        document.getElementById('proc-form-add-step').classList.add('hidden');
+        bEditingStepId = null;
+    }
+
+    function saveProcLinearStep() {
+        const name = document.getElementById('proc-step-name').value.trim();
+        const desc = document.getElementById('proc-step-desc').value.trim();
+        const resp = document.getElementById('proc-step-resp').value.trim();
+        const status = document.getElementById('proc-step-status').value;
+
+        if (!name) return;
+
+        if (bEditingStepId) {
+            const s = bLinearSteps.find(x => x.id === bEditingStepId);
+            if (s) Object.assign(s, { name, description: desc, resp, status });
+        } else {
+            bLinearSteps.push({ id: 's_' + Date.now(), name, description: desc, resp, status });
+        }
+
+        hideProcAddStepForm();
+        renderBuilderLinear();
+        reqBuilderAutoSave();
+    }
+
+    function editProcLinearStep(id) {
+        const s = bLinearSteps.find(x => x.id === id);
+        if (!s) return;
+        document.getElementById('proc-step-name').value = s.name;
+        document.getElementById('proc-step-desc').value = s.description;
+        document.getElementById('proc-step-resp').value = s.resp;
+        document.getElementById('proc-step-status').value = s.status;
+        bEditingStepId = id;
+        showProcAddStepForm();
+    }
+
+    function deleteProcLinearStep(id) {
+        if (confirm("Excluir etapa?")) {
+            bLinearSteps = bLinearSteps.filter(x => x.id !== id);
+            renderBuilderLinear();
+            reqBuilderAutoSave();
+        }
+    }
+
+    function cycleProcStatus(id) {
+        const s = bLinearSteps.find(x => x.id === id);
+        const seq = ['pendente', 'andamento', 'concluido', 'bloqueado'];
+        s.status = seq[(seq.indexOf(s.status) + 1) % seq.length];
+        renderBuilderLinear();
+        reqBuilderAutoSave();
+    }
+
+    // --- FLOWCHART ENGINE ---
+    function renderBuilderFlowchart() {
+        const canvas = document.getElementById('proc-nodes-canvas');
+        canvas.innerHTML = '';
+        renderBuilderEdges();
+
+        bFlowNodes.forEach(node => {
+            const el = document.createElement('div');
+            el.id = `proc-n-${node.id}`;
+            el.className = `absolute cursor-grab select-none shadow-sm flex flex-col items-center justify-center px-3 py-1.5 text-[11px] font-bold border-2 transition-shadow`;
+            el.style.left = node.x + 'px';
+            el.style.top = node.y + 'px';
+
+            let theme = "bg-white border-gray-300 rounded-lg";
+            if (node.type === 'inicio') theme = "bg-green-50 text-green-800 border-green-400 rounded-full px-4";
+            else if (node.type === 'fim') theme = "bg-red-50 text-red-800 border-red-400 rounded-full px-4";
+            else if (node.type === 'decisao') theme = "bg-amber-50 text-amber-900 border-amber-400 rounded-md rotate-45 w-20 h-20";
+
+            if (node.id === bSelectedNodeId) theme += " ring-2 ring-red-500 ring-offset-2";
+
+            el.className += " " + theme;
+
+            const labelContent = node.type === 'decisao'
+                ? `<div class="-rotate-45 text-center px-1"><span contenteditable="true" onblur="updateProcNodeLabel('${node.id}', this.innerText)">${node.label}</span></div>`
+                : `<span contenteditable="true" onblur="updateProcNodeLabel('${node.id}', this.innerText)">${node.label}</span>`;
+
+            el.innerHTML = labelContent;
+
+            if (node.id === bSelectedNodeId) {
+                el.insertAdjacentHTML('beforeend', `
+                    <div class="port absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full" data-p="t"></div>
+                    <div class="port absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full" data-p="b"></div>
+                    <div class="port absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full" data-p="l"></div>
+                    <div class="port absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full" data-p="r"></div>
+                `);
+            }
+
+            el.addEventListener('mousedown', (e) => handleProcNodeMouseDown(e, node));
+            canvas.appendChild(el);
+        });
+
+        document.getElementById('proc-btn-flow-delete').classList.toggle('hidden', !bSelectedNodeId);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function renderBuilderEdges() {
+        const group = document.getElementById('proc-edges-group');
+        group.innerHTML = '';
+
+        bFlowEdges.forEach(edge => {
+            const s = bFlowNodes.find(n => n.id === edge.source);
+            const t = bFlowNodes.find(n => n.id === edge.target);
+            if (!s || !t) return;
+
+            const sDOM = document.getElementById(`proc-n-${s.id}`);
+            const tDOM = document.getElementById(`proc-n-${t.id}`);
+
+            const sx = s.x + (sDOM ? sDOM.offsetWidth / 2 : 40);
+            const sy = s.y + (sDOM ? sDOM.offsetHeight / 2 : 20);
+            const ex = t.x + (tDOM ? tDOM.offsetWidth / 2 : 40);
+            const ey = t.y + (tDOM ? tDOM.offsetHeight / 2 : 20);
+
+            let d = `M ${sx} ${sy} C ${sx} ${(sy + ey) / 2}, ${ex} ${(sy + ey) / 2}, ${ex} ${ey}`;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#9CA3AF');
+            path.setAttribute('stroke-width', '1.5');
+            path.setAttribute('marker-end', 'url(#proc-arrowhead)');
+            path.style.pointerEvents = 'auto';
+            path.style.cursor = 'pointer';
+            path.onclick = () => { if (confirm("Remover link?")) { bFlowEdges = bFlowEdges.filter(x => x.id !== edge.id); renderBuilderFlowchart(); reqBuilderAutoSave(); } };
+
+            group.appendChild(path);
+        });
+    }
+
+    function addProcFlowNode(type) {
+        const labels = { inicio: 'Início', fim: 'Fim', processo: 'Ação', decisao: '?' };
+        bFlowNodes.push({ id: 'n' + Date.now(), type, label: labels[type], x: 50, y: 50 });
+        renderBuilderFlowchart();
+        reqBuilderAutoSave();
+    }
+
+    function updateProcNodeLabel(id, text) {
+        const n = bFlowNodes.find(x => x.id === id);
+        if (n && text.trim()) { n.label = text.trim(); reqBuilderAutoSave(); }
+    }
+
+    function deleteSelectedProcNode() {
+        if (!bSelectedNodeId) return;
+        bFlowNodes = bFlowNodes.filter(n => n.id !== bSelectedNodeId);
+        bFlowEdges = bFlowEdges.filter(e => e.source !== bSelectedNodeId && e.target !== bSelectedNodeId);
+        bSelectedNodeId = null;
+        renderBuilderFlowchart();
+        reqBuilderAutoSave();
+    }
+
+    function clearBuilderSelection() { bSelectedNodeId = null; renderBuilderFlowchart(); }
+
+    function handleProcNodeMouseDown(e, node) {
+        e.stopPropagation();
+        if (e.target.classList.contains('port')) {
+            bIsConnecting = true; bConnectSourceId = node.id; e.preventDefault();
+            return;
+        }
+        bSelectedNodeId = node.id; bDraggedNode = node; bIsDraggingNode = true;
+        const rect = document.getElementById('proc-flowchart-container').getBoundingClientRect();
+        bDragOffset.x = (e.clientX - rect.left) - node.x;
+        bDragOffset.y = (e.clientY - rect.top) - node.y;
+        renderBuilderFlowchart();
+    }
+
+    function handleBuilderCanvasMouseMove(e) {
+        const rect = document.getElementById('proc-flowchart-container').getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        if (bIsDraggingNode && bDraggedNode) {
+            bDraggedNode.x = Math.max(0, Math.round((mx - bDragOffset.x) / 14) * 14);
+            bDraggedNode.y = Math.max(0, Math.round((my - bDragOffset.y) / 14) * 14);
+            renderBuilderFlowchart();
+        }
+
+        if (bIsConnecting) {
+            const dragLine = document.getElementById('proc-drag-line');
+            const s = bFlowNodes.find(x => x.id === bConnectSourceId);
+            const dom = document.getElementById(`proc-n-${s.id}`);
+            const sx = s.x + dom.offsetWidth / 2;
+            const sy = s.y + dom.offsetHeight / 2;
+            dragLine.classList.remove('hidden');
+            dragLine.setAttribute('d', `M ${sx} ${sy} L ${mx} ${my}`);
+        }
+    }
+
+    function handleBuilderCanvasMouseUp(e) {
+        if (bIsDraggingNode) { bIsDraggingNode = false; bDraggedNode = null; reqBuilderAutoSave(); }
+        if (bIsConnecting) {
+            document.getElementById('proc-drag-line').classList.add('hidden');
+            const rect = document.getElementById('proc-flowchart-container').getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+
+            const target = bFlowNodes.find(n => {
+                if (n.id === bConnectSourceId) return false;
+                const dom = document.getElementById(`proc-n-${n.id}`);
+                return mx >= n.x && mx <= n.x + dom.offsetWidth && my >= n.y && my <= n.y + dom.offsetHeight;
+            });
+
+            if (target && !bFlowEdges.find(ed => ed.source === bConnectSourceId && ed.target === target.id)) {
+                bFlowEdges.push({ id: 'e' + Date.now(), source: bConnectSourceId, target: target.id });
+                reqBuilderAutoSave();
+            }
+            bIsConnecting = false; bConnectSourceId = null; renderBuilderFlowchart();
+        }
+    }
+</script>
