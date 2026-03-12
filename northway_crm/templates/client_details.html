@@ -81,7 +81,7 @@
                             client.renewal_date.strftime('%d/%m/%Y') }}) {% else %} Renovação em {{ days_left }} dias
                             ({{ client.renewal_date.strftime('%d/%m/%Y') }}) {% endif %} </span>
                 </div>
-                <button onclick="toggleModal('taskModal')"
+                <button type="button" onclick="toggleModal('taskModal')"
                     class="text-xs font-bold px-3 py-1 bg-white border rounded shadow-sm hover:bg-gray-50 transition-colors {{ 'text-red-600 border-red-200' if days_left < 0 else 'text-orange-600 border-orange-200' }}">
                     Agendar
                 </button>
@@ -100,7 +100,7 @@
                 <span>Drive</span>
             </a>
             {% else %}
-            <button onclick="switchClientTab('archivos')"
+            <button type="button" onclick="switchClientTab('archivos')"
                 class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2"
                 title="Configurar Drive">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
@@ -122,12 +122,12 @@
                     <span>Editar Dados</span>
                 </button>
                 <div id="saveCancelBtns" class="hidden flex items-center gap-2">
-                    <button onclick="cancelEditMode()"
+                    <button type="button" onclick="cancelEditMode()"
                         class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
                         <i data-lucide="x" class="w-4 h-4"></i>
                         <span>Cancelar</span>
                     </button>
-                    <button onclick="saveClientForm()"
+                    <button type="button" onclick="saveClientForm()"
                         class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
                         <i data-lucide="save" class="w-4 h-4"></i>
                         <span>Salvar Alterações</span>
@@ -1320,7 +1320,7 @@
                             <h3 class="text-xl font-bold text-gray-900 mb-2">Conecte o Google Drive</h3>
                             <p class="text-gray-500 max-w-md mx-auto mb-8">Centralize contratos, documentos e
                                 arquivos do cliente em uma pasta segura e compartilhada.</p>
-                            <button onclick="toggleModal('createDriveFoldersModal')"
+                            <button type="button" onclick="toggleModal('createDriveFoldersModal')"
                                 class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 mx-auto">
                                 <i data-lucide="hard-drive" class="w-5 h-5"></i>
                                 Criar Pasta do Cliente
@@ -1353,11 +1353,11 @@
                             <!-- Attachment Menu (Absolute) -->
                             <div id="attach-menu"
                                 class="hidden absolute bottom-20 left-4 bg-white shadow-xl rounded-lg flex flex-col w-40 overflow-hidden z-20 border border-gray-100">
-                                <button onclick="triggerFile('image/*')"
+                                <button type="button" onclick="triggerFile('image/*')"
                                     class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700 border-b border-gray-50">
                                     <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos
                                 </button>
-                                <button onclick="triggerFile('*/*')"
+                                <button type="button" onclick="triggerFile('*/*')"
                                     class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700">
                                     <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
                                 </button>
@@ -1373,15 +1373,15 @@
 
                                     <!-- Rich Text Toolbar (Mini) -->
                                     <div class="hidden md:flex items-center gap-0.5 border-r border-gray-300 pr-2 mr-1">
-                                        <button onclick="insertFormat('*')"
+                                        <button type="button" onclick="insertFormat('*')"
                                             class="p-1 text-gray-400 hover:text-gray-600 rounded">
                                             <i data-lucide="bold" class="w-4 h-4"></i>
                                         </button>
-                                        <button onclick="insertFormat('_')"
+                                        <button type="button" onclick="insertFormat('_')"
                                             class="p-1 text-gray-400 hover:text-gray-600 rounded">
                                             <i data-lucide="italic" class="w-4 h-4"></i>
                                         </button>
-                                        <button onclick="insertFormat('- ')"
+                                        <button type="button" onclick="insertFormat('- ')"
                                             class="p-1 text-gray-400 hover:text-gray-600 rounded">
                                             <i data-lucide="list" class="w-4 h-4"></i>
                                         </button>
@@ -1408,7 +1408,8 @@
                                 <!-- Recording UI -->
                                 <div id="toolbar-recording"
                                     class="flex-1 items-center gap-4 hidden px-4 py-2 bg-white rounded-lg border border-red-100">
-                                    <button onclick="cancelRecording()" class="text-gray-500 hover:text-red-500 p-2">
+                                    <button type="button" onclick="cancelRecording()"
+                                        class="text-gray-500 hover:text-red-500 p-2">
                                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                                     </button>
                                     <div class="flex-1 flex items-center gap-3 justify-center">
@@ -1416,7 +1417,7 @@
                                         <span id="recording-time"
                                             class="text-gray-700 font-mono text-sm font-bold">0:00</span>
                                     </div>
-                                    <button onclick="stopAndSendRecording()"
+                                    <button type="button" onclick="stopAndSendRecording()"
                                         class="text-green-500 hover:text-green-600 p-2">
                                         <i data-lucide="send" class="w-5 h-5"></i>
                                     </button>
@@ -1428,10 +1429,11 @@
                                     <span class="text-gray-500"><i data-lucide="file" class="w-5 h-5 inline"></i></span>
                                     <span id="file-name"
                                         class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
-                                    <button onclick="cancelFile()" class="text-gray-400 hover:text-red-500 p-2">
+                                    <button type="button" onclick="cancelFile()"
+                                        class="text-gray-400 hover:text-red-500 p-2">
                                         <i data-lucide="x" class="w-5 h-5"></i>
                                     </button>
-                                    <button onclick="sendFile()"
+                                    <button type="button" onclick="sendFile()"
                                         class="text-green-600 hover:text-green-700 font-bold text-sm px-3">
                                         Enviar
                                     </button>
@@ -1454,17 +1456,18 @@
                     x-data="scriptStudio()">
                     <!-- Top Navigation Bar -->
                     <div
-                        class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
-                        <div class="flex items-center gap-8">
+                        class="bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+                        <div class="flex items-center gap-10">
                             <!-- Logo -->
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-3 group cursor-default">
                                 <div
-                                    class="w-10 h-10 bg-[#E8191A] rounded flex items-center justify-center text-white font-serif text-2xl font-bold italic">
+                                    class="w-12 h-12 bg-gradient-to-br from-[#fa0102] to-[#b90102] rounded-xl flex items-center justify-center text-white font-serif text-3xl font-bold italic shadow-lg shadow-red-500/20 transform group-hover:scale-105 transition-transform">
                                     N</div>
                                 <div class="flex flex-col leading-none">
                                     <span
-                                        class="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">NorthWay</span>
-                                    <span class="text-lg font-serif font-black italic text-gray-900">SCRIPT
+                                        class="text-[10px] font-black tracking-[0.3em] text-gray-400 uppercase">NorthWay</span>
+                                    <span
+                                        class="text-xl font-serif font-black italic text-gray-900 tracking-tight">SCRIPT
                                         STUDIO</span>
                                 </div>
                             </div>
@@ -1472,22 +1475,28 @@
                             <!-- Client Name (Static) -->
                             <div class="h-10 w-px bg-gray-100 mx-2"></div>
                             <div class="flex flex-col leading-none">
-                                <span class="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-1">Cliente
-                                    Ativo</span>
-                                <span class="text-sm font-bold text-gray-900">{{ client.name }}</span>
+                                <span
+                                    class="text-[8px] font-black uppercase tracking-widest text-gray-400 mb-1.5 flex items-center gap-1">
+                                    <span class="w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                                    Cliente Ativo
+                                </span>
+                                <span class="text-sm font-black text-gray-900">{{ client.name }}</span>
                             </div>
                         </div>
 
                         <!-- Tabs -->
                         <div class="flex-1 flex items-center gap-2 px-8 overflow-x-auto no-scrollbar">
                             <template x-for="(script, index) in openScripts" :key="script.id">
-                                <button @click="activeScriptId = script.id"
-                                    class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all border shrink-0"
-                                    :class="activeScriptId === script.id ? 'bg-white border-gray-200 shadow-sm text-gray-900 font-bold' : 'bg-transparent border-transparent text-gray-400 hover:text-gray-600 font-medium'">
-                                    <span x-show="script.dirty" class="w-1.5 h-1.5 bg-[#E8191A] rounded-full"></span>
-                                    <span x-text="script.name || 'Sem nome'"></span>
+                                <button type="button" @click="activeScriptId = script.id"
+                                    class="flex items-center gap-3 px-5 py-2.5 rounded-xl transition-all border shrink-0 group relative overflow-hidden"
+                                    :class="activeScriptId === script.id ? 'bg-white border-gray-200 shadow-md text-gray-900 font-bold scale-105' : 'bg-transparent border-transparent text-gray-400 hover:text-gray-600 font-medium hover:bg-gray-50'">
+                                    <div x-show="script.dirty" class="absolute top-0 left-0 w-full h-0.5 bg-[#fa0102]">
+                                    </div>
+                                    <i data-lucide="file-text" class="w-3.5 h-3.5"
+                                        :class="activeScriptId === script.id ? 'text-[#fa0102]' : 'text-gray-300'"></i>
+                                    <span x-text="script.name || 'Sem nome'" class="truncate max-w-[120px]"></span>
                                     <span @click.stop="closeScript(index)"
-                                        class="hover:bg-gray-100 p-0.5 rounded transition-colors ml-1">
+                                        class="hover:bg-red-50 hover:text-red-500 p-1 rounded-lg transition-all ml-1 opacity-0 group-hover:opacity-100">
                                         <i data-lucide="x" class="w-3 h-3"></i>
                                     </span>
                                 </button>
@@ -1495,19 +1504,20 @@
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex items-center gap-3">
-                            <button @click="showTemplates = true"
-                                class="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <div class="flex items-center gap-4">
+                            <button type="button" @click="showTemplates = true"
+                                class="px-5 py-2.5 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all flex items-center gap-2">
+                                <i data-lucide="layout" class="w-4 h-4"></i>
                                 Templates
                             </button>
-                            <button @click="createNewScript"
-                                class="px-5 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-all flex items-center gap-2">
+                            <button type="button" @click="createNewScript"
+                                class="px-6 py-2.5 bg-black text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-all flex items-center gap-2 shadow-lg shadow-black/10 hover:-translate-y-0.5 transform active:translate-y-0">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
                                 Novo Script
                             </button>
                             <div class="relative group">
-                                <button disabled
-                                    class="px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-sm font-bold text-gray-300 flex items-center gap-2 cursor-not-allowed">
+                                <button type="button" disabled
+                                    class="px-5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-black uppercase tracking-widest text-gray-300 flex items-center gap-2 cursor-not-allowed">
                                     ✨ IA
                                     <span
                                         class="text-[8px] bg-gray-200 text-gray-400 px-1.5 py-0.5 rounded uppercase tracking-tighter">Em
@@ -1528,12 +1538,16 @@
                         <p class="text-sm text-gray-400 font-medium mb-8">Comece criando um script do zero ou use um de
                             nossos templates.</p>
                         <div class="flex items-center gap-4">
-                            <button @click="showTemplates = true"
-                                class="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition-all">Ver
-                                templates</button>
-                            <button @click="createNewScript"
-                                class="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all">+
-                                Novo script</button>
+                            <button type="button" @click="showTemplates = true"
+                                class="px-8 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-black uppercase tracking-widest text-gray-900 hover:shadow-xl hover:shadow-gray-200/50 transition-all flex items-center gap-3 transform hover:-translate-y-1">
+                                <i data-lucide="layout" class="w-5 h-5 text-gray-400"></i>
+                                Usar um Template
+                            </button>
+                            <button type="button" @click="createNewScript"
+                                class="px-8 py-3.5 bg-[#fa0102] rounded-2xl text-sm font-black uppercase tracking-widest text-white hover:bg-black hover:shadow-xl hover:shadow-red-500/20 transition-all flex items-center gap-3 transform hover:-translate-y-1">
+                                <i data-lucide="plus" class="w-5 h-5"></i>
+                                Criar do Zero
+                            </button>
                         </div>
                     </div>
 
@@ -1588,17 +1602,17 @@
                                         Variações de Hooks: <span class="font-bold text-gray-900"
                                             x-text="currentScript.hooks.length"></span>
                                     </div>
-                                    <button @click="copyScript"
-                                        class="p-2.5 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-all"
+                                    <button type="button" @click="copyScript"
+                                        class="p-3 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
                                         title="Copiar Script">
-                                        <i data-lucide="copy" class="w-4 h-4"></i>
+                                        <i data-lucide="copy" class="w-4.5 h-4.5"></i>
                                     </button>
-                                    <button @click="printScript"
-                                        class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-2">
+                                    <button type="button" @click="printScript"
+                                        class="px-5 py-2.5 border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm">
                                         <i data-lucide="download" class="w-4 h-4"></i>
                                         PDF
                                     </button>
-                                    <button @click="saveMain()"
+                                    <button type="button" @click="saveMain()"
                                         class="px-5 py-2 rounded-lg text-sm font-bold transition-all"
                                         :class="currentScript.dirty ? 'bg-[#E8191A] text-white hover:bg-red-700 shadow-lg shadow-red-500/20' : 'bg-gray-100 text-gray-400 cursor-default'">
                                         Salvar
@@ -1607,49 +1621,60 @@
                             </div>
 
                             <!-- Columns Workspace -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 min-h-[calc(100vh-140px)]">
+                            <div class="grid grid-cols-1 lg:grid-cols-3 min-h-[calc(100vh-140px)] bg-white">
                                 <!-- Column 1: Hooks -->
-                                <div class="p-8 border-r border-gray-100 bg-[#FFF9F9]/30">
-                                    <div class="flex items-center justify-between mb-8">
+                                <div class="p-10 border-r border-gray-100 bg-gradient-to-b from-[#FFF9F9] to-white">
+                                    <div class="flex items-center justify-between mb-10">
                                         <div>
-                                            <h4
-                                                class="text-sm font-black uppercase tracking-[0.15em] text-[#E8191A] mb-1">
-                                                Passo 01</h4>
-                                            <h3 class="text-xl font-serif font-black italic text-gray-900">Ganchos
-                                                (Hooks)</h3>
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="w-8 h-[2px] bg-[#fa0102]"></span>
+                                                <h4
+                                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-[#fa0102]">
+                                                    Passo 01</h4>
+                                            </div>
+                                            <h3
+                                                class="text-2xl font-serif font-black italic text-gray-900 tracking-tight">
+                                                Ganchos (Hooks)</h3>
                                         </div>
-                                        <button @click="addHook"
-                                            class="w-8 h-8 rounded-full border border-[#E8191A]/20 text-[#E8191A] flex items-center justify-center hover:bg-[#E8191A] hover:text-white transition-all">
-                                            <i data-lucide="plus" class="w-4 h-4"></i>
+                                        <button type="button" @click="addHook"
+                                            class="w-10 h-10 rounded-xl bg-[#fa0102]/5 border border-[#fa0102]/10 text-[#fa0102] flex items-center justify-center hover:bg-[#fa0102] hover:text-white transition-all shadow-sm hover:shadow-red-500/20 transform hover:-translate-y-0.5">
+                                            <i data-lucide="plus" class="w-5 h-5"></i>
                                         </button>
                                     </div>
 
-                                    <div class="space-y-6">
+                                    <div class="space-y-8">
                                         <template x-for="(hook, hIdx) in currentScript.hooks" :key="hIdx">
                                             <div
-                                                class="group relative bg-white p-6 rounded-xl border border-[#FFE5E5] transition-all hover:border-[#E8191A]/30 hover:shadow-xl hover:shadow-red-500/5">
-                                                <div class="flex items-center justify-between mb-4">
-                                                    <div class="flex items-center gap-2">
+                                                class="group relative bg-white p-6 rounded-2xl border border-gray-100 transition-all hover:border-[#fa0102]/30 shadow-sm hover:shadow-xl hover:shadow-red-500/5">
+                                                <div class="flex items-center justify-between mb-5">
+                                                    <div class="flex items-center gap-3">
                                                         <span
-                                                            class="w-6 h-6 rounded bg-[#E8191A] text-white text-[10px] font-black flex items-center justify-center"
+                                                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#fa0102] to-[#b90102] text-white text-[10px] font-black flex items-center justify-center shadow-md shadow-red-500/20"
                                                             x-text="String.fromCharCode(65 + hIdx)"></span>
                                                         <span
-                                                            class="text-[10px] font-black uppercase tracking-widest text-[#E8191A]/50">Variação</span>
+                                                            class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Variação</span>
                                                     </div>
-                                                    <button @click="removeHook(hIdx)"
+                                                    <button type="button" @click="removeHook(hIdx)"
                                                         x-show="currentScript.hooks.length > 1"
-                                                        class="text-gray-300 hover:text-red-500 transition-colors">
+                                                        class="text-gray-200 hover:text-red-500 transition-all transform hover:scale-110">
                                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                                     </button>
                                                 </div>
                                                 <textarea x-model="currentScript.hooks[hIdx]"
                                                     @input="currentScript.dirty = true; saveToLocal()"
-                                                    class="w-full border-none p-0 focus:ring-0 text-gray-700 text-sm leading-relaxed placeholder-gray-200 resize-none"
-                                                    rows="3" placeholder="Digite uma variação de gancho..."></textarea>
-                                                <div class="flex justify-end mt-4">
-                                                    <span class="text-[9px] font-bold text-gray-300"
-                                                        :class="currentScript.hooks[hIdx].length > 150 ? 'text-amber-500' : ''">
-                                                        <span x-text="currentScript.hooks[hIdx].length"></span>/200
+                                                    class="w-full border-none p-0 focus:ring-0 text-gray-700 text-sm leading-relaxed placeholder-gray-300 bg-transparent resize-none font-medium"
+                                                    rows="3"
+                                                    placeholder="Digite uma variação de gancho atraente..."></textarea>
+                                                <div
+                                                    class="flex items-center justify-between mt-5 pt-4 border-t border-gray-50/50">
+                                                    <div class="flex gap-1">
+                                                        <template x-for="i in 3">
+                                                            <div class="w-1 h-1 rounded-full bg-gray-100"></div>
+                                                        </template>
+                                                    </div>
+                                                    <span class="text-[9px] font-black text-gray-300 tracking-widest"
+                                                        :class="currentScript.hooks[hIdx].length > 180 ? 'text-red-500' : ''">
+                                                        <span x-text="currentScript.hooks[hIdx].length"></span> / 200
                                                     </span>
                                                 </div>
                                             </div>
@@ -1658,81 +1683,115 @@
                                 </div>
 
                                 <!-- Column 2: Development -->
-                                <div class="p-8 border-r border-gray-100 bg-[#F9FBFF]/30">
-                                    <div class="flex items-center justify-between mb-8">
+                                <div class="p-10 border-r border-gray-100 bg-gradient-to-b from-[#F9FBFF] to-white">
+                                    <div class="flex items-center justify-between mb-10">
                                         <div>
-                                            <h4
-                                                class="text-sm font-black uppercase tracking-[0.15em] text-[#1A4FE8] mb-1">
-                                                Passo 02</h4>
-                                            <h3 class="text-xl font-serif font-black italic text-gray-900">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="w-8 h-[2px] bg-[#1A4FE8]"></span>
+                                                <h4
+                                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-[#1A4FE8]">
+                                                    Passo 02</h4>
+                                            </div>
+                                            <h3
+                                                class="text-2xl font-serif font-black italic text-gray-900 tracking-tight">
                                                 Desenvolvimento</h3>
                                         </div>
                                         <div
-                                            class="w-8 h-8 rounded-full bg-[#1A4FE8]/10 text-[#1A4FE8] flex items-center justify-center">
-                                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                                            class="w-10 h-10 rounded-xl bg-[#1A4FE8]/5 border border-[#1A4FE8]/10 text-[#1A4FE8] flex items-center justify-center shadow-sm">
+                                            <i data-lucide="book-open" class="w-5 h-5"></i>
                                         </div>
                                     </div>
 
                                     <div
-                                        class="bg-white p-8 rounded-xl border border-[#E5EBFF] h-fit sticky top-24 min-h-[400px] flex flex-col">
-                                        <div class="flex items-center gap-2 mb-6 opacity-30">
+                                        class="bg-white p-10 rounded-3xl border border-gray-100 h-fit sticky top-28 min-h-[450px] flex flex-col shadow-sm hover:shadow-xl transition-all hover:border-[#1A4FE8]/20">
+                                        <div class="flex items-center gap-3 mb-8">
                                             <span
-                                                class="text-[10px] font-black uppercase tracking-widest text-[#1A4FE8]">Estrutura
+                                                class="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A4FE8]">Estrutura
                                                 Sugerida</span>
-                                            <div class="h-px flex-1 bg-gray-100"></div>
+                                            <div class="h-[1px] flex-1 bg-gradient-to-r from-gray-100 to-transparent">
+                                            </div>
                                         </div>
                                         <textarea x-model="currentScript.body"
                                             @input="currentScript.dirty = true; saveToLocal()"
-                                            class="flex-1 w-full border-none p-0 focus:ring-0 text-gray-700 text-sm leading-loose placeholder-gray-200 resize-none"
-                                            placeholder="Apresente o problema, a solução e uma prova social rápida..."></textarea>
+                                            class="flex-1 w-full border-none p-0 focus:ring-0 text-gray-700 text-sm leading-[2.2] placeholder-gray-300 bg-transparent resize-none font-medium"
+                                            placeholder="Apresente o problema sob a ótica do cliente, introduza sua solução única e valide com uma prova social ou autoridade rápida..."></textarea>
+
+                                        <div class="mt-8 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/30">
+                                            <p class="text-[10px] text-blue-600 font-bold leading-relaxed">
+                                                💡 Use parágrafos curtos. O cérebro humano escaneia antes de ler.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- Column 3: CTA -->
-                                <div class="p-8 bg-[#F9FFF9]/30">
-                                    <div class="flex items-center justify-between mb-8">
+                                <div class="p-10 bg-gradient-to-b from-[#F9FFF9] to-white">
+                                    <div class="flex items-center justify-between mb-10">
                                         <div>
-                                            <h4
-                                                class="text-sm font-black uppercase tracking-[0.15em] text-[#1A7A3C] mb-1">
-                                                Passo 03</h4>
-                                            <h3 class="text-xl font-serif font-black italic text-gray-900">Chamada p/
-                                                Ação</h3>
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <span class="w-8 h-[2px] bg-[#1A7A3C]"></span>
+                                                <h4
+                                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-[#1A7A3C]">
+                                                    Passo 03</h4>
+                                            </div>
+                                            <h3
+                                                class="text-2xl font-serif font-black italic text-gray-900 tracking-tight">
+                                                Call to Action</h3>
                                         </div>
                                         <div
-                                            class="w-8 h-8 rounded-full bg-[#1A7A3C]/10 text-[#1A7A3C] flex items-center justify-center">
-                                            <i data-lucide="send" class="w-4 h-4"></i>
+                                            class="w-10 h-10 rounded-xl bg-[#1A7A3C]/5 border border-[#1A7A3C]/10 text-[#1A7A3C] flex items-center justify-center shadow-sm">
+                                            <i data-lucide="send" class="w-5 h-5"></i>
                                         </div>
                                     </div>
 
                                     <div
-                                        class="bg-white p-8 rounded-xl border border-[#E5FFE9] h-fit sticky top-24 min-h-[300px] shadow-sm">
-                                        <div class="flex items-center gap-2 mb-6 opacity-30">
+                                        class="bg-white p-10 rounded-3xl border border-gray-100 h-fit sticky top-28 min-h-[320px] shadow-sm hover:shadow-xl transition-all hover:border-[#1A7A3C]/20">
+                                        <div class="flex items-center gap-3 mb-8">
                                             <span
-                                                class="text-[10px] font-black uppercase tracking-widest text-[#1A7A3C]">Conversão</span>
-                                            <div class="h-px flex-1 bg-gray-100"></div>
+                                                class="text-[9px] font-black uppercase tracking-[0.2em] text-[#1A7A3C]">Conversão</span>
+                                            <div class="h-[1px] flex-1 bg-gradient-to-r from-gray-100 to-transparent">
+                                            </div>
                                         </div>
                                         <textarea x-model="currentScript.cta"
                                             @input="currentScript.dirty = true; saveToLocal()"
-                                            class="w-full border-none p-0 focus:ring-0 text-gray-700 text-sm leading-relaxed placeholder-gray-200 resize-none font-bold"
+                                            class="w-full border-none p-0 focus:ring-0 text-gray-900 text-base leading-relaxed placeholder-gray-300 bg-transparent resize-none font-black italic"
                                             rows="6"
-                                            placeholder="Qual o próximo passo que o cliente deve tomar?"></textarea>
+                                            placeholder="Ex: Qual desses horários funciona melhor para uma conversa de 5 min?"></textarea>
                                     </div>
 
                                     <!-- Quick Tips -->
-                                    <div class="mt-8 p-6 bg-white rounded-xl border border-gray-100 border-dashed">
+                                    <div
+                                        class="mt-10 p-8 bg-black/[0.02] rounded-3xl border border-gray-100 border-dashed relative overflow-hidden group">
+                                        <div
+                                            class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#fa0102]/5 to-transparent rounded-bl-full transform translate-x-12 -translate-y-12 group-hover:translate-x-10 group-hover:-translate-y-10 transition-transform">
+                                        </div>
+
                                         <h5
-                                            class="text-[10px] font-black uppercase text-gray-400 mb-4 tracking-widest flex items-center gap-2">
-                                            <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i> Dicas NorthWay
+                                            class="text-[10px] font-black uppercase text-gray-400 mb-6 tracking-[0.2em] flex items-center gap-2">
+                                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i> Dicas
+                                            Especialistas
                                         </h5>
-                                        <ul class="space-y-4">
-                                            <li class="flex gap-3 text-xs leading-relaxed text-gray-500">
-                                                <span class="text-[#1A7A3C] font-bold">1.</span>
-                                                <span>Elimine o "como você está?". Vá direto ao ponto de dor do
-                                                    cliente.</span>
+                                        <ul class="space-y-6">
+                                            <li class="flex gap-4">
+                                                <span
+                                                    class="flex-shrink-0 w-6 h-6 rounded-lg bg-black/5 text-black text-[10px] font-black flex items-center justify-center">1</span>
+                                                <p class="text-xs leading-relaxed text-gray-500 font-medium">
+                                                    Elimine o <span class="text-gray-900 font-bold">"como você
+                                                        está?"</span>. Em vendas, sua primeira frase deve ser sobre
+                                                    <span class="text-red-500 font-bold">o lucro</span> dele ou <span
+                                                        class="text-red-500 font-bold">a dor</span> que ele quer
+                                                    resolver.
+                                                </p>
                                             </li>
-                                            <li class="flex gap-3 text-xs leading-relaxed text-gray-500">
-                                                <span class="text-[#1A7A3C] font-bold">2.</span>
-                                                <span>Use uma pergunta aberta no CTA para estimular a resposta.</span>
+                                            <li class="flex gap-4">
+                                                <span
+                                                    class="flex-shrink-0 w-6 h-6 rounded-lg bg-black/5 text-black text-[10px] font-black flex items-center justify-center">2</span>
+                                                <p class="text-xs leading-relaxed text-gray-500 font-medium">
+                                                    Sempre termine com uma <span
+                                                        class="text-gray-900 font-bold">pergunta binária</span> ou de
+                                                    <span class="text-gray-900 font-bold">baixa fricção</span>. Não peça
+                                                    "tempo", peça uma "opinião".
+                                                </p>
                                             </li>
                                         </ul>
                                     </div>
@@ -1748,15 +1807,17 @@
                         x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
                         <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
                             @click.away="showTemplates = false">
-                            <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+                            <div
+                                class="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                                 <div>
-                                    <h3 class="text-2xl font-serif font-black italic text-gray-900">Templates NorthWay
+                                    <h3 class="text-2xl font-serif font-black italic text-gray-900 tracking-tight">
+                                        Templates NorthWay
                                     </h3>
-                                    <p class="text-xs text-gray-400 font-medium">Modelos validados para diferentes
-                                        nichos de mercado.</p>
+                                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mt-1">
+                                        Modelos validados para alta conversão.</p>
                                 </div>
-                                <button @click="showTemplates = false"
-                                    class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                                <button type="button" @click="showTemplates = false"
+                                    class="w-10 h-10 flex items-center justify-center hover:bg-white hover:shadow-sm rounded-xl transition-all text-gray-400 hover:text-gray-900">
                                     <i data-lucide="x" class="w-6 h-6"></i>
                                 </button>
                             </div>
@@ -2097,8 +2158,62 @@
         }
     }
 
-    function saveClientForm() {
-        document.getElementById('clientForm').submit();
+    async function saveClientForm() {
+        const btn = document.querySelector('button[onclick="saveClientForm()"]');
+        const form = document.getElementById('clientForm');
+
+        if (!form) return;
+
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Salvando...</span>';
+        if (window.lucide) lucide.createIcons();
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Success feedback
+                btn.classList.add('bg-green-600', 'border-green-600');
+                btn.classList.remove('bg-[#fa0102]', 'border-[#fa0102]');
+                btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i><span>Sucesso!</span>';
+                if (window.lucide) lucide.createIcons();
+
+                // Switch off edit mode without reload
+                document.querySelectorAll('.edit-input').forEach(el => el.disabled = true);
+                document.querySelectorAll('.view-label').forEach(el => el.classList.remove('hidden'));
+                document.getElementById('saveCancelBtns').classList.add('hidden');
+                document.getElementById('topEditBtn').classList.remove('hidden');
+
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                    btn.classList.remove('bg-green-600', 'border-green-600');
+                    btn.classList.add('bg-[#fa0102]', 'border-[#fa0102]');
+                    if (window.lucide) lucide.createIcons();
+                }, 2000);
+            } else {
+                alert(data.message || 'Erro ao salvar os dados.');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                if (window.lucide) lucide.createIcons();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Erro de conexão ao salvar.');
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            if (window.lucide) lucide.createIcons();
+        }
     }
 
     // Termination Functions
@@ -3030,6 +3145,8 @@
                     } else {
                         selectedContent.classList.add('block');
                     }
+                    // Persist tab
+                    localStorage.setItem(`active_tab_${pageClientId}`, tabName);
                 } else {
                     console.warn(`Content for tab '${tabName}' not found!`);
                     // Fallback to details if selected tab doesn't exist (e.g. diag is hidden)
@@ -3055,6 +3172,13 @@
                 alert("ERRO CRITICO AO TROCAR ABA: " + e.message);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTab = localStorage.getItem(`active_tab_${pageClientId}`);
+            if (savedTab) {
+                switchClientTab(savedTab);
+            }
+        });
 
         function switchDiagSubTab(tab) {
             // Update Buttons
@@ -4449,20 +4573,20 @@ ${dateHeader}
 
             <!-- Wizard Footer -->
             <div class="p-8 bg-white border-t border-gray-50 flex justify-between items-center">
-                <button onclick="prevStep()" id="btn-prev"
+                <button type="button" onclick="prevStep()" id="btn-prev"
                     class="px-8 py-3 rounded-2xl font-black text-gray-400 hover:text-gray-900 transition-all opacity-0 pointer-events-none">
                     Voltar
                 </button>
                 <div class="flex gap-4">
-                    <button onclick="saveMatrixDraft()"
+                    <button type="button" onclick="saveMatrixDraft()"
                         class="px-8 py-3 rounded-2xl font-black text-gray-600 hover:bg-gray-50 transition-all">
                         Salvar Rascunho
                     </button>
-                    <button onclick="nextStep()" id="btn-next"
+                    <button type="button" onclick="nextStep()" id="btn-next"
                         class="px-12 py-3 bg-northway-red text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">
                         Próximo Passo
                     </button>
-                    <button onclick="finishMatrix()" id="btn-finish"
+                    <button type="button" onclick="finishMatrix()" id="btn-finish"
                         class="hidden px-12 py-3 bg-northway-red text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">
                         Concluir e Salvar
                     </button>
@@ -4940,7 +5064,19 @@ ${dateHeader}
                 saveMain() {
                     this.currentScript.dirty = false;
                     this.saveToLocal();
-                    alert('Script salvo localmente com sucesso!');
+
+                    // Show subtle notification
+                    const btn = event.currentTarget;
+                    const originalText = btn.innerText;
+                    btn.innerText = 'Salvo!';
+                    btn.classList.remove('bg-[#E8191A]');
+                    btn.classList.add('bg-green-600');
+
+                    setTimeout(() => {
+                        btn.innerText = originalText;
+                        btn.classList.add('bg-[#E8191A]');
+                        btn.classList.remove('bg-green-600');
+                    }, 2000);
                 },
 
                 copyScript() {

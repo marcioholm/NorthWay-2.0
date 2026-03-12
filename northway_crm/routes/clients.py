@@ -231,12 +231,20 @@ def update_client(id):
                 client.renewal_date = None
 
         db.session.commit()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': True, 'message': 'Dados do cliente atualizados!'})
+            
         flash('Dados do cliente atualizados!', 'success')
         return redirect(url_for('clients.client_details', id=client.id))
 
     except Exception as e:
         print(f'CRITICAL ERROR updating client: {e}')
         db.session.rollback()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': f'Erro ao salvar: {str(e)}'}), 500
+            
         flash(f'Erro ao salvar: {str(e)}', 'error')
         return redirect(url_for('clients.client_details', id=id))
 
