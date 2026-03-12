@@ -521,6 +521,10 @@ def create_app():
                         
                         # Task Updates (BDR Cadence)
                         "ALTER TABLE task ADD COLUMN IF NOT EXISTS description TEXT;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT FALSE;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS overdue_reminder_sent BOOLEAN DEFAULT FALSE;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT FALSE;",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS recurrence VARCHAR(20);",
                         "ALTER TABLE task ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE;",
                         "ALTER TABLE task ADD COLUMN IF NOT EXISTS source_type VARCHAR(50);",
                         "ALTER TABLE task ADD COLUMN IF NOT EXISTS auto_generated BOOLEAN DEFAULT FALSE;",
