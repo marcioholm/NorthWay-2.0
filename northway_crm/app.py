@@ -534,7 +534,7 @@ def create_app():
                         "ALTER TABLE task ADD COLUMN IF NOT EXISTS origin_stage_id INTEGER REFERENCES pipeline_stage(id);",
                         "ALTER TABLE task ADD COLUMN IF NOT EXISTS observation TEXT;",
                         "ALTER TABLE task ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
-                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES user(id);",
+                        "ALTER TABLE task ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES \"user\"(id);",
 
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
                         "ALTER TABLE form_submission ADD COLUMN IF NOT EXISTS stars FLOAT;",
@@ -607,8 +607,8 @@ def create_app():
                         );""",
                         """CREATE TABLE IF NOT EXISTS commercial_presentations (
                             id VARCHAR(36) PRIMARY KEY,
-                            consultor_id INTEGER REFERENCES users(id),
-                            company_id INTEGER REFERENCES companies(id),
+                            consultor_id INTEGER REFERENCES \"user\"(id),
+                            company_id INTEGER REFERENCES company(id),
                             prospect_name VARCHAR(200) NOT NULL,
                             prospect_logo VARCHAR(500),
                             observacao TEXT,
