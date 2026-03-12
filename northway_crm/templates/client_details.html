@@ -5106,39 +5106,161 @@ ${dateHeader}
                     const doc = iframe.contentWindow.document;
                     const style = `
                         <style>
-                            @page { size: A4; margin: 0; }
-                            body { font-family: 'DM Sans', sans-serif; padding: 40px; color: #111; }
-                            .header-print { display: flex; justify-content: space-between; border-bottom: 3px solid #E8191A; padding-bottom: 20px; margin-bottom: 40px; align-items: flex-end; }
-                            .print-card { border: 1px solid #eee; padding: 25px; margin-bottom: 25px; border-radius: 12px; page-break-inside: avoid; background: white; border-left: 6px solid #ccc; }
-                            .hook-variation { background: #FFF9F9; border: 1px solid #FFE5E5; padding: 15px; margin-bottom: 12px; border-radius: 8px; font-size: 14px; }
-                            .column-label { font-size: 10px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; display: block; }
-                            .script-name { font-size: 16px; color: #333; margin: 8px 0 0; font-weight: bold; }
+                            @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&display=swap');
+                            @page { size: A4; margin: 20mm; }
+                            
+                            body { 
+                                font-family: 'DM Sans', sans-serif; 
+                                color: #1a1a1a; 
+                                line-height: 1.6;
+                                margin: 0;
+                                padding: 0;
+                                background: #fff;
+                            }
+                            
+                            .print-container { max-width: 100%; }
+                            
+                            .header-print { 
+                                display: flex; 
+                                justify-content: space-between; 
+                                border-bottom: 4px solid #E8191A; 
+                                padding-bottom: 25px; 
+                                margin-bottom: 40px; 
+                                align-items: flex-end; 
+                            }
+                            
+                            .logo-section h1 { 
+                                font-family: 'DM Serif Display', serif; 
+                                font-style: italic; 
+                                color: #E8191A; 
+                                margin: 0; 
+                                font-size: 36px;
+                                line-height: 1;
+                            }
+                            
+                            .script-name { 
+                                font-size: 18px; 
+                                color: #4b5563; 
+                                margin: 10px 0 0; 
+                                font-weight: 700;
+                            }
+                            
+                            .client-info { text-align: right; }
+                            .client-name { 
+                                font-weight: 900; 
+                                margin: 0; 
+                                text-transform: uppercase; 
+                                letter-spacing: 1.5px; 
+                                font-size: 13px; 
+                                color: #111;
+                            }
+                            .date { 
+                                font-size: 11px; 
+                                color: #9ca3af; 
+                                margin: 6px 0 0; 
+                                font-weight: 500;
+                            }
+                            
+                            .print-card { 
+                                border: 1px solid #f3f4f6; 
+                                padding: 30px; 
+                                margin-bottom: 30px; 
+                                border-radius: 16px; 
+                                page-break-inside: avoid; 
+                                background: #fff; 
+                                border-left: 8px solid #ccc;
+                                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                            }
+                            
+                            .step-label { 
+                                font-size: 10px; 
+                                font-weight: 900; 
+                                letter-spacing: 3px; 
+                                text-transform: uppercase; 
+                                margin-bottom: 20px; 
+                                display: block; 
+                            }
+                            
+                            .hook-variation { 
+                                background: #fafafa; 
+                                border: 1px solid #f1f1f1; 
+                                padding: 18px; 
+                                margin-bottom: 12px; 
+                                border-radius: 10px; 
+                                font-size: 14px;
+                                color: #374151;
+                            }
+                            
+                            .hook-id {
+                                color: #E8191A;
+                                font-weight: 900;
+                                margin-right: 8px;
+                            }
+                            
+                            .content-body { 
+                                font-size: 15px; 
+                                color: #374151; 
+                                white-space: pre-wrap;
+                            }
+                            
+                            .content-cta {
+                                font-size: 17px;
+                                font-weight: 900;
+                                font-style: italic;
+                                color: #111827;
+                                white-space: pre-wrap;
+                            }
+
+                            .footer {
+                                margin-top: 60px;
+                                border-top: 1px solid #f3f4f6;
+                                padding-top: 20px;
+                                text-align: center;
+                                font-size: 10px;
+                                color: #9ca3af;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                letter-spacing: 2px;
+                            }
                         </style>
                     `;
 
                     const content = `
-                        \${style}
-                        <div class="header-print">
-                            <div>
-                                <h1 style="font-family: 'serif'; font-style: italic; color: #E8191A; margin: 0; font-size: 32px;">NorthWay / SCRIPT STUDIO</h1>
-                                <p class="script-name">\${this.currentScript.name}</p>
+                        ${style}
+                        <div class="print-container">
+                            <div class="header-print">
+                                <div class="logo-section">
+                                    <h1>NorthWay / SCRIPT STUDIO</h1>
+                                    <p class="script-name">${this.currentScript.name || 'Script sem nome'}</p>
+                                </div>
+                                <div class="client-info">
+                                    <p class="client-name">{{ client.name }}</p>
+                                    <p class="date">${new Date().toLocaleDateString('pt-BR')}</p>
+                                </div>
                             </div>
-                            <div style="text-align: right;">
-                                <p style="font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-size: 14px;">{{ client.name }}</p>
-                                <p style="font-size: 12px; color: #999; margin: 5px 0 0;">\${new Date().toLocaleDateString()}</p>
+
+                            <div class="print-card" style="border-left-color: #E8191A;">
+                                <span class="step-label" style="color: #E8191A;">Passo 01: Ganchos (Hooks)</span>
+                                ${this.currentScript.hooks.map((h, i) => `
+                                    <div class="hook-variation">
+                                        <span class="hook-id">${String.fromCharCode(65 + i)}:</span> ${h || '...'}
+                                    </div>
+                                `).join('')}
                             </div>
-                        </div>
-                        <div class="print-card" style="border-left-color: #E8191A;">
-                            <span class="column-label" style="color: #E8191A;">Passo 01: Ganchos (Hooks)</span>
-                            \${this.currentScript.hooks.map((h, i) => \`<div class="hook-variation"><strong>\${String.fromCharCode(65 + i)}:</strong> \${h}</div>\`).join('')}
-                        </div>
-                        <div class="print-card" style="border-left-color: #1A4FE8;">
-                            <span class="column-label" style="color: #1A4FE8;">Passo 02: Desenvolvimento</span>
-                            <div style="line-height: 1.8; white-space: pre-wrap; font-size: 14px; color: #374151;">\${this.currentScript.body}</div>
-                        </div>
-                        <div class="print-card" style="border-left-color: #1A7A3C;">
-                            <span class="column-label" style="color: #1A7A3C;">Passo 03: Chamada p/ Ação (CTA)</span>
-                            <div style="font-weight: bold; line-height: 1.8; white-space: pre-wrap; font-size: 15px; color: #111827;">\${this.currentScript.cta}</div>
+
+                            <div class="print-card" style="border-left-color: #1A4FE8;">
+                                <span class="step-label" style="color: #1A4FE8;">Passo 02: Desenvolvimento</span>
+                                <div class="content-body">${this.currentScript.body || '...'}</div>
+                            </div>
+
+                            <div class="print-card" style="border-left-color: #1A7A3C;">
+                                <span class="step-label" style="color: #1A7A3C;">Passo 03: Chamada p/ Ação (CTA)</span>
+                                <div class="content-cta">${this.currentScript.cta || '...'}</div>
+                            </div>
+
+                            <div class="footer">
+                                Gerado via Ecossistema NorthWay Company
+                            </div>
                         </div>
                     `;
 
@@ -5146,13 +5268,13 @@ ${dateHeader}
                     doc.write(content);
                     doc.close();
 
-                    // Wait for styles/images and then print
+                    // Wait for fonts and styles, then print
                     setTimeout(() => {
                         iframe.contentWindow.focus();
                         iframe.contentWindow.print();
                         document.body.removeChild(iframe);
                         this.isPrinting = false;
-                    }, 500);
+                    }, 800);
                 }
             }
         }
