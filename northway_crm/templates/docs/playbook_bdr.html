@@ -111,7 +111,7 @@
 
         @media print {
             @page {
-                size: landscape;
+                size: A4 landscape;
                 margin: 0;
             }
 
@@ -123,18 +123,79 @@
                 scroll-behavior: auto !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
+                box-shadow: none !important;
             }
 
             body {
-                background-color: #000 !important;
+                background-color: #fff !important;
+                color: #000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
 
+            .grid-bg {
+                background-image: none !important;
+            }
+
             .slide {
                 height: 100vh !important;
-                break-after: page;
+                min-height: 100vh !important;
+                background-color: #fff !important;
+                color: #000 !important;
+                border-bottom: 1px solid #eee !important;
+                padding: 3rem 5% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
                 page-break-after: always;
+                break-after: page;
+            }
+
+            .slide h1,
+            .slide h2,
+            .slide h3 {
+                color: #000 !important;
+            }
+
+            .highlight,
+            .text-northway-red {
+                color: #fa0102 !important;
+            }
+
+            .text-gray-400,
+            .text-gray-500 {
+                color: #666 !important;
+            }
+
+            .card {
+                background: #f9fafb !important;
+                border: 1px solid #eee !important;
+                color: #000 !important;
+            }
+
+            .script-box {
+                background: #f3f4f6 !important;
+                border-left: 4px solid #fa0102 !important;
+                color: #374151 !important;
+            }
+
+            .bg-northway-red {
+                background-color: #fa0102 !important;
+                color: #fff !important;
+            }
+
+            .bg-white\/5,
+            .bg-white\/10 {
+                background-color: #f3f4f6 !important;
+            }
+
+            .h-px {
+                background-color: #eee !important;
+            }
+
+            .slide-number,
+            .footer-logo {
+                color: #999 !important;
             }
 
             #controls,
