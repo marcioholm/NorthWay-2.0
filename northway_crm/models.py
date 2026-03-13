@@ -1134,7 +1134,7 @@ class AudienceMatrix(db.Model):
     status = db.Column(db.String(20), default='rascunho') # rascunho, concluido
     audiences = db.Column(db.JSON, nullable=False) # Stores the 4 audiences data
     tone_of_voice = db.Column(db.Text, nullable=True) # Tone of voice for the audience
-    external_token = db.Column(db.String(36), unique=True, nullable=True) # Token for external access
+    external_token = db.Column(db.String(36), unique=True, nullable=True, default=lambda: str(uuid.uuid4())) # Token for external access
     
     # Logging / Acceptance fields
     filled_by = db.Column(db.String(100), nullable=True)

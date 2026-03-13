@@ -492,6 +492,7 @@ def create_app():
                 if is_postgres:
                     # POSTGRESQL QUERIES
                     queries = [
+                        "CREATE EXTENSION IF NOT EXISTS pgcrypto;",
                         # Drive Folder Template
                         """CREATE TABLE IF NOT EXISTS drive_folder_template (
                             id SERIAL PRIMARY KEY,
@@ -646,6 +647,7 @@ def create_app():
                         "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP WITH TIME ZONE;",
                         "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS accepted_ip VARCHAR(50);",
                         "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'rascunho';",
+                        "UPDATE audience_matrices SET external_token = gen_random_uuid() WHERE external_token IS NULL;",
 
                         """CREATE TABLE IF NOT EXISTS swot_itens (
                             id VARCHAR(36) PRIMARY KEY,
