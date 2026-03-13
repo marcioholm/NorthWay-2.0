@@ -63,6 +63,14 @@
                 <i data-lucide="chevron-down"
                     class="w-4 h-4 text-gray-400 absolute right-2 top-2.5 pointer-events-none"></i>
             </div>
+
+            <div class="h-6 w-px bg-gray-200"></div>
+
+            <button onclick="toggleSelectionMode()" id="btnSelectionMode"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all border border-gray-200 text-gray-600 hover:bg-gray-50">
+                <i data-lucide="check-square" class="w-4 h-4"></i>
+                Modo Seleção
+            </button>
         </div>
     </header>
 
@@ -145,6 +153,13 @@
                     data-pipeline-id="{{ lead.pipeline_id or '' }}"
                     data-estimated-value="{{ lead.estimated_value or 0 }}"
                     class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-l-orange-500' if lead.days_inactive > 3 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
+
+                    <!-- Checkbox for Selection Mode -->
+                    <div class="selection-checkbox hidden absolute top-4 left-4 z-30">
+                        <input type="checkbox" data-lead-id="{{ lead.id }}" onchange="updateSelectionBar()"
+                            onclick="event.stopPropagation()"
+                            class="w-5 h-5 rounded border-gray-300 text-northway-red focus:ring-northway-red cursor-pointer bg-white shadow-sm">
+                    </div>
 
                     {% if t_prog.overdue > 0 %}
                     <div class="absolute -top-2 -left-2 bg-red-600 text-white w-6 h-6 flex items-center justify-center rounded-full shadow-lg z-20 border-2 border-white text-[10px] font-bold"
@@ -252,6 +267,57 @@
         {% endif %}
     </div>
 </div>
+</div>
+
+<!-- Bulk Action Bar (Hidden) -->
+<div id="bulkActionBar"
+    class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl z-[70] hidden items-center gap-8 animate-slideUp border border-gray-800">
+    <div class="flex items-center gap-3 pr-8 border-r border-gray-700">
+        <span class="bg-northway-red text-white text-xs font-black px-2 py-1 rounded-full" id="selectedCount">0</span>
+        <span class="text-sm font-bold text-gray-300 uppercase tracking-wider">Leads Selecionados</span>
+    </div>
+
+    <div class="flex items-center gap-4">
+        <!-- Move Stage Dropdown -->
+        <div class="relative group/bulk-stage">
+            <button class="flex items-center gap-2 text-sm font-bold hover:text-northway-red transition-colors">
+                <i data-lucide="move" class="w-4 h-4"></i> Mover Etapa
+            </button>
+            <div
+                class="absolute bottom-full mb-2 left-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover/bulk-stage:block py-2">
+                {% for stage in stages %}
+                <button onclick="bulkMoveStage('{{ stage.id }}', '{{ stage.name }}')"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-northway-red transition-colors">
+                    {{ stage.name }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="w-px h-6 bg-gray-700"></div>
+
+        <!-- Move Pipeline Dropdown -->
+        <div class="relative group/bulk-pipeline">
+            <button class="flex items-center gap-2 text-sm font-bold hover:text-northway-red transition-colors">
+                <i data-lucide="shuffle" class="w-4 h-4"></i> Mover Funil
+            </button>
+            <div
+                class="absolute bottom-full mb-2 left-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover/bulk-pipeline:block py-2">
+                {% for p in pipelines %}
+                <button onclick="bulkMovePipeline('{{ p.id }}', '{{ p.name }}')"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-northway-red transition-colors">
+                    {{ p.name }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="w-px h-6 bg-gray-700"></div>
+
+        <button onclick="cancelSelection()" class="text-sm font-bold text-gray-400 hover:text-white transition-colors">
+            Cancelar
+        </button>
+    </div>
 </div>
 
 <!-- Create Pipeline Modal -->
@@ -731,6 +797,98 @@
         }
     }
 
+    // --- SELECTION MODE ---
+    let selectionMode = false;
+
+    function toggleSelectionMode() {
+        selectionMode = !selectionMode;
+        const btn = document.getElementById('btnSelectionMode');
+        const checkboxes = document.querySelectorAll('.selection-checkbox');
+        const cards = document.querySelectorAll('.pipeline-card');
+
+        if (selectionMode) {
+            btn.classList.add('bg-northway-red', 'text-white', 'border-northway-red');
+            btn.classList.remove('text-gray-600', 'bg-white');
+            checkboxes.forEach(cb => cb.classList.remove('hidden'));
+            cards.forEach(card => card.classList.add('selection-active'));
+        } else {
+            btn.classList.remove('bg-northway-red', 'text-white', 'border-northway-red');
+            btn.classList.add('text-gray-600', 'bg-white');
+            checkboxes.forEach(cb => {
+                cb.classList.add('hidden');
+                cb.querySelector('input').checked = false;
+            });
+            cards.forEach(card => card.classList.remove('selection-active'));
+            updateSelectionBar();
+        }
+    }
+
+    function updateSelectionBar() {
+        const selected = document.querySelectorAll('.selection-checkbox input:checked');
+        const bar = document.getElementById('bulkActionBar');
+        const countSpan = document.getElementById('selectedCount');
+
+        if (selected.length > 0) {
+            bar.classList.remove('hidden');
+            bar.classList.add('flex');
+            countSpan.textContent = selected.length;
+        } else {
+            bar.classList.add('hidden');
+            bar.classList.remove('flex');
+        }
+    }
+
+    function cancelSelection() {
+        selectionMode = true; // Temporary toggle off
+        toggleSelectionMode();
+    }
+
+    async function bulkMoveStage(stageId, stageName) {
+        const selectedIds = Array.from(document.querySelectorAll('.selection-checkbox input:checked'))
+            .map(cb => cb.dataset.leadId);
+
+        if (!confirm(`Deseja mover ${selectedIds.length} leads para a etapa "${stageName}"?`)) return;
+
+        try {
+            const res = await fetch('/api/leads/bulk_move/stage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead_ids: selectedIds, target_stage_id: stageId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        } catch (e) {
+            alert('Erro de conexão ao mover em massa.');
+        }
+    }
+
+    async function bulkMovePipeline(pipelineId, pipelineName) {
+        const selectedIds = Array.from(document.querySelectorAll('.selection-checkbox input:checked'))
+            .map(cb => cb.dataset.leadId);
+
+        if (!confirm(`Deseja mover ${selectedIds.length} leads para o funil "${pipelineName}"?`)) return;
+
+        try {
+            const res = await fetch('/api/leads/bulk_move/pipeline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead_ids: selectedIds, target_pipeline_id: pipelineId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        } catch (e) {
+            alert('Erro de conexão ao mover funil.');
+        }
+    }
+
     // ... [Rest of existing functions strictly maintained] ...
 
     function switchTab(tabName) {
@@ -1141,4 +1299,26 @@
         </form>
     </div>
 </div>
+
+<style>
+    .selection-active {
+        padding-left: 3.5rem !important;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translate(-50%, 100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+    }
+
+    .animate-slideUp {
+        animation: slideUp 0.3s ease-out forwards;
+    }
+</style>
 {% endblock %}

@@ -127,8 +127,10 @@ async function init() {
         // Fallback interval just in case observer misses (runs rarely)
         intervalChat = setInterval(checkActiveChat, 5000);
         intervalLayout = setInterval(adjustLayout, 2000);
-        setInterval(() => AutomationEngine.poll(), 30000); // Check every 30s
-        AutomationEngine.poll(); // Initial check
+
+        // --- POLLING ---
+        AutomationEngine.startPolling(); // Starts the loop and manages its own interval
+
 
     } catch (e) {
         console.log("NW: Init failed", e);
@@ -1734,15 +1736,50 @@ const BroadcastEngine = {
 
 const AutomationEngine = {
     queue: [],
+    intervalId: null,
+    startPolling: function () {
+        if (this.intervalId) clearInterval(this.intervalId);
+        this.intervalId = setInterval(() => this.poll(), 30000);
+        this.poll();
+    },
     poll: async function () {
+        // --- CONTEXT CHECK ---
+        if (typeof chrome === 'undefined' || !chrome.runtime?.id) {
+            console.warn("NW: Extension context invalidated. Stopping polling.");
+            if (this.intervalId) clearInterval(this.intervalId);
+            return;
+        }
+
         try {
             chrome.runtime.sendMessage({ action: "GET_WHATSAPP_QUEUE" }, (response) => {
+                // Handling the callback error (where 'context invalidated' often manifests)
+                if (typeof chrome === 'undefined' || chrome.runtime?.lastError) {
+                    const lastErr = typeof chrome !== 'undefined' ? chrome.runtime.lastError : null;
+                    const msg = lastErr?.message || "Context invalidated (undefined chrome)";
+
+                    if (msg.includes("Extension context invalidated") || !chrome?.runtime?.id) {
+                        console.warn("NW: Extension context invalidated during message. Stopping poll.");
+                        if (this.intervalId) clearInterval(this.intervalId);
+                    } else {
+                        console.error("NW: poll message error", lastErr);
+                    }
+                    return;
+                }
+
                 if (response && Array.isArray(response)) {
                     this.queue = response;
                     this.updateBadge();
                 }
             });
-        } catch (err) { console.error("NW: poll failed", err); }
+        } catch (err) {
+            const errMsg = err?.message || String(err) || "";
+            if (errMsg.includes("Extension context invalidated")) {
+                console.warn("NW: Extension context invalidated caught. Stopping poll.");
+                if (this.intervalId) clearInterval(this.intervalId);
+            } else {
+                console.error("NW: poll failed", err);
+            }
+        }
     },
     updateBadge: function () {
         const badge = getEl('nw-automation-badge');

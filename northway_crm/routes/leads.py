@@ -319,6 +319,61 @@ def update_lead_stage_api(id):
     
     return jsonify({'success': True, 'message': 'Lead moved successfully'})
 
+@leads_bp.route('/api/leads/bulk_move/stage', methods=['POST'])
+@login_required
+def bulk_move_stage():
+    data = request.get_json()
+    lead_ids = data.get('lead_ids', [])
+    target_stage_id = data.get('target_stage_id')
+    
+    if not lead_ids or not target_stage_id:
+        return jsonify({'error': 'Lead IDs and Target Stage ID are required'}), 400
+        
+    stage = PipelineStage.query.get(target_stage_id)
+    if not stage or stage.company_id != current_user.company_id:
+        return jsonify({'error': 'Invalid Stage'}), 400
+        
+    leads = Lead.query.filter(Lead.id.in_(lead_ids), Lead.company_id == current_user.company_id).all()
+    
+    for lead in leads:
+        lead.pipeline_stage_id = stage.id
+        # Optional: update status if moving to won/lost stage
+        generate_tasks_for_stage(lead.id, stage.id)
+        process_funnel_automations(lead.id, stage.id)
+        
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'{len(leads)} leads movidos para {stage.name}'})
+
+@leads_bp.route('/api/leads/bulk_move/pipeline', methods=['POST'])
+@login_required
+def bulk_move_pipeline():
+    data = request.get_json()
+    lead_ids = data.get('lead_ids', [])
+    target_pipeline_id = data.get('target_pipeline_id')
+    
+    if not lead_ids or not target_pipeline_id:
+        return jsonify({'error': 'Lead IDs and Target Pipeline ID are required'}), 400
+        
+    pipeline = Pipeline.query.get(target_pipeline_id)
+    if not pipeline or pipeline.company_id != current_user.company_id:
+        return jsonify({'error': 'Invalid Pipeline'}), 400
+        
+    # Get first stage of target pipeline
+    first_stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).first()
+    if not first_stage:
+        return jsonify({'error': 'Target pipeline has no stages'}), 400
+        
+    leads = Lead.query.filter(Lead.id.in_(lead_ids), Lead.company_id == current_user.company_id).all()
+    
+    for lead in leads:
+        lead.pipeline_id = pipeline.id
+        lead.pipeline_stage_id = first_stage.id
+        generate_tasks_for_stage(lead.id, first_stage.id)
+        process_funnel_automations(lead.id, first_stage.id)
+        
+    db.session.commit()
+    return jsonify({'success': True, 'message': f'{len(leads)} leads movidos para o funil {pipeline.name}'})
+
 @leads_bp.route('/leads/<int:id>/convert', methods=['POST'])
 @login_required
 def convert_lead(id):
