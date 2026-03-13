@@ -315,6 +315,20 @@ def add_client_interaction(id):
     )
     db.session.add(interaction)
     db.session.commit()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return jsonify({
+            'success': True, 
+            'message': 'Interação registrada.',
+            'interaction': {
+                'id': interaction.id,
+                'type': interaction.type,
+                'content': interaction.content,
+                'created_at': interaction.created_at.strftime('%d/%m/%Y %H:%M'),
+                'user_name': current_user.name
+            }
+        })
+        
     flash('Interação registrada.', 'success')
     return redirect(url_for('clients.client_details', id=client.id))
 

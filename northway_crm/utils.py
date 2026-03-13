@@ -54,17 +54,13 @@ def update_client_health(client):
     Yellow: 4-7 days
     Red: > 7 days or No interaction
     """
-    last_interaction = None
-    if client.interactions:
-        # Sort descending in memory (Relationship is lazy=True but can be joinedloaded)
-        interactions_list = sorted(client.interactions, key=lambda x: x.created_at, reverse=True)
-        if interactions_list:
-            last_interaction = interactions_list[0]
+    from models import Interaction
+    last_interaction_date = db.session.query(db.func.max(Interaction.created_at)).filter(Interaction.client_id == client.id).scalar()
     
     status = 'vermelho' # Default critical
     
-    if last_interaction:
-        days_diff = (get_now_br() - last_interaction.created_at).days
+    if last_interaction_date:
+        days_diff = (get_now_br() - last_interaction_date).days
         
         if days_diff <= 3:
             status = 'verde'
