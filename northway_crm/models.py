@@ -1144,8 +1144,6 @@ class AudienceMatrix(db.Model):
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
 
-    client = db.relationship('Client', backref='audience_matrices')
-
 class CREPIDiagnostico(db.Model):
     __tablename__ = 'crepi_diagnosticos'
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
