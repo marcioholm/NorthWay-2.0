@@ -1062,11 +1062,19 @@
                                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Excluir
                                                 </button>
                                             </div>
-                                            <button type="button" onclick="downloadMatrixPDF('{{ matrix.id }}')"
-                                                class="p-2 bg-gray-50 text-gray-400 hover:bg-northway-red hover:text-white rounded-lg transition-all"
-                                                title="Baixar PDF">
-                                                <i data-lucide="download" class="w-4 h-4"></i>
-                                            </button>
+                                            <div class="flex items-center gap-2">
+                                                <button type="button"
+                                                    onclick="copyMatrixLink('{{ matrix.external_token }}')"
+                                                    class="p-2 bg-blue-50 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition-all"
+                                                    title="Copiar Link para Cliente">
+                                                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                                                </button>
+                                                <button type="button" onclick="downloadMatrixPDF('{{ matrix.id }}')"
+                                                    class="p-2 bg-gray-50 text-gray-400 hover:bg-northway-red hover:text-white rounded-lg transition-all"
+                                                    title="Baixar PDF">
+                                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -3466,22 +3474,24 @@
             if (tabName === 'script-studio') {
                 if (mainCol) {
                     mainCol.classList.remove('lg:col-span-9');
-                    mainCol.classList.add('lg:col-span-12');
+                    mainCol.classList.add('lg:col-span-12', 'w-full');
+                    mainCol.style.zIndex = "40"; // Bring to front
                 }
                 if (sideCol) sideCol.classList.add('hidden');
                 if (pageWrapper) {
                     pageWrapper.classList.remove('p-8');
-                    pageWrapper.classList.add('p-0', 'pb-10');
+                    pageWrapper.classList.add('p-0', 'pb-10', 'bg-white');
                 }
             } else {
                 if (mainCol) {
                     mainCol.classList.add('lg:col-span-9');
-                    mainCol.classList.remove('lg:col-span-12');
+                    mainCol.classList.remove('lg:col-span-12', 'w-full');
+                    mainCol.style.zIndex = "";
                 }
                 if (sideCol) sideCol.classList.remove('hidden');
                 if (pageWrapper) {
                     pageWrapper.classList.add('p-8');
-                    pageWrapper.classList.remove('p-0', 'pb-10');
+                    pageWrapper.classList.remove('p-0', 'pb-10', 'bg-white');
                 }
             }
 
@@ -5360,6 +5370,31 @@ ${dateHeader}
                     }
                 });
         }
+    }
+
+    function copyMatrixLink(token) {
+        if (!token) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Link não disponível',
+                text: 'Esta matriz ainda não tem um link de compartilhamento. Salve a matriz primeiro.',
+                confirmButtonColor: '#fa0102'
+            });
+            return;
+        }
+
+        const link = `${window.location.origin}/external/matrix/${token}`;
+        navigator.clipboard.writeText(link).then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Link Copiado!',
+                text: 'O link para o cliente preencher a matriz foi copiado para sua área de transferência.',
+                timer: 2000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        });
     }
 
     function editMatrix(matrixId) {
