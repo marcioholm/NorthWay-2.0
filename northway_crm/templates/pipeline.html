@@ -99,6 +99,13 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    <!-- Column Select All (Visible in Selection Mode) -->
+                    <button onclick="toggleSelectColumn('{{ stage.id }}')"
+                        class="column-select-all hidden bg-white border border-gray-200 text-gray-500 hover:text-northway-red p-1 rounded transition-colors"
+                        title="Selecionar Todos">
+                        <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
+                    </button>
+
                     <span class="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full font-medium count-badge">
                         {{ leads_by_stage[stage.id]|length }}
                     </span>
@@ -811,6 +818,7 @@
             btn.classList.remove('text-gray-600', 'bg-white');
             checkboxes.forEach(cb => cb.classList.remove('hidden'));
             cards.forEach(card => card.classList.add('selection-active'));
+            document.querySelectorAll('.column-select-all').forEach(btn => btn.classList.remove('hidden'));
         } else {
             btn.classList.remove('bg-northway-red', 'text-white', 'border-northway-red');
             btn.classList.add('text-gray-600', 'bg-white');
@@ -819,8 +827,24 @@
                 cb.querySelector('input').checked = false;
             });
             cards.forEach(card => card.classList.remove('selection-active'));
+            document.querySelectorAll('.column-select-all').forEach(btn => btn.classList.add('hidden'));
             updateSelectionBar();
         }
+    }
+
+    function toggleSelectColumn(stageId) {
+        const column = document.querySelector(`.pipeline-column[data-stage-id="${stageId}"]`);
+        if (!column) return;
+
+        const columnCheckboxes = column.querySelectorAll('.selection-checkbox input');
+        // Check if all are already checked
+        const allChecked = Array.from(columnCheckboxes).every(cb => cb.checked);
+
+        columnCheckboxes.forEach(cb => {
+            cb.checked = !allChecked;
+        });
+
+        updateSelectionBar();
     }
 
     function updateSelectionBar() {
