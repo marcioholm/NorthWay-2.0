@@ -22,6 +22,14 @@
                     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
             </button>
+            <button id="nw-btn-nav-automation" class="nw-icon-btn" title="Automações Pendentes">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span id="nw-automation-badge" class="nw-badge-counter hidden">0</span>
+            </button>
             <button id="nw-btn-settings" class="nw-icon-btn" title="Configurações">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -499,6 +507,33 @@
                         <button id="nw-btn-bc-skip" class="nw-btn"
                             style="flex: 1; background: rgba(255,255,255,0.05); text-transform: none;">Pular</button>
                         <button id="nw-btn-bc-confirm" class="nw-btn primary" style="flex: 2;">Enviar Agora</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Content State: Automation Queue -->
+        <div id="nw-state-automation" class="nw-state hidden">
+            <div class="nw-broadcast-header">
+                <h3>Automações Pendentes</h3>
+                <button id="nw-btn-close-automation" class="nw-icon-btn">✕</button>
+            </div>
+
+            <div style="padding: 15px;">
+                <p style="font-size: 12px; color: var(--nw-text-muted); margin-bottom: 15px;">
+                    As mensagens abaixo foram geradas automaticamente baseadas no funil do CRM.
+                    Revise e envie manualmente para manter o atendimento pessoal.
+                </p>
+
+                <div id="nw-automation-list" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Items will be injected here -->
+                    <div class="nw-empty-state" style="text-align: center; padding: 40px 20px;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1" style="opacity: 0.3; margin-bottom: 15px;">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <p style="font-size: 13px; color: var(--nw-text-muted);">Tudo em dia! Nenhuma automação
+                            pendente.</p>
                     </div>
                 </div>
             </div>

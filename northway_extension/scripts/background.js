@@ -119,6 +119,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    if (request.action === "GET_WHATSAPP_QUEUE") {
+        apiCall('/whatsapp/queue', 'GET').then(sendResponse);
+        return true;
+    }
+
+    if (request.action === "UPDATE_QUEUE_STATUS") {
+        apiCall('/whatsapp/queue/update', 'POST', request.data).then(sendResponse);
+        return true;
+    }
+
     // Future: "ENQUEUE_MESSAGE" action for automated sending
 });
 
