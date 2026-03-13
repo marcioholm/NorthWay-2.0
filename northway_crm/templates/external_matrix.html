@@ -1,0 +1,314 @@
+{% extends "base_minimal.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-[#faf8f5] py-12 px-4" x-data="externalMatrixWizard()">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12 space-y-4">
+            <div
+                class="inline-flex items-center gap-3 px-4 py-2 bg-northway-red/10 rounded-full text-northway-red text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                Diagnóstico Estratégico
+            </div>
+            <h1 class="text-4xl md:text-5xl font-display font-black text-gray-900 tracking-tight">
+                Sua Matriz de Públicos
+            </h1>
+            <p class="text-lg text-gray-500 font-medium max-w-2xl mx-auto">
+                Olá, <strong>{{ matrix.client.name }}</strong>! Ajude-nos a entender melhor o seu público para criarmos
+                roteiros de alta conversão.
+            </p>
+        </div>
+
+        <!-- Progress Stepper -->
+        <div class="mb-12">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest"
+                    x-text="`Passo ${currentStep + 1} de 7` "></span>
+                <span class="text-[10px] font-black text-northway-red uppercase tracking-widest"
+                    x-text="stepLabels[currentStep]"></span>
+            </div>
+            <div class="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-northway-red transition-all duration-500"
+                    :style="`width: ${((currentStep + 1) / 7) * 100}%` "></div>
+            </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-gray-200/50 p-8 md:p-12 relative overflow-hidden">
+            <!-- Step 0: Product -->
+            <div x-show="currentStep === 0" class="space-y-8 animate-fade-in">
+                <div class="text-center space-y-2">
+                    <h2 class="text-3xl font-display font-black text-gray-900">O que vamos analisar?</h2>
+                    <p class="text-gray-500 font-medium">Confirme o produto ou serviço foco deste diagnóstico.</p>
+                </div>
+                <div class="max-w-md mx-auto space-y-4">
+                    <label class="text-[10px] font-black text-northway-red uppercase tracking-widest ml-4">Produto ou
+                        Serviço</label>
+                    <input type="text" x-model="formData.product"
+                        class="w-full px-8 py-5 bg-gray-50 border-2 border-transparent focus:border-northway-red rounded-3xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-red-500/5 text-lg"
+                        placeholder="Ex: Consultoria de Vendas">
+                </div>
+                <div class="max-w-md mx-auto space-y-4 pt-4">
+                    <label class="text-[10px] font-black text-northway-red uppercase tracking-widest ml-4">Seu Nome /
+                        Responsável</label>
+                    <input type="text" x-model="formData.filled_by"
+                        class="w-full px-8 py-5 bg-gray-50 border-2 border-transparent focus:border-northway-red rounded-3xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-red-500/5 text-lg"
+                        placeholder="Quem está preenchendo?">
+                </div>
+            </div>
+
+            <!-- Steps 1-4: Audience Details -->
+            <template x-for="i in 4" :key="i">
+                <div x-show="currentStep === i" class="space-y-10 animate-fade-in">
+                    <div class="text-center space-y-2">
+                        <span class="text-[10px] font-black text-northway-red uppercase tracking-[0.2em]"
+                            x-text="`Público ${i}`"></span>
+                        <div class="max-w-md mx-auto">
+                            <input type="text" x-model="formData.audiences[i-1].name"
+                                class="w-full text-center text-3xl font-display font-black text-gray-900 border-none focus:ring-0 p-0 placeholder-gray-200"
+                                :placeholder="`Nome do Público ${i}`">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Pain -->
+                        <div
+                            class="p-8 bg-red-50/50 rounded-[2.5rem] border border-red-100 space-y-4 group hover:bg-white hover:shadow-xl transition-all">
+                            <div class="flex items-center gap-3 text-red-700">
+                                <i data-lucide="frown" class="w-6 h-6"></i>
+                                <h4 class="font-black uppercase tracking-wider text-sm">A Dor</h4>
+                            </div>
+                            <p class="text-[10px] text-red-600 font-bold uppercase tracking-widest">O que ele sente?</p>
+                            <textarea x-model="formData.audiences[i-1].pain"
+                                class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-red-500/10 font-medium text-gray-900 transition-all resize-none"
+                                placeholder="Qual o principal problema que ele enfrenta hoje?"></textarea>
+                        </div>
+
+                        <!-- Transformation -->
+                        <div
+                            class="p-8 bg-green-50/50 rounded-[2.5rem] border border-green-100 space-y-4 group hover:bg-white hover:shadow-xl transition-all">
+                            <div class="flex items-center gap-3 text-green-700">
+                                <i data-lucide="sparkles" class="w-6 h-6"></i>
+                                <h4 class="font-black uppercase tracking-wider text-sm">Transformação</h4>
+                            </div>
+                            <p class="text-[10px] text-green-600 font-bold uppercase tracking-widest">Qual o resultado?
+                            </p>
+                            <textarea x-model="formData.audiences[i-1].transf"
+                                class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-green-500/10 font-medium text-gray-900 transition-all resize-none"
+                                placeholder="Como a vida dele muda após seu produto?"></textarea>
+                        </div>
+
+                        <!-- Objection -->
+                        <div
+                            class="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 space-y-4 group hover:bg-white hover:shadow-xl transition-all">
+                            <div class="flex items-center gap-3 text-amber-700">
+                                <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                                <h4 class="font-black uppercase tracking-wider text-sm">Objeção</h4>
+                            </div>
+                            <p class="text-[10px] text-amber-600 font-bold uppercase tracking-widest">O que ele diz?</p>
+                            <textarea x-model="formData.audiences[i-1].obj"
+                                class="w-full h-24 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-amber-500/10 font-medium text-gray-900 transition-all resize-none"
+                                placeholder="Qual a desculpa mais comum para não comprar?"></textarea>
+                        </div>
+
+                        <!-- Break -->
+                        <div
+                            class="p-8 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-4 group hover:bg-white hover:shadow-xl transition-all">
+                            <div class="flex items-center gap-3 text-blue-700">
+                                <i data-lucide="swords" class="w-6 h-6"></i>
+                                <h4 class="font-black uppercase tracking-wider text-sm">Como Quebrar</h4>
+                            </div>
+                            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Sua Resposta</p>
+                            <textarea x-model="formData.audiences[i-1].break"
+                                class="w-full h-24 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-blue-500/10 font-medium text-gray-900 transition-all resize-none"
+                                placeholder="Qual o argumento matador contra essa objeção?"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Step 5: Tone of Voice -->
+            <div x-show="currentStep === 5" class="space-y-8 animate-fade-in">
+                <div class="text-center space-y-2">
+                    <h2 class="text-3xl font-display font-black text-gray-900">Tom de Voz</h2>
+                    <p class="text-gray-500 font-medium">Como devemos nos comunicar com essas pessoas?</p>
+                </div>
+                <div class="max-w-2xl mx-auto space-y-8">
+                    <div
+                        class="p-8 bg-purple-50 rounded-[2.5rem] border border-purple-100 space-y-4 group hover:bg-white hover:shadow-xl transition-all">
+                        <div class="flex items-center gap-3 text-purple-700">
+                            <i data-lucide="mic-2" class="w-6 h-6"></i>
+                            <h4 class="font-black uppercase tracking-wider text-sm">Sua Identidade Verbal</h4>
+                        </div>
+                        <p class="text-[10px] text-purple-600 font-bold uppercase tracking-widest">Descrição do Tom</p>
+                        <textarea x-model="formData.tone_of_voice"
+                            class="w-full h-48 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-purple-500/10 font-medium text-gray-900 transition-all resize-none"
+                            placeholder="Ex: Amigável, autoritário, técnico, engraçado, etc. Descreva o estilo de fala ideal."></textarea>
+                    </div>
+
+                    <div class="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 flex items-start gap-4">
+                        <div class="pt-1">
+                            <input type="checkbox" x-model="formData.accepted" id="accept-check"
+                                class="w-6 h-6 rounded-lg border-2 border-gray-300 text-northway-red focus:ring-northway-red transition-all cursor-pointer">
+                        </div>
+                        <label for="accept-check"
+                            class="text-xs text-gray-500 font-bold leading-relaxed cursor-pointer select-none">
+                            Estou ciente de que as informações registradas nesta matriz serão utilizadas para a
+                            elaboração de estratégias e roteiros de comunicação.
+                            Autorizo o processamento destes dados para fins de consultoria.
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Success -->
+            <div x-show="currentStep === 6" class="text-center space-y-8 py-12 animate-fade-in">
+                <div
+                    class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="check-circle" class="w-12 h-12"></i>
+                </div>
+                <div class="space-y-2">
+                    <h2 class="text-4xl font-display font-black text-gray-900">Tudo Pronto!</h2>
+                    <p class="text-xl text-gray-500 font-medium">Suas informações foram salvas e nossa equipe já está
+                        analisando.</p>
+                </div>
+                <p class="text-gray-400">Você pode fechar esta aba agora.</p>
+            </div>
+
+            <!-- Footer / Navigation -->
+            <div class="mt-12 flex justify-between items-center" x-show="currentStep < 6">
+                <button type="button" @click="prevStep()" :disabled="currentStep === 0"
+                    class="px-8 py-3 rounded-2xl font-black text-gray-400 hover:text-gray-900 transition-all disabled:opacity-0">
+                    Voltar
+                </button>
+                <div class="flex gap-4">
+                    <button type="button" @click="nextStep()"
+                        :disabled="currentStep === 5 && (!formData.accepted || !formData.filled_by)"
+                        class="px-12 py-4 bg-northway-red text-white rounded-2xl font-black hover:bg-black transition-all shadow-xl shadow-red-500/20 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-text="currentStep === 5 ? 'Finalizar' : 'Próximo Passo'"></span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Branding -->
+        <div class="mt-12 text-center">
+            <img src="/static/img/logo.png" class="h-8 mx-auto opacity-20 grayscale" alt="NorthWay"
+                onerror="this.src='https://crm.northwaycompany.com.br/static/img/logo.png'">
+            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mt-4">
+                Powered by NorthWay CRM
+            </p>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div x-show="isSaving"
+        class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center space-y-4">
+        <div class="w-12 h-12 border-4 border-northway-red border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm font-black uppercase tracking-widest text-[#fa0102]">Salvando Dados...</p>
+    </div>
+</div>
+
+<script>
+    function externalMatrixWizard() {
+        return {
+            currentStep: 0,
+            isSaving: false,
+            stepLabels: [
+                "Produto/Serviço",
+                "Público 1",
+                "Público 2",
+                "Público 3",
+                "Público 4",
+                "Tom de Voz",
+                "Concluído"
+            ],
+            formData: {
+                product: `{{ matrix.product or '' }}`,
+                filled_by: `{{ matrix.filled_by or '' }}`,
+                tone_of_voice: `{{ matrix.tone_of_voice or '' }}`,
+                audiences: {{ matrix.audiences | tojson if matrix.audiences else '[]' }
+    },
+    accepted: false
+            },
+
+    init() {
+        // Ensure 4 audiences exist
+        if (this.formData.audiences.length < 4) {
+            const currentLen = this.formData.audiences.length;
+            for (let i = currentLen; i < 4; i++) {
+                this.formData.audiences.push({
+                    name: `Público ${i + 1}`,
+                    pain: '',
+                    transf: '',
+                    obj: '',
+                    break: ''
+                });
+            }
+        }
+        this.$nextTick(() => { lucide.createIcons(); });
+    },
+
+    nextStep() {
+        if (this.currentStep === 5) {
+            this.saveData();
+        } else {
+            this.currentStep++;
+            this.$nextTick(() => { lucide.createIcons(); });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    },
+
+    prevStep() {
+        if (this.currentStep > 0) {
+            this.currentStep--;
+            this.$nextTick(() => { lucide.createIcons(); });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    },
+
+            async saveData() {
+        this.isSaving = true;
+        try {
+            const response = await fetch(`/external/matrix/{{ matrix.external_token }}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.formData)
+            });
+
+            if (response.ok) {
+                this.currentStep = 6;
+                this.$nextTick(() => { lucide.createIcons(); });
+            } else {
+                alert("Houve um erro ao salvar os dados. Por favor, tente novamente.");
+            }
+        } catch (error) {
+            console.error("Error saving data:", error);
+            alert("Erro de conexão. Verifique sua internet.");
+        } finally {
+            this.isSaving = false;
+        }
+    }
+        }
+    }
+</script>
+
+<style>
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}

@@ -1133,8 +1133,18 @@ class AudienceMatrix(db.Model):
     product = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(20), default='rascunho') # rascunho, concluido
     audiences = db.Column(db.JSON, nullable=False) # Stores the 4 audiences data
+    tone_of_voice = db.Column(db.Text, nullable=True) # Tone of voice for the audience
+    external_token = db.Column(db.String(36), unique=True, nullable=True) # Token for external access
+    
+    # Logging / Acceptance fields
+    filled_by = db.Column(db.String(100), nullable=True)
+    accepted_at = db.Column(db.DateTime, nullable=True)
+    accepted_ip = db.Column(db.String(50), nullable=True)
+
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    client = db.relationship('Client', backref='audience_matrices')
 
 class CREPIDiagnostico(db.Model):
     __tablename__ = 'crepi_diagnosticos'

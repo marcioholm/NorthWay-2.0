@@ -383,6 +383,7 @@ def create_app():
         def debug_schema():
             if not getattr(current_user, 'is_super_admin', False):
                 return jsonify({"error": "Unauthorized"}), 403
+            
             debug_info = {}
             try:
                 # 1. Env Var Check
@@ -404,10 +405,38 @@ def create_app():
                      cols = [c['name'] for c in inspector.get_columns(table)]
                      schema_info[table] = cols
                 
-                return jsonify({'status': 'ok', 'debug_info': debug_info, 'tables': tables, 'schema': schema_info})
+                return jsonify({'status': 'ok', 'user': current_user.email, 'debug_info': debug_info, 'tables': tables, 'schema': schema_info})
             except Exception as e:
                 import traceback
                 return jsonify({'error': str(e), 'traceback': traceback.format_exc(), 'partial_info': debug_info}), 500
+
+        @app.route('/debug_test_template')
+        def debug_test_template():
+            from models import Client, User, Transaction, ProcessTemplate, DriveFolderTemplate
+            from datetime import date
+            from flask_login import login_user
+            
+            # Find a user to "login" for this debug session
+            user = User.query.first()
+            if user:
+                login_user(user)
+            
+            client = Client.query.first()
+            if not client: return "No client found", 404
+            users = User.query.limit(5).all()
+            return render_template('client_details.html',
+                                  client=client,
+                                  mrr=1000.0,
+                                  today=date.today(),
+                                  client_txs=[],
+                                  total_paid=0.0,
+                                  total_pending=0.0,
+                                  total_overdue=0.0,
+                                  process_templates=[],
+                                  users=users,
+                                  diag_instance=None,
+                                  drive_templates=[],
+                                  is_drive_connected=False)
 
         @app.route('/verify-deploy-2026')
         def verify_deploy():
@@ -647,7 +676,79 @@ def create_app():
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         );""",
                         "ALTER TABLE lead ADD COLUMN diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+                        "ALTER TABLE lead ADD COLUMN diagnostic_score FLOAT;",
+                        "ALTER TABLE lead ADD COLUMN diagnostic_stars FLOAT;",
+                        "ALTER TABLE lead ADD COLUMN diagnostic_classification VARCHAR(50);",
+                        "ALTER TABLE lead ADD COLUMN diagnostic_date TIMESTAMP;",
+                        "ALTER TABLE lead ADD COLUMN diagnostic_pillars TEXT;",
+                        "ALTER TABLE lead ADD COLUMN drive_folder_id VARCHAR(100);",
+                        "ALTER TABLE lead ADD COLUMN drive_folder_url VARCHAR(500);",
+                        "ALTER TABLE lead ADD COLUMN drive_folder_name VARCHAR(255);",
+                        "ALTER TABLE lead ADD COLUMN drive_last_scan_at TIMESTAMP;",
+                        "ALTER TABLE lead ADD COLUMN drive_unread_files_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE lead ADD COLUMN gmb_link VARCHAR(500);",
+                        "ALTER TABLE lead ADD COLUMN gmb_rating FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE lead ADD COLUMN gmb_reviews INTEGER DEFAULT 0;",
+                        "ALTER TABLE lead ADD COLUMN gmb_photos INTEGER DEFAULT 0;",
+                        "ALTER TABLE lead ADD COLUMN gmb_last_sync TIMESTAMP;",
+                        "ALTER TABLE lead ADD COLUMN profile_pic_url VARCHAR(500);",
+
+                        "ALTER TABLE client ADD COLUMN diagnostic_status VARCHAR(20) DEFAULT 'pending';",
+                        "ALTER TABLE client ADD COLUMN diagnostic_score FLOAT;",
+                        "ALTER TABLE client ADD COLUMN diagnostic_stars FLOAT;",
+                        "ALTER TABLE client ADD COLUMN diagnostic_classification VARCHAR(50);",
+                        "ALTER TABLE client ADD COLUMN diagnostic_date TIMESTAMP;",
+                        "ALTER TABLE client ADD COLUMN diagnostic_pillars TEXT;",
+                        "ALTER TABLE client ADD COLUMN drive_folder_id VARCHAR(100);",
+                        "ALTER TABLE client ADD COLUMN drive_folder_url VARCHAR(500);",
+                        "ALTER TABLE client ADD COLUMN drive_folder_name VARCHAR(255);",
+                        "ALTER TABLE client ADD COLUMN drive_last_scan_at TIMESTAMP;",
+                        "ALTER TABLE client ADD COLUMN drive_unread_files_count INTEGER DEFAULT 0;",
+                        "ALTER TABLE client ADD COLUMN gmb_link VARCHAR(500);",
+                        "ALTER TABLE client ADD COLUMN gmb_rating FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE client ADD COLUMN gmb_reviews INTEGER DEFAULT 0;",
+                        "ALTER TABLE client ADD COLUMN gmb_photos INTEGER DEFAULT 0;",
+                        "ALTER TABLE client ADD COLUMN gmb_last_sync TIMESTAMP;",
+                        "ALTER TABLE client ADD COLUMN profile_pic_url VARCHAR(500);",
+                        "ALTER TABLE client ADD COLUMN health_status VARCHAR(20) DEFAULT 'verde';",
+                        "ALTER TABLE client ADD COLUMN payment_status VARCHAR(20) DEFAULT 'em_dia';",
+                        "ALTER TABLE client ADD COLUMN niche VARCHAR(100);",
+                        "ALTER TABLE client ADD COLUMN document VARCHAR(20);",
+                        "ALTER TABLE client ADD COLUMN representative VARCHAR(100);",
+                        "ALTER TABLE client ADD COLUMN representative_cpf VARCHAR(20);",
+                        "ALTER TABLE client ADD COLUMN email_contact VARCHAR(120);",
+                        "ALTER TABLE client ADD COLUMN asaas_customer_id VARCHAR(50);",
+
+                        "ALTER TABLE task ADD COLUMN description TEXT;",
+                        "ALTER TABLE task ADD COLUMN reminder_sent BOOLEAN DEFAULT 0;",
+                        "ALTER TABLE task ADD COLUMN overdue_reminder_sent BOOLEAN DEFAULT 0;",
+                        "ALTER TABLE task ADD COLUMN is_recurring BOOLEAN DEFAULT 0;",
+                        "ALTER TABLE task ADD COLUMN recurrence VARCHAR(20);",
+                        "ALTER TABLE task ADD COLUMN completed_at TIMESTAMP;",
+                        "ALTER TABLE task ADD COLUMN source_type VARCHAR(50);",
+                        "ALTER TABLE task ADD COLUMN auto_generated BOOLEAN DEFAULT 0;",
+                        "ALTER TABLE task ADD COLUMN is_urgent BOOLEAN DEFAULT 0;",
+                        "ALTER TABLE task ADD COLUMN is_important BOOLEAN DEFAULT 0;",
+                        "ALTER TABLE task ADD COLUMN task_type VARCHAR(50);",
+                        "ALTER TABLE task ADD COLUMN origin_stage_id INTEGER;",
+                        "ALTER TABLE task ADD COLUMN observation TEXT;",
+                        "ALTER TABLE task ADD COLUMN client_id INTEGER;",
+                        "ALTER TABLE task ADD COLUMN created_by_user_id INTEGER;",
+
                         "ALTER TABLE company ADD COLUMN features TEXT DEFAULT '{}';",
+                        "ALTER TABLE contract ADD COLUMN amount FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE contract ADD COLUMN billing_type VARCHAR(20) DEFAULT 'BOLETO';",
+                        "ALTER TABLE contract ADD COLUMN total_installments INTEGER DEFAULT 12;",
+                        "ALTER TABLE contract ADD COLUMN emit_nfse BOOLEAN DEFAULT 1;",
+                        "ALTER TABLE contract ADD COLUMN nfse_service_code VARCHAR(20);",
+                        "ALTER TABLE contract ADD COLUMN nfse_iss_rate FLOAT;",
+                        "ALTER TABLE contract ADD COLUMN nfse_desc VARCHAR(255);",
+                        "ALTER TABLE audience_matrices ADD COLUMN tone_of_voice TEXT;",
+                        "ALTER TABLE audience_matrices ADD COLUMN external_token VARCHAR(36);",
+                        "ALTER TABLE audience_matrices ADD COLUMN filled_by VARCHAR(100);",
+                        "ALTER TABLE audience_matrices ADD COLUMN accepted_at DATETIME;",
+                        "ALTER TABLE audience_matrices ADD COLUMN accepted_ip VARCHAR(50);",
+
                         """CREATE TABLE IF NOT EXISTS commercial_presentations (
                             id TEXT PRIMARY KEY,
                             consultor_id INTEGER REFERENCES users(id),
@@ -838,6 +939,36 @@ def create_app():
                         except Exception as e_user_mig:
                             print(f"⚠️ USER MIGRATION ERROR: {e_user_mig}")
                             print(f"⚠️ USER MIGRATION ERROR: {e_user_mig}")
+                            
+                        # Added Task Repairs
+                        try:
+                            if inspector.has_table("task"):
+                                task_cols = [c['name'] for c in inspector.get_columns("task")]
+                                task_repairs = [
+                                    ('overdue_reminder_sent', "BOOLEAN DEFAULT FALSE"),
+                                    ('is_recurring', "BOOLEAN DEFAULT FALSE"),
+                                    ('recurrence', "VARCHAR(20)"),
+                                    ('completed_at', "TIMESTAMP"),
+                                    ('source_type', "VARCHAR(50)"),
+                                    ('auto_generated', "BOOLEAN DEFAULT FALSE"),
+                                    ('is_urgent', "BOOLEAN DEFAULT FALSE"),
+                                    ('is_important', "BOOLEAN DEFAULT FALSE"),
+                                    ('task_type', "VARCHAR(50)"),
+                                    ('origin_stage_id', "INTEGER"),
+                                    ('observation', "TEXT"),
+                                    ('client_id', "INTEGER"),
+                                    ('created_by_user_id', "INTEGER")
+                                ]
+                                for col, dtype in task_repairs:
+                                    if col not in task_cols:
+                                        try:
+                                            print(f"🛠️ MIGRATION: Adding {col} to task...")
+                                            conn.execute(text(f"ALTER TABLE task ADD COLUMN {col} {dtype}"))
+                                            conn.commit()
+                                        except Exception as e_task:
+                                            print(f"⚠️ MIGRATION FAILED for task.{col}: {e_task}")
+                        except Exception as e_task_mig:
+                            print(f"⚠️ TASK MIGRATION ERROR: {e_task_mig}")
                             
                         # Added ClientProcess Table Creation
                         try:
