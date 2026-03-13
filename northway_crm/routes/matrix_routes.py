@@ -121,7 +121,7 @@ def update_external_matrix(token):
 def public_new_matrix(token):
     client = Client.query.filter_by(matrix_token=token).first_or_404()
     # Return same template but indicating it's a NEW matrix for this client
-    return render_template('external_matrix.html', client=client, is_new=True)
+    return render_template('external_matrix.html', client=client, matrix=None, is_new=True)
 
 @matrix_bp.route('/public/matrix/new/<token>', methods=['POST'])
 def public_save_new_matrix(token):
