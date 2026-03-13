@@ -14,7 +14,8 @@
                 Sua Matriz de Públicos
             </h1>
             <p class="text-lg text-gray-500 font-medium max-w-2xl mx-auto">
-                Olá, <strong>{{ matrix.client.name }}</strong>! Ajude-nos a entender melhor o seu público para criarmos
+                Olá, <strong>{{ matrix.client.name if matrix else client.name }}</strong>! Ajude-nos a entender melhor o
+                seu público para criarmos
                 roteiros de alta conversão.
             </p>
         </div>
@@ -225,10 +226,10 @@
                 "Concluído"
             ],
             formData: {
-                product: `{{ matrix.product or '' }}`,
-                filled_by: `{{ matrix.filled_by or '' }}`,
-                tone_of_voice: `{{ matrix.tone_of_voice or '' }}`,
-                audiences: {{ matrix.audiences | tojson if matrix.audiences else '[]' }
+                product: `{{ (matrix.product or '') if matrix else '' }}`,
+                filled_by: `{{ (matrix.filled_by or '') if matrix else '' }}`,
+                tone_of_voice: `{{ (matrix.tone_of_voice or '') if matrix else '' }}`,
+                audiences: {{ (matrix.audiences | tojson) if matrix and matrix.audiences else '[]' }
     },
     accepted: false
             },
@@ -271,7 +272,8 @@
             async saveData() {
         this.isSaving = true;
         try {
-            const response = await fetch(`/external/matrix/{{ matrix.external_token }}/update`, {
+            const url = `{{ url_for('matrix.public_save_new_matrix', token=client.matrix_token) if is_new else url_for('matrix.update_external_matrix', token=matrix.external_token) }}`;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(this.formData)

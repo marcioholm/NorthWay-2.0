@@ -1022,11 +1022,18 @@
                                     <i data-lucide="users" class="w-5 h-5 text-gray-400"></i>
                                     Matriz de Públicos
                                 </h3>
-                                <button type="button" onclick="openMatrixWizard()"
-                                    class="bg-northway-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    Nova Matriz
-                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button type="button" onclick="copyClientMatrixLink('{{ client.matrix_token }}')"
+                                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20">
+                                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                                        Link Geral
+                                    </button>
+                                    <button type="button" onclick="openMatrixWizard()"
+                                        class="bg-northway-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                        Nova Matriz
+                                    </button>
+                                </div>
                             </div>
 
                             <div id="matrices-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -3475,13 +3482,16 @@
                 if (mainCol) {
                     mainCol.classList.remove('lg:col-span-9');
                     mainCol.classList.add('lg:col-span-12', 'w-full');
-                    mainCol.style.zIndex = "40"; // Bring to front
+                    mainCol.style.position = "relative";
+                    mainCol.style.zIndex = "40";
                 }
                 if (sideCol) sideCol.classList.add('hidden');
                 if (pageWrapper) {
                     pageWrapper.classList.remove('p-8');
                     pageWrapper.classList.add('p-0', 'pb-10', 'bg-white');
                 }
+                // Force a resize event for layout scripts
+                window.dispatchEvent(new Event('resize'));
             } else {
                 if (mainCol) {
                     mainCol.classList.add('lg:col-span-9');
@@ -5389,6 +5399,31 @@ ${dateHeader}
                 icon: 'success',
                 title: 'Link Copiado!',
                 text: 'O link para o cliente preencher a matriz foi copiado para sua área de transferência.',
+                timer: 2000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        });
+    }
+
+    function copyClientMatrixLink(token) {
+        if (!token) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Link não disponível',
+                text: 'Este cliente ainda não tem um link de compartilhamento geral.',
+                confirmButtonColor: '#fa0102'
+            });
+            return;
+        }
+
+        const link = `${window.location.origin}/public/matrix/new/${token}`;
+        navigator.clipboard.writeText(link).then(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Link Copiado!',
+                text: 'O link geral para o cliente preencher novas matrizes foi copiado.',
                 timer: 2000,
                 showConfirmButton: false,
                 toast: true,

@@ -117,6 +117,41 @@ def update_external_matrix(token):
     db.session.commit()
     return jsonify({'status': 'success'})
 
+@matrix_bp.route('/public/matrix/new/<token>', methods=['GET'])
+def public_new_matrix(token):
+    client = Client.query.filter_by(matrix_token=token).first_or_404()
+    # Return same template but indicating it's a NEW matrix for this client
+    return render_template('external_matrix.html', client=client, is_new=True)
+
+@matrix_bp.route('/public/matrix/new/<token>', methods=['POST'])
+def public_save_new_matrix(token):
+    client = Client.query.filter_by(matrix_token=token).first_or_404()
+    data = request.get_json()
+    
+    new_matrix = AudienceMatrix(
+        id=str(uuid.uuid4()),
+        client_id=client.id,
+        external_token=str(uuid.uuid4()),
+        product=data.get('product', ''),
+        audiences=data.get('audiences', []),
+        tone_of_voice=data.get('tone_of_voice', ''),
+        filled_by=data.get('filled_by', ''),
+        accepted_ip=request.remote_addr,
+        accepted_at=get_now_br(),
+        status='concluido',
+        created_at=get_now_br(),
+        updated_at=get_now_br()
+    )
+    
+    db.session.add(new_matrix)
+    db.session.commit()
+    
+    return jsonify({
+        'status': 'success',
+        'id': new_matrix.id,
+        'message': 'Matriz criada com sucesso'
+    })
+
 @matrix_bp.route('/matrix/<matrix_id>', methods=['DELETE'])
 @login_required
 def delete_matrix(matrix_id):

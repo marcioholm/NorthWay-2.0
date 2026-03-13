@@ -451,6 +451,7 @@ class Client(db.Model):
     representative_cpf = db.Column(db.String(20), nullable=True)
     email_contact = db.Column(db.String(120), nullable=True) # Specific contact email if diff from main
     profile_pic_url = db.Column(db.String(500), nullable=True) # WhatsApp Profile Pic
+    matrix_token = db.Column(db.String(36), unique=True, nullable=True) # Token for persistent matrix sharing
     
     # GMB / Maps Data
     gmb_link = db.Column(db.String(500), nullable=True)
