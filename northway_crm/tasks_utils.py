@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from models import db, Task, Lead, PipelineStageTaskTemplate, User, Notification
+from models import db, Task, Lead, PipelineStageTaskTemplate, User, Notification, AutomationRule, AutomationExecution, MessageQueue
 from utils import get_now_br, create_notification
 
 def generate_tasks_for_stage(lead_id, stage_id):
@@ -86,4 +86,77 @@ def generate_tasks_for_stage(lead_id, stage_id):
         db.session.commit()
         return True
         
+    return False
+
+def process_funnel_automations(lead_id, stage_id):
+    """
+    Checks for active WhatsApp automation rules for a stage and queues messages.
+    """
+    lead = Lead.query.get(lead_id)
+    if not lead or not lead.phone:
+        return False
+
+    rules = AutomationRule.query.filter_by(
+        stage_id=stage_id,
+        company_id=lead.company_id,
+        active=True,
+        trigger_type='stage_entry'
+    ).all()
+
+    if not rules:
+        return False
+
+    queued_count = 0
+    now = get_now_br()
+
+    for rule in rules:
+        # Check if already executed for this lead
+        execution = AutomationExecution.query.filter_by(
+            rule_id=rule.id,
+            lead_id=lead_id
+        ).first()
+
+        if execution:
+            continue
+
+        # Variable Substitution
+        content = rule.message_template or ""
+        replacements = {
+            "{{nome}}": lead.name.split()[0] if lead.name else "Lead",
+            "{{empresa}}": lead.company_name or "Empresa",
+            "{{responsavel}}": User.query.get(lead.assigned_to_id).name if lead.assigned_to_id else "Responsável",
+            "{{interesse}}": lead.interest or "seu interesse"
+        }
+        
+        for key, val in replacements.items():
+            content = content.replace(key, str(val))
+
+        # Create Execution Record
+        new_execution = AutomationExecution(
+            rule_id=rule.id,
+            lead_id=lead_id,
+            status='executed',
+            executed_at=now
+        )
+        db.session.add(new_execution)
+        db.session.flush()
+
+        # Create Message Queue Entry
+        new_msg = MessageQueue(
+            company_id=lead.company_id,
+            lead_id=lead_id,
+            phone=lead.phone,
+            content=content,
+            status='pending',
+            scheduled_at=now + timedelta(hours=rule.delay_hours),
+            rule_id=rule.id,
+            execution_id=new_execution.id
+        )
+        db.session.add(new_msg)
+        queued_count += 1
+
+    if queued_count > 0:
+        db.session.commit()
+        return True
+
     return False

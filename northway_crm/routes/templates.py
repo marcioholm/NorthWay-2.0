@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
-from models import db, ContractTemplate, ROLE_ADMIN
+from models import db, ContractTemplate, ROLE_ADMIN, AutomationRule, Pipeline, PipelineStage
 from datetime import datetime
 
 templates_bp = Blueprint('templates', __name__)
@@ -353,4 +353,83 @@ def update_drive_template(id):
     
     flash('Template atualizado com sucesso!', 'success')
     return redirect(url_for('templates.settings_drive_templates'))
+
+
+@templates_bp.route('/settings/automations')
+@login_required
+def settings_automations():
+    if current_user.role != ROLE_ADMIN:
+        abort(403)
+    
+    rules = AutomationRule.query.filter_by(company_id=current_user.company_id).all()
+    pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+    stages = PipelineStage.query.filter_by(company_id=current_user.company_id).all()
+    
+    return render_template('settings_automations.html', 
+                           rules=rules, 
+                           pipelines=pipelines,
+                           stages=stages)
+
+@templates_bp.route('/settings/automations/new', methods=['POST'])
+@login_required
+def new_automation():
+    if current_user.role != ROLE_ADMIN:
+        abort(403)
+        
+    name = request.form.get('name')
+    pipeline_id = request.form.get('pipeline_id')
+    stage_id = request.form.get('stage_id')
+    message_template = request.form.get('message_template')
+    delay_hours = request.form.get('delay_hours', 0)
+    
+    rule = AutomationRule(
+        name=name,
+        company_id=current_user.company_id,
+        pipeline_id=pipeline_id,
+        stage_id=stage_id,
+        message_template=message_template,
+        delay_hours=delay_hours,
+        active=True
+    )
+    db.session.add(rule)
+    db.session.commit()
+    
+    flash('Regra de automação criada com sucesso!', 'success')
+    return redirect(url_for('templates.settings_automations'))
+
+@templates_bp.route('/settings/automations/<int:id>/edit', methods=['POST'])
+@login_required
+def edit_automation(id):
+    if current_user.role != ROLE_ADMIN:
+        abort(403)
+        
+    rule = AutomationRule.query.get_or_404(id)
+    if rule.company_id != current_user.company_id:
+        abort(403)
+        
+    rule.name = request.form.get('name')
+    rule.pipeline_id = request.form.get('pipeline_id')
+    rule.stage_id = request.form.get('stage_id')
+    rule.message_template = request.form.get('message_template')
+    rule.delay_hours = request.form.get('delay_hours', 0)
+    rule.active = 'active' in request.form
+    
+    db.session.commit()
+    flash('Automação atualizada!', 'success')
+    return redirect(url_for('templates.settings_automations'))
+
+@templates_bp.route('/settings/automations/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_automation(id):
+    if current_user.role != ROLE_ADMIN:
+        abort(403)
+        
+    rule = AutomationRule.query.get_or_404(id)
+    if rule.company_id != current_user.company_id:
+        abort(403)
+        
+    db.session.delete(rule)
+    db.session.commit()
+    flash('Automação removida!', 'success')
+    return redirect(url_for('templates.settings_automations'))
 

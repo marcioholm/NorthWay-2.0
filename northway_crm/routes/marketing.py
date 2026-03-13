@@ -106,3 +106,8 @@ def delete_presentation(id):
     db.session.commit()
     
     return jsonify({'success': True})
+
+@marketing_bp.route('/marketing/whatsapp-tutorial')
+@login_required
+def whatsapp_tutorial():
+    return render_template('marketing/whatsapp_automation_tutorial.html')

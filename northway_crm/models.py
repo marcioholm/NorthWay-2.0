@@ -1250,3 +1250,51 @@ class ClientProcess(db.Model):
     # Relationships
     client = db.relationship('Client', backref=db.backref('processes', cascade='all, delete-orphan'))
     company = db.relationship('Company', backref='processes')
+
+# ==========================================
+# WHATSAPP AUTOMATION MODELS
+# ==========================================
+
+class AutomationRule(db.Model):
+    __tablename__ = 'automation_rules'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True)
+    stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'), nullable=True)
+    
+    name = db.Column(db.String(100), nullable=False)
+    trigger_type = db.Column(db.String(50), default='stage_entry') # stage_entry, inactivity
+    delay_hours = db.Column(db.Integer, default=0)
+    
+    message_template = db.Column(db.Text, nullable=False)
+    active = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+class AutomationExecution(db.Model):
+    __tablename__ = 'automation_executions'
+    id = db.Column(db.Integer, primary_key=True)
+    rule_id = db.Column(db.Integer, db.ForeignKey('automation_rules.id'), nullable=False)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=False)
+    status = db.Column(db.String(20), default='pending') # pending, executed, skipped
+    executed_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+class MessageQueue(db.Model):
+    __tablename__ = 'message_queue'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True)
+    
+    phone = db.Column(db.String(50), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    
+    status = db.Column(db.String(20), default='pending') # pending, sent, failed, cancelled
+    scheduled_at = db.Column(db.DateTime, default=get_now_br)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    
+    # Metadata for tracking
+    rule_id = db.Column(db.Integer, db.ForeignKey('automation_rules.id'), nullable=True)
+    execution_id = db.Column(db.Integer, db.ForeignKey('automation_executions.id'), nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=get_now_br)

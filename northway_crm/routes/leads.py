@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, ClientChecklist, Task, Interaction, WhatsAppMessage, LEAD_STATUS_WON, LEAD_STATUS_NEW, LEAD_STATUS_IN_PROGRESS, LEAD_STATUS_LOST, User, LibraryTemplate, FormInstance, DriveFolderTemplate
 from utils import create_notification
-from tasks_utils import generate_tasks_for_stage
+from tasks_utils import generate_tasks_for_stage, process_funnel_automations
 from datetime import datetime, timedelta
 
 leads_bp = Blueprint('leads', __name__)
@@ -289,6 +289,7 @@ def move_lead(id, direction):
     
     # Generate Automated Tasks
     generate_tasks_for_stage(lead.id, lead.pipeline_stage_id)
+    process_funnel_automations(lead.id, lead.pipeline_stage_id)
     
     return redirect(url_for('leads.pipeline', pipeline_id=lead.pipeline_id))
 
@@ -314,6 +315,7 @@ def update_lead_stage_api(id):
     
     # Generate Automated Tasks
     generate_tasks_for_stage(lead.id, lead.pipeline_stage_id)
+    process_funnel_automations(lead.id, lead.pipeline_stage_id)
     
     return jsonify({'success': True, 'message': 'Lead moved successfully'})
 

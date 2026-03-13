@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, redirect
-from models import db, User, Lead, Client, Pipeline, PipelineStage, Task, Interaction
+from models import db, User, Lead, Client, Pipeline, PipelineStage, Task, Interaction, MessageQueue
 from flask_login import login_user, login_required, current_user
 import jwt
 import datetime
@@ -412,6 +412,10 @@ def create_lead(current_user):
 
     db.session.commit()
     
+    # Trigger Automation
+    from tasks_utils import process_funnel_automations
+    process_funnel_automations(new_lead.id, new_lead.pipeline_stage_id)
+
     return jsonify({
         'success': True, 
         'lead': {
@@ -479,6 +483,11 @@ def update_lead(current_user, id):
         lead.gmb_last_sync = datetime.datetime.utcnow()
 
     db.session.commit()
+
+    # Trigger Automation if stage changed
+    if 'pipeline_stage_id' in data:
+        from tasks_utils import process_funnel_automations
+        process_funnel_automations(lead.id, lead.pipeline_stage_id)
     
     return jsonify({'success': True})
 
@@ -518,3 +527,65 @@ def debug_status():
         debug_info["message"] = "Not logged in. Please log in and revisit this page."
         
     return jsonify(debug_info)
+
+# --- WhatsApp Automation Queue ---
+
+@api_ext.route('/api/ext/whatsapp/queue', methods=['GET'])
+@token_required
+def get_whatsapp_queue(current_user):
+    """Returns pending automated messages for the company."""
+    queue = MessageQueue.query.filter_by(
+        company_id=current_user.company_id,
+        status='pending'
+    ).order_by(MessageQueue.scheduled_at.asc()).all()
+    
+    result = []
+    for item in queue:
+        # Avoid sending scheduled for future if we want to be strict, 
+        # but for semi-auto, we can show everything pending.
+        # Let's filter by current time for "due" messages.
+        # However, for semi-auto "cadences", showing next steps is good.
+        
+        result.append({
+            'id': item.id,
+            'lead_id': item.lead_id,
+            'phone': item.phone,
+            'content': item.content,
+            'scheduled_at': item.scheduled_at.isoformat() if item.scheduled_at else None
+        })
+        
+    return jsonify(result)
+
+@api_ext.route('/api/ext/whatsapp/queue/update', methods=['POST'])
+@token_required
+def update_queue_status(current_user):
+    """Updates the status of a message in the queue (e.g., to 'sent')."""
+    data = request.get_json()
+    msg_id = data.get('id')
+    status = data.get('status', 'sent')
+    
+    if not msg_id:
+        return jsonify({'error': 'Message ID required'}), 400
+        
+    msg = MessageQueue.query.get(msg_id)
+    if not msg or msg.company_id != current_user.company_id:
+        return jsonify({'error': 'Message not found or unauthorized'}), 404
+        
+    msg.status = status
+    if status == 'sent':
+        msg.sent_at = datetime.datetime.utcnow()
+        
+        # Log interaction on lead
+        if msg.lead_id:
+            interaction = Interaction(
+                lead_id=msg.lead_id,
+                user_id=current_user.id,
+                company_id=current_user.company_id,
+                type='whatsapp',
+                content=f"[Automação] Mensagem enviada via ZapWay:\n\n{msg.content}",
+                created_at=datetime.datetime.utcnow()
+            )
+            db.session.add(interaction)
+
+    db.session.commit()
+    return jsonify({'success': True})
