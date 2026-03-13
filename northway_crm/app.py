@@ -639,6 +639,14 @@ def create_app():
                             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                         );""",
+                        
+                        "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS tone_of_voice TEXT;",
+                        "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS external_token VARCHAR(36);",
+                        "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS filled_by VARCHAR(100);",
+                        "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP WITH TIME ZONE;",
+                        "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS accepted_ip VARCHAR(50);",
+                        "ALTER TABLE audience_matrices ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'rascunho';",
+
                         """CREATE TABLE IF NOT EXISTS swot_itens (
                             id VARCHAR(36) PRIMARY KEY,
                             swot_analise_id VARCHAR(36) NOT NULL REFERENCES swot_analises(id),
@@ -776,6 +784,7 @@ def create_app():
                         "ALTER TABLE audience_matrices ADD COLUMN filled_by VARCHAR(100);",
                         "ALTER TABLE audience_matrices ADD COLUMN accepted_at DATETIME;",
                         "ALTER TABLE audience_matrices ADD COLUMN accepted_ip VARCHAR(50);",
+                        "ALTER TABLE audience_matrices ADD COLUMN status VARCHAR(20);",
 
                         """CREATE TABLE IF NOT EXISTS commercial_presentations (
                             id TEXT PRIMARY KEY,
