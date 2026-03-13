@@ -625,6 +625,20 @@ def create_app():
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         );""",
+                        """CREATE TABLE IF NOT EXISTS audience_matrices (
+                            id VARCHAR(36) PRIMARY KEY,
+                            client_id INTEGER NOT NULL REFERENCES client(id),
+                            product VARCHAR(255),
+                            status VARCHAR(20) DEFAULT 'rascunho',
+                            audiences JSONB NOT NULL,
+                            tone_of_voice TEXT,
+                            external_token VARCHAR(36) UNIQUE,
+                            filled_by VARCHAR(100),
+                            accepted_at TIMESTAMP WITH TIME ZONE,
+                            accepted_ip VARCHAR(50),
+                            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );""",
                         """CREATE TABLE IF NOT EXISTS swot_itens (
                             id VARCHAR(36) PRIMARY KEY,
                             swot_analise_id VARCHAR(36) NOT NULL REFERENCES swot_analises(id),
@@ -659,6 +673,20 @@ def create_app():
                             name VARCHAR(100) NOT NULL,
                             structure_json TEXT NOT NULL,
                             is_default BOOLEAN DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );""",
+                        """CREATE TABLE IF NOT EXISTS audience_matrices (
+                            id TEXT PRIMARY KEY,
+                            client_id INTEGER NOT NULL REFERENCES client(id),
+                            product TEXT,
+                            status TEXT DEFAULT 'rascunho',
+                            audiences TEXT NOT NULL,
+                            tone_of_voice TEXT,
+                            external_token TEXT UNIQUE,
+                            filled_by TEXT,
+                            accepted_at TIMESTAMP,
+                            accepted_ip TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         );""",
