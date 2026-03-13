@@ -202,11 +202,11 @@
                         <label class="block text-xs font-black text-gray-500 uppercase tracking-widest">Modelo de
                             Mensagem</label>
                         <div class="flex gap-2">
-                            <button type="button" @click="insertVar('{{nome}}')"
+                            <button type="button" @click="insertVar('{% raw %}{{nome}}{% endraw %}')"
                                 class="text-[10px] font-bold bg-gray-100 px-2 py-1 rounded hover:bg-northway-red hover:text-white transition-colors">#Nome</button>
-                            <button type="button" @click="insertVar('{{vendedor}}')"
+                            <button type="button" @click="insertVar('{% raw %}{{vendedor}}{% endraw %}')"
                                 class="text-[10px] font-bold bg-gray-100 px-2 py-1 rounded hover:bg-northway-red hover:text-white transition-colors">#Vendedor</button>
-                            <button type="button" @click="insertVar('{{empresa}}')"
+                            <button type="button" @click="insertVar('{% raw %}{{empresa}}{% endraw %}')"
                                 class="text-[10px] font-bold bg-gray-100 px-2 py-1 rounded hover:bg-northway-red hover:text-white transition-colors">#Empresa</button>
                         </div>
                     </div>
