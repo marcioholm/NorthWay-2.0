@@ -1261,32 +1261,6 @@ def create_app():
             except:
                 return {}
 
-
-        @app.route('/sys_admin/migrate_matrix')
-        def sys_migrate_matrix():
-            try:
-                from sqlalchemy import text
-                print("Starting Manual Matrix Migration...")
-                for col, dtype in [('avg_ticket', 'VARCHAR(50)'), ('margin', 'VARCHAR(50)'), ('filled_by', 'VARCHAR(100)')]:
-                    try:
-                        db.session.execute(text(f"ALTER TABLE audience_matrices ADD COLUMN {col} {dtype};"))
-                        db.session.commit()
-                    except:
-                        db.session.rollback()
-                return jsonify({"status": "success", "message": "Migration finished"})
-            except Exception as e:
-                return jsonify({"status": "error", "message": str(e)}), 500
-
-        @app.route('/sys_admin/check_columns')
-        def sys_check_columns():
-            try:
-                from sqlalchemy import inspect
-                inspector = inspect(db.engine)
-                cols = [c['name'] for c in inspector.get_columns('audience_matrices')]
-                return jsonify({"columns": cols})
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
-
         return app
     except Exception as factory_e:
         import traceback
