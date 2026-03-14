@@ -4305,236 +4305,236 @@ ${dateHeader}
                                 <input type="text" id="matrix-avg-ticket" placeholder="Ex: 5.000,00"
                                     class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-blue-500 rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-blue-500/5">
                             </div>
-                            <div class="space-y-2">
-                                <label
-                                    class="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-4">Margem
-                                    de Lucro (%)</label>
-                                <input type="text" id="matrix-margin" placeholder="Ex: 30%"
-                                    class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-orange-500 rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-orange-500/5">
-                            </div>
+                            <label
+                                class="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-4 flex items-center gap-1">
+                                Margem de Contribuição (%)
+                                <i data-lucide="info" class="w-3 h-3 cursor-help"
+                                    title="Valor que sobra das vendas após o abatimento dos custos e despesas variáveis. Serve para pagar os gastos fixos e gerar o lucro."></i>
+                            </label>
+                            <input type="text" id="matrix-margin" placeholder="Ex: 30%"
+                                class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-orange-500 rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-orange-500/5">
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Step 1: Publics Groups -->
-            <div class="step-pane hidden space-y-8" data-step="1">
-                <div class="max-w-xl mx-auto text-center space-y-4">
-                    <h3 class="text-3xl font-black text-gray-900 leading-tight">Quem são seus 4 públicos?</h3>
-                    <p class="text-gray-500 font-medium">Dê um nome para cada grupo que deseja atingir.</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                    {% for i in range(1, 5) %}
-                    <div
-                        class="p-6 bg-white rounded-3xl border-2 border-gray-50 hover:border-red-100 transition-all group">
-                        <div
-                            class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 font-black mb-4 group-hover:bg-red-50 group-hover:text-northway-red transition-all">
-                            {{ i }}
-                        </div>
-                        <input type="text" id="public-name-{{ i }}" placeholder="Ex: Público {{ i }}"
-                            class="w-full text-lg font-black text-gray-900 border-none outline-none placeholder:text-gray-200">
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Steps 2-5: Dynamic Audience Detail -->
-            {% for i in range(1, 5) %}
-            <div class="step-pane hidden space-y-8" data-step="{{ i + 1 }}">
-                <div class="max-w-xl mx-auto text-center space-y-2">
-                    <span class="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">Público {{ i
-                        }}</span>
-                    <h3 class="text-3xl font-black text-gray-900 leading-tight public-name-display-{{ i }}">Público
-                        {{ i
-                        }}</h3>
-                </div>
-
-                <div class="max-w-6xl mx-auto mb-6">
-                    <div
-                        class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
-                        <!-- Faixa Etária -->
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Faixa
-                                Etária</label>
-                            <input type="text" id="public-age-{{ i }}" placeholder="Ex: 25-45 anos"
-                                class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                        </div>
-                        <!-- Renda Familiar -->
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Renda
-                                Familiar</label>
-                            <select id="public-income-{{ i }}"
-                                class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                                <option value="">Selecione...</option>
-                                <option value="Até 2 salários mínimos">Até 2 salários mínimos</option>
-                                <option value="De 2 a 4 salários mínimos">De 2 a 4 salários mínimos</option>
-                                <option value="De 4 a 10 salários mínimos">De 4 a 10 salários mínimos</option>
-                                <option value="De 10 a 20 salários mínimos">De 10 a 20 salários mínimos</option>
-                                <option value="Acima de 20 salários mínimos">Acima de 20 salários mínimos</option>
-                            </select>
-                        </div>
-                        <!-- Perfil Econômico -->
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Perfil
-                                Econômico</label>
-                            <select id="public-profile-{{ i }}"
-                                class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                                <option value="">Selecione...</option>
-                                <option value="Classe baixa">Classe baixa</option>
-                                <option value="Classe média baixa">Classe média baixa</option>
-                                <option value="Classe média">Classe média</option>
-                                <option value="Classe média alta">Classe média alta</option>
-                                <option value="Classe alta">Classe alta</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-                    <!-- Dor -->
-                    <div class="p-8 bg-red-50/50 rounded-[2.5rem] border border-red-100 space-y-4">
-                        <div class="flex items-center gap-3 text-red-700">
-                            <i data-lucide="frown" class="w-6 h-6"></i>
-                            <h4 class="font-black uppercase tracking-wider text-sm">A Dor</h4>
-                        </div>
-                        <p class="text-xs text-red-600 font-medium">Como o cliente sente o problema (Palavras dele)
-                        </p>
-                        <textarea id="public-pain-{{ i }}"
-                            class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-red-500/10 font-bold text-gray-900 transition-all"
-                            placeholder="Descreva a dor principal..."></textarea>
-                    </div>
-
-                    <!-- Transformação -->
-                    <div class="p-8 bg-green-50/50 rounded-[2.5rem] border border-green-100 space-y-4">
-                        <div class="flex items-center gap-3 text-green-700">
-                            <i data-lucide="sparkles" class="w-6 h-6"></i>
-                            <h4 class="font-black uppercase tracking-wider text-sm">Transformação</h4>
-                        </div>
-                        <p class="text-xs text-green-600 font-medium">O que muda na vida dele após o produto</p>
-                        <textarea id="public-transf-{{ i }}"
-                            class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-green-500/10 font-bold text-gray-900 transition-all"
-                            placeholder="Descreva a transformação..."></textarea>
-                    </div>
-
-                    <!-- Objeção -->
-                    <div class="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 space-y-4">
-                        <div class="flex items-center gap-3 text-amber-700">
-                            <i data-lucide="shield-alert" class="w-6 h-6"></i>
-                            <h4 class="font-black uppercase tracking-wider text-sm">Objeção</h4>
-                        </div>
-                        <p class="text-xs text-amber-600 font-medium">O que ele diz para não comprar</p>
-                        <textarea id="public-obj-{{ i }}"
-                            class="w-full h-24 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-amber-500/10 font-bold text-gray-900 transition-all"
-                            placeholder="O que ele diz?"></textarea>
-                    </div>
-
-                    <!-- Quebra de Objeção -->
-                    <div class="p-8 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-4">
-                        <div class="flex items-center gap-3 text-blue-700">
-                            <i data-lucide="swords" class="w-6 h-6"></i>
-                            <h4 class="font-black uppercase tracking-wider text-sm">Quebra</h4>
-                        </div>
-                        <p class="text-xs text-blue-600 font-medium">Como você responde a essa objeção</p>
-                        <textarea id="public-break-{{ i }}"
-                            class="w-full h-24 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-blue-500/10 font-bold text-gray-900 transition-all"
-                            placeholder="Como você quebra?"></textarea>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-
-            <!-- Step 6: Tone of Voice -->
-            <div class="step-pane hidden space-y-8" data-step="6">
-                <div class="max-w-xl mx-auto text-center space-y-4">
-                    <h3 class="text-3xl font-black text-gray-900 leading-tight">Tom de Voz e Identidade</h3>
-                    <p class="text-gray-500 font-medium">Como o público deve perceber a comunicação da marca?</p>
-                </div>
-                <div class="max-w-2xl mx-auto">
-                    <div class="p-8 bg-purple-50/50 rounded-[2.5rem] border border-purple-100 space-y-4">
-                        <div class="flex items-center gap-3 text-purple-700">
-                            <i data-lucide="mic-2" class="w-6 h-6"></i>
-                            <h4 class="font-black uppercase tracking-wider text-sm">Tom de Voz do Público</h4>
-                        </div>
-                        <p class="text-xs text-purple-600 font-medium">Descreva o tom ideal (Ex: Formal, Amigável,
-                            Autoritário, etc)</p>
-                        <textarea id="matrix-tone-of-voice"
-                            class="w-full h-40 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-purple-500/10 font-bold text-gray-900 transition-all"
-                            placeholder="Ex: O tom deve ser empático mas profissional, tratando o cliente como um parceiro de negócios, evitando gírias excessivas..."></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 7: Final Matrix -->
-            <div class="step-pane hidden space-y-8" data-step="7">
-                <div class="max-w-xl mx-auto text-center space-y-4">
-                    <h3 class="text-3xl font-black text-gray-900 leading-tight">Sua Matriz de Públicos</h3>
-                    <p class="text-gray-500 font-medium">Confira o resultado final e exporte para PDF.</p>
-                </div>
-
-                <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden"
-                    id="final-matrix-capture">
-                    <div class="bg-gray-900 p-6 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <img src="/static/img/logo-white.png" class="h-6" alt="NorthWay"
-                                onerror="this.src='https://crm.northwaycompany.com.br/static/img/logo-white.png'">
-                            <span
-                                class="text-white/30 font-bold text-[10px] uppercase tracking-widest border-l border-white/10 pl-3">Matriz
-                                de Públicos</span>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-white font-black text-xs uppercase" id="display-matrix-client">{{
-                                client.name
-                                }}</p>
-                            <p class="text-white/50 text-[10px]" id="display-matrix-product"></p>
-                        </div>
-                    </div>
-                    <table class="w-full border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50">
-                                <th
-                                    class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                    Público</th>
-                                <th
-                                    class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                    Dor Principal</th>
-                                <th
-                                    class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                    Transformação</th>
-                                <th
-                                    class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                    Objeções & Quebras</th>
-                            </tr>
-                        </thead>
-                        <tbody id="matrix-table-body">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Wizard Footer -->
-        <div class="p-8 bg-white border-t border-gray-50 flex justify-between items-center">
-            <button type="button" onclick="prevStep()" id="btn-prev"
-                class="px-8 py-3 rounded-2xl font-black text-gray-400 hover:text-gray-900 transition-all opacity-0 pointer-events-none">
-                Voltar
-            </button>
-            <div class="flex gap-4">
-                <button type="button" onclick="saveMatrixDraft()"
-                    class="px-8 py-3 rounded-2xl font-black text-gray-600 hover:bg-gray-50 transition-all">
-                    Salvar Rascunho
-                </button>
-                <button type="button" onclick="nextStep()" id="btn-next"
-                    class="px-12 py-3 bg-northway-red text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">
-                    Próximo Passo
-                </button>
-                <button type="button" onclick="finishMatrix()" id="btn-finish"
-                    class="hidden px-12 py-3 bg-northway-red text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">
-                    Concluir e Salvar
-                </button>
+        <!-- Step 1: Publics Groups -->
+        <div class="step-pane hidden space-y-8" data-step="1">
+            <div class="max-w-xl mx-auto text-center space-y-4">
+                <h3 class="text-3xl font-black text-gray-900 leading-tight">Quem são seus 4 públicos?</h3>
+                <p class="text-gray-500 font-medium">Dê um nome para cada grupo que deseja atingir.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                {% for i in range(1, 5) %}
+                <div class="p-6 bg-white rounded-3xl border-2 border-gray-50 hover:border-red-100 transition-all group">
+                    <div
+                        class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 font-black mb-4 group-hover:bg-red-50 group-hover:text-northway-red transition-all">
+                        {{ i }}
+                    </div>
+                    <input type="text" id="public-name-{{ i }}" placeholder="Ex: Público {{ i }}"
+                        class="w-full text-lg font-black text-gray-900 border-none outline-none placeholder:text-gray-200">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Steps 2-5: Dynamic Audience Detail -->
+        {% for i in range(1, 5) %}
+        <div class="step-pane hidden space-y-8" data-step="{{ i + 1 }}">
+            <div class="max-w-xl mx-auto text-center space-y-2">
+                <span class="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">Público {{ i
+                    }}</span>
+                <h3 class="text-3xl font-black text-gray-900 leading-tight public-name-display-{{ i }}">Público
+                    {{ i
+                    }}</h3>
+            </div>
+
+            <div class="max-w-6xl mx-auto mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
+                    <!-- Faixa Etária -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Faixa
+                            Etária</label>
+                        <input type="text" id="public-age-{{ i }}" placeholder="Ex: 25-45 anos"
+                            class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                    </div>
+                    <!-- Renda Familiar -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Renda
+                            Familiar</label>
+                        <select id="public-income-{{ i }}"
+                            class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                            <option value="">Selecione...</option>
+                            <option value="Até 2 salários mínimos">Até 2 salários mínimos</option>
+                            <option value="De 2 a 4 salários mínimos">De 2 a 4 salários mínimos</option>
+                            <option value="De 4 a 10 salários mínimos">De 4 a 10 salários mínimos</option>
+                            <option value="De 10 a 20 salários mínimos">De 10 a 20 salários mínimos</option>
+                            <option value="Acima de 20 salários mínimos">Acima de 20 salários mínimos</option>
+                        </select>
+                    </div>
+                    <!-- Perfil Econômico -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Perfil
+                            Econômico</label>
+                        <select id="public-profile-{{ i }}"
+                            class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                            <option value="">Selecione...</option>
+                            <option value="Classe baixa">Classe baixa</option>
+                            <option value="Classe média baixa">Classe média baixa</option>
+                            <option value="Classe média">Classe média</option>
+                            <option value="Classe média alta">Classe média alta</option>
+                            <option value="Classe alta">Classe alta</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                <!-- Dor -->
+                <div class="p-8 bg-red-50/50 rounded-[2.5rem] border border-red-100 space-y-4">
+                    <div class="flex items-center gap-3 text-red-700">
+                        <i data-lucide="frown" class="w-6 h-6"></i>
+                        <h4 class="font-black uppercase tracking-wider text-sm">A Dor</h4>
+                    </div>
+                    <p class="text-xs text-red-600 font-medium">Como o cliente sente o problema (Palavras dele)
+                    </p>
+                    <textarea id="public-pain-{{ i }}"
+                        class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-red-500/10 font-bold text-gray-900 transition-all"
+                        placeholder="Descreva a dor principal..."></textarea>
+                </div>
+
+                <!-- Transformação -->
+                <div class="p-8 bg-green-50/50 rounded-[2.5rem] border border-green-100 space-y-4">
+                    <div class="flex items-center gap-3 text-green-700">
+                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                        <h4 class="font-black uppercase tracking-wider text-sm">Transformação</h4>
+                    </div>
+                    <p class="text-xs text-green-600 font-medium">O que muda na vida dele após o produto</p>
+                    <textarea id="public-transf-{{ i }}"
+                        class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-green-500/10 font-bold text-gray-900 transition-all"
+                        placeholder="Descreva a transformação..."></textarea>
+                </div>
+
+                <!-- Objeção -->
+                <div class="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 space-y-4">
+                    <div class="flex items-center gap-3 text-amber-700">
+                        <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                        <h4 class="font-black uppercase tracking-wider text-sm">Objeção</h4>
+                    </div>
+                    <p class="text-xs text-amber-600 font-medium">O que ele diz para não comprar</p>
+                    <textarea id="public-obj-{{ i }}"
+                        class="w-full h-24 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-amber-500/10 font-bold text-gray-900 transition-all"
+                        placeholder="O que ele diz?"></textarea>
+                </div>
+
+                <!-- Quebra de Objeção -->
+                <div class="p-8 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-4">
+                    <div class="flex items-center gap-3 text-blue-700">
+                        <i data-lucide="swords" class="w-6 h-6"></i>
+                        <h4 class="font-black uppercase tracking-wider text-sm">Quebra</h4>
+                    </div>
+                    <p class="text-xs text-blue-600 font-medium">Como você responde a essa objeção</p>
+                    <textarea id="public-break-{{ i }}"
+                        class="w-full h-24 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-blue-500/10 font-bold text-gray-900 transition-all"
+                        placeholder="Como você quebra?"></textarea>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Step 6: Tone of Voice -->
+        <div class="step-pane hidden space-y-8" data-step="6">
+            <div class="max-w-xl mx-auto text-center space-y-4">
+                <h3 class="text-3xl font-black text-gray-900 leading-tight">Tom de Voz e Identidade</h3>
+                <p class="text-gray-500 font-medium">Como o público deve perceber a comunicação da marca?</p>
+            </div>
+            <div class="max-w-2xl mx-auto">
+                <div class="p-8 bg-purple-50/50 rounded-[2.5rem] border border-purple-100 space-y-4">
+                    <div class="flex items-center gap-3 text-purple-700">
+                        <i data-lucide="mic-2" class="w-6 h-6"></i>
+                        <h4 class="font-black uppercase tracking-wider text-sm">Tom de Voz do Público</h4>
+                    </div>
+                    <p class="text-xs text-purple-600 font-medium">Descreva o tom ideal (Ex: Formal, Amigável,
+                        Autoritário, etc)</p>
+                    <textarea id="matrix-tone-of-voice"
+                        class="w-full h-40 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-purple-500/10 font-bold text-gray-900 transition-all"
+                        placeholder="Ex: O tom deve ser empático mas profissional, tratando o cliente como um parceiro de negócios, evitando gírias excessivas..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 7: Final Matrix -->
+        <div class="step-pane hidden space-y-8" data-step="7">
+            <div class="max-w-xl mx-auto text-center space-y-4">
+                <h3 class="text-3xl font-black text-gray-900 leading-tight">Sua Matriz de Públicos</h3>
+                <p class="text-gray-500 font-medium">Confira o resultado final e exporte para PDF.</p>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden"
+                id="final-matrix-capture">
+                <div class="bg-gray-900 p-6 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <img src="/static/img/logo-white.png" class="h-6" alt="NorthWay"
+                            onerror="this.src='https://crm.northwaycompany.com.br/static/img/logo-white.png'">
+                        <span
+                            class="text-white/30 font-bold text-[10px] uppercase tracking-widest border-l border-white/10 pl-3">Matriz
+                            de Públicos</span>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-white font-black text-xs uppercase" id="display-matrix-client">{{
+                            client.name
+                            }}</p>
+                        <p class="text-white/50 text-[10px]" id="display-matrix-product"></p>
+                    </div>
+                </div>
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th
+                                class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                Público</th>
+                            <th
+                                class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                Dor Principal</th>
+                            <th
+                                class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                Transformação</th>
+                            <th
+                                class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                Objeções & Quebras</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matrix-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+
+    <!-- Wizard Footer -->
+    <div class="p-8 bg-white border-t border-gray-50 flex justify-between items-center">
+        <button type="button" onclick="prevStep()" id="btn-prev"
+            class="px-8 py-3 rounded-2xl font-black text-gray-400 hover:text-gray-900 transition-all opacity-0 pointer-events-none">
+            Voltar
+        </button>
+        <div class="flex gap-4">
+            <button type="button" onclick="saveMatrixDraft()"
+                class="px-8 py-3 rounded-2xl font-black text-gray-600 hover:bg-gray-50 transition-all">
+                Salvar Rascunho
+            </button>
+            <button type="button" onclick="nextStep()" id="btn-next"
+                class="px-12 py-3 bg-northway-red text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">
+                Próximo Passo
+            </button>
+            <button type="button" onclick="finishMatrix()" id="btn-finish"
+                class="hidden px-12 py-3 bg-northway-red text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">
+                Concluir e Salvar
+            </button>
+        </div>
+    </div>
+</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -4800,7 +4800,7 @@ ${dateHeader}
 
     function generateMatrixPreview() {
         const data = gatherMatrixData();
-        document.getElementById('display-matrix-product').innerHTML = `${data.product} <br> <span class="opacity-50 text-[9px]">Ticket: ${data.avg_ticket} • Margem: ${data.margin}</span>`;
+        document.getElementById('display-matrix-product').innerHTML = `${data.product} <br> <span class="opacity-50 text-[9px]">Ticket: ${data.avg_ticket} • Margem de Contribuição: ${data.margin}</span>`;
 
         const tbody = document.getElementById('matrix-table-body');
         tbody.innerHTML = '';
@@ -4918,7 +4918,7 @@ ${dateHeader}
                                 <p style="font-size:13px; color:rgba(255,255,255,0.75); margin:0; font-weight:600;">
                                     ${data.product || ''} 
                                     ${data.avg_ticket ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Ticket: ${data.avg_ticket}</span>` : ''}
-                                    ${data.margin ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Margem: ${data.margin}</span>` : ''}
+                                    ${data.margin ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Margem Contribuição: ${data.margin}</span>` : ''}
                                 </p>
                             </div>
                             <div style="text-align:right;">
