@@ -1055,11 +1055,30 @@
                                         <h4
                                             class="font-black text-gray-900 mb-1 group-hover:text-northway-red transition-colors capitalize">
                                             {{ matrix.product or 'Produto não definido' }}</h4>
-                                        <p class="text-[10px] text-gray-400 uppercase font-black tracking-tight mb-6">
+                                        <p class="text-[10px] text-gray-400 uppercase font-black tracking-tight mb-2">
                                             Criado em {{ matrix.created_at.strftime('%d/%m/%Y') }}</p>
+
+                                        {% if matrix.filled_by %}
+                                        <div class="flex items-center gap-1.5 mb-6">
+                                            <div
+                                                class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                                                <i data-lucide="user" class="w-3 h-3"></i>
+                                            </div>
+                                            <span
+                                                class="text-[10px] font-black text-gray-500 uppercase tracking-tighter">
+                                                Resp: {{ matrix.filled_by }}
+                                            </span>
+                                        </div>
+                                        {% else %}
+                                        <div class="mb-6"></div>
+                                        {% endif %}
 
                                         <div class="flex items-center justify-between pt-4 border-t border-gray-50">
                                             <div class="flex gap-3">
+                                                <button type="button" onclick="viewMatrix('{{ matrix.id }}')"
+                                                    class="text-xs font-black text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1">
+                                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i> Ver
+                                                </button>
                                                 <button type="button" onclick="editMatrix('{{ matrix.id }}')"
                                                     class="text-xs font-black text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
                                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
@@ -4272,11 +4291,27 @@ ${dateHeader}
                                 class="w-full px-6 py-4 bg-gray-100 border-none rounded-2xl font-bold text-gray-400 cursor-not-allowed">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-black text-red-600 uppercase tracking-widest ml-4">Produto
-                                ou
+                            <label class="text-[10px] font-black text-red-600 uppercase tracking-widest ml-4">Produto ou
                                 Serviço Foco</label>
                             <input type="text" id="matrix-product-name" placeholder="Ex: Assessoria de Marketing 360"
                                 class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-northway-red rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-red-500/5">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label
+                                    class="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-4">Ticket
+                                    Médio (R$)</label>
+                                <input type="text" id="matrix-avg-ticket" placeholder="Ex: 5.000,00"
+                                    class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-blue-500 rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-blue-500/5">
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-4">Margem
+                                    de Lucro (%)</label>
+                                <input type="text" id="matrix-margin" placeholder="Ex: 30%"
+                                    class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-orange-500 rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-orange-500/5">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4312,6 +4347,47 @@ ${dateHeader}
                     <h3 class="text-3xl font-black text-gray-900 leading-tight public-name-display-{{ i }}">Público
                         {{ i
                         }}</h3>
+                </div>
+
+                <div class="max-w-6xl mx-auto mb-6">
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
+                        <!-- Faixa Etária -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Faixa
+                                Etária</label>
+                            <input type="text" id="public-age-{{ i }}" placeholder="Ex: 25-45 anos"
+                                class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                        </div>
+                        <!-- Renda Familiar -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Renda
+                                Familiar</label>
+                            <select id="public-income-{{ i }}"
+                                class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                                <option value="">Selecione...</option>
+                                <option value="Até 2 salários mínimos">Até 2 salários mínimos</option>
+                                <option value="De 2 a 4 salários mínimos">De 2 a 4 salários mínimos</option>
+                                <option value="De 4 a 10 salários mínimos">De 4 a 10 salários mínimos</option>
+                                <option value="De 10 a 20 salários mínimos">De 10 a 20 salários mínimos</option>
+                                <option value="Acima de 20 salários mínimos">Acima de 20 salários mínimos</option>
+                            </select>
+                        </div>
+                        <!-- Perfil Econômico -->
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Perfil
+                                Econômico</label>
+                            <select id="public-profile-{{ i }}"
+                                class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                                <option value="">Selecione...</option>
+                                <option value="Classe baixa">Classe baixa</option>
+                                <option value="Classe média baixa">Classe média baixa</option>
+                                <option value="Classe média">Classe média</option>
+                                <option value="Classe média alta">Classe média alta</option>
+                                <option value="Classe alta">Classe alta</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
@@ -4466,10 +4542,16 @@ ${dateHeader}
     let currentMatrixStep = 0;
     let editingMatrixId = null;
 
-    function openMatrixWizard(matrixId = null) {
+    let isViewOnly = false;
+
+    function openMatrixWizard(matrixId = null, viewOnly = false) {
         editingMatrixId = matrixId;
+        isViewOnly = viewOnly; // Needs global or scope variable
         currentMatrixStep = 0;
         resetMatrixInputs();
+
+        // Handle read-only UI
+        toggleMatrixReadMode(viewOnly);
 
         if (matrixId) {
             fetch(`/matrix/${matrixId}`)
@@ -4490,6 +4572,21 @@ ${dateHeader}
             content.classList.remove('scale-95', 'opacity-0');
             content.classList.add('scale-100', 'opacity-100');
         }, 10);
+    }
+
+    function toggleMatrixReadMode(viewOnly) {
+        const inputs = document.querySelectorAll('#matrixWizardModal input, #matrixWizardModal textarea');
+        inputs.forEach(input => {
+            if (input.id !== 'matrix-share-url' && input.id !== 'matrix-business-name') {
+                input.readOnly = viewOnly;
+            }
+        });
+
+        const saveBtns = document.querySelectorAll('button[onclick*="saveMatrixDraft"], button[onclick*="finishMatrix"]');
+        saveBtns.forEach(btn => {
+            if (viewOnly) btn.classList.add('hidden');
+            else btn.classList.remove('hidden');
+        });
     }
 
     function closeMatrixWizard() {
@@ -4573,11 +4670,16 @@ ${dateHeader}
             document.getElementById(`public-transf-${i}`).value = '';
             document.getElementById(`public-obj-${i}`).value = '';
             document.getElementById(`public-break-${i}`).value = '';
+            document.getElementById(`public-age-${i}`).value = '';
+            document.getElementById(`public-income-${i}`).value = '';
+            document.getElementById(`public-profile-${i}`).value = '';
         }
     }
 
     function populateMatrixInputs(data) {
-        document.getElementById('matrix-product-name').value = data.product;
+        document.getElementById('matrix-product-name').value = data.product || '';
+        document.getElementById('matrix-avg-ticket').value = data.avg_ticket || '';
+        document.getElementById('matrix-margin').value = data.margin || '';
         document.getElementById('matrix-tone-of-voice').value = data.tone_of_voice || '';
 
         if (data.external_token) {
@@ -4598,7 +4700,15 @@ ${dateHeader}
             document.getElementById(`public-transf-${i}`).value = aud.transf;
             document.getElementById(`public-obj-${i}`).value = aud.obj;
             document.getElementById(`public-break-${i}`).value = aud.break;
+            document.getElementById(`public-age-${i}`).value = aud.age || '';
+            document.getElementById(`public-income-${i}`).value = aud.income || '';
+            document.getElementById(`public-profile-${i}`).value = aud.profile || '';
         });
+
+        // If it was filled by someone, show it in subtitle for context if editing
+        if (data.filled_by) {
+            document.getElementById('wizard-subtitle').textContent += ` • Preenchido por: ${data.filled_by}`;
+        }
     }
 
     function gatherMatrixData() {
@@ -4609,12 +4719,18 @@ ${dateHeader}
                 pain: document.getElementById(`public-pain-${i}`).value,
                 transf: document.getElementById(`public-transf-${i}`).value,
                 obj: document.getElementById(`public-obj-${i}`).value,
-                break: document.getElementById(`public-break-${i}`).value
+                break: document.getElementById(`public-break-${i}`).value,
+                age: document.getElementById(`public-age-${i}`).value,
+                income: document.getElementById(`public-income-${i}`).value,
+                profile: document.getElementById(`public-profile-${i}`).value
             });
         }
         return {
             product: document.getElementById('matrix-product-name').value,
+            avg_ticket: document.getElementById('matrix-avg-ticket').value,
+            margin: document.getElementById('matrix-margin').value,
             tone_of_voice: document.getElementById('matrix-tone-of-voice').value,
+            filled_by: `Equipe {{ current_user.name }}`, // CRM User
             audiences: audiences
         };
     }
@@ -4684,7 +4800,7 @@ ${dateHeader}
 
     function generateMatrixPreview() {
         const data = gatherMatrixData();
-        document.getElementById('display-matrix-product').textContent = data.product;
+        document.getElementById('display-matrix-product').innerHTML = `${data.product} <br> <span class="opacity-50 text-[9px]">Ticket: ${data.avg_ticket} • Margem: ${data.margin}</span>`;
 
         const tbody = document.getElementById('matrix-table-body');
         tbody.innerHTML = '';
@@ -4695,6 +4811,11 @@ ${dateHeader}
             tr.innerHTML = `
             <td class="p-6">
                 <div class="font-black text-gray-900 uppercase text-xs">${aud.name}</div>
+                <div class="mt-2 space-y-1">
+                    <div class="text-[9px] font-bold text-gray-500 uppercase">Idade: <span class="text-gray-900">${aud.age || '-'}</span></div>
+                    <div class="text-[9px] font-bold text-gray-500 uppercase">Renda: <span class="text-gray-900">${aud.income || '-'}</span></div>
+                    <div class="text-[9px] font-bold text-gray-400 uppercase">Perfil: <span class="text-red-600">${aud.profile || '-'}</span></div>
+                </div>
             </td>
             <td class="p-6">
                 <div class="text-xs font-bold text-red-600 mb-1">DOR:</div>
@@ -4737,6 +4858,24 @@ ${dateHeader}
                             <div style="display:inline-block; background:${p.accent}; color:white; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:2px; padding:5px 14px; border-radius:30px; margin-bottom:18px;">${aud.name || 'Público ' + (idx + 1)}</div>
                             <table style="width:100%; border-collapse:collapse;">
                                 <tr>
+                                    <td colspan="2" style="padding-bottom:12px;">
+                                        <div style="background:white; border-radius:10px; padding:12px; border-top:3px solid ${p.accent}; display:flex; gap:20px;">
+                                            <div style="width:33%;">
+                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Faixa Etária</div>
+                                                <div style="font-size:10px; font-weight:700; color:#111827;">${aud.age || '—'}</div>
+                                            </div>
+                                            <div style="width:33%;">
+                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Renda Familiar</div>
+                                                <div style="font-size:10px; font-weight:700; color:#111827;">${aud.income || '—'}</div>
+                                            </div>
+                                            <div style="width:33%;">
+                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Perfil Econômico</div>
+                                                <div style="font-size:10px; font-weight:700; color:${p.accent}">${aud.profile || '—'}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td style="width:50%; padding:0 10px 0 0; vertical-align:top;">
                                         <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #e31f1f; margin-bottom:12px;">
                                             <div style="font-size:8px; font-weight:900; color:#e31f1f; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Dor Principal</div>
@@ -4776,7 +4915,11 @@ ${dateHeader}
                             <div>
                                 <div style="font-size:9px; color:rgba(255,255,255,0.6); font-weight:800; letter-spacing:3px; text-transform:uppercase; margin-bottom:8px;">Diagnóstico Estratégico</div>
                                 <h1 style="font-size:34px; font-weight:900; color:white; text-transform:uppercase; margin:0 0 8px 0; letter-spacing:-0.5px;">Matriz de Públicos</h1>
-                                <p style="font-size:13px; color:rgba(255,255,255,0.75); margin:0; font-weight:600;">${data.product || ''}</p>
+                                <p style="font-size:13px; color:rgba(255,255,255,0.75); margin:0; font-weight:600;">
+                                    ${data.product || ''} 
+                                    ${data.avg_ticket ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Ticket: ${data.avg_ticket}</span>` : ''}
+                                    ${data.margin ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Margem: ${data.margin}</span>` : ''}
+                                </p>
                             </div>
                             <div style="text-align:right;">
                                 <p style="font-size:13px; font-weight:900; color:white; margin:0; text-transform:uppercase;">{{ client.name }}</p>
@@ -4899,7 +5042,11 @@ ${dateHeader}
     }
 
     function editMatrix(matrixId) {
-        openMatrixWizard(matrixId);
+        openMatrixWizard(matrixId, false);
+    }
+
+    function viewMatrix(matrixId) {
+        openMatrixWizard(matrixId, true);
     }
 
     // --- SCRIPT STUDIO LOGIC ---

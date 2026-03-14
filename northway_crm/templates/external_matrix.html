@@ -26,8 +26,13 @@
         <div class="flex flex-col items-center mb-10">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-16 w-auto mb-4">
             <h1 class="text-3xl font-black text-gray-900 tracking-tight">Sua Matriz de Públicos</h1>
-            <p class="text-gray-500 mt-2 font-medium">Preencha as informações para estruturar seu marketing estratégico.
-            </p>
+            <p class="text-gray-500 mt-2 font-medium">Preencha as informações para estruturar seu marketing estratégico.</p>
+            
+            <div x-show="formData.product" class="mt-4 flex flex-wrap justify-center gap-2 animate-fade-in">
+                <span class="px-3 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-full border border-gray-200" x-text="'Produto: ' + formData.product"></span>
+                <span x-show="formData.avg_ticket" class="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full border border-blue-100" x-text="'Ticket: ' + formData.avg_ticket"></span>
+                <span x-show="formData.margin" class="px-3 py-1 bg-orange-50 text-orange-600 text-[10px] font-bold rounded-full border border-orange-100" x-text="'Margem: ' + formData.margin"></span>
+            </div>
         </div>
 
         <!-- Progress Steps -->
@@ -72,12 +77,27 @@
 
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Nome do
-                                Produto/Serviço</label>
+                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Nome do Produto/Serviço</label>
                             <input type="text" x-model="formData.product"
                                 class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300"
                                 placeholder="Ex: Consultoria Empresarial Elite">
                         </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-black text-blue-600 uppercase tracking-widest mb-2">Ticket Médio (R$)</label>
+                                <input type="text" x-model="formData.avg_ticket"
+                                    class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 text-lg font-bold placeholder:text-gray-300"
+                                    placeholder="Ex: 5.000,00">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black text-orange-600 uppercase tracking-widest mb-2">Margem de Lucro (%)</label>
+                                <input type="text" x-model="formData.margin"
+                                    class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 text-lg font-bold placeholder:text-gray-300"
+                                    placeholder="Ex: 30%">
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Quem
                                 está preenchendo?</label>
@@ -110,6 +130,39 @@
                                     <input type="text" x-model="formData.audiences[index-1].name"
                                         class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red font-bold">
                                 </div>
+                                <div class="grid grid-cols-1 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Faixa Etária</label>
+                                        <input type="text" x-model="formData.audiences[index-1].age" placeholder="Ex: 25-45 anos"
+                                            class="w-full px-4 py-2 bg-white border border-gray-100 rounded-lg focus:ring-2 focus:ring-northway-red text-xs font-bold">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Renda Familiar</label>
+                                            <select x-model="formData.audiences[index-1].income"
+                                                class="w-full px-3 py-2 bg-white border border-gray-100 rounded-lg focus:ring-2 focus:ring-northway-red text-[10px] font-bold appearance-none">
+                                                <option value="">Selecione...</option>
+                                                <option value="Até 2 salários mínimos">Até 2</option>
+                                                <option value="De 2 a 4 salários mínimos">2-4 SM</option>
+                                                <option value="De 4 a 10 salários mínimos">4-10 SM</option>
+                                                <option value="De 10 a 20 salários mínimos">10-20 SM</option>
+                                                <option value="Acima de 20 salários mínimos">> 20 SM</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Perfil Econômico</label>
+                                            <select x-model="formData.audiences[index-1].profile"
+                                                class="w-full px-3 py-2 bg-white border border-gray-100 rounded-lg focus:ring-2 focus:ring-northway-red text-[10px] font-bold appearance-none">
+                                                <option value="">Selecione...</option>
+                                                <option value="Classe baixa">Classe baixa</option>
+                                                <option value="Classe média baixa">Média baixa</option>
+                                                <option value="Classe média">Classe média</option>
+                                                <option value="Classe média alta">Média alta</option>
+                                                <option value="Classe alta">Classe alta</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div>
                                     <label
                                         class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Dor
@@ -117,6 +170,8 @@
                                     <textarea x-model="formData.audiences[index-1].pain" rows="3"
                                         class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
                                 </div>
+                            </div>
+                            <div class="space-y-6">
                                 <div>
                                     <label
                                         class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Transformação
@@ -124,8 +179,6 @@
                                     <textarea x-model="formData.audiences[index-1].transf" rows="3"
                                         class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
                                 </div>
-                            </div>
-                            <div class="space-y-6">
                                 <div>
                                     <label
                                         class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Objeções
@@ -218,65 +271,70 @@
             ],
             formData: {
                 product: `{{ (matrix.product or '') if matrix else '' }}`,
+                avg_ticket: `{{ (matrix.avg_ticket or '') if matrix else '' }}`,
+                margin: `{{ (matrix.margin or '') if matrix else '' }}`,
                 filled_by: `{{ (matrix.filled_by or '') if matrix else '' }}`,
                 tone_of_voice: `{{ (matrix.tone_of_voice or '') if matrix else '' }}`,
-                audiences: {{ (matrix.audiences | tojson) if matrix and matrix.audiences else '[]' }},
+                audiences: {{ (matrix.audiences | tojson) if matrix and matrix.audiences else '[]' | safe }},
                 accepted: false
             },
 
-    init() {
-        // Ensure 4 audiences exist
-        if (this.formData.audiences.length < 4) {
-            const currentLen = this.formData.audiences.length;
-            for (let i = currentLen; i < 4; i++) {
-                this.formData.audiences.push({
-                    name: `Público ${i + 1}`,
-                    pain: '',
-                    transf: '',
-                    obj: '',
-                    break: ''
+            init() {
+                // Ensure 4 audiences exist
+                if (this.formData.audiences.length < 4) {
+                    const currentLen = this.formData.audiences.length;
+                    for (let i = currentLen; i < 4; i++) {
+                        this.formData.audiences.push({
+                            name: `Público ${i + 1}`,
+                            pain: '',
+                            transf: '',
+                            obj: '',
+                            break: '',
+                            age: '',
+                            income: '',
+                            profile: ''
+                        });
+                    }
+                }
+
+                this.$nextTick(() => {
+                    lucide.createIcons();
                 });
-            }
-        }
+            },
 
-        this.$nextTick(() => {
-            lucide.createIcons();
-        });
-    },
-
-    nextStep() {
-        if (this.currentStep < 6) {
-            this.currentStep++;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            this.$nextTick(() => lucide.createIcons());
-        } else {
-            this.submitForm();
-        }
-    },
+            nextStep() {
+                if (this.currentStep < 6) {
+                    this.currentStep++;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    this.$nextTick(() => lucide.createIcons());
+                } else {
+                    this.submitForm();
+                }
+            },
 
             async submitForm() {
-        this.isSaving = true;
-        try {
-            const response = await fetch(window.location.href, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.formData)
-            });
+                this.isSaving = true;
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.formData)
+                    });
 
-            const result = await response.json();
+                    const result = await response.json();
 
-            if (result.success) {
-                window.location.href = result.redirect || '/';
-            } else {
-                alert('Erro ao salvar: ' + (result.error || 'Erro desconhecido'));
+                    if (result.success) {
+                        window.location.href = result.redirect || '/';
+                    } else {
+                        alert('Erro ao salvar: ' + (result.error || 'Erro desconhecido'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Erro na conexão. Tente novamente.');
+                } finally {
+                    this.isSaving = false;
+                }
             }
-        } catch (e) {
-            console.error(e);
-            alert('Erro na conexão. Tente novamente.');
-        } finally {
-            this.isSaving = false;
-        }
-    }
         }
     }
 </script>
