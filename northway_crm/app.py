@@ -1873,42 +1873,42 @@ def sys_migrate_forms():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@app.route('/sys_admin/migrate_matrix')
-def sys_migrate_matrix():
-    try:
-        from sqlalchemy import text
-        print("Starting Manual Matrix Migration...")
-        
-        # 1. avg_ticket
+    @app.route('/sys_admin/migrate_matrix')
+    def sys_migrate_matrix():
         try:
-            db.session.execute(text("ALTER TABLE audience_matrices ADD COLUMN avg_ticket VARCHAR(50);"))
-            db.session.commit()
-            print("avg_ticket added.")
-        except Exception as e:
-            db.session.rollback()
-            print(f"avg_ticket skip: {e}")
+            from sqlalchemy import text
+            print("Starting Manual Matrix Migration...")
+            
+            # 1. avg_ticket
+            try:
+                db.session.execute(text("ALTER TABLE audience_matrices ADD COLUMN avg_ticket VARCHAR(50);"))
+                db.session.commit()
+                print("avg_ticket added.")
+            except Exception as e:
+                db.session.rollback()
+                print(f"avg_ticket skip: {e}")
 
-        # 2. margin
-        try:
-            db.session.execute(text("ALTER TABLE audience_matrices ADD COLUMN margin VARCHAR(50);"))
-            db.session.commit()
-            print("margin added.")
-        except Exception as e:
-            db.session.rollback()
-            print(f"margin skip: {e}")
+            # 2. margin
+            try:
+                db.session.execute(text("ALTER TABLE audience_matrices ADD COLUMN margin VARCHAR(50);"))
+                db.session.commit()
+                print("margin added.")
+            except Exception as e:
+                db.session.rollback()
+                print(f"margin skip: {e}")
 
-        # 3. filled_by
-        try:
-            db.session.execute(text("ALTER TABLE audience_matrices ADD COLUMN filled_by VARCHAR(100);"))
-            db.session.commit()
-            print("filled_by added.")
-        except Exception as e:
-            db.session.rollback()
-            print(f"filled_by skip: {e}")
+            # 3. filled_by
+            try:
+                db.session.execute(text("ALTER TABLE audience_matrices ADD COLUMN filled_by VARCHAR(100);"))
+                db.session.commit()
+                print("filled_by added.")
+            except Exception as e:
+                db.session.rollback()
+                print(f"filled_by skip: {e}")
 
-        return jsonify({"status": "success", "message": "Matrix migration attempt completed. Check logs for details."})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+            return jsonify({"status": "success", "message": "Matrix migration attempt completed. Check logs for details."})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
 
 
 
