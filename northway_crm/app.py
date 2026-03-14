@@ -1910,6 +1910,16 @@ def sys_migrate_forms():
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)}), 500
 
+    @app.route('/sys_admin/check_columns')
+    def sys_check_columns():
+        try:
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            columns = [c['name'] for c in inspector.get_columns('audience_matrices')]
+            return jsonify({"columns": columns})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == '__main__':
