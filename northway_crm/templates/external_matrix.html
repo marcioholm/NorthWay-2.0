@@ -66,31 +66,166 @@
                     </div>
                 </template>
             </div>
-        </div>
-
-        <!-- Form Cards -->
+        </        <!-- Form Cards -->
         <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden min-h-[500px] flex flex-col">
 
             <!-- Step 0: Product Info -->
             <div x-show="currentStep === 0" class="p-8 md:p-12 flex-1 animate-fade-in">
                 <div class="max-w-xl mx-auto">
-                    <div class="mb-8">
+                    <div class="mb-8 text-center">
                         <span
                             class="inline-block px-3 py-1 bg-red-50 text-northway-red text-[10px] font-black uppercase tracking-widest rounded-full mb-3">Passo
-                            Inicial</span>
-                        <h2 class="text-2xl font-black text-gray-900">Qual o produto ou serviço?</h2>
-                        <p class="text-gray-500 text-sm mt-1">Identifique claramente o que estamos analisando.</p>
+                            0</span>
+                        <h2 class="text-2xl font-black text-gray-900">Identificação do Projeto</h2>
+                        <p class="text-gray-500 text-sm mt-1">Quem é o cliente e qual o foco desta análise?</p>
                     </div>
 
                     <div class="space-y-6">
                         <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Nome do
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Cliente</label>
+                            <div class="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-lg font-bold text-gray-900">
+                                {{ matrix.client.name if matrix and matrix.client else (client.name if client else 'Cliente Não Identificado') }}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nome do
                                 Produto/Serviço</label>
                             <input type="text" x-model="formData.product"
                                 class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300"
                                 placeholder="Ex: Consultoria Empresarial Elite">
                         </div>
 
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Responsável pelo Preenchimento</label>
+                            <input type="text" x-model="formData.filled_by"
+                                class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300"
+                                placeholder="Seu Nome Completo">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps 1-4: Audiences (Psychographics Only) -->
+            <template x-for="index in [1,2,3,4]">
+                <div x-show="currentStep === index" class="p-8 md:p-12 flex-1 animate-fade-in">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="mb-10 text-center">
+                            <span
+                                class="inline-block px-3 py-1 bg-red-50 text-northway-red text-[10px] font-black uppercase tracking-widest rounded-full mb-3"
+                                x-text="'Qualitativo - Segmento ' + index"></span>
+                            <h2 class="text-3xl font-black text-gray-900">Perfil Psicográfico <span
+                                    x-text="index"></span></h2>
+                            <p class="text-gray-500 text-sm mt-1">Quais são as dores e desejos desse público específico?</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-6">
+                                <div>
+                                    <label
+                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Nome
+                                        do Público (Opcional)</label>
+                                    <input type="text" x-model="formData.audiences[index-1].name"
+                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red font-bold"
+                                        :placeholder="'Público ' + index">
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Dores / Problemas Atuais</label>
+                                    <textarea x-model="formData.audiences[index-1].pain" rows="4"
+                                        placeholder="O que tira o sono desse cliente hoje?"
+                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
+                                </div>
+                            </div>
+                            <div class="space-y-6">
+                                <div>
+                                    <label
+                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 text-green-600">Transformação / Desejo</label>
+                                    <textarea x-model="formData.audiences[index-1].transf" rows="3"
+                                        placeholder="Onde ele quer chegar com sua ajuda?"
+                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-green-500 text-sm font-medium resize-none"></textarea>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 text-northway-red">Principais Objeções</label>
+                                    <textarea x-model="formData.audiences[index-1].obj" rows="2"
+                                        placeholder="O que impede ele de comprar?"
+                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Quebra de Objeção</label>
+                                    <textarea x-model="formData.audiences[index-1].break" rows="2"
+                                        placeholder="Qual o seu argumento fatal?"
+                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Step 5: Demographics (Unified) -->
+            <div x-show="currentStep === 5" class="p-8 md:p-12 flex-1 animate-fade-in">
+                <div class="max-w-4xl mx-auto">
+                    <div class="mb-10 text-center">
+                        <span
+                            class="inline-block px-3 py-1 bg-red-50 text-northway-red text-[10px] font-black uppercase tracking-widest rounded-full mb-3">Passo 5</span>
+                        <h2 class="text-3xl font-black text-gray-900">Demográficos & Poder de Compra</h2>
+                        <p class="text-gray-500 text-sm mt-1">Quanto ganha e qual o perfil econômico dos seus 4 públicos?</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="index in [1,2,3,4]">
+                            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-4">
+                                <h4 class="text-xs font-black text-gray-900 uppercase tracking-tighter" x-text="'Público ' + index + ': ' + (formData.audiences[index-1].name || '')"></h4>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[8px] font-black text-gray-400 uppercase mb-1">Faixa Etária</label>
+                                        <input type="text" x-model="formData.audiences[index-1].age" placeholder="Ex: 25-45"
+                                            class="w-full px-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[8px] font-black text-gray-400 uppercase mb-1">Renda Familiar</label>
+                                        <select x-model="formData.audiences[index-1].income"
+                                            class="w-full px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold appearance-none">
+                                            <option value="">Selecione...</option>
+                                            <option value="Até 2 salários mínimos">Até 2</option>
+                                            <option value="De 2 a 4 salários mínimos">2-4 SM</option>
+                                            <option value="De 4 a 10 salários mínimos">4-10 SM</option>
+                                            <option value="De 10 a 20 salários mínimos">10-20 SM</option>
+                                            <option value="Acima de 20 salários mínimos">> 20 SM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[8px] font-black text-gray-400 uppercase mb-1">Perfil Econômico</label>
+                                    <select x-model="formData.audiences[index-1].profile"
+                                        class="w-full px-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-bold appearance-none text-center">
+                                        <option value="">Selecione...</option>
+                                        <option value="Classe baixa">Classe baixa</option>
+                                        <option value="Classe média baixa">Média baixa</option>
+                                        <option value="Classe média">Classe média</option>
+                                        <option value="Classe média alta">Média alta</option>
+                                        <option value="Classe alta">Classe alta</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Financial Indicators -->
+            <div x-show="currentStep === 6" class="p-8 md:p-12 flex-1 animate-fade-in">
+                <div class="max-w-xl mx-auto">
+                    <div class="mb-10 text-center">
+                        <span
+                            class="inline-block px-3 py-1 bg-red-50 text-northway-red text-[10px] font-black uppercase tracking-widest rounded-full mb-3">Eficência de Vendas</span>
+                        <h2 class="text-3xl font-black text-gray-900">Indicadores Financeiros</h2>
+                        <p class="text-gray-500 text-sm mt-1">Quanto o negócio gera e qual o custo para adquirir novos clientes?</p>
+                    </div>
+
+                    <div class="space-y-6">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label
@@ -102,10 +237,8 @@
                             </div>
                             <div>
                                 <label
-                                    class="block text-xs font-black text-orange-600 uppercase tracking-widest mb-2 flex items-center gap-1">
-                                    Margem de Contribuição (%)
-                                    <i data-lucide="info" class="w-3 h-3 cursor-help"
-                                        title="Valor que sobra das vendas após o abatimento dos custos e despesas variáveis. Serve para pagar os gastos fixos e gerar o lucro."></i>
+                                    class="block text-xs font-black text-orange-600 uppercase tracking-widest mb-2">
+                                    Margem Operacional (%)
                                 </label>
                                 <input type="text" x-model="formData.margin"
                                     class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 text-lg font-bold placeholder:text-gray-300"
@@ -113,144 +246,55 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Quem
-                                está preenchendo?</label>
-                            <input type="text" x-model="formData.filled_by"
-                                class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300"
-                                placeholder="Seu Nome Completo">
+                        <div class="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+                             <div class="absolute -top-12 -right-12 w-32 h-32 bg-northway-red rounded-full opacity-20 blur-2xl"></div>
+                             
+                             <div class="relative z-10">
+                                <label class="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
+                                    <i data-lucide="target" class="w-4 h-4 text-northway-red"></i>
+                                    CAC Máximo Desejado (R$)
+                                </label>
+                                <input type="text" x-model="formData.cac"
+                                    class="w-full bg-white/10 border-2 border-white/20 rounded-2xl px-6 py-5 text-3xl font-black text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-northway-red transition-all"
+                                    placeholder="Ex: 150,00">
+                                <p class="text-[10px] text-gray-400 mt-4 leading-relaxed font-bold">
+                                    CAC: Custo de Aquisição de Cliente. É a soma de todos os investimentos em marketing e vendas dividida pelo número de novos clientes.
+                                </p>
+                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Steps 1-4: Audiences -->
-            <template x-for="index in [1,2,3,4]">
-                <div x-show="currentStep === index" class="p-8 md:p-12 flex-1 animate-fade-in">
-                    <div class="max-w-2xl mx-auto">
-                        <div class="mb-10 text-center">
-                            <span
-                                class="inline-block px-3 py-1 bg-red-50 text-northway-red text-[10px] font-black uppercase tracking-widest rounded-full mb-3"
-                                x-text="'Segmento ' + index"></span>
-                            <h2 class="text-3xl font-black text-gray-900">Definição do Público <span
-                                    x-text="index"></span></h2>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div class="space-y-6">
-                                <div>
-                                    <label
-                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Nome
-                                        do Público</label>
-                                    <input type="text" x-model="formData.audiences[index-1].name"
-                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red font-bold">
-                                </div>
-                                <div class="grid grid-cols-1 gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                    <div>
-                                        <label
-                                            class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Faixa
-                                            Etária</label>
-                                        <input type="text" x-model="formData.audiences[index-1].age"
-                                            placeholder="Ex: 25-45 anos"
-                                            class="w-full px-4 py-2 bg-white border border-gray-100 rounded-lg focus:ring-2 focus:ring-northway-red text-xs font-bold">
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Renda
-                                                Familiar</label>
-                                            <select x-model="formData.audiences[index-1].income"
-                                                class="w-full px-3 py-2 bg-white border border-gray-100 rounded-lg focus:ring-2 focus:ring-northway-red text-[10px] font-bold appearance-none">
-                                                <option value="">Selecione...</option>
-                                                <option value="Até 2 salários mínimos">Até 2</option>
-                                                <option value="De 2 a 4 salários mínimos">2-4 SM</option>
-                                                <option value="De 4 a 10 salários mínimos">4-10 SM</option>
-                                                <option value="De 10 a 20 salários mínimos">10-20 SM</option>
-                                                <option value="Acima de 20 salários mínimos">> 20 SM</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Perfil
-                                                Econômico</label>
-                                            <select x-model="formData.audiences[index-1].profile"
-                                                class="w-full px-3 py-2 bg-white border border-gray-100 rounded-lg focus:ring-2 focus:ring-northway-red text-[10px] font-bold appearance-none">
-                                                <option value="">Selecione...</option>
-                                                <option value="Classe baixa">Classe baixa</option>
-                                                <option value="Classe média baixa">Média baixa</option>
-                                                <option value="Classe média">Classe média</option>
-                                                <option value="Classe média alta">Média alta</option>
-                                                <option value="Classe alta">Classe alta</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Dor
-                                        / Problema</label>
-                                    <textarea x-model="formData.audiences[index-1].pain" rows="3"
-                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
-                                </div>
-                            </div>
-                            <div class="space-y-6">
-                                <div>
-                                    <label
-                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Transformação
-                                        / Desejo</label>
-                                    <textarea x-model="formData.audiences[index-1].transf" rows="3"
-                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Objeções
-                                        Comuns</label>
-                                    <textarea x-model="formData.audiences[index-1].obj" rows="3"
-                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Quebra
-                                        de Objeção</label>
-                                    <textarea x-model="formData.audiences[index-1].break" rows="3"
-                                        class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none"></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Step 5: Tone of Voice -->
-            <div x-show="currentStep === 5" class="p-8 md:p-12 flex-1 animate-fade-in">
+            <!-- Step 7: Tone of Voice -->
+            <div x-show="currentStep === 7" class="p-8 md:p-12 flex-1 animate-fade-in">
                 <div class="max-w-xl mx-auto">
-                    <div class="mb-8">
+                    <div class="mb-8 text-center">
                         <span
-                            class="inline-block px-3 py-1 bg-red-50 text-northway-red text-[10px] font-black uppercase tracking-widest rounded-full mb-3">Finalização</span>
-                        <h2 class="text-2xl font-black text-gray-900">Qual o Tom de Voz do projeto?</h2>
-                        <p class="text-gray-500 text-sm mt-1">Como devemos nos comunicar com esses públicos?</p>
+                            class="inline-block px-3 py-1 bg-red-50 text-northway-red text-[10px] font-black uppercase tracking-widest rounded-full mb-3">Comunicação</span>
+                        <h2 class="text-2xl font-black text-gray-900">Como falaremos com o público?</h2>
+                        <p class="text-gray-500 text-sm mt-1">Defina o Tom de Voz do projeto.</p>
                     </div>
 
-                    <textarea x-model="formData.tone_of_voice" rows="6"
+                    <textarea x-model="formData.tone_of_voice" rows="8"
                         class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-medium placeholder:text-gray-300"
                         placeholder="Ex: Profissional, acolhedor, autoritário, mas acessível..."></textarea>
                 </div>
             </div>
 
-            <!-- Step 6: Confirmation -->
-            <div x-show="currentStep === 6"
+            <!-- Step 8: Confirmation -->
+            <div x-show="currentStep === 8"
                 class="p-8 md:p-12 flex-1 animate-fade-in flex flex-col items-center justify-center text-center">
                 <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                     <i data-lucide="award" class="w-10 h-10 text-green-600"></i>
                 </div>
-                <h2 class="text-3xl font-black text-gray-900 mb-2">Tudo pronto!</h2>
-                <p class="text-gray-500 mb-8 max-w-sm">Revise os passos anteriores se necessário ou confirme o envio
-                    para nossa equipe estratégica.</p>
+                <h2 class="text-3xl font-black text-gray-900 mb-2">Estrutura Concluída!</h2>
+                <p class="text-gray-500 mb-8 max-w-sm">Revise seus dados se precisar. Ao enviar, nossa equipe iniciará a estratégia com base nesses fundamentos.</p>
 
                 <div class="flex items-center gap-2 mb-8 bg-gray-50 p-4 rounded-xl">
                     <input type="checkbox" id="accept" x-model="formData.accepted"
                         class="w-5 h-5 text-northway-red border-gray-300 rounded focus:ring-northway-red">
-                    <label for="accept" class="text-xs font-bold text-gray-600 select-none">Eu aceito estruturar meu
+                    <label for="accept" class="text-xs font-bold text-gray-600 select-none cursor-pointer">Eu aceito estruturar meu
                         marketing com base nesses dados.</label>
                 </div>
             </div>
@@ -263,15 +307,18 @@
                 </button>
                 <div x-show="currentStep === 0" class="flex-1"></div>
 
-                <button type="button" @click="nextStep()"
-                    class="ml-auto bg-northway-red hover:bg-red-700 text-white px-10 py-4 rounded-2xl font-black tracking-wide shadow-lg shadow-red-200 transition-all active:scale-95 disabled:opacity-50"
-                    :disabled="currentStep === 6 && !formData.accepted || isSaving">
-                    <span x-show="!isSaving" x-text="currentStep < 6 ? 'Próximo' : 'Enviar Matriz'"></span>
-                    <span x-show="isSaving" class="flex items-center gap-2">
-                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
-                        Salvando...
-                    </span>
-                </button>
+                <div class="flex items-center gap-4">
+                    <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest hidden md:block" x-text="(currentStep + 1) + ' / ' + stepLabels.length"></span>
+                    <button type="button" @click="nextStep()"
+                        class="ml-auto bg-northway-red hover:bg-red-700 text-white px-10 py-4 rounded-2xl font-black tracking-wide shadow-lg shadow-red-200 transition-all active:scale-95 disabled:opacity-50"
+                        :disabled="currentStep === 8 && !formData.accepted || isSaving">
+                        <span x-show="!isSaving" x-text="currentStep < 8 ? 'Próximo' : 'Enviar Matriz'"></span>
+                        <span x-show="isSaving" class="flex items-center gap-2">
+                            <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                            Salvando...
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -283,81 +330,85 @@
             currentStep: 0,
             isSaving: false,
             stepLabels: [
-                "Produto/Serviço",
+                "Identificação",
                 "Público 1",
                 "Público 2",
                 "Público 3",
                 "Público 4",
+                "Demográficos",
+                "Indicadores",
                 "Tom de Voz",
-                "Concluído"
+                "Finalização"
             ],
             formData: {
                 product: `{{ (matrix.product or '') if matrix else '' }}`,
                 avg_ticket: `{{ (matrix.avg_ticket or '') if matrix else '' }}`,
                 margin: `{{ (matrix.margin or '') if matrix else '' }}`,
+                cac: `{{ (matrix.cac or '') if matrix else '' }}`,
                 filled_by: `{{ (matrix.filled_by or '') if matrix else '' }}`,
                 tone_of_voice: `{{ (matrix.tone_of_voice or '') if matrix else '' }}`,
-                audiences: {{ (matrix.audiences | tojson) if matrix and matrix.audiences else '[]' | safe }
-    },
-    accepted: false
+                audiences: {{ (matrix.audiences | tojson) if matrix and matrix.audiences else '[]' | safe }},
+                accepted: false
             },
 
-    init() {
-        // Ensure 4 audiences exist
-        if (this.formData.audiences.length < 4) {
-            const currentLen = this.formData.audiences.length;
-            for (let i = currentLen; i < 4; i++) {
-                this.formData.audiences.push({
-                    name: `Público ${i + 1}`,
-                    pain: '',
-                    transf: '',
-                    obj: '',
-                    break: '',
-                    age: '',
-                    income: '',
-                    profile: ''
+            init() {
+                // Ensure 4 audiences exist
+                if (this.formData.audiences.length < 4) {
+                    const currentLen = this.formData.audiences.length;
+                    for (let i = currentLen; i < 4; i++) {
+                        this.formData.audiences.push({
+                            name: `Público ${i + 1}`,
+                            pain: '',
+                            transf: '',
+                            obj: '',
+                            break: '',
+                            age: '',
+                            income: '',
+                            profile: ''
+                        });
+                    }
+                }
+
+                this.$nextTick(() => {
+                    lucide.createIcons();
                 });
-            }
-        }
+            },
 
-        this.$nextTick(() => {
-            lucide.createIcons();
-        });
-    },
-
-    nextStep() {
-        if (this.currentStep < 6) {
-            this.currentStep++;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            this.$nextTick(() => lucide.createIcons());
-        } else {
-            this.submitForm();
-        }
-    },
+            nextStep() {
+                if (this.currentStep < 8) {
+                    this.currentStep++;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    this.$nextTick(() => lucide.createIcons());
+                } else {
+                    this.submitForm();
+                }
+            },
 
             async submitForm() {
-        this.isSaving = true;
-        try {
-            const response = await fetch(window.location.href, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.formData)
-            });
+                this.isSaving = true;
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.formData)
+                    });
 
-            const result = await response.json();
+                    const result = await response.json();
 
-            if (result.success) {
-                window.location.href = result.redirect || '/';
-            } else {
-                alert('Erro ao salvar: ' + (result.error || 'Erro desconhecido'));
+                    if (result.status === 'success') {
+                        // Show success message and redirect
+                        alert('Matriz enviada com sucesso!');
+                        window.location.reload();
+                    } else {
+                        alert('Erro ao salvar: ' + (result.message || 'Erro desconhecido'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Erro na conexão. Tente novamente.');
+                } finally {
+                    this.isSaving = false;
+                }
             }
-        } catch (e) {
-            console.error(e);
-            alert('Erro na conexão. Tente novamente.');
-        } finally {
-            this.isSaving = false;
-        }
-    }
         }
     }
 </script>

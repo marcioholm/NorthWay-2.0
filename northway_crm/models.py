@@ -1137,6 +1137,7 @@ class AudienceMatrix(db.Model):
     tone_of_voice = db.Column(db.Text, nullable=True) # Tone of voice for the audience
     avg_ticket = db.Column(db.String(50), nullable=True) # Average ticket price
     margin = db.Column(db.String(50), nullable=True) # Profit margin
+    cac = db.Column(db.String(50), nullable=True) # Customer Acquisition Cost
     external_token = db.Column(db.String(36), unique=True, nullable=True, default=lambda: str(uuid.uuid4())) # Token for external access
     
     # Logging / Acceptance fields

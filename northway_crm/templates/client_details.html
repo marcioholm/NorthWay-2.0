@@ -4277,9 +4277,8 @@ ${dateHeader}
             <!-- Step 0: Product & Service -->
             <div class="step-pane space-y-8" data-step="0">
                 <div class="max-w-xl mx-auto text-center space-y-4">
-                    <h3 class="text-3xl font-black text-gray-900 leading-tight">Vamos começar pelo básico.</h3>
-                    <p class="text-gray-500 font-medium">Qual produto ou serviço estamos analisando neste
-                        diagnóstico?
+                    <h3 class="text-3xl font-black text-gray-900 leading-tight">Identificação do Projeto</h3>
+                    <p class="text-gray-500 font-medium">Quem é o cliente e qual o foco desta análise?
                     </p>
                 </div>
                 <div class="max-w-md mx-auto">
@@ -4296,98 +4295,18 @@ ${dateHeader}
                             <input type="text" id="matrix-product-name" placeholder="Ex: Assessoria de Marketing 360"
                                 class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-northway-red rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-red-500/5">
                         </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <label
-                                    class="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-4">Ticket
-                                    Médio (R$)</label>
-                                <input type="text" id="matrix-avg-ticket" placeholder="Ex: 5.000,00"
-                                    class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-blue-500 rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-blue-500/5">
-                            </div>
-                            <label
-                                class="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-4 flex items-center gap-1">
-                                Margem de Contribuição (%)
-                                <i data-lucide="info" class="w-3 h-3 cursor-help"
-                                    title="Valor que sobra das vendas após o abatimento dos custos e despesas variáveis. Serve para pagar os gastos fixos e gerar o lucro."></i>
-                            </label>
-                            <input type="text" id="matrix-margin" placeholder="Ex: 30%"
-                                class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-orange-500 rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-orange-500/5">
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Step 1: Publics Groups -->
-        <div class="step-pane hidden space-y-8" data-step="1">
-            <div class="max-w-xl mx-auto text-center space-y-4">
-                <h3 class="text-3xl font-black text-gray-900 leading-tight">Quem são seus 4 públicos?</h3>
-                <p class="text-gray-500 font-medium">Dê um nome para cada grupo que deseja atingir.</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                {% for i in range(1, 5) %}
-                <div class="p-6 bg-white rounded-3xl border-2 border-gray-50 hover:border-red-100 transition-all group">
-                    <div
-                        class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 font-black mb-4 group-hover:bg-red-50 group-hover:text-northway-red transition-all">
-                        {{ i }}
-                    </div>
-                    <input type="text" id="public-name-{{ i }}" placeholder="Ex: Público {{ i }}"
-                        class="w-full text-lg font-black text-gray-900 border-none outline-none placeholder:text-gray-200">
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Steps 2-5: Dynamic Audience Detail -->
+        <!-- Steps 1-4: Dynamic Audience Psychographics -->
         {% for i in range(1, 5) %}
-        <div class="step-pane hidden space-y-8" data-step="{{ i + 1 }}">
+        <div class="step-pane hidden space-y-8" data-step="{{ i }}">
             <div class="max-w-xl mx-auto text-center space-y-2">
-                <span class="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">Público {{ i
-                    }}</span>
-                <h3 class="text-3xl font-black text-gray-900 leading-tight public-name-display-{{ i }}">Público
-                    {{ i
-                    }}</h3>
-            </div>
-
-            <div class="max-w-6xl mx-auto mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
-                    <!-- Faixa Etária -->
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Faixa
-                            Etária</label>
-                        <input type="text" id="public-age-{{ i }}" placeholder="Ex: 25-45 anos"
-                            class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                    </div>
-                    <!-- Renda Familiar -->
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Renda
-                            Familiar</label>
-                        <select id="public-income-{{ i }}"
-                            class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                            <option value="">Selecione...</option>
-                            <option value="Até 2 salários mínimos">Até 2 salários mínimos</option>
-                            <option value="De 2 a 4 salários mínimos">De 2 a 4 salários mínimos</option>
-                            <option value="De 4 a 10 salários mínimos">De 4 a 10 salários mínimos</option>
-                            <option value="De 10 a 20 salários mínimos">De 10 a 20 salários mínimos</option>
-                            <option value="Acima de 20 salários mínimos">Acima de 20 salários mínimos</option>
-                        </select>
-                    </div>
-                    <!-- Perfil Econômico -->
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Perfil
-                            Econômico</label>
-                        <select id="public-profile-{{ i }}"
-                            class="w-full px-5 py-3 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                            <option value="">Selecione...</option>
-                            <option value="Classe baixa">Classe baixa</option>
-                            <option value="Classe média baixa">Classe média baixa</option>
-                            <option value="Classe média">Classe média</option>
-                            <option value="Classe média alta">Classe média alta</option>
-                            <option value="Classe alta">Classe alta</option>
-                        </select>
-                    </div>
-                </div>
+                <span class="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">Público {{ i }}</span>
+                <input type="text" id="public-name-{{ i }}" placeholder="Dê um nome a este público (Ex: Empresários)"
+                    class="block mx-auto text-center text-3xl font-black text-gray-900 leading-tight bg-transparent border-none outline-none focus:ring-0 placeholder:text-gray-300">
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
@@ -4397,8 +4316,7 @@ ${dateHeader}
                         <i data-lucide="frown" class="w-6 h-6"></i>
                         <h4 class="font-black uppercase tracking-wider text-sm">A Dor</h4>
                     </div>
-                    <p class="text-xs text-red-600 font-medium">Como o cliente sente o problema (Palavras dele)
-                    </p>
+                    <p class="text-xs text-red-600 font-medium">Como o cliente sente o problema (Palavras dele)</p>
                     <textarea id="public-pain-{{ i }}"
                         class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-red-500/10 font-bold text-gray-900 transition-all"
                         placeholder="Descreva a dor principal..."></textarea>
@@ -4443,8 +4361,90 @@ ${dateHeader}
         </div>
         {% endfor %}
 
-        <!-- Step 6: Tone of Voice -->
+        <!-- Step 5: Demographics (Unified) -->
+        <div class="step-pane hidden space-y-8" data-step="5">
+            <div class="max-w-xl mx-auto text-center space-y-4">
+                <h3 class="text-3xl font-black text-gray-900 leading-tight">Demográficos e Poder de Compra</h3>
+                <p class="text-gray-500 font-medium">Quanto ganha e qual o perfil econômico dos seus 4 públicos?</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto">
+                {% for i in range(1, 5) %}
+                <div class="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 space-y-4">
+                    <h4 class="text-xs font-black text-gray-900 uppercase tracking-tighter" id="demographic-name-{{ i }}">Público {{ i }}</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Faixa Etária</label>
+                            <input type="text" id="public-age-{{ i }}" placeholder="Ex: 25-45 anos"
+                                class="w-full px-4 py-2 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Renda familiar</label>
+                            <select id="public-income-{{ i }}"
+                                class="w-full px-4 py-2 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                                <option value="">Selecione...</option>
+                                <option value="Até 2 salários mínimos">Até 2 SM</option>
+                                <option value="De 2 a 4 salários mínimos">2 a 4 SM</option>
+                                <option value="De 4 a 10 salários mínimos">4 a 10 SM</option>
+                                <option value="De 10 a 20 salários mínimos">10 a 20 SM</option>
+                                <option value="Acima de 20 salários mínimos">> 20 SM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Perfil Econômico</label>
+                        <select id="public-profile-{{ i }}"
+                            class="w-full px-4 py-2 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
+                            <option value="">Selecione...</option>
+                            <option value="Classe baixa">Classe baixa</option>
+                            <option value="Classe média baixa">Classe média baixa</option>
+                            <option value="Classe média">Classe média</option>
+                            <option value="Classe média alta">Classe média alta</option>
+                            <option value="Classe alta">Classe alta</option>
+                        </select>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Step 6: Financial Indicators -->
         <div class="step-pane hidden space-y-8" data-step="6">
+            <div class="max-w-xl mx-auto text-center space-y-4">
+                <h3 class="text-3xl font-black text-gray-900 leading-tight">Indicadores Financeiros</h3>
+                <p class="text-gray-500 font-medium">Quanto o negócio gera e qual o custo para adquirir novos clientes?</p>
+            </div>
+            <div class="max-w-2xl mx-auto space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-4">Ticket Médio (R$)</label>
+                        <input type="text" id="matrix-avg-ticket" placeholder="Ex: 5.000,00"
+                            class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-blue-500 rounded-2xl font-bold text-gray-900 transition-all outline-none">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-4">Margem Operacional (%)</label>
+                        <input type="text" id="matrix-margin" placeholder="Ex: 30%"
+                            class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-orange-500 rounded-2xl font-bold text-gray-900 transition-all outline-none">
+                    </div>
+                </div>
+                <div class="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+                     <div class="absolute -top-12 -right-12 w-32 h-32 bg-northway-red rounded-full opacity-20 blur-2xl"></div>
+                     <div class="relative z-10">
+                        <label class="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
+                            <i data-lucide="target" class="w-4 h-4 text-northway-red"></i>
+                            CAC Máximo Desejado (R$)
+                        </label>
+                        <input type="text" id="matrix-cac" placeholder="Ex: 150,00"
+                            class="w-full bg-white/10 border-2 border-white/20 rounded-2xl px-6 py-5 text-3xl font-black text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-northway-red transition-all">
+                        <p class="text-[10px] text-gray-400 mt-4 leading-relaxed font-bold opacity-70">
+                            CAC: Custo de Aquisição de Cliente. É o quanto você está disposto a investir para trazer um novo cliente.
+                        </p>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 7: Tone of Voice -->
+        <div class="step-pane hidden space-y-8" data-step="7">
             <div class="max-w-xl mx-auto text-center space-y-4">
                 <h3 class="text-3xl font-black text-gray-900 leading-tight">Tom de Voz e Identidade</h3>
                 <p class="text-gray-500 font-medium">Como o público deve perceber a comunicação da marca?</p>
@@ -4464,12 +4464,13 @@ ${dateHeader}
             </div>
         </div>
 
-        <!-- Step 7: Final Matrix -->
-        <div class="step-pane hidden space-y-8" data-step="7">
+        <!-- Step 8: Final Matrix -->
+        <div class="step-pane hidden space-y-8" data-step="8">
             <div class="max-w-xl mx-auto text-center space-y-4">
                 <h3 class="text-3xl font-black text-gray-900 leading-tight">Sua Matriz de Públicos</h3>
                 <p class="text-gray-500 font-medium">Confira o resultado final e exporte para PDF.</p>
             </div>
+            <!-- ... (tabela continua igual) ... -->
 
             <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden"
                 id="final-matrix-capture">
@@ -4607,20 +4608,21 @@ ${dateHeader}
         document.querySelector(`.step-pane[data-step="${step}"]`).classList.remove('hidden');
 
         // Update Header
-        const progress = ((step + 1) / 8) * 100;
+        const progress = ((step + 1) / 9) * 100;
         document.getElementById('matrix-progress').style.width = `${progress}%`;
 
         const labels = [
-            "Definição de Produto",
-            "Públicos Alvo",
-            "Público 1: Detalhes",
-            "Público 2: Detalhes",
-            "Público 3: Detalhes",
-            "Público 4: Detalhes",
+            "Identificação",
+            "Público 1",
+            "Público 2",
+            "Público 3",
+            "Público 4",
+            "Demográficos",
+            "Financeiro",
             "Tom de Voz",
-            "Matriz Gerada"
+            "Finalização"
         ];
-        document.getElementById('wizard-subtitle').textContent = `Passo ${step + 1} de 8 • ${labels[step]}`;
+        document.getElementById('wizard-subtitle').textContent = `Passo ${step + 1} de 9 • ${labels[step]}`;
 
         // Update Buttons
         const btnPrev = document.getElementById('btn-prev');
@@ -4633,7 +4635,7 @@ ${dateHeader}
             btnPrev.classList.remove('opacity-0', 'pointer-events-none');
         }
 
-        if (step === 7) {
+        if (step === 8) {
             btnNext.classList.add('hidden');
             btnFinish.classList.remove('hidden');
             generateMatrixPreview();
@@ -4647,12 +4649,14 @@ ${dateHeader}
             for (let i = 1; i <= 4; i++) {
                 const val = document.getElementById(`public-name-${i}`).value || `Público ${i}`;
                 document.querySelectorAll(`.public-name-display-${i}`).forEach(el => el.textContent = val);
+                const demoLabel = document.getElementById(`demographic-name-${i}`);
+                if (demoLabel) demoLabel.textContent = val;
             }
         }
     }
 
     function nextStep() {
-        if (currentMatrixStep < 7) showStep(currentMatrixStep + 1);
+        if (currentMatrixStep < 8) showStep(currentMatrixStep + 1);
     }
 
     function prevStep() {
@@ -4661,6 +4665,9 @@ ${dateHeader}
 
     function resetMatrixInputs() {
         document.getElementById('matrix-product-name').value = '';
+        document.getElementById('matrix-avg-ticket').value = '';
+        document.getElementById('matrix-margin').value = '';
+        document.getElementById('matrix-cac').value = '';
         document.getElementById('matrix-tone-of-voice').value = '';
         document.getElementById('matrix-share-section').classList.add('hidden');
         document.getElementById('matrix-share-url').value = '';
@@ -4680,6 +4687,7 @@ ${dateHeader}
         document.getElementById('matrix-product-name').value = data.product || '';
         document.getElementById('matrix-avg-ticket').value = data.avg_ticket || '';
         document.getElementById('matrix-margin').value = data.margin || '';
+        document.getElementById('matrix-cac').value = data.cac || '';
         document.getElementById('matrix-tone-of-voice').value = data.tone_of_voice || '';
 
         if (data.external_token) {
@@ -4729,6 +4737,7 @@ ${dateHeader}
             product: document.getElementById('matrix-product-name').value,
             avg_ticket: document.getElementById('matrix-avg-ticket').value,
             margin: document.getElementById('matrix-margin').value,
+            cac: document.getElementById('matrix-cac').value,
             tone_of_voice: document.getElementById('matrix-tone-of-voice').value,
             filled_by: `Equipe {{ current_user.name }}`, // CRM User
             audiences: audiences
@@ -4800,7 +4809,7 @@ ${dateHeader}
 
     function generateMatrixPreview() {
         const data = gatherMatrixData();
-        document.getElementById('display-matrix-product').innerHTML = `${data.product} <br> <span class="opacity-50 text-[9px]">Ticket: ${data.avg_ticket} • Margem de Contribuição: ${data.margin}</span>`;
+        document.getElementById('display-matrix-product').innerHTML = `${data.product} <br> <span class="opacity-50 text-[9px]">Ticket: ${data.avg_ticket} • Margem: ${data.margin} • CAC: ${data.cac}</span>`;
 
         const tbody = document.getElementById('matrix-table-body');
         tbody.innerHTML = '';

@@ -5,6 +5,7 @@ import jwt
 import datetime
 from functools import wraps
 from werkzeug.security import check_password_hash
+from extensions import limiter
 
 api_ext = Blueprint('api_ext', __name__)
 
@@ -532,6 +533,7 @@ def debug_status():
 
 @api_ext.route('/api/ext/whatsapp/queue', methods=['GET'])
 @token_required
+@limiter.limit("300 per hour")
 def get_whatsapp_queue(current_user):
     """Returns pending automated messages for the company."""
     queue = MessageQueue.query.filter_by(

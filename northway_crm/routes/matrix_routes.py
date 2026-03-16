@@ -22,6 +22,7 @@ def create_matrix(client_id):
         tone_of_voice=data.get('tone_of_voice', ''),
         avg_ticket=data.get('avg_ticket', ''),
         margin=data.get('margin', ''),
+        cac=data.get('cac', ''),
         filled_by=data.get('filled_by', f"Equipe {current_user.name}"),
         created_at=get_now_br(),
         updated_at=get_now_br()
@@ -53,6 +54,7 @@ def get_matrix(matrix_id):
         'tone_of_voice': matrix.tone_of_voice,
         'avg_ticket': matrix.avg_ticket,
         'margin': matrix.margin,
+        'cac': matrix.cac,
         'external_token': matrix.external_token,
         'created_at': matrix.created_at.isoformat() if matrix.created_at else None,
         'updated_at': matrix.updated_at.isoformat() if matrix.updated_at else None
@@ -72,6 +74,7 @@ def update_matrix(matrix_id):
     matrix.tone_of_voice = data.get('tone_of_voice', matrix.tone_of_voice)
     matrix.avg_ticket = data.get('avg_ticket', matrix.avg_ticket)
     matrix.margin = data.get('margin', matrix.margin)
+    matrix.cac = data.get('cac', matrix.cac)
     matrix.filled_by = data.get('filled_by', matrix.filled_by)
     matrix.updated_at = get_now_br()
     
@@ -116,6 +119,7 @@ def update_external_matrix(token):
     matrix.tone_of_voice = data.get('tone_of_voice', matrix.tone_of_voice)
     matrix.avg_ticket = data.get('avg_ticket', matrix.avg_ticket)
     matrix.margin = data.get('margin', matrix.margin)
+    matrix.cac = data.get('cac', matrix.cac)
     matrix.filled_by = data.get('filled_by', matrix.filled_by)
     
     # Capture security audit data
@@ -147,6 +151,7 @@ def public_save_new_matrix(token):
         tone_of_voice=data.get('tone_of_voice', ''),
         avg_ticket=data.get('avg_ticket', ''),
         margin=data.get('margin', ''),
+        cac=data.get('cac', ''),
         filled_by=data.get('filled_by', ''),
         accepted_ip=request.remote_addr,
         accepted_at=get_now_br(),
