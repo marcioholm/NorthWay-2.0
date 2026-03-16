@@ -347,7 +347,7 @@
                 cac: `{{ (matrix.cac or '') if matrix else '' }}`,
                 filled_by: `{{ (matrix.filled_by or '') if matrix else '' }}`,
                 tone_of_voice: `{{ (matrix.tone_of_voice or '') if matrix else '' }}`,
-                audiences: {{ (matrix.audiences | tojson) if matrix and matrix.audiences else '[]' | safe }},
+                audiences: {{ (matrix.audiences if matrix and matrix.audiences else []) | tojson | safe }},
                 accepted: false
             },
 

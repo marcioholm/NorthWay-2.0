@@ -1221,8 +1221,7 @@
                                 <button type="button" onclick="toggleModal('createDriveFoldersModal')"
                                     class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 shadow-md hover:shadow-lg shadow-blue-500/30">
                                     <i data-lucide="folder-plus" class="w-4 h-4"></i>
-                                    {% if client.drive_folder_url %}Nova Pasta{% else %}Conectar Drive{% endif
-                                    %}
+                                    {% if client.drive_folder_url %}Nova Pasta{% else %}Conectar Drive{% endif %}
                                 </button>
                                 {% else %}
                                 <a href="{{ url_for('admin.settings_integrations') }}"
@@ -4295,7 +4294,6 @@ ${dateHeader}
                             <input type="text" id="matrix-product-name" placeholder="Ex: Assessoria de Marketing 360"
                                 class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-northway-red rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-red-500/5">
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
