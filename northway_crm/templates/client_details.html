@@ -2,8 +2,6 @@
 {% from "macros.html" import user_avatar %}
 
 {% block content %}
-<!-- Redundant Library for PDF (Fail-safe) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <div id="page-content-wrapper" class="flex-1 overflow-y-auto bg-gray-100 p-8">
     <style>
         .custom-scrollbar::-webkit-scrollbar {
@@ -5502,9 +5500,31 @@ ${dateHeader}
             });
     }
 
-    function processMatrixPDF(data) {
+    function ensurePdfLibrary() {
+        return new Promise((resolve, reject) => {
+            if (typeof html2pdf !== 'undefined') {
+                resolve();
+                return;
+            }
+            console.log('PDF library not found, attempting to load from jsDelivr...');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('A biblioteca de PDF (html2pdf) não pôde ser carregada. Verifique se há algum bloqueador de scripts ativo.'));
+            document.head.appendChild(script);
+        });
+    }
+
+    async function processMatrixPDF(data) {
         if (!data || !data.audiences) {
             alert('Dados da matriz incompletos para gerar o PDF.');
+            return;
+        }
+
+        try {
+            await ensurePdfLibrary();
+        } catch (e) {
+            alert(e.message);
             return;
         }
 
