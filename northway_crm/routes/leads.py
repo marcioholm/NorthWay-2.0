@@ -397,9 +397,6 @@ def bulk_move_pipeline():
 @login_required
 def convert_lead(id):
     lead = Lead.query.get_or_404(id)
-    # ... (rest of convert_lead logic is likely needed too if I deleted it. I will include the start of it to be safe or check if it exists)
-    # Actually, I deleted EVERYTHING between lead_details and update_lead_info.
-    # So I need to restore convert_lead and update_bant too!
     if lead.company_id != current_user.company_id:
         abort(403)
         
@@ -524,90 +521,58 @@ def convert_lead(id):
                 client.drive_folder_name = folder_name
                 
                 # Create Folder Structure from Template
-                # Check if auto creation is enabled
                 if current_user.company.auto_create_subfolders:
                     drive_template_id = request.form.get('drive_template_id')
                     selected_template = None
-                    
-                    # 1. Try selected template
                     if drive_template_id:
-                         t = DriveFolderTemplate.query.get(drive_template_id)
-                         if t:
-                             # Check permissions
-                             is_own = t.company_id == current_user.company_id
-                             is_global_allowed = t.scope == 'global' and \
-                                 current_user.company.allowed_global_template_ids and \
-                                 t.id in current_user.company.allowed_global_template_ids
-                             
-                             if is_own or is_global_allowed or current_user.is_super_admin:
-                                 selected_template = t
+                        t = DriveFolderTemplate.query.get(drive_template_id)
+                        if t and (t.company_id == current_user.company_id or t.scope == 'global' or current_user.is_super_admin):
+                            selected_template = t
                     
-                    # 2. Try default template if none selected or valid
                     if not selected_template and current_user.company.default_template_id:
-                         t = DriveFolderTemplate.query.get(current_user.company.default_template_id)
-                         if t:
-                             # Re-check permissions
-                             is_own = t.company_id == current_user.company_id
-                             is_global_allowed = t.scope == 'global' and \
-                                 current_user.company.allowed_global_template_ids and \
-                                 t.id in current_user.company.allowed_global_template_ids
-                                 
-                             if is_own or is_global_allowed or current_user.is_super_admin:
-                                 selected_template = t
-                                 
+                        t = DriveFolderTemplate.query.get(current_user.company.default_template_id)
+                        if t and (t.company_id == current_user.company_id or t.scope == 'global' or current_user.is_super_admin):
+                            selected_template = t
+                    
                     if selected_template:
                         try:
-                            # Parse if string (legacy safely)
                             import json
                             structure = selected_template.structure_json
-                            if isinstance(structure, str):
-                                structure = json.loads(structure)
-                                
+                            if isinstance(structure, str): structure = json.loads(structure)
                             drive_service.create_folder_structure(drive_integration, folder.get('id'), structure)
-                        except Exception as e:
-                             print(f"Error applying template structure: {e}")
-                             # Fallback to simple structure on error?
+                        except: pass
                     else:
-                        # Legacy Fallback
                         subfolders = ['01 - Contratos', '02 - Briefing', '03 - Mídia', '04 - Relatórios']
                         for sub in subfolders:
-                            try:
-                                drive_service.create_folder(drive_integration, sub, parent_id=folder.get('id'))
+                            try: drive_service.create_folder(drive_integration, sub, parent_id=folder.get('id'))
                             except: pass
                 
                 flash(f'Pasta criada no Google Drive: {folder_name}', 'success')
 
     except Exception as drive_e:
-        import traceback
-        traceback.print_exc()
         flash(f'Erro ao criar pasta no Drive: {str(drive_e)}', 'warning')
-    # -------------------------------
 
-    db.session.commit()
+    # Update WhatsApp messages
+    WhatsAppMessage.query.filter_by(lead_id=lead.id).update({'client_id': client.id, 'lead_id': None})
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao salvar conversão: {str(e)}', 'error')
+        return redirect(url_for('leads.leads'))
     
     # Notify
-    create_notification(
-        user_id=client.account_manager_id,
-        message=f"Novo cliente convertido: {client.name}",
-        link=url_for('clients.client_details', id=client.id),
-        type="success"
-    )
-    
-    return redirect(url_for('clients.client_details', id=client.id))
-
-    # Notify
-    if client.account_manager_id and client.account_manager_id != current_user.id:
+    if client.account_manager_id:
         create_notification(
             user_id=client.account_manager_id,
             company_id=current_user.company_id,
             type='lead_converted',
             title='Lead Convertido',
-            message=f"Lead {lead.name} convertido e atribuído a você."
+            message=f"Lead {lead.name} convertido em Cliente!",
+            link=url_for('clients.client_details', id=client.id)
         )
     
-    WhatsAppMessage.query.filter_by(lead_id=lead.id).update({'client_id': client.id, 'lead_id': None})
-    
-    db.session.commit()
     flash(f'Parabéns! {client.name} agora é um cliente ativo.', 'success')
     return redirect(url_for('clients.client_details', id=client.id))
 

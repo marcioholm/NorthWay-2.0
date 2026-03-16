@@ -29,8 +29,22 @@ def api_response(success=True, data=None, error=None, status=200):
     }
     return jsonify(response), status
 
-def create_notification(user_id, company_id, type, title, message):
+def create_notification(user_id, company_id=None, type='info', title='Notificação', message='', **kwargs):
+    """
+    Creates a notification for a user. 
+    Accepts extra kwargs for compatibility with inconsistent callers.
+    """
     try:
+        # Fallback if title/company_id not provided by old callers
+        if not company_id:
+            from models import User
+            user = User.query.get(user_id)
+            company_id = user.company_id if user else None
+            
+        if not company_id:
+            print(f"Warning: create_notification called without company_id for user {user_id}")
+            return
+
         notification = Notification(
             user_id=user_id,
             company_id=company_id,
