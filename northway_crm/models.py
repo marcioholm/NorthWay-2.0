@@ -1138,6 +1138,11 @@ class AudienceMatrix(db.Model):
     avg_ticket = db.Column(db.String(50), nullable=True) # Average ticket price
     margin = db.Column(db.String(50), nullable=True) # Profit margin
     cac = db.Column(db.String(50), nullable=True) # Customer Acquisition Cost
+    cac_known = db.Column(db.String(10), nullable=True) # "Sim" or "Não"
+    media_investment = db.Column(db.String(50), nullable=True)
+    clients_per_month = db.Column(db.String(50), nullable=True)
+    cac_target = db.Column(db.String(50), nullable=True)
+    financial_notes = db.Column(db.Text, nullable=True)
     external_token = db.Column(db.String(36), unique=True, nullable=True, default=lambda: str(uuid.uuid4())) # Token for external access
     
     # Logging / Acceptance fields

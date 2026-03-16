@@ -4271,40 +4271,51 @@ ${dateHeader}
             </div>
         </div>
 
-        <!-- Wizard Body -->
-        <div class="flex-1 overflow-y-auto p-8" id="wizard-body">
-            <!-- Step 0: Product & Service -->
-            <div class="step-pane space-y-8" data-step="0">
-                <div class="max-w-xl mx-auto text-center space-y-4">
-                    <h3 class="text-3xl font-black text-gray-900 leading-tight">Identificação do Projeto</h3>
-                    <p class="text-gray-500 font-medium">Quem é o cliente e qual o foco desta análise?
-                    </p>
+        <!-- Step 0: Product & Service -->
+        <div class="step-pane space-y-8" data-step="0">
+            <div class="max-w-xl mx-auto text-center space-y-4">
+                <h3 class="text-3xl font-black text-gray-900 leading-tight">Identidade Visual e Informações Básicas</h3>
+                <p class="text-gray-500 font-medium">Como se chama o produto ou serviço?</p>
+                <div class="mt-4 flex justify-center">
+                    <button type="button" id="btn-add-persona-init" onclick="addPersona()"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        + Adicionar Persona
+                    </button>
                 </div>
-                <div class="max-w-md mx-auto">
-                    <div class="space-y-6">
-                        <div class="space-y-2">
-                            <label
-                                class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Empresa/Negócio</label>
-                            <input type="text" id="matrix-business-name" value="{{ client.name }}" readonly
-                                class="w-full px-6 py-4 bg-gray-100 border-none rounded-2xl font-bold text-gray-400 cursor-not-allowed">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-red-600 uppercase tracking-widest ml-4">Produto ou
-                                Serviço Foco</label>
-                            <input type="text" id="matrix-product-name" placeholder="Ex: Assessoria de Marketing 360"
-                                class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-northway-red rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-red-500/5">
-                        </div>
+            </div>
+            <div class="max-w-md mx-auto">
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label
+                            class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Empresa/Negócio</label>
+                        <input type="text" id="matrix-business-name" value="{{ client.name }}" readonly
+                            class="w-full px-6 py-4 bg-gray-100 border-none rounded-2xl font-bold text-gray-400 cursor-not-allowed">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-red-600 uppercase tracking-widest ml-4">Produto ou
+                            Serviço Foco</label>
+                        <input type="text" id="matrix-product-name" placeholder="Ex: Assessoria de Marketing 360"
+                            class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-northway-red rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-red-500/5">
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Steps 1-4: Dynamic Audience Psychographics -->
         {% for i in range(1, 5) %}
-        <div class="step-pane hidden space-y-8" data-step="{{ i }}">
+        <div class="step-pane hidden space-y-8 persona-step" data-step="{{ i }}" data-persona-index="{{ i - 1 }}">
             <div class="max-w-xl mx-auto text-center space-y-2">
                 <span class="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">Público {{ i }}</span>
                 <input type="text" id="public-name-{{ i }}" placeholder="Dê um nome a este público (Ex: Empresários)"
                     class="block mx-auto text-center text-3xl font-black text-gray-900 leading-tight bg-transparent border-none outline-none focus:ring-0 placeholder:text-gray-300">
+                <div class="mt-4 flex justify-center gap-3">
+                    <button type="button" onclick="addPersona()" class="btn-add-persona px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        + Adicionar Persona
+                    </button>
+                    <button type="button" onclick="removePersona({{ i - 1 }})" class="btn-remove-persona px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                        - Remover Persona
+                    </button>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
@@ -4356,6 +4367,7 @@ ${dateHeader}
                         placeholder="Como você quebra?"></textarea>
                 </div>
             </div>
+            </div>
         </div>
         {% endfor %}
 
@@ -4363,11 +4375,11 @@ ${dateHeader}
         <div class="step-pane hidden space-y-8" data-step="5">
             <div class="max-w-xl mx-auto text-center space-y-4">
                 <h3 class="text-3xl font-black text-gray-900 leading-tight">Demográficos e Poder de Compra</h3>
-                <p class="text-gray-500 font-medium">Quanto ganha e qual o perfil econômico dos seus 4 públicos?</p>
+                <p class="text-gray-500 font-medium">Quanto ganha e qual o perfil econômico dos seus públicos?</p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto">
                 {% for i in range(1, 5) %}
-                <div class="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 space-y-4">
+                <div class="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 space-y-4 persona-demo-box">
                     <h4 class="text-xs font-black text-gray-900 uppercase tracking-tighter" id="demographic-name-{{ i }}">Público {{ i }}</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
@@ -4415,28 +4427,69 @@ ${dateHeader}
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
                         <label class="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-4">Ticket Médio (R$)</label>
-                        <input type="text" id="matrix-avg-ticket" placeholder="Ex: 5.000,00"
+                        <input type="text" id="matrix-avg-ticket" placeholder="Ex: 5.000,00" oninput="updateFinancialCalculations()"
                             class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-blue-500 rounded-2xl font-bold text-gray-900 transition-all outline-none">
                     </div>
                     <div class="space-y-2">
                         <label class="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-4">Margem Operacional (%)</label>
-                        <input type="text" id="matrix-margin" placeholder="Ex: 30%"
+                        <input type="text" id="matrix-margin" placeholder="Ex: 30%" oninput="updateFinancialCalculations()"
                             class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-orange-500 rounded-2xl font-bold text-gray-900 transition-all outline-none">
                     </div>
                 </div>
+
+                <!-- CAC Known Toggle -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
+                    <span class="text-sm font-bold text-gray-700">CAC atual conhecido?</span>
+                    <div class="flex gap-2 p-1 bg-white rounded-xl shadow-sm">
+                        <button type="button" id="btn-cac-known-yes" onclick="toggleCacKnown(true)" class="px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-gray-400 hover:text-gray-600">Sim</button>
+                        <button type="button" id="btn-cac-known-no" onclick="toggleCacKnown(false)" class="px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-northway-red text-white">Não</button>
+                        <input type="hidden" id="matrix-cac-known" value="Não">
+                    </div>
+                </div>
+
+                <!-- CAC Known: Yes -->
+                <div id="section-cac-real" class="hidden animate-fade-in space-y-2">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">CAC Real (R$)</label>
+                    <input type="text" id="matrix-cac" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300" placeholder="Ex: 150,00">
+                </div>
+
+                <!-- CAC Known: No (Simulation) -->
+                <div id="section-cac-sim" class="space-y-4 animate-fade-in">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Inves. Mídia (R$)</label>
+                            <input type="text" id="matrix-media-investment" oninput="updateFinancialCalculations()" class="w-full px-5 py-3 bg-blue-50/50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-bold text-center" placeholder="Ex: 5.000,00">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Clientes/Mês</label>
+                            <input type="text" id="matrix-clients-month" oninput="updateFinancialCalculations()" class="w-full px-5 py-3 bg-blue-50/50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-bold text-center" placeholder="Ex: 50">
+                        </div>
+                    </div>
+                    <div class="p-4 bg-blue-600 rounded-2xl text-white flex justify-between items-center shadow-lg shadow-blue-200">
+                        <span class="text-[10px] font-black uppercase tracking-widest opacity-80">CAC Calculado (R$)</span>
+                        <span class="text-xl font-black" id="display-calculated-cac">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Target CAC -->
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">CAC Alvo (Desejado)</label>
+                    <input type="text" id="matrix-cac-target" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300" placeholder="Ex: 120,00">
+                </div>
+
                 <div class="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
                      <div class="absolute -top-12 -right-12 w-32 h-32 bg-northway-red rounded-full opacity-20 blur-2xl"></div>
-                     <div class="relative z-10">
-                        <label class="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
-                            <i data-lucide="target" class="w-4 h-4 text-northway-red"></i>
-                            CAC Máximo Desejado (R$)
-                        </label>
-                        <input type="text" id="matrix-cac" placeholder="Ex: 150,00"
-                            class="w-full bg-white/10 border-2 border-white/20 rounded-2xl px-6 py-5 text-3xl font-black text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-northway-red transition-all">
-                        <p class="text-[10px] text-gray-400 mt-4 leading-relaxed font-bold opacity-70">
-                            CAC: Custo de Aquisição de Cliente. É o quanto você está disposto a investir para trazer um novo cliente.
-                        </p>
+                     <div class="relative z-10 flex flex-col items-center text-center">
+                        <span class="text-[10px] font-black text-northway-red uppercase tracking-[0.2em] mb-4">Limite de Segurança</span>
+                        <h3 class="text-3xl font-black mb-1" id="display-stop-loss">R$ 0,00</h3>
+                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">CAC Máximo / Stop Loss</p>
+                        <p class="text-[8px] text-gray-600 mt-4 leading-relaxed">Cálculo baseado em Margem de Contribuição Estimada × Ticket Médio</p>
                      </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Observações Financeiras</label>
+                    <textarea id="matrix-financial-notes" rows="3" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none placeholder:text-gray-300" placeholder="Algum detalhe importante sobre os custos ou métricas?"></textarea>
                 </div>
             </div>
         </div>
@@ -4599,66 +4652,178 @@ ${dateHeader}
         }, 300);
     }
 
-    function showStep(step) {
-        currentMatrixStep = step;
-        const panes = document.querySelectorAll('.step-pane');
-        panes.forEach(p => p.classList.add('hidden'));
-        document.querySelector(`.step-pane[data-step="${step}"]`).classList.remove('hidden');
+    let numAudiences = 4;
 
-        // Update Header
-        const progress = ((step + 1) / 9) * 100;
-        document.getElementById('matrix-progress').style.width = `${progress}%`;
-
-        const labels = [
-            "Identificação",
-            "Público 1",
-            "Público 2",
-            "Público 3",
-            "Público 4",
-            "Demográficos",
-            "Financeiro",
-            "Tom de Voz",
-            "Finalização"
-        ];
-        document.getElementById('wizard-subtitle').textContent = `Passo ${step + 1} de 9 • ${labels[step]}`;
-
-        // Update Buttons
-        const btnPrev = document.getElementById('btn-prev');
-        const btnNext = document.getElementById('btn-next');
-        const btnFinish = document.getElementById('btn-finish');
-
-        if (step === 0) {
-            btnPrev.classList.add('opacity-0', 'pointer-events-none');
-        } else {
-            btnPrev.classList.remove('opacity-0', 'pointer-events-none');
-        }
-
-        if (step === 8) {
-            btnNext.classList.add('hidden');
-            btnFinish.classList.remove('hidden');
-            generateMatrixPreview();
-        } else {
-            btnNext.classList.remove('hidden');
-            btnFinish.classList.add('hidden');
-        }
-
-        // Sync Public Names to displays
-        if (step >= 1) {
-            for (let i = 1; i <= 4; i++) {
-                const val = document.getElementById(`public-name-${i}`).value || `Público ${i}`;
-                document.querySelectorAll(`.public-name-display-${i}`).forEach(el => el.textContent = val);
-                const demoLabel = document.getElementById(`demographic-name-${i}`);
-                if (demoLabel) demoLabel.textContent = val;
+    function addPersona() {
+        if (numAudiences < 4) {
+            numAudiences++;
+            // Show the next persona step if we are on a persona step
+            if (currentMatrixStep >= 1 && currentMatrixStep <= 4) {
+                // If we are currently on the "last" persona, maybe stay or move?
+                // For simplicity, just update the labels and buttons visibility
+                showStep(currentMatrixStep);
             }
         }
     }
 
+    function removePersona(index) {
+        if (numAudiences > 1) {
+            // Clear the data for the persona being "removed" (moved to end)
+            // Or just shift them? Shifting is better for data preservation.
+            for (let i = index + 1; i < numAudiences; i++) {
+                copyPersonaData(i + 1, i);
+            }
+            numAudiences--;
+            if (currentMatrixStep > numAudiences) {
+                showStep(numAudiences);
+            } else {
+                showStep(currentMatrixStep);
+            }
+        }
+    }
+
+    function copyPersonaData(from, to) {
+        const fields = ['name', 'pain', 'transf', 'obj', 'break', 'age', 'income', 'profile'];
+        fields.forEach(f => {
+            const fromEl = document.getElementById(`public-${f}-${from}`);
+            const toEl = document.getElementById(`public-${f}-${to}`);
+            if (fromEl && toEl) toEl.value = fromEl.value;
+        });
+    }
+
+    function toggleCacKnown(isKnown) {
+        const input = document.getElementById('matrix-cac-known');
+        const sectionReal = document.getElementById('section-cac-real');
+        const sectionSim = document.getElementById('section-cac-sim');
+        const btnYes = document.getElementById('btn-cac-known-yes');
+        const btnNo = document.getElementById('btn-cac-known-no');
+
+        if (isKnown) {
+            input.value = 'Sim';
+            sectionReal.classList.remove('hidden');
+            sectionSim.classList.add('hidden');
+            btnYes.classList.add('bg-northway-red', 'text-white');
+            btnYes.classList.remove('text-gray-400', 'hover:text-gray-600');
+            btnNo.classList.remove('bg-northway-red', 'text-white');
+            btnNo.classList.add('text-gray-400', 'hover:text-gray-600');
+        } else {
+            input.value = 'Não';
+            sectionReal.classList.add('hidden');
+            sectionSim.classList.remove('hidden');
+            btnNo.classList.add('bg-northway-red', 'text-white');
+            btnNo.classList.remove('text-gray-400', 'hover:text-gray-600');
+            btnYes.classList.remove('bg-northway-red', 'text-white');
+            btnYes.classList.add('text-gray-400', 'hover:text-gray-600');
+        }
+        updateFinancialCalculations();
+    }
+
+    function updateFinancialCalculations() {
+        // CAC Calculation
+        const mediaVal = document.getElementById('matrix-media-investment').value;
+        const clientsVal = document.getElementById('matrix-clients-month').value;
+
+        const media = parseFloat(mediaVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        const clients = parseInt(clientsVal) || 0;
+
+        let calculatedCac = 0;
+        if (clients > 0) {
+            calculatedCac = media / clients;
+        }
+        document.getElementById('display-calculated-cac').textContent = calculatedCac.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        // Stop Loss Calculation
+        const ticketVal = document.getElementById('matrix-avg-ticket').value;
+        const marginVal = document.getElementById('matrix-margin').value;
+
+        const ticket = parseFloat(ticketVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        const margin = parseFloat(marginVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+
+        const stopLoss = ticket * (margin / 100);
+        document.getElementById('display-stop-loss').textContent = stopLoss.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function showStep(step) {
+        currentMatrixStep = step;
+        document.querySelectorAll('.step-pane').forEach(el => el.classList.add('hidden'));
+        document.querySelector(`.step-pane[data-step="${step}"]`).classList.remove('hidden');
+
+        // Dynamic labels based on numAudiences
+        const labels = ["Identificação"];
+        for (let i = 1; i <= numAudiences; i++) labels.push(`Persona ${i}`);
+        labels.push("Demográficos", "Financeiro", "Tom de Voz", "Finalização");
+
+        // The actual index of "Demográficos" etc depends on numAudiences
+        // But for UI simplicity in the loop, we used fixed data-step values: 5, 6, 7, 8
+        // We need to map 'logical' steps to 'physical' data-step values.
+
+        let physicalStep = step;
+        if (step > numAudiences && step <= 4) {
+            // This case shouldn't happen if we skip correctly
+        }
+
+        const totalLogicalSteps = numAudiences + 4; // Intro (0) + N Personas + 4 final
+        const progress = ((step) / totalLogicalSteps) * 100;
+        document.getElementById('matrix-progress').style.width = `${progress}%`;
+
+        // Update Nav Labels
+        let currentLabel = labels[step];
+        if (step === numAudiences + 1) currentLabel = "Demográficos";
+        if (step === numAudiences + 2) currentLabel = "Financeiro";
+        if (step === numAudiences + 3) currentLabel = "Tom de Voz";
+        if (step === numAudiences + 4) currentLabel = "Finalização";
+
+        document.getElementById('wizard-subtitle').textContent = `Passo ${step + 1} de ${totalLogicalSteps + 1} • ${currentLabel}`;
+
+        // Buttons Visibility
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnFinish = document.getElementById('btn-finish');
+
+        btnPrev.classList.toggle('opacity-0', step === 0);
+        btnPrev.classList.toggle('pointer-events-none', step === 0);
+
+        const isLast = (step === totalLogicalSteps);
+        btnNext.classList.toggle('hidden', isLast);
+        btnFinish.classList.toggle('hidden', !isLast);
+
+        if (isLast) generateMatrixPreview();
+
+        // Control Persona buttons visibility
+        document.querySelectorAll('.btn-add-persona').forEach(btn => btn.classList.toggle('hidden', numAudiences >= 4));
+        document.querySelectorAll('.btn-remove-persona').forEach(btn => btn.classList.toggle('hidden', numAudiences <= 1));
+        document.getElementById('btn-add-persona-init').classList.toggle('hidden', numAudiences >= 4);
+
+        // Sync Public Names to displays
+        for (let i = 1; i <= 4; i++) {
+            const val = document.getElementById(`public-name-${i}`).value || `Público ${i}`;
+            document.querySelectorAll(`.public-name-display-${i}`).forEach(el => el.textContent = val);
+            const demoLabel = document.getElementById(`demographic-name-${i}`);
+            if (demoLabel) demoLabel.textContent = val;
+
+            // Hide/Show persona items in Demographics Step 5
+            const demoBox = document.querySelectorAll('.persona-demo-box')[i - 1];
+            if (demoBox) demoBox.classList.toggle('hidden', i > numAudiences);
+        }
+    }
+
     function nextStep() {
-        if (currentMatrixStep < 8) showStep(currentMatrixStep + 1);
+        let next = currentMatrixStep + 1;
+        // If we just finished personas, skip remaining fixed persona steps to Demographic (Step 5)
+        if (currentMatrixStep === numAudiences && next <= 4) {
+            next = 5;
+        }
+        if (next <= 8) showStep(next);
+        else finishMatrix();
     }
 
     function prevStep() {
-        if (currentMatrixStep > 0) showStep(currentMatrixStep - 1);
+        let prev = currentMatrixStep - 1;
+        // If we are on Demographic (Step 5), go back to last active persona
+        if (currentMatrixStep === 5 && prev >= 1) {
+            prev = numAudiences;
+        }
+        if (prev >= 0) showStep(prev);
     }
 
     function resetMatrixInputs() {
@@ -4666,9 +4831,16 @@ ${dateHeader}
         document.getElementById('matrix-avg-ticket').value = '';
         document.getElementById('matrix-margin').value = '';
         document.getElementById('matrix-cac').value = '';
+        document.getElementById('matrix-cac-known').value = 'Não';
+        document.getElementById('matrix-media-investment').value = '';
+        document.getElementById('matrix-clients-month').value = '';
+        document.getElementById('matrix-cac-target').value = '';
+        document.getElementById('matrix-financial-notes').value = '';
         document.getElementById('matrix-tone-of-voice').value = '';
-        document.getElementById('matrix-share-section').classList.add('hidden');
-        document.getElementById('matrix-share-url').value = '';
+
+        numAudiences = 1; // Default
+        toggleCacKnown(false);
+
         for (let i = 1; i <= 4; i++) {
             document.getElementById(`public-name-${i}`).value = '';
             document.getElementById(`public-pain-${i}`).value = '';
@@ -4686,18 +4858,15 @@ ${dateHeader}
         document.getElementById('matrix-avg-ticket').value = data.avg_ticket || '';
         document.getElementById('matrix-margin').value = data.margin || '';
         document.getElementById('matrix-cac').value = data.cac || '';
+        document.getElementById('matrix-cac-known').value = data.cac_known || 'Não';
+        document.getElementById('matrix-media-investment').value = data.media_investment || '';
+        document.getElementById('matrix-clients-month').value = data.clients_per_month || '';
+        document.getElementById('matrix-cac-target').value = data.cac_target || '';
+        document.getElementById('matrix-financial-notes').value = data.financial_notes || '';
         document.getElementById('matrix-tone-of-voice').value = data.tone_of_voice || '';
 
-        if (data.external_token) {
-            const shareUrl = `${window.location.origin}/external/matrix/${data.external_token}`;
-            document.getElementById('matrix-share-url').value = shareUrl;
-            document.getElementById('matrix-share-section').classList.remove('hidden');
-            document.getElementById('btn-generate-share').classList.add('hidden');
-        } else if (editingMatrixId) {
-            document.getElementById('matrix-share-section').classList.remove('hidden');
-            document.getElementById('btn-generate-share').classList.remove('hidden');
-            document.getElementById('matrix-share-url').value = 'Gerar link para enviar...';
-        }
+        toggleCacKnown(data.cac_known === 'Sim');
+        numAudiences = data.audiences.length || 1;
 
         data.audiences.forEach((aud, idx) => {
             const i = idx + 1;
@@ -4711,15 +4880,12 @@ ${dateHeader}
             document.getElementById(`public-profile-${i}`).value = aud.profile || '';
         });
 
-        // If it was filled by someone, show it in subtitle for context if editing
-        if (data.filled_by) {
-            document.getElementById('wizard-subtitle').textContent += ` • Preenchido por: ${data.filled_by}`;
-        }
+        updateFinancialCalculations();
     }
 
     function gatherMatrixData() {
         const audiences = [];
-        for (let i = 1; i <= 4; i++) {
+        for (let i = 1; i <= numAudiences; i++) {
             audiences.push({
                 name: document.getElementById(`public-name-${i}`).value || `Público ${i}`,
                 pain: document.getElementById(`public-pain-${i}`).value,
@@ -4736,8 +4902,13 @@ ${dateHeader}
             avg_ticket: document.getElementById('matrix-avg-ticket').value,
             margin: document.getElementById('matrix-margin').value,
             cac: document.getElementById('matrix-cac').value,
+            cac_known: document.getElementById('matrix-cac-known').value,
+            media_investment: document.getElementById('matrix-media-investment').value,
+            clients_per_month: document.getElementById('matrix-clients-month').value,
+            cac_target: document.getElementById('matrix-cac-target').value,
+            financial_notes: document.getElementById('matrix-financial-notes').value,
             tone_of_voice: document.getElementById('matrix-tone-of-voice').value,
-            filled_by: `Equipe {{ current_user.name }}`, // CRM User
+            filled_by: `Equipe {{ current_user.name }}`,
             audiences: audiences
         };
     }

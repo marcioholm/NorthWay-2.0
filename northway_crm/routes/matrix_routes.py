@@ -23,6 +23,11 @@ def create_matrix(client_id):
         avg_ticket=data.get('avg_ticket', ''),
         margin=data.get('margin', ''),
         cac=data.get('cac', ''),
+        cac_known=data.get('cac_known', 'Não'),
+        media_investment=data.get('media_investment', ''),
+        clients_per_month=data.get('clients_per_month', ''),
+        cac_target=data.get('cac_target', ''),
+        financial_notes=data.get('financial_notes', ''),
         filled_by=data.get('filled_by', f"Equipe {current_user.name}"),
         created_at=get_now_br(),
         updated_at=get_now_br()
@@ -55,6 +60,11 @@ def get_matrix(matrix_id):
         'avg_ticket': matrix.avg_ticket,
         'margin': matrix.margin,
         'cac': matrix.cac,
+        'cac_known': matrix.cac_known,
+        'media_investment': matrix.media_investment,
+        'clients_per_month': matrix.clients_per_month,
+        'cac_target': matrix.cac_target,
+        'financial_notes': matrix.financial_notes,
         'external_token': matrix.external_token,
         'created_at': matrix.created_at.isoformat() if matrix.created_at else None,
         'updated_at': matrix.updated_at.isoformat() if matrix.updated_at else None
@@ -75,6 +85,11 @@ def update_matrix(matrix_id):
     matrix.avg_ticket = data.get('avg_ticket', matrix.avg_ticket)
     matrix.margin = data.get('margin', matrix.margin)
     matrix.cac = data.get('cac', matrix.cac)
+    matrix.cac_known = data.get('cac_known', matrix.cac_known)
+    matrix.media_investment = data.get('media_investment', matrix.media_investment)
+    matrix.clients_per_month = data.get('clients_per_month', matrix.clients_per_month)
+    matrix.cac_target = data.get('cac_target', matrix.cac_target)
+    matrix.financial_notes = data.get('financial_notes', matrix.financial_notes)
     matrix.filled_by = data.get('filled_by', matrix.filled_by)
     matrix.updated_at = get_now_br()
     
@@ -120,6 +135,11 @@ def update_external_matrix(token):
     matrix.avg_ticket = data.get('avg_ticket', matrix.avg_ticket)
     matrix.margin = data.get('margin', matrix.margin)
     matrix.cac = data.get('cac', matrix.cac)
+    matrix.cac_known = data.get('cac_known', matrix.cac_known)
+    matrix.media_investment = data.get('media_investment', matrix.media_investment)
+    matrix.clients_per_month = data.get('clients_per_month', matrix.clients_per_month)
+    matrix.cac_target = data.get('cac_target', matrix.cac_target)
+    matrix.financial_notes = data.get('financial_notes', matrix.financial_notes)
     matrix.filled_by = data.get('filled_by', matrix.filled_by)
     
     # Capture security audit data
@@ -152,6 +172,11 @@ def public_save_new_matrix(token):
         avg_ticket=data.get('avg_ticket', ''),
         margin=data.get('margin', ''),
         cac=data.get('cac', ''),
+        cac_known=data.get('cac_known', 'Não'),
+        media_investment=data.get('media_investment', ''),
+        clients_per_month=data.get('clients_per_month', ''),
+        cac_target=data.get('cac_target', ''),
+        financial_notes=data.get('financial_notes', ''),
         filled_by=data.get('filled_by', ''),
         accepted_ip=request.remote_addr,
         accepted_at=get_now_br(),
