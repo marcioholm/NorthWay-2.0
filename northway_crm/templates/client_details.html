@@ -5338,30 +5338,39 @@ ${dateHeader}
     }
 
     function gatherMatrixData() {
+        console.log('Gathering matrix data...');
         const audiences = [];
         for (let i = 1; i <= numAudiences; i++) {
             const nameEl = document.getElementById(`public-name-${i}`);
-            if (!nameEl) continue;
-            audiences.push({
-                name: nameEl.value || `Público ${i}`,
-                pain: document.getElementById(`public-pain-${i}`)?.value || '',
-                transf: document.getElementById(`public-transf-${i}`)?.value || '',
-                obj: document.getElementById(`public-obj-${i}`)?.value || '',
-                break: document.getElementById(`public-break-${i}`)?.value || '',
-                age: document.getElementById(`public-age-${i}`)?.value || '',
-                income: document.getElementById(`public-income-${i}`)?.value || '',
-                profile: document.getElementById(`public-profile-${i}`)?.value || ''
-            });
+            // Safety: Only gather if the element exists in current step or DOM
+            if (nameEl) {
+                audiences.push({
+                    name: nameEl.value || `Público ${i}`,
+                    pain: document.getElementById(`public-pain-${i}`)?.value || '',
+                    transf: document.getElementById(`public-transf-${i}`)?.value || '',
+                    obj: document.getElementById(`public-obj-${i}`)?.value || '',
+                    break: document.getElementById(`public-break-${i}`)?.value || '',
+                    age: document.getElementById(`public-age-${i}`)?.value || '',
+                    income: document.getElementById(`public-income-${i}`)?.value || '',
+                    profile: document.getElementById(`public-profile-${i}`)?.value || ''
+                });
+            } else {
+                console.warn(`Audience element public-name-${i} not found, skipping.`);
+            }
         }
 
         // Calculate actual CAC if known
-        const mediaVal = document.getElementById('matrix-media-investment').value;
-        const clientsVal = document.getElementById('matrix-clients-month').value;
+        const mediaEl = document.getElementById('matrix-media-investment');
+        const clientsEl = document.getElementById('matrix-clients-month');
+        
+        const mediaVal = mediaEl ? mediaEl.value : "0";
+        const clientsVal = clientsEl ? clientsEl.value : "0";
+        
         const media = parseFloat(mediaVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
         const clients = parseInt(clientsVal) || 0;
         const calculatedCac = clients > 0 ? (media / clients).toFixed(2) : "0.00";
 
-        return {
+        const data = {
             product: document.getElementById('matrix-product-name')?.value || 'Produto',
             avg_ticket: document.getElementById('matrix-avg-ticket')?.value || 'R$ 0,00',
             margin: document.getElementById('matrix-margin')?.value || '0%',
@@ -5376,6 +5385,8 @@ ${dateHeader}
             client_name: `{{ client.name }}`,
             audiences: audiences
         };
+        console.log('Data gathered:', data);
+        return data;
     }
 
     function generateShareUrl() {
@@ -5475,28 +5486,58 @@ ${dateHeader}
     }
 
     function triggerMatrixPDF() {
-        console.log('PDF Triggered. ViewOnly:', isViewOnly, 'ID:', editingMatrixId);
+        console.log('--- PDF Generation Triggered ---');
+        const btn = document.getElementById('btn-print-matrix');
+        const originalHtml = btn ? btn.innerHTML : '';
+        
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Gerando...</span>';
+            lucide.createIcons();
+        }
+
+        console.log('ViewOnly:', isViewOnly, 'ID:', editingMatrixId);
+        
+        const finalize = () => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                lucide.createIcons();
+            }
+        };
+
         if (isViewOnly && editingMatrixId) {
-            downloadMatrixPDF(editingMatrixId);
+            downloadMatrixPDF(editingMatrixId, finalize);
         } else {
-            // Preview mode or rascunho: gather current data and download
-            const currentData = gatherMatrixData();
-            processMatrixPDF(currentData);
+            console.log('Preview/Draft mode: gathering current data...');
+            try {
+                const currentData = gatherMatrixData();
+                processMatrixPDF(currentData).finally(finalize);
+            } catch (err) {
+                console.error('Gather data error:', err);
+                alert('Erro ao processar dados da matriz.');
+                finalize();
+            }
         }
     }
 
-    function downloadMatrixPDF(matrixId) {
+    function downloadMatrixPDF(matrixId, onComplete) {
+        console.log(`Fetching matrix data for ID: ${matrixId}`);
         fetch(`/matrix/${matrixId}`)
             .then(res => {
                 if (!res.ok) throw new Error('Não foi possível carregar os dados da matriz.');
                 return res.json();
             })
             .then(data => {
-                processMatrixPDF(data);
+                console.log('Matrix data fetched successfully.');
+                processMatrixPDF(data).finally(() => {
+                    if (onComplete) onComplete();
+                });
             })
             .catch(err => {
                 console.error('Fetch Error:', err);
                 alert('Erro ao buscar dados da matriz: ' + err.message);
+                if (onComplete) onComplete();
             });
     }
 
@@ -5516,18 +5557,23 @@ ${dateHeader}
     }
 
     async function processMatrixPDF(data) {
+        console.log('Starting processMatrixPDF...');
         if (!data || !data.audiences) {
             alert('Dados da matriz incompletos para gerar o PDF.');
-            return;
+            return Promise.reject('Dados da matriz incompletos.'); // Return a rejected promise
         }
 
         try {
+            console.log('Ensuring PDF library...');
             await ensurePdfLibrary();
+            console.log('PDF library ready.');
         } catch (e) {
+            console.error('Library load failed:', e);
             alert(e.message);
-            return;
+            return Promise.reject(e); // Return a rejected promise
         }
 
+        console.log('Generating audience cards...');
         const audienceCards = data.audiences.map((aud, idx) => `
             <div style="background: white; border-radius: 20px; border: 1px solid #f1f5f9; padding: 30px; margin-bottom: 25px; page-break-inside: avoid; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;">
@@ -5614,12 +5660,15 @@ ${dateHeader}
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
         };
         
+        console.log('Attaching tempDiv to DOM...');
         tempDiv.style.position = 'absolute';
         tempDiv.style.left = '-9999px';
         tempDiv.style.top = '0';
         document.body.appendChild(tempDiv);
-        
-        html2pdf().from(tempDiv).set(opt).save().then(() => {
+
+        console.log('Calling html2pdf().save()...');
+        return html2pdf().from(tempDiv).set(opt).save().then(() => {
+            console.log('PDF generation complete. Cleaning up...');
             document.body.removeChild(tempDiv);
         }).catch(err => {
             console.error('PDF Generation Error:', err);
