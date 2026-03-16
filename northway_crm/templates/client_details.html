@@ -1036,84 +1036,77 @@
                                 </div>
                             </div>
 
-                            <div id="matrices-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div id="matrices-list">
                                 {% if client.audience_matrices %}
-                                {% for matrix in client.audience_matrices %}
-                                <div
-                                    class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
-                                    <div class="relative z-10">
-                                        <div class="flex justify-between items-start mb-4">
-                                            <div class="p-2.5 bg-red-50 rounded-xl text-northway-red">
-                                                <i data-lucide="layout-grid" class="w-5 h-5"></i>
-                                            </div>
-                                            <span
-                                                class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider {{ 'bg-green-100 text-green-700' if matrix.status == 'concluido' else 'bg-amber-100 text-amber-700' }}">
-                                                {{ 'Concluído' if matrix.status == 'concluido' else 'Rascunho' }}
-                                            </span>
-                                        </div>
-
-                                        <h4
-                                            class="font-black text-gray-900 mb-1 group-hover:text-northway-red transition-colors capitalize">
-                                            {{ matrix.product or 'Produto não definido' }}</h4>
-                                        <p class="text-[10px] text-gray-400 uppercase font-black tracking-tight mb-2">
-                                            Criado em {{ matrix.created_at.strftime('%d/%m/%Y') }}</p>
-
-                                        {% if matrix.filled_by %}
-                                        <div class="flex items-center gap-1.5 mb-6">
-                                            <div
-                                                class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
-                                                <i data-lucide="user" class="w-3 h-3"></i>
-                                            </div>
-                                            <span
-                                                class="text-[10px] font-black text-gray-500 uppercase tracking-tighter">
-                                                Resp: {{ matrix.filled_by }}
-                                            </span>
-                                        </div>
-                                        {% else %}
-                                        <div class="mb-6"></div>
-                                        {% endif %}
-
-                                        <div class="flex items-center justify-between pt-4 border-t border-gray-50">
-                                            <div class="flex gap-3">
-                                                <button type="button" onclick="viewMatrix('{{ matrix.id }}')"
-                                                    class="text-xs font-black text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-1">
-                                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i> Ver
-                                                </button>
-                                                <button type="button" onclick="editMatrix('{{ matrix.id }}')"
-                                                    class="text-xs font-black text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">
-                                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
-                                                </button>
-                                                <button type="button" onclick="deleteMatrix('{{ matrix.id }}')"
-                                                    class="text-xs font-black text-red-600 hover:text-red-800 transition-colors flex items-center gap-1">
-                                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Excluir
-                                                </button>
-                                            </div>
-                                            <div class="flex items-center gap-2">
-                                                <button type="button"
-                                                    onclick="copyMatrixLink('{{ matrix.external_token }}')"
-                                                    class="p-2 bg-blue-50 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition-all"
-                                                    title="Copiar Link para Cliente">
-                                                    <i data-lucide="share-2" class="w-4 h-4"></i>
-                                                </button>
-                                                <button type="button" onclick="downloadMatrixPDF('{{ matrix.id }}')"
-                                                    class="p-2 bg-gray-50 text-gray-400 hover:bg-northway-red hover:text-white rounded-lg transition-all"
-                                                    title="Baixar PDF">
-                                                    <i data-lucide="download" class="w-4 h-4"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="overflow-hidden rounded-2xl border border-gray-100">
+                                    <table class="w-full text-sm">
+                                        <thead>
+                                            <tr class="bg-gray-50 border-b border-gray-100">
+                                                <th class="px-5 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Produto</th>
+                                                <th class="px-5 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                                                <th class="px-5 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Responsável</th>
+                                                <th class="px-5 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Data</th>
+                                                <th class="px-5 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-50">
+                                        {% for matrix in client.audience_matrices %}
+                                        <tr class="hover:bg-gray-50/50 transition-colors">
+                                            <td class="px-5 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-8 h-8 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                        <i data-lucide="layout-grid" class="w-4 h-4 text-northway-red"></i>
+                                                    </div>
+                                                    <span class="font-bold text-gray-900 text-sm capitalize">{{ matrix.product or 'Produto não definido' }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-5 py-4">
+                                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider {{ 'bg-green-100 text-green-700' if matrix.status == 'concluido' else 'bg-amber-100 text-amber-700' }}">
+                                                    {{ 'Concluído' if matrix.status == 'concluido' else 'Rascunho' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-5 py-4 hidden md:table-cell">
+                                                <span class="text-xs text-gray-500 font-medium">{{ matrix.filled_by or '—' }}</span>
+                                            </td>
+                                            <td class="px-5 py-4 hidden md:table-cell">
+                                                <span class="text-xs text-gray-400 font-medium">{{ matrix.created_at.strftime('%d/%m/%Y') }}</span>
+                                            </td>
+                                            <td class="px-5 py-4">
+                                                <div class="flex items-center justify-end gap-1">
+                                                    <button type="button" onclick="viewMatrix('{{ matrix.id }}')"
+                                                        class="px-3 py-1.5 rounded-lg text-[10px] font-black text-gray-600 hover:bg-gray-100 transition-all flex items-center gap-1">
+                                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i> Ver
+                                                    </button>
+                                                    <button type="button" onclick="editMatrix('{{ matrix.id }}')"
+                                                        class="px-3 py-1.5 rounded-lg text-[10px] font-black text-blue-600 hover:bg-blue-50 transition-all flex items-center gap-1">
+                                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
+                                                    </button>
+                                                    <button type="button" onclick="downloadMatrixPDF('{{ matrix.id }}')"
+                                                        class="px-3 py-1.5 rounded-lg text-[10px] font-black text-purple-600 hover:bg-purple-50 transition-all flex items-center gap-1"
+                                                        title="Baixar PDF">
+                                                        <i data-lucide="file-down" class="w-3.5 h-3.5"></i> PDF
+                                                    </button>
+                                                    <button type="button" onclick="copyMatrixLink('{{ matrix.external_token }}')"
+                                                        class="p-1.5 rounded-lg text-blue-400 hover:bg-blue-50 transition-all" title="Copiar Link">
+                                                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                                                    </button>
+                                                    <button type="button" onclick="deleteMatrix('{{ matrix.id }}')"
+                                                        class="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-all" title="Excluir">
+                                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                {% endfor %}
                                 {% else %}
-                                <div
-                                    class="col-span-full py-16 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center">
-                                    <div
-                                        class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 text-gray-300">
+                                <div class="py-16 text-center bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center">
+                                    <div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 text-gray-300">
                                         <i data-lucide="layers" class="w-8 h-8"></i>
                                     </div>
-                                    <p class="text-sm text-gray-500 font-bold">Nenhuma matriz de públicos criada ainda.
-                                    </p>
+                                    <p class="text-sm text-gray-500 font-bold">Nenhuma matriz de públicos criada ainda.</p>
                                 </div>
                                 {% endif %}
                             </div>
@@ -5275,7 +5268,7 @@ ${dateHeader}
     }
 
     function resetMatrixInputs() {
-        const ids = ['matrix-product-name', 'matrix-avg-ticket', 'matrix-margin', 'matrix-cac', 'matrix-cac-known', 'matrix-media-investment', 'matrix-clients-month', 'matrix-cac-target', 'matrix-financial-notes', 'matrix-tone-of-voice'];
+        const ids = ['matrix-product-name', 'matrix-avg-ticket', 'matrix-margin', 'matrix-cac-known', 'matrix-media-investment', 'matrix-clients-month', 'matrix-financial-notes', 'matrix-tone-of-voice'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = (id === 'matrix-cac-known' ? 'Não' : '');
@@ -5291,16 +5284,14 @@ ${dateHeader}
     }
 
     function populateMatrixInputs(data) {
-        document.getElementById('matrix-product-name').value = data.product || '';
-        document.getElementById('matrix-avg-ticket').value = data.avg_ticket || '';
-        document.getElementById('matrix-margin').value = data.margin || '';
-        document.getElementById('matrix-cac').value = data.cac || '';
-        document.getElementById('matrix-cac-known').value = data.cac_known || 'Não';
-        document.getElementById('matrix-media-investment').value = data.media_investment || '';
-        document.getElementById('matrix-clients-month').value = data.clients_per_month || '';
-        document.getElementById('matrix-cac-target').value = data.cac_target || '';
-        document.getElementById('matrix-financial-notes').value = data.financial_notes || '';
-        document.getElementById('matrix-tone-of-voice').value = data.tone_of_voice || '';
+        if (document.getElementById('matrix-product-name')) document.getElementById('matrix-product-name').value = data.product || '';
+        if (document.getElementById('matrix-avg-ticket')) document.getElementById('matrix-avg-ticket').value = data.avg_ticket || '';
+        if (document.getElementById('matrix-margin')) document.getElementById('matrix-margin').value = data.margin || '';
+        if (document.getElementById('matrix-cac-known')) document.getElementById('matrix-cac-known').value = data.cac_known || 'Não';
+        if (document.getElementById('matrix-media-investment')) document.getElementById('matrix-media-investment').value = data.media_investment || '';
+        if (document.getElementById('matrix-clients-month')) document.getElementById('matrix-clients-month').value = data.clients_per_month || '';
+        if (document.getElementById('matrix-financial-notes')) document.getElementById('matrix-financial-notes').value = data.financial_notes || '';
+        if (document.getElementById('matrix-tone-of-voice')) document.getElementById('matrix-tone-of-voice').value = data.tone_of_voice || '';
 
         toggleCacKnown(data.cac_known === 'Sim');
         numAudiences = data.audiences.length || 1;
