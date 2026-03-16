@@ -4271,8 +4271,10 @@ ${dateHeader}
             </div>
         </div>
 
-        <!-- Step 0: Product & Service -->
-        <div class="step-pane space-y-8" data-step="0">
+        <!-- Wizard Body -->
+        <div class="flex-1 overflow-y-auto p-8" id="wizard-body">
+            <!-- Step 0: Product & Service -->
+            <div class="step-pane space-y-8" data-step="0">
             <div class="max-w-xl mx-auto text-center space-y-4">
                 <h3 class="text-3xl font-black text-gray-900 leading-tight">Identidade Visual e Informações Básicas</h3>
                 <p class="text-gray-500 font-medium">Como se chama o produto ou serviço?</p>
@@ -4563,7 +4565,7 @@ ${dateHeader}
                 </table>
             </div>
         </div>
-    </div>
+    </div> <!-- End of flex-1 (wizard-body) -->
 
     <!-- Wizard Footer -->
     <div class="p-8 bg-white border-t border-gray-50 flex justify-between items-center">
@@ -4586,8 +4588,8 @@ ${dateHeader}
             </button>
         </div>
     </div>
-</div>
-</div>
+</div> <!-- End of matrixModalContent -->
+</div> <!-- End of matrixWizardModal -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
