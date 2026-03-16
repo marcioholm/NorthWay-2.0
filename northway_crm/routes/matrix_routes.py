@@ -208,3 +208,36 @@ def delete_matrix(matrix_id):
         'status': 'success',
         'message': 'Matriz excluída com sucesso'
     })
+
+@matrix_bp.route('/matrix/<matrix_id>/pdf', methods=['GET'])
+@login_required
+def matrix_pdf_view(matrix_id):
+    matrix = AudienceMatrix.query.get_or_404(matrix_id)
+    if matrix.client.company_id != current_user.company_id:
+        abort(403)
+        
+    data = {
+        'product': matrix.product,
+        'client_name': matrix.client.name,
+        'audiences': matrix.audiences,
+        'tone_of_voice': matrix.tone_of_voice,
+        'avg_ticket': matrix.avg_ticket,
+        'margin': matrix.margin,
+        'cac': matrix.cac,
+        'media_investment': matrix.media_investment,
+        'clients_per_month': matrix.clients_per_month
+    }
+    return render_template('matrix_pdf_model.html', data=data, now_date=get_now_br().strftime('%d/%m/%Y'))
+
+@matrix_bp.route('/matrix/preview_pdf', methods=['POST'])
+@login_required
+def matrix_pdf_preview():
+    # Supports both JSON and Form data for flexibility
+    if request.is_json:
+        data = request.get_json()
+    else:
+        import json
+        data_raw = request.form.get('data')
+        data = json.loads(data_raw) if data_raw else {}
+        
+    return render_template('matrix_pdf_model.html', data=data, now_date=get_now_br().strftime('%d/%m/%Y'))

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matriz Estratégica - {{ data.client_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #ef4444;
+            --secondary: #1e293b;
+            --bg: #f8fafc;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--secondary);
+        }
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 0 auto;
+            background: white;
+            box-sizing: border-box;
+            position: relative;
+        }
+        @media print {
+            body { background: white; }
+            .page { margin: 0; border: none; box-shadow: none; width: 100%; padding: 10mm; }
+            .no-print { display: none; }
+        }
+        .header-card {
+            background: var(--primary);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .header-title {
+            font-size: 24px;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+        .header-subtitle {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        .indicator-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .indicator-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #f1f5f9;
+        }
+        .indicator-label {
+            font-size: 9px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .indicator-value {
+            font-size: 18px;
+            font-weight: 900;
+            color: var(--secondary);
+        }
+        .persona-card {
+            background: white;
+            border: 1px solid #f1f5f9;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+        .persona-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .persona-tag {
+            background: var(--secondary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .persona-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .quadrant-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .quadrant {
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #ddd;
+        }
+        .quad-pain { background: #fff1f2; border-color: #f43f5e; }
+        .quad-transf { background: #f0fdf4; border-color: #22c55e; }
+        .quad-obj { background: #fffcf0; border-color: #eab308; }
+        .quad-break { background: #eff6ff; border-color: #3b82f6; }
+        
+        .quad-title {
+            display: block;
+            font-size: 8px;
+            text-transform: uppercase;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+        .quad-text {
+            font-size: 11px;
+            line-height: 1.5;
+            margin: 0;
+            color: #334155;
+        }
+        .footer {
+            margin-top: 40px;
+            padding: 20px;
+            border-radius: 15px;
+            background: #f1f5f9;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 800;
+            color: #94a3b8;
+            letter-spacing: 1.5px;
+        }
+        .btn-print {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 900;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+            border: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir PDF</button>
+
+    <div class="page" id="pdf-content">
+        <div class="header-card">
+            <div>
+                <div class="header-subtitle">Planejamento Estratégico</div>
+                <h1 class="header-title">MATRIZ DE PÚBLICOS</h1>
+                <div style="margin-top: 5px; font-weight: 600; opacity: 0.9;">{{ data.product }}</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: 900; font-size: 14px; margin-bottom: 4px;">{{ data.client_name }}</div>
+                <div style="font-size: 9px; opacity: 0.7; font-weight: 700;">PROJETO NORTHWAY • {{ now_date }}</div>
+            </div>
+        </div>
+
+        <div class="indicator-grid">
+            <div class="indicator-card">
+                <span class="indicator-label">Ticket Médio</span>
+                <span class="indicator-value">{{ data.avg_ticket or '—' }}</span>
+            </div>
+            <div class="indicator-card">
+                <span class="indicator-label">Margem</span>
+                <span class="indicator-value">{{ data.margin or '—' }}</span>
+            </div>
+            <div class="indicator-card">
+                <span class="indicator-label">CAC Real</span>
+                <span class="indicator-value" style="color: var(--primary);">{{ data.cac or '—' }}</span>
+            </div>
+        </div>
+
+        {% if data.tone_of_voice %}
+        <div style="padding: 20px; background: #fdfdfd; border: 1px dashed #e2e8f0; border-radius: 15px; margin-bottom: 30px;">
+            <span style="display: block; font-size: 9px; font-weight: 900; color: #64748b; margin-bottom: 10px; text-transform: uppercase;">Diretriz de Comunicação</span>
+            <p style="font-size: 12px; line-height: 1.6; margin: 0; color: #475569;">{{ data.tone_of_voice }}</p>
+        </div>
+        {% endif %}
+
+        {% for aud in data.audiences %}
+        <div class="persona-card">
+            <div class="persona-header">
+                <div>
+                    <span class="persona-tag">{{ aud.name or 'Público ' ~ loop.index }}</span>
+                </div>
+                <div class="persona-meta">
+                    <span>IDADE: {{ aud.age or '—' }}</span>
+                    <span>RENDA: {{ aud.income or '—' }}</span>
+                    <span>PERFIL: {{ aud.profile or '—' }}</span>
+                </div>
+            </div>
+            
+            <div class="quadrant-grid">
+                <div class="quadrant quad-pain">
+                    <span class="quad-title" style="color: #e11d48;">DOR PRINCIPAL</span>
+                    <p class="quad-text">{{ aud.pain or '—' }}</p>
+                </div>
+                <div class="quadrant quad-transf">
+                    <span class="quad-title" style="color: #15803d;">TRANSFORMAÇÃO</span>
+                    <p class="quad-text">{{ aud.transf or '—' }}</p>
+                </div>
+                <div class="quadrant quad-obj">
+                    <span class="quad-title" style="color: #a16207;">OBJEÇÃO COMUM</span>
+                    <p class="quad-text">"{{ aud.obj or '—' }}"</p>
+                </div>
+                <div class="quadrant quad-break">
+                    <span class="quad-title" style="color: #1d4ed8;">QUEBRA ESTRATÉGICA</span>
+                    <p class="quad-text">{{ aud.break or '—' }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="footer">
+            NORTHWAY CRM • GESTÃO ESTRATÉGICA DE VENDAS
+        </div>
+    </div>
+
+    <script>
+        // Automatic PDF trigger if needed (or let the user click)
+        // window.onload = () => { if(window.location.search.includes('auto=1')) window.print(); }
+    </script>
+</body>
+</html>
