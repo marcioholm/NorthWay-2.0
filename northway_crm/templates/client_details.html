@@ -2,6 +2,8 @@
 {% from "macros.html" import user_avatar %}
 
 {% block content %}
+<!-- Redundant Library for PDF (Fail-safe) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <div id="page-content-wrapper" class="flex-1 overflow-y-auto bg-gray-100 p-8">
     <style>
         .custom-scrollbar::-webkit-scrollbar {
