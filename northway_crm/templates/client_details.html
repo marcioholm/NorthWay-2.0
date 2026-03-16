@@ -4221,6 +4221,7 @@ ${dateHeader}
     }
 </script>
 
+<script>
     function copyClientMatrixLink(token) {
         if (!token) {
             Swal.fire({
@@ -4590,8 +4591,8 @@ ${dateHeader}
             },
 
             copyScript() {
-                let segmentsText = this.currentScript.segments.map((seg, i) => `BLOCO ${i + 1}:\\nVOZ: \${seg.voice}\\nCENA: \${seg.scene}`).join('\\n\\n');
-                const text = `HOOKS:\\n\${this.currentScript.hooks.map((h, i) => \`\${String.fromCharCode(65 + i)}) \${h}\`).join('\\n')}\\n\\nROTEIRO & CENÁRIO:\\n\${segmentsText}\\n\\nCTA:\\n\${this.currentScript.cta}`;
+                let segmentsText = this.currentScript.segments.map((seg, i) => `BLOCO ${i + 1}:\nVOZ: ${seg.voice}\nCENA: ${seg.scene}`).join('\n\n');
+                const text = `HOOKS:\n${this.currentScript.hooks.map((h, i) => `${String.fromCharCode(65 + i)}) ${h}`).join('\n')}\n\nROTEIRO & CENÁRIO:\n${segmentsText}\n\nCTA:\n${this.currentScript.cta}`;
                 navigator.clipboard.writeText(text).then(() => {
                     alert('Script copiado para a área de transferência!');
                 });
@@ -4754,6 +4755,8 @@ ${dateHeader}
 
         }
     }
+
+</script>
 
 <script>
     let editingMatrixId = null;
