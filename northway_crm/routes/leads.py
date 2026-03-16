@@ -27,6 +27,16 @@ def leads():
             flash('Nome, Telefone e Origem são obrigatórios.', 'error')
             return redirect(url_for('leads.leads'))
 
+        # Robust Conversion of assigned_to_id
+        try:
+            val = str(assigned_to_id).strip()
+            if val and val.isdigit():
+                assigned_to_id = int(val)
+            else:
+                assigned_to_id = current_user.id
+        except:
+            assigned_to_id = current_user.id
+
         # Duplicate Check by CNPJ
         if cnpj:
             clean_cnpj = ''.join(filter(str.isdigit, str(cnpj)))
@@ -67,11 +77,17 @@ def leads():
         )
 
         try:
+            from flask import current_app
+            current_app.logger.info(f"🆕 CREATING LEAD: {name} | Phone: {phone} | Assigned: {assigned_to_id}")
             db.session.add(new_lead)
             db.session.commit()
+            current_app.logger.info(f"✅ LEAD CREATED SUCCESS: ID {new_lead.id}")
             flash('Lead criado com sucesso!', 'success')
         except Exception as e:
             db.session.rollback()
+            import traceback
+            error_trace = traceback.format_exc()
+            current_app.logger.error(f"❌ LEAD CREATION FAILED: {str(e)}\n{error_trace}")
             flash(f'Erro ao criar lead: {str(e)}', 'error')
             
         return redirect(url_for('leads.leads'))
@@ -95,15 +111,19 @@ def leads():
     
     if search_q:
         search_term = f"%{search_q}%"
-        query = query.filter(db.or_(
+        filters = [
             Lead.name.ilike(search_term),
             Lead.email.ilike(search_term),
-            Lead.phone.ilike(search_term),
-            Lead.legal_name.ilike(search_term) 
-            # Actually Lead model usually has name. It might not have company_name field (it has company_id).
-            # Let's check Lead model again or just stick to safe fields.
-            # Viewing leads.py confirms Lead has name, email, phone.
-        ))
+            Lead.phone.ilike(search_term)
+        ]
+        
+        # Add safety check for legal_name
+        try:
+             filters.append(Lead.legal_name.ilike(search_term))
+        except:
+             pass
+
+        query = query.filter(db.or_(*filters))
     
     if status:
         query = query.filter_by(status=status)
@@ -121,7 +141,6 @@ def leads():
     
     leads_list = pagination.items
     
-    from models import User, Pipeline, PipelineStage # Lazy import
     # Strict filter
     users = User.query.filter(User.company_id == current_user.company_id).all()
     
@@ -917,7 +936,6 @@ def import_leads():
         
     if file:
         try:
-            from models import Pipeline, PipelineStage
             default_p = Pipeline.query.filter_by(company_id=current_user.company_id).first()
             target_pipeline_id = default_p.id if default_p else None
             target_stage_id = None
@@ -1011,7 +1029,6 @@ def mass_update_stage():
     if not lead_ids or not stage_id:
         return jsonify({'success': False, 'error': 'Missing data'}), 400
 
-    from models import PipelineStage
     stage = PipelineStage.query.get(stage_id)
     if not stage or stage.company_id != current_user.company_id:
         return jsonify({'success': False, 'error': 'Invalid stage'}), 400
@@ -1038,7 +1055,6 @@ def mass_update_pipeline():
     if not lead_ids or not pipeline_id:
         return jsonify({'success': False, 'error': 'Missing data'}), 400
 
-    from models import Pipeline, PipelineStage
     pipeline = Pipeline.query.get(pipeline_id)
     if not pipeline or pipeline.company_id != current_user.company_id:
         return jsonify({'success': False, 'error': 'Invalid pipeline'}), 400
@@ -1149,7 +1165,6 @@ def quick_add_lead():
 @leads_bp.route('/api/leads/<int:id>/tasks')
 @login_required
 def get_lead_tasks(id):
-    from models import Task
     from datetime import datetime
     lead = Lead.query.get_or_404(id)
     if lead.company_id != current_user.company_id:

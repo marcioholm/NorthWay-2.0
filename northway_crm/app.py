@@ -380,6 +380,12 @@ def create_app():
             except: pass
             
             error_msg = str(error)
+            
+            # CRITICAL: Log traceback to stderr/logs
+            import traceback
+            error_trace = traceback.format_exc()
+            app.logger.error(f"🚨 INTERNAL SERVER ERROR (500): {error_msg}\n{error_trace}")
+
             # If it's an API request, return JSON so the frontend can parse the error
             if request.path.startswith('/api/'):
                 return jsonify({
