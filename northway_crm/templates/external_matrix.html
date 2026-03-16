@@ -270,7 +270,7 @@
 
                         <!-- CAC Known Toggle -->
                         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                            <span class="text-sm font-bold text-gray-700">CAC atual conhecido?</span>
+                            <span class="text-sm font-bold text-gray-700">Já investiu em mídia e vendeu por anúncio?</span>
                             <div class="flex gap-2 p-1 bg-white rounded-xl shadow-sm">
                                 <button type="button" @click="formData.cac_known = 'Sim'" :class="formData.cac_known === 'Sim' ? 'bg-northway-red text-white' : 'text-gray-400 hover:text-gray-600'" class="px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Sim</button>
                                 <button type="button" @click="formData.cac_known = 'Não'" :class="formData.cac_known === 'Não' ? 'bg-northway-red text-white' : 'text-gray-400 hover:text-gray-600'" class="px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Não</button>
@@ -278,66 +278,26 @@
                         </div>
 
                         <!-- CAC Known: Yes -->
-                        <div x-show="formData.cac_known === 'Sim'" class="animate-fade-in">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">CAC Real (R$)</label>
-                            <input type="text" x-model="formData.cac" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300" placeholder="Ex: 150,00">
-                        </div>
-
-                        <!-- CAC Known: No (Simulation) -->
-                        <div x-show="formData.cac_known === 'Não'" class="space-y-4 animate-fade-in">
+                        <div x-show="formData.cac_known === 'Sim'" class="space-y-4 animate-fade-in">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 text-center">Inves. Mídia (R$)</label>
-                                    <input type="text" x-model="formData.media_investment" class="w-full px-5 py-3 bg-blue-50/50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-bold text-center" placeholder="Ex: 5.000,00">
+                                    <label class="block text-xs font-black text-blue-600 uppercase tracking-widest mb-2">Investimento em Mídia (R$)</label>
+                                    <input type="text" x-model="formData.media_investment" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 text-lg font-bold placeholder:text-gray-300" placeholder="Ex: 5.000,00">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 text-center">Clientes/Mês</label>
-                                    <input type="text" x-model="formData.clients_per_month" class="w-full px-5 py-3 bg-blue-50/50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-bold text-center" placeholder="Ex: 50">
+                                    <label class="block text-xs font-black text-green-600 uppercase tracking-widest mb-2">Vendas via Anúncio</label>
+                                    <input type="text" x-model="formData.clients_per_month" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-green-500 text-lg font-bold placeholder:text-gray-300" placeholder="Ex: 10">
                                 </div>
                             </div>
-                            <div class="p-4 bg-blue-600 rounded-2xl text-white flex justify-between items-center shadow-lg shadow-blue-200">
-                                <span class="text-[10px] font-black uppercase tracking-widest opacity-80">CAC Calculado (R$)</span>
-                                <span class="text-xl font-black" x-text="'R$ ' + computedCAC"></span>
+                            <!-- CAC Calculated -->
+                            <div class="p-5 bg-gray-900 rounded-2xl text-white flex justify-between items-center">
+                                <div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest opacity-60">CAC Real Calculado</span>
+                                    <p class="text-[8px] text-gray-500 mt-0.5">Investimento ÷ Vendas</p>
+                                </div>
+                                <span class="text-2xl font-black" x-text="'R$ ' + computedCAC"></span>
                             </div>
                         </div>
-
-                        <!-- Target CAC -->
-                        <div class="pt-4">
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">CAC Alvo (Desejado)</label>
-                            <input type="text" x-model="formData.cac_target" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300" placeholder="Ex: 120,00">
-                        </div>
-
-                        <div class="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
-                             <div class="absolute -top-12 -right-12 w-32 h-32 bg-northway-red rounded-full opacity-20 blur-2xl"></div>
-                             <div class="relative z-10 flex flex-col items-center text-center">
-                                <span class="text-[10px] font-black text-northway-red uppercase tracking-[0.2em] mb-4">Limite de Segurança</span>
-                                <h3 class="text-3xl font-black mb-1" x-text="stopLoss"></h3>
-                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">CAC Máximo / Stop Loss</p>
-                                <p class="text-[8px] text-gray-600 mt-4 leading-relaxed">Cálculo baseado em Margem de Contribuição Estimada × Ticket Médio</p>
-                             </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Observações Financeiras</label>
-                            <textarea x-model="formData.financial_notes" rows="3" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none placeholder:text-gray-300" placeholder="Algum detalhe importante sobre os custos ou métricas?"></textarea>
-                        </div>
-                             
-                             <div class="relative z-10">
-                                <label class="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
-                                    <i data-lucide="target" class="w-4 h-4 text-northway-red"></i>
-                                    CAC Máximo Desejado (R$)
-                                </label>
-                                <input type="text" x-model="formData.cac"
-                                    class="w-full bg-white/10 border-2 border-white/20 rounded-2xl px-6 py-5 text-3xl font-black text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-northway-red transition-all"
-                                    placeholder="Ex: 150,00">
-                                <p class="text-[10px] text-gray-400 mt-4 leading-relaxed font-bold">
-                                    CAC: Custo de Aquisição de Cliente. É a soma de todos os investimentos em marketing e vendas dividida pelo número de novos clientes.
-                                </p>
-                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Step 7: Tone of Voice -->
             <div x-show="currentStep === (formData.audiences.length + 3)" class="p-8 md:p-12 flex-1 animate-fade-in">
@@ -356,7 +316,7 @@
             </div>
 
             <!-- Step 8: Confirmation -->
-            <div x-show="currentStep === 8"
+            <div x-show="currentStep === (formData.audiences.length + 4)"
                 class="p-8 md:p-12 flex-1 animate-fade-in flex flex-col items-center justify-center text-center">
                 <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                     <i data-lucide="award" class="w-10 h-10 text-green-600"></i>
