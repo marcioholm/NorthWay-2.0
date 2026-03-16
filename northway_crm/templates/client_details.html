@@ -5168,26 +5168,23 @@ ${dateHeader}
     function toggleCacKnown(isKnown) {
         const input = document.getElementById('matrix-cac-known');
         const sectionReal = document.getElementById('section-cac-real');
-        const sectionSim = document.getElementById('section-cac-sim');
         const btnYes = document.getElementById('btn-cac-known-yes');
         const btnNo = document.getElementById('btn-cac-known-no');
 
         if (isKnown) {
             input.value = 'Sim';
-            sectionReal.classList.remove('hidden');
-            sectionSim.classList.add('hidden');
-            btnYes.classList.add('bg-northway-red', 'text-white');
-            btnYes.classList.remove('text-gray-400', 'hover:text-gray-600');
-            btnNo.classList.remove('bg-northway-red', 'text-white');
-            btnNo.classList.add('text-gray-400', 'hover:text-gray-600');
+            if (sectionReal) sectionReal.classList.remove('hidden');
+            if (btnYes) btnYes.classList.add('bg-northway-red', 'text-white');
+            if (btnYes) btnYes.classList.remove('text-gray-400', 'hover:text-gray-600');
+            if (btnNo) btnNo.classList.remove('bg-northway-red', 'text-white');
+            if (btnNo) btnNo.classList.add('text-gray-400', 'hover:text-gray-600');
         } else {
             input.value = 'Não';
-            sectionReal.classList.add('hidden');
-            sectionSim.classList.remove('hidden');
-            btnNo.classList.add('bg-northway-red', 'text-white');
-            btnNo.classList.remove('text-gray-400', 'hover:text-gray-600');
-            btnYes.classList.remove('bg-northway-red', 'text-white');
-            btnYes.classList.add('text-gray-400', 'hover:text-gray-600');
+            if (sectionReal) sectionReal.classList.add('hidden');
+            if (btnNo) btnNo.classList.add('bg-northway-red', 'text-white');
+            if (btnNo) btnNo.classList.remove('text-gray-400', 'hover:text-gray-600');
+            if (btnYes) btnYes.classList.remove('bg-northway-red', 'text-white');
+            if (btnYes) btnYes.classList.add('text-gray-400', 'hover:text-gray-600');
         }
         updateFinancialCalculations();
     }
@@ -5323,15 +5320,23 @@ ${dateHeader}
                 profile: document.getElementById(`public-profile-${i}`).value
             });
         }
+
+        // Calculate actual CAC if known
+        const mediaVal = document.getElementById('matrix-media-investment').value;
+        const clientsVal = document.getElementById('matrix-clients-month').value;
+        const media = parseFloat(mediaVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        const clients = parseInt(clientsVal) || 0;
+        const calculatedCac = clients > 0 ? (media / clients).toFixed(2) : "0.00";
+
         return {
             product: document.getElementById('matrix-product-name').value,
             avg_ticket: document.getElementById('matrix-avg-ticket').value,
             margin: document.getElementById('matrix-margin').value,
-            cac: document.getElementById('matrix-cac').value,
+            cac: calculatedCac, // Now sending calculated CAC
             cac_known: document.getElementById('matrix-cac-known').value,
-            media_investment: document.getElementById('matrix-media-investment').value,
-            clients_per_month: document.getElementById('matrix-clients-month').value,
-            cac_target: document.getElementById('matrix-cac-target').value,
+            media_investment: mediaVal,
+            clients_per_month: clientsVal,
+            cac_target: '', // Legacy or calculated
             financial_notes: document.getElementById('matrix-financial-notes').value,
             tone_of_voice: document.getElementById('matrix-tone-of-voice').value,
             filled_by: `Equipe {{ current_user.name }}`,
