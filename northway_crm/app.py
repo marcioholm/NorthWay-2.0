@@ -51,11 +51,11 @@ def create_app():
             # Content Security Policy (Base safe policy)
             csp = (
                 "default-src 'self' https:; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com https://unpkg.com https://cdn.tailwindcss.com https://cdn.quilljs.com; "
-                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.quilljs.com; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com https://unpkg.com https://cdn.tailwindcss.com https://cdn.quilljs.com; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.quilljs.com; "
                 "font-src 'self' https://fonts.gstatic.com; "
-                "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://*.whatsapp.net https://*.google.com https://*.whatsapp.com; "
-                "connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.googleapis.com;"
+                "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://*.whatsapp.net https://*.google.com https://*.whatsapp.com https://upload.wikimedia.org https://cdnjs.cloudflare.com; "
+                "connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.googleapis.com https://cdn.jsdelivr.net https://unpkg.com;"
             )
             response.headers['Content-Security-Policy'] = csp
             
