@@ -217,7 +217,13 @@ def create_app():
         if database_url and 'postgresql' in database_url:
             # Use NullPool for Vercel/Serverless to avoid QueuePool limits
             engine_options['poolclass'] = NullPool
-            engine_options['connect_args'] = {'connect_timeout': 10}
+            engine_options['connect_args'] = {
+                'connect_timeout': 10,
+                'keepalives': 1,
+                'keepalives_idle': 30,
+                'keepalives_interval': 10,
+                'keepalives_count': 5,
+            }
             # Remove pool_size/max_overflow when using NullPool
             if 'pool_size' in engine_options: del engine_options['pool_size']
             if 'max_overflow' in engine_options: del engine_options['max_overflow']
@@ -261,7 +267,16 @@ def create_app():
 
         @login_manager.user_loader
         def load_user(user_id):
-            return User.query.get(int(user_id))
+            try:
+                return User.query.get(int(user_id))
+            except Exception as e:
+                print(f"⚠️ load_user failed (likely SSL drop), retrying: {e}")
+                try:
+                    db.session.remove()
+                    return User.query.get(int(user_id))
+                except Exception as e2:
+                    print(f"❌ load_user retry also failed: {e2}")
+                    return None
 
         @app.context_processor
         def inject_globals():
