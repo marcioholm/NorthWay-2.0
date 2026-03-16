@@ -1718,9 +1718,7 @@
             btn.disabled = false;
             btn.innerText = 'Gerar Cobrança';
         }
-    }
 </script>
-</div>
 
 <!-- Termination Modal -->
 <!-- Termination Modal -->
@@ -1785,9 +1783,6 @@
             </div>
         </form>
     </div>
-</div>
-</div>
-</div>
 </div>
 
 <!-- Add Process Modal -->
@@ -4224,948 +4219,7 @@ ${dateHeader}
         modal.classList.add('flex');
         modal.style.zIndex = "9999"; // Ensure top
     }
-</script><!-- Matrix Wizard Modal -->
-<div id="matrixWizardModal"
-    class="fixed inset-0 bg-gray-900/60 backdrop-blur-md hidden items-center justify-center z-[100] transition-all duration-500">
-    <div class="bg-[#faf8f5] w-full max-w-5xl h-[90vh] md:h-[80vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden m-4 transform transition-all scale-95 opacity-0 duration-300"
-        id="matrixModalContent">
-        <!-- Wizard Header -->
-        <div class="bg-northway-red p-6 text-white flex flex-col gap-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i data-lucide="users-2" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-black uppercase tracking-tight leading-none">Matriz de Públicos</h2>
-                        <p class="text-[10px] opacity-80 font-bold uppercase tracking-widest mt-1" id="wizard-subtitle">
-                            Passo 1 de 8 • Definição de Produto</p>
-                    </div>
-                </div>
-                <!-- Sharing Link Section (Hidden by default, shown after first save) -->
-                <div id="matrix-share-section"
-                    class="hidden flex items-center gap-4 bg-white/10 p-2 rounded-2xl border border-white/20">
-                    <div class="flex-1 min-w-0">
-                        <p class="text-[8px] font-black uppercase tracking-widest opacity-60">Link para o Cliente:</p>
-                        <input type="text" id="matrix-share-url" readonly
-                            class="w-full bg-transparent border-none p-0 text-[10px] font-bold text-white focus:ring-0 truncate"
-                            value="Gerando link...">
-                    </div>
-                    <button type="button" onclick="copyMatrixShareUrl()"
-                        class="p-2 hover:bg-white/20 rounded-xl transition-all" title="Copiar Link">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
-                    <button type="button" onclick="generateShareUrl()" id="btn-generate-share"
-                        class="px-3 py-1 bg-white text-northway-red rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all">
-                        Gerar Link
-                    </button>
-                </div>
-                <button onclick="closeMatrixWizard()" class="p-2 hover:bg-white/10 rounded-xl transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <!-- Progress Bar -->
-            <div class="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
-                <div id="matrix-progress" class="bg-white h-full rounded-full transition-all duration-500"
-                    style="width: 12.5%"></div>
-            </div>
-        </div>
-
-        <!-- Wizard Body -->
-        <div class="flex-1 overflow-y-auto p-8" id="wizard-body">
-            <!-- Step 0: Product & Service -->
-            <div class="step-pane space-y-8" data-step="0">
-            <div class="max-w-xl mx-auto text-center space-y-4">
-                <h3 class="text-3xl font-black text-gray-900 leading-tight">Identidade Visual e Informações Básicas</h3>
-                <p class="text-gray-500 font-medium">Como se chama o produto ou serviço?</p>
-                <div class="mt-4 flex justify-center">
-                    <button type="button" id="btn-add-persona-init" onclick="addPersona()"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                        + Adicionar Persona
-                    </button>
-                </div>
-            </div>
-            <div class="max-w-md mx-auto">
-                <div class="space-y-6">
-                    <div class="space-y-2">
-                        <label
-                            class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Empresa/Negócio</label>
-                        <input type="text" id="matrix-business-name" value="{{ client.name }}" readonly
-                            class="w-full px-6 py-4 bg-gray-100 border-none rounded-2xl font-bold text-gray-400 cursor-not-allowed">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-red-600 uppercase tracking-widest ml-4">Produto ou
-                            Serviço Foco</label>
-                        <input type="text" id="matrix-product-name" placeholder="Ex: Assessoria de Marketing 360"
-                            class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-northway-red rounded-2xl font-bold text-gray-900 transition-all outline-none focus:ring-4 focus:ring-red-500/5">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Steps 1-4: Dynamic Audience Psychographics -->
-        {% for i in range(1, 5) %}
-        <div class="step-pane hidden space-y-8 persona-step" data-step="{{ i }}" data-persona-index="{{ i - 1 }}">
-            <div class="max-w-xl mx-auto text-center space-y-2">
-                <span class="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">Público {{ i }}</span>
-                <input type="text" id="public-name-{{ i }}" placeholder="Dê um nome a este público (Ex: Empresários)"
-                    class="block mx-auto text-center text-3xl font-black text-gray-900 leading-tight bg-transparent border-none outline-none focus:ring-0 placeholder:text-gray-300">
-                <div class="mt-4 flex justify-center gap-3">
-                    <button type="button" onclick="addPersona()" class="btn-add-persona px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                        + Adicionar Persona
-                    </button>
-                    <button type="button" onclick="removePersona({{ i - 1 }})" class="btn-remove-persona px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-                        - Remover Persona
-                    </button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-                <!-- Dor -->
-                <div class="p-8 bg-red-50/50 rounded-[2.5rem] border border-red-100 space-y-4">
-                    <div class="flex items-center gap-3 text-red-700">
-                        <i data-lucide="frown" class="w-6 h-6"></i>
-                        <h4 class="font-black uppercase tracking-wider text-sm">A Dor</h4>
-                    </div>
-                    <p class="text-xs text-red-600 font-medium">Como o cliente sente o problema (Palavras dele)</p>
-                    <textarea id="public-pain-{{ i }}"
-                        class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-red-500/10 font-bold text-gray-900 transition-all"
-                        placeholder="Descreva a dor principal..."></textarea>
-                </div>
-
-                <!-- Transformação -->
-                <div class="p-8 bg-green-50/50 rounded-[2.5rem] border border-green-100 space-y-4">
-                    <div class="flex items-center gap-3 text-green-700">
-                        <i data-lucide="sparkles" class="w-6 h-6"></i>
-                        <h4 class="font-black uppercase tracking-wider text-sm">Transformação</h4>
-                    </div>
-                    <p class="text-xs text-green-600 font-medium">O que muda na vida dele após o produto</p>
-                    <textarea id="public-transf-{{ i }}"
-                        class="w-full h-32 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-green-500/10 font-bold text-gray-900 transition-all"
-                        placeholder="Descreva a transformação..."></textarea>
-                </div>
-
-                <!-- Objeção -->
-                <div class="p-8 bg-amber-50/50 rounded-[2.5rem] border border-amber-100 space-y-4">
-                    <div class="flex items-center gap-3 text-amber-700">
-                        <i data-lucide="shield-alert" class="w-6 h-6"></i>
-                        <h4 class="font-black uppercase tracking-wider text-sm">Objeção</h4>
-                    </div>
-                    <p class="text-xs text-amber-600 font-medium">O que ele diz para não comprar</p>
-                    <textarea id="public-obj-{{ i }}"
-                        class="w-full h-24 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-amber-500/10 font-bold text-gray-900 transition-all"
-                        placeholder="O que ele diz?"></textarea>
-                </div>
-
-                <!-- Quebra de Objeção -->
-                <div class="p-8 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-4">
-                    <div class="flex items-center gap-3 text-blue-700">
-                        <i data-lucide="swords" class="w-6 h-6"></i>
-                        <h4 class="font-black uppercase tracking-wider text-sm">Quebra</h4>
-                    </div>
-                    <p class="text-xs text-blue-600 font-medium">Como você responde a essa objeção</p>
-                    <textarea id="public-break-{{ i }}"
-                        class="w-full h-24 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-blue-500/10 font-bold text-gray-900 transition-all"
-                        placeholder="Como você quebra?"></textarea>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-
-        <!-- Step 5: Demographics (Unified) -->
-        <div class="step-pane hidden space-y-8" data-step="5">
-            <div class="max-w-xl mx-auto text-center space-y-4">
-                <h3 class="text-3xl font-black text-gray-900 leading-tight">Demográficos e Poder de Compra</h3>
-                <p class="text-gray-500 font-medium">Quanto ganha e qual o perfil econômico dos seus públicos?</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto">
-                {% for i in range(1, 5) %}
-                <div class="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 space-y-4 persona-demo-box">
-                    <h4 class="text-xs font-black text-gray-900 uppercase tracking-tighter" id="demographic-name-{{ i }}">Público {{ i }}</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Faixa Etária</label>
-                            <input type="text" id="public-age-{{ i }}" placeholder="Ex: 25-45 anos"
-                                class="w-full px-4 py-2 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Renda familiar</label>
-                            <select id="public-income-{{ i }}"
-                                class="w-full px-4 py-2 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                                <option value="">Selecione...</option>
-                                <option value="Até 2 salários mínimos">Até 2 SM</option>
-                                <option value="De 2 a 4 salários mínimos">2 a 4 SM</option>
-                                <option value="De 4 a 10 salários mínimos">4 a 10 SM</option>
-                                <option value="De 10 a 20 salários mínimos">10 a 20 SM</option>
-                                <option value="Acima de 20 salários mínimos">> 20 SM</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Perfil Econômico</label>
-                        <select id="public-profile-{{ i }}"
-                            class="w-full px-4 py-2 bg-white border border-gray-100 focus:border-red-500 rounded-xl font-bold text-gray-900 outline-none transition-all">
-                            <option value="">Selecione...</option>
-                            <option value="Classe baixa">Classe baixa</option>
-                            <option value="Classe média baixa">Classe média baixa</option>
-                            <option value="Classe média">Classe média</option>
-                            <option value="Classe média alta">Classe média alta</option>
-                            <option value="Classe alta">Classe alta</option>
-                        </select>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Step 6: Financial Indicators -->
-        <div class="step-pane hidden space-y-8" data-step="6">
-            <div class="max-w-xl mx-auto text-center space-y-4">
-                <h3 class="text-3xl font-black text-gray-900 leading-tight">Indicadores Financeiros</h3>
-                <p class="text-gray-500 font-medium">Quanto o negócio gera e qual o custo para adquirir novos clientes?</p>
-            </div>
-            <div class="max-w-2xl mx-auto space-y-6">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-blue-600 uppercase tracking-widest ml-4">Ticket Médio (R$)</label>
-                        <input type="text" id="matrix-avg-ticket" placeholder="Ex: 5.000,00" oninput="updateFinancialCalculations()"
-                            class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-blue-500 rounded-2xl font-bold text-gray-900 transition-all outline-none">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-orange-600 uppercase tracking-widest ml-4">Margem Operacional (%)</label>
-                        <input type="text" id="matrix-margin" placeholder="Ex: 30%" oninput="updateFinancialCalculations()"
-                            class="w-full px-6 py-4 bg-white border-2 border-gray-100 focus:border-orange-500 rounded-2xl font-bold text-gray-900 transition-all outline-none">
-                    </div>
-                </div>
-
-                <!-- CAC Known Toggle -->
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
-                    <span class="text-sm font-bold text-gray-700">CAC atual conhecido?</span>
-                    <div class="flex gap-2 p-1 bg-white rounded-xl shadow-sm">
-                        <button type="button" id="btn-cac-known-yes" onclick="toggleCacKnown(true)" class="px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-gray-400 hover:text-gray-600">Sim</button>
-                        <button type="button" id="btn-cac-known-no" onclick="toggleCacKnown(false)" class="px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-northway-red text-white">Não</button>
-                        <input type="hidden" id="matrix-cac-known" value="Não">
-                    </div>
-                </div>
-
-                <!-- CAC Known: Yes -->
-                <div id="section-cac-real" class="hidden animate-fade-in space-y-2">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">CAC Real (R$)</label>
-                    <input type="text" id="matrix-cac" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300" placeholder="Ex: 150,00">
-                </div>
-
-                <!-- CAC Known: No (Simulation) -->
-                <div id="section-cac-sim" class="space-y-4 animate-fade-in">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Inves. Mídia (R$)</label>
-                            <input type="text" id="matrix-media-investment" oninput="updateFinancialCalculations()" class="w-full px-5 py-3 bg-blue-50/50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-bold text-center" placeholder="Ex: 5.000,00">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Clientes/Mês</label>
-                            <input type="text" id="matrix-clients-month" oninput="updateFinancialCalculations()" class="w-full px-5 py-3 bg-blue-50/50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 text-sm font-bold text-center" placeholder="Ex: 50">
-                        </div>
-                    </div>
-                    <div class="p-4 bg-blue-600 rounded-2xl text-white flex justify-between items-center shadow-lg shadow-blue-200">
-                        <span class="text-[10px] font-black uppercase tracking-widest opacity-80">CAC Calculado (R$)</span>
-                        <span class="text-xl font-black" id="display-calculated-cac">R$ 0,00</span>
-                    </div>
-                </div>
-
-                <!-- Target CAC -->
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">CAC Alvo (Desejado)</label>
-                    <input type="text" id="matrix-cac-target" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-lg font-bold placeholder:text-gray-300" placeholder="Ex: 120,00">
-                </div>
-
-                <div class="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
-                     <div class="absolute -top-12 -right-12 w-32 h-32 bg-northway-red rounded-full opacity-20 blur-2xl"></div>
-                     <div class="relative z-10 flex flex-col items-center text-center">
-                        <span class="text-[10px] font-black text-northway-red uppercase tracking-[0.2em] mb-4">Limite de Segurança</span>
-                        <h3 class="text-3xl font-black mb-1" id="display-stop-loss">R$ 0,00</h3>
-                        <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest">CAC Máximo / Stop Loss</p>
-                        <p class="text-[8px] text-gray-600 mt-4 leading-relaxed">Cálculo baseado em Margem de Contribuição Estimada × Ticket Médio</p>
-                     </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4">Observações Financeiras</label>
-                    <textarea id="matrix-financial-notes" rows="3" class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-northway-red text-sm font-medium resize-none placeholder:text-gray-300" placeholder="Algum detalhe importante sobre os custos ou métricas?"></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- Step 7: Tone of Voice -->
-        <div class="step-pane hidden space-y-8" data-step="7">
-            <div class="max-w-xl mx-auto text-center space-y-4">
-                <h3 class="text-3xl font-black text-gray-900 leading-tight">Tom de Voz e Identidade</h3>
-                <p class="text-gray-500 font-medium">Como o público deve perceber a comunicação da marca?</p>
-            </div>
-            <div class="max-w-2xl mx-auto">
-                <div class="p-8 bg-purple-50/50 rounded-[2.5rem] border border-purple-100 space-y-4">
-                    <div class="flex items-center gap-3 text-purple-700">
-                        <i data-lucide="mic-2" class="w-6 h-6"></i>
-                        <h4 class="font-black uppercase tracking-wider text-sm">Tom de Voz do Público</h4>
-                    </div>
-                    <p class="text-xs text-purple-600 font-medium">Descreva o tom ideal (Ex: Formal, Amigável,
-                        Autoritário, etc)</p>
-                    <textarea id="matrix-tone-of-voice"
-                        class="w-full h-40 bg-white/70 backdrop-blur-md rounded-2xl p-6 border-none outline-none focus:ring-4 focus:ring-purple-500/10 font-bold text-gray-900 transition-all"
-                        placeholder="Ex: O tom deve ser empático mas profissional, tratando o cliente como um parceiro de negócios, evitando gírias excessivas..."></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- Step 8: Final Matrix -->
-        <div class="step-pane hidden space-y-8" data-step="8">
-            <div class="max-w-xl mx-auto text-center space-y-4">
-                <h3 class="text-3xl font-black text-gray-900 leading-tight">Sua Matriz de Públicos</h3>
-                <p class="text-gray-500 font-medium">Confira o resultado final e exporte para PDF.</p>
-            </div>
-            <!-- ... (tabela continua igual) ... -->
-
-            <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden"
-                id="final-matrix-capture">
-                <div class="bg-gray-900 p-6 flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <img src="/static/img/logo-white.png" class="h-6" alt="NorthWay"
-                            onerror="this.src='https://crm.northwaycompany.com.br/static/img/logo-white.png'">
-                        <span
-                            class="text-white/30 font-bold text-[10px] uppercase tracking-widest border-l border-white/10 pl-3">Matriz
-                            de Públicos</span>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-white font-black text-xs uppercase" id="display-matrix-client">{{
-                            client.name
-                            }}</p>
-                        <p class="text-white/50 text-[10px]" id="display-matrix-product"></p>
-                    </div>
-                </div>
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50">
-                            <th
-                                class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                Público</th>
-                            <th
-                                class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                Dor Principal</th>
-                            <th
-                                class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                Transformação</th>
-                            <th
-                                class="p-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                Objeções & Quebras</th>
-                        </tr>
-                    </thead>
-                    <tbody id="matrix-table-body">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div> <!-- End of flex-1 (wizard-body) -->
-
-    <!-- Wizard Footer -->
-    <div class="p-8 bg-white border-t border-gray-50 flex justify-between items-center">
-        <button type="button" onclick="prevStep()" id="btn-prev"
-            class="px-8 py-3 rounded-2xl font-black text-gray-400 hover:text-gray-900 transition-all opacity-0 pointer-events-none">
-            Voltar
-        </button>
-        <div class="flex gap-4">
-            <button type="button" onclick="saveMatrixDraft()"
-                class="px-8 py-3 rounded-2xl font-black text-gray-600 hover:bg-gray-50 transition-all">
-                Salvar Rascunho
-            </button>
-            <button type="button" onclick="nextStep()" id="btn-next"
-                class="px-12 py-3 bg-northway-red text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">
-                Próximo Passo
-            </button>
-            <button type="button" onclick="finishMatrix()" id="btn-finish"
-                class="hidden px-12 py-3 bg-northway-red text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">
-                Concluir e Salvar
-            </button>
-        </div>
-    </div>
-</div> <!-- End of matrixModalContent -->
-</div> <!-- End of matrixWizardModal -->
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
-    let currentMatrixStep = 0;
-    let editingMatrixId = null;
-
-    let isViewOnly = false;
-
-    function openMatrixWizard(matrixId = null, viewOnly = false) {
-        editingMatrixId = matrixId;
-        isViewOnly = viewOnly; // Needs global or scope variable
-        currentMatrixStep = 0;
-        resetMatrixInputs();
-
-        // Handle read-only UI
-        toggleMatrixReadMode(viewOnly);
-
-        if (matrixId) {
-            fetch(`/matrix/${matrixId}`)
-                .then(res => res.json())
-                .then(data => {
-                    populateMatrixInputs(data);
-                    showStep(0);
-                });
-        } else {
-            showStep(0);
-        }
-
-        const modal = document.getElementById('matrixWizardModal');
-        const content = document.getElementById('matrixModalContent');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        setTimeout(() => {
-            content.classList.remove('scale-95', 'opacity-0');
-            content.classList.add('scale-100', 'opacity-100');
-        }, 10);
-    }
-
-    function toggleMatrixReadMode(viewOnly) {
-        const inputs = document.querySelectorAll('#matrixWizardModal input, #matrixWizardModal textarea');
-        inputs.forEach(input => {
-            if (input.id !== 'matrix-share-url' && input.id !== 'matrix-business-name') {
-                input.readOnly = viewOnly;
-            }
-        });
-
-        const saveBtns = document.querySelectorAll('button[onclick*="saveMatrixDraft"], button[onclick*="finishMatrix"]');
-        saveBtns.forEach(btn => {
-            if (viewOnly) btn.classList.add('hidden');
-            else btn.classList.remove('hidden');
-        });
-    }
-
-    function closeMatrixWizard() {
-        const modal = document.getElementById('matrixWizardModal');
-        const content = document.getElementById('matrixModalContent');
-        content.classList.remove('scale-100', 'opacity-100');
-        content.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }, 300);
-    }
-
-    let numAudiences = 4;
-
-    function addPersona() {
-        if (numAudiences < 4) {
-            numAudiences++;
-            // Show the next persona step if we are on a persona step
-            if (currentMatrixStep >= 1 && currentMatrixStep <= 4) {
-                // If we are currently on the "last" persona, maybe stay or move?
-                // For simplicity, just update the labels and buttons visibility
-                showStep(currentMatrixStep);
-            }
-        }
-    }
-
-    function removePersona(index) {
-        if (numAudiences > 1) {
-            // Clear the data for the persona being "removed" (moved to end)
-            // Or just shift them? Shifting is better for data preservation.
-            for (let i = index + 1; i < numAudiences; i++) {
-                copyPersonaData(i + 1, i);
-            }
-            numAudiences--;
-            if (currentMatrixStep > numAudiences) {
-                showStep(numAudiences);
-            } else {
-                showStep(currentMatrixStep);
-            }
-        }
-    }
-
-    function copyPersonaData(from, to) {
-        const fields = ['name', 'pain', 'transf', 'obj', 'break', 'age', 'income', 'profile'];
-        fields.forEach(f => {
-            const fromEl = document.getElementById(`public-${f}-${from}`);
-            const toEl = document.getElementById(`public-${f}-${to}`);
-            if (fromEl && toEl) toEl.value = fromEl.value;
-        });
-    }
-
-    function toggleCacKnown(isKnown) {
-        const input = document.getElementById('matrix-cac-known');
-        const sectionReal = document.getElementById('section-cac-real');
-        const sectionSim = document.getElementById('section-cac-sim');
-        const btnYes = document.getElementById('btn-cac-known-yes');
-        const btnNo = document.getElementById('btn-cac-known-no');
-
-        if (isKnown) {
-            input.value = 'Sim';
-            sectionReal.classList.remove('hidden');
-            sectionSim.classList.add('hidden');
-            btnYes.classList.add('bg-northway-red', 'text-white');
-            btnYes.classList.remove('text-gray-400', 'hover:text-gray-600');
-            btnNo.classList.remove('bg-northway-red', 'text-white');
-            btnNo.classList.add('text-gray-400', 'hover:text-gray-600');
-        } else {
-            input.value = 'Não';
-            sectionReal.classList.add('hidden');
-            sectionSim.classList.remove('hidden');
-            btnNo.classList.add('bg-northway-red', 'text-white');
-            btnNo.classList.remove('text-gray-400', 'hover:text-gray-600');
-            btnYes.classList.remove('bg-northway-red', 'text-white');
-            btnYes.classList.add('text-gray-400', 'hover:text-gray-600');
-        }
-        updateFinancialCalculations();
-    }
-
-    function updateFinancialCalculations() {
-        // CAC Calculation
-        const mediaVal = document.getElementById('matrix-media-investment').value;
-        const clientsVal = document.getElementById('matrix-clients-month').value;
-
-        const media = parseFloat(mediaVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-        const clients = parseInt(clientsVal) || 0;
-
-        let calculatedCac = 0;
-        if (clients > 0) {
-            calculatedCac = media / clients;
-        }
-        document.getElementById('display-calculated-cac').textContent = calculatedCac.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-        // Stop Loss Calculation
-        const ticketVal = document.getElementById('matrix-avg-ticket').value;
-        const marginVal = document.getElementById('matrix-margin').value;
-
-        const ticket = parseFloat(ticketVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-        const margin = parseFloat(marginVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
-
-        const stopLoss = ticket * (margin / 100);
-        document.getElementById('display-stop-loss').textContent = stopLoss.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    function showStep(step) {
-        currentMatrixStep = step;
-        document.querySelectorAll('.step-pane').forEach(el => el.classList.add('hidden'));
-        document.querySelector(`.step-pane[data-step="${step}"]`).classList.remove('hidden');
-
-        // Dynamic labels based on numAudiences
-        const labels = ["Identificação"];
-        for (let i = 1; i <= numAudiences; i++) labels.push(`Persona ${i}`);
-        labels.push("Demográficos", "Financeiro", "Tom de Voz", "Finalização");
-
-        // The actual index of "Demográficos" etc depends on numAudiences
-        // But for UI simplicity in the loop, we used fixed data-step values: 5, 6, 7, 8
-        // We need to map 'logical' steps to 'physical' data-step values.
-
-        let physicalStep = step;
-        if (step > numAudiences && step <= 4) {
-            // This case shouldn't happen if we skip correctly
-        }
-
-        const totalLogicalSteps = numAudiences + 4; // Intro (0) + N Personas + 4 final
-        const progress = ((step) / totalLogicalSteps) * 100;
-        document.getElementById('matrix-progress').style.width = `${progress}%`;
-
-        // Update Nav Labels
-        let currentLabel = labels[step];
-        if (step === numAudiences + 1) currentLabel = "Demográficos";
-        if (step === numAudiences + 2) currentLabel = "Financeiro";
-        if (step === numAudiences + 3) currentLabel = "Tom de Voz";
-        if (step === numAudiences + 4) currentLabel = "Finalização";
-
-        document.getElementById('wizard-subtitle').textContent = `Passo ${step + 1} de ${totalLogicalSteps + 1} • ${currentLabel}`;
-
-        // Buttons Visibility
-        const btnPrev = document.getElementById('btn-prev');
-        const btnNext = document.getElementById('btn-next');
-        const btnFinish = document.getElementById('btn-finish');
-
-        btnPrev.classList.toggle('opacity-0', step === 0);
-        btnPrev.classList.toggle('pointer-events-none', step === 0);
-
-        const isLast = (step === totalLogicalSteps);
-        btnNext.classList.toggle('hidden', isLast);
-        btnFinish.classList.toggle('hidden', !isLast);
-
-        if (isLast) generateMatrixPreview();
-
-        // Control Persona buttons visibility
-        document.querySelectorAll('.btn-add-persona').forEach(btn => btn.classList.toggle('hidden', numAudiences >= 4));
-        document.querySelectorAll('.btn-remove-persona').forEach(btn => btn.classList.toggle('hidden', numAudiences <= 1));
-        document.getElementById('btn-add-persona-init').classList.toggle('hidden', numAudiences >= 4);
-
-        // Sync Public Names to displays
-        for (let i = 1; i <= 4; i++) {
-            const val = document.getElementById(`public-name-${i}`).value || `Público ${i}`;
-            document.querySelectorAll(`.public-name-display-${i}`).forEach(el => el.textContent = val);
-            const demoLabel = document.getElementById(`demographic-name-${i}`);
-            if (demoLabel) demoLabel.textContent = val;
-
-            // Hide/Show persona items in Demographics Step 5
-            const demoBox = document.querySelectorAll('.persona-demo-box')[i - 1];
-            if (demoBox) demoBox.classList.toggle('hidden', i > numAudiences);
-        }
-    }
-
-    function nextStep() {
-        let next = currentMatrixStep + 1;
-        // If we just finished personas, skip remaining fixed persona steps to Demographic (Step 5)
-        if (currentMatrixStep === numAudiences && next <= 4) {
-            next = 5;
-        }
-        if (next <= 8) showStep(next);
-        else finishMatrix();
-    }
-
-    function prevStep() {
-        let prev = currentMatrixStep - 1;
-        // If we are on Demographic (Step 5), go back to last active persona
-        if (currentMatrixStep === 5 && prev >= 1) {
-            prev = numAudiences;
-        }
-        if (prev >= 0) showStep(prev);
-    }
-
-    function resetMatrixInputs() {
-        document.getElementById('matrix-product-name').value = '';
-        document.getElementById('matrix-avg-ticket').value = '';
-        document.getElementById('matrix-margin').value = '';
-        document.getElementById('matrix-cac').value = '';
-        document.getElementById('matrix-cac-known').value = 'Não';
-        document.getElementById('matrix-media-investment').value = '';
-        document.getElementById('matrix-clients-month').value = '';
-        document.getElementById('matrix-cac-target').value = '';
-        document.getElementById('matrix-financial-notes').value = '';
-        document.getElementById('matrix-tone-of-voice').value = '';
-
-        numAudiences = 1; // Default
-        toggleCacKnown(false);
-
-        for (let i = 1; i <= 4; i++) {
-            document.getElementById(`public-name-${i}`).value = '';
-            document.getElementById(`public-pain-${i}`).value = '';
-            document.getElementById(`public-transf-${i}`).value = '';
-            document.getElementById(`public-obj-${i}`).value = '';
-            document.getElementById(`public-break-${i}`).value = '';
-            document.getElementById(`public-age-${i}`).value = '';
-            document.getElementById(`public-income-${i}`).value = '';
-            document.getElementById(`public-profile-${i}`).value = '';
-        }
-    }
-
-    function populateMatrixInputs(data) {
-        document.getElementById('matrix-product-name').value = data.product || '';
-        document.getElementById('matrix-avg-ticket').value = data.avg_ticket || '';
-        document.getElementById('matrix-margin').value = data.margin || '';
-        document.getElementById('matrix-cac').value = data.cac || '';
-        document.getElementById('matrix-cac-known').value = data.cac_known || 'Não';
-        document.getElementById('matrix-media-investment').value = data.media_investment || '';
-        document.getElementById('matrix-clients-month').value = data.clients_per_month || '';
-        document.getElementById('matrix-cac-target').value = data.cac_target || '';
-        document.getElementById('matrix-financial-notes').value = data.financial_notes || '';
-        document.getElementById('matrix-tone-of-voice').value = data.tone_of_voice || '';
-
-        toggleCacKnown(data.cac_known === 'Sim');
-        numAudiences = data.audiences.length || 1;
-
-        data.audiences.forEach((aud, idx) => {
-            const i = idx + 1;
-            document.getElementById(`public-name-${i}`).value = aud.name;
-            document.getElementById(`public-pain-${i}`).value = aud.pain;
-            document.getElementById(`public-transf-${i}`).value = aud.transf;
-            document.getElementById(`public-obj-${i}`).value = aud.obj;
-            document.getElementById(`public-break-${i}`).value = aud.break;
-            document.getElementById(`public-age-${i}`).value = aud.age || '';
-            document.getElementById(`public-income-${i}`).value = aud.income || '';
-            document.getElementById(`public-profile-${i}`).value = aud.profile || '';
-        });
-
-        updateFinancialCalculations();
-    }
-
-    function gatherMatrixData() {
-        const audiences = [];
-        for (let i = 1; i <= numAudiences; i++) {
-            audiences.push({
-                name: document.getElementById(`public-name-${i}`).value || `Público ${i}`,
-                pain: document.getElementById(`public-pain-${i}`).value,
-                transf: document.getElementById(`public-transf-${i}`).value,
-                obj: document.getElementById(`public-obj-${i}`).value,
-                break: document.getElementById(`public-break-${i}`).value,
-                age: document.getElementById(`public-age-${i}`).value,
-                income: document.getElementById(`public-income-${i}`).value,
-                profile: document.getElementById(`public-profile-${i}`).value
-            });
-        }
-        return {
-            product: document.getElementById('matrix-product-name').value,
-            avg_ticket: document.getElementById('matrix-avg-ticket').value,
-            margin: document.getElementById('matrix-margin').value,
-            cac: document.getElementById('matrix-cac').value,
-            cac_known: document.getElementById('matrix-cac-known').value,
-            media_investment: document.getElementById('matrix-media-investment').value,
-            clients_per_month: document.getElementById('matrix-clients-month').value,
-            cac_target: document.getElementById('matrix-cac-target').value,
-            financial_notes: document.getElementById('matrix-financial-notes').value,
-            tone_of_voice: document.getElementById('matrix-tone-of-voice').value,
-            filled_by: `Equipe {{ current_user.name }}`,
-            audiences: audiences
-        };
-    }
-
-    function generateShareUrl() {
-        if (!editingMatrixId) {
-            alert("Salve a matriz primeiro para gerar um link!");
-            return;
-        }
-
-        const btn = document.getElementById('btn-generate-share');
-        btn.textContent = "Gerando...";
-        btn.disabled = true;
-
-        fetch(`/matrix/${editingMatrixId}/share`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                const shareUrl = `${window.location.origin}/external/matrix/${data.token}`;
-                document.getElementById('matrix-share-url').value = shareUrl;
-                btn.classList.add('hidden');
-                lucide.createIcons();
-            })
-            .catch(err => {
-                console.error(err);
-                btn.textContent = "Erro";
-                btn.disabled = false;
-            });
-    }
-
-    function copyMatrixShareUrl() {
-        const input = document.getElementById('matrix-share-url');
-        input.select();
-        document.execCommand('copy');
-        alert("Link copiado!");
-    }
-
-    function saveMatrixDraft() {
-        const data = gatherMatrixData();
-        data.status = 'rascunho';
-        performSave(data);
-    }
-
-    function finishMatrix() {
-        const data = gatherMatrixData();
-        data.status = 'concluido';
-        performSave(data);
-    }
-
-    function performSave(data) {
-        const url = editingMatrixId ? `/matrix/${editingMatrixId}` : `/clients/{{ client.id }}/matrix`;
-        const method = editingMatrixId ? 'PUT' : 'POST';
-
-        fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-            .then(res => res.json())
-            .then(resData => {
-                if (resData.status === 'success') {
-                    window.location.reload();
-                } else {
-                    alert('Erro ao salvar matriz: ' + resData.message);
-                }
-            });
-    }
-
-    function generateMatrixPreview() {
-        const data = gatherMatrixData();
-        document.getElementById('display-matrix-product').innerHTML = `${data.product} <br> <span class="opacity-50 text-[9px]">Ticket: ${data.avg_ticket} • Margem: ${data.margin} • CAC: ${data.cac}</span>`;
-
-        const tbody = document.getElementById('matrix-table-body');
-        tbody.innerHTML = '';
-
-        data.audiences.forEach(aud => {
-            const tr = document.createElement('tr');
-            tr.className = "border-b border-gray-50 hover:bg-gray-50/50 transition-colors";
-            tr.innerHTML = `
-            <td class="p-6">
-                <div class="font-black text-gray-900 uppercase text-xs">${aud.name}</div>
-                <div class="mt-2 space-y-1">
-                    <div class="text-[9px] font-bold text-gray-500 uppercase">Idade: <span class="text-gray-900">${aud.age || '-'}</span></div>
-                    <div class="text-[9px] font-bold text-gray-500 uppercase">Renda: <span class="text-gray-900">${aud.income || '-'}</span></div>
-                    <div class="text-[9px] font-bold text-gray-400 uppercase">Perfil: <span class="text-red-600">${aud.profile || '-'}</span></div>
-                </div>
-            </td>
-            <td class="p-6">
-                <div class="text-xs font-bold text-red-600 mb-1">DOR:</div>
-                <p class="text-[11px] text-gray-600 leading-relaxed font-medium">${aud.pain || '-'}</p>
-            </td>
-            <td class="p-6">
-                <div class="text-xs font-bold text-green-600 mb-1">TRANSFORMAÇÃO:</div>
-                <p class="text-[11px] text-gray-600 leading-relaxed font-medium">${aud.transf || '-'}</p>
-            </td>
-            <td class="p-6">
-                <div class="mb-3">
-                    <div class="text-[10px] font-black text-amber-600 uppercase mb-0.5">Objeção:</div>
-                    <p class="text-[10px] text-gray-500 italic">"${aud.obj || '-'}"</p>
-                </div>
-                <div>
-                    <div class="text-[10px] font-black text-blue-600 uppercase mb-0.5">Quebra:</div>
-                    <p class="text-[10px] text-gray-600 font-bold">${aud.break || '-'}</p>
-                </div>
-            </td>
-        `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function downloadMatrixPDF(matrixId) {
-        fetch(`/matrix/${matrixId}`)
-            .then(res => res.json())
-            .then(data => {
-                const palette = [
-                    { bg: '#fff1f1', accent: '#e31f1f', border: '#fca5a5' },
-                    { bg: '#eff6ff', accent: '#2563eb', border: '#93c5fd' },
-                    { bg: '#f0fdf4', accent: '#16a34a', border: '#86efac' },
-                    { bg: '#fefce8', accent: '#ca8a04', border: '#fde047' },
-                ];
-
-                const audienceCards = data.audiences.map((aud, idx) => {
-                    const p = palette[idx % palette.length];
-                    return `
-                        <div style="background:${p.bg}; border:2px solid ${p.border}; border-radius:16px; padding:28px; margin-bottom:20px; page-break-inside:avoid;">
-                            <div style="display:inline-block; background:${p.accent}; color:white; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:2px; padding:5px 14px; border-radius:30px; margin-bottom:18px;">${aud.name || 'Público ' + (idx + 1)}</div>
-                            <table style="width:100%; border-collapse:collapse;">
-                                <tr>
-                                    <td colspan="2" style="padding-bottom:12px;">
-                                        <div style="background:white; border-radius:10px; padding:12px; border-top:3px solid ${p.accent}; display:flex; gap:20px;">
-                                            <div style="width:33%;">
-                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Faixa Etária</div>
-                                                <div style="font-size:10px; font-weight:700; color:#111827;">${aud.age || '—'}</div>
-                                            </div>
-                                            <div style="width:33%;">
-                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Renda Familiar</div>
-                                                <div style="font-size:10px; font-weight:700; color:#111827;">${aud.income || '—'}</div>
-                                            </div>
-                                            <div style="width:33%;">
-                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Perfil Econômico</div>
-                                                <div style="font-size:10px; font-weight:700; color:${p.accent}">${aud.profile || '—'}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="width:50%; padding:0 10px 0 0; vertical-align:top;">
-                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #e31f1f; margin-bottom:12px;">
-                                            <div style="font-size:8px; font-weight:900; color:#e31f1f; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Dor Principal</div>
-                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7;">${aud.pain || '—'}</p>
-                                        </div>
-                                    </td>
-                                    <td style="width:50%; padding:0 0 0 10px; vertical-align:top;">
-                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #16a34a; margin-bottom:12px;">
-                                            <div style="font-size:8px; font-weight:900; color:#16a34a; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Transformação</div>
-                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7;">${aud.transf || '—'}</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:0 10px 0 0; vertical-align:top;">
-                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #ca8a04;">
-                                            <div style="font-size:8px; font-weight:900; color:#ca8a04; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Objeção</div>
-                                            <p style="font-size:11px; color:#374151; margin:0; line-height:1.7; font-style:italic;">"${aud.obj || '—'}"</p>
-                                        </div>
-                                    </td>
-                                    <td style="padding:0 0 0 10px; vertical-align:top;">
-                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #2563eb;">
-                                            <div style="font-size:8px; font-weight:900; color:#2563eb; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Quebra de Objeção</div>
-                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7; font-weight:700;">${aud.break || '—'}</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>`;
-                }).join('');
-
-                const tempDiv = document.createElement('div');
-                tempDiv.style.cssText = 'width:900px; position:absolute; left:-9999px; top:0;';
-                tempDiv.innerHTML = `
-                    <div style="font-family: Arial, Helvetica, sans-serif; background:#f9fafb; padding:0;">
-                        <div style="background:linear-gradient(135deg,#e31f1f 0%,#991b1b 100%); padding:44px 52px; display:flex; align-items:flex-end; justify-content:space-between;">
-                            <div>
-                                <div style="font-size:9px; color:rgba(255,255,255,0.6); font-weight:800; letter-spacing:3px; text-transform:uppercase; margin-bottom:8px;">Diagnóstico Estratégico</div>
-                                <h1 style="font-size:34px; font-weight:900; color:white; text-transform:uppercase; margin:0 0 8px 0; letter-spacing:-0.5px;">Matriz de Públicos</h1>
-                                <p style="font-size:13px; color:rgba(255,255,255,0.75); margin:0; font-weight:600;">
-                                    ${data.product || ''} 
-                                    ${data.avg_ticket ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Ticket: ${data.avg_ticket}</span>` : ''}
-                                    ${data.margin ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Margem Contribuição: ${data.margin}</span>` : ''}
-                                </p>
-                            </div>
-                            <div style="text-align:right;">
-                                <p style="font-size:13px; font-weight:900; color:white; margin:0; text-transform:uppercase;">{{ client.name }}</p>
-                                <p style="font-size:8px; color:rgba(255,255,255,0.45); margin:4px 0 0 0; text-transform:uppercase; letter-spacing:2px;">NorthWay CRM</p>
-                            </div>
-                        </div>
-                        <div style="padding:40px 52px;">
-                            ${audienceCards}
-                        </div>
-                        <div style="padding:16px 52px 28px; text-align:center; border-top:1px solid #e5e7eb;">
-                            <p style="font-size:8px; color:#9ca3af; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin:0;">Matriz Estratégica de Público • NorthWay Assessoria</p>
-                        </div>
-                    </div>
-                    `;
-
-                document.body.appendChild(tempDiv);
-
-                const opt = {
-                    margin: 0,
-                    filename: `Matriz_Publicos_${(data.product || 'matriz').replace(/\s+/g, '_')}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                html2pdf().from(tempDiv).set(opt).save().then(() => {
-                    document.body.removeChild(tempDiv);
-                });
-            });
-    }
-
-    function deleteMatrix(matrixId) {
-        if (confirm('Tem certeza que deseja excluir esta matriz?')) {
-            fetch(`/matrix/${matrixId}`, { method: 'DELETE' })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        window.location.reload();
-                    }
-                });
-        }
-    }
-
-    function copyMatrixLink(token) {
-        if (!token) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Link não disponível',
-                text: 'Esta matriz ainda não tem um link de compartilhamento. Salve a matriz primeiro.',
-                confirmButtonColor: '#fa0102'
-            });
-            return;
-        }
-
-        const link = `${window.location.origin}/external/matrix/${token}`;
-        navigator.clipboard.writeText(link).then(() => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Link Copiado!',
-                text: 'O link para o cliente preencher a matriz foi copiado para sua área de transferência.',
-                timer: 2000,
-                showConfirmButton: false,
-                toast: true,
-                position: 'top-end'
-            });
-        });
-    }
+</script>
 
     function copyClientMatrixLink(token) {
         if (!token) {
@@ -5700,5 +4754,473 @@ ${dateHeader}
 
         }
     }
+
+<script>
+    let editingMatrixId = null;
+    let isViewOnly = false;
+    let currentMatrixStep = 0;
+
+    function openMatrixWizard(matrixId = null, viewOnly = false) {
+        editingMatrixId = matrixId;
+        isViewOnly = viewOnly;
+        currentMatrixStep = 0;
+        resetMatrixInputs();
+        toggleMatrixReadMode(viewOnly);
+
+        if (matrixId) {
+            fetch(`/matrix/${matrixId}`)
+                .then(res => res.json())
+                .then(data => {
+                    populateMatrixInputs(data);
+                    showStep(0);
+                });
+        } else {
+            showStep(0);
+        }
+
+        const modal = document.getElementById('matrixWizardModal');
+        const content = document.getElementById('matrixModalContent');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function toggleMatrixReadMode(viewOnly) {
+        const inputs = document.querySelectorAll('#matrixWizardModal input, #matrixWizardModal textarea');
+        inputs.forEach(input => {
+            if (input.id !== 'matrix-share-url' && input.id !== 'matrix-business-name') {
+                input.readOnly = viewOnly;
+            }
+        });
+        const saveBtns = document.querySelectorAll('button[onclick*="saveMatrixDraft"], button[onclick*="finishMatrix"]');
+        saveBtns.forEach(btn => {
+            if (viewOnly) btn.classList.add('hidden');
+            else btn.classList.remove('hidden');
+        });
+    }
+
+    function closeMatrixWizard() {
+        const modal = document.getElementById('matrixWizardModal');
+        const content = document.getElementById('matrixModalContent');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+
+    let numAudiences = 4;
+
+    function addPersona() {
+        if (numAudiences < 4) {
+            numAudiences++;
+            showStep(currentMatrixStep);
+        }
+    }
+
+    function removePersona(index) {
+        if (numAudiences > 1) {
+            for (let i = index + 1; i < numAudiences; i++) {
+                copyPersonaData(i + 1, i);
+            }
+            numAudiences--;
+            if (currentMatrixStep > numAudiences) showStep(numAudiences);
+            else showStep(currentMatrixStep);
+        }
+    }
+
+    function copyPersonaData(from, to) {
+        const fields = ['name', 'pain', 'transf', 'obj', 'break', 'age', 'income', 'profile'];
+        fields.forEach(f => {
+            const fromEl = document.getElementById(`public-${f}-${from}`);
+            const toEl = document.getElementById(`public-${f}-${to}`);
+            if (fromEl && toEl) toEl.value = fromEl.value;
+        });
+    }
+
+    function toggleCacKnown(isKnown) {
+        const input = document.getElementById('matrix-cac-known');
+        const sectionReal = document.getElementById('section-cac-real');
+        const sectionSim = document.getElementById('section-cac-sim');
+        const btnYes = document.getElementById('btn-cac-known-yes');
+        const btnNo = document.getElementById('btn-cac-known-no');
+
+        if (isKnown) {
+            input.value = 'Sim';
+            sectionReal.classList.remove('hidden');
+            sectionSim.classList.add('hidden');
+            btnYes.classList.add('bg-northway-red', 'text-white');
+            btnYes.classList.remove('text-gray-400', 'hover:text-gray-600');
+            btnNo.classList.remove('bg-northway-red', 'text-white');
+            btnNo.classList.add('text-gray-400', 'hover:text-gray-600');
+        } else {
+            input.value = 'Não';
+            sectionReal.classList.add('hidden');
+            sectionSim.classList.remove('hidden');
+            btnNo.classList.add('bg-northway-red', 'text-white');
+            btnNo.classList.remove('text-gray-400', 'hover:text-gray-600');
+            btnYes.classList.remove('bg-northway-red', 'text-white');
+            btnYes.classList.add('text-gray-400', 'hover:text-gray-600');
+        }
+        updateFinancialCalculations();
+    }
+
+    function updateFinancialCalculations() {
+        const mediaVal = document.getElementById('matrix-media-investment').value;
+        const clientsVal = document.getElementById('matrix-clients-month').value;
+        const media = parseFloat(mediaVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        const clients = parseInt(clientsVal) || 0;
+        let calculatedCac = clients > 0 ? media / clients : 0;
+        document.getElementById('display-calculated-cac').textContent = calculatedCac.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        const ticketVal = document.getElementById('matrix-avg-ticket').value;
+        const marginVal = document.getElementById('matrix-margin').value;
+        const ticket = parseFloat(ticketVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        const margin = parseFloat(marginVal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+        const stopLoss = ticket * (margin / 100);
+        document.getElementById('display-stop-loss').textContent = stopLoss.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function showStep(step) {
+        currentMatrixStep = step;
+        document.querySelectorAll('.step-pane').forEach(el => el.classList.add('hidden'));
+        document.querySelector(`.step-pane[data-step="${step}"]`).classList.remove('hidden');
+
+        const labels = ["Identificação"];
+        for (let i = 1; i <= numAudiences; i++) labels.push(`Persona ${i}`);
+        labels.push("Demográficos", "Financeiro", "Tom de Voz", "Finalização");
+
+        const totalLogicalSteps = numAudiences + 4;
+        const progress = (step / totalLogicalSteps) * 100;
+        document.getElementById('matrix-progress').style.width = `${progress}%`;
+
+        let currentLabel = labels[step];
+        if (step === numAudiences + 1) currentLabel = "Demográficos";
+        if (step === numAudiences + 2) currentLabel = "Financeiro";
+        if (step === numAudiences + 3) currentLabel = "Tom de Voz";
+        if (step === numAudiences + 4) currentLabel = "Finalização";
+
+        document.getElementById('wizard-subtitle').textContent = `Passo ${step + 1} de ${totalLogicalSteps + 1} • ${currentLabel}`;
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnFinish = document.getElementById('btn-finish');
+        btnPrev.classList.toggle('opacity-0', step === 0);
+        btnPrev.classList.toggle('pointer-events-none', step === 0);
+        const isLast = (step === totalLogicalSteps);
+        btnNext.classList.toggle('hidden', isLast);
+        btnFinish.classList.toggle('hidden', !isLast);
+
+        if (isLast) generateMatrixPreview();
+
+        document.querySelectorAll('.btn-add-persona').forEach(btn => btn.classList.toggle('hidden', numAudiences >= 4));
+        document.querySelectorAll('.btn-remove-persona').forEach(btn => btn.classList.toggle('hidden', numAudiences <= 1));
+        document.getElementById('btn-add-persona-init').classList.toggle('hidden', numAudiences >= 4);
+
+        for (let i = 1; i <= 4; i++) {
+            const val = document.getElementById(`public-name-${i}`).value || `Público ${i}`;
+            document.querySelectorAll(`.public-name-display-${i}`).forEach(el => el.textContent = val);
+            const demoLabel = document.getElementById(`demographic-name-${i}`);
+            if (demoLabel) demoLabel.textContent = val;
+            const demoBox = document.querySelectorAll('.persona-demo-box')[i - 1];
+            if (demoBox) demoBox.classList.toggle('hidden', i > numAudiences);
+        }
+    }
+
+    function nextStep() {
+        let next = currentMatrixStep + 1;
+        if (currentMatrixStep === numAudiences && next <= 4) next = 5;
+        if (next <= 8) showStep(next);
+        else finishMatrix();
+    }
+
+    function prevStep() {
+        let prev = currentMatrixStep - 1;
+        if (currentMatrixStep === 5 && prev >= 1) prev = numAudiences;
+        if (prev >= 0) showStep(prev);
+    }
+
+    function resetMatrixInputs() {
+        const ids = ['matrix-product-name', 'matrix-avg-ticket', 'matrix-margin', 'matrix-cac', 'matrix-cac-known', 'matrix-media-investment', 'matrix-clients-month', 'matrix-cac-target', 'matrix-financial-notes', 'matrix-tone-of-voice'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = (id === 'matrix-cac-known' ? 'Não' : '');
+        });
+        numAudiences = 1;
+        toggleCacKnown(false);
+        for (let i = 1; i <= 4; i++) {
+            ['name', 'pain', 'transf', 'obj', 'break', 'age', 'income', 'profile'].forEach(f => {
+                const el = document.getElementById(`public-${f}-${i}`);
+                if (el) el.value = '';
+            });
+        }
+    }
+
+    function populateMatrixInputs(data) {
+        document.getElementById('matrix-product-name').value = data.product || '';
+        document.getElementById('matrix-avg-ticket').value = data.avg_ticket || '';
+        document.getElementById('matrix-margin').value = data.margin || '';
+        document.getElementById('matrix-cac').value = data.cac || '';
+        document.getElementById('matrix-cac-known').value = data.cac_known || 'Não';
+        document.getElementById('matrix-media-investment').value = data.media_investment || '';
+        document.getElementById('matrix-clients-month').value = data.clients_per_month || '';
+        document.getElementById('matrix-cac-target').value = data.cac_target || '';
+        document.getElementById('matrix-financial-notes').value = data.financial_notes || '';
+        document.getElementById('matrix-tone-of-voice').value = data.tone_of_voice || '';
+
+        toggleCacKnown(data.cac_known === 'Sim');
+        numAudiences = data.audiences.length || 1;
+        data.audiences.forEach((aud, idx) => {
+            const i = idx + 1;
+            document.getElementById(`public-name-${i}`).value = aud.name;
+            document.getElementById(`public-pain-${i}`).value = aud.pain;
+            document.getElementById(`public-transf-${i}`).value = aud.transf;
+            document.getElementById(`public-obj-${i}`).value = aud.obj;
+            document.getElementById(`public-break-${i}`).value = aud.break;
+            document.getElementById(`public-age-${i}`).value = aud.age || '';
+            document.getElementById(`public-income-${i}`).value = aud.income || '';
+            document.getElementById(`public-profile-${i}`).value = aud.profile || '';
+        });
+        updateFinancialCalculations();
+    }
+
+    function gatherMatrixData() {
+        const audiences = [];
+        for (let i = 1; i <= numAudiences; i++) {
+            audiences.push({
+                name: document.getElementById(`public-name-${i}`).value || `Público ${i}`,
+                pain: document.getElementById(`public-pain-${i}`).value,
+                transf: document.getElementById(`public-transf-${i}`).value,
+                obj: document.getElementById(`public-obj-${i}`).value,
+                break: document.getElementById(`public-break-${i}`).value,
+                age: document.getElementById(`public-age-${i}`).value,
+                income: document.getElementById(`public-income-${i}`).value,
+                profile: document.getElementById(`public-profile-${i}`).value
+            });
+        }
+        return {
+            product: document.getElementById('matrix-product-name').value,
+            avg_ticket: document.getElementById('matrix-avg-ticket').value,
+            margin: document.getElementById('matrix-margin').value,
+            cac: document.getElementById('matrix-cac').value,
+            cac_known: document.getElementById('matrix-cac-known').value,
+            media_investment: document.getElementById('matrix-media-investment').value,
+            clients_per_month: document.getElementById('matrix-clients-month').value,
+            cac_target: document.getElementById('matrix-cac-target').value,
+            financial_notes: document.getElementById('matrix-financial-notes').value,
+            tone_of_voice: document.getElementById('matrix-tone-of-voice').value,
+            filled_by: `Equipe {{ current_user.name }}`,
+            audiences: audiences
+        };
+    }
+
+    function generateShareUrl() {
+        if (!editingMatrixId) {
+            alert("Salve a matriz primeiro para gerar um link!");
+            return;
+        }
+        const btn = document.getElementById('btn-generate-share');
+        btn.textContent = "Gerando...";
+        btn.disabled = true;
+        fetch(`/matrix/${editingMatrixId}/share`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                const shareUrl = `${window.location.origin}/external/matrix/${data.token}`;
+                document.getElementById('matrix-share-url').value = shareUrl;
+                btn.classList.add('hidden');
+                lucide.createIcons();
+            })
+            .catch(err => {
+                console.error(err);
+                btn.textContent = "Erro";
+                btn.disabled = false;
+            });
+    }
+
+    function copyMatrixShareUrl() {
+        const input = document.getElementById('matrix-share-url');
+        input.select();
+        document.execCommand('copy');
+        alert("Link copiado!");
+    }
+
+    function saveMatrixDraft() {
+        const data = gatherMatrixData();
+        data.status = 'rascunho';
+        performSave(data);
+    }
+
+    function finishMatrix() {
+        const data = gatherMatrixData();
+        data.status = 'concluido';
+        performSave(data);
+    }
+
+    function performSave(data) {
+        const url = editingMatrixId ? `/matrix/${editingMatrixId}` : `/clients/{{ client.id }}/matrix`;
+        const method = editingMatrixId ? 'PUT' : 'POST';
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resData => {
+            if (resData.status === 'success') window.location.reload();
+            else alert('Erro ao salvar matriz: ' + resData.message);
+        });
+    }
+
+    function generateMatrixPreview() {
+        const data = gatherMatrixData();
+        document.getElementById('display-matrix-product').innerHTML = `${data.product} <br> <span class="opacity-50 text-[9px]">Ticket: ${data.avg_ticket} • Margem: ${data.margin} • CAC: ${data.cac}</span>`;
+        const tbody = document.getElementById('matrix-table-body');
+        tbody.innerHTML = '';
+        data.audiences.forEach(aud => {
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-gray-50 hover:bg-gray-50/50 transition-colors";
+            tr.innerHTML = `
+                <td class="p-6">
+                    <div class="font-black text-gray-900 uppercase text-xs">${aud.name}</div>
+                    <div class="mt-2 space-y-1">
+                        <div class="text-[9px] font-bold text-gray-500 uppercase">Idade: <span class="text-gray-900">${aud.age || '-'}</span></div>
+                        <div class="text-[9px] font-bold text-gray-500 uppercase">Renda: <span class="text-gray-900">${aud.income || '-'}</span></div>
+                        <div class="text-[9px] font-bold text-gray-400 uppercase">Perfil: <span class="text-red-600">${aud.profile || '-'}</span></div>
+                    </div>
+                </td>
+                <td class="p-6">
+                    <div class="text-xs font-bold text-red-600 mb-1">DOR:</div>
+                    <p class="text-[11px] text-gray-600 leading-relaxed font-medium">${aud.pain || '-'}</p>
+                </td>
+                <td class="p-6">
+                    <div class="text-xs font-bold text-green-600 mb-1">TRANSFORMAÇÃO:</div>
+                    <p class="text-[11px] text-gray-600 leading-relaxed font-medium">${aud.transf || '-'}</p>
+                </td>
+                <td class="p-6">
+                    <div class="mb-3">
+                        <div class="text-[10px] font-black text-amber-600 uppercase mb-0.5">Objeção:</div>
+                        <p class="text-[10px] text-gray-500 italic">"${aud.obj || '-'}"</p>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-black text-blue-600 uppercase mb-0.5">Quebra:</div>
+                        <p class="text-[10px] text-gray-600 font-bold">${aud.break || '-'}</p>
+                    </div>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function downloadMatrixPDF(matrixId) {
+        fetch(`/matrix/${matrixId}`)
+            .then(res => res.json())
+            .then(data => {
+                const palette = [{ bg: '#fff1f1', accent: '#e31f1f', border: '#fca5a5' }, { bg: '#eff6ff', accent: '#2563eb', border: '#93c5fd' }, { bg: '#f0fdf4', accent: '#16a34a', border: '#86efac' }, { bg: '#fefce8', accent: '#ca8a04', border: '#fde047' }];
+                const audienceCards = data.audiences.map((aud, idx) => {
+                    const p = palette[idx % palette.length];
+                    return `
+                        <div style="background:${p.bg}; border:2px solid ${p.border}; border-radius:16px; padding:28px; margin-bottom:20px; page-break-inside:avoid;">
+                            <div style="display:inline-block; background:${p.accent}; color:white; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:2px; padding:5px 14px; border-radius:30px; margin-bottom:18px;">${aud.name || 'Público ' + (idx + 1)}</div>
+                            <table style="width:100%; border-collapse:collapse;">
+                                <tr>
+                                    <td colspan="2" style="padding-bottom:12px;">
+                                        <div style="background:white; border-radius:10px; padding:12px; border-top:3px solid ${p.accent}; display:flex; gap:20px;">
+                                            <div style="width:33%;">
+                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Faixa Etária</div>
+                                                <div style="font-size:10px; font-weight:700; color:#111827;">${aud.age || '—'}</div>
+                                            </div>
+                                            <div style="width:33%;">
+                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Renda Familiar</div>
+                                                <div style="font-size:10px; font-weight:700; color:#111827;">${aud.income || '—'}</div>
+                                            </div>
+                                            <div style="width:33%;">
+                                                <div style="font-size:7px; font-weight:900; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Perfil Econômico</div>
+                                                <div style="font-size:10px; font-weight:700; color:${p.accent}">${aud.profile || '—'}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width:50%; padding:0 10px 0 0; vertical-align:top;">
+                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #e31f1f; margin-bottom:12px;">
+                                            <div style="font-size:8px; font-weight:900; color:#e31f1f; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Dor Principal</div>
+                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7;">${aud.pain || '—'}</p>
+                                        </div>
+                                    </td>
+                                    <td style="width:50%; padding:0 0 0 10px; vertical-align:top;">
+                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #16a34a; margin-bottom:12px;">
+                                            <div style="font-size:8px; font-weight:900; color:#16a34a; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Transformação</div>
+                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7;">${aud.transf || '—'}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:0 10px 0 0; vertical-align:top;">
+                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #ca8a04;">
+                                            <div style="font-size:8px; font-weight:900; color:#ca8a04; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Objeção</div>
+                                            <p style="font-size:11px; color:#374151; margin:0; line-height:1.7; font-style:italic;">"${aud.obj || '—'}"</p>
+                                        </div>
+                                    </td>
+                                    <td style="padding:0 0 0 10px; vertical-align:top;">
+                                        <div style="background:white; border-radius:10px; padding:16px; border-left:4px solid #2563eb;">
+                                            <div style="font-size:8px; font-weight:900; color:#2563eb; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px;">Quebra de Objeção</div>
+                                            <p style="font-size:11px; color:#1f2937; margin:0; line-height:1.7; font-weight:700;">${aud.break || '—'}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>`;
+                }).join('');
+                const tempDiv = document.createElement('div');
+                tempDiv.style.cssText = 'width:900px; position:absolute; left:-9999px; top:0;';
+                tempDiv.innerHTML = `
+                    <div style="font-family: Arial, Helvetica, sans-serif; background:#f9fafb; padding:0;">
+                        <div style="background:linear-gradient(135deg,#e31f1f 0%,#991b1b 100%); padding:44px 52px; display:flex; align-items:flex-end; justify-content:space-between;">
+                            <div>
+                                <div style="font-size:9px; color:rgba(255,255,255,0.6); font-weight:800; letter-spacing:3px; text-transform:uppercase; margin-bottom:8px;">Diagnóstico Estratégico</div>
+                                <h1 style="font-size:34px; font-weight:900; color:white; text-transform:uppercase; margin:0 0 8px 0; letter-spacing:-0.5px;">Matriz de Públicos</h1>
+                                <p style="font-size:13px; color:rgba(255,255,255,0.75); margin:0; font-weight:600;">${data.product || ''} ${data.avg_ticket ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Ticket: ${data.avg_ticket}</span>` : ''} ${data.margin ? `<span style="opacity:0.6; font-size:11px; margin-left:10px;">Margem Contribuição: ${data.margin}</span>` : ''}</p>
+                            </div>
+                            <div style="text-align:right;">
+                                <p style="font-size:13px; font-weight:900; color:white; margin:0; text-transform:uppercase;">{{ client.name }}</p>
+                                <p style="font-size:8px; color:rgba(255,255,255,0.45); margin:4px 0 0 0; text-transform:uppercase; letter-spacing:2px;">NorthWay CRM</p>
+                            </div>
+                        </div>
+                        <div style="padding:40px 52px;">${audienceCards}</div>
+                        <div style="padding:16px 52px 28px; text-align:center; border-top:1px solid #e5e7eb;">
+                            <p style="font-size:8px; color:#9ca3af; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin:0;">Matriz Estratégica de Público • NorthWay Assessoria</p>
+                        </div>
+                    </div>`;
+                document.body.appendChild(tempDiv);
+                const opt = { margin: 0, filename: `Matriz_Publicos_${(data.product || 'matriz').replace(/\s+/g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+                html2pdf().from(tempDiv).set(opt).save().then(() => document.body.removeChild(tempDiv));
+            });
+    }
+
+    function deleteMatrix(matrixId) {
+        if (confirm('Tem certeza que deseja excluir esta matriz?')) {
+            fetch(`/matrix/${matrixId}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => { if (data.status === 'success') window.location.reload(); });
+        }
+    }
+
+    function copyMatrixLink(token) {
+        if (!token) {
+            Swal.fire({ icon: 'warning', title: 'Link não disponível', text: 'Esta matriz ainda não tem um link de compartilhamento. Salve a matriz primeiro.', confirmButtonColor: '#fa0102' });
+            return;
+        }
+        const link = `${window.location.origin}/external/matrix/${token}`;
+        navigator.clipboard.writeText(link).then(() => {
+            Swal.fire({ icon: 'success', title: 'Link Copiado!', text: 'O link para o cliente preencher a matriz foi copiado para sua área de transferência.', timer: 2000, showConfirmButton: false, toast: true, position: 'top-end' });
+        });
+    }
+
+    function editMatrix(matrixId) { openMatrixWizard(matrixId, false); }
+    function viewMatrix(matrixId) { openMatrixWizard(matrixId, true); }
 </script>
+
 {% endblock %}
