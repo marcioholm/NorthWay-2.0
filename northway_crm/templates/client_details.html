@@ -5486,25 +5486,35 @@ ${dateHeader}
     }
 
     function triggerMatrixPDF() {
-        console.log('--- PDF Generation Triggered ---');
+        console.log('--- PDF Generation Triggered (v2) ---');
         const btn = document.getElementById('btn-print-matrix');
         const originalHtml = btn ? btn.innerHTML : '';
         
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Gerando...</span>';
-            lucide.createIcons();
-        }
+        let timeoutHandle = null;
 
-        console.log('ViewOnly:', isViewOnly, 'ID:', editingMatrixId);
-        
         const finalize = () => {
+            console.log('Finalizing PDF UI state...');
+            if (timeoutHandle) clearTimeout(timeoutHandle);
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
-                lucide.createIcons();
+                if (window.lucide) window.lucide.createIcons();
             }
         };
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> <span>Gerando...</span>';
+            if (window.lucide) window.lucide.createIcons();
+            
+            // Safety timeout: reset button after 20s even if generation hangs
+            timeoutHandle = setTimeout(() => {
+                console.warn('PDF Generation timeout reached (20s). Force unlocking button.');
+                finalize();
+            }, 20000);
+        }
+
+        console.log('ViewOnly:', isViewOnly, 'ID:', editingMatrixId);
 
         if (isViewOnly && editingMatrixId) {
             downloadMatrixPDF(editingMatrixId, finalize);
@@ -5512,7 +5522,10 @@ ${dateHeader}
             console.log('Preview/Draft mode: gathering current data...');
             try {
                 const currentData = gatherMatrixData();
-                processMatrixPDF(currentData).finally(finalize);
+                processMatrixPDF(currentData).then(finalize).catch(err => {
+                    console.error('Process error:', err);
+                    finalize();
+                });
             } catch (err) {
                 console.error('Gather data error:', err);
                 alert('Erro ao processar dados da matriz.');
@@ -5656,7 +5669,7 @@ ${dateHeader}
             margin: [10, 10, 10, 10], 
             filename: `Matriz_Estrategica_${data.client_name || 'Cliente'}_${(data.product || 'matriz').replace(/\s+/g, '_')}.pdf`, 
             image: { type: 'jpeg', quality: 0.98 }, 
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#f8fafc' }, 
+            html2canvas: { scale: 1.5, useCORS: true, letterRendering: true, backgroundColor: '#f8fafc' }, 
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
         };
         
