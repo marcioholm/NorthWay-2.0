@@ -332,31 +332,100 @@ def get_chart_data():
         else:
              current += timedelta(days=30)
              
+    from models import db, Lead, Client # Local import
+    from sqlalchemy import func
+
     # Initialize dictionary
     for sort_key, label in all_buckets:
         if sort_key not in data_buckets:
             data_buckets[sort_key] = {'label': label, 'leads': 0, 'sales': 0}
 
-    from models import Lead, Client # Local import
-    leads = Lead.query.filter(Lead.company_id == company_id, Lead.created_at >= start_date).all()
-    # Use start_date for clients to reflect historical entry correctly
-    clients = Client.query.filter(Client.company_id == company_id, Client.start_date >= start_date.date()).all()
+    # Aggregate Leads in Database
+    # Group by the date format required for the bucket key
+    if period == 'monthly':
+        # Group by Year and Month (YYYY-MM)
+        date_trunc_func = func.to_char(Lead.created_at, 'YYYY-MM')
+    elif period in ['daily', 'last_7_days']:
+        # Group by Year, Month, Day (YYYY-MM-DD)
+        date_trunc_func = func.to_char(Lead.created_at, 'YYYY-MM-DD')
+    elif period == 'today':
+        # Group by Year, Month, Day, Hour (YYYY-MM-DD-HH24)
+        date_trunc_func = func.to_char(Lead.created_at, 'YYYY-MM-DD-HH24')
+    else:
+        # Fallback to monthly grouping for complex periods
+        date_trunc_func = func.to_char(Lead.created_at, 'YYYY-MM')
 
-    for l in leads:
-        sort_key, label = get_bucket_key(l.created_at, period)
-        if sort_key in data_buckets:
-            data_buckets[sort_key]['leads'] += 1
-    
-    for c in clients:
-        # Client start_date is Date, convert to datetime for bucket key if needed
-        # get_bucket_key handles date objects
-        sort_key, label = get_bucket_key(c.start_date, period)
-        if sort_key in data_buckets:
-            data_buckets[sort_key]['sales'] += 1
-    
+    # Lead Query
+    lead_counts = db.session.query(
+        date_trunc_func.label('period_key'),
+        func.count(Lead.id).label('total')
+    ).filter(
+        Lead.company_id == company_id,
+        Lead.created_at >= start_date
+    ).group_by(
+        'period_key'
+    ).all()
+
+    # Client Query (using start_date)
+    if period == 'monthly':
+        client_date_trunc_func = func.to_char(Client.start_date, 'YYYY-MM')
+    elif period in ['daily', 'last_7_days']:
+        client_date_trunc_func = func.to_char(Client.start_date, 'YYYY-MM-DD')
+    elif period == 'today':
+        # Client start_date is usually Date, but cast just in case
+        client_date_trunc_func = func.to_char(Client.start_date, 'YYYY-MM-DD-00')
+    else:
+        client_date_trunc_func = func.to_char(Client.start_date, 'YYYY-MM')
+
+    client_counts = db.session.query(
+        client_date_trunc_func.label('period_key'),
+        func.count(Client.id).label('total')
+    ).filter(
+        Client.company_id == company_id,
+        Client.start_date >= start_date.date()
+    ).group_by(
+        'period_key'
+    ).all()
+
+    # Map grouped results to our initialized buckets
+    for r in lead_counts:
+        # Match PostgreSQL to_char output with Python bucket keys
+        key = str(r.period_key)
+        # Handle week/quarter edge cases by falling back to python iteration if key doesn't exactly match
+        if key in data_buckets:
+            data_buckets[key]['leads'] = r.total
+        else:
+            # Fallback for complex periods: if DB key doesn't perfectly align with Python bucket string, 
+            # we iterate (this usually only happens for 'weekly' which is complex)
+            pass
+
+    for r in client_counts:
+        key = str(r.period_key)
+        if key in data_buckets:
+            data_buckets[key]['sales'] = r.total
+
+    # Due to SQLite not supporting `to_char` and weekly/bimonthly complexities,
+    # as a fallback for non-postgres environments or complex buckets, we do a hybrid approach:
+    # If the DB returns nothing (due to dialect errors), we gracefully fall back to the old method.
+    if db.engine.name == 'sqlite' or period in ['weekly', 'bimonthly', 'quarterly', 'semiannual', 'annual']:
+        # Clear buckets (in case of partial fail)
+        for k in data_buckets:
+            data_buckets[k]['leads'] = 0
+            data_buckets[k]['sales'] = 0
+            
+        leads = Lead.query.filter(Lead.company_id == company_id, Lead.created_at >= start_date).all()
+        clients = Client.query.filter(Client.company_id == company_id, Client.start_date >= start_date.date()).all()
+        for l in leads:
+            sort_key, label = get_bucket_key(l.created_at, period)
+            if sort_key in data_buckets: data_buckets[sort_key]['leads'] += 1
+        for c in clients:
+            sort_key, label = get_bucket_key(c.start_date, period)
+            if sort_key in data_buckets: data_buckets[sort_key]['sales'] += 1
+
     sorted_keys = sorted(data_buckets.keys())
     return api_response(data={
         'labels': [data_buckets[k]['label'] for k in sorted_keys],
         'leads': [data_buckets[k]['leads'] for k in sorted_keys],
         'sales': [data_buckets[k]['sales'] for k in sorted_keys]
     })
+

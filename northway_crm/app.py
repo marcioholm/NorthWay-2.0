@@ -211,12 +211,17 @@ def create_app():
         
         # Optimize SQLAlchemy for Serverless (Vercel)
         engine_options = {
-            'pool_recycle': 280,
             'pool_pre_ping': True
         }
         if database_url and 'postgresql' in database_url:
-            # Use NullPool for Vercel/Serverless to avoid QueuePool limits
-            engine_options['poolclass'] = NullPool
+            # Use QueuePool for connection reuse instead of NullPool
+            # Adding robust keep-alive logic for long transactions
+            from sqlalchemy.pool import QueuePool
+            engine_options['poolclass'] = QueuePool
+            engine_options['pool_size'] = 5
+            engine_options['max_overflow'] = 10
+            engine_options['pool_timeout'] = 30
+            engine_options['pool_recycle'] = 280 # Recycle before 5min LB drop
             engine_options['connect_args'] = {
                 'connect_timeout': 10,
                 'keepalives': 1,
@@ -224,10 +229,8 @@ def create_app():
                 'keepalives_interval': 10,
                 'keepalives_count': 5,
             }
-            # Remove pool_size/max_overflow when using NullPool
-            if 'pool_size' in engine_options: del engine_options['pool_size']
-            if 'max_overflow' in engine_options: del engine_options['max_overflow']
-            if 'pool_recycle' in engine_options: del engine_options['pool_recycle']
+        else:
+            engine_options['pool_recycle'] = 280
             
         app.config['SQLALCHEMY_ENGINE_OPTIONS'] = engine_options
         
@@ -601,6 +604,29 @@ def create_app():
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_service_code VARCHAR(20);",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_iss_rate FLOAT;",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_desc VARCHAR(255);",
+                        
+                        # Performance Indexes (CRM Loading Speed Fix)
+                        "CREATE INDEX IF NOT EXISTS idx_lead_company_id ON lead(company_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_lead_pipeline_id ON lead(pipeline_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_lead_pipeline_stage_id ON lead(pipeline_stage_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_lead_assigned_to_id ON lead(assigned_to_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_lead_created_at ON lead(created_at);",
+                        
+                        "CREATE INDEX IF NOT EXISTS idx_client_company_id ON client(company_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_client_account_manager_id ON client(account_manager_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_client_status ON client(status);",
+                        
+                        "CREATE INDEX IF NOT EXISTS idx_task_company_id ON task(company_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_task_assigned_to_id ON task(assigned_to_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_task_due_date ON task(due_date);",
+                        "CREATE INDEX IF NOT EXISTS idx_task_status ON task(status);",
+                        
+                        "CREATE INDEX IF NOT EXISTS idx_interaction_client_id ON interaction(client_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_interaction_lead_id ON interaction(lead_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_interaction_company_id ON interaction(company_id);",
+                        
+                        "CREATE INDEX IF NOT EXISTS idx_transaction_company_id ON transaction(company_id);",
+                        "CREATE INDEX IF NOT EXISTS idx_transaction_client_id ON transaction(client_id);",
 
                         """CREATE TABLE IF NOT EXISTS pipeline_stage_task_template (
                             id SERIAL PRIMARY KEY,

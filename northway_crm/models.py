@@ -300,12 +300,12 @@ class Lead(db.Model):
     interest = db.Column(db.String(100))
     notes = db.Column(db.Text)
     
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True) # Nullable for transition / inbox
-    pipeline_stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'))
-    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True, index=True) # Nullable for transition / inbox
+    pipeline_stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'), index=True)
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
-    created_at = db.Column(db.DateTime, default=get_now_br)
+    created_at = db.Column(db.DateTime, default=get_now_br, index=True)
     
     interactions = db.relationship('Interaction', backref='lead', cascade='all, delete-orphan', lazy=True)
     tasks = db.relationship('Task', backref='lead', cascade='all, delete-orphan', lazy=True)
@@ -411,11 +411,11 @@ class Client(db.Model):
     email = db.Column(db.String(120))
     phone = db.Column(db.String(50))
     
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
-    account_manager_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    account_manager_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True) # Origin lead
     
-    status = db.Column(db.String(20), default='onboarding') # onboarding, ativo, pausado, cancelado
+    status = db.Column(db.String(20), default='onboarding', index=True) # onboarding, ativo, pausado, cancelado
     health_status = db.Column(db.String(20), default='verde') # verde, amarelo, vermelho
     payment_status = db.Column(db.String(20), default='em_dia') # em_dia, atrasado, inadimplente
     start_date = db.Column(db.Date, nullable=False, default=datetime.utcnow)
@@ -617,10 +617,10 @@ class QuickMessage(db.Model):
 
 class Interaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Allow interactions on clients too
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True, index=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True, index=True) # Allow interactions on clients too
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Who created it
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy (Null for migration)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True, index=True) # Multitenancy (Null for migration)
     type = db.Column(db.String(50), nullable=True) # ligacao, reuniao, email, nota, tarefa_criada
     content = db.Column(db.Text, nullable=True)
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
@@ -642,9 +642,9 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True) # Added for details
-    due_date = db.Column(db.DateTime)
+    due_date = db.Column(db.DateTime, index=True)
     priority = db.Column(db.String(20), default='media') # baixa, media, alta, urgente
-    status = db.Column(db.String(20), default='pendente') # pendente, a_fazer, em_andamento, aguardando, validacao, concluida
+    status = db.Column(db.String(20), default='pendente', index=True) # pendente, a_fazer, em_andamento, aguardando, validacao, concluida
     reminder_sent = db.Column(db.Boolean, default=False)
     overdue_reminder_sent = db.Column(db.Boolean, default=False)
     is_recurring = db.Column(db.Boolean, default=False)
@@ -669,9 +669,9 @@ class Task(db.Model):
     contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=True)
     service_order_id = db.Column(db.Integer, db.ForeignKey('service_order.id'), nullable=True)
     
-    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     created_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
 
     # Relationships are backref'd from Lead/Client usually, or here:
     # lead = db.relationship('Lead', backref='tasks') -- already in Lead
@@ -698,8 +698,8 @@ class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     contract_id = db.Column(db.Integer, db.ForeignKey('contract.id'), nullable=True) # Now nullable for manual charges
     service_order_id = db.Column(db.Integer, db.ForeignKey('service_order.id'), nullable=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True) # Direct link for easier querying/manual charges
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True) # Multitenancy
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True, index=True) # Direct link for easier querying/manual charges
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=True, index=True) # Multitenancy
     description = db.Column(db.String(200), nullable=False) # e.g. "Mensalidade 1/12"
     amount = db.Column(db.Numeric(12, 2), nullable=False)
     due_date = db.Column(db.Date, nullable=False)
