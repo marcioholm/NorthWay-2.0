@@ -50,6 +50,46 @@ class CNPJAService:
             return {"error": str(e)}
 
     @classmethod
+    def search_by_cnae(cls, cnae_code, city=None, state=None, api_key=None):
+        """
+        Searches for companies by CNAE and location. (Paid API)
+        """
+        if not api_key:
+            return {"error": "API Key required for CNAE search"}
+            
+        url = f"{cls.BASE_URL}/office"
+        params = {"mainActivity.id": cnae_code}
+        
+        if city:
+            params["address.city"] = city
+        if state:
+            params["address.state"] = state
+            
+        try:
+            response = requests.get(url, params=params, headers=cls.get_headers(api_key), timeout=15)
+            if response.status_code == 200:
+                data = response.json()
+                records = data.get('records', [])
+                
+                normalized = []
+                for r in records:
+                    normalized.append({
+                        'tax_id': r.get('taxId'),
+                        'name': r.get('company', {}).get('name') or r.get('alias'),
+                        'alias': r.get('alias'),
+                        'status': r.get('status'),
+                        'address': r.get('address'),
+                        'mainActivity': r.get('mainActivity')
+                    })
+                return normalized
+            else:
+                current_app.logger.error(f"CNPJA CNAE Search Error: {response.text}")
+                return {"error": response.text, "status": response.status_code}
+        except Exception as e:
+            current_app.logger.error(f"CNPJA Connection Error: {e}")
+            return {"error": str(e)}
+
+    @classmethod
     def get_by_brasilapi(cls, cnpj):
         """
         Fallback to BrasilAPI (Free, No Auth)

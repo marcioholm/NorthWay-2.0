@@ -125,6 +125,60 @@ def search_places():
     except Exception as e:
         return api_response(success=False, error=str(e), status=500)
 
+@prospecting_bp.route('/api/prospecting/search-cnae')
+@login_required
+def search_cnae():
+    cnae = request.args.get('cnae')
+    city = request.args.get('city')
+    state = request.args.get('state')
+    
+    if not cnae:
+        return api_response(success=False, error='CNAE is required', status=400)
+        
+    # Get CNPJA Integration
+    from models import Integration, Lead
+    integration = Integration.query.filter_by(company_id=current_user.company_id, service='cnpja').first()
+    api_key = integration.api_key if integration and integration.is_active else None
+    
+    if not api_key:
+        return api_response(success=False, error='A busca por CNAE requer integração com CNPJA ativa.', status=400)
+
+    try:
+        results = CNPJAService.search_by_cnae(cnae, city, state, api_key)
+        
+        if isinstance(results, dict) and "error" in results:
+            return api_response(success=False, error=results.get('error'), status=500)
+            
+        # Check for duplicates in CRM
+        existing_tax_ids = {l.cnpj.replace('.', '').replace('/', '').replace('-', '') for l in Lead.query.filter(Lead.company_id == current_user.company_id, Lead.cnpj != None).all()}
+        
+        final_results = []
+        for r in results:
+            tax_id_clean = r.get('tax_id', '').replace('.', '').replace('/', '').replace('-', '')
+            addr = r.get('address', {})
+            formatted_addr = f"{addr.get('street', '')}, {addr.get('number', 'S/N')} - {addr.get('district', '')}, {addr.get('city', '')}/{addr.get('state', '')}"
+            
+            final_results.append({
+                'place_id': r.get('tax_id'), # Use Tax ID as identifier for CNAE results
+                'name': r.get('name'),
+                'formatted_address': formatted_addr,
+                'rating': 0,
+                'user_ratings_total': 0,
+                'types': [r.get('mainActivity', {}).get('text', 'Empresa')],
+                'is_duplicate': tax_id_clean in existing_tax_ids,
+                'phone': None, # CNPJA search usually needs details call for phone, but let's see what we get
+                'website': None,
+                'tax_id': r.get('tax_id')
+            })
+
+        return api_response(data={
+            'results': final_results,
+            'count': len(final_results),
+            'next_page_token': None # CNAE search pagination not implemented yet
+        })
+    except Exception as e:
+        return api_response(success=False, error=str(e), status=500)
+
 @prospecting_bp.route('/api/prospecting/favorites', methods=['GET', 'POST'])
 @login_required
 def handle_favorites():
