@@ -945,8 +945,9 @@ def create_app():
                 from models import PipelineStageTaskTemplate, SwotAnalise, SwotItem, CREPIDiagnostico, CREPIPremissa, AudienceMatrix, CommercialPresentation, LibraryBook
 
                 # 1. Simple Table Creation
-                db.create_all()
-                print("✅ Tables created (if missing).")
+                if not os.environ.get('VERCEL') or os.environ.get('FORCE_MIGRATE') == '1':
+                    db.create_all()
+                    print("✅ Tables created (if missing).")
 
                 # 1.1. Manual Migrations (Safety check for new columns)
                 # Using engine.connect() for more direct DDL execution
@@ -986,7 +987,9 @@ def create_app():
                                     ('gmb_reviews', "INTEGER DEFAULT 0"),
                                     ('gmb_link', "VARCHAR(500)"),
                                     ('gmb_photos', "INTEGER DEFAULT 0"),
-                                    ('gmb_last_sync', "TIMESTAMP")
+                                    ('gmb_last_sync', "TIMESTAMP"),
+                                    ('lost_reason', "VARCHAR(500)"),
+                                    ('lost_at_stage_name', "VARCHAR(100)")
                                 ]
                                 for col, dtype in lead_repairs:
                                     if col not in lead_cols:
@@ -1001,7 +1004,7 @@ def create_app():
 
                         # Added User Repairs
                         try:
-                            if inspector.has_table("user"):
+                            if (not os.environ.get('VERCEL') or os.environ.get('FORCE_MIGRATE') == '1') and inspector.has_table("user"):
                                 user_cols = [c['name'] for c in inspector.get_columns("user")]
                                 user_repairs = [
                                     ('is_super_admin', "BOOLEAN DEFAULT FALSE"),
@@ -1030,7 +1033,7 @@ def create_app():
                             
                         # Added Task Repairs
                         try:
-                            if inspector.has_table("task"):
+                            if (not os.environ.get('VERCEL') or os.environ.get('FORCE_MIGRATE') == '1') and inspector.has_table("task"):
                                 task_cols = [c['name'] for c in inspector.get_columns("task")]
                                 task_repairs = [
                                     ('overdue_reminder_sent', "BOOLEAN DEFAULT FALSE"),
@@ -1106,7 +1109,7 @@ def create_app():
                     from sqlalchemy import inspect, text
                     inspector = inspect(db.engine)
                     
-                    if inspector.has_table("company"):
+                    if (not os.environ.get('VERCEL') or os.environ.get('FORCE_MIGRATE') == '1') and inspector.has_table("company"):
                         with db.engine.connect() as conn:
                             columns = [c['name'] for c in inspector.get_columns("company")]
                             
@@ -1148,6 +1151,8 @@ def create_app():
                                 ('gmb_reviews', "INTEGER DEFAULT 0"),
                                 ('gmb_photos', "INTEGER DEFAULT 0"),
                                 ('gmb_last_sync', "TIMESTAMP"),
+                                ('lost_reason', "VARCHAR(500)"),
+                                ('lost_at_stage_name', "VARCHAR(100)"),
                                 ('profile_pic_url', "VARCHAR(500)"),
                                 ('legal_name', "VARCHAR(200)"),
                                 ('cnpj', "VARCHAR(20)"),
@@ -1175,7 +1180,7 @@ def create_app():
                             conn.commit()
 
                     # 5. CLIENT REPAIR
-                    if inspector.has_table("client"):
+                    if (not os.environ.get('VERCEL') or os.environ.get('FORCE_MIGRATE') == '1') and inspector.has_table("client"):
                         with db.engine.connect() as conn:
                             client_cols = [c['name'] for c in inspector.get_columns("client")]
                             repairs = [
@@ -1217,7 +1222,7 @@ def create_app():
                             conn.commit()
                     
                     # 6. CONTRACT REPAIR
-                    if inspector.has_table("contract"):
+                    if (not os.environ.get('VERCEL') or os.environ.get('FORCE_MIGRATE') == '1') and inspector.has_table("contract"):
                         with db.engine.connect() as conn:
                             ctr_cols = [c['name'] for c in inspector.get_columns("contract")]
                             repairs = [

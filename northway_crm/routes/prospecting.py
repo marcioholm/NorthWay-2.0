@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 import requests
 from models import db, Lead, Interaction, ProspectingSearch, Company
 from datetime import datetime
+from services.cnpj_service import CNPJAService
 
 prospecting_bp = Blueprint('prospecting', __name__)
 
