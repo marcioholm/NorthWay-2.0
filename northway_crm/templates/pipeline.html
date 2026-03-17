@@ -159,7 +159,18 @@
                     data-responsible-id="{{ lead.assigned_to_id or '' }}"
                     data-pipeline-id="{{ lead.pipeline_id or '' }}"
                     data-estimated-value="{{ lead.estimated_value or 0 }}"
-                    class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-l-orange-500' if lead.days_inactive > 3 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
+                    class="pipeline-card bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-l-[6px] transition-all duration-200 cursor-grab active:cursor-grabbing relative group {{ 'border-l-4 border-gray-400 bg-gray-50 opacity-80' if lead.status == 'lost' else 'border-l-4 border-l-orange-500' if lead.days_inactive > 3 else 'border-l-4 border-l-northway-red' }} active:scale-[0.98]">
+
+                    <!-- Action Buttons (Hover) -->
+                    <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                        {% if lead.status != 'lost' %}
+                        <button onclick="event.stopPropagation(); window.openLoseModal('{{ lead.id }}', '{{ lead.name|escape }}');" 
+                                class="bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded border border-gray-200 shadow-sm transition-colors"
+                                title="Marcar como Perdido">
+                            <i data-lucide="thumbs-down" class="w-3.5 h-3.5"></i>
+                        </button>
+                        {% endif %}
+                    </div>
 
                     <!-- Checkbox for Selection Mode -->
                     <div class="selection-checkbox hidden absolute top-4 left-4 z-30">
@@ -228,16 +239,24 @@
                     </div>
 
                     <div class="mt-3 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">
-                                {{ lead.created_at.strftime('%d/%m') }}
-                            </span>
-                            <span
-                                class="text-[9px] font-black text-northway-red uppercase bg-red-50 px-1.5 py-0.5 rounded border border-red-100 flex items-center gap-1"
-                                title="Responsável">
-                                <i data-lucide="user" class="w-2.5 h-2.5"></i>
-                                {{ lead.assigned_user.name.split(' ')[0] if lead.assigned_user else '---' }}
-                            </span>
+                        <div class="flex flex-col gap-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">
+                                    {{ lead.created_at.strftime('%d/%m') }}
+                                </span>
+                                <span
+                                    class="text-[9px] font-black text-northway-red uppercase bg-red-50 px-1.5 py-0.5 rounded border border-red-100 flex items-center gap-1"
+                                    title="Responsável">
+                                    <i data-lucide="user" class="w-2.5 h-2.5"></i>
+                                    {{ lead.assigned_user.name.split(' ')[0] if lead.assigned_user else '---' }}
+                                </span>
+                            </div>
+                            {% if lead.status == 'lost' %}
+                            <div class="text-[10px] text-red-600 font-bold flex items-center gap-1 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 mt-1 max-w-[200px] truncate" title="Motivo: {{ lead.lost_reason }}">
+                                <i data-lucide="x-circle" class="w-2.5 h-2.5 flex-shrink-0"></i>
+                                <span class="truncate">Perdido: {{ lead.lost_reason }}</span>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div
@@ -274,6 +293,63 @@
         {% endif %}
     </div>
 </div>
+</div>
+
+<!-- Lose Lead Modal -->
+<div id="loseLeadModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-[70]">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="bg-red-50 border-b border-red-100 p-5 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                    <i data-lucide="thumbs-down" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900 text-lg">Marcar como Perdido</h3>
+                    <p class="text-xs text-red-600 font-medium" id="loseModalLeadName"></p>
+                </div>
+            </div>
+            <button onclick="closeLoseModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form id="loseLeadForm" method="POST" class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Motivo da Perda *</label>
+                    <textarea name="reason" rows="3" required
+                        placeholder="Ex: Achou caro, fechou com concorrente, incompatibilidade de produto..."
+                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all resize-none"></textarea>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-2">
+                    <label class="flex items-center gap-2 cursor-pointer mb-3">
+                        <input type="checkbox" id="toggleSchedule" onchange="toggleScheduleInput()"
+                            class="w-4 h-4 text-northway-red rounded border-gray-300 focus:ring-northway-red">
+                        <span class="text-sm font-bold text-gray-700">Agendar contato futuro?</span>
+                    </label>
+                    
+                    <div id="scheduleInputContainer" class="hidden">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Data e Hora do Retorno</label>
+                        <input type="datetime-local" name="schedule_date" id="scheduleDateInput"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red text-gray-700 bg-white">
+                        <p class="text-[10px] text-gray-400 mt-1"><i data-lucide="info" class="w-3 h-3 inline"></i> Criará uma tarefa automaticamente.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex gap-3">
+                <button type="button" onclick="closeLoseModal()"
+                    class="flex-1 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm flex justify-center items-center gap-2">
+                    Confirmar Perda
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Bulk Action Bar (Hidden) -->
@@ -1290,6 +1366,52 @@
 
         toggleModal('leadModal');
     }
+
+    // Lead Loss Actions
+    window.openLoseModal = function (leadId, leadName) {
+        // Find existing form
+        const form = document.getElementById('loseLeadForm');
+        form.action = `/leads/${leadId}/lose`;
+
+        // Reset fields
+        form.reset();
+        document.getElementById('scheduleInputContainer').classList.add('hidden');
+        document.getElementById('scheduleDateInput').removeAttribute('required');
+
+        document.getElementById('loseModalLeadName').textContent = leadName;
+
+        // Show
+        document.getElementById('loseLeadModal').classList.remove('hidden');
+        document.getElementById('loseLeadModal').classList.add('flex');
+    };
+
+    window.closeLoseModal = function () {
+        document.getElementById('loseLeadModal').classList.add('hidden');
+        document.getElementById('loseLeadModal').classList.remove('flex');
+    };
+
+    window.toggleScheduleInput = function () {
+        const checkbox = document.getElementById('toggleSchedule');
+        const container = document.getElementById('scheduleInputContainer');
+        const input = document.getElementById('scheduleDateInput');
+
+        if (checkbox.checked) {
+            container.classList.remove('hidden');
+            input.setAttribute('required', 'required');
+            
+            // Set Default (Start of next day)
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(9, 0, 0, 0); // 9AM block
+            // Local ISO string hack to fill input
+            const tzOffset = (new Date()).getTimezoneOffset() * 60000; 
+            const localISOTime = (new Date(tomorrow - tzOffset)).toISOString().slice(0, 16);
+            input.value = localISOTime;
+        } else {
+            container.classList.add('hidden');
+            input.removeAttribute('required');
+        }
+    };
 </script>
 
 <!-- Create Stage Modal -->

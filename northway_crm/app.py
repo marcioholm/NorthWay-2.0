@@ -214,14 +214,9 @@ def create_app():
             'pool_pre_ping': True
         }
         if database_url and 'postgresql' in database_url:
-            # Use QueuePool for connection reuse instead of NullPool
-            # Adding robust keep-alive logic for long transactions
-            from sqlalchemy.pool import QueuePool
-            engine_options['poolclass'] = QueuePool
-            engine_options['pool_size'] = 5
-            engine_options['max_overflow'] = 10
-            engine_options['pool_timeout'] = 30
-            engine_options['pool_recycle'] = 280 # Recycle before 5min LB drop
+            # Use NullPool for Serverless (Vercel) to prevent connection drops across frozen instances
+            from sqlalchemy.pool import NullPool
+            engine_options['poolclass'] = NullPool
             engine_options['connect_args'] = {
                 'connect_timeout': 10,
                 'keepalives': 1,
@@ -604,6 +599,9 @@ def create_app():
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_service_code VARCHAR(20);",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_iss_rate FLOAT;",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS nfse_desc VARCHAR(255);",
+                        
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS lost_reason VARCHAR(500);",
+                        "ALTER TABLE lead ADD COLUMN IF NOT EXISTS lost_at_stage_name VARCHAR(100);",
                         
                         # Performance Indexes (CRM Loading Speed Fix)
                         "CREATE INDEX IF NOT EXISTS idx_lead_company_id ON lead(company_id);",

@@ -10,7 +10,14 @@ crm_dir = os.path.join(root_dir, 'northway_crm')
 if crm_dir not in sys.path:
     sys.path.append(crm_dir)
 
-# 2. Create App Instance
+# 2. Add explicit dummy imports to force Vercel's Serverless Builder to package the folders
+try:
+    import northway_crm.models
+    import northway_crm.services.supabase_service
+except ImportError:
+    pass
+
+# 3. Create App Instance
 try:
     from northway_crm.app import create_app
     app = create_app()

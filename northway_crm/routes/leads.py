@@ -729,6 +729,91 @@ def delete_lead(id):
     flash('Lead excluído com sucesso.', 'success')
     return redirect(url_for('leads.leads'))
 
+@leads_bp.route('/leads/<int:id>/lose', methods=['POST'])
+@login_required
+def lose_lead(id):
+    lead = Lead.query.get_or_404(id)
+    if lead.company_id != current_user.company_id:
+        abort(403)
+        
+    reason = request.form.get('reason')
+    schedule_date_str = request.form.get('schedule_date')
+    
+    if not reason:
+        flash('O motivo da perda é obrigatório.', 'error')
+        return redirect(url_for('leads.pipeline', pipeline_id=lead.pipeline_id))
+        
+    # Save original stage name
+    if lead.pipeline_stage:
+        lead.lost_at_stage_name = lead.pipeline_stage.name
+    else:
+        lead.lost_at_stage_name = "Desconhecida"
+        
+    # Find or Create 'Perdido' Stage
+    perdido_stage = PipelineStage.query.filter(
+        PipelineStage.pipeline_id == lead.pipeline_id,
+        PipelineStage.company_id == current_user.company_id,
+        PipelineStage.name.ilike('Perdido')
+    ).first()
+    
+    if not perdido_stage:
+        # Get the highest order to append to the end
+        last_stage = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order.desc()).first()
+        new_order = (last_stage.order + 1) if last_stage else 0
+        perdido_stage = PipelineStage(
+            name="Perdido",
+            pipeline_id=lead.pipeline_id,
+            company_id=current_user.company_id,
+            order=new_order
+        )
+        db.session.add(perdido_stage)
+        db.session.flush() # get ID
+        
+    # Update lead status
+    lead.status = LEAD_STATUS_LOST
+    lead.lost_reason = reason
+    lead.pipeline_stage_id = perdido_stage.id
+    
+    # Create History Note
+    interaction = Interaction(
+        lead_id=lead.id,
+        user_id=current_user.id,
+        company_id=current_user.company_id,
+        type='note',
+        content=f"🔴 **Lead Perdido**\n\n**Motivo:** {reason}\n**Etapa Original:** {lead.lost_at_stage_name}",
+        created_at=datetime.now()
+    )
+    db.session.add(interaction)
+    
+    # Optional Task Scheduling
+    if schedule_date_str:
+        try:
+            schedule_date = datetime.strptime(schedule_date_str, '%Y-%m-%dT%H:%M')
+            task = Task(
+                title=f"Retomar contato: {lead.name}",
+                description=f"Contato agendado após lead ser dado como perdido.\n\nMotivo anterior: {reason}",
+                due_date=schedule_date,
+                priority='media',
+                status='pendente',
+                lead_id=lead.id,
+                assigned_to_id=current_user.id,
+                company_id=current_user.company_id
+            )
+            db.session.add(task)
+            flash(f'Lead marcado como perdido. Contato futuro agendado para {schedule_date.strftime("%d/%m/%Y %H:%M")}', 'success')
+        except ValueError:
+            flash('Lead marcado como perdido, mas a data de agendamento era inválida.', 'warning')
+    else:
+        flash('Lead marcado como perdido com sucesso.', 'success')
+        
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao atualizar o lead: {str(e)}', 'error')
+
+    return redirect(url_for('leads.pipeline', pipeline_id=lead.pipeline_id))
+
 @leads_bp.route('/pipeline/stages/new', methods=['POST'])
 @login_required
 def create_stage():

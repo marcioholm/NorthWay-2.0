@@ -356,6 +356,10 @@ class Lead(db.Model):
     diagnostic_pillars = db.Column(db.JSON, nullable=True) # Breakdown {"Atrair": 10, ...}
     estimated_value = db.Column(db.Numeric(12, 2), default=0.0)
 
+    # Lead Loss Tracking
+    lost_reason = db.Column(db.String(500), nullable=True)
+    lost_at_stage_name = db.Column(db.String(100), nullable=True)
+
     # Google Drive Fields
     drive_folder_id = db.Column(db.String(100), nullable=True)
     drive_folder_url = db.Column(db.String(500), nullable=True)
