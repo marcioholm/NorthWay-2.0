@@ -29,7 +29,12 @@ def home():
     company_id = current_user.company_id
     user_id = current_user.id
     
-    from flask import current_app
+    from services.automation_service import AutomationService
+    try:
+        AutomationService.check_leads_followup()
+    except Exception as e:
+        current_app.logger.error(f"❌ Error triggering cadence check: {e}")
+
     current_app.logger.info(f"🏠 DASHBOARD HOME: Access by {current_user.email} (Company: {current_user.company_id})")
     
     # 1. Summary stats
@@ -244,6 +249,7 @@ def get_today_tasks(company_id, user_id):
         Task.status == 'pendente',
         Task.due_date <= now
     ).all()
+
 
 def get_attention_leads(company_id, user_id):
     # Leads with no interaction in over 3 days

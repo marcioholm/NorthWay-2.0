@@ -97,7 +97,7 @@ class AutomationService:
                         lead_id=lead.id,
                         rule_id=rule.id,
                         executed_at=now,
-                        status='success'
+                        status='executed'
                     )
                     db.session.add(execution)
                     
