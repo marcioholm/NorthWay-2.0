@@ -361,7 +361,26 @@ def settings_automations():
     if current_user.role != ROLE_ADMIN:
         abort(403)
     
-    rules = AutomationRule.query.filter_by(company_id=current_user.company_id).all()
+    rules_query = AutomationRule.query.filter_by(company_id=current_user.company_id).all()
+    rules = []
+    for r in rules_query:
+        rules.append({
+            'id': r.id,
+            'name': r.name,
+            'company_id': r.company_id,
+            'pipeline_id': r.pipeline_id,
+            'stage_id': r.stage_id,
+            'trigger_type': r.trigger_type,
+            'target_day': r.target_day,
+            'action_type': r.action_type,
+            'message_template': r.message_template,
+            'description_template': r.description_template,
+            'priority': r.priority,
+            'delay_hours': r.delay_hours,
+            'active': r.active,
+            'created_at_display': r.created_at.strftime('%d/%m/%Y') if r.created_at else ''
+        })
+    
     pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
     stages = PipelineStage.query.filter_by(company_id=current_user.company_id).all()
     
@@ -379,16 +398,26 @@ def new_automation():
     name = request.form.get('name')
     pipeline_id = request.form.get('pipeline_id')
     stage_id = request.form.get('stage_id')
+    trigger_type = request.form.get('trigger_type', 'stage_entry')
+    target_day = request.form.get('target_day')
+    action_type = request.form.get('action_type', 'whatsapp')
     message_template = request.form.get('message_template')
+    description_template = request.form.get('description_template')
+    priority = request.form.get('priority', 'media')
     delay_hours = request.form.get('delay_hours', 0)
     
     rule = AutomationRule(
         name=name,
         company_id=current_user.company_id,
-        pipeline_id=pipeline_id,
-        stage_id=stage_id,
+        pipeline_id=pipeline_id if pipeline_id else None,
+        stage_id=stage_id if stage_id else None,
+        trigger_type=trigger_type,
+        target_day=int(target_day) if target_day else None,
+        action_type=action_type,
         message_template=message_template,
-        delay_hours=delay_hours,
+        description_template=description_template,
+        priority=priority,
+        delay_hours=int(delay_hours) if delay_hours else 0,
         active=True
     )
     db.session.add(rule)
@@ -408,10 +437,21 @@ def edit_automation(id):
         abort(403)
         
     rule.name = request.form.get('name')
-    rule.pipeline_id = request.form.get('pipeline_id')
-    rule.stage_id = request.form.get('stage_id')
+    rule.pipeline_id = request.form.get('pipeline_id') if request.form.get('pipeline_id') else None
+    rule.stage_id = request.form.get('stage_id') if request.form.get('stage_id') else None
+    rule.trigger_type = request.form.get('trigger_type', 'stage_entry')
+    
+    target_day = request.form.get('target_day')
+    rule.target_day = int(target_day) if target_day else None
+    
+    rule.action_type = request.form.get('action_type', 'whatsapp')
     rule.message_template = request.form.get('message_template')
-    rule.delay_hours = request.form.get('delay_hours', 0)
+    rule.description_template = request.form.get('description_template')
+    rule.priority = request.form.get('priority', 'media')
+    
+    delay_hours = request.form.get('delay_hours', 0)
+    rule.delay_hours = int(delay_hours) if delay_hours else 0
+    
     rule.active = 'active' in request.form
     
     db.session.commit()

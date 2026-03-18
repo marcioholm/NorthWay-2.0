@@ -1284,10 +1284,15 @@ class AutomationRule(db.Model):
     stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'), nullable=True)
     
     name = db.Column(db.String(100), nullable=False)
-    trigger_type = db.Column(db.String(50), default='stage_entry') # stage_entry, inactivity
+    trigger_type = db.Column(db.String(50), default='stage_entry') # stage_entry, inactivity, lead_age
     delay_hours = db.Column(db.Integer, default=0)
+    target_day = db.Column(db.Integer, nullable=True) # For lead_age trigger
     
-    message_template = db.Column(db.Text, nullable=False)
+    action_type = db.Column(db.String(20), default='whatsapp') # whatsapp, task
+    message_template = db.Column(db.Text, nullable=True) # For whatsapp
+    description_template = db.Column(db.Text, nullable=True) # For task
+    priority = db.Column(db.String(20), default='media') # For task
+    
     active = db.Column(db.Boolean, default=True)
     
     created_at = db.Column(db.DateTime, default=get_now_br)

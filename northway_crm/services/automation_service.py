@@ -6,44 +6,79 @@ class AutomationService:
     @staticmethod
     def check_leads_followup():
         """
-        Rule 1: Leads without interaction for X days.
+        Main logic for the BDR cadence.
+        Refactored to pull steps from AutomationRule in the database.
         """
-        # Config: 3 days default
-        days_limit = 3
-        limit_date = datetime.utcnow() - timedelta(days=days_limit)
+        from models import Lead, Task, AutomationRule
+        from services.task_service import TaskService
+        from datetime import datetime
         
-        # Find leads with last status update or creation before limit_date
-        # Ideally we check interactions, but assuming created_at/updated_at for MVP
+        # 1. Fetch all leads that are not won/lost
         leads = Lead.query.filter(
             Lead.status != 'won', 
-            Lead.status != 'lost',
-            Lead.created_at < limit_date
-            # Simple logic: check if ANY task exists, if not create one?
-            # Or strict "no interaction". MVP: Create task if no OPEN task exists.
+            Lead.status != 'lost'
         ).all()
         
-        created_count = 0
-        for lead in leads:
-            # Check if there is an active task
-            has_task = Task.query.filter_by(
-                lead_id=lead.id, 
-                status='a_fazer'
-            ).first()
+        if not leads:
+            return 0
             
-            if not has_task:
-                 TaskService.create_task({
-                     'title': f"Follow-up: {lead.name}",
-                     'description': "Lead sem interação recente. Entrar em contato.",
-                     'priority': 'media',
-                     'due_date': datetime.utcnow(),
-                     'company_id': lead.company_id,
-                     'assigned_to_id': lead.assigned_to_id, # Owner
-                     'source_type': 'LEAD',
-                     'auto_generated': True,
-                     'lead_id': lead.id
-                 }, user_id=None) # System
-                 created_count += 1
-                 
+        created_count = 0
+        now = datetime.utcnow()
+        
+        # We group rules by company to avoid redundant queries in the loop if needed,
+        # but since we are usually running in a context of one company (triggered by CRON or user),
+        # we can fetch rules per lead's company if they differ, or just the current context.
+        # For this implementation, we'll assume we process rules for all companies found in the leads list.
+        company_ids = set(l.company_id for l in leads if l.company_id)
+        
+        for comp_id in company_ids:
+            # Fetch active BDR Cadence rules for this company
+            bdr_rules_list = AutomationRule.query.filter_by(
+                company_id=comp_id, 
+                trigger_type='lead_age', 
+                active=True
+            ).all()
+            
+            if not bdr_rules_list:
+                continue
+                
+            bdr_rules = {rule.target_day: rule for rule in bdr_rules_list}
+            comp_leads = [l for l in leads if l.company_id == comp_id]
+            
+            for lead in comp_leads:
+                if not lead.created_at:
+                    continue
+                    
+                days_elapsed = (now - lead.created_at).days
+                
+                # Check if we have a rule for this specific age
+                if days_elapsed in bdr_rules:
+                    rule = bdr_rules[days_elapsed]
+                    
+                    # Expected title uses the rule name to ensure uniqueness for that day
+                    expected_title = f"{rule.name}: {lead.name}"
+                    
+                    # Check if a task for this specific cadence step already exists for this lead
+                    has_task_for_step = Task.query.filter_by(
+                        lead_id=lead.id, 
+                        title=expected_title
+                    ).first()
+                    
+                    if not has_task_for_step:
+                         TaskService.create_task({
+                             'title': expected_title,
+                             'description': rule.description_template or rule.message_template or f"Cadência BDR Dia {days_elapsed}",
+                             'priority': rule.priority or 'media',
+                             'due_date': now,
+                             'company_id': lead.company_id,
+                             'assigned_to_id': lead.assigned_to_id,
+                             'source_type': 'LEAD',
+                             'auto_generated': True,
+                             'lead_id': lead.id
+                         }, user_id=None)
+                         created_count += 1
+                         
+        db.session.commit()
         return created_count
 
     @staticmethod
