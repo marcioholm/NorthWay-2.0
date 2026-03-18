@@ -542,7 +542,7 @@ def get_whatsapp_queue(current_user):
     except Exception as e:
         print(f"Error triggering cadence check in queue: {e}")
 
-    limit = request.args.get('limit', type=int)
+    limit = request.args.get('limit', default=10, type=int)
     offset = request.args.get('offset', default=0, type=int)
 
     query = MessageQueue.query.filter_by(
