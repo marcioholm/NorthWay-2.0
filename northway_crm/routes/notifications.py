@@ -2,11 +2,13 @@ from flask import Blueprint, jsonify, request, abort
 from flask_login import login_required, current_user
 from models import db, Notification
 from datetime import datetime
+from extensions import limiter
 
 notifications_bp = Blueprint('notifications', __name__)
 
 @notifications_bp.route('/api/notifications', methods=['GET'])
 @login_required
+@limiter.limit("600 per hour")
 def get_notifications():
     # Fetch unread first, then recent read ones (limit 20 total)
     unread = Notification.query.filter_by(user_id=current_user.id, read=False)\

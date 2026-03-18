@@ -14,7 +14,7 @@ except ImportError:
 # Initialize Limiter without app (Factory Pattern)
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["5000 per day", "1000 per hour"],
     storage_uri="memory://",
     strategy="fixed-window"
 )

@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import db, Integration, WhatsAppMessage, Lead, Client, QuickMessage
 from services.whatsapp_service import WhatsAppService
 import json
+from extensions import limiter
 
 whatsapp_bp = Blueprint('whatsapp', __name__)
 
@@ -480,6 +481,7 @@ def update_notes(type, id):
 
 @whatsapp_bp.route('/api/whatsapp/unread-counts')
 @login_required
+@limiter.limit("600 per hour")
 def get_unread_counts():
     """Returns total unread count and count by tab using optimized query."""
     try:
