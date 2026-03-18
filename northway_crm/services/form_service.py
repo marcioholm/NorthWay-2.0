@@ -19,7 +19,7 @@ class FormService:
     def verify_token(token, form_instance_id):
         s = FormService.get_serializer()
         try:
-            data = s.loads(token, salt='form-submission', max_age=3600) # 1 hour exp
+            data = s.loads(token, salt='form-submission', max_age=86400) # 24 hour exp
             if data.get('fid') != form_instance_id:
                 return False
             return True

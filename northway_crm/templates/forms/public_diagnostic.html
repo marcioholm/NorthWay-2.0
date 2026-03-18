@@ -468,6 +468,44 @@
                     if (this.step > 1) this.step--;
                 },
 
+                async refreshToken() {
+                    try {
+                        const res = await fetch(window.location.pathname + window.location.search, {
+                            method: 'GET',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        // The server re-renders the page with a new token embedded.
+                        // We extract the token from the HTML response.
+                        const html = await res.text();
+                        const match = html.match(/token:\s*"([^"]+)"/);
+                        if (match && match[1]) {
+                            this.token = match[1];
+                            return true;
+                        }
+                    } catch (e) {
+                        console.error('Token refresh failed:', e);
+                    }
+                    return false;
+                },
+
+                async doSubmit() {
+                    const res = await fetch('/forms/public/submit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token
+                        },
+                        body: JSON.stringify({
+                            slug: this.slug,
+                            contact: this.contact,
+                            answers: this.answers,
+                            target_id: this.target_id,
+                            target_type: this.target_type
+                        })
+                    });
+                    return res;
+                },
+
                 async submit() {
                     if (this.loading) return;
                     if (!this.validateStep()) return;
@@ -475,23 +513,18 @@
                     this.loading = true;
 
                     try {
-                        // Simulate delay for UX (feeling of analysis)
+                        // Small UX delay (feeling of analysis)
                         await new Promise(r => setTimeout(r, 1500));
 
-                        const res = await fetch('/forms/public/submit', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer ' + this.token
-                            },
-                            body: JSON.stringify({
-                                slug: this.slug,
-                                contact: this.contact,
-                                answers: this.answers,
-                                target_id: this.target_id,
-                                target_type: this.target_type
-                            })
-                        });
+                        let res = await this.doSubmit();
+
+                        // If token expired, refresh and retry once
+                        if (res.status === 401) {
+                            const refreshed = await this.refreshToken();
+                            if (refreshed) {
+                                res = await this.doSubmit();
+                            }
+                        }
 
                         const data = await res.json();
 
