@@ -93,9 +93,8 @@ class AutomationService:
 
                     # 3. Log execution
                     execution = AutomationExecution(
-                        company_id=comp_id,
-                        lead_id=lead.id,
                         rule_id=rule.id,
+                        lead_id=lead.id,
                         executed_at=now,
                         status='executed'
                     )
