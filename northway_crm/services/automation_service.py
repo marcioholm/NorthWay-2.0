@@ -9,7 +9,7 @@ class AutomationService:
         Main logic for the BDR cadence.
         Refactored to pull steps from AutomationRule in the database.
         """
-        from models import Lead, Task, AutomationRule
+        from models import Lead, Task, AutomationRule, MessageQueue, AutomationExecution
         from services.task_service import TaskService
         from datetime import datetime
         
@@ -25,13 +25,14 @@ class AutomationService:
         created_count = 0
         now = datetime.utcnow()
         
-        # We group rules by company to avoid redundant queries in the loop if needed,
-        # but since we are usually running in a context of one company (triggered by CRON or user),
-        # we can fetch rules per lead's company if they differ, or just the current context.
-        # For this implementation, we'll assume we process rules for all companies found in the leads list.
-        company_ids = set(l.company_id for l in leads if l.company_id)
-        
-        for comp_id in company_ids:
+        # Group leads by company
+        by_company = {}
+        for l in leads:
+            if not l.company_id: continue
+            if l.company_id not in by_company: by_company[l.company_id] = []
+            by_company[l.company_id].append(l)
+
+        for comp_id, comp_leads in by_company.items():
             # Fetch active BDR Cadence rules for this company
             bdr_rules_list = AutomationRule.query.filter_by(
                 company_id=comp_id, 
@@ -43,7 +44,6 @@ class AutomationService:
                 continue
                 
             bdr_rules = {rule.target_day: rule for rule in bdr_rules_list}
-            comp_leads = [l for l in leads if l.company_id == comp_id]
             
             for lead in comp_leads:
                 if not lead.created_at:
@@ -55,28 +55,53 @@ class AutomationService:
                 if days_elapsed in bdr_rules:
                     rule = bdr_rules[days_elapsed]
                     
-                    # Expected title uses the rule name to ensure uniqueness for that day
-                    expected_title = f"{rule.name}: {lead.name}"
-                    
-                    # Check if a task for this specific cadence step already exists for this lead
-                    has_task_for_step = Task.query.filter_by(
-                        lead_id=lead.id, 
-                        title=expected_title
+                    # Check if already executed for this lead/rule/day to avoid spamming
+                    # We can use AutomationExecution table or just check for existing task/msg
+                    already_executed = AutomationExecution.query.filter_by(
+                        lead_id=lead.id,
+                        rule_id=rule.id
                     ).first()
+
+                    if already_executed:
+                        continue
+
+                    # 1. Create Internal Task
+                    expected_title = f"{rule.name}: {lead.name}"
+                    TaskService.create_task({
+                        'title': expected_title,
+                        'description': rule.description_template or rule.message_template or f"Cadência BDR Dia {days_elapsed}",
+                        'priority': rule.priority or 'media',
+                        'due_date': now,
+                        'company_id': lead.company_id,
+                        'assigned_to_id': lead.assigned_to_id,
+                        'source_type': 'LEAD',
+                        'auto_generated': True,
+                        'lead_id': lead.id
+                    }, user_id=None)
+
+                    # 2. Create Message Queue entry if type is WhatsApp
+                    if rule.action_type == 'whatsapp' and rule.message_template and lead.phone:
+                        new_msg = MessageQueue(
+                            company_id=comp_id,
+                            lead_id=lead.id,
+                            phone=lead.phone,
+                            content=rule.message_template,
+                            status='pending',
+                            scheduled_at=now
+                        )
+                        db.session.add(new_msg)
+
+                    # 3. Log execution
+                    execution = AutomationExecution(
+                        company_id=comp_id,
+                        lead_id=lead.id,
+                        rule_id=rule.id,
+                        executed_at=now,
+                        status='success'
+                    )
+                    db.session.add(execution)
                     
-                    if not has_task_for_step:
-                         TaskService.create_task({
-                             'title': expected_title,
-                             'description': rule.description_template or rule.message_template or f"Cadência BDR Dia {days_elapsed}",
-                             'priority': rule.priority or 'media',
-                             'due_date': now,
-                             'company_id': lead.company_id,
-                             'assigned_to_id': lead.assigned_to_id,
-                             'source_type': 'LEAD',
-                             'auto_generated': True,
-                             'lead_id': lead.id
-                         }, user_id=None)
-                         created_count += 1
+                    created_count += 1
                          
         db.session.commit()
         return created_count

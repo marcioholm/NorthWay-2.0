@@ -144,7 +144,7 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button @click='editRule({{ rule }})'
+                    <button @click='editRule({{ rule|tojson|safe }})'
                         class="p-2 text-gray-400 hover:text-northway-red hover:bg-gray-50 rounded-lg transition-colors">
                         <i data-lucide="edit-3" class="w-5 h-5"></i>
                     </button>
