@@ -526,6 +526,7 @@ class Contract(db.Model):
     status = db.Column(db.String(20), default='draft') # draft, issued, signed
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
+    signed_at = db.Column(db.DateTime, nullable=True)
     
     client = db.relationship('Client', backref=db.backref('contracts', cascade='all, delete-orphan'))
     company = db.relationship('Company', backref='contracts')

@@ -594,6 +594,7 @@ def create_app():
                         "ALTER TABLE interaction ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES client(id);",
                         "ALTER TABLE company ADD COLUMN IF NOT EXISTS features JSONB DEFAULT '{}';",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS amount FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS signed_at TIMESTAMP WITH TIME ZONE;",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS billing_type VARCHAR(20) DEFAULT 'BOLETO';",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS total_installments INTEGER DEFAULT 12;",
                         "ALTER TABLE contract ADD COLUMN IF NOT EXISTS emit_nfse BOOLEAN DEFAULT TRUE;",
@@ -796,7 +797,8 @@ def create_app():
                         "ALTER TABLE client ADD COLUMN gmb_photos INTEGER DEFAULT 0;",
                         "ALTER TABLE client ADD COLUMN gmb_last_sync TIMESTAMP;",
                         "ALTER TABLE client ADD COLUMN profile_pic_url VARCHAR(500);",
-                        "ALTER TABLE client ADD COLUMN matrix_token VARCHAR(36);",
+                        "ALTER TABLE client ADD COLUMN IF NOT EXISTS matrix_token VARCHAR(36);",
+                        "ALTER TABLE contract ADD COLUMN IF NOT EXISTS signed_at TIMESTAMP;",
                         "ALTER TABLE client ADD COLUMN health_status VARCHAR(20) DEFAULT 'verde';",
                         "ALTER TABLE client ADD COLUMN payment_status VARCHAR(20) DEFAULT 'em_dia';",
                         "ALTER TABLE client ADD COLUMN niche VARCHAR(100);",
@@ -856,20 +858,17 @@ def create_app():
                 for q in queries:
                     try:
                         db.session.execute(text(q))
+                        db.session.commit()
                         results.append(f"SUCCESS: {q[:30]}...")
                     except Exception as e:
+                        db.session.rollback()
                         msg = str(e).lower()
-                        if "already exists" in msg or "duplicate column" in msg:
+                        if "already exists" in msg or "duplicate column" in msg or "exists" in msg:
                             results.append(f"SKIPPED (Exists): {q[:30]}...")
                         else:
                             results.append(f"ERROR: {q[:30]}... -> {str(e)}")
                 
-                try:
-                    db.session.commit()
-                    results.append("FINAL COMMIT: Success")
-                except Exception as e:
-                    db.session.rollback()
-                    results.append(f"FINAL COMMIT FAILED: {str(e)}")
+                results.append("Migration run finished.")
                     
                 return "Migration finished.<br><pre>" + "\n".join(results) + "</pre>"
             except Exception as e:

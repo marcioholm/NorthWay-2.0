@@ -528,7 +528,9 @@
                                         {% endif %}
 
                                         {% if contract.status == 'issued' %}
-                                        <button type="button" onclick="signContract('{{ contract.id }}')"
+                                        {% set c_data = contract.form_data | from_json if contract.form_data else {} %}
+                                        <button type="button" 
+                                            onclick="signContract('{{ contract.id }}', '{{ c_data.get('data_inicio', '') }}', '{{ c_data.get('dia_vencimento', '') }}')"
                                             class="text-xs font-bold text-white bg-green-600 hover:bg-green-700 flex items-center gap-1 px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer">
                                             <i data-lucide="pen-tool" class="w-3 h-3"></i> Assinar
                                         </button>
@@ -2250,6 +2252,50 @@
         </form>
     </div>
 </div>
+
+<!-- Sign Contract Modal -->
+<div id="signContractModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-[60]">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div class="flex justify-between items-center p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Confirmar Assinatura</h3>
+            <button onclick="toggleModal('signContractModal')" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <p class="text-sm text-gray-600">Verifique as datas antes de gerar o financeiro. Caso o cliente tenha atrasado, você pode atualizar a data de início abaixo.</p>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Data de Início (Primeiro vencimento base)</label>
+                <input type="text" id="sign-new-start-date" placeholder="DD/MM/YYYY"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Dia de Vencimento</label>
+                <input type="number" id="sign-new-due-day" min="1" max="28"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+            </div>
+
+            <div class="bg-yellow-50 p-3 rounded-lg flex gap-3 border border-yellow-100">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-600 shrink-0"></i>
+                <p class="text-[11px] text-yellow-700">Ao confirmar, o contrato será ativado e as parcelas financeiras serão geradas automaticamente no Asaas.</p>
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button type="button" onclick="toggleModal('signContractModal')"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button type="button" onclick="confirmSignContract(this)"
+                    class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold shadow-md">
+                    Confirmar & Gerar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Service Order Modal -->
 <div id="serviceOrderModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
@@ -3218,11 +3264,33 @@
         }
     }
 
-    async function signContract(id) {
-        if (!confirm("Confirmar que o contrato foi assinado? Isso irá gerar as parcelas financeiras automaticamente.")) return;
+    let currentSigningContractId = null;
+    function signContract(id, start_date, due_day) {
+        currentSigningContractId = id;
+        document.getElementById('sign-new-start-date').value = start_date || '';
+        document.getElementById('sign-new-due-day').value = due_day || '5';
+        toggleModal('signContractModal');
+    }
+
+    async function confirmSignContract(btn) {
+        const id = currentSigningContractId;
+        const new_start_date = document.getElementById('sign-new-start-date').value;
+        const new_due_day = document.getElementById('sign-new-due-day').value;
+        
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Processando...';
+        if (window.lucide) window.lucide.createIcons();
 
         try {
-            const res = await fetch(`/contracts/${id}/sign`, { method: 'POST' });
+            const res = await fetch(`/contracts/${id}/sign`, { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    new_start_date: new_start_date,
+                    new_due_day: new_due_day
+                })
+            });
             let data;
             try {
                 data = await res.json();
@@ -3230,6 +3298,8 @@
                 const text = await res.text();
                 console.error("Failed to parse JSON response:", text);
                 alert("Erro no servidor (Resposta inválida). Detalhes no console.");
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
                 return;
             }
 
@@ -3237,10 +3307,14 @@
                 window.location.reload();
             } else {
                 alert("Erro: " + (data.error || "Desconhecido"));
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
             }
         } catch (e) {
             alert("Erro de conexão ou execução. Verifique o console.");
             console.error(e);
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
         }
     }
 

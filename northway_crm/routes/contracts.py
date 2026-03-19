@@ -671,7 +671,21 @@ def sign_contract(id):
         if contract.company_id != current_user.company_id:
             return jsonify({'error': 'Unauthorized'}), 403
         
+        # Accept new dates if provided
+        request_data = request.get_json() or {}
+        new_start_date = request_data.get('new_start_date') # Format: 'DD/MM/YYYY'
+        new_due_day = request_data.get('new_due_day')
+
         data = json.loads(contract.form_data)
+        
+        if new_start_date:
+            data['data_inicio'] = new_start_date
+        if new_due_day:
+            data['dia_vencimento'] = str(new_due_day)
+            
+        contract.form_data = json.dumps(data)
+        db.session.commit()
+
         val_p = float(data.get('valor_parcela', '0').replace('.', '').replace(',', '.'))
         qtd_p = int(data.get('qtd_parcelas', '12'))
         venc = int(data.get('dia_vencimento', '5'))
@@ -699,7 +713,6 @@ def sign_contract(id):
         email_enabled, sms_enabled, whatsapp_enabled = True, False, False
         if tenant_integration and tenant_integration.config_json:
             try:
-                import json
                 config = json.loads(tenant_integration.config_json)
                 email_enabled = config.get('emailEnabled', True)
                 sms_enabled = config.get('smsEnabled', False)
@@ -803,7 +816,11 @@ def sign_contract(id):
         return jsonify({'message': msg, 'success': success, 'asaas_errors': asaas_errors})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'message': f'Erro: {str(e)}'}), 500
+        import traceback
+        error_msg = str(e) or "Erro desconhecido"
+        print(f"❌ SIGN ERROR: {error_msg}")
+        traceback.print_exc()
+        return jsonify({'message': f'Erro: {error_msg}', 'error': error_msg}), 500
 
 @contracts_bp.route('/contracts')
 @login_required

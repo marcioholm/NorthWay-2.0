@@ -187,6 +187,11 @@ def guide_captacao():
 @login_required
 def manual_edicao():
     return render_template('docs/manual_edicao.html')
+
+@docs_bp.route('/apresentacao-oticas')
+@login_required
+def presentation_optics():
+    return render_template('docs/presentation_optics.html')
 @docs_bp.route('/api/docs/sync-library')
 @docs_bp.route('/master/api/docs/sync-library')
 @login_required
@@ -250,6 +255,32 @@ def sync_library():
             existing.description = desc
             existing.route_name = 'docs.presentation_crm_v2'
             results.append(f"Updated: {title}")
+                
+        # --- REGISTER: Optics Presentation ---
+        title_ot = "Proposta Óticas — NorthWay Assessoria"
+        desc_ot = "Apresentação de vendas completa para o setor óptico, com diagnóstico de mercado, pesquisa 2026, matemática da perda e comparativo de planos."
+        
+        existing_ot = LibraryBook.query.filter_by(title=title_ot).first()
+        if not existing_ot:
+            new_book_ot = LibraryBook(
+                title=title_ot, 
+                description=desc_ot, 
+                category="Apresentação", 
+                route_name='docs.presentation_optics', 
+                active=True
+            )
+            db.session.add(new_book_ot)
+            db.session.flush()
+            
+            companies = Company.query.all()
+            for company in companies:
+                if company not in new_book_ot.allowed_companies:
+                    new_book_ot.allowed_companies.append(company)
+            results.append(f"Registered: {title_ot}")
+        else:
+            existing_ot.description = desc_ot
+            existing_ot.route_name = 'docs.presentation_optics'
+            results.append(f"Updated: {title_ot}")
                 
         db.session.commit()
         return jsonify({
