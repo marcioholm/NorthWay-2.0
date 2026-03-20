@@ -330,6 +330,13 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* PRINT OPTIMIZATION */
+  @media print {
+    nav, .progress-bar { display: none !important; }
+    section { page-break-after: always; }
+    .relatorio-card, .cenario-card, .desc-card, .solucao-card, .comp-card, .plano-card { page-break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
@@ -342,9 +349,14 @@
     <div class="logo-text">NorthWay</div>
   </div>
   <div style="display: flex; gap: 15px;">
-    <button class="nav-btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border);" onclick="downloadPDF()">
-      <i class="fas fa-download" style="margin-right: 8px;"></i>Baixar PDF
-    </button>
+    <div style="display: flex; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
+      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px; border-right: 1px solid var(--border);" onclick="downloadPDF('portrait')">
+        <i class="fas fa-file-alt" style="margin-right: 8px;"></i>PDF Vertical
+      </button>
+      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px;" onclick="downloadPDF('landscape')">
+        <i class="fas fa-file-image" style="margin-right: 8px;"></i>PDF Horizontal
+      </button>
+    </div>
     <button class="nav-btn" onclick="scrollToId('planos')">Ver Planos</button>
   </div>
 </nav>
@@ -680,11 +692,10 @@
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
   // PDF Generation Function
-  function downloadPDF() {
+  function downloadPDF(orientation = 'portrait') {
     const element = document.body;
     const nav = document.querySelector('nav');
     const pb = document.getElementById('pb');
-    const ctaButtons = document.querySelectorAll('.nav-btn, .btn-primary, .btn-outline, .cta-plano');
     
     // 1. Prepare for capture: Hide UI elements
     nav.style.display = 'none';
@@ -695,18 +706,24 @@
     fadeUps.forEach(el => el.classList.add('visible'));
 
     // Config for html2pdf
+    const isLandscape = orientation === 'landscape';
     const opt = {
       margin:       [0, 0, 0, 0],
-      filename:     'Proposta-Oticas-NorthWay.pdf',
+      filename:     `Proposta-Oticas-NorthWay-${orientation}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { 
-        scale: 2, 
+        scale: isLandscape ? 1.5 : 2, // Slightly lower scale for landscape to manage memory
         useCORS: true, 
         letterRendering: true,
         backgroundColor: '#0A0A0A',
-        scrollY: 0
+        scrollY: 0,
+        windowWidth: isLandscape ? 1400 : 1100 // Force width to stabilize layout
       },
-      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+      jsPDF:        { 
+        unit: 'in', 
+        format: 'a4', 
+        orientation: orientation 
+      },
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
