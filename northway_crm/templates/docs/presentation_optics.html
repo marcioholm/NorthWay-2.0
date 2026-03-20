@@ -331,7 +331,7 @@
     transform: translateY(0);
   }
 
-  /* PRINT OPTIMIZATION (v6 - Direct Print) */
+  /* PRINT OPTIMIZATION (v7 - Universal A3/A4) */
   @media print {
     * {
       -webkit-print-color-adjust: exact !important;
@@ -343,27 +343,31 @@
     section {
       page-break-before: always;
       break-before: page;
-      page-break-inside: auto;
-      break-inside: auto;
-      min-height: 100vh;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      min-height: 95vh; /* Slightly less than 100 to account for @page margin */
+      width: 100% !important;
       display: flex !important;
       flex-direction: column;
       justify-content: center;
-      padding: 40px !important;
+      padding: 20px 40px !important;
       overflow: visible !important;
+      box-sizing: border-box;
     }
 
-    body.landscape section {
-      min-height: 210mm;
-      width: 297mm;
-    }
-
-    body.portrait section {
-      min-height: 297mm;
-      width: 210mm;
+    /* Reduzir escala de títulos e gaps para evitar vazamento */
+    h1 { font-size: 60px !important; margin-bottom: 15px !important; }
+    h2 { font-size: 45px !important; margin-bottom: 20px !important; }
+    .label { margin-bottom: 20px !important; }
+    .section-img { margin-top: 20px !important; max-height: 40vh !important; }
+    
+    .relatorio-grid, .cenario-grid, .desc-grid, .solucao-grid {
+      gap: 15px !important;
+      margin-top: 25px !important;
     }
 
     .card {
+      padding: 20px !important;
       page-break-inside: avoid;
       break-inside: avoid;
       background: var(--card) !important;
@@ -372,8 +376,8 @@
     .fade-up { opacity: 1 !important; transform: none !important; transition: none !important; }
   }
 
-  /* Page Setup */
-  @page { margin: 0; }
+  /* Page Setup: Add safety margin for A3/A4 */
+  @page { margin: 10mm; size: auto; }
 
   /* Loading State */
   #loading-pdf {
