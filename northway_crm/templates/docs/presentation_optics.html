@@ -373,9 +373,7 @@
   }
 
   /* Page Setup */
-  @page { size: auto; margin: 0; }
-  body.landscape @page { size: landscape; }
-  body.portrait @page { size: portrait; }
+  @page { margin: 0; }
 
   /* Loading State */
   #loading-pdf {
@@ -743,11 +741,20 @@
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
   function printProposal(orientation) {
+    // Inject dynamic @page style for orientation
+    const style = document.createElement('style');
+    style.id = 'print-orientation-style';
+    style.innerHTML = `@page { size: ${orientation}; margin: 0; }`;
+    document.head.appendChild(style);
+    
     document.body.classList.add(orientation);
+    
     setTimeout(() => {
       window.print();
       document.body.classList.remove(orientation);
-    }, 100);
+      const styleEl = document.getElementById('print-orientation-style');
+      if (styleEl) styleEl.remove();
+    }, 200);
   }
 </script>
 
