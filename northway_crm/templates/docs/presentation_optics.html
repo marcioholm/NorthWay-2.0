@@ -394,10 +394,10 @@
   </div>
   <div style="display: flex; gap: 15px;">
     <div style="display: flex; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
-      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px; border-right: 1px solid var(--border);" onclick="exportPDF('portrait')">
+      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px; border-right: 1px solid var(--border);" onclick="window.open('/apresentacao-oticas/print?orientation=portrait', '_blank')">
         <i class="fas fa-file-alt" style="margin-right: 8px;"></i>PDF Vertical
       </button>
-      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px;" onclick="exportPDF('landscape')">
+      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px;" onclick="window.open('/apresentacao-oticas/print?orientation=landscape', '_blank')">
         <i class="fas fa-file-image" style="margin-right: 8px;"></i>PDF Horizontal
       </button>
     </div>
@@ -736,52 +736,6 @@
   }, observerOptions);
 
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
-
-  // Robust PDF Generation (v3)
-  async function exportPDF(orientation = 'portrait') {
-    const { jsPDF } = window.jspdf;
-    const loader = document.getElementById('loading-pdf');
-    const sections = document.querySelectorAll('section');
-    
-    loader.style.display = 'block';
-    document.body.classList.toggle('landscape', orientation === 'landscape');
-
-    try {
-      const pdf = new jsPDF({
-        orientation: orientation,
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const [pageW, pageH] = orientation === 'landscape' ? [297, 210] : [210, 297];
-
-      for (let i = 0; i < sections.length; i++) {
-        // Force highlight components or other specific adjustments if needed
-        const canvas = await html2canvas(sections[i], {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#0a0a0a',
-          logging: false,
-          width: orientation === 'landscape' ? 1200 : 1000 // Force width for consistent rendering
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
-        
-        loader.innerText = `Gerando PDF... (${i + 1}/${sections.length})`;
-      }
-
-      pdf.save(`Proposta-Oticas-NorthWay-${orientation}.pdf`);
-    } catch (error) {
-      console.error('PDF Generation Error:', error);
-      alert('Erro ao gerar PDF. Tente novamente.');
-    } finally {
-      document.body.classList.remove('landscape');
-      loader.style.display = 'none';
-      loader.innerText = 'Gerando PDF...';
-    }
-  }
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
