@@ -43,8 +43,8 @@
   /* Cada .print-page = 1 página A4 */
   .print-page {
     width: 297mm;      /* Landscape default */
-    height: 210mm;
-    overflow: hidden;
+    min-height: 210mm;
+    overflow: visible;
     position: relative;
     page-break-after: always;
     break-after: page;
@@ -55,8 +55,8 @@
     align-items: center;
     justify-content: center;
     background: #0a0a0a;
-    padding: 40px;
-    border: 1px solid var(--border); /* Visual helper for screen */
+    padding: 30mm 40px; /* Margem interna maior para segurança */
+    border: 1px solid var(--border);
   }
 
   /* Estilos específicos baseados na proposta original */
@@ -66,9 +66,9 @@
   .text-red { color: var(--red); }
   .text-gray { color: var(--gray); }
   
-  h1 { font-family: 'Bebas Neue'; font-size: 80px; line-height: 0.9; margin-bottom: 20px; }
-  h2 { font-family: 'Bebas Neue'; font-size: 60px; line-height: 1; margin-bottom: 30px; }
-  p { font-size: 18px; color: var(--gray); max-width: 800px; margin: 0 auto; }
+  h1 { font-family: 'Bebas Neue'; font-size: 60px; line-height: 0.9; margin-bottom: 20px; }
+  h2 { font-family: 'Bebas Neue'; font-size: 45px; line-height: 1; margin-bottom: 25px; }
+  p { font-size: 16px; color: var(--gray); max-width: 800px; margin: 0 auto; }
   
   .label {
     display: inline-flex; align-items: center; gap: 10px;
@@ -92,17 +92,23 @@
 
   .card {
     background: var(--card); border: 1px solid var(--border);
-    padding: 30px; border-radius: 20px; text-align: left;
+    padding: 25px; border-radius: 20px; text-align: left;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
-  .card i { font-size: 24px; color: var(--red); margin-bottom: 15px; display: block; }
-  .card h3 { font-family: 'Barlow Condensed'; font-size: 20px; font-weight: 800; margin-bottom: 10px; }
-  .card p { font-size: 14px; margin: 0; text-align: left; }
+  .card i { font-size: 20px; color: var(--red); margin-bottom: 12px; display: block; }
+  .card h3 { font-family: 'Barlow Condensed'; font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+  .card p { font-size: 13px; margin: 0; text-align: left; line-height: 1.4; }
 
   /* Orientation Classes */
   body.portrait .print-page {
     width: 210mm;
-    height: 297mm;
+    min-height: 297mm;
+    padding: 30mm 40px;
   }
+  
+  body.portrait h1 { font-size: 70px; }
+  body.portrait h2 { font-size: 55px; }
 
   /* Print Controls */
   .print-controls {
