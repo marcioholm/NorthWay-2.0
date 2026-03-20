@@ -331,46 +331,51 @@
     transform: translateY(0);
   }
 
-  /* PRINT OPTIMIZATION */
+  /* PRINT OPTIMIZATION (v6 - Direct Print) */
   @media print {
     * {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
     }
-    body { margin: 0; padding: 0; background: var(--dark); }
+    body { background: #000; margin: 0; padding: 0; }
     nav, .progress-bar, .nav-btn, .hero-cta-group, .cta-plano, #loading-pdf { display: none !important; }
     
     section {
       page-break-before: always;
       break-before: page;
-      page-break-inside: avoid;
-      break-inside: avoid;
-      width: 210mm;
-      min-height: 297mm;
-      max-height: 297mm;
-      overflow: hidden;
-      box-sizing: border-box;
-      margin: 0;
-      padding: 40px !important;
-      display: flex;
+      page-break-inside: auto;
+      break-inside: auto;
+      min-height: 100vh;
+      display: flex !important;
       flex-direction: column;
       justify-content: center;
+      padding: 40px !important;
+      overflow: visible !important;
     }
 
     body.landscape section {
-      width: 297mm;
       min-height: 210mm;
-      max-height: 210mm;
+      width: 297mm;
     }
 
-    section:first-child { page-break-before: avoid; break-before: avoid; }
-    
-    /* Reveal all for print */
-    .fade-up { opacity: 1 !important; transform: none !important; }
+    body.portrait section {
+      min-height: 297mm;
+      width: 210mm;
+    }
+
+    .card {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      background: var(--card) !important;
+    }
+
+    .fade-up { opacity: 1 !important; transform: none !important; transition: none !important; }
   }
 
   /* Page Setup */
-  @page { size: A4; margin: 0; }
+  @page { size: auto; margin: 0; }
+  body.landscape @page { size: landscape; }
+  body.portrait @page { size: portrait; }
 
   /* Loading State */
   #loading-pdf {
@@ -394,10 +399,10 @@
   </div>
   <div style="display: flex; gap: 15px;">
     <div style="display: flex; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
-      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px; border-right: 1px solid var(--border);" onclick="window.open('/apresentacao-oticas/print?orientation=portrait', '_blank')">
+      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px; border-right: 1px solid var(--border);" onclick="printProposal('portrait')">
         <i class="fas fa-file-alt" style="margin-right: 8px;"></i>PDF Vertical
       </button>
-      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px;" onclick="window.open('/apresentacao-oticas/print?orientation=landscape', '_blank')">
+      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px;" onclick="printProposal('landscape')">
         <i class="fas fa-file-image" style="margin-right: 8px;"></i>PDF Horizontal
       </button>
     </div>
@@ -736,6 +741,14 @@
   }, observerOptions);
 
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  function printProposal(orientation) {
+    document.body.classList.add(orientation);
+    setTimeout(() => {
+      window.print();
+      document.body.classList.remove(orientation);
+    }, 100);
+  }
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

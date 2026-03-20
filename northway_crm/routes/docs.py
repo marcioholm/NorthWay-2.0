@@ -192,11 +192,6 @@ def manual_edicao():
 @login_required
 def presentation_optics():
     return render_template('docs/presentation_optics.html')
-
-@docs_bp.route('/apresentacao-oticas/print')
-@login_required
-def presentation_optics_print():
-    return render_template('docs/presentation_optics_print.html')
 @docs_bp.route('/api/docs/sync-library')
 @docs_bp.route('/master/api/docs/sync-library')
 @login_required
