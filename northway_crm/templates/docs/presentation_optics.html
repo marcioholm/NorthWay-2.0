@@ -341,7 +341,12 @@
     <div class="logo-icon">N</div>
     <div class="logo-text">NorthWay</div>
   </div>
-  <button class="nav-btn" onclick="scrollToId('planos')">Ver Planos</button>
+  <div style="display: flex; gap: 15px;">
+    <button class="nav-btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border);" onclick="downloadPDF()">
+      <i class="fas fa-download" style="margin-right: 8px;"></i>Baixar PDF
+    </button>
+    <button class="nav-btn" onclick="scrollToId('planos')">Ver Planos</button>
+  </div>
 </nav>
 
 <!-- 1. HERO -->
@@ -673,7 +678,52 @@
   }, observerOptions);
 
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // PDF Generation Function
+  function downloadPDF() {
+    const element = document.body;
+    const nav = document.querySelector('nav');
+    const pb = document.getElementById('pb');
+    const ctaButtons = document.querySelectorAll('.nav-btn, .btn-primary, .btn-outline, .cta-plano');
+    
+    // 1. Prepare for capture: Hide UI elements
+    nav.style.display = 'none';
+    pb.style.display = 'none';
+    
+    // Force all fade-up elements to be visible for the PDF
+    const fadeUps = document.querySelectorAll('.fade-up');
+    fadeUps.forEach(el => el.classList.add('visible'));
+
+    // Config for html2pdf
+    const opt = {
+      margin:       [0, 0, 0, 0],
+      filename:     'Proposta-Oticas-NorthWay.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        letterRendering: true,
+        backgroundColor: '#0A0A0A',
+        scrollY: 0
+      },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    // 2. Generate PDF
+    html2pdf().set(opt).from(element).save().then(() => {
+      // 3. Restore UI
+      nav.style.display = 'flex';
+      pb.style.display = 'block';
+    }).catch(err => {
+      console.error('PDF Error:', err);
+      nav.style.display = 'flex';
+      pb.style.display = 'block';
+    });
+  }
 </script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 </body>
 </html>
