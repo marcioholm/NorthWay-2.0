@@ -333,9 +333,53 @@
 
   /* PRINT OPTIMIZATION */
   @media print {
-    nav, .progress-bar { display: none !important; }
-    section { page-break-after: always; }
-    .relatorio-card, .cenario-card, .desc-card, .solucao-card, .comp-card, .plano-card { page-break-inside: avoid; }
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body { margin: 0; padding: 0; background: var(--dark); }
+    nav, .progress-bar, .nav-btn, .hero-cta-group, .cta-plano, #loading-pdf { display: none !important; }
+    
+    section {
+      page-break-before: always;
+      break-before: page;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      width: 210mm;
+      min-height: 297mm;
+      max-height: 297mm;
+      overflow: hidden;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 40px !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    body.landscape section {
+      width: 297mm;
+      min-height: 210mm;
+      max-height: 210mm;
+    }
+
+    section:first-child { page-break-before: avoid; break-before: avoid; }
+    
+    /* Reveal all for print */
+    .fade-up { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* Page Setup */
+  @page { size: A4; margin: 0; }
+
+  /* Loading State */
+  #loading-pdf {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--red); color: white;
+    padding: 10px 20px; border-radius: 6px;
+    font-family: 'Barlow Condensed'; font-weight: 700;
+    z-index: 2000; display: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   }
 </style>
 </head>
@@ -350,16 +394,18 @@
   </div>
   <div style="display: flex; gap: 15px;">
     <div style="display: flex; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;">
-      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px; border-right: 1px solid var(--border);" onclick="downloadPDF('portrait')">
+      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px; border-right: 1px solid var(--border);" onclick="exportPDF('portrait')">
         <i class="fas fa-file-alt" style="margin-right: 8px;"></i>PDF Vertical
       </button>
-      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px;" onclick="downloadPDF('landscape')">
+      <button class="nav-btn" style="background: transparent; border: none; padding: 12px 15px;" onclick="exportPDF('landscape')">
         <i class="fas fa-file-image" style="margin-right: 8px;"></i>PDF Horizontal
       </button>
     </div>
     <button class="nav-btn" onclick="scrollToId('planos')">Ver Planos</button>
   </div>
 </nav>
+
+<div id="loading-pdf">Gerando PDF...</div>
 
 <!-- 1. HERO -->
 <section id="hero">
@@ -691,49 +737,56 @@
 
   document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
-  // PDF Generation Function
-  function downloadPDF(orientation = 'portrait') {
-    const element = document.body;
-    const nav = document.querySelector('nav');
-    const pb = document.getElementById('pb');
+  // Robust PDF Generation (v3)
+  async function exportPDF(orientation = 'portrait') {
+    const { jsPDF } = window.jspdf;
+    const loader = document.getElementById('loading-pdf');
+    const sections = document.querySelectorAll('section');
     
-    // 1. Prepare for capture: Hide UI elements
-    nav.style.display = 'none';
-    pb.style.display = 'none';
-    
-    // Force all fade-up elements to be visible for the PDF
-    const fadeUps = document.querySelectorAll('.fade-up');
-    fadeUps.forEach(el => el.classList.add('visible'));
+    loader.style.display = 'block';
+    document.body.classList.toggle('landscape', orientation === 'landscape');
 
-    // Config for html2pdf
-    const isLandscape = orientation === 'landscape';
-    const opt = {
-      margin:       [0, 0, 0, 0],
-      filename:     `Proposta-Oticas-NorthWay-${orientation}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { 
-        scale: isLandscape ? 1.5 : 2, // Slightly lower scale for landscape to manage memory
-        useCORS: true, 
-        letterRendering: true,
-        backgroundColor: '#0A0A0A',
-        scrollY: 0,
-        windowWidth: isLandscape ? 1400 : 1100 // Force width to stabilize layout
-      },
-      jsPDF:        { 
-        unit: 'in', 
-        format: 'a4', 
-        orientation: orientation 
-      },
-      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-    };
+    try {
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: 'mm',
+        format: 'a4',
+      });
 
-    // 2. Generate PDF
-    html2pdf().set(opt).from(element).save().then(() => {
-      // 3. Restore UI
-      nav.style.display = 'flex';
-      pb.style.display = 'block';
-    }).catch(err => {
-      console.error('PDF Error:', err);
+      const [pageW, pageH] = orientation === 'landscape' ? [297, 210] : [210, 297];
+
+      for (let i = 0; i < sections.length; i++) {
+        // Force highlight components or other specific adjustments if needed
+        const canvas = await html2canvas(sections[i], {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#0a0a0a',
+          logging: false,
+          width: orientation === 'landscape' ? 1200 : 1000 // Force width for consistent rendering
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH);
+        
+        loader.innerText = `Gerando PDF... (${i + 1}/${sections.length})`;
+      }
+
+      pdf.save(`Proposta-Oticas-NorthWay-${orientation}.pdf`);
+    } catch (error) {
+      console.error('PDF Generation Error:', error);
+      alert('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      document.body.classList.remove('landscape');
+      loader.style.display = 'none';
+      loader.innerText = 'Gerando PDF...';
+    }
+  }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+ err);
       nav.style.display = 'flex';
       pb.style.display = 'block';
     });
