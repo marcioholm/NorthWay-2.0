@@ -262,6 +262,7 @@ def stats():
             'client_name': client_name,
             'amount': t.amount,
             'due_date': t.due_date.strftime('%d/%m/%Y'),
+            'paid_date': t.paid_date.strftime('%d/%m/%Y') if t.paid_date else '-',
             'created_at': t.created_at.strftime('%d/%m/%Y %H:%M') if t.created_at else '',
             'status': t.status
         })

@@ -295,6 +295,7 @@
                             <th class="px-4 py-3 font-medium">Descrição</th>
                             <th class="px-4 py-3 font-medium">Cliente</th>
                             <th class="px-4 py-3 font-medium">Vencimento</th>
+                            <th class="px-4 py-3 font-medium text-green-600">Pago Em</th>
                             <th class="px-4 py-3 font-medium">Gerada Em</th>
                             <th class="px-4 py-3 font-medium">Valor</th>
                             <th class="px-4 py-3 font-medium">Status</th>
@@ -304,7 +305,7 @@
                     <tbody id="tx-table-body" class="divide-y divide-gray-100">
                         <!-- Compact Rows injected via JS -->
                         <tr>
-                            <td class="p-4 text-center text-gray-400" colspan="6">Carregando...</td>
+                            <td class="p-4 text-center text-gray-400" colspan="8">Carregando...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -419,6 +420,7 @@
                         </td>
                         <td class="px-4 py-3 text-gray-500 truncate max-w-[150px]" title="${t.client_name}">${t.client_name}</td>
                         <td class="px-4 py-3 text-gray-500 font-mono text-[10px]">${t.due_date}</td>
+                        <td class="px-4 py-3 text-green-600 font-bold text-[10px]">${t.paid_date}</td>
                         <td class="px-4 py-3 text-gray-500 text-[10px]">${t.created_at}</td>
                         <td class="px-4 py-3 font-bold text-gray-900">${formatCurrency(t.amount)}</td>
                         <td class="px-4 py-3">${statusHtml}</td>
