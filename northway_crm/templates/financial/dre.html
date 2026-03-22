@@ -48,6 +48,12 @@
             <div class="flex gap-2">
                 <!-- Date Filter -->
                 <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-md p-1 px-2 shadow-sm">
+                    <i data-lucide="scale" class="w-4 h-4 text-gray-400"></i>
+                    <select id="dreRegime" class="text-xs font-medium border-none focus:ring-0 text-gray-700 p-0 pr-6">
+                        <option value="caixa">Regime de Caixa</option>
+                        <option value="competencia" selected>Regime de Competência</option>
+                    </select>
+                    <div class="w-px h-4 bg-gray-200"></div>
                     <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
                     <select id="dreYear" class="text-xs font-medium border-none focus:ring-0 text-gray-700 p-0 pr-6">
                         {% for y in range(now.year - 2, now.year + 2) %}
@@ -320,6 +326,7 @@
         loadCategories();
 
         // Filter Changes
+        document.getElementById('dreRegime').addEventListener('change', loadDRE);
         document.getElementById('dreYear').addEventListener('change', loadDRE);
         document.getElementById('dreMonth').addEventListener('change', loadDRE);
     });
@@ -331,11 +338,12 @@
     async function loadDRE() {
         const year = document.getElementById('dreYear').value;
         const month = document.getElementById('dreMonth').value;
+        const regime = document.getElementById('dreRegime').value;
 
         // Show loading state implicitly or explicit UI
 
         try {
-            const res = await fetch(`/api/financial/dre?year=${year}&month=${month}`);
+            const res = await fetch(`/api/financial/dre?year=${year}&month=${month}&regime=${regime}`);
             const data = await res.json();
 
             // Map Values

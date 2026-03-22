@@ -336,70 +336,46 @@ def get_dre_data():
     # Get filters
     year = request.args.get('year', type=int, default=date.today().year)
     month = request.args.get('month', type=int, default=date.today().month)
+    regime = request.args.get('regime', 'competencia') # 'caixa' or 'competencia'
     
-    # --- 1. RECEITA BRUTA (Transactions Paid + Issued in that month?) ---
-    # Usually DRE is Competence Regime (issued invoice). Let's use 'due_date' (vencimento/competencia approx) or created_at?
-    # For MVP financial, let's use 'due_date' as proxy for competence if paid or pending.
-    # Ideally we should have 'competence_date', but due_date is close enough for simple CRM.
-    
-    # Fetch Revenue Transactions
-    revenue_txs = Transaction.query.filter(
-        Transaction.company_id == company_id,
-        extract('year', Transaction.due_date) == year,
-        extract('month', Transaction.due_date) == month
-        # We include all, or just paid? DRE Competency = All Billed. DRE Cash = All Paid.
-        # Let's do COMPETENCY (Billed/Faturado).
-    ).all()
+    # --- 1. RECEITA BRUTA ---
+    if regime == 'caixa':
+        # Result Regime (Cash): Sum PAID in that month
+        revenue_txs = Transaction.query.filter(
+            Transaction.company_id == company_id,
+            Transaction.status == 'paid',
+            extract('year', Transaction.paid_date) == year,
+            extract('month', Transaction.paid_date) == month
+        ).all()
+    else:
+        # Competency Regime (Accrual): Sum DUE in that month (excluding cancelled)
+        revenue_txs = Transaction.query.filter(
+            Transaction.company_id == company_id,
+            Transaction.status != 'cancelled',
+            extract('year', Transaction.due_date) == year,
+            extract('month', Transaction.due_date) == month
+        ).all()
     
     gross_revenue = sum(t.amount for t in revenue_txs)
     
-    # --- 2. DEDUÇÕES (Impostos) --- 
-    # Simple approx: Category 'Impostos' manually added OR calculated
-    # Let's fetch Manual Expenses of type 'expense' named 'Impostos' or similar?
-    # Actually, we defined Expense Types.
-    # Let's fetch ALL Expenses for the period (by due_date)
+    # --- 2. EXPENSES & DEDUCTIONS --- 
+    if regime == 'caixa':
+        period_expenses = Expense.query.filter(
+            Expense.company_id == company_id,
+            Expense.status == 'paid',
+            extract('year', Expense.paid_date) == year,
+            extract('month', Expense.paid_date) == month
+        ).all()
+    else:
+        period_expenses = Expense.query.filter(
+            Expense.company_id == company_id,
+            # For competency, we usually count all non-cancelled expenses due in the period
+            # Status isn't strictly 'cancelled' for expense yet, but let's assume 'pending'/'paid' are active
+            extract('year', Expense.due_date) == year,
+            extract('month', Expense.due_date) == month
+        ).all()
     
-    period_expenses = Expense.query.filter(
-        Expense.company_id == company_id,
-        extract('year', Expense.due_date) == year,
-        extract('month', Expense.due_date) == month
-    ).all()
-    
-    # Categorize
-    taxes = 0
-    variable_costs = 0 # Markting if variable? Or commissions?
-    fixed_expenses = 0
-    
-    # Map from our DB Categories
-    # We need to join with Category to check type
-    
-    # Helper to group by category for frontend
-    breakdown_expenses = {} # { 'Pessoal': 5000, 'Marketing': 1000 }
-    
-    for exp in period_expenses:
-        cat = exp.category
-        val = exp.amount
-        
-        # Populate Breakdown
-        if cat.name not in breakdown_expenses:
-            breakdown_expenses[cat.name] = 0
-        breakdown_expenses[cat.name] += val
-        
-        # Aggregate High Level
-        if cat.type == 'cost':
-             variable_costs += val
-        elif cat.name.lower().startswith('imposto'): # Hacky if user didn't use default
-             taxes += val
-        else:
-             # Default to fixed expense
-             fixed_expenses += val
-             
-    # Adjust: If 'Impostos' is a category, we might have double counted in fixed_expenses if we didn't filtering logic properly.
-    # Let's refine. type='revenue' (not used for expense), 'expense', 'cost'.
-    # We will assume 'cost' = CMV/Variable. 'expense' = Fixed.
-    # 'Impostos' usually is separate. Let's look for a category named "Impostos e Taxas".
-    
-    # Refined Loop
+    # 3. Categorize
     taxes = 0
     variable_costs = 0
     fixed_expenses = 0
@@ -412,22 +388,36 @@ def get_dre_data():
         if cat.name not in breakdown: breakdown[cat.name] = 0
         breakdown[cat.name] += val
         
-        if "imposto" in cat.name.lower():
+        cat_name_lower = cat.name.lower()
+        if "imposto" in cat_name_lower or "taxa" in cat_name_lower or "das" in cat_name_lower:
             taxes += val
         elif cat.type == 'cost':
             variable_costs += val
         else:
             fixed_expenses += val
 
-    # --- 1.2 COMMISSIONS (VARIABLE COSTS) ---
+    # --- 4. COMMISSIONS (VARIABLE COSTS) ---
     comp_str = f"{year}-{month:02d}"
-    period_commissions = AccountsPayable.query.filter_by(
-        tenant_id=company_id,
-        competencia=comp_str,
-        status='PAGO' # Only paid? Or all committed? DRE Competency = All committed.
-    ).all()
     
-    comm_total = sum(float(c.valor_comissao_calculado) for c in period_commissions)
+    if regime == 'caixa':
+        # Cash: Commissions actually PAID this month
+        # Note: AccountsPayable doesn't have a paid_date in current model? 
+        # Let's check status='PAGO'. Usually accounts payable has competencia.
+        # If no paid_date, we have to rely on competencia.
+        period_commissions = AccountsPayable.query.filter_by(
+            tenant_id=company_id,
+            competencia=comp_str,
+            status='PAGO'
+        ).all()
+    else:
+        # Competency: Any commission committed to this month
+        period_commissions = AccountsPayable.query.filter(
+            AccountsPayable.tenant_id == company_id,
+            AccountsPayable.competencia == comp_str,
+            AccountsPayable.status != 'CANCELADO'
+        ).all()
+    
+    comm_total = sum(float(c.valor_comissao_calculado or 0) for c in period_commissions)
     variable_costs += comm_total
     
     if comm_total > 0:
