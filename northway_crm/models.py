@@ -146,6 +146,7 @@ class Company(db.Model):
     # Feature Flags (Master Control)
     # JSON: {'whatsapp': True, 'prospecting': False, ...}
     features = db.Column(db.JSON, default={})
+    tax_rate = db.Column(db.Float, default=0.0) # New: Default tax rate for DRE
 
     # Global Templates Control
     allowed_global_template_ids = db.Column(db.JSON, default=[]) # List of IDs [1, 2, 3]
@@ -710,6 +711,7 @@ class Transaction(db.Model):
     due_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), default='pending') # pending, paid, overdue, cancelled
     paid_date = db.Column(db.Date, nullable=True)
+    revenue_type = db.Column(db.String(20), default='recorrente') # recorrente, pontual, setup_onboarding, outros
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
     
@@ -762,6 +764,7 @@ class FinancialCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     type = db.Column(db.String(20), nullable=False) # revenue, expense, cost
+    is_deduction = db.Column(db.Boolean, default=False) # New: for DRE subtraction
     is_default = db.Column(db.Boolean, default=False)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     
@@ -778,6 +781,7 @@ class Expense(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('financial_category.id'), nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Who registered it
+    fixed_cost_id = db.Column(db.String(36), db.ForeignKey('custos_fixos_globais.id'), nullable=True) # Linked template
     
     created_at = db.Column(db.DateTime, default=get_now_br)
 
@@ -1006,10 +1010,18 @@ class FixedCost(db.Model):
     observacao = db.Column(db.Text)
     inicio_competencia = db.Column(db.String(7)) # YYYY-MM
     total_parcelas = db.Column(db.Integer, default=0) # 0 = Recorrente (Sem fim)
+    
+    # Smart Financials Fields
+    is_variable = db.Column(db.Boolean, default=False) # Requires manual value adjustment each month
+    linked_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # For "Equipe" category
+    
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    # Relationships
+    linked_user = db.relationship('User', foreign_keys=[linked_user_id], backref='linked_fixed_costs')
 
     company = db.relationship('Company', backref='fixed_costs')
     creator = db.relationship('User', foreign_keys=[created_by])
@@ -1017,7 +1029,7 @@ class FixedCost(db.Model):
 
 class StrategicAuditLog(db.Model):
     __tablename__ = 'strategic_audit_log'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     action = db.Column(db.String(50), nullable=False) # e.g., CREATE, UPDATE, DELETE, IMPORT
@@ -1069,6 +1081,7 @@ class CommissionSnapshot(db.Model):
     percentual_definitivo = db.Column(db.Float, nullable=True) # Set on tier update or month close
     data_fechamento = db.Column(db.DateTime, default=get_now_br)
     competencia_fechamento = db.Column(db.String(7), nullable=False) # YYYY-MM
+    valor_base_contratual = db.Column(db.Numeric(12, 2), default=0.0)
     base_calculo = db.Column(db.String(20), default='valor_pago')
     recorrente = db.Column(db.Boolean, default=True)
 

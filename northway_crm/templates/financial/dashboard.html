@@ -34,6 +34,11 @@
             </div>
         </div>
 
+        <!-- Financial Alerts -->
+        <div id="financial-alerts" class="space-y-3 hidden mb-6">
+            <!-- Injected via JS -->
+        </div>
+
         <!-- KPI Strip (Ultra Compact) -->
         <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
             <!-- MRR -->
@@ -344,6 +349,23 @@
             document.getElementById('kpi-ticket').textContent = formatCurrency(data.kpis.avg_ticket);
             document.getElementById('kpi-clients').textContent = data.kpis.active_clients;
             document.getElementById('kpi-churn').textContent = data.kpis.churn_rate;
+
+            // Render Alerts
+            const alertsDiv = document.getElementById('financial-alerts');
+            if (data.alerts && data.alerts.length > 0) {
+                alertsDiv.classList.remove('hidden');
+                alertsDiv.innerHTML = data.alerts.map(alert => `
+                    <div class="p-4 rounded-xl border flex items-start gap-3 ${alert.level === 'red' ? 'bg-red-50 border-red-100 text-red-800' : 'bg-yellow-50 border-yellow-100 text-yellow-800'}">
+                        <i data-lucide="${alert.level === 'red' ? 'alert-octagon' : 'alert-triangle'}" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="text-sm font-bold">${alert.title}</p>
+                            <p class="text-xs opacity-80">${alert.message}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                alertsDiv.classList.add('hidden');
+            }
 
             // Render Chart
             renderForecastChart(data.charts.forecast);

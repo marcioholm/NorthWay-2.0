@@ -69,6 +69,7 @@ class CommissionService:
             modelo=rule.modelo,
             percentual_provisorio=percentual,
             competencia_fechamento=competence,
+            valor_base_contratual=contract.amount if contract else service_order.value if service_order else 0.0,
             base_calculo='valor_pago', # User rule specifies net value paid
             recorrente=True if contract else False # Recurrent only for contracts, not single SOs
         )

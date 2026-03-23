@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
 from flask_login import login_required, current_user
-from models import db, Transaction, ServiceOrder, FixedCost, StrategicAuditLog, get_now_br, ROLE_ADMIN
+from models import db, Transaction, ServiceOrder, FixedCost, StrategicAuditLog, get_now_br, ROLE_ADMIN, Expense, FinancialCategory, User
 from sqlalchemy import func, extract
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import csv
 import io
 import json
@@ -81,30 +81,59 @@ def dashboard():
     # 4. Ponto de Equilíbrio (Fase 1: Ponto de equilíbrio = Custos Fixos)
     break_even = total_fixed_costs
     
-    # Trend Data (Last 6 Months)
+    # Trend Data (Last 6 Months) - Optimized Refactor (Eliminated N+1)
     trend_data = []
+    months_labels = []
+    
+    # Calculate month labels and date range
     for i in range(5, -1, -1):
-        d = date(year, month, 1)
-        # Simple month subtraction helper
         m = (month - i - 1) % 12 + 1
         y = year + (month - i - 1) // 12
+        months_labels.append({
+            'y': y,
+            'm': m,
+            'label': f"{m:02d}/{y}"
+        })
+    
+    start_date = date(months_labels[0]['y'], months_labels[0]['m'], 1)
+    # End of target month (last day of input month)
+    if month == 12:
+        end_date = date(year, 12, 31)
+    else:
+        end_date = date(year, month + 1, 1) - timedelta(days=1)
+
+    # 1. Bulk Revenue Query (Single query for all 6 months)
+    revenue_rows = db.session.query(
+        extract('month', Transaction.paid_date).label('m'),
+        extract('year', Transaction.paid_date).label('y'),
+        func.sum(Transaction.amount)
+    ).filter(
+        Transaction.company_id == current_user.company_id,
+        Transaction.status == 'paid',
+        Transaction.paid_date >= start_date,
+        Transaction.paid_date <= end_date
+    ).group_by('y', 'm').all()
+    
+    # Map revenue for efficient lookup
+    revenue_map = {(int(r.y), int(r.m)): float(r[2] or 0) for r in revenue_rows}
+
+    # 2. Bulk Fixed Costs (One query instead of per month)
+    # Fetch all potentially active costs for the company
+    all_active_costs = FixedCost.query.filter(
+        FixedCost.tenant_id == current_user.company_id,
+        FixedCost.status == 'Ativo'
+    ).all()
+
+    # Assemble Trend Data (In-memory aggregation)
+    for ml in months_labels:
+        y, m = ml['y'], ml['m']
         
-        # Monthly Revenue
-        m_rev = db.session.query(func.sum(Transaction.amount)).filter(
-            Transaction.company_id == current_user.company_id,
-            Transaction.status == 'paid',
-            extract('month', Transaction.paid_date) == m,
-            extract('year', Transaction.paid_date) == y
-        ).scalar() or 0.0
+        # Get Revenue from map
+        m_rev = revenue_map.get((y, m), 0.0)
         
-        # Monthly Fixed Costs
-        m_costs_q = FixedCost.query.filter(
-            FixedCost.tenant_id == current_user.company_id,
-            FixedCost.status == 'Ativo',
-            FixedCost.inicio_competencia <= f"{y}-{m:02d}"
-        ).all()
+        # Calculate Costs from pre-fetched list
         m_costs = 0.0
-        for c in m_costs_q:
+        for c in all_active_costs:
             if is_cost_active_in_month(c, y, m):
                 if c.tipo == 'Anual Rateado':
                     m_costs += float(c.valor) / 12
@@ -112,10 +141,10 @@ def dashboard():
                     m_costs += float(c.valor)
         
         trend_data.append({
-            'label': f"{m:02d}/{y}",
-            'revenue': float(m_rev),
+            'label': ml['label'],
+            'revenue': m_rev,
             'costs': m_costs,
-            'result': float(m_rev) - m_costs
+            'result': m_rev - m_costs
         })
 
     return render_template('financial/strategic_dre.html',
@@ -134,7 +163,8 @@ def fixed_costs():
         abort(403)
     
     costs = FixedCost.query.filter_by(tenant_id=current_user.company_id).order_by(FixedCost.inicio_competencia.desc()).all()
-    return render_template('financial/fixed_costs.html', costs=costs)
+    users = User.query.filter_by(company_id=current_user.company_id).all()
+    return render_template('financial/fixed_costs.html', costs=costs, users=users)
 
 @financial_strategic_bp.route('/financial/strategic/fixed-costs/new', methods=['POST'])
 @login_required
@@ -152,6 +182,8 @@ def add_fixed_cost():
         observacao=request.form.get('observacao'),
         inicio_competencia=request.form.get('inicio_competencia'),
         total_parcelas=int(request.form.get('total_parcelas', 0) or 0),
+        is_variable=bool(request.form.get('is_variable')),
+        linked_user_id=int(request.form.get('linked_user_id')) if request.form.get('linked_user_id') else None,
         created_by=current_user.id
     )
     db.session.add(cost)
@@ -174,6 +206,113 @@ def add_fixed_cost():
     
     db.session.commit()
     flash('Custo fixo adicionado com sucesso.', 'success')
+    return redirect(url_for('financial_strategic.fixed_costs'))
+
+@financial_strategic_bp.route('/financial/strategic/fixed-costs/api-update/<id>', methods=['POST'])
+@login_required
+def api_update_fixed_cost(id):
+    if not current_user.has_permission('admin_view'):
+        return jsonify({"error": "Forbidden"}), 403
+        
+    cost = FixedCost.query.get_or_404(id)
+    if cost.tenant_id != current_user.company_id:
+        return jsonify({"error": "Forbidden"}), 403
+        
+    data = request.json
+    if 'is_variable' in data:
+        cost.is_variable = bool(data['is_variable'])
+    if 'linked_user_id' in data:
+        cost.linked_user_id = int(data['linked_user_id']) if data['linked_user_id'] else None
+        
+    db.session.commit()
+    return jsonify({"status": "success"})
+
+@financial_strategic_bp.route('/financial/strategic/fixed-costs/generate-expenses', methods=['POST'])
+@login_required
+def generate_monthly_expenses():
+    if not current_user.has_permission('admin_view'):
+        abort(403)
+        
+    today = date.today()
+    month = today.month
+    year = today.year
+    
+    # 1. Helper to get or create category
+    def get_category(name):
+        cat = FinancialCategory.query.filter_by(company_id=current_user.company_id, name=name).first()
+        if not cat:
+            cat = FinancialCategory(name=name, type='expense', company_id=current_user.company_id)
+            db.session.add(cat)
+            db.session.flush()
+        return cat
+
+    # 2. Get active costs
+    costs = FixedCost.query.filter_by(
+        tenant_id=current_user.company_id,
+        status='Ativo'
+    ).all()
+    
+    # helper from dashboard route (duplicated here for simplicity or we could refactor)
+    def is_active(cost, y, m):
+        start_y = int(cost.inicio_competencia[:4])
+        start_m = int(cost.inicio_competencia[5:])
+        if y < start_y or (y == start_y and m < start_m): return False
+        if cost.total_parcelas and cost.total_parcelas > 0:
+            months_diff = (y - start_y) * 12 + (m - start_m)
+            if months_diff >= cost.total_parcelas: return False
+        return True
+
+    generated_count = 0
+    skipped_count = 0
+    
+    for cost in costs:
+        if is_active(cost, year, month):
+            # Check if already generated for this month
+            # We look for an Expense linked to this fixed_cost_id with due date in this month
+            existing = Expense.query.filter(
+                Expense.fixed_cost_id == cost.id,
+                extract('month', Expense.due_date) == month,
+                extract('year', Expense.due_date) == year
+            ).first()
+            
+            if existing:
+                skipped_count += 1
+                continue
+                
+            # Create Expense
+            cat = get_category(cost.categoria)
+            
+            amount = float(cost.valor)
+            if cost.tipo == 'Anual Rateado':
+                amount = amount / 12
+                
+            new_expense = Expense(
+                description=f"{cost.nome_custo} ({month:02d}/{year})",
+                amount=amount,
+                due_date=date(year, month, 5), # Default to 5th
+                status='pending',
+                category_id=cat.id,
+                company_id=current_user.company_id,
+                user_id=current_user.id,
+                fixed_cost_id=cost.id
+            )
+            db.session.add(new_expense)
+            generated_count += 1
+            
+    db.session.commit()
+    
+    # Audit Log
+    log = StrategicAuditLog(
+        tenant_id=current_user.company_id,
+        user_id=current_user.id,
+        action='GENERATE_EXPENSES',
+        target_type='Expense',
+        changes=json.dumps({'generated': generated_count, 'skipped': skipped_count})
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    flash(f'Sucesso: {generated_count} despesas geradas. {skipped_count} já existiam.', 'success')
     return redirect(url_for('financial_strategic.fixed_costs'))
 
 @financial_strategic_bp.route('/financial/strategic/fixed-costs/edit/<id>', methods=['POST'])
@@ -201,6 +340,8 @@ def edit_fixed_cost(id):
     cost.observacao = request.form.get('observacao')
     cost.inicio_competencia = request.form.get('inicio_competencia')
     cost.total_parcelas = int(request.form.get('total_parcelas', 0) or 0)
+    cost.is_variable = bool(request.form.get('is_variable'))
+    cost.linked_user_id = int(request.form.get('linked_user_id')) if request.form.get('linked_user_id') else None
     cost.updated_by = current_user.id
     cost.updated_at = get_now_br()
     

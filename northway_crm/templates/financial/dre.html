@@ -94,6 +94,11 @@
                         <span class="font-bold text-gray-900 text-lg" id="val-revenue">R$ 0,00</span>
                     </div>
 
+                    <!-- Revenue Types Breakdown -->
+                    <div id="revenue-breakdown" class="space-y-1 pl-8 text-xs text-gray-500 mb-2">
+                        <!-- Injected via JS -->
+                    </div>
+
                     <!-- Deductions -->
                     <div class="flex justify-between items-center py-2 pl-4 text-red-600">
                         <span class="text-gray-600">(-) Impostos e Deduções</span>
@@ -348,7 +353,7 @@
 
             // Map Values
             document.getElementById('val-revenue').innerText = formatMoney(data.gross_revenue);
-            document.getElementById('val-taxes').innerText = formatMoney(data.taxes * -1); // Show as negative for visual logic? Or just abs
+            document.getElementById('val-taxes').innerText = formatMoney(data.taxes * -1); 
             document.getElementById('val-net-revenue').innerText = formatMoney(data.net_revenue);
             document.getElementById('val-variable').innerText = formatMoney(data.variable_costs * -1);
             document.getElementById('val-margin').innerText = formatMoney(data.gross_profit);
@@ -356,7 +361,28 @@
             document.getElementById('val-ebitda').innerText = formatMoney(data.ebitda);
             document.getElementById('val-net-result').innerText = formatMoney(data.net_result);
 
-            // Render Breakdown
+            // Render Revenue Breakdown
+            const revBreakdownEl = document.getElementById('revenue-breakdown');
+            if (revBreakdownEl) {
+                revBreakdownEl.innerHTML = '';
+                const types = {
+                    'recorrente': 'Recorrente',
+                    'pontual': 'Pontual',
+                    'setup_onboarding': 'Setup/Onboarding',
+                    'outros': 'Outros'
+                };
+                
+                Object.entries(data.revenue_by_type).forEach(([key, val]) => {
+                    if (val > 0) {
+                        const row = document.createElement('div');
+                        row.className = 'flex justify-between items-center py-1';
+                        row.innerHTML = `<span class="text-gray-500">${types[key] || key}</span> <span>${formatMoney(val)}</span>`;
+                        revBreakdownEl.appendChild(row);
+                    }
+                });
+            }
+
+            // Render Expense Breakdown
             const breakdownEl = document.getElementById('expense-breakdown');
             breakdownEl.innerHTML = '';
 

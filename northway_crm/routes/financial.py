@@ -145,22 +145,13 @@ def stats():
             print(f"📊 DEBUG FINANCIAL ERROR (Contract {c.id if c else 'unknown'}): {e}")
             pass
     
-    print(f"📊 DEBUG FINANCIAL RESULT: MRR: {mrr}, At Risk: {mrr_at_risk}, Active Clients: {active_clients_count}")
-
-    print(f"📊 DEBUG FINANCIAL Result - MRR: {mrr}, Count: {active_clients_count}, Risk: {mrr_at_risk}")
-    
     avg_ticket = mrr / active_clients_count if active_clients_count > 0 else 0
     
     # Churn Rate: (Cancelled / (Active + Cancelled)) * 100
     cancelled_count = len(cancelled_contracts)
-    print(f"📊 DEBUG FINANCIAL: Cancelled Contracts Count: {cancelled_count}")
-    
     total_ever_signed = active_clients_count + cancelled_count
     churn_rate = (cancelled_count / total_ever_signed * 100) if total_ever_signed > 0 else 0
     
-    # Final KPIs Log
-    print(f"📊 DEBUG FINANCIAL FINAL KPIs: {forecast_30}, {paid_this_month}, {overdue}, {mrr}, {avg_ticket}")
-
     # --- CHARTS (12 Months Projection) ---
     chart_labels = []
     chart_values = []
@@ -188,8 +179,7 @@ def stats():
         chart_labels.append(future_date.strftime('%b/%Y'))
         chart_values.append(float(month_sum))
 
-    # --- NICHE STATS (New) ---
-    # Aggregate MRR expected this month by Client Niche
+    # --- NICHE STATS ---
     m_curr_start = today.replace(day=1)
     if today.month == 12:
         m_curr_end = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
@@ -203,59 +193,41 @@ def stats():
         Transaction.due_date <= m_curr_end
     ).all()
     
-    niche_buckets = {} # For MRR Expected
-    niche_counts = {} # For Transaction / Client Count
+    niche_buckets = {} 
+    niche_counts = {} 
     
     for tx in current_month_txs:
         try:
             val = float(tx.amount)
-            
-            # Get Niche
             niche = "Sem Nicho"
             if tx.client:
                 niche = tx.client.niche or "Sem Nicho"
             elif tx.contract and tx.contract.client:
                 niche = tx.contract.client.niche or "Sem Nicho"
-                
-            niche = niche.strip()
-            if not niche: niche = "Sem Nicho"
-            
+            niche = niche.strip() or "Sem Nicho"
             if niche not in niche_buckets:
                 niche_buckets[niche] = 0
                 niche_counts[niche] = 0
             niche_buckets[niche] += val
             niche_counts[niche] += 1
-        except:
-            pass
+        except: pass
             
-    # Sort Niches by MRR (desc)
     sorted_niches = sorted(niche_buckets.items(), key=lambda x: x[1], reverse=True)
     niche_labels = [item[0] for item in sorted_niches]
     niche_values = [item[1] for item in sorted_niches]
-    # Create matching list of counts for the frontend (same order as labels)
     niche_quantities = [niche_counts[label] for label in niche_labels]
 
-    # --- RERECENT TRANSACTIONS ---
-    print(f"📡 API STATS: Fetching recent transactions for company: {company_id}")
+    # --- RECENT TRANSACTIONS ---
     recent_txs = Transaction.query.filter(
         Transaction.company_id == company_id,
-        Transaction.status != 'cancelled' # Hide cancelled
-    ).order_by(
-        Transaction.status == 'paid', # Pending first
-        Transaction.due_date.asc()
-    ).limit(50).all()
-    
-    print(f"📡 API STATS: Found {len(recent_txs)} recent transactions.")
+        Transaction.status != 'cancelled'
+    ).order_by(Transaction.status == 'paid', Transaction.due_date.asc()).limit(50).all()
     
     tx_list = []
     for t in recent_txs:
-        # Resolve Client Name safely
         client_name = "Cliente"
-        if t.contract:
-            client_name = t.contract.client.name
-        elif t.client:
-            client_name = t.client.name
-            
+        if t.contract: client_name = t.contract.client.name
+        elif t.client: client_name = t.client.name
         tx_list.append({
             'id': t.id,
             'description': t.description,
@@ -266,6 +238,77 @@ def stats():
             'created_at': t.created_at.strftime('%d/%m/%Y %H:%M') if t.created_at else '',
             'status': t.status
         })
+
+    # --- ALERTS & THRESHOLDS ---
+    alerts = []
+    
+    # 1. Total Revenue for threshold contexts (Competency of current month)
+    curr_rev = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.company_id == company_id,
+        Transaction.status != 'cancelled',
+        extract('year', Transaction.due_date) == today.year,
+        extract('month', Transaction.due_date) == today.month
+    ).scalar() or 0
+    
+    # 2. Team Cost Alert
+    expenses_today = Expense.query.filter(
+        Expense.company_id == company_id,
+        extract('year', Expense.due_date) == today.year,
+        extract('month', Expense.due_date) == today.month
+    ).all()
+    
+    team_cost = 0
+    for e in expenses_today:
+        c_name = e.category.name.lower()
+        if any(k in c_name for k in ['salário', 'pro-labore', 'pró-labore', 'folha', 'encargo']):
+            team_cost += e.amount
+            
+    if curr_rev > 0:
+        tc_pct = (team_cost / curr_rev) * 100
+        if tc_pct > 40:
+            alerts.append({
+                'level': 'red',
+                'title': 'Custo de equipe elevado',
+                'message': f'Gastos com pessoal representam {tc_pct:.1f}% da receita bruta.'
+            })
+            
+    # 3. Net Margin Alert
+    total_exp = sum(e.amount for e in expenses_today)
+    comm_appx = db.session.query(func.sum(AccountsPayable.valor_comissao_calculado)).filter(
+        AccountsPayable.tenant_id == company_id,
+        AccountsPayable.competencia == today.strftime('%Y-%m'),
+        AccountsPayable.status != 'CANCELADO'
+    ).scalar() or 0
+    
+    monthly_net = float(curr_rev) - float(total_exp) - float(comm_appx)
+    if curr_rev > 0:
+        margin_pct = (monthly_net / float(curr_rev)) * 100
+        if margin_pct < 20:
+             alerts.append({
+                'level': 'yellow',
+                'title': 'Margem líquida em atenção',
+                'message': f'A margem projetada para este mês é de {margin_pct:.1f}% (meta: 20%).'
+            })
+            
+    # 4. MRR Delta
+    lm_date = today.replace(day=1) - timedelta(days=1)
+    mrr_last_month = 0
+    for c in active_contracts:
+        if c.created_at.date() <= lm_date.replace(day=1):
+            try:
+                d = json.loads(c.form_data)
+                v = float(d.get('valor_parcela', '0').replace('.', '').replace(',', '.'))
+                mrr_last_month += v
+            except: pass
+            
+    if mrr_last_month > 0:
+        mrr_delta = ((mrr - mrr_last_month) / mrr_last_month) * 100
+        if mrr_delta < -10:
+             alerts.append({
+                'level': 'red',
+                'title': 'Queda acentuada de MRR',
+                'message': f'Houve uma redução de {abs(mrr_delta):.1f}% na base recorrente vs mês anterior.'
+            })
 
     return jsonify({
         'kpis': {
@@ -283,8 +326,9 @@ def stats():
         },
         'charts': {
             'forecast': {'labels': chart_labels, 'data': chart_values},
-            'niches': {'labels': niche_labels, 'data': niche_values, 'counts': niche_quantities} # NEW
+            'niches': {'labels': niche_labels, 'data': niche_values, 'counts': niche_quantities}
         },
+        'alerts': alerts,
         'transactions': tx_list
     })
 
@@ -341,7 +385,6 @@ def get_dre_data():
     
     # --- 1. RECEITA BRUTA ---
     if regime == 'caixa':
-        # Result Regime (Cash): Sum PAID in that month
         revenue_txs = Transaction.query.filter(
             Transaction.company_id == company_id,
             Transaction.status == 'paid',
@@ -349,7 +392,6 @@ def get_dre_data():
             extract('month', Transaction.paid_date) == month
         ).all()
     else:
-        # Competency Regime (Accrual): Sum DUE in that month (excluding cancelled)
         revenue_txs = Transaction.query.filter(
             Transaction.company_id == company_id,
             Transaction.status != 'cancelled',
@@ -358,6 +400,16 @@ def get_dre_data():
         ).all()
     
     gross_revenue = sum(t.amount for t in revenue_txs)
+    revenue_by_type = {
+        'recorrente': 0,
+        'pontual': 0,
+        'setup_onboarding': 0,
+        'outros': 0
+    }
+    for t in revenue_txs:
+        rtype = t.revenue_type or 'recorrente'
+        if rtype not in revenue_by_type: rtype = 'outros'
+        revenue_by_type[rtype] += t.amount
     
     # --- 2. EXPENSES & DEDUCTIONS --- 
     if regime == 'caixa':
@@ -370,14 +422,12 @@ def get_dre_data():
     else:
         period_expenses = Expense.query.filter(
             Expense.company_id == company_id,
-            # For competency, we usually count all non-cancelled expenses due in the period
-            # Status isn't strictly 'cancelled' for expense yet, but let's assume 'pending'/'paid' are active
             extract('year', Expense.due_date) == year,
             extract('month', Expense.due_date) == month
         ).all()
     
     # 3. Categorize
-    taxes = 0
+    taxes = 0 # Conceptually: Deductions
     variable_costs = 0
     fixed_expenses = 0
     breakdown = {}
@@ -389,8 +439,7 @@ def get_dre_data():
         if cat.name not in breakdown: breakdown[cat.name] = 0
         breakdown[cat.name] += val
         
-        cat_name_lower = cat.name.lower()
-        if "imposto" in cat_name_lower or "taxa" in cat_name_lower or "das" in cat_name_lower:
+        if cat.is_deduction:
             taxes += val
         elif cat.type == 'cost':
             variable_costs += val
@@ -401,17 +450,12 @@ def get_dre_data():
     comp_str = f"{year}-{month:02d}"
     
     if regime == 'caixa':
-        # Cash: Commissions actually PAID this month
-        # Note: AccountsPayable doesn't have a paid_date in current model? 
-        # Let's check status='PAGO'. Usually accounts payable has competencia.
-        # If no paid_date, we have to rely on competencia.
         period_commissions = AccountsPayable.query.filter_by(
             tenant_id=company_id,
             competencia=comp_str,
             status='PAGO'
         ).all()
     else:
-        # Competency: Any commission committed to this month
         period_commissions = AccountsPayable.query.filter(
             AccountsPayable.tenant_id == company_id,
             AccountsPayable.competencia == comp_str,
@@ -427,16 +471,13 @@ def get_dre_data():
     # --- CALCULATION ---
     net_revenue = gross_revenue - taxes
     gross_profit = net_revenue - variable_costs # Margem de Contribuição
-    # EBITDA = Gross Profit - Fixed Expenses (before interest/depreciation)
-    # We assume all 'fixed_expenses' are operating expenses for EBITDA in this simple model.
     ebitda = gross_profit - fixed_expenses
-    
-    # Net Result (ignoring depreciation/interest for MVP)
     net_result = ebitda 
     
     return jsonify({
         'gross_revenue': gross_revenue,
-        'taxes': taxes,
+        'revenue_by_type': revenue_by_type,
+        'taxes': taxes, # Impostos e Deduções
         'net_revenue': net_revenue,
         'variable_costs': variable_costs,
         'gross_profit': gross_profit, # Margem Contribuição
