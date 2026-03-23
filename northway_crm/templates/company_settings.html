@@ -270,7 +270,7 @@
             const reader = new FileReader();
             reader.onload = function (e) {
                 // Replace content with img
-                logoPreviewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview" class="max-w-full max-h-full object-contain">`;
+                logoPreviewContainer.innerHTML = `<img src="${e.target.result}" alt="Preview" class="max-w-full max-h-full object-contain" loading="lazy">`;
             }
             reader.readAsDataURL(file);
         }

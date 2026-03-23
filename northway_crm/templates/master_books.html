@@ -38,7 +38,7 @@
             <div
                 class="aspect-video bg-gray-100 rounded-lg mb-4 overflow-hidden relative flex items-center justify-center">
                 {% if book.cover_image and book.cover_image.startswith('http') %}
-                <img src="{{ book.cover_image }}" class="w-full h-full object-cover">
+                <img src="{{ book.cover_image }}" class="w-full h-full object-cover" loading="lazy">
                 {% else %}
                 <i data-lucide="book-open" class="text-gray-300 w-12 h-12"></i>
                 {% endif %}

@@ -28,22 +28,10 @@ def home():
         
     company_id = current_user.company_id
     user_id = current_user.id
-    
-    from services.automation_service import AutomationService
-    try:
-        AutomationService.check_leads_followup()
-    except Exception as e:
-        current_app.logger.error(f"❌ Error triggering cadence check: {e}")
 
-    current_app.logger.info(f"🏠 DASHBOARD HOME: Access by {current_user.email} (Company: {current_user.company_id})")
-    
     # 1. Summary stats
     lead_count = Lead.query.filter(Lead.company_id == company_id).count()
     client_count = Client.query.filter(Client.company_id == company_id).count()
-    
-    # Global check (Hydra Strategy)
-    total_leads_global = Lead.query.count()
-    current_app.logger.info(f"🏠 DASHBOARD HOME: Leads for Company {company_id} = {lead_count}. Total Global Leads = {total_leads_global}")
     
     recent_leads = Lead.query.filter(Lead.company_id == company_id).order_by(Lead.created_at.desc()).limit(5).all()
     
@@ -108,16 +96,10 @@ def dashboard():
     user_id = current_user.id
     
     from flask import current_app
-    current_app.logger.info(f"📊 DASHBOARD STATS: Access by {current_user.email} (Company: {current_user.company_id})")
-    
     # 1. KPIs
     total_leads = Lead.query.filter(Lead.company_id == company_id).count()
     active_clients = Client.query.filter(Client.company_id == company_id, Client.status == 'ativo').count()
     won_deals = Lead.query.filter(Lead.company_id == company_id, Lead.status == 'won').count()
-    
-    # Global check
-    total_clients_global = Client.query.count()
-    current_app.logger.info(f"📊 DASHBOARD STATS: Leads: {total_leads}, Active Clients: {active_clients}. Global Clients: {total_clients_global}")
     
     
     # Calculate MRR (exclude inadimplentes for accurate projections)
@@ -434,4 +416,19 @@ def get_chart_data():
         'leads': [data_buckets[k]['leads'] for k in sorted_keys],
         'sales': [data_buckets[k]['sales'] for k in sorted_keys]
     })
+
+@dashboard_bp.route('/api/trigger-automation', methods=['POST'])
+@login_required
+def trigger_automation():
+    if getattr(current_user, 'role', '') not in ['admin', 'manager']:
+        return jsonify({"success": False, "error": "Unauthorized"}), 403
+        
+    from services.automation_service import AutomationService
+    try:
+        AutomationService.check_leads_followup()
+        return jsonify({"success": True, "message": "Automation cadence checks triggered successfully"}), 200
+    except Exception as e:
+        current_app.logger.error(f"❌ Error triggering cadence check via API: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 

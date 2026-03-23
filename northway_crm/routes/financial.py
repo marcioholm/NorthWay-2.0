@@ -27,27 +27,6 @@ def dashboard():
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
 
-    # RECONCILIATION: Create missing snapshots for approved SOs (fallback fix)
-    try:
-        from models import ServiceOrder, CommissionSnapshot
-        from services.commission_service import CommissionService
-        
-        # Approved SOs in this month that don't have a snapshot
-        approved_sos = ServiceOrder.query.filter(
-            ServiceOrder.company_id == current_user.company_id,
-            ServiceOrder.status.in_(['EM_EXECUCAO', 'CONCLUIDA', 'AGUARDANDO_PAGAMENTO'])
-        ).all()
-        
-        for so in approved_sos:
-            existing = CommissionSnapshot.query.filter_by(service_order_id=so.id).first()
-            if not existing:
-                beneficiary = so.client.account_manager or current_user
-                CommissionService.create_snapshot(beneficiary, service_order=so)
-        db.session.commit()
-    except Exception as e:
-        print(f"⚠️ Reconciliation error: {e}")
-        db.session.rollback()
-
     return render_template('financial/dashboard.html')
 
 @financial_bp.route('/api/financial/stats')
@@ -59,41 +38,39 @@ def stats():
     if current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
         abort(403)
     
-    print(f"📡 API STATS: Request by {current_user.email} (ID: {current_user.id})")
-    current_app.logger.info(f"📡 API STATS: Request by {current_user.email} (ID: {current_user.id})")
-    current_app.logger.info(f"🏢 API STATS: current_user.company_id = {current_user.company_id}")
-    
     company_id = current_user.company_id
     if not company_id:
-        current_app.logger.info("🚨 API STATS: company_id is MISSING! Skipping data fetch.")
         return jsonify({'error': 'Empresa não vinculada'}), 400
         
     today = date.today()
     
-    current_app.logger.info(f"📊 DEBUG FINANCIAL: Loading stats for Company ID: {company_id}, User: {current_user.email}")
-    
     # --- PROJECTION & REVENUE ---
-    upcoming_transactions = Transaction.query.filter(
+    from datetime import timedelta
+    
+    forecast_30 = db.session.query(func.sum(Transaction.amount)).filter(
         Transaction.company_id == company_id,
         Transaction.status == 'pending',
-        Transaction.due_date >= today
-    ).all()
+        Transaction.due_date >= today,
+        Transaction.due_date <= today + timedelta(days=30)
+    ).scalar() or 0.0
     
-    current_app.logger.info(f"📊 DEBUG FINANCIAL: Found {len(upcoming_transactions)} upcoming transactions.")
+    forecast_60 = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.company_id == company_id,
+        Transaction.status == 'pending',
+        Transaction.due_date >= today,
+        Transaction.due_date <= today + timedelta(days=60)
+    ).scalar() or 0.0
     
-    forecast_30 = 0
-    forecast_60 = 0
-    forecast_90 = 0
-    
-    for t in upcoming_transactions:
-        days_diff = (t.due_date - today).days
-        print(f"📊 DEBUG FINANCIAL: tx {t.id} - due: {t.due_date} - amount: {t.amount} - diff: {days_diff}")
-        if days_diff <= 30:
-            forecast_30 += t.amount
-        if days_diff <= 60:
-            forecast_60 += t.amount
-        if days_diff <= 90:
-            forecast_90 += t.amount
+    forecast_90 = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.company_id == company_id,
+        Transaction.status == 'pending',
+        Transaction.due_date >= today,
+        Transaction.due_date <= today + timedelta(days=90)
+    ).scalar() or 0.0
+
+    forecast_30 = float(forecast_30)
+    forecast_60 = float(forecast_60)
+    forecast_90 = float(forecast_90)
             
     # Confirmed Revenue (Paid this month)
     first_day_month = today.replace(day=1)
@@ -128,12 +105,7 @@ def stats():
     
     for c in active_contracts:
         try:
-            print(f"📊 DEBUG FINANCIAL: Processing Contract ID: {c.id}, Client: {c.client.name}, Status: {c.status}")
-            data = json.loads(c.form_data)
-            val_str = data.get('valor_parcela', '0')
-            print(f"📊 DEBUG FINANCIAL: Contract {c.id} - valor_parcela (raw): {val_str}")
-            val = float(val_str.replace('.', '').replace(',', '.'))
-            print(f"📊 DEBUG FINANCIAL: Contract {c.id} - valor_parcela (parsed): {val}")
+            val = float(c.amount or 0.0)
             
             if c.client.payment_status == 'inadimplente':
                 mrr_at_risk += val
@@ -142,7 +114,6 @@ def stats():
                 mrr += val
                 active_clients_count += 1
         except Exception as e:
-            print(f"📊 DEBUG FINANCIAL ERROR (Contract {c.id if c else 'unknown'}): {e}")
             pass
     
     avg_ticket = mrr / active_clients_count if active_clients_count > 0 else 0
@@ -153,28 +124,34 @@ def stats():
     churn_rate = (cancelled_count / total_ever_signed * 100) if total_ever_signed > 0 else 0
     
     # --- CHARTS (12 Months Projection) ---
+    end_date = add_months(today, 11)
+    if end_date.month == 12:
+        max_date = end_date.replace(year=end_date.year + 1, month=1, day=1) - timedelta(days=1)
+    else:
+        max_date = end_date.replace(month=end_date.month + 1, day=1) - timedelta(days=1)
+        
+    year_transactions = Transaction.query.filter(
+        Transaction.company_id == company_id,
+        Transaction.status == 'pending',
+        Transaction.due_date >= today.replace(day=1),
+        Transaction.due_date <= max_date
+    ).all()
+    
+    results_map = {}
+    for tx in year_transactions:
+        m_key = tx.due_date.strftime('%Y-%m')
+        results_map[m_key] = results_map.get(m_key, 0.0) + float(tx.amount or 0.0)
+
     chart_labels = []
     chart_values = []
     for i in range(12):
         future_date = add_months(today, i)
+        m_key = future_date.strftime('%Y-%m')
         
-        # Calculate range for the future month
-        m_start = future_date.replace(day=1)
-        if future_date.month == 12:
-            m_end = future_date.replace(year=future_date.year + 1, month=1, day=1) - timedelta(days=1)
-        else:
-            m_end = future_date.replace(month=future_date.month + 1, day=1) - timedelta(days=1)
-
-        # Sum transactions due in that month/year (exclude cancelled)
-        month_sum = db.session.query(func.sum(Transaction.amount)).filter(
-            Transaction.company_id == company_id,
-            Transaction.status == 'pending',
-            Transaction.due_date >= m_start,
-            Transaction.due_date <= m_end
-        ).scalar() or 0
+        month_sum = results_map.get(m_key, 0.0)
         
         if i == 0:
-             month_sum += paid_this_month
+             month_sum += float(paid_this_month)
              
         chart_labels.append(future_date.strftime('%b/%Y'))
         chart_values.append(float(month_sum))
@@ -296,8 +273,7 @@ def stats():
     for c in active_contracts:
         if c.created_at.date() <= lm_date.replace(day=1):
             try:
-                d = json.loads(c.form_data)
-                v = float(d.get('valor_parcela', '0').replace('.', '').replace(',', '.'))
+                v = float(c.amount or 0.0)
                 mrr_last_month += v
             except: pass
             

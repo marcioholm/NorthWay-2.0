@@ -816,7 +816,7 @@
                     if (msg.type === 'image' && msg.attachment_url) {
                         messageContent = `
                         <div class="mb-2 cursor-pointer" onclick="window.open('${msg.attachment_url}', '_blank')">
-                            <img src="${msg.attachment_url}" class="rounded-lg max-w-full h-auto shadow-sm hover:opacity-90 transition-opacity">
+                            <img src="${msg.attachment_url}" class="rounded-lg max-w-full h-auto shadow-sm hover:opacity-90 transition-opacity" loading="lazy">
                         </div>
                         ${msg.content && msg.content !== '[FOTO]' ? `<div class="whitespace-pre-wrap break-words text-[13px] opacity-90">${msg.content}</div>` : ''}
                     `;
@@ -1308,7 +1308,7 @@
                 // Keep the button inside
                 avatarEl.innerHTML = `
                     <div class="w-full h-full relative group">
-                         <img src="${data.url}" class="w-full h-full object-cover rounded-full">
+                         <img src="${data.url}" class="w-full h-full object-cover rounded-full" loading="lazy">
                          <!-- Sync Overlay Button -->
                          <button onclick="syncProfile()" title="Atualizar Foto do WhatsApp"
                             class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center rounded-full text-white transition-all z-10">

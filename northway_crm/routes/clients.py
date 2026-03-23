@@ -13,7 +13,7 @@ clients_bp = Blueprint('clients', __name__)
 @login_required
 def clients():
     page = request.args.get('page', 1, type=int)
-    per_page = 20
+    per_page = request.args.get('per_page', 50, type=int)
     query = Client.query.filter_by(company_id=current_user.company_id)
     
     # Filters
@@ -548,10 +548,8 @@ def import_clients():
                     pass
             
             # Payment status parsing and health_status mapping
-            print(f"DEBUG IMPORT: Processing row {row_num}")
             payment_status = 'em_dia'
             health_status = 'verde' # Default health
-            print(f"DEBUG IMPORT: health_status init: {health_status}")
             if payment_status_raw:
                 ps = payment_status_raw.lower().strip()
                 if 'inadimpl' in ps or 'overdue' in ps:
