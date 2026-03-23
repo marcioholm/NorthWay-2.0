@@ -88,26 +88,24 @@ def stats():
     ).scalar() or 0
     
     # --- MRR & TICKET ---
-    # Performance: Avoid parsing JSON for every request if possible.
-    # For now, we iterate active contracts.
-    active_contracts = Contract.query.filter(
-        Contract.company_id == company_id,
-        Contract.status.in_(['signed', 'active'])
+    # Performance: Use Client.monthly_value as the source of truth for MRR
+    active_clients = Client.query.filter(
+        Client.company_id == company_id,
+        Client.status == 'ativo'
     ).all()
-    cancelled_contracts = Contract.query.filter_by(company_id=company_id, status='cancelled').all() # Assuming 'cancelled' status exists/used
     
     mrr = 0
     mrr_at_risk = 0
     delinquent_count = 0
     active_clients_count = 0
     
-    print(f"📊 DEBUG FINANCIAL: Found {len(active_contracts)} active/signed contracts.")
+    print(f"📊 DEBUG FINANCIAL: Found {len(active_clients)} active clients.")
     
-    for c in active_contracts:
+    for c in active_clients:
         try:
-            val = float(c.amount or 0.0)
+            val = float(c.monthly_value or 0.0)
             
-            if c.client.payment_status == 'inadimplente':
+            if c.payment_status == 'inadimplente':
                 mrr_at_risk += val
                 delinquent_count += 1
             else:
@@ -119,6 +117,7 @@ def stats():
     avg_ticket = mrr / active_clients_count if active_clients_count > 0 else 0
     
     # Churn Rate: (Cancelled / (Active + Cancelled)) * 100
+    cancelled_contracts = Contract.query.filter_by(company_id=company_id, status='cancelled').all()
     cancelled_count = len(cancelled_contracts)
     total_ever_signed = active_clients_count + cancelled_count
     churn_rate = (cancelled_count / total_ever_signed * 100) if total_ever_signed > 0 else 0
@@ -270,10 +269,10 @@ def stats():
     # 4. MRR Delta
     lm_date = today.replace(day=1) - timedelta(days=1)
     mrr_last_month = 0
-    for c in active_contracts:
+    for c in active_clients:
         if c.created_at.date() <= lm_date.replace(day=1):
             try:
-                v = float(c.amount or 0.0)
+                v = float(c.monthly_value or 0.0)
                 mrr_last_month += v
             except: pass
             

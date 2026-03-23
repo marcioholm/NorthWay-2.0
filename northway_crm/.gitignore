@@ -30,3 +30,6 @@ migrations/
 diagnose_tenancy.py
 apply_migration.py
 .env*.local
+
+# Node
+node_modules/
