@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, jsonify, abort, request, current_app
 from flask_login import login_required, current_user
-from models import db, Contract, Transaction, FinancialCategory, Expense, AccountsPayable, ROLE_ADMIN, ROLE_MANAGER
+from models import db, Client, Contract, Transaction, FinancialCategory, Expense, AccountsPayable, ROLE_ADMIN, ROLE_MANAGER
 
 from datetime import date, datetime, timedelta
 import json
