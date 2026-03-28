@@ -121,15 +121,25 @@ async function init() {
 
         createToggleButton();
 
+        // High-resilience polling and event triggers
         if (intervalChat) clearInterval(intervalChat);
+        intervalChat = setInterval(checkActiveChat, 1000); 
+        
         if (intervalLayout) clearInterval(intervalLayout);
-
-        // Fallback interval just in case observer misses (runs rarely)
-        intervalChat = setInterval(checkActiveChat, 5000);
         intervalLayout = setInterval(adjustLayout, 2000);
 
+        // Force check on any click within the chat list
+        document.addEventListener('click', (e) => {
+            const isChatItem = e.target.closest('[role="listitem"]') || e.target.closest('div._ak8j');
+            if (isChatItem) {
+                console.log("NW DEBUG: Chat click detected, forcing check...");
+                setTimeout(checkActiveChat, 100);
+                setTimeout(checkActiveChat, 500);
+            }
+        });
+
         // --- POLLING ---
-        AutomationEngine.startPolling(); // Starts the loop and manages its own interval
+        AutomationEngine.startPolling(); 
 
 
     } catch (e) {
@@ -298,11 +308,12 @@ function getReactInstance(dom) {
 }
 
 function findJidInFiber(fiber) {
+    if (!fiber) return null;
     let queue = [{ node: fiber, depth: 0 }];
     let visited = new Set();
     while (queue.length > 0) {
         const { node, depth } = queue.shift();
-        if (!node || depth > 50 || visited.has(node)) continue;
+        if (!node || depth > 60 || visited.has(node)) continue;
         visited.add(node);
 
         const props = node.memoizedProps || node.props || node.pendingProps;
@@ -311,9 +322,14 @@ function findJidInFiber(fiber) {
             if (props.jid && typeof props.jid === 'string') return props.jid;
             if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
             if (props.id && typeof props.id === 'string' && (props.id.includes('@c.us') || props.id.includes('@g.us'))) return props.id;
+            
+            // WA Web v2.3000+ specific JID structures
+            if (props.chatId && typeof props.chatId === 'string' && props.chatId.includes('@')) return props.chatId;
 
-            // Nested objects (WA Web v2.3000+)
-            if (props.chat && (props.chat.id || props.chat.jid)) return props.chat.id || props.chat.jid;
+            // Nested objects
+            if (props.chat && (props.chat.id || props.chat.jid || props.chat.__x_id)) {
+                return props.chat.id || props.chat.jid || props.chat.__x_id;
+            }
             if (props.contact && (props.contact.id || props.contact.jid)) return props.contact.id || props.contact.jid;
             if (props.msg && props.msg.to) return props.msg.to;
             if (props.searchResult && props.searchResult.id) return props.searchResult.id;
@@ -356,16 +372,23 @@ function checkActiveChat() {
         ]);
 
         if (mainPanel) {
+            console.log("NW DEBUG: Main Chat Panel found");
             // Priority 1: Extract JID via Fiber from Main Panel (Very stable)
             const mainFiber = getReactInstance(mainPanel);
             if (mainFiber) {
                 const jid = findJidInFiber(mainFiber);
+                console.log("NW DEBUG: Fiber JID search result:", jid);
                 if (jid) {
                     phone = jid;
                     if (jid.includes('@g.us')) isGroup = true;
                 }
             }
+        } else {
+             // If no main panel, we are definitely NOT in a chat
+             console.log("NW DEBUG: No main chat panel detected");
+        }
 
+        if (mainPanel) {
             // 2. Find the Header
             let header = getRobustElement([
                 '[data-testid="conversation-info-header"]',
@@ -376,6 +399,7 @@ function checkActiveChat() {
             ], mainPanel);
 
             if (header) {
+                console.log("NW DEBUG: Chat Header found");
                 // Secondary check for JID via Image if main Fiber failed
                 if (!phone) {
                     const img = header.querySelector('img');
@@ -384,6 +408,7 @@ function checkActiveChat() {
                         const fiber = getReactInstance(img);
                         if (fiber) {
                             const jid = findJidInFiber(fiber);
+                            console.log("NW DEBUG: Header Image Fiber JID:", jid);
                             if (jid) {
                                 if (jid.includes('@g.us')) isGroup = true;
                                 phone = jid;
@@ -406,6 +431,7 @@ function checkActiveChat() {
 
                 if (nameEl && !name) {
                     name = nameEl.title || nameEl.innerText;
+                    console.log("NW DEBUG: Captured Name:", name);
                 }
 
                 if (name) name = name.trim();
@@ -414,36 +440,12 @@ function checkActiveChat() {
                 if (!phone && name && name.match(/\+?\d[\d\s-]{10,}/)) {
                     phone = name.replace(/\D/g, '') + "@c.us";
                 }
-
-                // 5. Group Refinement (Check for participants list or group icon)
-                const groupTrigger = getRobustElement([
-                    '[data-testid="group-info-drawer-error"]',
-                    'span[data-icon="group"]',
-                    'span[title*=","]',
-                    'span[data-testid*="group"]'
-                ], header);
-
-                if (groupTrigger || isGroup) {
-                    isGroup = true;
-                }
-
-                // 6. Extract Status
-                const statusEl = getRobustElement([
-                    '[data-testid="contact-online-status"]',
-                    'span[title*="online"]',
-                    'span[title*="digitando"]',
-                    'span[title*="typing"]',
-                    'div._amig' // New subtext class
-                ], header);
-
-                if (statusEl && !isGroup) {
-                    contactStatus = statusEl.title || statusEl.innerText;
-                }
             }
         }
 
         // --- FALLBACK: Side List Selection ---
         if (!phone || !name) {
+            console.log("NW DEBUG: Attempting side list fallback...");
             const activeChat = document.querySelector('div[role="listitem"][aria-selected="true"]') || 
                                document.querySelector('div._ak8j[aria-selected="true"]');
             if (activeChat) {
@@ -451,6 +453,7 @@ function checkActiveChat() {
                     const fiber = getReactInstance(activeChat);
                     if (fiber) {
                         const jid = findJidInFiber(fiber);
+                        console.log("NW DEBUG: Side List Fiber JID:", jid);
                         if (jid) {
                             phone = jid;
                             if (jid.includes('@g.us')) isGroup = true;
@@ -465,6 +468,8 @@ function checkActiveChat() {
             }
         }
 
+        if (phone) console.log(`NW DEBUG: Final Detection ID: ${phone} (Group: ${isGroup})`);
+
         // --- DRAWER OVERRIDE (Profile View) ---
         const drawer = getRobustElement([
             '[data-testid="drawer-left"]',
@@ -475,6 +480,7 @@ function checkActiveChat() {
         ]);
 
         if (drawer) {
+            console.log("NW DEBUG: Info Drawer is open");
             const isGroupInfo = drawer.innerText.match(/group|grupo/i);
             if (isGroupInfo) {
                 isGroup = true;
