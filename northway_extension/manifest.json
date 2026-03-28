@@ -5,8 +5,7 @@
   "description": "WhatsApp Web CRM Integration with Adaptive Scraping.",
   "permissions": [
     "storage",
-    "scripting",
-    "activeTab"
+    "scripting"
   ],
   "host_permissions": [
     "https://web.whatsapp.com/*",
@@ -29,7 +28,15 @@
         "https://web.whatsapp.com/*"
       ],
       "js": [
-        "scripts/content_whatsapp.js"
+        "scripts/constants.js",
+        "scripts/selectors.js",
+        "scripts/state.js",
+        "scripts/detection.js",
+        "scripts/broadcast.js",
+        "scripts/automation.js",
+        "scripts/group_extractor.js",
+        "scripts/sidebar_ui.js",
+        "scripts/main.js"
       ],
       "css": [
         "scripts/sidebar.css"

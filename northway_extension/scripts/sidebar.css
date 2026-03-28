@@ -419,3 +419,58 @@ textarea:focus {
     opacity: 0.5;
     font-size: 13px;
 }
+
+/* === TOAST ANIMATIONS === */
+@keyframes nw-slide-in {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes nw-slide-out {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(120%); opacity: 0; }
+}
+
+/* === QUEUE LIST STYLES === */
+.nw-q-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    transition: background 0.2s;
+    cursor: default;
+}
+
+.nw-q-item:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+.nw-q-item.active {
+    background: rgba(255, 31, 75, 0.05);
+    border-left: 2px solid var(--nw-primary);
+}
+
+.nw-q-status {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+}
+
+.nw-q-status.PENDENTE { color: var(--nw-text-muted); }
+.nw-q-status.ENVIADO { color: var(--nw-accent); background: rgba(0, 230, 153, 0.1); }
+.nw-q-status.FALHOU { color: var(--nw-primary); background: rgba(255, 31, 75, 0.1); }
+
+/* === TAG CHIPS === */
+.nw-tag-chip {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--nw-border);
+    border-radius: 10px;
+    color: var(--nw-text-secondary);
+}

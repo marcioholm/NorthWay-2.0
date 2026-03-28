@@ -473,13 +473,22 @@
                         <span id="nw-stat-failed">0</span>
                         <label>Falhas</label>
                     </div>
-                    <!-- ETA -->
-                    <!-- ETA -->
                     <div class="nw-stat-item"
                         style="grid-column: span 3; margin-top: 10px; background: rgba(255, 193, 7, 0.15); border: 1px solid rgba(255, 193, 7, 0.4); padding: 10px; flex-direction: row; gap: 10px; justify-content: center; border-radius: 8px;">
                         <label style="font-size: 13px; margin: 0; color: #ffecb3;">⏱️ Tempo Estimado:</label>
                         <span id="nw-stat-eta"
                             style="font-size: 16px; font-weight: 800; color: #ffeb3b; text-shadow: 0 0 8px rgba(255, 193, 7, 0.3);">--:--</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar Section -->
+                <div id="nw-progress-section" class="hidden" style="margin: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 11px; color: var(--nw-text-secondary);">Próximo envio em...</span>
+                        <span id="nw-countdown-text" style="font-size: 11px; font-weight: 700; color: var(--nw-primary);">0s</span>
+                    </div>
+                    <div class="nw-progress-track" style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                        <div id="nw-progress-fill" style="width: 0%; height: 100%; background: var(--nw-primary); transition: width 0.1s linear;"></div>
                     </div>
                 </div>
 
@@ -490,19 +499,28 @@
                     <div class="nw-message-preview" id="nw-bc-message-preview">Carregando...</div>
                 </div>
 
-                <div class="nw-broadcast-controls">
+                <!-- Queue List Section -->
+                <div class="nw-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; max-height: 300px;">
+                    <div style="padding: 12px; border-bottom: 1px solid var(--nw-border); display: flex; justify-content: space-between; align-items: center;">
+                        <span id="nw-bc-queue-counter" style="font-size: 11px; font-weight: 600;">0 contatos</span>
+                        <input type="text" id="nw-bc-search" placeholder="Buscar na fila..." style="width: 120px; font-size: 10px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--nw-border); border-radius: 4px; color: white;">
+                    </div>
+                    <div id="nw-bc-queue-list" style="overflow-y: auto; flex: 1;">
+                        <!-- List items added by JS -->
+                    </div>
+                </div>
+
+                <div class="nw-broadcast-controls" style="margin-top: 15px;">
                     <button id="nw-btn-bc-stop" class="nw-btn"
                         style="background: rgba(255, 31, 75, 0.1); color: var(--nw-primary); border: 1px solid rgba(255, 31, 75, 0.2); text-transform: none; margin-bottom: 10px; width: 100%;">
                         Parar Disparo
                     </button>
-                    <!-- Pause and Resume Block -->
                     <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 10px;">
                         <button id="nw-btn-bc-pause" class="nw-btn"
                             style="flex: 1; background: rgba(255, 193, 7, 0.15); color: #ffeb3b; border: 1px solid rgba(255, 193, 7, 0.4); text-transform: none;">
                             ⏸ Pausar Lote
                         </button>
                     </div>
-
                     <div style="display: flex; gap: 10px; width: 100%;">
                         <button id="nw-btn-bc-skip" class="nw-btn"
                             style="flex: 1; background: rgba(255,255,255,0.05); text-transform: none;">Pular</button>

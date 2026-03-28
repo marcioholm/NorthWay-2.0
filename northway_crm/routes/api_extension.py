@@ -110,6 +110,7 @@ def verify_token(current_user):
     })
 
 @api_ext.route('/seed-fix')
+@login_required
 def seed_fix_manual():
     try:
         from models import db
@@ -497,6 +498,7 @@ def update_lead(current_user, id):
     return jsonify({'success': True})
 
 @api_ext.route('/debug-status')
+@login_required
 def debug_status():
     """Diagnostic route to check WHY the user sees nothing."""
     from flask_login import current_user
