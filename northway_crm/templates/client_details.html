@@ -230,6 +230,11 @@
                                 class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
                                 <i data-lucide="scroll-text" class="w-3.5 h-3.5"></i> Script Studio
                             </button>
+                            <button type="button" onclick="switchClientTab('meta-ads')"
+                                id="tab-client-meta-ads"
+                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Tráfego Meta
+                            </button>
                         </div>
                     </div>
 
@@ -1566,6 +1571,11 @@
 
                     <!-- Script Studio Content (Relocated) -->
                     {% include 'includes/script_studio_full_block.html' %}
+
+                    <!-- Meta Ads Analyzer (Next.js Application iframe) -->
+                    <div id="content-client-meta-ads" class="hidden w-full h-full min-h-[1000px]">
+                        <iframe id="iframe-meta-ads" data-src="https://northway-crm-next.vercel.app/clientes/{{ client.id }}" width="100%" height="2000" frameborder="0" allowfullscreen class="transition-opacity duration-500"></iframe>
+                    </div>
                 </div> <!-- Close lg:col-span-9 -->
 
                 <!-- Sidebar Info Column -->
@@ -3357,7 +3367,7 @@
             const sideCol = document.getElementById('side-info-column');
             const pageWrapper = document.getElementById('page-content-wrapper');
 
-            if (tabName === 'script-studio') {
+            if (tabName === 'script-studio' || tabName === 'meta-ads') {
                 if (mainCol) {
                     mainCol.classList.remove('lg:col-span-9');
                     mainCol.classList.add('lg:col-span-12', 'w-full');
@@ -3385,7 +3395,7 @@
             }
 
             // Updated list of tabs
-            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic-tab', 'archivos', 'processes', 'script-studio'];
+            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic-tab', 'archivos', 'processes', 'script-studio', 'meta-ads'];
 
             // 1. Force HIDE all contents first
             tabs.forEach(t => {
@@ -3411,6 +3421,15 @@
                 } else {
                     selectedContent.classList.add('block');
                 }
+                
+                // Lazy-load Meta Ads Iframe
+                if (tabName === 'meta-ads') {
+                    const iframe = document.getElementById('iframe-meta-ads');
+                    if (iframe && !iframe.src) {
+                        iframe.src = iframe.getAttribute('data-src');
+                    }
+                }
+
                 // Persist tab
                 localStorage.setItem(`active_tab_${pageClientId}`, tabName);
             } else {
