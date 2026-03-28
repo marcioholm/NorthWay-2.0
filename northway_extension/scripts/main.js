@@ -213,6 +213,14 @@ function bindEvents() {
         }
     });
 
+    const btnDirectSend = getEl('nw-btn-direct-send');
+    if (btnDirectSend) {
+        btnDirectSend.onclick = () => {
+            const message = getEl('nw-input-notes').value || "";
+            sendSingleMessage(NWState.currentPhone, message);
+        };
+    }
+
     nwLog("Events bound.");
 }
 

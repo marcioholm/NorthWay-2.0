@@ -209,26 +209,77 @@ async function loadTemplates() {
         const section = NWState.shadowRoot.querySelector('.nw-templates-section');
         if (!section || !response) return;
 
-        section.querySelectorAll('.nw-template-card').forEach(c => c.remove());
-
         response.forEach(tpl => {
             const card = document.createElement('div');
             card.className = 'nw-template-card';
+            card.style.position = 'relative';
             card.innerHTML = `
-                <div class="nw-template-icon"><svg>...</svg></div>
+                <div class="nw-template-icon" style="background: rgba(99,102,241,0.1); color: #818cf8;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
                 <div class="nw-template-info">
                     <strong>${tpl.title}</strong>
-                    <p>${tpl.content}</p>
+                    <p>${tpl.content.substring(0, 60)}${tpl.content.length > 60 ? '...' : ''}</p>
                 </div>
+                <button class="nw-btn-direct-send-tpl" title="Disparo Direto" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 6px; border: none; background: rgba(0, 230, 153, 0.1); color: var(--nw-accent); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
             `;
-            card.onclick = () => {
+            
+            // Fill textarea
+            card.onclick = (e) => {
+                if (e.target.closest('.nw-btn-direct-send-tpl')) return;
                 const ta = getEl('nw-broadcast-template') || getEl('nw-input-notes') || getEl('nw-new-notes');
-                if (ta) ta.value = tpl.content;
-                else toast("Copiado para área de transferência", "success");
+                if (ta) {
+                    ta.value = tpl.content;
+                    ta.dispatchEvent(new Event('input', { bubbles: true }));
+                }
             };
+
+            // Direct Send
+            const btn = card.querySelector('.nw-btn-direct-send-tpl');
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                sendSingleMessage(NWState.currentPhone, tpl.content);
+            };
+
             section.appendChild(card);
         });
     } catch (e) {
         nwLog("Template load error", e);
+    }
+}
+
+/**
+ * Handle Single Message Send (Direct Send)
+ */
+async function sendSingleMessage(contactId, message, mediaKey = null) {
+    if (!contactId) {
+        toast("Selecione um contato primeiro", "warning");
+        return;
+    }
+    if (!message || message.trim() === '') {
+        toast("Digite uma mensagem primeiro", "warning");
+        return;
+    }
+
+    try {
+        toast("Enviando mensagem direta...", "info", 2000);
+        
+        // Use active media if specified (from state)
+        let media = null;
+        if (mediaKey) media = await NWDB.getFile(mediaKey);
+        
+        const success = await BroadcastEngine.sendDirectMessage(contactId, message, media);
+        
+        if (success) {
+            toast("Mensagem enviada com sucesso!", "success");
+            sendMsg({ action: "INCREMENT_SENT" });
+        } else {
+            toast("Falha ao enviar mensagem direta.", "error");
+        }
+    } catch (e) {
+        nwLog("Direct send failed", e);
+        toast("Erro ao processar envio direto.", "error");
     }
 }
