@@ -356,6 +356,16 @@ function checkActiveChat() {
         ]);
 
         if (mainPanel) {
+            // Priority 1: Extract JID via Fiber from Main Panel (Very stable)
+            const mainFiber = getReactInstance(mainPanel);
+            if (mainFiber) {
+                const jid = findJidInFiber(mainFiber);
+                if (jid) {
+                    phone = jid;
+                    if (jid.includes('@g.us')) isGroup = true;
+                }
+            }
+
             // 2. Find the Header
             let header = getRobustElement([
                 '[data-testid="conversation-info-header"]',
@@ -366,18 +376,23 @@ function checkActiveChat() {
             ], mainPanel);
 
             if (header) {
-                // 3. Extract Avatar & JID via Fiber
-                const img = header.querySelector('img');
-                if (img) {
-                    avatarUrl = img.src;
-                    const fiber = getReactInstance(img);
-                    if (fiber) {
-                        const jid = findJidInFiber(fiber);
-                        if (jid) {
-                            if (jid.includes('@g.us')) isGroup = true;
-                            phone = jid;
+                // Secondary check for JID via Image if main Fiber failed
+                if (!phone) {
+                    const img = header.querySelector('img');
+                    if (img) {
+                        avatarUrl = img.src;
+                        const fiber = getReactInstance(img);
+                        if (fiber) {
+                            const jid = findJidInFiber(fiber);
+                            if (jid) {
+                                if (jid.includes('@g.us')) isGroup = true;
+                                phone = jid;
+                            }
                         }
                     }
+                } else if (!avatarUrl) {
+                    const img = header.querySelector('img');
+                    if (img) avatarUrl = img.src;
                 }
 
                 // 4. Extract Name (Priority: data-testid)
@@ -389,7 +404,7 @@ function checkActiveChat() {
                     'div[role="button"] span'
                 ], header);
 
-                if (nameEl) {
+                if (nameEl && !name) {
                     name = nameEl.title || nameEl.innerText;
                 }
 
@@ -423,6 +438,29 @@ function checkActiveChat() {
 
                 if (statusEl && !isGroup) {
                     contactStatus = statusEl.title || statusEl.innerText;
+                }
+            }
+        }
+
+        // --- FALLBACK: Side List Selection ---
+        if (!phone || !name) {
+            const activeChat = document.querySelector('div[role="listitem"][aria-selected="true"]') || 
+                               document.querySelector('div._ak8j[aria-selected="true"]');
+            if (activeChat) {
+                if (!phone) {
+                    const fiber = getReactInstance(activeChat);
+                    if (fiber) {
+                        const jid = findJidInFiber(fiber);
+                        if (jid) {
+                            phone = jid;
+                            if (jid.includes('@g.us')) isGroup = true;
+                        }
+                    }
+                }
+                if (!name) {
+                    const nameEl = activeChat.querySelector('span[title]') || 
+                                   activeChat.querySelector('span[dir="auto"]');
+                    if (nameEl) name = nameEl.title || nameEl.innerText;
                 }
             }
         }

@@ -243,17 +243,21 @@ def search_contact(current_user):
 
     # 2. Search by Name (Fallback)
     if not lead and not client and name_query:
-        # Simple name match (insensitive)
-        lead = Lead.query.filter(
-            Lead.company_id == current_user.company_id,
-            Lead.name.ilike(f'%{name_query}%')
-        ).first()
+        # Fuzzy Name Sanitization: Remove "..." or trailing special chars
+        clean_name = name_query.split(' - ')[0].split('...')[0].strip()
         
-        if not lead:
-             client = Client.query.filter(
-                Client.company_id == current_user.company_id,
-                Client.name.ilike(f'%{name_query}%')
+        if len(clean_name) >= 3:
+            # Simple name match (insensitive)
+            lead = Lead.query.filter(
+                Lead.company_id == current_user.company_id,
+                Lead.name.ilike(f'%{clean_name}%')
             ).first()
+            
+            if not lead:
+                 client = Client.query.filter(
+                    Client.company_id == current_user.company_id,
+                    Client.name.ilike(f'%{clean_name}%')
+                ).first()
     
     if lead:
         return jsonify({
