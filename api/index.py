@@ -18,18 +18,23 @@ except ImportError:
     pass
 
 # 3. Create App Instance
-try:
-    from northway_crm.app import create_app
-    app = create_app()
-except Exception as e:
-    # Fail-safe error page
-    from flask import Flask
-    import traceback
-    app = Flask(__name__)
-    
-    error_details = str(e) + "\n\n" + traceback.format_exc()
-    
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path:path>')
-    def boot_error(path):
-        return f"<h1>🔥 Boot Error</h1><pre>{error_details}</pre>", 500
+def get_app():
+    try:
+        from northway_crm.app import create_app
+        return create_app()
+    except Exception as e:
+        # Fail-safe error page
+        from flask import Flask
+        import traceback
+        error_app = Flask(__name__)
+        
+        error_details = str(e) + "\n\n" + traceback.format_exc()
+        
+        @error_app.route('/', defaults={'path': ''})
+        @error_app.route('/<path:path>')
+        def boot_error(path):
+            return f"<h1>🔥 Boot Error</h1><pre>{error_details}</pre>", 500
+        return error_app
+
+app = get_app()
+application = app # Standard alias for Vercel/WSGI

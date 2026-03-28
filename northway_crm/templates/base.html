@@ -160,38 +160,46 @@
     <div class="flex-1 flex flex-row overflow-hidden relative w-full h-full">
 
         <script>
-                // Premium Splash Screen Logic
-                (function () {
-                    const path = window.location.pathname;
-                    const isDashboard = path === '/' || path.includes('dashboard') || path.includes('master');
+            // Global Loading Control
+            window.stopGlobalLoading = function() {
+                const splash = document.getElementById('splash-screen');
+                if (splash && !splash.classList.contains('hidden')) {
+                    splash.style.opacity = '0';
+                    splash.style.filter = 'blur(20px)';
+                    splash.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        splash.classList.add('hidden');
+                        sessionStorage.setItem('northway_welcome_shown', 'true');
+                    }, 500);
+                }
+            };
 
-                    if (isDashboard && !sessionStorage.getItem('northway_welcome_shown')) {
-                        const splash = document.getElementById('splash-screen');
-                        if (splash) {
-                            splash.classList.remove('hidden');
+            // Premium Splash Screen Logic
+            (function () {
+                const path = window.location.pathname;
+                const isDashboard = path === '/' || path.includes('dashboard') || path.includes('master');
 
-                            const messages = [
-                                "Sincronizando Ecossistema...",
-                                "Preparando sua Inteligência...",
-                                "Otimizando Negociações...",
-                                "Bem-vindo à NorthWay",
-                                "Conectando ao Sucesso..."
-                            ];
-                            const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-                            document.getElementById('splash-text').textContent = randomMsg;
+                if (isDashboard && !sessionStorage.getItem('northway_welcome_shown')) {
+                    const splash = document.getElementById('splash-screen');
+                    if (splash) {
+                        splash.classList.remove('hidden');
 
-                            setTimeout(() => {
-                                splash.style.opacity = '0';
-                                splash.style.filter = 'blur(20px)';
-                                splash.style.transform = 'scale(1.1)';
-                                setTimeout(() => {
-                                    splash.classList.add('hidden');
-                                    sessionStorage.setItem('northway_welcome_shown', 'true');
-                                }, 1000);
-                            }, 2000);
-                        }
+                        const messages = [
+                            "Sincronizando Ecossistema...",
+                            "Preparando sua Inteligência...",
+                            "Otimizando Negociações...",
+                            "Bem-vindo à NorthWay",
+                            "Conectando ao Sucesso..."
+                        ];
+                        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+                        document.getElementById('splash-text').textContent = randomMsg;
+
+                        setTimeout(() => {
+                            window.stopGlobalLoading();
+                        }, 2500);
                     }
-                })();
+                }
+            })();
         </script>
 
         {% if current_user.is_authenticated and not minimal %}

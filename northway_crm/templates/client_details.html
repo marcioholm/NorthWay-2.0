@@ -3425,9 +3425,20 @@
                 // Lazy-load Meta Ads Iframe
                 if (tabName === 'meta-ads') {
                     const iframe = document.getElementById('iframe-meta-ads');
-                    if (iframe && !iframe.src) {
-                        iframe.src = iframe.getAttribute('data-src');
+                    if (iframe) {
+                        if (!iframe.src) {
+                            iframe.src = iframe.getAttribute('data-src');
+                        }
+                        // Stop global loading when iframe finishes
+                        iframe.onload = function() {
+                            if (window.stopGlobalLoading) window.stopGlobalLoading();
+                        };
                     }
+                }
+
+                // Stop loading for other non-iframe tabs
+                if (tabName !== 'meta-ads' && window.stopGlobalLoading) {
+                    window.stopGlobalLoading();
                 }
 
                 // Persist tab
