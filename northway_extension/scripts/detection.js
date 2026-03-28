@@ -5,9 +5,15 @@
 
 class FiberDetectionStrategy {
     detect() {
-        const mainPanel = getRobustElement(SELECTORS.MAIN_PANEL);
-        if (mainPanel) {
-            const fiber = getReactInstance(mainPanel);
+        const candidates = [
+            getRobustElement(SELECTORS.MAIN_PANEL),
+            getRobustElement(SELECTORS.HEADER),
+            getRobustElement(SELECTORS.DRAWER)
+        ];
+
+        for (const el of candidates) {
+            if (!el) continue;
+            const fiber = getReactInstance(el);
             if (fiber) {
                 const jid = findJidInFiber(fiber);
                 if (jid) return { phone: jid, isGroup: jid.includes('@g.us') };

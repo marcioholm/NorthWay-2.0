@@ -5,22 +5,18 @@
             "use": "@vercel/python"
         }
     ],
-    "routes": [
+    "rewrites": [
         {
-            "src": "/formularios(.*)",
-            "dest": "https://northway-crm-next.vercel.app/formularios$1"
+            "source": "/formularios(.*)",
+            "destination": "https://northway-crm-next.vercel.app/formularios$1"
         },
         {
-            "src": "/api/forms(.*)",
-            "dest": "https://northway-crm-next.vercel.app/api/forms$1"
+            "source": "/api/forms(.*)",
+            "destination": "https://northway-crm-next.vercel.app/api/forms$1"
         },
         {
-            "src": "/_next(.*)",
-            "dest": "https://northway-crm-next.vercel.app/_next$1"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "api/index.py"
+            "source": "/_next(.*)",
+            "destination": "https://northway-crm-next.vercel.app/_next$1"
         }
     ]
 }
