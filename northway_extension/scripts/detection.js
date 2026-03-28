@@ -117,42 +117,38 @@ function findJidInFiber(fiber) {
     if (!fiber) return null;
     let queue = [{ node: fiber, depth: 0 }];
     let visited = new Set();
-    
-    // Parent return search (only once at the beginning to avoid loops)
-    if (fiber.return) {
-        const parentProps = fiber.return.memoizedProps || fiber.return.pendingProps;
-        if (parentProps?.jid) return parentProps.jid;
-    }
 
     while (queue.length > 0) {
         const { node, depth } = queue.shift();
-        if (!node || depth > 50 || visited.has(node)) continue;
+        if (!node || depth > 25 || visited.has(node)) continue;
         visited.add(node);
 
         const props = node.memoizedProps || node.props || node.pendingProps;
         if (props) {
-            if (props.jid && typeof props.jid === 'string') return props.jid;
-            if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
-            if (props.id && typeof props.id === 'string' && (props.id.includes('@c.us') || props.id.includes('@g.us'))) return props.id;
-            if (props.id && props.id._serialized) return props.id._serialized; 
-            if (props.chatId && typeof props.chatId === 'string' && props.chatId.includes('@')) return props.chatId;
-            if (props.__x_id) return props.__x_id;
-            if (props.key && props.key.remoteJid) return props.key.remoteJid;
-            if (props.remoteJid) return props.remoteJid;
+            // Case 1: Simple JID string or object
+            const jid = props.jid || props.chatId || props.__x_id || props.chatJid || props.remoteJid;
+            if (typeof jid === 'string' && jid.includes('@')) return jid;
+            
+            // Case 2: ID Object (WhatsApp Common Pattern)
+            if (props.id && typeof props.id === 'object') {
+                if (props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
+                if (props.id._serialized) return props.id._serialized;
+            }
 
-            if (props.chat && (props.chat.id || props.chat.jid || props.chat.__x_id)) {
-                return props.chat.id || props.chat.jid || props.chat.__x_id;
+            // Case 3: Nested Objects
+            const sub = props.chat || props.contact || props.msg || props.item;
+            if (sub) {
+                const sj = sub.id || sub.jid || sub.remoteJid || (sub.id && sub.id._serialized);
+                if (typeof sj === 'string' && sj.includes('@')) return sj;
             }
-            if (props.contact && (props.contact.id || props.contact.jid || props.contact.remoteJid)) {
-                 return props.contact.id || props.contact.jid || props.contact.remoteJid;
-            }
-            if (props.msg && (props.msg.to || props.msg.id?.remote)) return props.msg.to || props.msg.id?.remote;
-            if (props.searchResult && props.searchResult.id) return props.searchResult.id;
         }
 
+        // Horizontal and Vertical scanning
         if (node.child) queue.push({ node: node.child, depth: depth + 1 });
         if (node.sibling) queue.push({ node: node.sibling, depth: depth + 1 });
-        // node.return is NOT included in BFS queue to prevent exponential growth/cycles
+        
+        // Peek slightly up to catch JIDs on the list items from child elements (limit to root depth)
+        if (depth < 2 && node.return) queue.push({ node: node.return, depth: depth + 1 });
     }
     return null;
 }

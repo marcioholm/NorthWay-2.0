@@ -1,24 +1,21 @@
 /**
  * ZapWay Extension Selectors
  * Centralized for easy maintenance.
+ * Stable selectors for WhatsApp Web.
  */
 
 const SELECTORS = {
     MAIN_PANEL: [
         '[data-testid="conversation-panel-wrapper"]',
+        'main#main',
         'div[role="main"]',
-        '#main',
-        'section._aigv',
-        '._aigv._aigz',
-        'div._aigv',
-        'section._aigw'
+        'section:has(header[data-testid="conversation-header"])'
     ],
     HEADER: [
+        '[data-testid="conversation-panel-header"]',
         '[data-testid="conversation-info-header"]',
         '[data-testid="conversation-header"]',
-        'header',
-        'div[role="button"]._amie',
-        'div[role="button"]'
+        'header'
     ],
     CONTACT_NAME: [
         '[data-testid="conversation-info-header-name"]',
@@ -36,12 +33,11 @@ const SELECTORS = {
         '[data-testid="drawer-left"]',
         '[data-testid="drawer-right"]',
         'div[role="navigation"]',
-        'div._aigv._aigz',
         'div[data-testid="contact-info-drawer"]'
     ],
     CHAT_ITEM: [
         '[role="listitem"]',
-        'div._ak8j'
+        '[data-testid="cell-frame-container"]'
     ],
     TEXT_INPUT: [
         'div[contenteditable="true"][role="textbox"]',
@@ -53,31 +49,22 @@ const SELECTORS = {
         '[data-testid="send"]',
         'span[data-icon*="send"]',
         'button[aria-label*="Send"]',
-        'button[aria-label*="Enviar"]',
-        'div[role="button"][aria-label*="Send"]',
-        'div[role="button"][aria-label*="Enviar"]'
+        'button[aria-label*="Enviar"]'
     ],
     ATTACH_BUTTON: [
-        'span[data-icon="plus-rounded"]',
-        '[data-icon="clip"]',
-        '[data-icon="plus"]',
-        'span[data-testid="clip"]',
-        'span[data-testid="attach-menu-plus"]',
+        '[data-testid="clip"]',
+        '[data-testid="attach-menu-plus"]',
         'div[title="Anexar"]',
-        'div[aria-label="Anexar"]',
-        'div[title="Attach"]',
-        'div[aria-label="Attach"]'
+        'div[aria-label="Anexar"]'
     ],
     MENU_ITEMS: {
         DOCUMENT: [
             '[data-testid="attach-document"]',
-            'span[data-icon="attach-document"]',
-            'li:has(span[data-icon="attach-document"])'
+            'span[data-icon="attach-document"]'
         ],
         IMAGE: [
             '[data-testid="attach-image"]',
-            'span[data-icon="attach-image"]',
-            'li:has(span[data-icon="attach-image"])'
+            'span[data-icon="attach-image"]'
         ]
     }
 };

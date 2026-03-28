@@ -22,11 +22,11 @@ const GroupExtractor = {
         const btn = getEl('nw-btn-export');
 
         // Detect list container
-        const sections = Array.from(document.querySelectorAll('section, div._aigv, div[role="dialog"]'));
+        const sections = Array.from(document.querySelectorAll('section, div[role="region"], div[role="dialog"], div[data-testid="drawer-right"]'));
         this.container = sections.find(s => {
             if (s.offsetParent === null) return false;
             const t = s.innerText.toLowerCase();
-            return t.match(/membros|participantes|participants|dados do grupo/);
+            return t.includes('membros') || t.includes('participantes') || t.includes('participants') || t.includes('dados do grupo');
         });
 
         if (!this.container) {
