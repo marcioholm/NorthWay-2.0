@@ -289,7 +289,10 @@ function startObserver() {
 function getReactInstance(dom) {
     if (!dom) return null;
     for (const key in dom) {
-        if (key.startsWith("__reactFiber") || key.startsWith("__reactInternalInstance") || key.startsWith("__reactProps")) return dom[key];
+        if (key.startsWith("__reactFiber") || 
+            key.startsWith("__reactInternalInstance") || 
+            key.startsWith("__reactProps") ||
+            key.startsWith("__reactEvents")) return dom[key];
     }
     return null;
 }
@@ -299,20 +302,21 @@ function findJidInFiber(fiber) {
     let visited = new Set();
     while (queue.length > 0) {
         const { node, depth } = queue.shift();
-        if (!node || depth > 30 || visited.has(node)) continue;
+        if (!node || depth > 50 || visited.has(node)) continue;
         visited.add(node);
 
-        const props = node.memoizedProps || node.props;
+        const props = node.memoizedProps || node.props || node.pendingProps;
         if (props) {
             // High priority JID fields
             if (props.jid && typeof props.jid === 'string') return props.jid;
-            if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user} @${props.id.server} `;
+            if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
             if (props.id && typeof props.id === 'string' && (props.id.includes('@c.us') || props.id.includes('@g.us'))) return props.id;
 
-            // Nested objects
-            if (props.chat && props.chat.id && typeof props.chat.id === 'string') return props.chat.id;
-            if (props.contact && props.contact.id && typeof props.contact.id === 'string') return props.contact.id;
-            if (props.msg && props.msg.to && typeof props.msg.to === 'string') return props.msg.to;
+            // Nested objects (WA Web v2.3000+)
+            if (props.chat && (props.chat.id || props.chat.jid)) return props.chat.id || props.chat.jid;
+            if (props.contact && (props.contact.id || props.contact.jid)) return props.contact.id || props.contact.jid;
+            if (props.msg && props.msg.to) return props.msg.to;
+            if (props.searchResult && props.searchResult.id) return props.searchResult.id;
         }
 
         if (node.child) queue.push({ node: node.child, depth: depth + 1 });
@@ -346,7 +350,9 @@ function checkActiveChat() {
             'div[role="main"]',
             '#main',
             'section._aigv',
-            '._aigv._aigz'
+            '._aigv._aigz',
+            'div._aigv',
+            'section._aigw'
         ]);
 
         if (mainPanel) {
@@ -355,6 +361,7 @@ function checkActiveChat() {
                 '[data-testid="conversation-info-header"]',
                 '[data-testid="conversation-header"]',
                 'header',
+                'div[role="button"]._amie',
                 'div[role="button"]'
             ], mainPanel);
 
@@ -378,7 +385,8 @@ function checkActiveChat() {
                     '[data-testid="conversation-info-header-name"]',
                     'span[title]',
                     'span[dir="auto"]',
-                    'h1'
+                    'h1',
+                    'div[role="button"] span'
                 ], header);
 
                 if (nameEl) {
@@ -396,7 +404,8 @@ function checkActiveChat() {
                 const groupTrigger = getRobustElement([
                     '[data-testid="group-info-drawer-error"]',
                     'span[data-icon="group"]',
-                    'span[title*=","]'
+                    'span[title*=","]',
+                    'span[data-testid*="group"]'
                 ], header);
 
                 if (groupTrigger || isGroup) {
@@ -408,7 +417,8 @@ function checkActiveChat() {
                     '[data-testid="contact-online-status"]',
                     'span[title*="online"]',
                     'span[title*="digitando"]',
-                    'span[title*="typing"]'
+                    'span[title*="typing"]',
+                    'div._amig' // New subtext class
                 ], header);
 
                 if (statusEl && !isGroup) {
@@ -421,22 +431,39 @@ function checkActiveChat() {
         const drawer = getRobustElement([
             '[data-testid="drawer-left"]',
             '[data-testid="drawer-right"]',
-            'div[role="navigation"]'
+            'div[role="navigation"]',
+            'div._aigv._aigz', // Context panel
+            'div[data-testid="contact-info-drawer"]'
         ]);
 
         if (drawer) {
             const isGroupInfo = drawer.innerText.match(/group|grupo/i);
             if (isGroupInfo) {
                 isGroup = true;
-                const h2 = drawer.querySelector('h2') || drawer.querySelector('span[dir="auto"]');
-                if (h2) name = h2.innerText.substring(0, 50);
+                // Try finding name in drawer header
+                const h2 = drawer.querySelector('h2') || drawer.querySelector('span[dir="auto"]') || drawer.querySelector('div[title]');
+                if (h2 && !name) name = (h2.title || h2.innerText).substring(0, 50);
+                
+                // Try JID via Fiber in drawer
+                const drawerImg = drawer.querySelector('img');
+                if (drawerImg && !phone) {
+                    const f = getReactInstance(drawerImg);
+                    if (f) phone = findJidInFiber(f);
+                }
             } else {
                 // Individual Info Drawer
                 if (!phone) {
-                    const phoneEl = Array.from(drawer.querySelectorAll('span, div')).find(el => 
-                        el.innerText.match(/^\+?\d[\d\s-]{12,}$/)
+                    // Look for phone text
+                    const allSpans = Array.from(drawer.querySelectorAll('span, div'));
+                    const phoneEl = allSpans.find(el => 
+                        el.innerText && el.innerText.match(/^\+?\d[\d\s-]{11,}$/)
                     );
                     if (phoneEl) phone = phoneEl.innerText.replace(/\D/g, '') + "@c.us";
+                }
+
+                if (!name) {
+                    const nameEl = drawer.querySelector('h2') || drawer.querySelector('span[dir="auto"]');
+                    if (nameEl) name = nameEl.innerText;
                 }
             }
         }

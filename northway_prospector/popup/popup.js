@@ -618,7 +618,18 @@ Google Maps: ${state.scrapedData.url}
 
             // Calculate Rank
             let all = [...(data.competitors.list || [])];
-            all.push({ name: "VOCÊ", rating: myRating, reviews: myReviews, isMe: true });
+            
+            // Check if 'VOCÊ' (current company) is already in the competitor list by name
+            const existingIdx = all.findIndex(c => c.name.toLowerCase() === (data.name || "").toLowerCase());
+            
+            if (existingIdx !== -1) {
+                // Rename existing entry to 'VOCÊ'
+                all[existingIdx].isMe = true;
+                // Keep original name for reference if needed, but change display name later
+            } else {
+                // Add as new entry if not found
+                all.push({ name: "VOCÊ", rating: myRating, reviews: myReviews, isMe: true });
+            }
             
             // Sort by Rating then Reviews
             all.sort((a, b) => {
