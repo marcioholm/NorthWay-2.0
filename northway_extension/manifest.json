@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ZapWay",
-  "version": "3.0.0",
-  "description": "WhatsApp Web CRM Integration for ZapWay.",
+  "version": "3.0.1",
+  "description": "WhatsApp Web CRM Integration with Adaptive Scraping.",
   "permissions": [
     "storage",
     "scripting",

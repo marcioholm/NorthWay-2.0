@@ -322,38 +322,41 @@ function findJidInFiber(fiber) {
     return null;
 }
 
-// --- DETECTION LOGIC (Simplified) ---
+// --- ROBUSTNESS HELPERS ---
+function getRobustElement(selectors, parent = document) {
+    for (const sel of selectors) {
+        const el = parent.querySelector(sel);
+        if (el && el.offsetParent !== null) return el;
+    }
+    return null;
+}
+
+// --- DETECTION LOGIC (Resilient Version) ---
 function checkActiveChat() {
     try {
         let name = null;
         let phone = null;
         let avatarUrl = null;
         let isGroup = false;
-        let contactStatus = null; // New field for online/typing status
+        let contactStatus = null;
 
-        // 1. Find the Main Chat Panel (Multiple Fallbacks)
-        const mainPanel = document.getElementById('main') ||
-            document.querySelector('div[role="main"]') ||
-            document.querySelector('section._aigv') ||
-            document.querySelector('._aigv._aigz') ||
-            document.querySelector('.x1c4vz4f') ||
-            document.querySelector('#app > div > div > div:last-child');
+        // 1. Find the Main Chat Panel (Priority: data-testid)
+        const mainPanel = getRobustElement([
+            '[data-testid="conversation-panel-wrapper"]',
+            'div[role="main"]',
+            '#main',
+            'section._aigv',
+            '._aigv._aigz'
+        ]);
 
         if (mainPanel) {
-            // 2. Find the Header (Multiple Fallbacks)
-            let header = mainPanel.querySelector('header') ||
-                mainPanel.querySelector('div[role="button"]') ||
-                mainPanel.querySelector('._aigw') ||
-                mainPanel.querySelector('div._aiih');
-
-            // Fallback: Find header by common icons if standard selectors fail
-            if (!header) {
-                const searchIcon = mainPanel.querySelector('span[data-icon="search-alt"]') ||
-                    mainPanel.querySelector('span[data-icon="search"]');
-                if (searchIcon) {
-                    header = searchIcon.closest('header') || searchIcon.closest('div._aigv') || searchIcon.closest('div._aigw');
-                }
-            }
+            // 2. Find the Header
+            let header = getRobustElement([
+                '[data-testid="conversation-info-header"]',
+                '[data-testid="conversation-header"]',
+                'header',
+                'div[role="button"]'
+            ], mainPanel);
 
             if (header) {
                 // 3. Extract Avatar & JID via Fiber
@@ -365,18 +368,18 @@ function checkActiveChat() {
                         const jid = findJidInFiber(fiber);
                         if (jid) {
                             if (jid.includes('@g.us')) isGroup = true;
-                            // Preserve JID for both groups and individuals
                             phone = jid;
                         }
                     }
                 }
 
-                // 4. Extract Name
-                const nameEl = header.querySelector('span[title]') ||
-                    header.querySelector('span[dir="auto"]') ||
-                    header.querySelector('._aacl') ||
-                    header.querySelector('h1') ||
-                    header.querySelector('div[title]');
+                // 4. Extract Name (Priority: data-testid)
+                const nameEl = getRobustElement([
+                    '[data-testid="conversation-info-header-name"]',
+                    'span[title]',
+                    'span[dir="auto"]',
+                    'h1'
+                ], header);
 
                 if (nameEl) {
                     name = nameEl.title || nameEl.innerText;
@@ -384,30 +387,29 @@ function checkActiveChat() {
 
                 if (name) name = name.trim();
 
-                // Failsafe: If phone is null but name looks like a phone, extract it
+                // Failsafe Regex for Phone-as-Name
                 if (!phone && name && name.match(/\+?\d[\d\s-]{10,}/)) {
                     phone = name.replace(/\D/g, '') + "@c.us";
                 }
 
-                // 5. Group Refinement
-                const subtitleEl = header.querySelector('span[title*=","]') ||
-                    header.querySelector('._aa-y') ||
-                    header.querySelector('._am_8') ||
-                    header.querySelector('span[data-icon="group"]');
+                // 5. Group Refinement (Check for participants list or group icon)
+                const groupTrigger = getRobustElement([
+                    '[data-testid="group-info-drawer-error"]',
+                    'span[data-icon="group"]',
+                    'span[title*=","]'
+                ], header);
 
-                if (subtitleEl) {
-                    const subText = subtitleEl.innerText.toLowerCase();
-                    if (subText.includes(',') || subText.includes('participan') || subText.includes('clique') || (subText.includes('online') === false && subText.length > 20)) {
-                        isGroup = true;
-                    }
+                if (groupTrigger || isGroup) {
+                    isGroup = true;
                 }
 
-                // 6. Extract Status (Online/Typing)
-                const statusEl = header.querySelector('span[title*="online"]') ||
-                    header.querySelector('span[title*="digitando"]') ||
-                    header.querySelector('span[title*="typing"]') ||
-                    header.querySelector('span[title*="gravando"]') ||
-                    header.querySelector('span[title*="recording"]');
+                // 6. Extract Status
+                const statusEl = getRobustElement([
+                    '[data-testid="contact-online-status"]',
+                    'span[title*="online"]',
+                    'span[title*="digitando"]',
+                    'span[title*="typing"]'
+                ], header);
 
                 if (statusEl && !isGroup) {
                     contactStatus = statusEl.title || statusEl.innerText;
@@ -415,57 +417,31 @@ function checkActiveChat() {
             }
         }
 
-        // --- DRAWER OVERRIDE ---
-        const drawerTitle = Array.from(document.querySelectorAll('span')).find(el =>
-            el.innerText.match(/Dados do|Contact info|Group info|Business info/i)
-        );
+        // --- DRAWER OVERRIDE (Profile View) ---
+        const drawer = getRobustElement([
+            '[data-testid="drawer-left"]',
+            '[data-testid="drawer-right"]',
+            'div[role="navigation"]'
+        ]);
 
-        // If a broadcast is active, don't reset to idle just because we switched contacts
-        const isBcActive = BroadcastEngine.currentIndex >= 0;
-
-        if (drawerTitle) {
-            const container = drawerTitle.closest('div._aigv') || drawerTitle.closest('section');
-            if (drawerTitle.innerText.match(/group|grupo/i)) {
+        if (drawer) {
+            const isGroupInfo = drawer.innerText.match(/group|grupo/i);
+            if (isGroupInfo) {
                 isGroup = true;
-                if (container) {
-                    const h2 = container.querySelector('h2') || container.querySelector('span[dir="auto"]');
-                    if (h2) {
-                        let rawName = h2.innerText;
-                        // Safety: If name is too long, it's likely the participant list dump. Truncate it.
-                        if (rawName.length > 50) {
-                            rawName = rawName.substring(0, 47) + "...";
-                        }
-                        name = rawName;
-                    }
-                }
+                const h2 = drawer.querySelector('h2') || drawer.querySelector('span[dir="auto"]');
+                if (h2) name = h2.innerText.substring(0, 50);
             } else {
-                // Contact Drawer - Try to recover phone
-                if (container && !phone) {
-                    // Try Fiber
-                    const dImg = container.querySelector('img');
-                    if (dImg) {
-                        const f = getReactInstance(dImg);
-                        if (f) {
-                            const j = findJidInFiber(f);
-                            if (j) phone = j.replace(/\D/g, '');
-                        }
-                    }
-                    // Try visual scan
-                    if (!phone) {
-                        const spans = container.querySelectorAll('span');
-                        for (const s of spans) {
-                            if (s.innerText.match(/^\+?\d[\d\s-]{12,}$/)) {
-                                phone = s.innerText.replace(/\D/g, '') + "@c.us";
-                                break;
-                            }
-                        }
-                    }
+                // Individual Info Drawer
+                if (!phone) {
+                    const phoneEl = Array.from(drawer.querySelectorAll('span, div')).find(el => 
+                        el.innerText.match(/^\+?\d[\d\s-]{12,}$/)
+                    );
+                    if (phoneEl) phone = phoneEl.innerText.replace(/\D/g, '') + "@c.us";
                 }
             }
         }
 
         // --- CACHE RECOVERY ---
-        // If Fiber randomly fails to find phone, restore it if name matches our cache
         if (!phone && name && currentContactName === name && currentPhoneValue) {
             phone = currentPhoneValue;
         }
@@ -476,18 +452,13 @@ function checkActiveChat() {
         }
 
         // --- DISPATCH ---
-        if (isBcActive) {
-            // During broadcast, we stay in the broadcast view
-            return;
-        }
+        const isBcActive = BroadcastEngine.currentIndex >= 0;
+        if (isBcActive) return;
 
         const isSystemChat = name === "WhatsApp" || name === "Contato";
-        if (isSystemChat) {
-            // Do not track WhatsApp internal channels or generic Contato placeholder
-            return;
-        }
+        if (isSystemChat) return;
 
-        const chatId = isGroup ? `GROUP:${name} ` : (phone || name);
+        const chatId = isGroup ? `GROUP:${name}` : (phone || name);
 
         if (!chatId) {
             if (currentPhone !== null) {
@@ -504,24 +475,19 @@ function checkActiveChat() {
                 const el = shadowRoot.getElementById('nw-group-name');
                 if (el) el.textContent = name || "Grupo";
             } else {
-                // If phone is found, pass phone. Otherwise it's just a name-based search.
                 updateSidebar(name || phone, phone, name, avatarUrl, contactStatus);
             }
-        } else {
-            // Even if same phone, status might have changed
-            if (!isGroup) {
-                const statusEl = shadowRoot.getElementById('nw-contact-online-status');
-                if (statusEl) {
-                    if (contactStatus) {
-                        statusEl.textContent = contactStatus;
-                        statusEl.style.display = 'block';
-                    } else {
-                        statusEl.style.display = 'none';
-                    }
+        } else if (!isGroup) {
+            const statusEl = shadowRoot.getElementById('nw-contact-online-status');
+            if (statusEl) {
+                if (contactStatus) {
+                    statusEl.textContent = contactStatus;
+                    statusEl.style.display = 'block';
+                } else {
+                    statusEl.style.display = 'none';
                 }
             }
         }
-
 
     } catch (err) {
         console.log("NW: Detection Error", err);
@@ -875,28 +841,46 @@ const GroupExtractor = {
     scrapeVisible: function () {
         if (!this.isExtracting || !this.container) return;
 
-        // Broad selector for contacts
-        const items = this.container.querySelectorAll('div[role="listitem"]');
+        // Broad selector for contacts (Priority: data-testid)
+        const items = this.container.querySelectorAll('[data-testid="member-list-item"]') || 
+                      this.container.querySelectorAll('div[role="listitem"]');
 
         items.forEach(item => {
-            const lines = item.innerText.split('\n');
+            const text = item.innerText || "";
+            if (!text) return;
+
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             if (lines.length < 1) return;
 
-            let name = lines[0];
-            let secondary = lines[1] || "";
+            let name = "Usuário sem nome";
             let phone = "";
 
-            // Phone Extraction Logic
-            if (name.match(/^\+?\d[\d\s-]{8,}$/)) {
-                phone = name.replace(/\D/g, '');
-                name = "Contato WhatsApp";
-                if (secondary.includes('~')) name = secondary.replace(/[~]/g, '').trim();
+            // Better extraction: Find anything that looks like a phone number in any line
+            const phoneMatch = text.match(/\+?\d[\d\s-]{10,}/);
+            if (phoneMatch) {
+                phone = phoneMatch[0].replace(/\D/g, '');
+                
+                // If it's a phone, look for a non-phone name (usually starting with ~ or in first line)
+                const nameMatch = text.match(/~([^ \n]+)/); // WhatsApp profile name pattern
+                if (nameMatch) {
+                    name = nameMatch[1].trim();
+                } else {
+                    // Fallback to first line if it's not a phone number
+                    if (!lines[0].match(/\+?\d[\d\s-]{10,}/)) {
+                        name = lines[0];
+                    }
+                }
             } else {
-                if (secondary.match(/^\+?\d[\d\s-]{8,}$/)) phone = secondary.replace(/\D/g, '');
+                // If no phone found, it might be a saved contact with just name
+                name = lines[0];
             }
 
             if (name === "Você" || name === "You") return;
-            if (phone && !phone.startsWith('55') && phone.length <= 11) phone = '55' + phone;
+            
+            // Format phone
+            if (phone && !phone.startsWith('55') && phone.length <= 11) {
+                phone = '55' + phone;
+            }
 
             const key = phone || name;
 
@@ -904,12 +888,12 @@ const GroupExtractor = {
                 this.contacts.set(key, {
                     name: name.replace(/"/g, ''),
                     phone: phone,
-                    origin: `Grupo: ${this.groupName} `,
+                    origin: `Grupo: ${this.groupName}`,
                     date: new Date().toLocaleDateString()
                 });
-                // Live Update
+                
                 const p = getEl('nw-export-status');
-                if (p) p.innerText = `Capturando...${this.contacts.size} detetados`;
+                if (p) p.innerText = `Capturando... ${this.contacts.size} detectados`;
             }
         });
     },

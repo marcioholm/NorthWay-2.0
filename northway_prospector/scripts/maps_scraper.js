@@ -187,73 +187,83 @@ function safeScrape() {
 
 function scrapeCompetitors() {
     try {
-        // Strategy C: Text Search (Most Robust)
-        // Find visible section headers with "Também pesquisados"
-        let container = null;
+        let list = [];
+        let items = [];
 
-        // 1. Try standard Aria Labels (often used by screen readers)
-        container = document.querySelector('div[aria-label*="Também pesquisam"], div[aria-label*="Also search"], div[aria-label*="Lugares também pesquisados"]');
+        // STRATEGY 1: Main Search List (if we are in search results view)
+        // Card selector in results list: div.UaQhfb, div.Nv2YUb
+        const searchCards = Array.from(document.querySelectorAll('div.Nv2YUb, div.UaQhfb')).filter(el => {
+            // Ensure card has a name and rating
+            return el.querySelector('div.fontHeadlineSmall') || el.querySelector('span.MW4etd');
+        });
 
-        // 2. If fail, find by Heading Text
-        if (!container) {
-            const headings = Array.from(document.querySelectorAll('h2, div[role="heading"], span.fontTitleLarge'));
-            const targetHeading = headings.find(h => {
-                const txt = h.innerText.toLowerCase();
-                return txt.includes('também pesquisad') || txt.includes('also search');
-            });
+        if (searchCards.length > 2) { // More than just the active one
+            items = searchCards;
+            console.log("NW Compass: Found competitors in Search Result List");
+        } else {
+            // STRATEGY 2: "Also Search For" / "People Also Search"
+            let container = document.querySelector('div[aria-label*="Também pesquisam"], div[aria-label*="Also search"], div[aria-label*="Lugares também pesquisados"]');
+            
+            if (!container) {
+                const headings = Array.from(document.querySelectorAll('h2, div[role="heading"], span.fontTitleLarge'));
+                const targetHeading = headings.find(h => {
+                    const txt = h.innerText.toLowerCase();
+                    return txt.includes('também pesquisad') || txt.includes('also search') || txt.includes('resultados próxim');
+                });
+                if (targetHeading) container = targetHeading.closest('div.m6QErb') || targetHeading.parentElement.parentElement;
+            }
 
-            if (targetHeading) {
-                // The list is usually in the parent or next sibling of the container holding the heading
-                // Use closest to find the section wrapper
-                // Often the structure is: [Section [Header] [Carousel/Grid]]
-                // We go up a few levels and query 'div.UaQhfb' (Item Card Class)
-                const wrapper = targetHeading.closest('div.m6QErb') || targetHeading.parentElement.parentElement;
-                if (wrapper) container = wrapper;
+            if (container) {
+                items = Array.from(container.querySelectorAll('div.UaQhfb, div.Nv2YUb'));
+                console.log("NW Compass: Found competitors in 'People also search'");
             }
         }
 
-        if (!container) return { avgRating: 0, count: 0, list: [] };
-
-        // 3. Extract Items
-        // 'div.UaQhfb' is the common card container class in Maps
-        const items = Array.from(container.querySelectorAll('div.UaQhfb'));
+        if (items.length === 0) return { avgRating: 0, count: 0, list: [] };
 
         let sum = 0;
         let count = 0;
-        let list = [];
 
-        items.slice(0, 5).forEach(item => {
-            // Rating is usually in 'span.MW4etd' (e.g. "4.8")
+        items.forEach(item => {
+            if (list.length >= 5) return;
+
+            // Name
+            const nameEl = item.querySelector('div.fontHeadlineSmall') || 
+                           item.querySelector('div.fontBodyMedium') || 
+                           item.querySelector('span.osL8y');
+            
+            // Rating
             const ratingEl = item.querySelector('span.MW4etd');
+            
+            // Reviews
+            const reviewsEl = item.querySelector('span.UY7F9'); // Usually "(123)"
 
-            // Name extraction
-            let name = "Concorrente";
-            // Try aria-label first (most accurate on cards)
-            const linkElement = item.closest('a') || item.querySelector('a');
-            if (linkElement && linkElement.ariaLabel) {
-                name = linkElement.ariaLabel;
-            } else {
-                // Fallback: fontBodyMedium
-                const nameEl = item.querySelector('div.fontBodyMedium') || item.querySelector('span.osL8y');
-                if (nameEl) name = nameEl.textContent.trim();
-            }
-
-            if (ratingEl) {
+            if (nameEl && ratingEl) {
+                const name = nameEl.textContent.trim();
                 const r = parseFloat(ratingEl.textContent.replace(',', '.'));
+                const revs = reviewsEl ? parseInt(reviewsEl.textContent.replace(/\D/g, '')) : 0;
+
                 if (!isNaN(r)) {
                     sum += r;
                     count++;
-                    list.push({ name, rating: r });
+                    list.push({ name, rating: r, reviews: revs });
                 }
             }
         });
 
         if (count === 0) return { avgRating: 0, count: 0, list: [] };
 
-        // Sort: Highest rating first
-        list.sort((a, b) => b.rating - a.rating);
+        // Hybrid Ranking: Stars (Primary) > Reviews (Secondary)
+        list.sort((a, b) => {
+            if (b.rating !== a.rating) return b.rating - a.rating;
+            return b.reviews - a.reviews;
+        });
 
-        return { avgRating: (sum / count).toFixed(1), count, list };
+        return { 
+            avgRating: (sum / count).toFixed(1), 
+            count, 
+            list 
+        };
 
     } catch (e) {
         console.error("Competitor Scrape Error:", e);

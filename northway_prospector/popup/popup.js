@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
     // === CONFIG ===
-    const API_URL = "https://crm.northwaycompany.com.br/api/ext";
-    // const API_URL = "http://127.0.0.1:5001/api/ext"; // Local Dev Mode (Port 5001)
+    const API_URL = "https://northway-crm-next.vercel.app/api/ext";
+    // const API_URL = "http://localhost:3000/api/ext"; // Local Dev Mode
 
     // === STATE ===
     const state = {
@@ -601,40 +601,73 @@ Google Maps: ${state.scrapedData.url}
             }
         }
 
-        // 3. Benchmark
+        // 3. Benchmark & Ranking
         if (data.competitors) {
             const compRating = parseFloat(data.competitors.avgRating) || 0;
             const myRating = parseFloat(data.rating) || 0;
+            const myReviews = parseInt(data.reviews) || 0;
 
             const barYou = document.getElementById('bar-you');
             const barComp = document.getElementById('bar-comp');
 
-            // Normalize to 5 stars = 100% width
             if (barYou) barYou.style.width = `${(myRating / 5) * 100}%`;
             if (barComp) barComp.style.width = `${(compRating / 5) * 100}%`;
 
             document.getElementById('val-you').textContent = myRating.toFixed(1);
             document.getElementById('val-comp').textContent = compRating.toFixed(1);
 
-            // Render List (New V2.1)
+            // Calculate Rank
+            let all = [...(data.competitors.list || [])];
+            all.push({ name: "VOCÊ", rating: myRating, reviews: myReviews, isMe: true });
+            
+            // Sort by Rating then Reviews
+            all.sort((a, b) => {
+                if (b.rating !== a.rating) return b.rating - a.rating;
+                return b.reviews - a.reviews;
+            });
+
+            const myPosition = all.findIndex(item => item.isMe) + 1;
+            const total = all.length;
+
+            // Render List with Ranking Context
             const listEl = document.getElementById('competitor-list');
-            if (listEl && data.competitors.list && data.competitors.list.length > 0) {
-                let html = '<div style="margin-top:8px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">';
-                data.competitors.list.forEach(c => {
-                    const isBetter = c.rating > myRating;
-                    const color = isBetter ? '#ff3333' : '#888'; // Red if they are winning, Gray if not
+            if (listEl) {
+                let html = `
+                    <div style="margin-top:12px; padding:10px; background: rgba(255,255,255,0.03); border-radius:8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="font-weight:bold; color:#fff; display:flex; justify-content:space-between; margin-bottom:10px; font-size:11px;">
+                            <span>🏆 Ranking de Nicho</span>
+                            <span style="color:var(--nw-primary)">${myPosition}º de ${total}</span>
+                        </div>
+                `;
+
+                all.forEach((c, idx) => {
+                    const isMe = c.isMe;
+                    const color = isMe ? 'var(--nw-primary)' : (c.rating > myRating ? '#ff4d4d' : '#888');
+                    const weight = isMe ? 'bold' : 'normal';
+                    const bg = isMe ? 'rgba(var(--nw-primary-rgb), 0.1)' : 'transparent';
 
                     html += `
-                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                            <span style="overflow:hidden; white-space:nowrap; text-overflow:ellipsis; max-width: 180px;">${c.name}</span>
-                            <span style="color:${color}; font-weight:bold;">${c.rating.toFixed(1)}</span>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding: 4px 6px; border-radius:4px; margin-bottom:2px; background:${bg}; font-weight:${weight};">
+                            <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                                <span style="font-size:9px; color:#666; width:12px;">${idx + 1}º</span>
+                                <span style="overflow:hidden; white-space:nowrap; text-overflow:ellipsis; max-width: 140px; color:${isMe ? '#fff' : 'inherit'}">${c.name}</span>
+                            </div>
+                            <span style="color:${color}; font-family:monospace;">${c.rating.toFixed(1)}</span>
                         </div>
                     `;
                 });
+
                 html += '</div>';
+                
+                // Add Insight Message
+                let insight = "";
+                if (myPosition === 1) insight = "🎉 Você é o líder da região!";
+                else if (myPosition <= 3) insight = "🥉 Você está no Top 3, mas pode subir.";
+                else insight = `📉 ${all[0].name} está dominando o nicho.`;
+
+                html += `<div style="text-align:center; margin-top:8px; font-size:10px; color:var(--nw-text-muted)">${insight}</div>`;
+                
                 listEl.innerHTML = html;
-            } else if (listEl) {
-                listEl.innerHTML = "Sem dados detalhados.";
             }
         }
     }
