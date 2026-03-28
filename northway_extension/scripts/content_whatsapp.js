@@ -313,25 +313,31 @@ function findJidInFiber(fiber) {
     let visited = new Set();
     while (queue.length > 0) {
         const { node, depth } = queue.shift();
-        if (!node || depth > 60 || visited.has(node)) continue;
+        if (!node || depth > 80 || visited.has(node)) continue; // Increased depth for deep responsive trees
         visited.add(node);
 
         const props = node.memoizedProps || node.props || node.pendingProps;
         if (props) {
-            // High priority JID fields
+            // --- HIGH PRIORITY (Direct JIDs) ---
             if (props.jid && typeof props.jid === 'string') return props.jid;
             if (props.id && typeof props.id === 'object' && props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
             if (props.id && typeof props.id === 'string' && (props.id.includes('@c.us') || props.id.includes('@g.us'))) return props.id;
+            if (props.id && props.id._serialized) return props.id._serialized; 
             
-            // WA Web v2.3000+ specific JID structures
+            // --- WA WEB RESPONSIVE / MOBILE KEYS ---
             if (props.chatId && typeof props.chatId === 'string' && props.chatId.includes('@')) return props.chatId;
+            if (props.__x_id) return props.__x_id;
+            if (props.key && props.key.remoteJid) return props.key.remoteJid;
+            if (props.remoteJid) return props.remoteJid;
 
-            // Nested objects
+            // --- NESTED OBJECTS ---
             if (props.chat && (props.chat.id || props.chat.jid || props.chat.__x_id)) {
                 return props.chat.id || props.chat.jid || props.chat.__x_id;
             }
-            if (props.contact && (props.contact.id || props.contact.jid)) return props.contact.id || props.contact.jid;
-            if (props.msg && props.msg.to) return props.msg.to;
+            if (props.contact && (props.contact.id || props.contact.jid || props.contact.remoteJid)) {
+                 return props.contact.id || props.contact.jid || props.contact.remoteJid;
+            }
+            if (props.msg && (props.msg.to || props.msg.id?.remote)) return props.msg.to || props.msg.id?.remote;
             if (props.searchResult && props.searchResult.id) return props.searchResult.id;
         }
 
@@ -443,32 +449,50 @@ function checkActiveChat() {
             }
         }
 
-        // --- FALLBACK: Side List Selection ---
+        // --- FALLBACK: Responsive/Mobile Detection ---
         if (!phone || !name) {
-            console.log("NW DEBUG: Attempting side list fallback...");
-            const activeChat = document.querySelector('div[role="listitem"][aria-selected="true"]') || 
-                               document.querySelector('div._ak8j[aria-selected="true"]');
-            if (activeChat) {
-                if (!phone) {
-                    const fiber = getReactInstance(activeChat);
-                    if (fiber) {
-                        const jid = findJidInFiber(fiber);
-                        console.log("NW DEBUG: Side List Fiber JID:", jid);
-                        if (jid) {
-                            phone = jid;
-                            if (jid.includes('@g.us')) isGroup = true;
-                        }
-                    }
-                }
-                if (!name) {
-                    const nameEl = activeChat.querySelector('span[title]') || 
-                                   activeChat.querySelector('span[dir="auto"]');
-                    if (nameEl) name = nameEl.title || nameEl.innerText;
+            console.log("NW DEBUG: Attempting responsive/mobile detection...");
+            // In mobile view, the main panel might be different or the side-list becomes the only active thing
+            const responsiveHeader = document.querySelector('header span[dir="auto"]') || 
+                                    document.querySelector('div[role="button"] span[dir="auto"]');
+            
+            if (responsiveHeader && !name) {
+                name = responsiveHeader.innerText;
+                console.log("NW DEBUG: Responsive Name found:", name);
+            }
+
+            // Check if we are clearly in a Group Info View (User's 2nd screenshot)
+            const isGroupInfo = document.body.innerText.match(/group info|dados do grupo/i);
+            const groupTitle = document.querySelector('h2[dir="auto"]') || document.querySelector('span._ak8q');
+            
+            if (isGroupInfo && groupTitle) {
+                isGroup = true;
+                if (!name) name = groupTitle.innerText;
+                console.log("NW DEBUG: Visual Group Detection: true");
+                
+                // If we are in group info, we can extract JID from the "Invite Link" or "Add participant" button
+                const groupFiberEl = groupTitle.closest('div[role="region"]') || groupTitle.closest('header');
+                if (groupFiberEl && !phone) {
+                    const fiber = getReactInstance(groupFiberEl);
+                    if (fiber) phone = findJidInFiber(fiber);
                 }
             }
         }
 
-        if (phone) console.log(`NW DEBUG: Final Detection ID: ${phone} (Group: ${isGroup})`);
+        if (phone) {
+            console.log(`NW DEBUG: Final Detection ID: ${phone} (Group: ${isGroup})`);
+        } else {
+             // CRITICAL SCANNER: Log keys if phone is still null
+             console.warn("NW DEBUG: FAILED TO FIND JID. ELEMENT ANALYSIS START.");
+             const elToScan = mainPanel || document.querySelector('header');
+             if (elToScan) {
+                 const fiber = getReactInstance(elToScan);
+                 if (fiber) {
+                     const props = fiber.memoizedProps || fiber.pendingProps;
+                     console.log("NW DEBUG: Fiber Keys found:", Object.keys(props || {}));
+                 }
+             }
+        }
 
         // --- DRAWER OVERRIDE (Profile View) ---
         const drawer = getRobustElement([
