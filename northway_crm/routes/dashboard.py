@@ -173,8 +173,10 @@ def get_funnel_data(pipeline_id):
          start_date = now - timedelta(days=1095)
     elif period == 'annual':
         start_date = now - timedelta(days=1825)
-    else: # Default or all time
-        start_date = now - timedelta(days=365) # Default to year
+    elif period == 'all_time':
+        start_date = None
+    else: # Default
+        start_date = None # Standard to see all history if no valid period selected
 
     # Verify pipeline
     pipeline = Pipeline.query.filter_by(id=pipeline_id, company_id=current_user.company_id).first()
@@ -298,6 +300,14 @@ def get_chart_data():
          start_date = now - timedelta(days=1095)
     elif period == 'annual':
         start_date = now - timedelta(days=1825)
+    elif period == 'all_time':
+        # Find the oldest lead/client to establish a start_date for buckets
+        oldest_lead = Lead.query.filter_by(company_id=company_id).order_by(Lead.created_at.asc()).first()
+        if oldest_lead:
+            start_date = oldest_lead.created_at
+        else:
+            start_date = now - timedelta(days=365)
+    # Fallback to monthly remains same
 
     # Calculate Buckets
     all_buckets = []

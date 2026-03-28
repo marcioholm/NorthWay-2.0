@@ -129,7 +129,8 @@
                     Conversão</p>
                 <p class="text-xl font-bold text-gray-900">
                     {% if total_leads > 0 %}
-                    {{ (won_deals / total_leads * 100)|round|int }}%
+                    {% set conv = (won_deals / total_leads * 100) %}
+                    {{ "%.1f"|format(conv)|replace('.0', '') }}%
                     {% else %}
                     0%
                     {% endif %}
@@ -191,11 +192,9 @@
                     <option value="last_7_days">Últimos 7 Dias</option>
                     <option value="daily">Últimos 30 Dias</option>
                     <option value="weekly">Semanal (12 sem)</option>
-                    <option value="monthly" selected>Mensal (12 meses)</option>
-                    <option value="bimonthly">Bimestral (2 anos)</option>
-                    <option value="quarterly">Trimestral (2 anos)</option>
                     <option value="semiannual">Semestral (3 anos)</option>
                     <option value="annual">Anual (5 anos)</option>
+                    <option value="all_time" selected>Todo o Período</option>
                 </select>
             </div>
             <div class="relative h-80 w-full transition-all duration-300 overflow-hidden"
@@ -377,7 +376,7 @@
         }
 
         // Initial Load for Activity Chart
-        updateChart('monthly');
+        updateChart('all_time');
 
         // Funnel Chart Logic
         const pipelineSelect = document.getElementById('pipelineSelect');
