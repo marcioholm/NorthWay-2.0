@@ -574,6 +574,32 @@ def create_app():
                 return {}
 
 
+        # --- GLOBAL PROXY FOR NEXT.JS ASSETS ---
+        # This ensures that CSS/JS from the Next.js app are served correctly
+        # when accessed via the Flask domain (e.g., in Playbooks and Forms).
+        @app.route('/_next/<path:path>')
+        def global_next_proxy(path):
+            import requests
+            from flask import make_response
+            NEXT_APP_URL = "https://northway-crm-next.vercel.app"
+            url = f"{NEXT_APP_URL}/_next/{path}"
+            
+            # Forward original query string
+            if request.query_string:
+                url += f"?{request.query_string.decode('utf-8')}"
+            
+            try:
+                # Simple GET proxy for assets
+                resp = requests.get(url, allow_redirects=True)
+                response = make_response(resp.content, resp.status_code)
+                if 'Content-Type' in resp.headers:
+                    response.headers['Content-Type'] = resp.headers['Content-Type']
+                # Cache assets for better performance
+                response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+                return response
+            except Exception as e:
+                return f"Asset Proxy Error: {str(e)}", 502
+
         return app
     except Exception as factory_e:
         import traceback
@@ -609,32 +635,6 @@ def create_app():
         return fallback
 
 app = create_app()
-
-# --- GLOBAL PROXY FOR NEXT.JS ASSETS ---
-# This ensures that CSS/JS from the Next.js app are served correctly
-# when accessed via the Flask domain (e.g., in Playbooks and Forms).
-@app.route('/_next/<path:path>')
-def global_next_proxy(path):
-    import requests
-    from flask import make_response
-    NEXT_APP_URL = "https://northway-crm-next.vercel.app"
-    url = f"{NEXT_APP_URL}/_next/{path}"
-    
-    # Forward original query string
-    if request.query_string:
-        url += f"?{request.query_string.decode('utf-8')}"
-    
-    try:
-        # Simple GET proxy for assets
-        resp = requests.get(url, allow_redirects=True)
-        response = make_response(resp.content, resp.status_code)
-        if 'Content-Type' in resp.headers:
-            response.headers['Content-Type'] = resp.headers['Content-Type']
-        # Cache assets for better performance
-        response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
-        return response
-    except Exception as e:
-        return f"Asset Proxy Error: {str(e)}", 502
 
 
 @app.route('/checkout')
