@@ -1,5 +1,6 @@
 
-from flask import Blueprint, request, jsonify, current_app, render_template, redirect, url_for, flash
+from flask import Blueprint, request, jsonify, current_app, render_template, redirect, url_for, flash, make_response
+import requests
 from flask_login import login_required, current_user
 from models import db, FormInstance, User, LibraryTemplate, LibraryTemplateGrant, FormSubmission
 from services.form_service import FormService
@@ -304,3 +305,55 @@ def get_report(submission_id):
         company_logo=company_logo,
         company=company
     )
+
+# ==========================================
+# PROXY DASHBOARD (NEXT.JS INTEGRATION)
+# ==========================================
+
+NEXT_APP_URL = "https://northway-crm-next.vercel.app"
+
+def proxy_request(path):
+    url = f"{NEXT_APP_URL}{path}"
+    if request.query_string:
+        url += f"?{request.query_string.decode('utf-8')}"
+    
+    headers = {key: value for (key, value) in request.headers if key.lower() != 'host'}
+    headers['Accept-Encoding'] = 'identity'
+    
+    try:
+        if request.method == 'GET':
+            resp = requests.get(url, headers=headers, allow_redirects=False)
+        else:
+            resp = requests.request(
+                method=request.method,
+                url=url,
+                headers=headers,
+                data=request.get_data(),
+                cookies=request.cookies,
+                allow_redirects=False
+            )
+
+        response = make_response(resp.content, resp.status_code)
+        if 'Content-Type' in resp.headers:
+            response.headers['Content-Type'] = resp.headers['Content-Type']
+        return response
+    except Exception as e:
+        return f"Proxy Error: {str(e)}", 502
+
+@forms_bp.route('/proxy-dashboard', defaults={'path': ''})
+@forms_bp.route('/proxy-dashboard/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@login_required
+def proxy_dashboard(path):
+    return proxy_request(f"/formularios/{path}")
+
+@forms_bp.route('/api-proxy', defaults={'path': ''})
+@forms_bp.route('/api-proxy/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+@login_required
+def proxy_api(path):
+    return proxy_request(f"/api/forms/{path}")
+
+@forms_bp.route('/_next-proxy', defaults={'path': ''})
+@forms_bp.route('/_next-proxy/<path:path>', methods=['GET'])
+@login_required
+def proxy_next_static(path):
+    return proxy_request(f"/_next/{path}")
