@@ -346,6 +346,13 @@ def proxy_request(path):
 def proxy_dashboard(path):
     return proxy_request(f"/formularios/{path}")
 
+@forms_bp.route('/playbook/<slug>', methods=['GET'])
+def playbook_view(slug):
+    """
+    Public Endpoint: View Strategy Playbooks proxied from Next.js
+    """
+    return proxy_request(f"/playbooks/{slug}")
+
 @forms_bp.route('/api-proxy', defaults={'path': ''})
 @forms_bp.route('/api-proxy/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @login_required
