@@ -359,6 +359,14 @@ def playbook_view(slug):
 def proxy_api(path):
     return proxy_request(f"/api/forms/{path}")
 
+@forms_bp.route('/_next/<path:path>', methods=['GET'])
+def proxy_next_public(path):
+    """
+    Public Proxy for Next.js Assets (CSS, JS, Chunks)
+    Necessary for the Premium Design to load on public playbooks.
+    """
+    return proxy_request(f"/_next/{path}")
+
 @forms_bp.route('/_next-proxy', defaults={'path': ''})
 @forms_bp.route('/_next-proxy/<path:path>', methods=['GET'])
 @login_required
