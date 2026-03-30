@@ -54,7 +54,7 @@ def create_app():
                 "default-src 'self' https:; "
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://northway-crm-next.vercel.app https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://www.googletagmanager.com https://unpkg.com https://cdn.tailwindcss.com https://cdn.quilljs.com; "
                 "style-src 'self' 'unsafe-inline' https://northway-crm-next.vercel.app https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://cdn.tailwindcss.com https://cdn.quilljs.com; "
-                "font-src 'self' https://fonts.gstatic.com; "
+                "font-src 'self' https://northway-crm-next.vercel.app https://fonts.gstatic.com; "
                 "img-src 'self' data: https://*.googleusercontent.com https://*.supabase.co https://*.whatsapp.net https://*.google.com https://*.whatsapp.com https://upload.wikimedia.org https://cdnjs.cloudflare.com; "
                 "connect-src 'self' https://northway-crm-next.vercel.app https://*.supabase.co https://*.google-analytics.com https://*.googleapis.com https://cdn.jsdelivr.net https://unpkg.com;"
             )
