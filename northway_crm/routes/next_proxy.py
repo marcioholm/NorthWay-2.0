@@ -1,4 +1,4 @@
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, make_response
 import requests
 
 next_proxy_bp = Blueprint('next_proxy', __name__)
@@ -28,9 +28,12 @@ def proxy_request(path):
     # Mirror headers for consistency (excluding Host)
     headers = {key: value for (key, value) in request.headers if key.lower() != 'host'}
     
+    # Force no compression for upstream if we want requests to handle it reliably
+    headers['Accept-Encoding'] = 'identity'
+    
     try:
         if request.method == 'GET':
-            resp = requests.get(url, headers=headers, stream=True)
+            resp = requests.get(url, headers=headers, allow_redirects=False)
         else:
             resp = requests.request(
                 method=request.method,
@@ -38,15 +41,19 @@ def proxy_request(path):
                 headers=headers,
                 data=request.get_data(),
                 cookies=request.cookies,
-                allow_redirects=False,
-                stream=True
+                allow_redirects=False
             )
 
-        # Exclude hop-by-hop headers
-        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
-        headers = [(name, value) for (name, value) in resp.raw.headers.items()
-                   if name.lower() not in excluded_headers]
-
-        return Response(resp.content, resp.status_code, headers)
+        # Create Flask response
+        response = make_response(resp.content, resp.status_code)
+        
+        # Forward critical headers
+        if 'Content-Type' in resp.headers:
+             response.headers['Content-Type'] = resp.headers['Content-Type']
+        
+        # EXCLUDE transfer-encoding and content-encoding
+        # This allows Flask/Vercel to handle downstream compression correctly
+        return response
+        
     except Exception as e:
         return f"Proxy Error: {str(e)}", 502
