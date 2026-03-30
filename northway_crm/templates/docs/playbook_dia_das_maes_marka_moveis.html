@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex-1 h-screen overflow-y-auto bg-transparent p-4 md:p-8 no-scrollbar text-white">
+    <div class="max-w-4xl mx-auto py-12">
+        <!-- Header Section -->
+        <div class="mb-12 relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-900/40 via-black to-red-950/20 p-8 md:p-12 border border-white/5 shadow-2xl backdrop-blur-xl">
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-northway-red/20 text-northway-red text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em] border border-northway-red/30">Consultoria Premium</span>
+                    <span class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Marka Móveis</span>
+                </div>
+                <h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tight leading-none uppercase italic">
+                    Playbook Estratégico <br>
+                    <span class="text-northway-red not-italic">Dia das Mães</span> 🚀
+                </h1>
+                <p class="text-xl text-gray-400 font-light leading-relaxed max-w-2xl">
+                    A estratégia definitiva para transformar conversas de WhatsApp em vendas de alto impacto e escala acelerada.
+                </p>
+            </div>
+            
+            <!-- Abstract Decoration -->
+            <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-northway-red/10 rounded-full blur-[100px]"></div>
+            <div class="absolute -left-10 top-0 opacity-5">
+                <i data-lucide="smartphone" class="w-64 h-64 text-white"></i>
+            </div>
+        </div>
+
+        <!-- Quote -->
+        <div class="mb-16 text-center italic text-gray-400 text-lg border-l-4 border-northway-red pl-6 py-2">
+            "Marketing sem direção é esforço perdido. Ação sem estratégia é ruído."
+        </div>
+
+        <div class="space-y-16">
+            <!-- Section 1 -->
+            <section>
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="h-px flex-1 bg-white/5"></div>
+                    <h2 class="text-xs font-black text-gray-500 uppercase tracking-[0.3em]">01. VISÃO ESTRATÉGICA</h2>
+                    <div class="h-px flex-1 bg-white/5"></div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white/[0.02] border border-white/5 p-8 rounded-2xl hover:bg-white/[0.04] transition-all">
+                        <h3 class="text-xl font-bold mb-4 text-white">Por que 09 de Abril?</h3>
+                        <p class="text-gray-400 leading-relaxed font-light">
+                            No nicho de móveis, a decisão de compra é uma jornada de planejamento. Começar agora permite capturar o orçamento do cliente antes da concorrência de pequenos presentes.
+                        </p>
+                    </div>
+                    <div class="bg-white/[0.02] border border-white/5 p-8 rounded-2xl hover:bg-white/[0.04] transition-all">
+                        <h3 class="text-xl font-bold mb-4 text-white">O Papel do WhatsApp</h3>
+                        <p class="text-gray-400 leading-relaxed font-light">
+                            O WhatsApp é o nosso "Closet Sales". Ele não serve para panfletagem digital, mas para atendimento consultivo. Cada conversa é uma consultoria de ambiente.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Cronograma -->
+            <section class="bg-white/[0.03] backdrop-blur-xl border border-white/5 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+                <div class="absolute -left-20 -bottom-20 w-80 h-80 bg-blue-500/5 rounded-full blur-[80px]"></div>
+                
+                <h2 class="text-3xl font-black mb-10 tracking-tight text-white uppercase italic">Fluxo de <span class="text-northway-red not-italic">Disparos</span> ⏰</h2>
+                
+                <div class="space-y-12 relative z-10">
+                    <!-- Step 1 -->
+                    <div class="flex gap-6 group">
+                        <div class="hidden md:flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full bg-northway-red flex items-center justify-center font-black text-sm shadow-lg shadow-red-500/20">1</div>
+                            <div class="w-px flex-1 bg-white/10 my-2"></div>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-xs font-black text-northway-red uppercase tracking-widest mb-2">09 a 11 de Abril — O Aquecimento</h4>
+                            <p class="text-gray-400 mb-4 font-light italic">"Olá [NOME], estamos preparando algo muito especial para este Dia das Mães..."</p>
+                            <div class="bg-black/40 rounded-xl p-4 border border-white/5 text-sm text-gray-500 font-medium">
+                                <span class="text-white font-bold">Objetivo:</span> Filtro de interesse e limpeza de base.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex gap-6 group">
+                        <div class="hidden md:flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-black text-sm">2</div>
+                            <div class="w-px flex-1 bg-white/10 my-2"></div>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">12 a 15 de Abril — A Curadoria</h4>
+                            <p class="text-gray-400 mb-4 font-light italic">"Qual desses estilos você acha que mais combina com a sua mãe? 1- Minimalista, 2- Clássico..."</p>
+                            <div class="bg-black/40 rounded-xl p-4 border border-white/5 text-sm text-gray-500 font-medium">
+                                <span class="text-white font-bold">Objetivo:</span> Qualificação natural e coleta de dados.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex gap-6 group">
+                        <div class="hidden md:flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-black text-sm">3</div>
+                            <div class="w-px flex-1 bg-white/10 my-2"></div>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">16 a 25 de Abril — Conversão Rápida</h4>
+                            <p class="text-gray-400 mb-4 font-light italic">"Condições de antecipação exclusivas até o dia 30/04. Garantia de entrega antes do domingo..."</p>
+                            <div class="bg-black/40 rounded-xl p-4 border border-white/5 text-sm text-gray-500 font-medium">
+                                <span class="text-white font-bold">Objetivo:</span> Gerar receita ainda em Abril.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Scripts -->
+            <section>
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="h-px flex-1 bg-white/5"></div>
+                    <h2 class="text-xs font-black text-gray-500 uppercase tracking-[0.3em]">02. SCRIPTS DE FECHAMENTO</h2>
+                    <div class="h-px flex-1 bg-white/5"></div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="bg-white/[0.04] p-8 rounded-2xl border-l-4 border-northway-red">
+                        <h4 class="text-sm font-black text-white/60 mb-2 uppercase tracking-widest italic">A Objeção "Vou Pensar"</h4>
+                        <p class="text-xl text-white font-medium leading-relaxed italic">
+                            "Perfeito, [NOME]. Decisões sobre a casa precisam ser ponderadas. Só um detalhe: nossa agenda de montagem para o Dia das Mães costuma lotar rápido..."
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer Banner -->
+            <div class="mt-24 p-12 rounded-3xl bg-northway-red text-center shadow-2xl shadow-red-900/20">
+                <h3 class="text-4xl font-black mb-4 tracking-tighter italic uppercase text-white">O Crescimento é um <br>Processo Inevitável.</h3>
+                <p class="text-red-100 font-medium mb-8 max-w-lg mx-auto opacity-80">
+                    A Marka Móveis não está apenas vendendo armários; está estruturando o cenário onde as famílias se reúnem.
+                </p>
+                <div class="flex justify-center gap-4">
+                    <span class="text-[10px] font-black uppercase tracking-[0.5em] text-white">NORTHWAY COMPANY</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

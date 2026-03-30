@@ -111,6 +111,10 @@ def ebook_time_value():
 def ebook_institutional():
     return render_template('docs/ebook_institutional.html')
 
+@docs_bp.route('/playbook-dia-das-maes-marka-moveis')
+def playbook_dia_das_maes_marka_moveis():
+    return render_template('docs/playbook_dia_das_maes_marka_moveis.html')
+
 @docs_bp.route('/library')
 @login_required
 def library():
