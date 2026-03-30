@@ -21,6 +21,8 @@ from services.supabase_service import init_supabase
 from flask_cors import CORS
 from extensions import limiter
 import logging
+import requests
+from flask import make_response
 
 def create_app():
     # CRITICAL: Set instance path BEFORE Flask initialization
@@ -461,7 +463,43 @@ def create_app():
 
         @app.route('/verify-deploy-2026')
         def verify_deploy():
-            return "DEPLOY_V7_LIVE_2026-03-09_01:10"
+            return "DEPLOY_V9_LIVE_2026-03-30_09:50"
+
+        # --- GLOBAL NEXT.JS PROXY ---
+        NEXT_APP_URL = "https://northway-crm-next.vercel.app"
+
+        def proxy_request(path):
+            url = f"{NEXT_APP_URL}{path}"
+            if request.query_string:
+                url += f"?{request.query_string.decode('utf-8')}"
+            headers = {key: value for (key, value) in request.headers if key.lower() != 'host'}
+            headers['Accept-Encoding'] = 'identity'
+            try:
+                if request.method == 'GET':
+                    resp = requests.get(url, headers=headers, allow_redirects=False)
+                else:
+                    resp = requests.request(method=request.method, url=url, headers=headers, data=request.get_data(), cookies=request.cookies, allow_redirects=False)
+                response = make_response(resp.content, resp.status_code)
+                if 'Content-Type' in resp.headers:
+                    response.headers['Content-Type'] = resp.headers['Content-Type']
+                return response
+            except Exception as e:
+                return f"Proxy Error: {str(e)}", 502
+
+        @app.route('/formularios', defaults={'path': ''})
+        @app.route('/formularios/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+        def proxy_formularios(path):
+            return proxy_request(f"/formularios/{path}")
+
+        @app.route('/api/forms', defaults={'path': ''})
+        @app.route('/api/forms/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+        def proxy_api_forms(path):
+            return proxy_request(f"/api/forms/{path}")
+
+        @app.route('/_next', defaults={'path': ''})
+        @app.route('/_next/<path:path>', methods=['GET'])
+        def proxy_next_static(path):
+            return proxy_request(f"/_next/{path}")
 
 
         @app.route('/sys-admin/sync-db')
@@ -518,8 +556,7 @@ def create_app():
             ('routes.matrix_routes', 'matrix_bp', 'matrix_bp', None),
             ('routes.crepi_routes', 'crepi_bp', 'crepi_bp', None),
             ('routes.swot_routes', 'swot_bp', 'swot_bp', None),
-            ('routes.marketing', 'marketing_bp', 'marketing_bp', None),
-            ('routes.next_proxy', 'next_proxy_bp', 'next_proxy_bp', None)
+            ('routes.marketing', 'marketing_bp', 'marketing_bp', None)
         ]
 
         import importlib
