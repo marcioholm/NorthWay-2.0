@@ -1043,7 +1043,8 @@
             } catch (e) { }
         }
 
-        if ({{ 'true' if current_user.is_authenticated else 'false' }}) {
+        const userAuthenticated = {{ 'true' if current_user.is_authenticated else 'false' }};
+        if (userAuthenticated) {
             updateWhatsAppUnreadCount();
             setInterval(updateWhatsAppUnreadCount, 30000); // Every 30s
         }

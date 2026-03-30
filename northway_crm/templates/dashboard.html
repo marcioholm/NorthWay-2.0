@@ -389,8 +389,10 @@
         }
 
         // Initialize Funnel
-        {% if current_pipeline_id %}
-        updateFunnelChart({{ current_pipeline_id }});
+        const defaultPipeline = {{ current_pipeline_id if current_pipeline_id else 'null' }};
+        if (defaultPipeline) {
+            updateFunnelChart(defaultPipeline);
+        }
     {% endif %}
     });
 
