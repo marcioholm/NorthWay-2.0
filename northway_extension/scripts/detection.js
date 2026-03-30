@@ -8,7 +8,8 @@ class FiberDetectionStrategy {
         const candidates = [
             getRobustElement(SELECTORS.MAIN_PANEL),
             getRobustElement(SELECTORS.HEADER),
-            getRobustElement(SELECTORS.DRAWER)
+            getRobustElement(SELECTORS.DRAWER),
+            document.querySelector('#main')
         ];
 
         for (const el of candidates) {
@@ -54,26 +55,26 @@ class DomDetectionStrategy {
 
             if (phone || name) return { phone, name, avatarUrl, isGroup };
         }
+        
+        // Final fallback: Title scan
+        const title = document.title || "";
+        const titleMatch = title.match(/^(?:\(\d+\) )?WhatsApp\s*[–-]\s*(.+)$/);
+        if (titleMatch && titleMatch[1]) {
+            return { name: titleMatch[1].trim(), offline: true };
+        }
+
         return null;
     }
 }
 
 class OfflineFallbackStrategy {
     detect() {
-        // Try title (e.g. "(1) WhatsApp - User Name")
-        const title = document.title;
-        const match = title.match(/^(?:\(\d+\) )?WhatsApp\s*[–-]\s*(.+)$/);
-        if (match && match[1]) {
-            return { name: match[1], offline: true };
-        }
-
         // Try URL
         const url = new URL(window.location.href);
         const phoneParam = url.searchParams.get('phone');
         if (phoneParam) {
             return { phone: phoneParam.replace(/\D/g, '') + "@c.us", offline: true };
         }
-
         return null;
     }
 }
@@ -117,7 +118,6 @@ function getReactInstance(dom) {
 
 /**
  * BFS Traversal for JID identification.
- * Optimized: Node recursion limits and parent avoidance.
  */
 function findJidInFiber(fiber) {
     if (!fiber) return null;
@@ -135,7 +135,7 @@ function findJidInFiber(fiber) {
             const jid = props.jid || props.chatId || props.__x_id || props.chatJid || props.remoteJid;
             if (typeof jid === 'string' && jid.includes('@')) return jid;
             
-            // Case 2: ID Object (WhatsApp Common Pattern)
+            // Case 2: ID Object 
             if (props.id && typeof props.id === 'object') {
                 if (props.id.user && props.id.server) return `${props.id.user}@${props.id.server}`;
                 if (props.id._serialized) return props.id._serialized;
@@ -149,11 +149,8 @@ function findJidInFiber(fiber) {
             }
         }
 
-        // Horizontal and Vertical scanning
         if (node.child) queue.push({ node: node.child, depth: depth + 1 });
         if (node.sibling) queue.push({ node: node.sibling, depth: depth + 1 });
-        
-        // Peek slightly up to catch JIDs on the list items from child elements (limit to root depth)
         if (depth < 2 && node.return) queue.push({ node: node.return, depth: depth + 1 });
     }
     return null;
@@ -182,11 +179,6 @@ function checkActiveChat() {
 
         const { phone, name, avatarUrl, isGroup, offline } = result;
 
-        if (offline) {
-            nwLog("WhatsApp is offline/syncing. Using fallback identification.");
-            // UI could show "Syncing" status if needed.
-        }
-
         const isBcActive = BroadcastEngine.currentIndex >= 0;
         if (isBcActive) return;
 
@@ -204,6 +196,7 @@ function checkActiveChat() {
         }
 
         if (chatId !== NWState.currentPhone) {
+            nwLog(`Switching to chat: ${chatId}`);
             NWState.currentPhone = chatId;
             NWState.contactName = name;
             NWState.contactPhone = phone;

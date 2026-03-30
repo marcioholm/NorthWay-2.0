@@ -15,6 +15,7 @@ const SELECTORS = {
         '[data-testid="conversation-panel-header"]',
         '[data-testid="conversation-info-header"]',
         '[data-testid="conversation-header"]',
+        '#main > header',
         'header'
     ],
     CONTACT_NAME: [

@@ -518,7 +518,8 @@ def create_app():
             ('routes.matrix_routes', 'matrix_bp', 'matrix_bp', None),
             ('routes.crepi_routes', 'crepi_bp', 'crepi_bp', None),
             ('routes.swot_routes', 'swot_bp', 'swot_bp', None),
-            ('routes.marketing', 'marketing_bp', 'marketing_bp', None)
+            ('routes.marketing', 'marketing_bp', 'marketing_bp', None),
+            ('routes.next_proxy', 'next_proxy_bp', 'next_proxy_bp', None)
         ]
 
         import importlib
