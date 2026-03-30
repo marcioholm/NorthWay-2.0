@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
-    <header class="mb-8 flex justify-between items-end">
+<div class="flex-1 h-screen overflow-y-auto bg-transparent p-8 no-scrollbar">
+    <header class="mb-10 flex justify-between items-end">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p class="text-gray-500 mt-1">Visão geral e métricas de desempenho.</p>
+            <h1 class="text-4xl font-black text-white tracking-tight">Dashboard</h1>
+            <p class="text-gray-400 mt-2 font-medium">Benvindo à sua central de inteligência estratégica.</p>
         </div>
-        <div class="text-sm text-gray-400 font-medium">
-            {{ now.strftime('%d de %B, %Y') }}
+        <div class="text-xs text-gray-500 font-bold uppercase tracking-[0.2em]">
+            {{ now.strftime('%d %B %Y') }}
         </div>
     </header>
 
@@ -18,86 +18,86 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <!-- Total Leads -->
         <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+            class="bg-white/[0.03] backdrop-blur-xl p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-red-500/30 transition-all duration-500 ease-out cursor-default">
             <div>
                 <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors">
                     Leads Totais</p>
-                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_leads }}</p>
-                <p class="text-xs text-gray-400 mt-1">Potenciais clientes</p>
+                <p class="text-4xl font-black text-white mt-3">{{ total_leads }}</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium">Inbound & Prospecção</p>
             </div>
             <div
-                class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 group-hover:bg-blue-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <i data-lucide="users" class="w-6 h-6"></i>
+                class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                <i data-lucide="users" class="w-7 h-7"></i>
             </div>
         </div>
 
         <!-- Active Clients -->
         <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+            class="bg-white/[0.03] backdrop-blur-xl p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-green-500/30 transition-all duration-500 ease-out cursor-default">
             <div>
                 <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-green-600 transition-colors">
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-green-500 transition-colors">
                     Clientes Ativos</p>
-                <p class="text-3xl font-bold text-gray-900 mt-2">{{ active_clients }}</p>
-                <p class="text-xs text-gray-400 mt-1">Carteira atual</p>
+                <p class="text-4xl font-black text-white mt-3">{{ active_clients }}</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium">Contratos Assinados</p>
             </div>
             <div
-                class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600 group-hover:bg-green-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <i data-lucide="briefcase" class="w-6 h-6"></i>
+                class="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                <i data-lucide="briefcase" class="w-7 h-7"></i>
             </div>
         </div>
 
         <!-- Pending Tasks -->
         <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+            class="bg-white/[0.03] backdrop-blur-xl p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-red-500/30 transition-all duration-500 ease-out cursor-default">
             <div>
                 <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors">
                     Tarefas Pendentes</p>
-                <p class="text-3xl font-bold {{ 'text-northway-red' if pending_tasks > 0 else 'text-gray-900' }} mt-2">
+                <p class="text-4xl font-black {{ 'text-northway-red' if pending_tasks > 0 else 'text-white' }} mt-3">
                     {{ pending_tasks }}</p>
-                <p class="text-xs text-gray-400 mt-1">Ações necessárias</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium">Execução Diária</p>
             </div>
             <div
-                class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-northway-red group-hover:bg-red-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <i data-lucide="check-square" class="w-6 h-6"></i>
+                class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center text-northway-red group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                <i data-lucide="check-square" class="w-7 h-7"></i>
             </div>
         </div>
     </div>
 
     <!-- Financial Section -->
-    <h2 class="text-lg font-bold text-gray-900 mb-4 px-1 flex items-center gap-2">
-        <i data-lucide="wallet" class="w-5 h-5 text-gray-400"></i> Saúde Financeira
+    <h2 class="text-sm font-black text-gray-500 uppercase tracking-[0.2em] mb-6 px-1 flex items-center gap-3">
+        <div class="w-2 h-2 bg-red-600 rounded-full"></div> Saúde Financeira
     </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <!-- MRR -->
         <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-default">
+            class="bg-white/[0.03] backdrop-blur-xl p-8 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] transition-all duration-500 cursor-default">
             <div>
                 <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-green-600 transition-colors">
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-green-500 transition-colors">
                     MRR (Realidade)</p>
-                <p class="text-3xl font-black text-gray-900 mt-2">R$ {{ "%.2f"|format(mrr)|replace('.', ',') }}</p>
-                <p class="text-xs text-gray-400 mt-1">Exclui inadimplentes (>30d)</p>
+                <p class="text-4xl font-black text-white mt-4">R$ {{ "%.2f"|format(mrr)|replace('.', ',') }}</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium italic">Receita Recorrente Líquida</p>
             </div>
-            <div class="p-3 bg-green-50 rounded-xl text-green-600 group-hover:bg-green-100 transition-colors">
+            <div class="p-4 bg-green-500/10 rounded-2xl text-green-500 group-hover:scale-110 transition-transform duration-500">
                 <i data-lucide="trending-up" class="w-8 h-8"></i>
             </div>
         </div>
 
         <!-- MRR at Risk -->
         <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-default">
+            class="bg-white/[0.03] backdrop-blur-xl p-8 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] transition-all duration-500 cursor-default">
             <div>
                 <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors">
                     MRR em Risco</p>
-                <p class="text-3xl font-black text-orange-600 mt-2">R$ {{ "%.2f"|format(mrr_at_risk)|replace('.', ',')
+                <p class="text-4xl font-black text-orange-500 mt-4">R$ {{ "%.2f"|format(mrr_at_risk)|replace('.', ',')
                     }}</p>
-                <p class="text-xs text-gray-400 mt-1">Clientes inadimplentes</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium italic">Inadimplência Potencial</p>
             </div>
-            <div class="p-3 bg-orange-50 rounded-xl text-orange-500 group-hover:bg-orange-100 transition-colors">
+            <div class="p-4 bg-orange-500/10 rounded-2xl text-orange-500 group-hover:scale-110 transition-transform duration-500">
                 <i data-lucide="shield-alert" class="w-8 h-8"></i>
             </div>
         </div>
@@ -174,27 +174,26 @@
 
     <!-- Activity Chart -->
     <!-- Performance Charts Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <!-- Activity Chart (Collapsible) -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100" id="performanceChartCard">
-            <div class="flex items-center justify-between mb-6 cursor-pointer" onclick="togglePerformanceChart()">
+        <div class="bg-white/[0.03] backdrop-blur-xl p-8 rounded-2xl border border-white/5" id="performanceChartCard">
+            <div class="flex items-center justify-between mb-8 cursor-pointer" onclick="togglePerformanceChart()">
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        Visão Geral de Performance
-                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transform transition-transform"
+                    <h3 class="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                        Performance Analítica
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 transform transition-transform"
                             id="perfChevron"></i>
                     </h3>
-                    <p class="text-xs text-gray-500">Novos Leads vs Vendas Ganhas</p>
                 </div>
                 <select id="chartPeriod" onclick="event.stopPropagation()"
-                    class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red">
-                    <option value="today">Hoje (Por Hora)</option>
-                    <option value="last_7_days">Últimos 7 Dias</option>
-                    <option value="daily">Últimos 30 Dias</option>
-                    <option value="weekly">Semanal (12 sem)</option>
-                    <option value="semiannual">Semestral (3 anos)</option>
-                    <option value="annual">Anual (5 anos)</option>
-                    <option value="all_time" selected>Todo o Período</option>
+                    class="text-[10px] bg-white/5 border-white/10 rounded-lg text-gray-400 font-bold uppercase tracking-widest focus:ring-red-600 focus:border-red-600 py-1.5 px-3">
+                    <option value="today">Hoje</option>
+                    <option value="last_7_days">7 Dias</option>
+                    <option value="daily">30 Dias</option>
+                    <option value="weekly">Semanal</option>
+                    <option value="semiannual">Semestral</option>
+                    <option value="annual">Anual</option>
+                    <option value="all_time" selected>Total</option>
                 </select>
             </div>
             <div class="relative h-80 w-full transition-all duration-300 overflow-hidden"
@@ -204,15 +203,14 @@
         </div>
 
         <!-- Sales Funnel Chart (New) -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between mb-6">
+        <div class="bg-white/[0.03] backdrop-blur-xl p-8 rounded-2xl border border-white/5">
+            <div class="flex items-center justify-between mb-8">
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900">Funil de Vendas</h3>
-                    <p class="text-xs text-gray-500">Conversão por etapa do pipeline</p>
+                    <h3 class="text-sm font-black text-white uppercase tracking-[0.2em]">Funil Estratégico</h3>
                 </div>
                 {% if pipelines %}
                 <select id="pipelineSelect"
-                    class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red max-w-[150px]">
+                    class="text-[10px] bg-white/5 border-white/10 rounded-lg text-gray-400 font-bold uppercase tracking-widest focus:ring-red-600 focus:border-red-600 py-1.5 px-3 max-w-[150px]">
                     {% for pipeline in pipelines %}
                     <option value="{{ pipeline.id }}" {% if pipeline.id==current_pipeline_id %}selected{% endif %}>
                         {{ pipeline.name }}
@@ -311,27 +309,31 @@
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            titleColor: '#111827',
-                            bodyColor: '#374151',
-                            borderColor: '#e5e7eb',
+                            backgroundColor: 'rgba(15, 15, 15, 0.95)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#e5e7eb',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
                             borderWidth: 1,
-                            padding: 10,
-                            boxPadding: 4
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true,
+                            titleFont: { family: "'Outfit', sans-serif", size: 13, weight: 'bold' },
+                            bodyFont: { family: "'Inter', sans-serif", size: 12 }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
                             grid: {
-                                color: '#f3f4f6',
+                                color: 'rgba(255, 255, 255, 0.03)',
                                 drawBorder: false
                             },
                             ticks: {
                                 font: {
-                                    size: 11
+                                    size: 10,
+                                    weight: 'bold'
                                 },
-                                color: '#9ca3af'
+                                color: '#64748b'
                             }
                         },
                         x: {
@@ -505,8 +507,8 @@
                     y: {
                         grid: { display: false },
                         ticks: {
-                            font: { family: "'Inter', sans-serif", size: 12, weight: '500' },
-                            color: '#374151'
+                            font: { family: "'Inter', sans-serif", size: 11, weight: '600' },
+                            color: '#9ca3af'
                         },
                         border: { display: false }
                     }

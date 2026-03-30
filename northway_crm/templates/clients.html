@@ -2,12 +2,12 @@
 {% from "macros.html" import user_avatar, render_pagination %}
 
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
+<div class="flex-1 h-screen overflow-y-auto bg-transparent p-4 md:p-8 no-scrollbar">
     <div class="max-w-7xl mx-auto">
-        <header class="mb-8 flex justify-between items-center">
+        <header class="mb-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Clientes</h1>
-                <p class="text-gray-500 mt-1">Gestão da base de clientes ativos.</p>
+                <h1 class="text-4xl font-black text-white tracking-tight">Clientes</h1>
+                <p class="text-gray-400 mt-2 font-medium">Gestão estratégica da base de ativos.</p>
             </div>
             <div class="flex gap-2">
                 <button onclick="openImportModal()"
@@ -60,8 +60,8 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-            <form action="{{ url_for('clients.clients') }}" method="GET" class="flex flex-wrap gap-4 items-end">
+        <div class="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/5 p-6 mb-8 shadow-2xl">
+            <form action="{{ url_for('clients.clients') }}" method="GET" class="flex flex-wrap gap-6 items-end">
                 <!-- Search -->
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Buscar</label>
@@ -167,27 +167,24 @@
         </div>
 
         <!-- Clients Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto custom-scrollbar">
+        <div class="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/5 shadow-2xl overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar no-scrollbar text-white">
                 <table class="w-full text-left border-collapse min-w-[1000px]">
-                    <thead class="bg-gray-50/50 border-b border-gray-100">
-                        <tr>
-                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Cliente</th>
-                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Serviço</th>
-                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Valor Mensal
-                            </th>
-                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Gerente</th>
-                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Renovação
-                            </th>
-                            <th class="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">
-                                Ações</th>
+                    <thead>
+                        <tr class="border-b border-white/[0.03]">
+                            <th class="py-5 px-8 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Cliente</th>
+                            <th class="py-5 px-8 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Serviço</th>
+                            <th class="py-5 px-8 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Valor Mensal</th>
+                            <th class="py-5 px-8 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Status</th>
+                            <th class="py-5 px-8 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Gerente</th>
+                            <th class="py-5 px-8 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Renovação</th>
+                            <th class="py-5 px-8 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Ações</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50">
+                    <tbody class="divide-y divide-white/[0.02]">
                         {% for client in clients %}
                         <tr
-                            class="transition-all duration-200 group {% if client.payment_status == 'inadimplente' %}bg-red-50/60 hover:bg-red-50/80{% else %}hover:bg-gray-50/80{% endif %}">
+                            class="transition-all duration-300 group {% if client.payment_status == 'inadimplente' %}bg-red-500/5 hover:bg-red-500/10{% else %}hover:bg-white/[0.04]{% endif %} cursor-default">
                             <td class="py-4 px-6">
                                 <a href="{{ url_for('clients.client_details', id=client.id) }}"
                                     class="font-bold text-gray-900 hover:text-northway-red block flex items-center gap-3">
@@ -422,12 +419,12 @@
         // OR: Add the modal here quickly.
 
         const modalHtml = `
-            <div id="quickTaskModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center">
-                <div class="bg-white rounded-lg w-full max-w-md p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold">Nova Tarefa para ${clientName}</h3>
-                        <button onclick="document.getElementById('quickTaskModal').remove()" class="text-gray-500 hover:text-gray-700">
-                            <i data-lucide="x" class="w-5 h-5"></i>
+            <div id="quickTaskModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                <div class="bg-[#141416] rounded-2xl w-full max-w-md p-8 border border-white/5 shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-black text-white">Nova Tarefa</h3>
+                        <button onclick="document.getElementById('quickTaskModal').remove()" class="text-gray-500 hover:text-white transition-colors">
+                            <i data-lucide="x" class="w-6 h-6"></i>
                         </button>
                     </div>
                     <form action="{{ url_for('tasks.tasks') }}" method="POST">
