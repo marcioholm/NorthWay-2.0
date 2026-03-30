@@ -322,7 +322,7 @@ def proxy_request(path):
     
     try:
         if request.method == 'GET':
-            resp = requests.get(url, headers=headers, allow_redirects=False)
+            resp = requests.get(url, headers=headers, allow_redirects=True)
         else:
             resp = requests.request(
                 method=request.method,
@@ -330,7 +330,7 @@ def proxy_request(path):
                 headers=headers,
                 data=request.get_data(),
                 cookies=request.cookies,
-                allow_redirects=False
+                allow_redirects=True
             )
 
         response = make_response(resp.content, resp.status_code)
