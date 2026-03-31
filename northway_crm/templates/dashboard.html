@@ -1,173 +1,205 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-transparent p-6 md:p-8 no-scrollbar">
-
-    <!-- Header -->
-    <header class="mb-8 flex justify-between items-center">
+<div class="flex-1 h-screen overflow-y-auto bg-transparent p-8 no-scrollbar">
+    <header class="mb-10 flex justify-between items-end">
         <div>
-            <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.3em] mb-2">Central de Inteligência</p>
-            <h1 class="text-3xl font-black text-white tracking-tight">Dashboard</h1>
+            <h1 class="text-4xl font-black text-white tracking-tight">Dashboard</h1>
+            <p class="text-gray-400 mt-2 font-medium">Benvindo à sua central de inteligência estratégica.</p>
         </div>
-        <div class="flex items-center gap-4">
-            <div class="text-right">
-                <p class="text-[10px] text-gray-600 uppercase tracking-widest font-bold">{{ now.strftime('%A') }}</p>
-                <p class="text-sm font-bold text-gray-400">{{ now.strftime('%d %b %Y') }}</p>
-            </div>
-            <a href="{{ url_for('dashboard.home') }}" class="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition-all">
-                <i data-lucide="home" class="w-3.5 h-3.5"></i>
-                Início
-            </a>
+        <div class="text-xs text-gray-500 font-bold uppercase tracking-[0.2em]">
+            {{ now.strftime('%d %B %Y') }}
         </div>
     </header>
 
-    <!-- KPI Grid - Top Bento -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 
-        <!-- Leads Totais -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 group hover:border-red-500/20 hover:bg-white/[0.05] transition-all duration-500 cursor-default">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-8 h-8 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500">
-                    <i data-lucide="users" class="w-4 h-4"></i>
-                </div>
-                <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest">Total</span>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Total Leads -->
+        <div
+            class="bg-white/[0.03] backdrop-blur-xl p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-red-500/30 transition-all duration-500 ease-out cursor-default">
+            <div>
+                <p
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors">
+                    Leads Totais</p>
+                <p class="text-4xl font-black text-white mt-3">{{ total_leads }}</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium">Inbound & Prospecção</p>
             </div>
-            <p class="text-3xl font-black text-white">{{ total_leads }}</p>
-            <p class="text-[10px] text-gray-600 mt-1 font-semibold uppercase tracking-wider">Leads</p>
+            <div
+                class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                <i data-lucide="users" class="w-7 h-7"></i>
+            </div>
         </div>
 
-        <!-- Clientes Ativos -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 group hover:border-emerald-500/20 hover:bg-white/[0.05] transition-all duration-500 cursor-default">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-8 h-8 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
-                    <i data-lucide="briefcase" class="w-4 h-4"></i>
-                </div>
-                <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest">Ativos</span>
+        <!-- Active Clients -->
+        <div
+            class="bg-white/[0.03] backdrop-blur-xl p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-green-500/30 transition-all duration-500 ease-out cursor-default">
+            <div>
+                <p
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-green-500 transition-colors">
+                    Clientes Ativos</p>
+                <p class="text-4xl font-black text-white mt-3">{{ active_clients }}</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium">Contratos Assinados</p>
             </div>
-            <p class="text-3xl font-black text-white">{{ active_clients }}</p>
-            <p class="text-[10px] text-gray-600 mt-1 font-semibold uppercase tracking-wider">Clientes</p>
+            <div
+                class="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                <i data-lucide="briefcase" class="w-7 h-7"></i>
+            </div>
         </div>
 
-        <!-- Vendas Ganhas -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 group hover:border-purple-500/20 hover:bg-white/[0.05] transition-all duration-500 cursor-default">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-8 h-8 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">
-                    <i data-lucide="trophy" class="w-4 h-4"></i>
-                </div>
-                <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest">Won</span>
+        <!-- Pending Tasks -->
+        <div
+            class="bg-white/[0.03] backdrop-blur-xl p-6 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-red-500/30 transition-all duration-500 ease-out cursor-default">
+            <div>
+                <p
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors">
+                    Tarefas Pendentes</p>
+                <p class="text-4xl font-black {{ 'text-northway-red' if pending_tasks > 0 else 'text-white' }} mt-3">
+                    {{ pending_tasks }}</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium">Execução Diária</p>
             </div>
-            <p class="text-3xl font-black text-white">{{ won_deals }}</p>
-            <p class="text-[10px] text-gray-600 mt-1 font-semibold uppercase tracking-wider">Vendas</p>
-        </div>
-
-        <!-- Tarefas Pendentes -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 group hover:border-orange-500/20 hover:bg-white/[0.05] transition-all duration-500 cursor-default">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-8 h-8 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500">
-                    <i data-lucide="check-square" class="w-4 h-4"></i>
-                </div>
-                {% if overdue_tasks > 0 %}
-                <span class="text-[9px] font-black text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full uppercase tracking-widest">{{ overdue_tasks }} atrasadas</span>
-                {% else %}
-                <span class="text-[9px] font-black text-gray-600 uppercase tracking-widest">Pendentes</span>
-                {% endif %}
+            <div
+                class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center text-northway-red group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                <i data-lucide="check-square" class="w-7 h-7"></i>
             </div>
-            <p class="text-3xl font-black {{ 'text-orange-400' if pending_tasks > 0 else 'text-white' }}">{{ pending_tasks }}</p>
-            <p class="text-[10px] text-gray-600 mt-1 font-semibold uppercase tracking-wider">Tarefas</p>
         </div>
     </div>
 
-    <!-- Financial + Risk Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <!-- Financial Section -->
+    <h2 class="text-sm font-black text-gray-500 uppercase tracking-[0.2em] mb-6 px-1 flex items-center gap-3">
+        <div class="w-2 h-2 bg-red-600 rounded-full"></div> Saúde Financeira
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <!-- MRR -->
+        <div
+            class="bg-white/[0.03] backdrop-blur-xl p-8 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] transition-all duration-500 cursor-default">
+            <div>
+                <p
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-green-500 transition-colors">
+                    MRR (Realidade)</p>
+                <p class="text-4xl font-black text-white mt-4">R$ {{ "%.2f"|format(mrr)|replace('.', ',') }}</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium italic">Receita Recorrente Líquida</p>
+            </div>
+            <div class="p-4 bg-green-500/10 rounded-2xl text-green-500 group-hover:scale-110 transition-transform duration-500">
+                <i data-lucide="trending-up" class="w-8 h-8"></i>
+            </div>
+        </div>
 
-        <!-- MRR - Large Card -->
-        <div class="md:col-span-2 bg-gradient-to-br from-emerald-950/60 to-emerald-900/20 backdrop-blur-xl p-6 rounded-2xl border border-emerald-500/10 relative overflow-hidden group cursor-default">
-            <div class="absolute top-0 right-0 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="flex items-start justify-between relative z-10">
-                <div>
-                    <div class="flex items-center gap-2 mb-3">
-                        <div class="w-7 h-7 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
-                        </div>
-                        <p class="text-[10px] font-black text-emerald-500/70 uppercase tracking-[0.25em]">MRR Realidade</p>
-                    </div>
-                    <p class="text-4xl font-black text-white">R$ {{ "%.2f"|format(mrr)|replace('.', ',') }}</p>
-                    <p class="text-xs text-emerald-500/50 mt-2 font-medium">Receita Recorrente Mensal Líquida</p>
-                </div>
-                <div class="text-right">
-                    {% if mrr_at_risk > 0 %}
-                    <div class="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
-                        <p class="text-[9px] font-black text-orange-400/70 uppercase tracking-widest mb-1">Em Risco</p>
-                        <p class="text-xl font-black text-orange-400">R$ {{ "%.2f"|format(mrr_at_risk)|replace('.', ',') }}</p>
-                        <p class="text-[9px] text-orange-400/50 mt-1">Inadimplência</p>
-                    </div>
+        <!-- MRR at Risk -->
+        <div
+            class="bg-white/[0.03] backdrop-blur-xl p-8 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] transition-all duration-500 cursor-default">
+            <div>
+                <p
+                    class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors">
+                    MRR em Risco</p>
+                <p class="text-4xl font-black text-orange-500 mt-4">R$ {{ "%.2f"|format(mrr_at_risk)|replace('.', ',')
+                    }}</p>
+                <p class="text-[10px] text-gray-500 mt-2 font-medium italic">Inadimplência Potencial</p>
+            </div>
+            <div class="p-4 bg-orange-500/10 rounded-2xl text-orange-500 group-hover:scale-110 transition-transform duration-500">
+                <i data-lucide="shield-alert" class="w-8 h-8"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Stats -->
+    <h2 class="text-sm font-black text-gray-500 uppercase tracking-[0.2em] mb-6 px-1 flex items-center gap-3">
+        <div class="w-2 h-2 bg-red-600 rounded-full"></div> Performance e Saúde
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Won Deals -->
+        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-green-500/20 transition-all duration-300 cursor-default">
+            <div>
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-green-400 transition-colors mb-2">Vendas Ganhas</p>
+                <p class="text-2xl font-black text-white">{{ won_deals }}</p>
+            </div>
+            <div class="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="trophy" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Conversion Rate -->
+        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-purple-500/20 transition-all duration-300 cursor-default">
+            <div>
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-purple-400 transition-colors mb-2">Conversão</p>
+                <p class="text-2xl font-black text-white">
+                    {% if total_leads > 0 %}
+                    {% set conv = (won_deals / total_leads * 100) %}
+                    {{ "%.1f"|format(conv)|replace('.0', '') }}%
+                    {% else %}
+                    0%
                     {% endif %}
-                </div>
+                </p>
+            </div>
+            <div class="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="trending-up" class="w-5 h-5"></i>
             </div>
         </div>
 
-        <!-- Risk & Conversion -->
-        <div class="flex flex-col gap-4">
-            <!-- Conversão -->
-            <div class="flex-1 bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between cursor-default">
-                <div>
-                    <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Conversão</p>
-                    <p class="text-3xl font-black text-purple-400">
-                        {% if total_leads > 0 %}{{ "%.1f"|format(won_deals / total_leads * 100) }}%{% else %}0%{% endif %}
-                    </p>
-                </div>
-                <div class="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400">
-                    <i data-lucide="pie-chart" class="w-5 h-5"></i>
-                </div>
+        <!-- Health Risk -->
+        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-red-500/20 transition-all duration-300 cursor-default">
+            <div>
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors mb-2">Em Risco</p>
+                <p class="text-2xl font-black {{ 'text-northway-red' if risky_clients > 0 else 'text-white' }}">{{ risky_clients }}</p>
             </div>
-            <!-- Em Risco -->
-            <div class="flex-1 bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between cursor-default">
-                <div>
-                    <p class="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] mb-1">Em Risco</p>
-                    <p class="text-3xl font-black {{ 'text-red-400' if risky_clients > 0 else 'text-white' }}">{{ risky_clients }}</p>
-                </div>
-                <div class="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center text-red-400">
-                    <i data-lucide="activity" class="w-5 h-5"></i>
-                </div>
+            <div class="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center text-northway-red group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="activity" class="w-5 h-5"></i>
+            </div>
+        </div>
+
+        <!-- Overdue Tasks -->
+        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-red-500/20 transition-all duration-300 cursor-default">
+            <div>
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors mb-2">Atrasadas</p>
+                <p class="text-2xl font-black {{ 'text-northway-red' if overdue_tasks > 0 else 'text-white' }}">{{ overdue_tasks }}</p>
+            </div>
+            <div class="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center text-northway-red group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="alert-octagon" class="w-5 h-5"></i>
             </div>
         </div>
     </div>
 
-    <!-- Charts Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-        <!-- Gráfico de Performance -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-6 rounded-2xl border border-white/5">
-            <div class="flex items-center justify-between mb-6">
+    <!-- Activity Chart -->
+    <!-- Performance Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        <!-- Activity Chart (Collapsible) -->
+        <div class="bg-white/[0.03] backdrop-blur-xl p-8 rounded-2xl border border-white/5" id="performanceChartCard">
+            <div class="flex items-center justify-between mb-8 cursor-pointer" onclick="togglePerformanceChart()">
                 <div>
-                    <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] mb-1">Analítico</p>
-                    <h3 class="text-sm font-black text-white">Performance</h3>
+                    <h3 class="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
+                        Performance Analítica
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 transform transition-transform"
+                            id="perfChevron"></i>
+                    </h3>
                 </div>
-                <select id="chartPeriod"
-                    class="text-[10px] bg-white/5 border border-white/10 rounded-lg text-gray-400 font-bold uppercase tracking-widest focus:ring-red-600 focus:border-red-600 py-1.5 px-3 cursor-pointer">
+                <select id="chartPeriod" onclick="event.stopPropagation()"
+                    class="text-[10px] bg-white/5 border-white/10 rounded-lg text-gray-400 font-bold uppercase tracking-widest focus:ring-red-600 focus:border-red-600 py-1.5 px-3">
                     <option value="today">Hoje</option>
                     <option value="last_7_days">7 Dias</option>
                     <option value="daily">30 Dias</option>
                     <option value="weekly">Semanal</option>
-                    <option value="monthly">Mensal</option>
+                    <option value="semiannual">Semestral</option>
+                    <option value="annual">Anual</option>
                     <option value="all_time" selected>Total</option>
                 </select>
             </div>
-            <div class="relative h-64 w-full">
+            <div class="relative h-80 w-full transition-all duration-300 overflow-hidden"
+                id="performanceChartContainer">
                 <canvas id="activityChart"></canvas>
             </div>
         </div>
 
-        <!-- Funil Estratégico -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-6 rounded-2xl border border-white/5">
-            <div class="flex items-center justify-between mb-6">
+        <!-- Sales Funnel Chart (New) -->
+        <div class="bg-white/[0.03] backdrop-blur-xl p-8 rounded-2xl border border-white/5">
+            <div class="flex items-center justify-between mb-8">
                 <div>
-                    <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.3em] mb-1">Pipeline</p>
-                    <h3 class="text-sm font-black text-white">Funil Estratégico</h3>
+                    <h3 class="text-sm font-black text-white uppercase tracking-[0.2em]">Funil Estratégico</h3>
                 </div>
                 {% if pipelines %}
                 <select id="pipelineSelect"
-                    class="text-[10px] bg-white/5 border border-white/10 rounded-lg text-gray-400 font-bold uppercase tracking-widest focus:ring-red-600 focus:border-red-600 py-1.5 px-3 max-w-[160px] cursor-pointer">
+                    class="text-[10px] bg-white/5 border-white/10 rounded-lg text-gray-400 font-bold uppercase tracking-widest focus:ring-red-600 focus:border-red-600 py-1.5 px-3 max-w-[150px]">
                     {% for pipeline in pipelines %}
                     <option value="{{ pipeline.id }}" {% if pipeline.id==current_pipeline_id %}selected{% endif %}>
                         {{ pipeline.name }}
@@ -176,34 +208,42 @@
                 </select>
                 {% endif %}
             </div>
-            <div class="relative h-64 w-full">
+            <div class="relative h-80 w-full">
                 <canvas id="funnelChart"></canvas>
             </div>
         </div>
     </div>
-
 </div>
 
+<!-- Chart.js Plugin Datalabels -->
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
 <script>
     let funnelChartInstance = null;
+    // Register the plugin globally or locally
     Chart.register(ChartDataLabels);
 
     document.addEventListener('DOMContentLoaded', function () {
+        // ... (rest of code) ...
+
         const ctx = document.getElementById('activityChart').getContext('2d');
         let chartInstance = null;
 
-        const gradientLeads = ctx.createLinearGradient(0, 0, 0, 300);
-        gradientLeads.addColorStop(0, 'rgba(250, 1, 2, 0.25)');
+        // Gradient for Leads
+        const gradientLeads = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientLeads.addColorStop(0, 'rgba(250, 1, 2, 0.2)');
         gradientLeads.addColorStop(1, 'rgba(250, 1, 2, 0)');
 
-        const gradientSales = ctx.createLinearGradient(0, 0, 0, 300);
-        gradientSales.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+        // Gradient for Sales
+        const gradientSales = ctx.createLinearGradient(0, 0, 0, 400);
+        gradientSales.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
         gradientSales.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
         function initChart(data) {
-            if (chartInstance) chartInstance.destroy();
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -214,25 +254,27 @@
                             data: data.leads,
                             borderColor: '#fa0102',
                             backgroundColor: gradientLeads,
-                            borderWidth: 2.5,
+                            borderWidth: 3,
                             tension: 0.4,
-                            pointBackgroundColor: '#fa0102',
-                            pointBorderColor: 'transparent',
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#fa0102',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
                             fill: true
                         },
                         {
-                            label: 'Vendas',
+                            label: 'Vendas Ganhas',
                             data: data.sales,
                             borderColor: '#10b981',
                             backgroundColor: gradientSales,
-                            borderWidth: 2.5,
+                            borderWidth: 3,
                             tension: 0.4,
-                            pointBackgroundColor: '#10b981',
-                            pointBorderColor: 'transparent',
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#10b981',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
                             fill: true
                         }
                     ]
@@ -247,36 +289,58 @@
                             labels: {
                                 usePointStyle: true,
                                 pointStyle: 'circle',
-                                color: '#6b7280',
-                                font: { family: "'Inter', sans-serif", size: 10, weight: 'bold' },
-                                boxWidth: 6
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 12
+                                }
                             }
                         },
                         tooltip: {
                             mode: 'index',
                             intersect: false,
-                            backgroundColor: 'rgba(10, 10, 12, 0.9)',
-                            titleColor: '#fff',
-                            bodyColor: '#9ca3af',
-                            borderColor: 'rgba(255,255,255,0.05)',
+                            backgroundColor: 'rgba(15, 15, 15, 0.95)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#e5e7eb',
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
                             borderWidth: 1,
-                            padding: 10,
+                            padding: 12,
+                            boxPadding: 6,
                             usePointStyle: true,
-                        },
-                        datalabels: { display: false }
+                            titleFont: { family: "'Outfit', sans-serif", size: 13, weight: 'bold' },
+                            bodyFont: { family: "'Inter', sans-serif", size: 12 }
+                        }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
-                            ticks: { color: '#4b5563', font: { size: 10 }, maxTicksLimit: 5 },
-                            border: { display: false }
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.03)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10,
+                                    weight: 'bold'
+                                },
+                                color: '#64748b'
+                            }
                         },
                         x: {
-                            grid: { display: false },
-                            ticks: { color: '#6b7280', font: { size: 10 }, maxTicksLimit: 8 },
-                            border: { display: false }
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 11
+                                },
+                                color: '#9ca3af'
+                            }
                         }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
                     }
                 }
             });
@@ -284,106 +348,162 @@
 
         function updateChart(period) {
             fetch(`/api/dashboard/chart-data?period=${period}`)
-                .then(r => r.json())
-                .then(json => initChart(json.data ? json.data : json))
-                .catch(e => console.error(e));
+                .then(response => response.json())
+                .then(json => {
+                    const chartData = json.data ? json.data : json;
+                    initChart(chartData);
+                })
+                .catch(error => console.error('Error loading chart data:', error));
         }
 
-        document.getElementById('chartPeriod')?.addEventListener('change', e => {
-            updateChart(e.target.value);
-            const pid = document.getElementById('pipelineSelect')?.value;
-            if (pid) updateFunnelChart(pid);
-        });
+        // Event Listener
+        const periodSelect = document.getElementById('chartPeriod');
+        if (periodSelect) {
+            periodSelect.addEventListener('change', (e) => {
+                updateChart(e.target.value);
+                const pipelineId = document.getElementById('pipelineSelect')?.value;
+                if (pipelineId) updateFunnelChart(pipelineId);
+            });
+        }
 
+        // Initial Load for Activity Chart
         updateChart('all_time');
 
-        document.getElementById('pipelineSelect')?.addEventListener('change', e => updateFunnelChart(e.target.value));
+        // Funnel Chart Logic
+        const pipelineSelect = document.getElementById('pipelineSelect');
+        if (pipelineSelect) {
+            pipelineSelect.addEventListener('change', (e) => {
+                updateFunnelChart(e.target.value);
+            });
+        }
 
-        const defaultPipeline = {{ current_pipeline_id if current_pipeline_id else 'null' }};
-        if (defaultPipeline) updateFunnelChart(defaultPipeline);
+        // Initialize Funnel
+        const defaultPipelineId = {{ current_pipeline_id if current_pipeline_id else 'null' }};
+        if (defaultPipelineId) updateFunnelChart(defaultPipelineId);
     });
+
+    // Toggle Function - Improved
+    function togglePerformanceChart() {
+        const container = document.getElementById('performanceChartContainer');
+        const chevron = document.getElementById('perfChevron');
+        const card = document.getElementById('performanceChartCard');
+
+        if (container.classList.contains('h-0')) {
+            // Expand
+            container.classList.remove('h-0', 'opacity-0');
+            container.classList.add('h-80');
+            chevron.classList.remove('-rotate-90');
+        } else {
+            // Collapse
+            container.classList.add('h-0', 'opacity-0');
+            container.classList.remove('h-80');
+            chevron.classList.add('-rotate-90');
+        }
+    }
 
     function updateFunnelChart(pipelineId) {
         const period = document.getElementById('chartPeriod')?.value || 'monthly';
+
         fetch(`/api/dashboard/funnel-data/${pipelineId}?period=${period}`)
-            .then(r => r.json())
-            .then(d => renderFunnelChart(d.labels, d.data))
-            .catch(e => console.error(e));
+            .then(res => res.json())
+            .then(data => {
+                renderFunnelChart(data.labels, data.data);
+            })
+            .catch(err => console.error("Error fetching funnel:", err));
     }
 
     function renderFunnelChart(labels, data) {
-        const ctxF = document.getElementById('funnelChart').getContext('2d');
-        if (funnelChartInstance) funnelChartInstance.destroy();
+        const ctxFunnel = document.getElementById('funnelChart').getContext('2d');
 
-        const colors = [
-            'rgba(220, 38, 38, 0.85)',
-            'rgba(234, 88, 12, 0.85)',
-            'rgba(217, 119, 6, 0.85)',
-            'rgba(161, 98, 7, 0.85)',
-            'rgba(22, 163, 74, 0.85)',
-            'rgba(37, 99, 235, 0.85)'
-        ];
+        if (funnelChartInstance) {
+            funnelChartInstance.destroy();
+        }
 
-        funnelChartInstance = new Chart(ctxF, {
-            type: 'bar',
+        const maxVal = data.length > 0 ? Math.max(...data) : 1;
+
+        funnelChartInstance = new Chart(ctxFunnel, {
+            type: 'bar', // Standard Bar
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Leads',
                     data: data,
-                    backgroundColor: colors,
-                    borderRadius: 6,
-                    barPercentage: 0.65,
+                    backgroundColor: [
+                        'rgba(220, 38, 38, 0.9)', // Red-600
+                        'rgba(234, 88, 12, 0.9)', // Orange-600
+                        'rgba(217, 119, 6, 0.9)', // Amber-600
+                        'rgba(202, 138, 4, 0.9)', // Yellow-600
+                        'rgba(22, 163, 74, 0.9)', // Green-600
+                        'rgba(37, 99, 235, 0.9)'  // Blue-600
+                    ],
+                    borderRadius: 4,
+                    barPercentage: 0.6,
                 }]
             },
             options: {
-                indexAxis: 'y',
+                indexAxis: 'y', // Horizontal
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
                         enabled: true,
-                        backgroundColor: 'rgba(10, 10, 12, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#9ca3af',
-                        borderColor: 'rgba(255,255,255,0.05)',
-                        borderWidth: 1,
-                        padding: 10,
                         callbacks: {
-                            label: function (ctx) {
-                                const val = ctx.raw;
-                                const first = ctx.chart.data.datasets[0].data[0];
-                                const pct = first > 0 ? Math.round((val / first) * 100) : 0;
-                                return `${val} Leads (${pct}%)`;
+                            label: function (context) {
+                                const val = context.raw;
+                                const firstVal = context.chart.data.datasets[0].data[0];
+                                const percentage = firstVal > 0 ? Math.round((val / firstVal) * 100) : 0;
+                                return `${val} Leads (${percentage}% do total)`;
                             }
                         }
                     },
                     datalabels: {
-                        color: 'rgba(255,255,255,0.7)',
+                        color: 'black', // Contrast
                         anchor: 'end',
                         align: 'end',
                         offset: 4,
-                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 10 },
-                        formatter: function (value, ctx) {
+                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 11 },
+                        formatter: function (value, context) {
                             if (value === 0) return '';
-                            const first = ctx.chart.data.datasets[0].data[0];
-                            const pct = first > 0 ? Math.round((value / first) * 100) : 0;
-                            return `${value} (${pct}%)`;
+
+                            const index = context.dataIndex;
+                            const data = context.chart.data.datasets[0].data;
+
+                            // 1. Total Percentage (vs first stage)
+                            const firstVal = data[0];
+                            const totalPct = firstVal > 0 ? Math.round((value / firstVal) * 100) : 0;
+
+                            // 2. Step Percentage (vs previous stage)
+                            let stepInfo = '';
+                            if (index > 0) {
+                                const prevVal = data[index - 1];
+                                const stepPct = prevVal > 0 ? Math.round((value / prevVal) * 100) : 0;
+                                stepInfo = ` | ${stepPct}% etapa`;
+                            }
+
+                            return `${value} (${totalPct}%${stepInfo})`;
                         }
                     }
                 },
-                layout: { padding: { right: 70, left: 4 } },
+                layout: { padding: { right: 80, left: 10 } }, // More space for longer labels
                 scales: {
-                    x: { grid: { display: false }, ticks: { display: false }, border: { display: false } },
+                    x: {
+                        grid: { display: false },
+                        ticks: { display: false },
+                        border: { display: false }
+                    },
                     y: {
                         grid: { display: false },
-                        ticks: { color: '#6b7280', font: { family: "'Inter', sans-serif", size: 11, weight: '600' } },
+                        ticks: {
+                            font: { family: "'Inter', sans-serif", size: 11, weight: '600' },
+                            color: '#9ca3af'
+                        },
                         border: { display: false }
                     }
                 }
             }
         });
     }
+
 </script>
 {% endblock %}
