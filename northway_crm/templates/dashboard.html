@@ -104,26 +104,30 @@
     </div>
 
     <!-- Secondary Stats -->
-    <h2 class="text-sm font-black text-gray-500 uppercase tracking-[0.2em] mb-6 px-1 flex items-center gap-3">
-        <div class="w-2 h-2 bg-red-600 rounded-full"></div> Performance e Saúde
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <h2 class="text-lg font-bold text-gray-900 mb-4 px-1">Performance e Saúde</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
         <!-- Won Deals -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-green-500/20 transition-all duration-300 cursor-default">
+        <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
             <div>
-                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-green-400 transition-colors mb-2">Vendas Ganhas</p>
-                <p class="text-2xl font-black text-white">{{ won_deals }}</p>
+                <p
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-green-600 transition-colors">
+                    Vendas Ganhas</p>
+                <p class="text-xl font-bold text-gray-900">{{ won_deals }}</p>
             </div>
-            <div class="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform duration-300">
+            <div class="p-2 bg-green-50 rounded-full text-green-600 group-hover:scale-110 transition-transform">
                 <i data-lucide="trophy" class="w-5 h-5"></i>
             </div>
         </div>
 
         <!-- Conversion Rate -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-purple-500/20 transition-all duration-300 cursor-default">
+        <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
             <div>
-                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-purple-400 transition-colors mb-2">Conversão</p>
-                <p class="text-2xl font-black text-white">
+                <p
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-purple-600 transition-colors">
+                    Conversão</p>
+                <p class="text-xl font-bold text-gray-900">
                     {% if total_leads > 0 %}
                     {% set conv = (won_deals / total_leads * 100) %}
                     {{ "%.1f"|format(conv)|replace('.0', '') }}%
@@ -132,34 +136,41 @@
                     {% endif %}
                 </p>
             </div>
-            <div class="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform duration-300">
+            <div class="p-2 bg-purple-50 rounded-full text-purple-600 group-hover:scale-110 transition-transform">
                 <i data-lucide="trending-up" class="w-5 h-5"></i>
             </div>
         </div>
 
         <!-- Health Risk -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-red-500/20 transition-all duration-300 cursor-default">
+        <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
             <div>
-                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors mb-2">Em Risco</p>
-                <p class="text-2xl font-black {{ 'text-northway-red' if risky_clients > 0 else 'text-white' }}">{{ risky_clients }}</p>
+                <p
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-northway-red transition-colors">
+                    Em Risco</p>
+                <p class="text-xl font-bold {{ 'text-northway-red' if risky_clients > 0 else 'text-gray-900' }}">{{
+                    risky_clients }}</p>
             </div>
-            <div class="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center text-northway-red group-hover:scale-110 transition-transform duration-300">
+            <div class="p-2 bg-red-50 rounded-full text-northway-red group-hover:scale-110 transition-transform">
                 <i data-lucide="activity" class="w-5 h-5"></i>
             </div>
         </div>
 
         <!-- Overdue Tasks -->
-        <div class="bg-white/[0.03] backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center justify-between group hover:bg-white/[0.06] hover:border-red-500/20 transition-all duration-300 cursor-default">
+        <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
             <div>
-                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] group-hover:text-northway-red transition-colors mb-2">Atrasadas</p>
-                <p class="text-2xl font-black {{ 'text-northway-red' if overdue_tasks > 0 else 'text-white' }}">{{ overdue_tasks }}</p>
+                <p
+                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-northway-red transition-colors">
+                    Atrasadas</p>
+                <p class="text-xl font-bold {{ 'text-northway-red' if overdue_tasks > 0 else 'text-gray-900' }}">{{
+                    overdue_tasks }}</p>
             </div>
-            <div class="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center text-northway-red group-hover:scale-110 transition-transform duration-300">
+            <div class="p-2 bg-red-50 rounded-full text-northway-red group-hover:scale-110 transition-transform">
                 <i data-lucide="alert-octagon" class="w-5 h-5"></i>
             </div>
         </div>
     </div>
-
 
     <!-- Activity Chart -->
     <!-- Performance Charts Grid -->
@@ -378,8 +389,9 @@
         }
 
         // Initialize Funnel
-        const defaultPipelineId = {{ current_pipeline_id if current_pipeline_id else 'null' }};
-        if (defaultPipelineId) updateFunnelChart(defaultPipelineId);
+        {% if current_pipeline_id %}
+        updateFunnelChart({{ current_pipeline_id }});
+    {% endif %}
     });
 
     // Toggle Function - Improved
