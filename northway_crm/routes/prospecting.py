@@ -312,28 +312,34 @@ def import_lead():
             if Lead.query.filter_by(company_id=current_user.company_id, google_place_id=place_id).first():
                 continue
             
-            new_lead = Lead(
-                name=p.get('name'),
-                company_id=current_user.company_id,
-                assigned_to_id=current_user.id,
-                status='new',
-                pipeline_id=target_pipeline_id,
-                pipeline_stage_id=target_stage_id,
-                source='google_maps',
-                phone=phone,
-                website=website,
-                address=p.get('formatted_address'),
-                google_place_id=place_id,
-                gmb_rating=p.get('rating', 0),
-                gmb_reviews=p.get('user_ratings_total', 0),
-                notes=f"Importado via Google Maps em {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-            )
-            db.session.add(new_lead)
+            with db.session.begin_nested():
+                name_val = p.get('name') or 'Sem Nome'
+                new_lead = Lead(
+                    name=name_val[:100],
+                    company_id=current_user.company_id,
+                    assigned_to_id=current_user.id,
+                    status='new',
+                    pipeline_id=target_pipeline_id,
+                    pipeline_stage_id=target_stage_id,
+                    source='google_maps',
+                    phone=phone[:50] if phone else None,
+                    website=website[:200] if website else None,
+                    address=p.get('formatted_address')[:255] if p.get('formatted_address') else None,
+                    google_place_id=place_id[:100] if place_id else None,
+                    gmb_rating=p.get('rating', 0),
+                    gmb_reviews=p.get('user_ratings_total', 0),
+                    notes=f"Importado via Google Maps em {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+                )
+                db.session.add(new_lead)
             imported_count += 1
         except Exception as e:
             errors.append(f"Error {p.get('name')}: {str(e)}")
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        errors.append(f"Commit error: {str(e)}")
     return api_response(data={'imported_count': imported_count, 'errors': errors})
 
 @prospecting_bp.route('/api/prospecting/backfill-phones', methods=['POST'])
