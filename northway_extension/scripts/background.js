@@ -171,6 +171,7 @@ async function apiCall(endpoint, method, body = null) {
 
     if (!token) {
         console.warn("NW: No auth token found");
+        notifySessionExpired();
         return { error: "Unauthorized", needsLogin: true };
     }
 
@@ -187,6 +188,9 @@ async function apiCall(endpoint, method, body = null) {
         const response = await fetch(`${API_BASE}${endpoint}`, options);
 
         if (response.status === 401 || response.status === 403) {
+            // Token expired or revoked — clear it and notify content script
+            await chrome.storage.local.remove(['authToken', 'user']);
+            notifySessionExpired();
             return { error: "Unauthorized", needsLogin: true };
         }
 
@@ -201,4 +205,17 @@ async function apiCall(endpoint, method, body = null) {
         console.error("NW: API Call Exception", e);
         return { error: e.message || "Connection failed" };
     }
+}
+
+/**
+ * Broadcasts a SESSION_EXPIRED message to all WhatsApp Web tabs
+ * so the sidebar can show a re-login prompt without the user
+ * having to open the extension popup manually.
+ */
+function notifySessionExpired() {
+    chrome.tabs.query({ url: "https://web.whatsapp.com/*" }, (tabs) => {
+        tabs.forEach(tab => {
+            chrome.tabs.sendMessage(tab.id, { action: "SESSION_EXPIRED" }).catch(() => {});
+        });
+    });
 }

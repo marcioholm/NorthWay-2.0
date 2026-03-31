@@ -1,7 +1,10 @@
 /**
- * WhatsApp Attachment Engine (Refactored)
+ * WhatsApp Attachment Engine
  * Handles file injection into WhatsApp Web DOM.
+ * No prototype monkey-patching — uses MutationObserver + direct injection.
  */
+
+const NW_PAGE_DEBUG = false;
 
 class WhatsAppAttachmentManager {
     constructor() {
@@ -10,7 +13,7 @@ class WhatsAppAttachmentManager {
     }
 
     log(msg, data = null) {
-        // Only log if specifically needed, otherwise keep it quiet
+        if (!NW_PAGE_DEBUG) return;
         if (data) console.log(`[${this.moduleName}] ${msg}`, data);
         else console.log(`[${this.moduleName}] ${msg}`);
     }
@@ -27,12 +30,11 @@ class WhatsAppAttachmentManager {
     setupListener() {
         window.addEventListener('message', async (event) => {
             if (event.data.source !== 'NW_EXTENSION') return;
-
             if (event.data.type === 'NW_PING') return;
             if (event.data.type !== 'NW_ATTACH_FILE') return;
 
             const { kind, name, mime, data } = event.data.payload;
-            
+
             try {
                 const u8 = new Uint8Array(data);
                 const blob = new Blob([u8], { type: mime });
@@ -40,20 +42,30 @@ class WhatsAppAttachmentManager {
 
                 await this.performAttachment(file, kind);
             } catch (err) {
-                console.error(`[${this.moduleName}] Attachment Workflow Failed`, err);
+                this.log('Attachment Workflow Failed', err);
             }
         });
     }
 
     async performAttachment(file, kind) {
         try {
+            // Strategy 1 — Direct injection into pre-existing hidden input (no menu needed)
+            const directInput = this.findBestInputByAttributes(kind);
+            if (directInput) {
+                this.log(`Direct injection into existing input (${kind})`);
+                await this.injectFile(directInput, file);
+                return;
+            }
+
+            // Strategy 2 — Open attach menu, then capture new input via MutationObserver
             const mainButton = await this.findMainAttachButton();
             if (!mainButton) {
                 this.toast("Não encontrei o botão de anexo. Clique manualmente no clip (📎).", "warning");
-            } else {
-                const clickableMain = mainButton.closest('div[role="button"]') || mainButton.closest('button') || mainButton;
-                this.forceClick(clickableMain);
+                return;
             }
+
+            const clickableMain = mainButton.closest('div[role="button"]') || mainButton.closest('button') || mainButton;
+            this.forceClick(clickableMain);
 
             const menuSelector = 'ul, div[role="dialog"] ul, div[data-animate-modal-popup="true"] ul';
             const menu = await this.waitForElement([menuSelector], 5000);
@@ -61,50 +73,58 @@ class WhatsAppAttachmentManager {
             if (menu) {
                 const targetButton = this.findMenuItemInMenu(menu, kind);
                 if (targetButton) {
-                    const originalClick = HTMLInputElement.prototype.click;
-                    let hijackedInput = null;
-                    
-                    const inputCapturedPromise = new Promise(resolve => {
-                        HTMLInputElement.prototype.click = function () {
-                            if (this.type === 'file') {
-                                hijackedInput = this;
-                                resolve(this);
-                            } else {
-                                originalClick.apply(this);
-                            }
-                        };
-                    });
-
-                    setTimeout(() => {
-                        if (HTMLInputElement.prototype.click !== originalClick) HTMLInputElement.prototype.click = originalClick;
-                    }, 2000);
+                    // Snapshot existing inputs before triggering menu item
+                    const existingInputs = new Set(Array.from(document.querySelectorAll('input[type="file"]')));
 
                     this.forceClick(targetButton);
-                    
-                    const capturedInput = await Promise.race([
-                        inputCapturedPromise,
-                        new Promise(r => setTimeout(() => r(null), 1500))
-                    ]);
 
-                    HTMLInputElement.prototype.click = originalClick;
+                    // Wait for a NEW input element to appear in the DOM
+                    const newInput = await this.waitForNewFileInput(existingInputs, 2000);
 
-                    if (capturedInput) {
-                        await this.injectFile(capturedInput, file);
+                    if (newInput) {
+                        this.log('New file input captured via MutationObserver');
+                        await this.injectFile(newInput, file);
                         return;
                     }
                 }
             }
-            
-            // Fallback
+
+            // Strategy 3 — Final fallback: re-query after short wait
+            await new Promise(r => setTimeout(r, 400));
             const fallbackInput = this.findBestInputByAttributes(kind);
             if (fallbackInput) {
+                this.log('Fallback input found after delay');
                 await this.injectFile(fallbackInput, file);
             } else {
                 this.toast("Falha ao anexar arquivo automaticamente.", "error");
             }
         } catch (e) {
-            console.error("Attachment flow error", e);
+            this.log('Attachment flow error', e);
         }
+    }
+
+    /**
+     * Watches for a NEW input[type="file"] element to appear in the DOM.
+     * Does NOT touch any prototype.
+     */
+    waitForNewFileInput(existingInputs, timeout) {
+        return new Promise(resolve => {
+            const observer = new MutationObserver(() => {
+                const newInput = Array.from(document.querySelectorAll('input[type="file"]'))
+                    .find(i => !existingInputs.has(i));
+                if (newInput) {
+                    observer.disconnect();
+                    resolve(newInput);
+                }
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            setTimeout(() => {
+                observer.disconnect();
+                resolve(null);
+            }, timeout);
+        });
     }
 
     async findMainAttachButton() {
@@ -166,7 +186,7 @@ class WhatsAppAttachmentManager {
 
     async injectFile(inputElement, file) {
         await new Promise(r => setTimeout(r, 100));
-        
+
         const dt = new DataTransfer();
         dt.items.add(file);
 

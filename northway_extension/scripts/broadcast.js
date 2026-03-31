@@ -32,6 +32,7 @@ const BroadcastEngine = {
         if (res.bc_templates) this.templates = res.bc_templates;
         this.autoSend = res.bc_auto || false;
         if (res.bc_config) this.config = res.bc_config;
+        if (res.bc_batch_count !== undefined) this.batchCount = res.bc_batch_count;
 
         if (res.bc_current_message) this.currentMessage = res.bc_current_message;
         if (res.bc_media_caption) this.mediaCaption = res.bc_media_caption;

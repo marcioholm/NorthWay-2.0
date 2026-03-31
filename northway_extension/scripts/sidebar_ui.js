@@ -101,48 +101,84 @@ function showState(state) {
 }
 
 async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
-    nwLog(`Updating sidebar for ${name} (${phone})`);
+    nwLog(`[ZapWay][Sidebar] render lead: ${name} (${phone})`);
     showState('loading');
-    
-    const initials = name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NW';
-    getEl('nw-contact-name').textContent = name || "Desconhecido";
-    getEl('nw-contact-initials').textContent = initials;
 
-    const img = getEl('nw-contact-img');
+    // Exibe nome e avatar imediatamente (antes da resposta do CRM)
+    const initials = name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'NW';
+    const nameEl = getEl('nw-contact-name');
     const initialsEl = getEl('nw-contact-initials');
-    if (avatarUrl) {
-        img.src = avatarUrl;
-        img.classList.remove('hidden');
-        initialsEl.classList.add('hidden');
-    } else {
-        img.classList.add('hidden');
-        initialsEl.classList.remove('hidden');
+    const img = getEl('nw-contact-img');
+
+    if (nameEl) nameEl.textContent = name || 'Desconhecido';
+    if (initialsEl) initialsEl.textContent = initials;
+
+    if (img && initialsEl) {
+        if (avatarUrl) {
+            img.src = avatarUrl;
+            img.classList.remove('hidden');
+            initialsEl.classList.add('hidden');
+        } else {
+            img.classList.add('hidden');
+            initialsEl.classList.remove('hidden');
+        }
     }
 
     try {
+        nwLog('[ZapWay][CRM] sync start →', { phone, name: searchName });
         const response = await sendMsg({ action: "GET_CONTACT", phone, name: searchName });
+        nwLog('[ZapWay][CRM] sync result →', response);
+
         if (!response || response.error) {
-            getEl('nw-connection-status').className = 'status-dot disconnected';
-            showState('idle');
+            // API inacessível: exibe estado "Novo Lead" com dados já detectados
+            // O currentPhone é MANTIDO para evitar loop infinito de detecção
+            nwLog('[ZapWay][CRM] API indisponível — exibindo estado parcial');
+            const connEl = getEl('nw-connection-status');
+            if (connEl) connEl.className = 'status-dot disconnected';
+            NWState.currentLeadId = null;
+            showState('new');
+            const collapsedEl = getEl('nw-new-collapsed');
+            const formEl = getEl('nw-new-form');
+            if (collapsedEl) collapsedEl.classList.remove('hidden');
+            if (formEl) formEl.classList.add('hidden');
+            const newNameEl = getEl('nw-new-name');
+            const newPhoneEl = getEl('nw-new-phone');
+            if (newNameEl) newNameEl.value = name || '';
+            if (newPhoneEl) newPhoneEl.value = phone ? String(phone).replace(/\D/g, '') : '';
+            loadPipelines(null, 'nw-new-stage');
             return;
         }
 
-        getEl('nw-connection-status').className = 'status-dot connected';
+        const connEl = getEl('nw-connection-status');
+        if (connEl) connEl.className = 'status-dot connected';
 
         if (response.found === false) {
+            nwLog('[ZapWay][Sidebar] Contato não encontrado no CRM — estado "Novo Lead"');
             NWState.currentLeadId = null;
             showState('new');
-            getEl('nw-new-collapsed').classList.remove('hidden');
-            getEl('nw-new-form').classList.add('hidden');
-            getEl('nw-new-name').value = name;
-            getEl('nw-new-phone').value = phone ? phone.split('@')[0].replace(/\D/g, '') : "";
+            const c = getEl('nw-new-collapsed');
+            const f = getEl('nw-new-form');
+            const n = getEl('nw-new-name');
+            const p = getEl('nw-new-phone');
+            if (c) c.classList.remove('hidden');
+            if (f) f.classList.add('hidden');
+            if (n) n.value = name || '';
+            if (p) p.value = phone ? String(phone).split('@')[0].replace(/\D/g, '') : '';
             loadPipelines(null, 'nw-new-stage');
         } else {
+            nwLog('[ZapWay][Sidebar] Contato encontrado — renderizando');
             renderContact(response.data, avatarUrl);
         }
     } catch (e) {
-        nwLog("Sidebar update failed", e);
-        showState('idle');
+        nwLog('[ZapWay][Sidebar] Erro ao atualizar sidebar', e);
+        // Em caso de exceção, mantemos o phone atual e mostramos estado offline
+        const connEl = getEl('nw-connection-status');
+        if (connEl) connEl.className = 'status-dot disconnected';
+        showState('new');
+        const collapsedEl = getEl('nw-new-collapsed');
+        const formEl = getEl('nw-new-form');
+        if (collapsedEl) collapsedEl.classList.remove('hidden');
+        if (formEl) formEl.classList.add('hidden');
     }
 }
 

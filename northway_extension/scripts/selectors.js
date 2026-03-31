@@ -67,5 +67,28 @@ const SELECTORS = {
             '[data-testid="attach-image"]',
             'span[data-icon="attach-image"]'
         ]
-    }
+    },
+
+    // Contact / Group info panel (right drawer)
+    CONTACT_INFO_PANEL: [
+        '[data-testid="contact-info-drawer"]',
+        '[data-testid="drawer-right"]',
+        'div[data-animate-drawer-right="true"]'
+    ],
+
+    // Participant list inside group info panel
+    PARTICIPANT_LIST: [
+        '[data-testid="participant-list-container"]',
+        'div[role="list"]',
+        'ul[role="list"]',
+        'div[aria-label*="participantes" i]',
+        'div[aria-label*="members" i]'
+    ],
+
+    // Individual participant item
+    PARTICIPANT_ITEM: [
+        '[data-testid="member-list-item"]',
+        '[role="listitem"]',
+        '[data-testid="cell-frame-container"]'
+    ]
 };

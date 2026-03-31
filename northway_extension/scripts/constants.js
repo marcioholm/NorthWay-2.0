@@ -3,7 +3,7 @@
  */
 
 const SIDEBAR_WIDTH = 380;
-const NW_DEBUG = false; // Set to true to enable logs
+const NW_DEBUG = true; // Debug ativo — desligar em produção
 
 /**
  * Enhanced Logging Helper

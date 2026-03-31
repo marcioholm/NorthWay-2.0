@@ -12,89 +12,79 @@
         <!-- HEADER -->
         <div class="nw-popup-header">
             <div class="nw-header-row">
-                <div class="nw-logo-icon-small">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M13 3L21 11M21 11L13 19M21 11H3"></path>
-                    </svg>
+                <div class="nw-logo-box">
+                    <div class="nw-logo-icon-small">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 3L21 11M21 11L13 19M21 11H3"></path>
+                        </svg>
+                    </div>
+                    <span class="nw-header-title">NorthWay CRM</span>
                 </div>
-                <span class="nw-header-title">NorthWay Assistant</span>
                 <div class="nw-connection-status offline" title="Desconectado"></div>
             </div>
-
-            <!-- Navbar REMOVED (No navigation needed) -->
         </div>
 
         <!-- AUTH VIEW (Login) -->
-        <div id="nw-view-auth">
+        <div id="nw-view-auth" class="nw-view">
             <div class="nw-hero">
-                <h1>Acesse sua <br><span>Operação</span></h1>
-                <p>ZapWay Extension v3.0.4</p>
+                <h1>Acesse sua<br><span>Operação</span></h1>
+                <p>ZapWay Extension v4.0.7</p>
             </div>
 
-            <div id="nw-login-form" class="nw-auth-card">
+            <div id="nw-login-form" class="nw-auth-card glass-panel">
                 <div id="nw-error-msg" class="nw-error-box hidden"></div>
+                
                 <div class="nw-input-group">
-                    <input type="email" id="nw-email" placeholder="E-mail Corporativo">
+                    <input type="email" id="nw-email" placeholder="E-mail Corporativo" autocomplete="off">
                 </div>
                 <div class="nw-input-group">
-                    <input type="password" id="nw-password" placeholder="Senha de Acesso">
+                    <input type="password" id="nw-password" placeholder="Chave de Acesso" autocomplete="off">
                 </div>
-                <button id="nw-btn-login" class="nw-btn primary">Conectar</button>
+                
+                <button id="nw-btn-login" class="nw-btn primary" style="margin-top: 24px;">Autenticar Acesso</button>
             </div>
         </div>
 
         <!-- ACTIVE VIEW (Logged In) -->
-        <div id="nw-view-active" class="nw-view hidden" style="padding-top: 20px;">
-            <div class="nw-auth-card" style="text-align: center; margin-bottom: 20px;">
-                <div class="nw-user-avatar" style="margin: 0 auto 10px;">
-                    <img id="nw-user-img" src="" class="hidden">
+        <div id="nw-view-active" class="nw-view hidden">
+            
+            <!-- User Profile Center -->
+            <div class="nw-user-profile glass-panel" style="padding: 24px;">
+                <div class="nw-user-avatar">
+                    <img id="nw-user-img" src="" class="hidden" width="56" height="56">
                     <span id="nw-user-initials">AD</span>
                 </div>
-                <strong id="nw-user-name" style="display: block; font-size: 16px; margin-bottom: 2px;">Usuário</strong>
-                <span id="nw-user-email"
-                    style="display: block; color: var(--nw-text-muted); font-size: 12px;">email@northway.com</span>
+                <div id="nw-user-name">Usuário Operador</div>
+                <div id="nw-user-email">email@northway.com</div>
             </div>
 
             <!-- Stats (Bug 13) -->
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <div
-                    style="flex: 1; background: rgba(var(--nw-primary-rgb), 0.1); border: 1px solid rgba(var(--nw-primary-rgb), 0.2); padding: 12px; border-radius: 8px; text-align: center;">
-                    <div id="nw-popup-sent"
-                        style="font-size: 20px; font-weight: bold; color: var(--nw-primary); margin-bottom: 4px;">0
-                    </div>
-                    <div style="font-size: 10px; color: var(--nw-text-muted); text-transform: uppercase;">Disparos</div>
+            <div class="nw-stats-row">
+                <!-- Disparos -->
+                <div class="nw-stat-card">
+                    <div id="nw-popup-sent" class="nw-stat-value">0</div>
+                    <div class="nw-stat-label">Disparos</div>
                 </div>
-                <div
-                    style="flex: 1; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 8px; text-align: center;">
-                    <div id="nw-popup-crm"
-                        style="font-size: 20px; font-weight: bold; color: #10b981; margin-bottom: 4px;">0</div>
-                    <div style="font-size: 10px; color: var(--nw-text-muted); text-transform: uppercase;">Leads</div>
+
+                <!-- Leads -->
+                <div class="nw-stat-card mint">
+                    <div id="nw-popup-crm" class="nw-stat-value">0</div>
+                    <div class="nw-stat-label">Leads CRM</div>
                 </div>
             </div>
 
-            <div
-                style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; font-size: 11px; color: #ccc; margin-bottom: 20px; text-align: center;">
-                🚀 Use a barra lateral no <b>WhatsApp Web</b> para realizar disparos.
-            </div>
-
-            <a href="https://web.whatsapp.com" target="_blank" class="nw-btn primary"
-                style="text-decoration: none; width: 100%; justify-content: center; margin-bottom: 8px;">
+            <a href="https://web.whatsapp.com" target="_blank" class="nw-btn primary" style="text-decoration: none; margin-bottom: 12px;">
                 Abrir WhatsApp Web
             </a>
 
-            <button id="nw-btn-logout" class="nw-btn"
-                style="width: 100%; justify-content: center; background: rgba(255,255,255,0.05);">
+            <button id="nw-btn-logout" class="nw-btn outline">
                 Desconectar
             </button>
         </div>
 
         <!-- FOOTER -->
         <div class="nw-popup-footer">
-            <span class="nw-version">v3.0.4</span>
-            <div class="nw-footer-stats hidden" id="nw-footer-stats">
-                Enviados hoje: <span id="nw-today-count">0</span>
-            </div>
+            <span class="nw-version">v4.0.7</span>
         </div>
     </div>
 

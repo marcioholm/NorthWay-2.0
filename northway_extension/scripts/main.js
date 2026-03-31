@@ -4,16 +4,17 @@
 
 let chatObserver = null;
 let intervalLayout = null;
+let isDetecting = false;
 
 async function bootstrap() {
-    nwLog("Bootstrapping... Checking Auth.");
+    nwLog("[ZapWay][Main] Bootstrap iniciado — verificando autenticação.");
     try {
         const response = await sendMsg({ action: "CHECK_AUTH" });
         if (response && response.token) {
-            nwLog("Authenticated. Initializing Sidebar.");
+            nwLog("[ZapWay][Main] Autenticado. Inicializando sidebar.");
             init();
         } else {
-            nwLog("Not authenticated. Sidebar will not load.");
+            nwLog("[ZapWay][Main] Não autenticado. Sidebar não será carregada.");
             unmount();
         }
     } catch (e) {
@@ -29,10 +30,18 @@ async function bootstrap() {
             }
         }
     });
+
+    chrome.runtime.onMessage.addListener((request) => {
+        if (request.action === "SESSION_EXPIRED") {
+            nwLog("Session expired — prompting re-login.");
+            unmount();
+            toast("Sessão expirada. Faça login novamente na extensão ZapWay.", "warning", 8000);
+        }
+    });
 }
 
 async function init() {
-    nwLog("NW: Initializing...");
+    nwLog("[ZapWay][Main] Inicializando extensão...");
     
     let sidebarContainer = document.getElementById('northway-sidebar-host') || document.createElement('div');
     sidebarContainer.id = 'northway-sidebar-host';
@@ -70,7 +79,7 @@ async function init() {
 }
 
 function startObserver() {
-    nwLog("Starting App Observer...");
+    nwLog("[ZapWay][Main] Iniciando observer do DOM...");
     const appEl = document.getElementById('app');
     if (!appEl) {
         // Retry logic: wait for #app to appear
@@ -89,12 +98,13 @@ function startObserver() {
     let debounceTimer = null;
     chatObserver = new MutationObserver(() => {
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(checkActiveChat, 300);
+        debounceTimer = setTimeout(checkActiveChat, 700);
     });
 
     chatObserver.observe(appEl, {
         childList: true, subtree: true, attributes: true,
-        attributeFilter: ['class', 'data-id', 'aria-label']
+        // aria-selected muda quando o usuário clica em outra conversa
+        attributeFilter: ['class', 'data-id', 'aria-label', 'aria-selected', 'data-testid']
     });
 }
 
@@ -140,7 +150,7 @@ function adjustLayout() {
 }
 
 function unmount() {
-    nwLog("Unmounting Sidebar...");
+    nwLog("[ZapWay][Main] Desmontando sidebar...");
     const host = document.getElementById('northway-sidebar-host');
     if (host) host.remove();
     const btn = document.getElementById('nw-toggle-btn');
@@ -221,7 +231,7 @@ function bindEvents() {
         };
     }
 
-    nwLog("Events bound.");
+    nwLog("[ZapWay][Main] Eventos vinculados.");
 }
 
 // Global Keyboard Shortcut
