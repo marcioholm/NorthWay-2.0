@@ -136,6 +136,57 @@ def sync_database():
                 )
             """)
 
+            create_table_if_missing("integration_api_keys", """
+                CREATE TABLE integration_api_keys (
+                    id VARCHAR(36) PRIMARY KEY,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    name VARCHAR(100) NOT NULL,
+                    key_prefix VARCHAR(10) NOT NULL,
+                    key_hash VARCHAR(255) NOT NULL,
+                    status VARCHAR(20) DEFAULT 'active',
+                    last_used_at TIMESTAMP,
+                    expires_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_by_id INTEGER REFERENCES "user"(id)
+                )
+            """)
+
+            create_table_if_missing("integration_webhooks", """
+                CREATE TABLE integration_webhooks (
+                    id VARCHAR(36) PRIMARY KEY,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    name VARCHAR(100) NOT NULL,
+                    url TEXT NOT NULL,
+                    event_types TEXT NOT NULL,
+                    secret_token VARCHAR(255),
+                    status VARCHAR(20) DEFAULT 'active',
+                    last_triggered_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_by_id INTEGER REFERENCES "user"(id)
+                )
+            """)
+
+            create_table_if_missing("integration_logs", """
+                CREATE TABLE integration_logs (
+                    id SERIAL PRIMARY KEY,
+                    company_id INTEGER NOT NULL REFERENCES company(id),
+                    api_key_id VARCHAR(36) REFERENCES integration_api_keys(id),
+                    webhook_id VARCHAR(36) REFERENCES integration_webhooks(id),
+                    type VARCHAR(20) NOT NULL,
+                    event VARCHAR(100) NOT NULL,
+                    status VARCHAR(20) NOT NULL,
+                    request_method VARCHAR(10),
+                    request_url TEXT,
+                    payload JSONB,
+                    response_code INTEGER,
+                    response_body TEXT,
+                    error_message TEXT,
+                    duration_ms INTEGER,
+                    ip_address VARCHAR(45),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
             create_table_if_missing("drive_file_event", """
                 CREATE TABLE drive_file_event (
                     id SERIAL PRIMARY KEY,
