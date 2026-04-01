@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "_settings_layout.html" %}
 
 {% block head %}
 <style>
@@ -24,7 +24,7 @@
 </style>
 {% endblock %}
 
-{% block content %}
+{% block settings_content %}
 <div class="p-8 max-w-7xl mx-auto space-y-8" x-data="integrationsHub()">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -2,7 +2,28 @@
 
 {% block settings_content %}
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Configurações</h1>
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Aplicativos (Nativos)</h1>
+        <a href="{{ url_for('integrations_admin.hub') }}" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-black transition-colors shadow-sm">
+            <i data-lucide="blocks" class="w-4 h-4"></i>
+            Ir para API & Webhooks
+        </a>
+    </div>
+
+    <!-- API Hub Intro Banner -->
+    <div class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-6 mb-8 text-white shadow-lg flex items-center justify-between">
+        <div>
+            <h2 class="text-lg font-black mb-1 flex items-center gap-2">
+                <i data-lucide="zap" class="text-yellow-400 w-5 h-5"></i>
+                Procurando n8n, Make ou Webhooks?
+            </h2>
+            <p class="text-sm text-slate-300">Nossa nova Central de API e Webhooks agora tem um painel dedicado para integrações avançadas.</p>
+        </div>
+        <a href="{{ url_for('integrations_admin.hub') }}" class="hidden md:flex bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-bold items-center gap-2 transition-colors border border-white/20">
+            Acessar Central
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+    </div>
 
     <!-- Google Drive Integration Card -->
     {% if company.has_feature('google_drive') or company.has_feature('drive') %}
