@@ -4,6 +4,7 @@ from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, C
 from utils import create_notification
 from tasks_utils import generate_tasks_for_stage, process_funnel_automations
 from datetime import datetime, timedelta
+from services.integrations_service import IntegrationsService
 
 leads_bp = Blueprint('leads', __name__)
 
@@ -80,6 +81,20 @@ def leads():
             from flask import current_app
             db.session.add(new_lead)
             db.session.commit()
+            
+            # Dispatch Webhook
+            try:
+                IntegrationsService.dispatch_webhooks(current_user.company_id, 'lead.created', {
+                    "id": new_lead.id,
+                    "name": new_lead.name,
+                    "email": new_lead.email,
+                    "phone": new_lead.phone,
+                    "source": new_lead.source,
+                    "assigned_to": new_lead.assigned_to_id
+                })
+            except Exception as e:
+                print(f"Webhook dispatch failed: {e}")
+
             flash('Lead criado com sucesso!', 'success')
         except Exception as e:
             db.session.rollback()
@@ -327,6 +342,17 @@ def update_lead_stage_api(id):
          
     lead.pipeline_stage_id = stage.id
     db.session.commit()
+
+    # Dispatch Webhook (Pipeline Change API)
+    try:
+        IntegrationsService.dispatch_webhooks(current_user.company_id, 'pipeline.changed', {
+            "lead_id": lead.id,
+            "lead_name": lead.name,
+            "new_stage_id": lead.pipeline_stage_id,
+            "source": "api_kanban"
+        })
+    except Exception as e:
+        print(f"Webhook dispatch failed: {e}")
     
     # Generate Automated Tasks
     generate_tasks_for_stage(lead.id, lead.pipeline_stage_id)
@@ -553,6 +579,18 @@ def convert_lead(id):
     
     try:
         db.session.commit()
+        
+        # Dispatch Webhook (Lead Converted)
+        try:
+            IntegrationsService.dispatch_webhooks(current_user.company_id, 'lead.converted', {
+                "lead_id": lead.id,
+                "client_id": client.id,
+                "client_name": client.name,
+                "value": value
+            })
+        except Exception as webhook_e:
+            print(f"Webhook dispatch failed: {webhook_e}")
+
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao salvar conversão: {str(e)}', 'error')

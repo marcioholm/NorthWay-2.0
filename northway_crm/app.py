@@ -518,7 +518,9 @@ def create_app():
             ('routes.matrix_routes', 'matrix_bp', 'matrix_bp', None),
             ('routes.crepi_routes', 'crepi_bp', 'crepi_bp', None),
             ('routes.swot_routes', 'swot_bp', 'swot_bp', None),
-            ('routes.marketing', 'marketing_bp', 'marketing_bp', None)
+            ('routes.marketing', 'marketing_bp', 'marketing_bp', None),
+            ('routes.integrations_admin', 'integrations_admin_bp', 'integrations_admin_bp', None),
+            ('routes.api_v1', 'api_v1_bp', 'api_v1_bp', None)
         ]
 
         import importlib

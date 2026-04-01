@@ -554,6 +554,52 @@ class Integration(db.Model):
     last_sync_at = db.Column(db.DateTime, nullable=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class IntegrationApiKey(db.Model):
+    __tablename__ = 'integration_api_keys'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    key_prefix = db.Column(db.String(10), nullable=False) # First chars for UI identification
+    key_hash = db.Column(db.String(255), nullable=False, index=True)
+    status = db.Column(db.String(20), default='active') # active, inactive, revoked
+    scopes = db.Column(db.JSON, default=[]) # List of strings: ["leads:read", ...]
+    last_used_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref=db.backref('api_keys', cascade='all, delete-orphan'))
+
+class IntegrationWebhook(db.Model):
+    __tablename__ = 'integration_webhooks'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    url = db.Column(db.Text, nullable=False)
+    events = db.Column(db.JSON, default=[]) # List of strings: ["lead.created", ...]
+    status = db.Column(db.String(20), default='active') # active, inactive
+    secret = db.Column(db.Text, nullable=False) # For HMAC signature
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref=db.backref('webhooks', cascade='all, delete-orphan'))
+
+class IntegrationLog(db.Model):
+    __tablename__ = 'integration_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    type = db.Column(db.String(20), nullable=False) # inbound_api, outbound_webhook
+    endpoint = db.Column(db.String(255), nullable=False) # API path or Webhook URL
+    method = db.Column(db.String(10), nullable=False) # GET, POST, etc
+    status_code = db.Column(db.Integer)
+    request_payload = db.Column(db.JSON, nullable=True)
+    response_payload = db.Column(db.JSON, nullable=True)
+    error_message = db.Column(db.Text, nullable=True)
+    request_id = db.Column(db.String(50), nullable=True) # UUID for tracing
+    execution_time_ms = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    company = db.relationship('Company', backref=db.backref('integration_logs', cascade='all, delete-orphan'))
+
 class TenantIntegration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)

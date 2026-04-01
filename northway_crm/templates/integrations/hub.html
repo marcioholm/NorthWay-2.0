@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+    }
+    .dark .glass-card {
+        background: rgba(30, 41, 59, 0.5);
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-active { background: #dcfce7; color: #166534; }
+    .status-revoked { background: #fee2e2; color: #991b1b; }
+    .status-inactive { background: #f3f4f6; color: #374151; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-7xl mx-auto space-y-8" x-data="integrationsHub()">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 flex items-center gap-3">
+                <i data-lucide="blocks" class="w-8 h-8 text-northway-red"></i>
+                Central de Integrações
+            </h1>
+            <p class="text-gray-500 mt-1">Conecte o NorthWay ao seu ecossistema (n8n, Make, Evolution API).</p>
+        </div>
+        <div class="flex gap-3">
+            <button @click="openModal('key')" class="bg-northway-red hover:bg-red-700 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-500/20">
+                <i data-lucide="key" class="w-4 h-4"></i>
+                Nova Chave API
+            </button>
+            <button @click="openModal('webhook')" class="bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-black/20">
+                <i data-lucide="webhook" class="w-4 h-4"></i>
+                Novo Webhook
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats / Info Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="glass-card p-6 bg-white shadow-sm border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Segurança</p>
+                    <p class="text-xl font-black text-gray-800">Isolamento Ativo</p>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card p-6 bg-white shadow-sm border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center">
+                    <i data-lucide="activity" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Requisições (24h)</p>
+                    <p class="text-xl font-black text-gray-800">{{ logs|length }} registradas</p>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card p-6 bg-white shadow-sm border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Webhooks</p>
+                    <p class="text-xl font-black text-gray-800">{{ webhooks|length }} ativos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs/Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- API KEYS SECTION -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i data-lucide="key" class="w-5 h-5 text-blue-500"></i>
+                    Chaves de API
+                </h2>
+            </div>
+            
+            <div class="space-y-3">
+                {% if not api_keys %}
+                <div class="p-8 text-center bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl">
+                    <p class="text-gray-400">Nenhuma chave gerada ainda.</p>
+                </div>
+                {% endif %}
+                
+                {% for key in api_keys %}
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-blue-200 transition-all">
+                    <div class="flex items-center gap-4">
+                        <div class="p-2 bg-gray-50 rounded-xl group-hover:bg-blue-50 transition-colors">
+                            <i data-lucide="code" class="w-5 h-5 text-gray-400 group-hover:text-blue-500"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">{{ key.name }}</p>
+                            <p class="text-xs text-gray-400 font-mono">{{ key.key_prefix }}********************</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="status-badge status-{{ key.status }}">{{ key.status }}</span>
+                        {% if key.status == 'active' %}
+                        <button @click="revokeKey({{ key.id }})" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Revogar Chave">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- WEBHOOKS SECTION -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i data-lucide="webhook" class="w-5 h-5 text-purple-500"></i>
+                    Webhooks (Outbound)
+                </h2>
+            </div>
+
+            <div class="space-y-3">
+                {% if not webhooks %}
+                <div class="p-8 text-center bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl">
+                    <p class="text-gray-400">Nenhum webhook cadastrado.</p>
+                </div>
+                {% endif %}
+
+                {% for webhook in webhooks %}
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3 group hover:border-purple-200 transition-all">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="p-2 bg-gray-50 rounded-xl group-hover:bg-purple-50 transition-colors">
+                                <i data-lucide="send" class="w-5 h-5 text-gray-400 group-hover:text-purple-500"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800">{{ webhook.name }}</p>
+                                <p class="text-xs text-gray-400 truncate max-w-[200px]">{{ webhook.url }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button @click="deleteWebhook({{ webhook.id }})" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1">
+                        {% for event in webhook.events %}
+                        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-md">{{ event }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <!-- LOGS TABLE -->
+    <section class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <i data-lucide="list" class="w-5 h-5 text-orange-500"></i>
+                Logs Recentes
+            </h2>
+            <button @click="clearLogs()" class="text-xs text-gray-400 hover:text-red-500 font-bold uppercase tracking-wider">Limpar Histórico</button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Data/Hora</th>
+                            <th class="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Tipo</th>
+                            <th class="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Método/Ref</th>
+                            <th class="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Status</th>
+                            <th class="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider text-[10px]">Tempo</th>
+                            <th class="px-6 py-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for log in logs %}
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-6 py-4 text-gray-500 whitespace-nowrap text-xs">
+                                {{ log.created_at.strftime('%d/%m/%Y %H:%M:%S') }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase {{ 'bg-blue-100 text-blue-700' if log.type == 'inbound_api' else 'bg-purple-100 text-purple-700' }}">
+                                    {{ 'Entrada' if log.type == 'inbound_api' else 'Saída' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-gray-700">{{ log.method }}</span>
+                                    <span class="text-[10px] text-gray-400 truncate max-w-[200px]">{{ log.endpoint }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-bold {{ 'text-green-600' if log.status_code and 200 <= log.status_code < 300 else 'text-red-500' }}">
+                                    {{ log.status_code or 'ERR' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-400 text-xs">
+                                {{ log.execution_time_ms or 0 }}ms
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button @click="viewLogDetails({{ log|tojson|safe if log.to_json is not defined else log.to_dict()|tojson|safe }})" class="text-gray-400 hover:text-gray-600">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not logs %}
+            <div class="p-12 text-center">
+                <i data-lucide="coffee" class="w-12 h-12 text-gray-200 mx-auto mb-4"></i>
+                <p class="text-gray-400">Nenhum log registrado hoje.</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- MODALS -->
+    
+    <!-- New API Key Modal -->
+    <div id="modal-key" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 space-y-6 transform transition-all scale-100">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-black text-gray-900">Nova Chave API</h3>
+                <button @click="closeModal('key')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div x-show="!generatedKey" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase mb-2">Identificador (Nome)</label>
+                    <input type="text" x-model="newKeyName" class="w-full bg-gray-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-northway-red" placeholder="Ex: Integração n8n produção">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase mb-2">Escopos (Permissões)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" value="*" x-model="selectedScopes" class="rounded text-northway-red focus:ring-northway-red">
+                            <span class="text-sm font-bold text-gray-700">Tudo (*)</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" value="leads:read" x-model="selectedScopes" class="rounded text-northway-red focus:ring-northway-red">
+                            <span class="text-sm font-bold text-gray-700">Ler Leads</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" value="leads:write" x-model="selectedScopes" class="rounded text-northway-red focus:ring-northway-red">
+                            <span class="text-sm font-bold text-gray-700">Criar Leads</span>
+                        </label>
+                    </div>
+                </div>
+                <button @click="submitNewKey()" class="w-full bg-northway-red text-white font-black py-4 rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-500/30">
+                    Gerar Chave Agora
+                </button>
+            </div>
+
+            <!-- Generated Key View -->
+            <div x-show="generatedKey" class="space-y-6 text-center">
+                <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="check" class="w-8 h-8"></i>
+                </div>
+                <h4 class="font-black text-gray-900 text-lg">Geração Bem-sucedida!</h4>
+                <p class="text-sm text-gray-500">Copie e salve esta chave em um local seguro. Por segurança, ela **nunca mais** será mostrada.</p>
+                
+                <div class="bg-gray-900 text-green-400 p-4 rounded-xl font-mono text-sm break-all relative group cursor-pointer" @click="copyKey()">
+                    <span x-text="generatedKey"></span>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-all rounded-xl">
+                        <span class="text-[10px] font-black tracking-widest uppercase">Clique para Copiar</span>
+                    </div>
+                </div>
+                
+                <button @click="location.reload()" class="w-full bg-gray-100 text-gray-800 font-black py-4 rounded-2xl hover:bg-gray-200 transition-all">
+                    Já Salvei a Chave
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Webhook Modal -->
+    <div id="modal-webhook" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 space-y-6">
+            <div class="flex justify-between items-center">
+                <h3 class="text-2xl font-black text-gray-900">Novo Webhook</h3>
+                <button @click="closeModal('webhook')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase mb-2">URL de Destino</label>
+                    <input type="url" x-model="webhookUrl" class="w-full bg-gray-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-northway-red" placeholder="https://seu-n8n.com/webhook/c842...">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase mb-2">Eventos para Disparar</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" value="lead.created" x-model="webhookEvents" class="rounded text-northway-red">
+                            <span class="text-sm font-bold text-gray-700">Novo Lead</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" value="lead.updated" x-model="webhookEvents" class="rounded text-northway-red">
+                            <span class="text-sm font-bold text-gray-700">Lead Atualizado</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" value="pipeline.changed" x-model="webhookEvents" class="rounded text-northway-red">
+                            <span class="text-sm font-bold text-gray-700">Fase do Funil</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors">
+                            <input type="checkbox" value="interaction.created" x-model="webhookEvents" class="rounded text-northway-red">
+                            <span class="text-sm font-bold text-gray-700">Nova Interação</span>
+                        </label>
+                    </div>
+                </div>
+                <button @click="submitWebhook()" class="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-black transition-all">
+                    Salvar Webhook
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function integrationsHub() {
+        return {
+            newKeyName: '',
+            selectedScopes: ['*'],
+            generatedKey: '',
+            webhookUrl: '',
+            webhookEvents: ['lead.created'],
+
+            openModal(type) {
+                document.getElementById('modal-' + type).classList.remove('hidden');
+                document.getElementById('modal-' + type).classList.add('flex');
+            },
+
+            closeModal(type) {
+                document.getElementById('modal-' + type).classList.add('hidden');
+                document.getElementById('modal-' + type).classList.remove('flex');
+                if (type === 'key' && this.generatedKey) location.reload();
+            },
+
+            async submitNewKey() {
+                if (!this.newKeyName) return Swal.fire('Atenção', 'Dê um nome para a chave.', 'warning');
+                
+                try {
+                    const res = await fetch('/api/integrations/keys', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ name: this.newKeyName, scopes: this.selectedScopes })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        this.generatedKey = data.api_key;
+                        lucide.createIcons();
+                    } else {
+                        Swal.fire('Erro', data.error, 'error');
+                    }
+                } catch (e) {
+                    Swal.fire('Erro', 'Falha ao conectar com o servidor.', 'error');
+                }
+            },
+
+            copyKey() {
+                navigator.clipboard.writeText(this.generatedKey);
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Chave copiada!',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            },
+
+            async revokeKey(id) {
+                const result = await Swal.fire({
+                    title: 'Revogar Chave?',
+                    text: 'Qualquer integração usando esta chave parará de funcionar imediatamente.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Sim, revogar',
+                    cancelButtonText: 'Cancelar'
+                });
+
+                if (result.isConfirmed) {
+                    const res = await fetch(`/api/integrations/keys/${id}/revoke`, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) location.reload();
+                }
+            },
+
+            async submitWebhook() {
+                if (!this.webhookUrl) return Swal.fire('Atenção', 'A URL é obrigatória.', 'warning');
+                
+                try {
+                    const res = await fetch('/api/integrations/webhooks', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ url: this.webhookUrl, events: this.webhookEvents })
+                    });
+                    const data = await res.json();
+                    if (data.success) location.reload();
+                    else Swal.fire('Erro', data.error, 'error');
+                } catch (e) {
+                    Swal.fire('Erro', 'Falha ao conectar.', 'error');
+                }
+            },
+
+            async deleteWebhook(id) {
+                const result = await Swal.fire({
+                    title: 'Excluir Webhook?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sim, excluir'
+                });
+                if (result.isConfirmed) {
+                    const res = await fetch(`/api/integrations/webhooks/${id}`, { method: 'DELETE' });
+                    if ((await res.json()).success) location.reload();
+                }
+            },
+
+            async clearLogs() {
+                const result = await Swal.fire({
+                    title: 'Limpar todos os logs?',
+                    icon: 'question',
+                    showCancelButton: true
+                });
+                if (result.isConfirmed) {
+                    const res = await fetch('/api/integrations/logs/clear', { method: 'POST' });
+                    if ((await res.json()).success) location.reload();
+                }
+            },
+
+            viewLogDetails(log) {
+                let payloadHtml = '<pre class="text-left text-xs bg-gray-900 text-green-400 p-4 rounded-xl overflow-auto max-h-60 mt-4">';
+                payloadHtml += JSON.stringify(log.request_payload, null, 2);
+                payloadHtml += '</pre>';
+                
+                if (log.response_payload) {
+                    payloadHtml += '<p class="text-left text-[10px] font-black uppercase text-gray-400 mt-4">Resposta:</p>';
+                    payloadHtml += '<pre class="text-left text-xs bg-gray-100 text-gray-700 p-4 rounded-xl overflow-auto max-h-60 mt-1">';
+                    payloadHtml += typeof log.response_payload === 'string' ? log.response_payload : JSON.stringify(log.response_payload, null, 2);
+                    payloadHtml += '</pre>';
+                }
+
+                Swal.fire({
+                    title: 'Detalhes da Requisição',
+                    html: payloadHtml,
+                    width: '800px',
+                    showCloseButton: true,
+                    showConfirmButton: false
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}
