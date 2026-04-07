@@ -32,19 +32,25 @@ class EvolutionService:
 
     @staticmethod
     def create_instance(instance_name):
+        """Creates a new instance in Evolution API v1/v2"""
         url = f"{EvolutionService.get_api_url()}/instance/create"
         payload = {
             "instanceName": instance_name,
-            "token": "",
-            "qrcode": True
+            "token": "", 
+            "qrcode": True,
+            "integration": "WHATSAPP-BAILEYS" # Required for v2.x
         }
-        response = requests.post(
-            url, 
-            json=payload, 
-            headers=EvolutionService.get_headers(),
-            verify=False # Bypass SSL issues common on VPS
-        )
-        return response.json()
+        try:
+            response = requests.post(
+                url, 
+                json=payload, 
+                headers=EvolutionService.get_headers(),
+                timeout=15,
+                verify=False
+            )
+            return response.json()
+        except Exception as e:
+            return {"error": str(e)}
 
     @staticmethod
     def get_connection_status(instance_name):
@@ -92,15 +98,23 @@ class EvolutionService:
 
     @staticmethod
     def logout_instance(instance_name):
+        """Logs out from an instance"""
         url = f"{EvolutionService.get_api_url()}/instance/logout/{instance_name}"
-        response = requests.delete(url, headers=EvolutionService.get_headers())
-        return response.json()
+        try:
+            response = requests.delete(url, headers=EvolutionService.get_headers(), verify=False)
+            return response.json()
+        except:
+            return {"status": 404}
         
     @staticmethod
     def delete_instance(instance_name):
+        """Deletes an instance from the server"""
         url = f"{EvolutionService.get_api_url()}/instance/delete/{instance_name}"
-        response = requests.delete(url, headers=EvolutionService.get_headers())
-        return response.json()
+        try:
+            response = requests.delete(url, headers=EvolutionService.get_headers(), verify=False)
+            return response.json()
+        except:
+            return {"status": 404}
 
     @staticmethod
     def configure_webhook(instance_name, webhook_url):

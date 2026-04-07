@@ -144,12 +144,14 @@ def get_instance_status(instance_name):
         debug_info = None
         
         if state in ['connecting', 'close', 'disconnected']:
-            # For v2, if it's disconnected, we should explicitly 'POST' to connect
-            if state == 'disconnected':
-                qr_res = EvolutionService.connect_instance(instance_name)
-            else:
-                # If already connecting, the 'GET' might bring the current QR
-                qr_res = EvolutionService.get_qrcode(instance_name)
+            # For v2, let's try POST connect first
+            qr_res = EvolutionService.connect_instance(instance_name)
+            
+            # If 404 (Not Found), the server might be out of sync
+            if isinstance(qr_res, dict) and qr_res.get('status') == 404:
+                # AUTO-SYNC: delete and recreate on server
+                EvolutionService.delete_instance(instance_name)
+                qr_res = EvolutionService.create_instance(instance_name)
             
             # Helper to find 'base64' in any nested dictionary
             def find_base64(data):
@@ -167,12 +169,12 @@ def get_instance_status(instance_name):
 
             qr_code_base64 = find_base64(qr_res)
             
-            # FALLBACK: If connect didn't work, try create (some versions return QR on re-creation)
+            # If still nothing, try GET as final fallback
             if not qr_code_base64:
-                qr_res_alt = EvolutionService.create_instance(instance_name)
-                qr_code_base64 = find_base64(qr_res_alt)
+                qr_res_get = EvolutionService.get_qrcode(instance_name)
+                qr_code_base64 = find_base64(qr_res_get)
                 if not qr_code_base64:
-                    debug_info = f"State: {state} | Connect Res: {str(qr_res)[:60]} | Create Res: {str(qr_res_alt)[:60]}"
+                    debug_info = f"V2.3.7 - State: {state} | POST Res: {str(qr_res)[:60]} | GET Res: {str(qr_res_get)[:60]}"
             
             # Ensure it has the data URI prefix
             if qr_code_base64 and isinstance(qr_code_base64, str) and not qr_code_base64.startswith('data:'):
