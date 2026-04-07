@@ -18,12 +18,11 @@ def sync_database():
             inspector = inspect(db.engine)
             
             def add_column_if_missing(table_name, col_name, dtype):
+                results.append(f"🔍 Checking table '{table_name}' for column '{col_name}'...")
                 if inspector.has_table(table_name):
                     columns = [c['name'] for c in inspector.get_columns(table_name)]
                     if col_name not in columns:
                         try:
-                            # Postgres supports IF NOT EXISTS for some things but not ALTER TABLE ADD COLUMN in all versions
-                            # So we check manually via inspector
                             conn.execute(text(f"ALTER TABLE \"{table_name}\" ADD COLUMN {col_name} {dtype}"))
                             conn.commit()
                             results.append(f"✅ Added {table_name}.{col_name}")
@@ -278,6 +277,37 @@ def sync_database():
             add_column_if_missing("company", "tax_rate", "FLOAT DEFAULT 0.0")
             add_column_if_missing("financial_category", "is_deduction", "BOOLEAN DEFAULT FALSE")
             add_column_if_missing("transaction", "revenue_type", "VARCHAR(20) DEFAULT 'recorrente'")
+
+            # WhatsApp Repairs
+            for c, d in [
+                ('company_id', "INTEGER"),
+                ('instance_id', "INTEGER"),
+                ('remote_jid', "VARCHAR(100)"),
+                ('name', "VARCHAR(255)"),
+                ('profile_pic_url', "TEXT"),
+                ('unread_count', "INTEGER DEFAULT 0"),
+                ('last_message_at', "TIMESTAMP"),
+                ('last_message_preview', "TEXT"),
+                ('last_message_dir', "VARCHAR(10) DEFAULT 'in'"),
+                ('last_message_status', "VARCHAR(20) DEFAULT 'sent'"),
+                ('created_at', "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+                ('updated_at', "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            ]: add_column_if_missing("whatsapp_conversations", c, d)
+
+            for c, d in [
+                ('company_id', "INTEGER"),
+                ('conversation_id', "INTEGER"),
+                ('message_id', "VARCHAR(100)"),
+                ('direction', "VARCHAR(10)"),
+                ('type', "VARCHAR(20)"),
+                ('content', "TEXT"),
+                ('media_url', "TEXT"),
+                ('status', "VARCHAR(20)"),
+                ('sender_name', "VARCHAR(255)"),
+                ('participant_jid', "VARCHAR(100)"),
+                ('created_at', "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+                ('updated_at', "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            ]: add_column_if_missing("whatsapp_messages", c, d)
 
             # 4. Data Seeding
             # Admin Seed

@@ -35,15 +35,24 @@ def evolution_webhook():
             
     # 3. Handle New Messages
     elif event == 'MESSAGES_UPSERT':
-        message_data = data.get('data', {}).get('message', {})
-        
-        # Determine if it's sent from the instance (me) or incoming from remote
-        is_from_me = message_data.get('key', {}).get('fromMe', False)
-        direction = 'out' if is_from_me else 'in'
-        
-        remote_jid = message_data.get('key', {}).get('remoteJid')
-        message_id = message_data.get('key', {}).get('id')
-        push_name = message_data.get('pushName') or remote_jid.split('@')[0]
+        # Evolution v2 often sends a list of messages in 'data.messages' or 'data.message'
+        webhook_data = data.get('data', {})
+        messages = webhook_data.get('messages', [])
+        if not messages and webhook_data.get('message'):
+            messages = [webhook_data.get('message')]
+            
+        if not messages:
+            return jsonify({'success': True}), 200
+            
+        for message_data in messages:
+            # Determine if it's sent from the instance (me) or incoming from remote
+            key = message_data.get('key', {})
+            is_from_me = key.get('fromMe', False)
+            direction = 'out' if is_from_me else 'in'
+            
+            remote_jid = key.get('remoteJid')
+            message_id = key.get('id')
+            push_name = message_data.get('pushName') or (remote_jid.split('@')[0] if remote_jid else "Unknown")
         
         # Parse content (simplistic for text, image, etc.)
         content = ""

@@ -19,8 +19,9 @@ def check_feature_access():
         return
         
     # Check Feature Flag
-    if current_user.is_authenticated:
-        if not current_user.company.has_feature('whatsapp'):
+    if current_user and current_user.is_authenticated:
+        company = getattr(current_user, 'company', None)
+        if not company or not hasattr(company, 'has_feature') or not company.has_feature('whatsapp'):
             if request.is_json: # API
                 return jsonify({'error': 'Feature Disabled for this Company'}), 403
             else: # UI
@@ -206,47 +207,99 @@ def inbox():
 @login_required
 def groups():
     return render_template('whatsapp_groups.html')
+@whatsapp_bp.route('/api/whatsapp/debug-schema')
+@login_required
+def debug_schema():
+    from sqlalchemy import inspect
+    inspector = inspect(db.engine)
+    results = {}
+    for table in ['whatsapp_instances', 'whatsapp_conversations', 'whatsapp_messages']:
+        try:
+            results[table] = [c['name'] for c in inspector.get_columns(table)]
+        except Exception as e:
+            results[table] = f"ERROR: {str(e)}"
+    return jsonify({
+        'version': 'v2.3.8-resilienct',
+        'tables': results,
+        'user_company_id': current_user.company_id
+    })
 
-# --- API ---
 @whatsapp_bp.route('/api/whatsapp/conversations')
 @login_required
 def get_conversations():
     try:
         instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
         if not instance:
-            return jsonify({'conversations': []})
+            return jsonify({'conversations': [], 'debug': 'No instance found for this company'})
             
-        conversations = WhatsappConversation.query.filter_by(instance_id=instance.id).order_by(WhatsappConversation.updated_at.desc()).all()
-        
+        try:
+            # Query conversations, but handle potential missing columns gracefully
+            # We use a safer query first to check if the table exists
+            conversations = WhatsappConversation.query.filter_by(instance_id=instance.id).order_by(WhatsappConversation.updated_at.desc()).all()
+        except Exception as query_e:
+            current_app.logger.error(f"Inbox Query Failure: {query_e}")
+            return jsonify({
+                'conversations': [],
+                 'debug_error': f"Query Error: {str(query_e)}",
+                 'repair_url': f'/sys-admin/sync-db?secret=northway_sync_2026'
+            }), 200 
+            
         data = []
         for c in conversations:
-            contact_type = 'atendimento'
-            contact_id = c.remote_jid
-            if c.lead_id:
-                contact_type = 'lead'
-                contact_id = c.lead_id
-            elif c.client_id:
-                contact_type = 'client'
-                contact_id = c.client_id
+            try:
+                # Use getattr for everything to be safe
+                remote_jid = getattr(c, 'remote_jid', 'unknown')
+                c_id = str(getattr(c, 'id', ''))
                 
-            data.append({
-                'id': contact_id,
-                'type': contact_type,
-                'phone': c.remote_jid,
-                'name': c.name or c.remote_jid.split('@')[0],
-                'profile_pic_url': c.profile_pic_url,
-                'last_message_content': c.last_message_preview,
-                'last_message_at': c.updated_at.isoformat() if c.updated_at else None,
-                'last_message_dir': c.last_message_dir,
-                'last_message_status': c.last_message_status,
-                'unread_count': c.unread_count,
-                'is_group': "@g.us" in c.remote_jid
-            })
+                # Determine contact type and ID
+                contact_type = 'atendimento'
+                contact_id = remote_jid
+                
+                if getattr(c, 'lead_id', None):
+                    contact_type = 'lead'
+                    contact_id = str(c.lead_id)
+                elif getattr(c, 'client_id', None):
+                    contact_type = 'client'
+                    contact_id = str(c.client_id)
+                    
+                # Safe date formatting
+                last_at = getattr(c, 'updated_at', None)
+                if last_at and hasattr(last_at, 'isoformat'):
+                    last_at = last_at.isoformat()
+                else:
+                    last_at = None
+                
+                data.append({
+                    'id': contact_id,
+                    'type': contact_type,
+                    'phone': remote_jid,
+                    'name': getattr(c, 'name', '') or (remote_jid.split('@')[0] if '@' in str(remote_jid) else 'Unknown'),
+                    'profile_pic_url': getattr(c, 'profile_pic_url', None),
+                    'last_message_content': getattr(c, 'last_message_preview', ''),
+                    'last_message_at': last_at,
+                    'last_message_dir': getattr(c, 'last_message_dir', 'in'),
+                    'last_message_status': getattr(c, 'last_message_status', 'sent'),
+                    'unread_count': getattr(c, 'unread_count', 0),
+                    'is_group': "@g.us" in str(remote_jid)
+                })
+            except Exception as item_e:
+                current_app.logger.warning(f"Error processing conversation item: {item_e}")
+                continue
             
         return jsonify({'conversations': data})
     except Exception as e:
-        current_app.logger.error(f"Inbox Error: {e}")
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        error_details = traceback.format_exc()
+        current_app.logger.error(f"Inbox Fatal Error: {e}\n{error_details}")
+        # Return 200 with error info so the UI can show the ACTUAL cause
+        return jsonify({
+            'error': f"BACKEND_ERROR: {str(e)}", 
+            'conversations': [], 
+            'fatal': True,
+            'stack': error_details,
+            'repair_message': 'Por favor, execute o link de sincronização para garantir que o banco de dados está atualizado.',
+            'repair_url': '/sys-admin/sync-db?secret=northway_sync_2026'
+        }), 200
 
 @whatsapp_bp.route('/api/whatsapp/<string:type>/<string:contact_id>/messages', methods=['GET'])
 @whatsapp_bp.route('/api/whatsapp/lead/<int:id>/messages', methods=['GET'], endpoint='get_lead_messages_legacy')
