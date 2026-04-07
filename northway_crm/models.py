@@ -18,7 +18,7 @@ class Contact(db.Model):
     # Relationships
     leads = db.relationship('Lead', backref='contact', lazy=True)
     clients = db.relationship('Client', backref='contact', lazy=True)
-    messages = db.relationship('WhatsAppMessage', backref='contact', lazy=True)
+    # WhatsApp relationship will be added later
 
 # Enums (using simple strings for MVP sqlite compatibility/simplicity)
 ROLE_ADMIN = 'admin'
@@ -310,7 +310,7 @@ class Lead(db.Model):
     
     interactions = db.relationship('Interaction', backref='lead', cascade='all, delete-orphan', lazy=True)
     tasks = db.relationship('Task', backref='lead', cascade='all, delete-orphan', lazy=True)
-    whatsapp_messages = db.relationship('WhatsAppMessage', backref='lead', lazy=True)
+    # WhatsApp relationship will be added later
     pipeline_stage = db.relationship('PipelineStage', backref='stage_leads')
     # Link back to client if converted
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
@@ -641,22 +641,64 @@ class DriveFileEvent(db.Model):
     # Unique constraint handled in migration or app logic ideally
     # __table_args__ = (db.UniqueConstraint('company_id', 'file_id', name='_company_file_uc'),)
 
-class WhatsAppMessage(db.Model):
+class WhatsappInstance(db.Model):
+    __tablename__ = 'whatsapp_instances'
     id = db.Column(db.Integer, primary_key=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    instance_name = db.Column(db.String(100), nullable=False)
+    evolution_api_id = db.Column(db.String(100), nullable=True)
+    token = db.Column(db.String(500), nullable=True) # API token for this instance
+    status = db.Column(db.String(20), default='disconnected') # connected, disconnected, reading_qrcode
+    owner_phone = db.Column(db.String(50), nullable=True)
+    profile_pic_url = db.Column(db.String(500), nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+class WhatsappConversation(db.Model):
+    __tablename__ = 'whatsapp_conversations'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    instance_id = db.Column(db.Integer, db.ForeignKey('whatsapp_instances.id'), nullable=False)
+    remote_jid = db.Column(db.String(100), nullable=False, index=True) # Usually phone number + @s.whatsapp.net or group jid
+    type = db.Column(db.String(20), default='individual') # individual, group
+    name = db.Column(db.String(255), nullable=True) # Contact or group name
+    profile_pic_url = db.Column(db.String(500), nullable=True)
+    unread_count = db.Column(db.Integer, default=0)
+    last_message_at = db.Column(db.DateTime, nullable=True)
+    last_message_preview = db.Column(db.Text, nullable=True)
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
-    direction = db.Column(db.String(10), nullable=False) # 'in' or 'out'
-    type = db.Column(db.String(20), default='text') # text, image, file
-    content = db.Column(db.Text, nullable=True)
-    status = db.Column(db.String(20), default='sent') # sent, delivered, read, failed
-    external_id = db.Column(db.String(100), nullable=True) # Z-API Message ID
-    phone = db.Column(db.String(50), nullable=True) # For unknown contacts
-    sender_name = db.Column(db.String(100), nullable=True) # From WhatsApp profile
-    profile_pic_url = db.Column(db.String(500), nullable=True) # URL from webhook
-    attachment_url = db.Column(db.String(1000), nullable=True) # Media URL (image, audio, etc.)
-    contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+    
+    messages = db.relationship('WhatsappMessage', backref='conversation', lazy=True, cascade="all, delete-orphan")
+    group_members = db.relationship('WhatsappGroupMember', backref='conversation', lazy=True, cascade="all, delete-orphan")
+
+class WhatsappMessage(db.Model):
+    __tablename__ = 'whatsapp_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('whatsapp_conversations.id'), nullable=False, index=True)
+    message_id = db.Column(db.String(255), nullable=False, unique=True, index=True) # Evolution Message ID
+    direction = db.Column(db.String(10), nullable=False) # 'in' or 'out'
+    type = db.Column(db.String(20), default='text') # text, image, audio, video, document, reaction, location, etc
+    content = db.Column(db.Text, nullable=True)
+    media_url = db.Column(db.String(1000), nullable=True)
+    mime_type = db.Column(db.String(100), nullable=True)
+    status = db.Column(db.String(20), default='sent') # sent, delivered, read, failed
+    timestamp = db.Column(db.DateTime, default=get_now_br)
+    sender_name = db.Column(db.String(255), nullable=True)
+    participant_jid = db.Column(db.String(100), nullable=True) # Used in groups (who sent the message)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+class WhatsappGroupMember(db.Model):
+    __tablename__ = 'whatsapp_group_members'
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('whatsapp_conversations.id'), nullable=False, index=True)
+    member_jid = db.Column(db.String(100), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
 
 class QuickMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,4 +1,4 @@
-from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction, FinancialEvent, ContractTemplate, BillingEvent, Expense, WhatsAppMessage, Notification, ClientChecklist
+from models import db, User, Company, Client, Lead, Contract, Transaction, Pipeline, PipelineStage, Role, ROLE_ADMIN, Task, Interaction, FinancialEvent, ContractTemplate, BillingEvent, Expense, Notification, ClientChecklist
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 import random
@@ -28,7 +28,7 @@ def wipe_data(db_session, company_id):
     
     # Interactions & Communication
     Interaction.query.filter_by(company_id=company_id).delete()
-    WhatsAppMessage.query.filter_by(company_id=company_id).delete()
+
     Notification.query.filter_by(company_id=company_id).delete()
     
     # Operations

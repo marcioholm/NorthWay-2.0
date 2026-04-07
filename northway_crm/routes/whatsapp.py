@@ -1,9 +1,12 @@
 from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template, current_app, Response
 from flask_login import login_required, current_user
-from models import db, Integration, WhatsAppMessage, Lead, Client, QuickMessage
-from services.whatsapp_service import WhatsAppService
+from models import db, Integration, Lead, Client, QuickMessage, WhatsappInstance, WhatsappConversation, WhatsappMessage, WhatsappGroupMember
+from services.evolution_service import EvolutionService
 import json
+import uuid
+import base64
 from extensions import limiter
+from datetime import datetime
 
 whatsapp_bp = Blueprint('whatsapp', __name__)
 
@@ -36,108 +39,55 @@ def from_json_filter(value):
 @whatsapp_bp.route('/api/whatsapp/config', methods=['POST'])
 @login_required
 def configure():
-    instance_id = request.form.get('instance_id', '').strip()
-    token = request.form.get('token', '').strip()
-    api_url = request.form.get('api_url', 'https://api.z-api.io').strip()
-    client_token = request.form.get('client_token', '').strip()
+    instance_name = request.form.get('instance_name', '').strip()
     
-    # Anti-ban delays
-    min_delay = request.form.get('min_delay', '1').strip()
-    max_delay = request.form.get('max_delay', '5').strip()
-    
-    if not instance_id or not token:
-        flash('Instance ID e Token são obrigatórios.', 'error')
-        return redirect(url_for('admin.settings_integrations'))
+    if not instance_name:
+        company_slug = current_user.company.name.lower().replace(' ', '_').replace('-', '_')
+        instance_name = f"northway_{company_slug}_{current_user.company_id}"
         
-    # Logic kept here as it's Admin/CRUD specific, or could move to Service setup
-    integration = Integration.query.filter_by(company_id=current_user.company_id, service='z_api').first()
-    if not integration:
-        integration = Integration(company_id=current_user.company_id, service='z_api')
-        db.session.add(integration)
-    
-    integration.api_key = token
-    integration.config_json = json.dumps({
-        'instance_id': instance_id,
-        'api_url': api_url.rstrip('/'),
-        'client_token': client_token,
-        'min_delay': int(min_delay) if min_delay.isdigit() else 1,
-        'max_delay': int(max_delay) if max_delay.isdigit() else 5
-    })
-    integration.is_active = True
-    
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        instance = WhatsappInstance(company_id=current_user.company_id, instance_name=instance_name)
+        db.session.add(instance)
+    else:
+        instance.instance_name = instance_name
+        
     try:
+        # Create instance in Evolution
+        res = EvolutionService.create_instance(instance_name)
+        instance.status = 'connecting'
         db.session.commit()
-        flash('Configuração salva.', 'success')
+        
+        flash('Instância Evolution criada com sucesso. Webhooks requerem configuração via n8n/Nora.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Erro: {e}', 'error')
+        flash(f'Erro na Evolution API: {e}', 'error')
         
     return redirect(url_for('admin.settings_integrations'))
 
 @whatsapp_bp.route('/api/whatsapp/test', methods=['POST'])
 @login_required
 def test_connection():
-    config = WhatsAppService.get_config(current_user.company_id)
-    if not config:
-        # DEBUG LOGIC FOR VERCEL
-        from models import Integration
-        cid = current_user.company_id
-        intg = Integration.query.filter_by(company_id=cid, service='z_api').first()
-        if not intg:
-            return jsonify({'connected': False, 'message': "Instalação não localizada no banco de dados."})
-        if not intg.is_active:
-            return jsonify({'connected': False, 'message': "A integração está desativada no painel."})
-            
-        return jsonify({'connected': False, 'message': "Configuração incompleta ou inválida."})
-    
-    import requests
-    headers = {}
-    if config.get('client_token'): headers['Client-Token'] = config['client_token']
-    url = f"{config['api_url']}/instances/{config['instance_id']}/token/{config['token']}/status"
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        return jsonify({'connected': False, 'message': "Instância não configurada."})
     
     try:
-        res = requests.get(url, headers=headers, timeout=10)
-        data = res.json()
+        res = EvolutionService.get_connection_status(instance.instance_name)
+        state = res.get('instance', {}).get('state', 'disconnected')
         
-        if 'error' in data:
-            err = data['error']
-            if "already connected" in str(err).lower():
-                return jsonify({'connected': True, 'message': "Conectado! ✅"})
-            return jsonify({'connected': False, 'message': f"Erro Z-API: {err}"})
+        instance.status = state
+        db.session.commit()
+        
+        if state == 'open':
+            return jsonify({'connected': True, 'message': "Conectado! ✅"})
+        elif state == 'connecting':
+            return jsonify({'connected': False, 'message': "Conectando / Aguardando QR Code."})
+        else:
+            return jsonify({'connected': False, 'message': f"Status: {state}"})
             
-        if data.get('connected') or data.get('status') == 'CONNECTED': 
-            phone = data.get('phone') or data.get('instanceId')
-            return jsonify({'connected': True, 'phone': phone, 'message': "Conectado! ✅"})
-            
-        return jsonify({'connected': False, 'message': "Desconectado (ou QR Code necessário)."})
-        
     except Exception as e:
-        return jsonify({'connected': False, 'message': f"Erro de conexão: {str(e)}"})
-
-@whatsapp_bp.route('/api/whatsapp/setup-webhook', methods=['POST'])
-@login_required
-def setup_webhook():
-    root = request.url_root.rstrip('/')
-    # Force HTTPS if not localhost (Vercel/Production)
-    if 'localhost' not in root and '127.0.0.1' not in root:
-        root = root.replace('http://', 'https://')
-        
-    webhook_url = f"{root}/api/webhooks/zapi/{current_user.company_id}"
-    try:
-        WhatsAppService.configure_webhook(current_user.company_id, webhook_url)
-        return jsonify({'success': True})
-    except Exception as e:
-        # Check if it was a configuration error
-        err_msg = str(e)
-        if "WhatsApp não configurado" in err_msg:
-             # Add more context
-             cid = current_user.company_id
-             intg = Integration.query.filter_by(company_id=cid, service='z_api').first()
-             if not intg: err_msg += f" (Registro inexistente para empresa {cid})"
-             elif not intg.is_active: err_msg += f" (Registro inativo para empresa {cid})"
-             else: err_msg += f" (Erro desconhecido na recuperação da config para empresa {cid})"
-             
-        return jsonify({'error': err_msg}), 500
+        return jsonify({'connected': False, 'message': f"Erro: {str(e)}"})
 
 # --- VIEWS ---
 @whatsapp_bp.route('/whatsapp')
@@ -148,13 +98,46 @@ def inbox():
     users = User.query.filter_by(company_id=current_user.company_id).all()
     return render_template('whatsapp_inbox.html', pipelines=pipelines, users=users)
 
-# --- API ---
+@whatsapp_bp.route('/whatsapp/groups')
+@login_required
+def groups():
+    return render_template('whatsapp_groups.html')
 
+# --- API ---
 @whatsapp_bp.route('/api/whatsapp/conversations')
 @login_required
 def get_conversations():
     try:
-        data = WhatsAppService.get_inbox_conversations(current_user.company_id)
+        instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+        if not instance:
+            return jsonify({'conversations': []})
+            
+        conversations = WhatsappConversation.query.filter_by(instance_id=instance.id).order_by(WhatsappConversation.updated_at.desc()).all()
+        
+        data = []
+        for c in conversations:
+            contact_type = 'atendimento'
+            contact_id = c.remote_jid
+            if c.lead_id:
+                contact_type = 'lead'
+                contact_id = c.lead_id
+            elif c.client_id:
+                contact_type = 'client'
+                contact_id = c.client_id
+                
+            data.append({
+                'id': c.id,
+                'phone': c.remote_jid,
+                'name': c.name or c.remote_jid.split('@')[0],
+                'profilePic': c.profile_pic_url,
+                'lastMessage': c.last_message_preview,
+                'lastMessageTime': c.updated_at.isoformat() if c.updated_at else None,
+                'unreadCount': c.unread_count,
+                'isGroup': "@g.us" in c.remote_jid,
+                'contactType': contact_type,
+                'contactId': contact_id
+            })
+            
         return jsonify({'conversations': data})
     except Exception as e:
         current_app.logger.error(f"Inbox Error: {e}")
@@ -165,55 +148,51 @@ def get_conversations():
 @whatsapp_bp.route('/api/whatsapp/client/<int:id>/messages', methods=['GET'], endpoint='get_client_messages_legacy')
 @login_required
 def get_history(type='lead', contact_id=None, id=None):
-    # Use contact_id from path, or id from legacy routes
     contact_id = contact_id or id
     
     if not contact_id:
         return jsonify({'error': 'Missing contact ID'}), 400
-    if 'lead' in request.endpoint: 
-        type = 'lead'
-    if 'client' in request.endpoint: 
-        type = 'client'
+    if 'lead' in request.endpoint: type = 'lead'
+    if 'client' in request.endpoint: type = 'client'
     
-    # Check Auth & Get Messages
     filters = []
+    remote_jid = None
     
     if type == 'lead':
         obj = Lead.query.get_or_404(contact_id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
-        norm_phone = WhatsAppService.normalize_phone(obj.phone)
-        filters.append(WhatsAppMessage.lead_id == obj.id)
-        if norm_phone:
-            filters.append(WhatsAppMessage.phone == norm_phone)
+        remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and "@" not in obj.phone else obj.phone
     elif type == 'client':
         obj = Client.query.get_or_404(contact_id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
-        norm_phone = WhatsAppService.normalize_phone(obj.phone)
-        filters.append(WhatsAppMessage.client_id == obj.id)
-        if norm_phone:
-            filters.append(WhatsAppMessage.phone == norm_phone)
+        remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and "@" not in obj.phone else obj.phone
     elif type == 'atendimento':
-        # Unknown contact, lookup by phone
-        norm_phone = WhatsAppService.normalize_phone(contact_id)
-        filters.append(WhatsAppMessage.phone == norm_phone)
-        filters.append(WhatsAppMessage.phone == contact_id) # Just in case
+        remote_jid = contact_id
+        if "@" not in remote_jid: remote_jid = f"{remote_jid}@s.whatsapp.net"
     else:
         return jsonify({'error': 'Invalid type'}), 400
         
-    msgs = WhatsAppMessage.query.filter(
-        WhatsAppMessage.company_id == current_user.company_id,
-        db.or_(*filters)
-    ).order_by(WhatsAppMessage.created_at.asc()).all()
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        return jsonify({'messages': []})
+        
+    conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
+    if not conv:
+        return jsonify({'messages': []})
+        
+    msgs = WhatsappMessage.query.filter_by(conversation_id=conv.id).order_by(WhatsappMessage.timestamp.asc()).all()
     
     return jsonify({
         'messages': [{
             'id': m.id,
+            'message_id': m.message_id,
             'content': m.content,
             'direction': m.direction,
             'status': m.status,
             'type': m.type or 'text',
-            'attachment_url': m.attachment_url,
-            'timestamp': m.created_at.isoformat()
+            'attachment_url': m.media_url,
+            'timestamp': m.timestamp.isoformat() if m.timestamp else m.created_at.isoformat(),
+            'sender_name': m.sender_name
         } for m in msgs]
     })
 
@@ -224,15 +203,62 @@ def send_msg():
     content = data.get('content')
     if not content: return jsonify({'error': 'No content'}), 400
     
-    try:
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance: return jsonify({'error': 'No instance configured'}), 400
+    
+    remote_jid = data.get('remote_jid')
+    if not remote_jid:
         if data.get('lead_id'):
-            msg = WhatsAppService.send_message(current_user.company_id, 'lead', data['lead_id'], content)
+            obj = Lead.query.get(data['lead_id'])
+            remote_jid = obj.phone
         elif data.get('client_id'):
-            msg = WhatsAppService.send_message(current_user.company_id, 'client', data['client_id'], content)
+            obj = Client.query.get(data['client_id'])
+            remote_jid = obj.phone
         else:
             return jsonify({'error': 'Target missing'}), 400
             
-        return jsonify({'success': True, 'message': {'id': msg.id, 'content': msg.content, 'timestamp': msg.created_at.isoformat()}})
+    if remote_jid and "@" not in remote_jid:
+        remote_jid = f"{remote_jid}@s.whatsapp.net"
+    
+    try:
+        res = EvolutionService.send_text(instance.instance_name, remote_jid, content)
+        
+        # Determine msg_id from response
+        try:
+            msg_id = res.get('key', {}).get('id', str(uuid.uuid4()))
+        except:
+            msg_id = str(uuid.uuid4())
+            
+        # Ensure conversation exists
+        conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
+        if not conv:
+            conv = WhatsappConversation(
+                company_id=current_user.company_id,
+                instance_id=instance.id,
+                remote_jid=remote_jid,
+                lead_id=data.get('lead_id'),
+                client_id=data.get('client_id'),
+                last_message_preview=content
+            )
+            db.session.add(conv)
+            db.session.flush()
+        else:
+            conv.last_message_preview = content
+            conv.updated_at = datetime.utcnow()
+            
+        new_msg = WhatsappMessage(
+            company_id=current_user.company_id,
+            conversation_id=conv.id,
+            message_id=msg_id,
+            direction='out',
+            type='text',
+            content=content,
+            status='sent'
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': {'id': new_msg.id, 'content': new_msg.content, 'timestamp': datetime.utcnow().isoformat()}})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -242,35 +268,113 @@ def send_media():
     if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
     file = request.files['file']
     
+    lead_id = request.form.get('lead_id')
+    client_id = request.form.get('client_id')
+    
+    if not lead_id and not client_id:
+        return jsonify({'error': 'Target missing'}), 400
+        
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance: return jsonify({'error': 'No instance configured'}), 400
+    
+    remote_jid = None
+    if lead_id:
+        obj = Lead.query.get(lead_id)
+        remote_jid = obj.phone
+    else:
+        obj = Client.query.get(client_id)
+        remote_jid = obj.phone
+        
+    if remote_jid and "@" not in remote_jid:
+        remote_jid = f"{remote_jid}@s.whatsapp.net"
+
+    mimetype = file.mimetype or 'application/octet-stream'
+    filename = file.filename
+    file_bytes = file.read()
+    b64_data = base64.b64encode(file_bytes).decode('utf-8')
+    
+    # Evolution APIs accept media encoded cleanly or as data URI. Evolution v1/v2 expects base64 without data URI for media if it's sendMedia, but wait, usually you pass the base64 string directly or use data URL. 
+    # Evolution supports data URL data:image/png;base64,..... or raw base64 depending on endpoint.
+    # To be safe, we prepend data uri scheme. Let's prepend it as Evolution v1 parses it.
+    base64_string = f"data:{mimetype};base64,{b64_data}"
+    
+    media_type = "document"
+    if "image" in mimetype: media_type = "image"
+    elif "video" in mimetype: media_type = "video"
+    elif "audio" in mimetype: media_type = "audio"
+    
     try:
-        if request.form.get('lead_id'):
-            WhatsAppService.send_message(current_user.company_id, 'lead', request.form['lead_id'], None, media_file=file)
-        elif request.form.get('client_id'):
-            WhatsAppService.send_message(current_user.company_id, 'client', request.form['client_id'], None, media_file=file)
+        if media_type == 'audio':
+            res = EvolutionService.send_audio(instance.instance_name, remote_jid, base64_string)
         else:
-            return jsonify({'error': 'Target missing'}), 400
+            res = EvolutionService.send_media(instance.instance_name, remote_jid, base64_string, media_type=media_type, caption=filename)
+        
+        # Determine msg_id
+        try:
+            msg_id = res.get('key', {}).get('id', str(uuid.uuid4()))
+        except:
+            msg_id = str(uuid.uuid4())
             
+        conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
+        if not conv:
+            conv = WhatsappConversation(
+                company_id=current_user.company_id,
+                instance_id=instance.id,
+                remote_jid=remote_jid,
+                lead_id=lead_id,
+                client_id=client_id,
+                last_message_preview=f"[{media_type}] {filename}"
+            )
+            db.session.add(conv)
+            db.session.flush()
+        else:
+            conv.last_message_preview = f"[{media_type}] {filename}"
+            conv.updated_at = datetime.utcnow()
+            
+        new_msg = WhatsappMessage(
+            company_id=current_user.company_id,
+            conversation_id=conv.id,
+            message_id=msg_id,
+            direction='out',
+            type=media_type,
+            content=filename,
+            media_url=base64_string, # In a real scale app you'd NOT save base64 in DB, but a URL
+            status='sent'
+        )
+        db.session.add(new_msg)
+        db.session.commit()
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# --- WEBHOOK ---(Public)
-@whatsapp_bp.route('/api/webhooks/zapi/<int:company_id>', methods=['POST'])
-def webhook(company_id):
-    # SECURITY: Verify Z-API Client-Token
-    client_token = request.headers.get('Client-Token')
-    config = WhatsAppService.get_config(company_id)
-    
-    if config and config.get('client_token'):
-        if client_token != config['client_token']:
-            current_app.logger.warning(f"Unauthorized Z-API Webhook Attempt: Invalid Client-Token for company {company_id}")
-            return jsonify({'error': 'Unauthorized'}), 401
-            
+# --- GROUPS (Evolution) ---
+@whatsapp_bp.route('/api/whatsapp/groups', methods=['GET'])
+@login_required
+def get_groups():
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance: return jsonify({'groups': []})
     try:
-        res = WhatsAppService.process_webhook(company_id, request.json)
+        res = EvolutionService.get_all_groups(instance.instance_name)
+        # Evolution usually returns an array or an object with groups list
         return jsonify(res)
     except Exception as e:
-        current_app.logger.error(f"Webhook Fatal: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@whatsapp_bp.route('/api/whatsapp/groups/send', methods=['POST'])
+@login_required
+def send_group_msg():
+    data = request.json
+    group_jid = data.get('group_jid')
+    content = data.get('content')
+    if not group_jid or not content: return jsonify({'error': 'Missing data'}), 400
+    
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance: return jsonify({'error': 'No instance'})
+    
+    try:
+        res = EvolutionService.send_text(instance.instance_name, group_jid, content)
+        return jsonify({'success': True, 'res': res})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 # --- QUICK MESSAGES (CRUD) ---
@@ -305,39 +409,33 @@ def delete_quick_message(id):
     db.session.commit()
     return jsonify({'success': True})
 
-@whatsapp_bp.route('/api/whatsapp/sync-profile', methods=['POST'])
+@whatsapp_bp.route('/api/whatsapp/read/<string:remote_jid>', methods=['POST'])
 @login_required
-def sync_profile():
-    data = request.json
-    c_type = data.get('type')
-    c_id = data.get('id')
+def mark_read(remote_jid):
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance: return jsonify({'success': False})
     
-    if not c_type or not c_id:
-        return jsonify({'error': 'Missing parameters'}), 400
-        
-    try:
-        contact = None
-        if c_type == 'lead':
-            contact = Lead.query.get(c_id)
-        elif c_type == 'client':
-            contact = Client.query.get(c_id)
-            
-        if not contact or contact.company_id != current_user.company_id:
-            return jsonify({'error': 'Contact not found'}), 404
-            
-        # Fetch Logic
-        # We need the phone to fetch
-        pic_url = WhatsAppService.fetch_profile_picture(current_user.company_id, contact.phone)
-        
-        if pic_url:
-            contact.profile_pic_url = pic_url
-            db.session.commit()
-            return jsonify({'success': True, 'url': pic_url})
-        else:
-            return jsonify({'success': False, 'message': 'Foto não encontrada ou erro na busca.'})
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
+    if conv:
+        conv.unread_count = 0
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'success': False})
+
+@whatsapp_bp.route('/api/whatsapp/unread-counts')
+@login_required
+@limiter.limit("600 per hour")
+def get_unread_counts():
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance: return jsonify({'total': 0, 'by_tab': {}})
+    
+    convs = WhatsappConversation.query.filter_by(instance_id=instance.id).filter(WhatsappConversation.unread_count > 0).all()
+    total = sum(c.unread_count for c in convs)
+    
+    return jsonify({
+        'total': total,
+        'by_tab': {'inbox': total} # Can be separated if needed
+    })
 
 @whatsapp_bp.route('/api/whatsapp/<string:type>/<string:id>/details', methods=['GET'])
 @login_required
@@ -347,7 +445,6 @@ def get_details(type, id):
         obj = Lead.query.get_or_404(id)
         if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
         
-        # Tags Logic
         tags = []
         if obj.status: tags.append({'text': obj.status, 'color': 'red' if obj.status == 'new' else 'gray'})
         if obj.source: tags.append({'text': obj.source, 'color': 'blue'})
@@ -373,18 +470,17 @@ def get_details(type, id):
         stage_id = None
         
     elif type == 'atendimento':
-        # Unknown contact
         tags = [{'text': 'Desconhecido', 'color': 'gray'}]
         deal_value = 'R$ 0,00'
         notes = 'Este contato ainda não foi adicionado ao CRM.'
         pipeline_id = None
         stage_id = None
         
-        # Try to find a sender name from messages
-        last_msg = WhatsAppMessage.query.filter_by(company_id=current_user.company_id, phone=id)\
-            .filter(WhatsAppMessage.sender_name != None)\
-            .order_by(WhatsAppMessage.created_at.desc()).first()
-        name = last_msg.sender_name if last_msg else id
+        instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+        name = id
+        if instance:
+            conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=id).first()
+            if conv and conv.name: name = conv.name
     else:
         return jsonify({'error': 'Invalid type'}), 400
         
@@ -398,20 +494,6 @@ def get_details(type, id):
         'stage_id': stage_id
     })
 
-@whatsapp_bp.route('/api/whatsapp/leads/<int:lead_id>/stage', methods=['POST'])
-@login_required
-def update_lead_stage(lead_id):
-    from models import Lead
-    data = request.json
-    lead = Lead.query.get_or_404(lead_id)
-    if lead.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
-    
-    lead.pipeline_id = data.get('pipeline_id')
-    lead.pipeline_stage_id = data.get('stage_id')
-    db.session.commit()
-    
-    return jsonify({'success': True})
-
 @whatsapp_bp.route('/api/whatsapp/atendimento/convert', methods=['POST'])
 @login_required
 def convert_unknown_to_lead():
@@ -422,10 +504,8 @@ def convert_unknown_to_lead():
     
     if not phone or not name: 
         return jsonify({'error': 'Missing phone or name'}), 400
-    
-    # Get pipeline info from request, or fallback to defaults
+        
     from models import Pipeline, PipelineStage
-    
     pipeline_id = data.get('pipeline_id')
     stage_id = data.get('stage_id')
     user_id = data.get('user_id') or current_user.id
@@ -438,7 +518,6 @@ def convert_unknown_to_lead():
             if first_stage:
                 stage_id = first_stage.id
 
-    # Create Lead
     lead = Lead(
         company_id=current_user.company_id,
         name=name,
@@ -451,12 +530,16 @@ def convert_unknown_to_lead():
         pipeline_stage_id=stage_id
     )
     db.session.add(lead)
-    db.session.flush() # Get ID
+    db.session.flush()
     
-    # Associate orphan messages
-    WhatsAppMessage.query.filter_by(company_id=current_user.company_id, phone=phone, lead_id=None, client_id=None)\
-        .update({WhatsAppMessage.lead_id: lead.id})
-    
+    # Associate conversation
+    remote_jid = f"{phone}@s.whatsapp.net" if "@" not in phone else phone
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if instance:
+        conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
+        if conv:
+            conv.lead_id = lead.id
+            
     db.session.commit()
     return jsonify({'success': True, 'lead_id': lead.id})
 
@@ -478,26 +561,3 @@ def update_notes(type, id):
     obj.notes = content
     db.session.commit()
     return jsonify({'success': True})
-
-@whatsapp_bp.route('/api/whatsapp/unread-counts')
-@login_required
-@limiter.limit("600 per hour")
-def get_unread_counts():
-    """Returns total unread count and count by tab using optimized query."""
-    try:
-        total, by_tab = WhatsAppService.get_unread_summary(current_user.company_id)
-        return jsonify({
-            'total': total,
-            'by_tab': by_tab
-        })
-    except Exception as e:
-        current_app.logger.error(f"Unread Counts Error: {e}")
-        return jsonify({'total': 0, 'by_tab': {}}), 500
-
-
-@whatsapp_bp.route('/api/whatsapp/read/<string:phone>', methods=['POST'])
-@login_required
-def mark_read(phone):
-    """Marks a conversation as read."""
-    success = WhatsAppService.mark_as_read(current_user.company_id, phone)
-    return jsonify({'success': success})

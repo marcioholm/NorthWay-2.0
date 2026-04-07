@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
 from flask_login import login_required, current_user
-from models import db, Client, Contract, ContractTemplate, Transaction, Task, WhatsAppMessage
+from models import db, Client, Contract, ContractTemplate, Transaction, Task
 from utils import create_notification, get_contract_replacements, get_date_extenso_br
 from services.commission_service import CommissionService
 from services.asaas_service import create_customer, create_payment, cancel_payment

@@ -361,7 +361,7 @@ def company_settings():
 
 @admin_bp.route('/settings/integrations', methods=['GET', 'POST'])
 def settings_integrations():
-    from models import db, Integration
+    from models import db, Integration, WhatsappInstance
     import json
     
     if not current_user.company_id:
@@ -386,12 +386,9 @@ def settings_integrations():
     integrations = Integration.query.filter(Integration.company_id == current_user.company_id).all()
     integrations_map = {i.service: i for i in integrations}
     
-    zapi_config = {}
-    if 'z_api' in integrations_map:
-        try: zapi_config = json.loads(integrations_map['z_api'].config_json or '{}')
-        except: pass
+    whatsapp_instances = WhatsappInstance.query.filter_by(company_id=current_user.company_id).all()
         
-    return render_template('settings_integrations.html', company=current_user.company, integrations_map=integrations_map, zapi_config=zapi_config)
+    return render_template('settings_integrations.html', company=current_user.company, integrations_map=integrations_map, whatsapp_instances=whatsapp_instances)
 
 @admin_bp.route('/settings/integrations/delete/<service>', methods=['POST'])
 def delete_integration(service):

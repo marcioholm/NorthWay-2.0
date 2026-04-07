@@ -46,7 +46,7 @@ def system_reset():
         
     if request.method == 'POST' and request.form.get('confirm') == 'RESET_PRODUCTION':
         from models import (
-            WhatsAppMessage, Task, Interaction, Transaction, Contract, 
+            Task, Interaction, Transaction, Contract, 
             Lead, Client, Contact, Pipeline, PipelineStage, User, Company
         )
         
@@ -70,7 +70,10 @@ def system_reset():
             # 1. Clear Activity Data with FORCE (SQL) to bypass circular refs
             db.session.execute(text("UPDATE lead SET contact_uuid = NULL"))
             db.session.execute(text("UPDATE client SET contact_uuid = NULL"))
-            db.session.execute(text("DELETE FROM whats_app_message"))
+            db.session.execute(text("DELETE FROM whatsapp_messages"))
+            db.session.execute(text("DELETE FROM whatsapp_conversations"))
+            db.session.execute(text("DELETE FROM whatsapp_group_members"))
+            db.session.execute(text("DELETE FROM whatsapp_instances"))
             db.session.execute(text("DELETE FROM task"))
             db.session.execute(text("DELETE FROM interaction"))
             db.session.execute(text("DELETE FROM transaction"))

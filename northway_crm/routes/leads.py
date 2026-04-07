@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort
 from flask_login import login_required, current_user
-from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, ClientChecklist, Task, Interaction, WhatsAppMessage, LEAD_STATUS_WON, LEAD_STATUS_NEW, LEAD_STATUS_IN_PROGRESS, LEAD_STATUS_LOST, User, LibraryTemplate, FormInstance, DriveFolderTemplate
+from models import db, Lead, Client, Pipeline, PipelineStage, ProcessTemplate, ClientChecklist, Task, Interaction, LEAD_STATUS_WON, LEAD_STATUS_NEW, LEAD_STATUS_IN_PROGRESS, LEAD_STATUS_LOST, User, LibraryTemplate, FormInstance, DriveFolderTemplate
 from utils import create_notification
 from tasks_utils import generate_tasks_for_stage, process_funnel_automations
 from datetime import datetime, timedelta
@@ -575,7 +575,7 @@ def convert_lead(id):
         flash(f'Erro ao criar pasta no Drive: {str(drive_e)}', 'warning')
 
     # Update WhatsApp messages
-    WhatsAppMessage.query.filter_by(lead_id=lead.id).update({'client_id': client.id, 'lead_id': None})
+    # Update WhatsApp messages (to be implemented with new Evolution API schema if needed)
     
     try:
         db.session.commit()

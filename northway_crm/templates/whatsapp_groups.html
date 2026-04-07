@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-full flex flex-col p-6 max-w-7xl mx-auto w-full">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Grupos de WhatsApp</h1>
+            <p class="text-sm text-gray-500 mt-1">Gerencie e envie mensagens para seus grupos da Evolution API</p>
+        </div>
+        <button onclick="loadGroups()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar Grupos
+        </button>
+    </div>
+
+    <!-- Layout: Lista + Ações -->
+    <div class="flex gap-6 h-[calc(100vh-140px)]">
+        
+        <!-- Lista de Grupos -->
+        <div class="w-1/3 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-gray-200">
+                <input type="text" id="searchInput" oninput="filterGroups()" placeholder="Buscar grupos..." class="w-full text-sm py-2 px-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+            
+            <div id="groupsList" class="overflow-y-auto flex-1 p-2 space-y-1">
+                <div class="p-6 text-center text-gray-500 text-sm">
+                    Carregando grupos...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detalhes do Grupo / Envio de Mensagem -->
+        <div class="w-2/3 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col hidden" id="groupDetailCard">
+            <!-- Header do Grupo -->
+            <div class="p-6 border-b border-gray-200 bg-gray-50 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800" id="detailSubject">Nome do Grupo</h2>
+                    <p class="text-xs text-gray-500" id="detailJid">JID do Grupo</p>
+                    <p class="text-sm font-medium text-blue-600 mt-1" id="detailParticipants">0 membros</p>
+                </div>
+            </div>
+            
+            <!-- Compor Mensagem -->
+            <div class="p-6 flex-1 flex flex-col bg-gray-50">
+                <h3 class="font-medium text-gray-700 mb-2">Disparar Mensagem para o Grupo</h3>
+                <div class="flex-1 overflow-hidden flex flex-col gap-3">
+                    <textarea id="messageContent" class="flex-1 w-full border border-gray-300 rounded-xl p-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none" placeholder="Digite a mensagem a ser enviada no grupo..."></textarea>
+                    
+                    <div class="flex justify-end">
+                        <button onclick="sendGroupMessage()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center gap-2" id="btnSend">
+                            <i data-lucide="send" class="w-4 h-4"></i> Enviar Mensagem
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado Vazio -->
+        <div class="w-2/3 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col items-center justify-center text-gray-500" id="groupEmptyState">
+            <i data-lucide="users" class="w-16 h-16 text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-700">Nenhum Grupo Selecionado</h3>
+            <p class="text-sm mt-1">Selecione um grupo na lista para ver detalhes e enviar mensagens.</p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let allGroups = [];
+    let selectedGroupJid = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadGroups();
+    });
+
+    async function loadGroups() {
+        const listDiv = document.getElementById('groupsList');
+        listDiv.innerHTML = `<div class="p-6 text-center text-gray-500 text-sm">Carregando grupos da Evolution...</div>`;
+        
+        try {
+            const res = await fetch('/api/whatsapp/groups');
+            const data = await res.json();
+            
+            if (data.error) {
+                listDiv.innerHTML = `<div class="p-6 text-center text-red-500 text-sm">Erro: ${data.error}</div>`;
+                return;
+            }
+            
+            // Depends on Evolution API exactly data structure
+            allGroups = Array.isArray(data) ? data : (data.data || []);
+            
+            renderGroupsList(allGroups);
+        } catch (e) {
+            listDiv.innerHTML = `<div class="p-6 text-center text-red-500 text-sm">Erro de rede.</div>`;
+        }
+    }
+
+    function renderGroupsList(groups) {
+        const listDiv = document.getElementById('groupsList');
+        listDiv.innerHTML = '';
+        
+        if (groups.length === 0) {
+            listDiv.innerHTML = `<div class="p-6 text-center text-gray-500 text-sm">Nenhum grupo encontrado nesta instância.</div>`;
+            return;
+        }
+
+        groups.forEach(g => {
+            const subject = g.subject || g.name || "Grupo Sem Nome";
+            const jid = g.id || g.jid;
+            const participantsCount = g.participants ? g.participants.length : (g.size || 0);
+
+            const item = document.createElement('div');
+            item.className = 'group-item p-3 rounded-lg hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-colors';
+            item.onclick = () => selectGroup(jid, subject, participantsCount);
+            
+            item.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-semibold text-gray-800 truncate">${subject}</h4>
+                    <p class="text-xs text-gray-500 truncate">${participantsCount} membros</p>
+                </div>
+            `;
+            listDiv.appendChild(item);
+        });
+        
+        // Re-render lucide icons for newly added items
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function filterGroups() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allGroups.filter(g => {
+            const subject = (g.subject || g.name || "").toLowerCase();
+            return subject.includes(query);
+        });
+        renderGroupsList(filtered);
+    }
+
+    function selectGroup(jid, subject, pCount) {
+        selectedGroupJid = jid;
+        
+        // UI updates
+        document.getElementById('groupEmptyState').classList.add('hidden');
+        document.getElementById('groupDetailCard').classList.remove('hidden');
+        
+        document.getElementById('detailSubject').textContent = subject;
+        document.getElementById('detailJid').textContent = jid;
+        document.getElementById('detailParticipants').textContent = `${pCount} membros`;
+        
+        // Reset message field
+        document.getElementById('messageContent').value = '';
+    }
+
+    async function sendGroupMessage() {
+        if (!selectedGroupJid) return;
+        
+        const content = document.getElementById('messageContent').value.trim();
+        if (!content) {
+            alert('Digite uma mensagem.');
+            return;
+        }
+        
+        const btn = document.getElementById('btnSend');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Enviando...`;
+        btn.disabled = true;
+        
+        try {
+            const res = await fetch('/api/whatsapp/groups/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ group_jid: selectedGroupJid, content: content })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                // Success
+                document.getElementById('messageContent').value = '';
+                
+                // Show toast or alert
+                alert('Mensagem enviada com sucesso para o grupo!');
+            } else {
+                alert('Falha: ' + data.error);
+            }
+        } catch (e) {
+            alert('Erro de rota.');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    }
+</script>
+{% endblock %}

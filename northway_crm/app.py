@@ -500,6 +500,7 @@ def create_app():
             ('routes.jobs', 'jobs_bp', 'jobs_bp', None),
             ('routes.api_extension', 'api_ext', 'api_ext', None),
             ('routes.whatsapp', 'whatsapp_bp', 'whatsapp_bp', None),
+            ('routes.webhook_whatsapp', 'evolution_webhook_bp', 'evolution_webhook_bp', None),
             ('routes.clients', 'clients_bp', 'clients_bp', None),
             ('routes.leads', 'leads_bp', 'leads_bp', None),
             ('routes.leads_enrichment', 'enrichment_bp', 'enrichment_bp', None),

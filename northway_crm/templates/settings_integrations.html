@@ -188,7 +188,7 @@
     </div>
 </div>
 
-<!-- WhatsApp Z-API Integration Card -->
+<!-- WhatsApp Evolution API Integration Card -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 relative overflow-hidden">
 
     <div class="p-6 border-b border-gray-200 flex justify-between items-center">
@@ -197,15 +197,14 @@
                 <i data-lucide="message-circle" class="w-5 h-5"></i>
             </div>
             <div>
-                <h2 class="text-lg font-bold text-gray-900">WhatsApp (Z-API)</h2>
-                <p class="text-xs text-gray-500">Envio e recebimento de mensagens</p>
+                <h2 class="text-lg font-bold text-gray-900">WhatsApp (Evolution API)</h2>
+                <p class="text-xs text-gray-500">Envio e recebimento de mensagens e grupos</p>
             </div>
         </div>
         <div>
-            {% set zapi = integrations_map.get('z_api') %}
-            {% if zapi and zapi.is_active %}
+            {% if whatsapp_instances|length > 0 %}
             <span
-                class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Conectado</span>
+                class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Conectado ({{ whatsapp_instances|length }})</span>
             {% else %}
             <span
                 class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">Desconectado</span>
@@ -214,222 +213,141 @@
     </div>
 
     <div class="p-6">
-        <!-- Z-API Promo Banner (Partnership) -->
-        <div
-            class="mb-8 relative overflow-hidden rounded-xl bg-gradient-to-br from-emerald-600 to-green-800 p-6 text-white shadow-md border border-green-500/20">
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div class="max-w-xl">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span
-                            class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest text-white border border-white/10">Parceria
-                            Oficial</span>
-                        <span
-                            class="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Desconto
-                            Exclusivo</span>
-                    </div>
-                    <h3 class="text-xl font-black mb-2 leading-tight">Potencialize seu WhatsApp com Desconto! ⚡</h3>
-                    <p class="text-sm text-green-50 mb-0 leading-relaxed">
-                        Ainda não tem uma instância Z-API ou quer reduzir seus custos mensais?
-                        Fale com nosso suporte agora e consiga <strong>condições especiais e descontos
-                            exclusivos</strong> na sua assinatura.
-                    </p>
+        <!-- Add New Instance Form -->
+        <form action="{{ url_for('whatsapp_bp.configure_instance') }}" method="POST" class="space-y-4 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-100">
+            <h3 class="text-sm font-bold text-gray-900 mb-2">Adicionar Nova Instância</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Nome da Instância</label>
+                    <input type="text" name="instance_name" required
+                        placeholder="ex: numero-atendimento-1"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
                 </div>
-                <div class="flex-shrink-0">
-                    <a href="https://wa.me/5542999896358" target="_blank"
-                        class="inline-flex items-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-lg font-black text-sm hover:bg-green-50 transition-all shadow-lg hover:scale-[1.05] active:scale-95">
-                        <i data-lucide="message-square" class="w-4 h-4"></i>
-                        FALAR COM SUPORTE
-                    </a>
-                </div>
-            </div>
-            <!-- Abstract BG Decoration -->
-            <div class="absolute -right-8 -top-8 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
-            <div class="absolute -left-4 -bottom-4 opacity-10">
-                <i data-lucide="zap" class="w-32 h-32 text-white"></i>
-            </div>
-        </div>
-
-        {% if zapi and zapi.is_active %}
-        <!-- Active State -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Instance ID</p>
-                <p class="text-sm font-mono text-gray-700 text-ellipsis overflow-hidden">{{ (zapi.config_json |
-                    from_json).get('instance_id', 'N/A') }}</p>
-            </div>
-            <div>
-                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Token</p>
-                <p
-                    class="text-sm font-mono text-gray-700 blur-sm hover:blur-none transition-all cursor-pointer truncate">
-                    {{ zapi.api_key }}</p>
-            </div>
-        </div>
-
-        <div class="mt-6 flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
-            <div class="flex-1">
-                <h3 class="text-sm font-bold text-gray-900">Webhook URL</h3>
-                <p class="text-xs text-gray-500 mb-2">Configure esta URL na Z-API para receber mensagens.</p>
-                <div class="flex items-center gap-2">
-                    <code
-                        class="bg-white px-2 py-1 rounded border border-gray-200 text-xs font-mono text-gray-600 w-full truncate"
-                        id="webhookUrl">
-                                     {{ request.url_root }}api/webhooks/zapi/{{ company.id }}
-                                 </code>
-                    <button
-                        onclick="navigator.clipboard.writeText(document.getElementById('webhookUrl').innerText.trim())"
-                        class="text-gray-400 hover:text-gray-600">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
+                <div class="flex items-end">
+                    <button type="submit"
+                        class="bg-green-600 text-white w-full px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-sm flex items-center justify-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Criar e Conectar
                     </button>
                 </div>
             </div>
-        </div>
-
-        <div class="mt-6 flex justify-end gap-2">
-            <div class="flex items-center gap-3">
-                <span id="whatsapp-status" class="text-sm font-bold"></span>
-                <span id="whatsapp-phone-display"
-                    class="hidden bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold font-mono"></span>
-
-                <button type="button" onclick="testZapiConnection(this)"
-                    class="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
-                    <i data-lucide="wifi" class="w-4 h-4"></i> Testar Conexão
-                </button>
-            </div>
-
-            <form action="{{ url_for('admin.delete_integration', service='z_api') }}" method="POST"
-                onsubmit="return confirm('Isso irá interromper o funcionamento do WhatsApp. Tem certeza?')">
-                <button type="submit"
-                    class="text-red-600 hover:text-red-700 text-sm font-medium px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
-                    Desconectar
-                </button>
-            </form>
-        </div>
-
-        <!-- Health & Automation -->
-        <div class="mt-6 border-t border-gray-100 pt-6">
-            <h4 class="text-xs font-bold text-gray-900 uppercase mb-3 flex items-center gap-2">
-                <i data-lucide="activity" class="w-4 h-4"></i> Status da Integração
-            </h4>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Last Sync -->
-                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <span class="text-xs text-gray-500 block mb-1">Última Sincronização</span>
-                    {% if zapi.last_sync_at %}
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                        <span class="text-sm font-mono font-bold text-gray-800">{{
-                            zapi.last_sync_at.strftime('%d/%m/%Y %H:%M') }}</span>
-                    </div>
-                    {% else %}
-                    <span class="text-sm text-gray-400 italic">Nunca sincronizado</span>
-                    {% endif %}
-                </div>
-
-                <!-- Webhook Automation -->
-                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 hover:border-blue-300 transition-colors cursor-pointer"
-                    onclick="setupZapiWebhook()">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-xs font-bold text-blue-800 block mb-1">Configuração Automática</span>
-                            <p class="text-[10px] text-blue-600 leading-tight">Configura as URLs de webhook na Z-API
-                                automaticamente.</p>
-                        </div>
-                        <i data-lucide="wand" class="w-4 h-4 text-blue-500"></i>
-                    </div>
-                </div>
-            </div>
-
-            {% if zapi.last_error %}
-            <div
-                class="mt-3 bg-red-50 text-red-800 p-3 rounded-lg text-xs border border-red-100 flex gap-2 items-start">
-                <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
-                <div>
-                    <strong class="block mb-0.5">Erro Recente:</strong>
-                    {{ zapi.last_error }}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        {% else %}
-        <!-- Setup Form -->
-        <form action="{{ url_for('whatsapp.configure') }}" method="POST" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Link da API (Opcional)</label>
-                <input type="text" name="api_url" value="{{ zapi_config.api_url or 'https://api.z-api.io' }}"
-                    placeholder="https://api.z-api.io"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-50 text-sm">
-                <p class="text-xs text-gray-500 mt-1">Deixe padrão ou altere se utilizar uma instância privada.
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Instance ID</label>
-                    <input type="text" name="instance_id" value="{{ zapi_config.instance_id or '' }}" required
-                        placeholder="3B2D..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Z-API Token (Security
-                        Token)</label>
-                    <input type="password" name="token" required placeholder="Security Token da URL"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Client Token (Opcional)</label>
-                    <input type="password" name="client_token" value="{{ zapi_config.client_token or '' }}"
-                        placeholder="Client Token (Header)"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red font-mono text-sm">
-                    <p class="text-[10px] text-gray-500 mt-1">Preencha apenas se "Client Token" estiver ativado
-                        na Z-API.</p>
-                </div>
-            </div>
-
-            <!-- Anti-Ban Controls -->
-            <div class="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
-                <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="shield-check" class="w-5 h-5 text-amber-600"></i>
-                    <h3 class="text-sm font-bold text-amber-900">Controles Anti-Ban (Intervalos)</h3>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-amber-800 mb-1">Intervalo Mínimo (segundos)</label>
-                        <input type="number" name="min_delay" value="{{ zapi_config.min_delay or 1 }}" min="1" max="60"
-                            class="w-full px-3 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-amber-800 mb-1">Intervalo Máximo (segundos)</label>
-                        <input type="number" name="max_delay" value="{{ zapi_config.max_delay or 5 }}" min="2" max="120"
-                            class="w-full px-3 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-sm">
-                    </div>
-                </div>
-                <p class="text-[10px] text-amber-600 mt-2">
-                    <i data-lucide="info" class="w-3 h-3 inline"></i>
-                    O sistema aguardará um tempo aleatório entre o mínimo e o máximo antes de disparar cada mensagem da
-                    extensão.
-                </p>
-            </div>
-            <div class="flex justify-end">
-                <button type="submit"
-                    class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-sm flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> Salvar e Conectar
-                </button>
-            </div>
         </form>
-        <div class="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-xs">
-            <p class="font-bold mb-1">Passo a passo:</p>
-            <ol class="list-decimal pl-4 space-y-1">
-                <li>Crie uma conta na Z-API.</li>
-                <li>Crie uma instância e copie o ID e Token.</li>
-                <li>Cole acima e salve.</li>
-                <li>Use o botão "Testar Conexão" para ler o QR Code se necessário.</li>
-            </ol>
+
+        {% if whatsapp_instances|length > 0 %}
+        <!-- Active Instances List -->
+        <div class="space-y-6">
+            {% for instance in whatsapp_instances %}
+            <div class="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full {% if instance.status == 'open' %}bg-green-500{% else %}bg-yellow-500{% endif %}"></div>
+                        <h4 class="font-bold text-gray-900">{{ instance.instance_name }}</h4>
+                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono">{{ instance.status }}</span>
+                    </div>
+                    <form action="{{ url_for('whatsapp_bp.remove_instance', instance_name=instance.instance_name) }}" method="POST"
+                        onsubmit="return confirm('Isso excluirá a instância na Evolution API e no CRM. Tem certeza?')">
+                        <button type="submit"
+                            class="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Telefone</p>
+                        <p class="text-sm font-mono text-gray-700">{{ instance.phone_number or 'Não identificado' }}</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 flex-wrap">
+                    <button type="button" onclick="loadEvolutionQrCode('{{ instance.instance_name }}')"
+                        class="text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium px-4 py-2 border border-gray-300 rounded-lg transition-colors flex items-center gap-2">
+                        <i data-lucide="qr-code" class="w-4 h-4 text-green-600"></i> Conectar / QR Code
+                    </button>
+                    <button type="button" onclick="checkEvolutionStatus('{{ instance.instance_name }}')"
+                        class="text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium px-4 py-2 border border-gray-300 rounded-lg transition-colors flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-600"></i> Atualizar Status
+                    </button>
+                </div>
+
+                <!-- QR Code Modal (Hidden initially) -->
+                <div id="qr-code-container-{{ instance.instance_name }}" class="hidden mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50 flex flex-col items-center justify-center">
+                    <p class="text-sm font-bold text-gray-700 mb-2">Escaneie o QR Code no seu WhatsApp</p>
+                    <div id="qr-code-image-{{ instance.instance_name }}" class="bg-white p-2 border border-gray-300 rounded shadow-sm w-48 h-48 flex items-center justify-center">
+                        <i data-lucide="loader-2" class="w-6 h-6 text-gray-400 animate-spin"></i>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 text-center max-w-xs">Aguarde carregar e aponte a câmera. O QR expira em 40 segundos.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Health & Global Conf -->
+        <div class="mt-6 border-t border-gray-100 pt-6">
+            <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
+                <div class="flex-1">
+                    <h3 class="text-sm font-bold text-gray-900">Webhook Base URL</h3>
+                    <p class="text-xs text-gray-500 mb-2">As instâncias usam essa URL para enviar eventos.</p>
+                    <div class="flex items-center gap-2">
+                        <code
+                            class="bg-white px-2 py-1 rounded border border-gray-200 text-xs font-mono text-gray-600 w-full truncate"
+                            id="webhookEvolutionUrl">
+                                         {{ request.url_root }}api/webhooks/evolution
+                                     </code>
+                        <button
+                            onclick="navigator.clipboard.writeText(document.getElementById('webhookEvolutionUrl').innerText.trim())"
+                            class="text-gray-400 hover:text-gray-600">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
         {% endif %}
     </div>
 </div>
+
+<script>
+    async function loadEvolutionQrCode(instanceName) {
+        const container = document.getElementById(`qr-code-container-${instanceName}`);
+        const imgContainer = document.getElementById(`qr-code-image-${instanceName}`);
+        container.classList.remove('hidden');
+        imgContainer.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 text-gray-400 animate-spin"></i>';
+        
+        try {
+            const res = await fetch(`/api/whatsapp/instances/${instanceName}/status`);
+            const data = await res.json();
+            
+            if (data.status === 'open') {
+                imgContainer.innerHTML = '<div class="text-green-600 text-center"><i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2"></i><span class="text-xs font-bold">Já Conectado!</span></div>';
+                lucide.createIcons();
+                return;
+            }
+
+            if (data.qr_code_base64) {
+                imgContainer.innerHTML = `<img src="${data.qr_code_base64}" class="w-full h-full object-contain" />`;
+            } else {
+                imgContainer.innerHTML = '<div class="text-red-500 text-center text-xs">QR Code<br>indisponível</div>';
+            }
+        } catch (e) {
+            imgContainer.innerHTML = '<div class="text-red-500 p-2 text-xs text-center">Falha ao carregar API</div>';
+        }
+    }
+
+    async function checkEvolutionStatus(instanceName) {
+        try {
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-blue-600"></i> Atualizando...';
+            lucide.createIcons();
+            
+            await fetch(`/api/whatsapp/instances/${instanceName}/status`);
+            window.location.reload();
+        } catch (e) {
+            alert('Falha ao verificar status');
+        }
+    }
+</script>
 
 <!-- WhatsApp Extension (ZapWay) Card -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
