@@ -9,9 +9,13 @@ evolution_webhook_bp = Blueprint('evolution_webhook', __name__)
 
 @evolution_webhook_bp.route('/api/webhooks/evolution', methods=['POST'])
 def evolution_webhook():
+    from .whatsapp import log_webhook_event
     data = request.json
     if not data:
         return jsonify({'error': 'No data'}), 400
+    
+    # Store for debug inspection
+    log_webhook_event(data)
         
     event = data.get('event')
     instance_name = data.get('instance')
