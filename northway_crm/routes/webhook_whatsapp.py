@@ -7,8 +7,11 @@ from datetime import datetime
 
 evolution_webhook_bp = Blueprint('evolution_webhook', __name__)
 
-@evolution_webhook_bp.route('/api/webhooks/evolution', methods=['POST'])
+@evolution_webhook_bp.route('/api/webhooks/evolution', methods=['GET', 'POST'])
 def evolution_webhook():
+    if request.method == 'GET':
+        return jsonify({'status': 'webhook endpoint active', 'method': 'GET', 'info': 'Send a POST request with Evolution API payload here.'})
+
     try:
         from northway_crm.utils.webhook_logger import log_webhook_event
     except ImportError:
@@ -53,15 +56,18 @@ def evolution_webhook():
         
     company_id = instance.company_id
     
+    # NORMALIZATION: Map common event names
+    event_upper = event.upper().replace('.', '_')
+    
     # 2. Handle Connection State changes
-    if event == 'CONNECTION_UPDATE':
+    if event_upper == 'CONNECTION_UPDATE':
         state = data.get('data', {}).get('state')
         if state:
             instance.status = state
             db.session.commit()
             
     # 3. Handle New Messages
-    elif event == 'MESSAGES_UPSERT':
+    elif event_upper == 'MESSAGES_UPSERT' or event_upper == 'MESSAGES_SET':
         # Evolution v2 often sends a list of messages in 'data.messages' or 'data.message'
         webhook_data = data.get('data', {})
         messages = webhook_data.get('messages', [])

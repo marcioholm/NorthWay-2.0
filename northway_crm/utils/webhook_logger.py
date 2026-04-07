@@ -1,11 +1,11 @@
+import os
+import json
 from datetime import datetime
 
-# Global list to store last webhook events in memory for live debugging
-# This avoids circular imports between blueprints
-LAST_EVENTS = []
+LOG_FILE = '/tmp/evolution_webhook_debug.json'
 
 def log_webhook_event(data):
-    """Helper to store last events in memory for live debugging"""
+    """Helper to store last events in a file for live debugging across serverless instances"""
     try:
         event_summary = {
             'time': datetime.utcnow().isoformat(),
@@ -14,12 +14,32 @@ def log_webhook_event(data):
             'status': 'received',
             'data_keys': list(data.keys())
         }
-        LAST_EVENTS.append(event_summary)
+        
+        events = []
+        if os.path.exists(LOG_FILE):
+            try:
+                with open(LOG_FILE, 'r') as f:
+                    events = json.load(f)
+            except:
+                events = []
+        
+        events.append(event_summary)
         # Keep only last 20 events
-        if len(LAST_EVENTS) > 20:
-            LAST_EVENTS.pop(0)
+        if len(events) > 20:
+            events = events[-20:]
+            
+        with open(LOG_FILE, 'w') as f:
+            json.dump(events, f)
+            
     except Exception as e:
         print(f"Error logging webhook event: {e}")
 
 def get_last_events():
-    return LAST_EVENTS
+    """Read events from /tmp/ file"""
+    if os.path.exists(LOG_FILE):
+        try:
+            with open(LOG_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return None
+    return None
