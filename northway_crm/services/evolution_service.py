@@ -7,11 +7,17 @@ from threading import Thread
 class EvolutionService:
     @staticmethod
     def get_api_url():
-        return os.environ.get('EVOLUTION_API_URL', '').rstrip('/')
+        url = os.environ.get('EVOLUTION_API_URL', '').rstrip('/')
+        if not url:
+            raise ValueError("EVOLUTION_API_URL não configurada no ambiente (Vercel).")
+        return url
         
     @staticmethod
     def get_api_key():
-        return os.environ.get('EVOLUTION_API_KEY', '')
+        key = os.environ.get('EVOLUTION_API_KEY', '')
+        if not key:
+            raise ValueError("EVOLUTION_API_KEY não configurada no ambiente (Vercel).")
+        return key
         
     @staticmethod
     def get_headers():
