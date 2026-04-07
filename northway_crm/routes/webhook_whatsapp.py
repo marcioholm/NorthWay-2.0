@@ -9,7 +9,11 @@ evolution_webhook_bp = Blueprint('evolution_webhook', __name__)
 
 @evolution_webhook_bp.route('/api/webhooks/evolution', methods=['POST'])
 def evolution_webhook():
-    from utils.webhook_logger import log_webhook_event
+    try:
+        from northway_crm.utils.webhook_logger import log_webhook_event
+    except ImportError:
+        from utils.webhook_logger import log_webhook_event
+        
     data = request.json
     if not data:
         return jsonify({'error': 'No data'}), 400

@@ -240,13 +240,25 @@ def debug_schema():
         'version': 'v2.4.0-FINAL-FIX',
         'tables': results,
         'instances': instances,
+@whatsapp_bp.route('/api/whatsapp/ping')
+def ping_whatsapp():
+    return jsonify({'status': 'alive', 'version': 'v2.4.1-DEBUG'})
+
 @whatsapp_bp.route('/api/whatsapp/inspect-webhook')
 def inspect_webhook():
-    from utils.webhook_logger import get_last_events
-    return jsonify({
-        'last_events': get_last_events() if get_last_events() else "No events received yet",
-        'server_time': datetime.utcnow().isoformat()
-    })
+    try:
+        from northway_crm.utils.webhook_logger import get_last_events
+        events = get_last_events()
+        return jsonify({
+            'last_events': events if events else "No events received yet",
+            'server_time': datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'error': str(e),
+            'trace': traceback.format_exc()
+        }), 500
 
 @whatsapp_bp.route('/api/whatsapp/conversations')
 @login_required
