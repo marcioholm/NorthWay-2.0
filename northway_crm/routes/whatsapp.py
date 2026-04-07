@@ -151,6 +151,8 @@ def get_instance_status(instance_name):
             if isinstance(qr_res, dict) and qr_res.get('status') == 404:
                 # AUTO-SYNC: delete and recreate on server
                 EvolutionService.delete_instance(instance_name)
+                import time
+                time.sleep(1) # Give the server a breather
                 qr_res = EvolutionService.create_instance(instance_name)
             
             # Helper to find 'base64' in any nested dictionary
