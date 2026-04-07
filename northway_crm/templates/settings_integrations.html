@@ -214,7 +214,7 @@
 
     <div class="p-6">
         <!-- Add New Instance Form -->
-        <form action="{{ url_for('whatsapp_bp.configure_instance') }}" method="POST" class="space-y-4 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-100">
+        <form action="{{ url_for('whatsapp.configure_instance') }}" method="POST" class="space-y-4 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-100">
             <h3 class="text-sm font-bold text-gray-900 mb-2">Adicionar Nova Instância</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -243,7 +243,7 @@
                         <h4 class="font-bold text-gray-900">{{ instance.instance_name }}</h4>
                         <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-mono">{{ instance.status }}</span>
                     </div>
-                    <form action="{{ url_for('whatsapp_bp.remove_instance', instance_name=instance.instance_name) }}" method="POST"
+                    <form action="{{ url_for('whatsapp.remove_instance', instance_name=instance.instance_name) }}" method="POST"
                         onsubmit="return confirm('Isso excluirá a instância na Evolution API e no CRM. Tem certeza?')">
                         <button type="submit"
                             class="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">

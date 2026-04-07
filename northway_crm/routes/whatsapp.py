@@ -35,10 +35,9 @@ def from_json_filter(value):
     except:
         return {}
 
-# --- CONFIG ---
 @whatsapp_bp.route('/api/whatsapp/config', methods=['POST'])
 @login_required
-def configure():
+def configure_instance():
     instance_name = request.form.get('instance_name', '').strip()
     
     if not instance_name:
@@ -88,6 +87,62 @@ def test_connection():
             
     except Exception as e:
         return jsonify({'connected': False, 'message': f"Erro: {str(e)}"})
+
+@whatsapp_bp.route('/api/whatsapp/remove', methods=['POST'])
+@login_required
+def remove_instance():
+    instance_name = request.args.get('instance_name') or request.form.get('instance_name')
+    if not instance_name:
+        return jsonify({'error': 'Instance name required'}), 400
+        
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id, instance_name=instance_name).first()
+    if not instance:
+        return jsonify({'error': 'Instance not found'}), 404
+        
+    try:
+        # Delete from Evolution
+        EvolutionService.delete_instance(instance_name)
+        
+        # Delete from DB
+        db.session.delete(instance)
+        db.session.commit()
+        
+        flash(f'Instância {instance_name} removida.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao remover: {e}', 'error')
+        
+    return redirect(url_for('admin.settings_integrations'))
+
+@whatsapp_bp.route('/api/whatsapp/instances/<string:instance_name>/status')
+@login_required
+def get_instance_status(instance_name):
+    # Security check: User must belong to the same company
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id, instance_name=instance_name).first()
+    if not instance:
+        return jsonify({'error': 'Unauthorized or Not Found'}), 403
+        
+    try:
+        res = EvolutionService.get_connection_status(instance_name)
+        # Evolution status check
+        # Response might contain "base64" for QR if state is "connecting"
+        state = res.get('instance', {}).get('state', 'disconnected')
+        
+        qr_code_base64 = None
+        if state == 'connecting' or state == 'close':
+            # Try to get QR Code if not provided in the first response
+            qr_res = EvolutionService.create_instance(instance_name) # RE-create instance might provide QR if it's not open
+            qr_code_base64 = qr_res.get('qrcode', {}).get('base64')
+            
+        instance.status = state
+        db.session.commit()
+        
+        return jsonify({
+            'status': state,
+            'qr_code_base64': qr_code_base64
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # --- VIEWS ---
 @whatsapp_bp.route('/whatsapp')
