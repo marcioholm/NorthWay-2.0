@@ -12,21 +12,32 @@ whatsapp_bp = Blueprint('whatsapp', __name__)
 
 @whatsapp_bp.before_request
 def check_feature_access():
-    if request.method == 'OPTIONS': return
-    
-    # Allow Webhook (Public)
-    if 'webhooks' in request.path:
-        return
+    try:
+        if request.method == 'OPTIONS': return
         
-    # Check Feature Flag
-    if current_user and current_user.is_authenticated:
-        company = getattr(current_user, 'company', None)
-        if not company or not hasattr(company, 'has_feature') or not company.has_feature('whatsapp'):
-            if request.is_json: # API
-                return jsonify({'error': 'Feature Disabled for this Company'}), 403
-            else: # UI
-                flash('Módulo WhatsApp desativado pela administração.', 'error')
-                return redirect(url_for('dashboard.home'))
+        # Allow Webhook and Public Diagnostic routes
+        if any(x in request.path for x in ['webhooks', 'ping', 'test-loopback', 'debug-schema']):
+            return
+            
+        # Check Feature Flag
+        if current_user and current_user.is_authenticated:
+            # Use a more robust check for company_id directly to avoid lazy-load crashes
+            if not current_user.company_id:
+                return # Allow users without company to reach basic dashboards or error pages
+                
+            company = getattr(current_user, 'company', None)
+            # If company is not loaded, just skip the check to avoid blocking the user with a 500
+            if company and hasattr(company, 'has_feature'):
+                if not company.has_feature('whatsapp'):
+                    if request.is_json: # API
+                        return jsonify({'error': 'Feature Disabled for this Company'}), 403
+                    else: # UI
+                        flash('Módulo WhatsApp desativado pela administração.', 'error')
+                        return redirect(url_for('dashboard.home'))
+    except Exception as e:
+        current_app.logger.error(f"WhatsApp Feature Check Error: {e}")
+        # Fail open: don't break the whole app if feature check fails
+        return
 
 # --- TEMPLATE FILTERS ---
 @whatsapp_bp.app_template_filter('from_json')
@@ -208,10 +219,19 @@ def get_instance_status(instance_name):
 @whatsapp_bp.route('/whatsapp')
 @login_required
 def inbox():
-    from models import Pipeline, User
-    pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
-    users = User.query.filter_by(company_id=current_user.company_id).all()
-    return render_template('whatsapp_inbox.html', pipelines=pipelines, users=users)
+    try:
+        from models import Pipeline, User
+        # Optimize queries with specific IDs
+        pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+        users = User.query.filter_by(company_id=current_user.company_id).all()
+        return render_template('whatsapp_inbox.html', pipelines=pipelines, users=users)
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        current_app.logger.error(f"WhatsApp Inbox Error: {e}\n{error_trace}")
+        
+        # If it's a 500, let's at least show the company ID for debugging
+        return render_template('500.html', error=f"Erro ao carregar o chat. (Company: {current_user.company_id})"), 500
 
 @whatsapp_bp.route('/whatsapp/groups')
 @login_required
