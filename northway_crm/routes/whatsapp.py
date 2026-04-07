@@ -240,6 +240,9 @@ def debug_schema():
         'version': 'v2.4.0-FINAL-FIX',
         'tables': results,
         'instances': instances,
+        'user_company_id': current_user.company_id
+    })
+
 @whatsapp_bp.route('/api/whatsapp/ping')
 def ping_whatsapp():
     return jsonify({'status': 'alive', 'version': 'v2.4.1-DEBUG'})
