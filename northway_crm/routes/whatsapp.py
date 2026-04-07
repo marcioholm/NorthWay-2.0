@@ -44,11 +44,15 @@ def configure_instance():
         company_slug = current_user.company.name.lower().replace(' ', '_').replace('-', '_')
         instance_name = f"northway_{company_slug}_{current_user.company_id}"
         
+    # Slugify instance name to be URL and ID safe
+    instance_name = instance_name.lower().replace(' ', '-').replace('_', '-')
+    
     instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
     if not instance:
         instance = WhatsappInstance(company_id=current_user.company_id, instance_name=instance_name)
         db.session.add(instance)
     else:
+        # If updating, let's keep the name consistent or update it
         instance.instance_name = instance_name
         
     try:
@@ -120,7 +124,15 @@ def get_instance_status(instance_name):
     # Security check: User must belong to the same company
     instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id, instance_name=instance_name).first()
     if not instance:
-        return jsonify({'error': 'Unauthorized or Not Found'}), 403
+        # Try a flexible search if direct match fails (e.g. spaces vs hyphens)
+        alt_name = instance_name.replace(' ', '-').lower()
+        instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id, instance_name=alt_name).first()
+        
+    if not instance:
+        return jsonify({
+            'error': 'Instance not found in DB',
+            'debug': f"Searched for: {instance_name}"
+        }), 404
         
     try:
         res = EvolutionService.get_connection_status(instance_name)

@@ -271,9 +271,10 @@
                 </div>
 
                 <!-- QR Code Modal (Hidden initially) -->
-                <div id="qr-code-container-{{ instance.instance_name }}" class="hidden mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50 flex flex-col items-center justify-center">
+                {% set slug_id = instance.instance_name.lower().replace(' ', '-').replace('_', '-') %}
+                <div id="qr-code-container-{{ slug_id }}" class="hidden mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50 flex flex-col items-center justify-center">
                     <p class="text-sm font-bold text-gray-700 mb-2">Escaneie o QR Code no seu WhatsApp</p>
-                    <div id="qr-code-image-{{ instance.instance_name }}" class="bg-white p-2 border border-gray-300 rounded shadow-sm w-48 h-48 flex items-center justify-center">
+                    <div id="qr-code-image-{{ slug_id }}" class="bg-white p-2 border border-gray-300 rounded shadow-sm w-48 h-48 flex items-center justify-center">
                         <i data-lucide="loader-2" class="w-6 h-6 text-gray-400 animate-spin"></i>
                     </div>
                     <p class="text-xs text-gray-500 mt-2 text-center max-w-xs">Aguarde carregar e aponte a câmera. O QR expira em 40 segundos.</p>
@@ -309,8 +310,15 @@
 
 <script>
     async function loadEvolutionQrCode(instanceName) {
-        const container = document.getElementById(`qr-code-container-${instanceName}`);
-        const imgContainer = document.getElementById(`qr-code-image-${instanceName}`);
+        const slugName = instanceName.toLowerCase().replace(/ /g, '-').replace(/_/g, '-');
+        const container = document.getElementById(`qr-code-container-${slugName}`);
+        const imgContainer = document.getElementById(`qr-code-image-${slugName}`);
+        
+        if (!container || !imgContainer) {
+            console.error("Containers not found for", slugName);
+            return;
+        }
+
         container.classList.remove('hidden');
         imgContainer.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 text-gray-400 animate-spin"></i>';
         
