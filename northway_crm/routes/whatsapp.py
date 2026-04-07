@@ -138,8 +138,18 @@ def get_instance_status(instance_name):
     try:
         res = EvolutionService.get_connection_status(instance_name)
         # Evolution status check
-        # Response might contain "base64" for QR if state is "connecting"
         state = res.get('instance', {}).get('state', 'disconnected').lower()
+        
+        # AUTO-CONFIG WEBHOOK: If connected, ensure the webhook is set to our live endpoint
+        if state == 'open':
+            try:
+                # Use current_app.config['SERVER_NAME'] or hardcoded for now since it's production
+                # The correct URL is needed. We can use the request.host_url
+                webhook_url = f"{request.host_url.rstrip('/')}/api/webhooks/evolution"
+                EvolutionService.configure_webhook(instance_name, webhook_url)
+                current_app.logger.info(f"Auto-configured webhook for {instance_name} to {webhook_url}")
+            except Exception as e:
+                current_app.logger.error(f"Failed auto-webhook config: {e}")
         
         qr_code_base64 = None
         debug_info = None

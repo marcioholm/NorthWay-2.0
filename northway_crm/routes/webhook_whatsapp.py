@@ -45,104 +45,112 @@ def evolution_webhook():
             return jsonify({'success': True}), 200
             
         for message_data in messages:
-            # Determine if it's sent from the instance (me) or incoming from remote
-            key = message_data.get('key', {})
-            is_from_me = key.get('fromMe', False)
-            direction = 'out' if is_from_me else 'in'
-            
-            remote_jid = key.get('remoteJid')
-            message_id = key.get('id')
-            push_name = message_data.get('pushName') or (remote_jid.split('@')[0] if remote_jid else "Unknown")
-        
-        # Parse content (simplistic for text, image, etc.)
-        content = ""
-        msg_type = "text"
-        msg_object = message_data.get('message', {})
-        media_url = None
-        
-        if 'conversation' in msg_object:
-            content = msg_object['conversation']
-        elif 'extendedTextMessage' in msg_object:
-            content = msg_object['extendedTextMessage'].get('text', '')
-        elif 'imageMessage' in msg_object:
-            msg_type = "image"
-            content = msg_object['imageMessage'].get('caption', '')
-            media_url = "image_placeholder_url_or_base64" # Evolution provides base64 via API if needed
-        elif 'audioMessage' in msg_object:
-            msg_type = "audio"
-        elif 'videoMessage' in msg_object:
-            msg_type = "video"
-        elif 'documentMessage' in msg_object:
-            msg_type = "document"
-            
-        # If it's a completely empty system message, we can ignore
-        if not content and msg_type == 'text':
-            content = "[Mensagem do Sistema]"
-            
-        # Find or create Conversation
-        conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
-        if not conv:
-            conv = WhatsappConversation(
-                company_id=company_id,
-                instance_id=instance.id,
-                remote_jid=remote_jid,
-                name=push_name,
-                last_message_preview=content
-            )
-            db.session.add(conv)
-            db.session.flush()
-            
-        conv.last_message_preview = content
-        conv.last_message_dir = direction
-        conv.last_message_status = 'sent' if direction == 'out' else 'received'
-        conv.updated_at = datetime.utcnow()
-        if direction == 'in':
-            conv.unread_count += 1
-            if push_name and not conv.name:
-                conv.name = push_name
+            try:
+                # 3.1. Parsing basic identifiers
+                key = message_data.get('key', {})
+                is_from_me = key.get('fromMe', False)
+                direction = 'out' if is_from_me else 'in'
                 
-        # Check if message already exists
-        existing_msg = WhatsappMessage.query.filter_by(message_id=message_id).first()
-        if not existing_msg:
-            timestamp = message_data.get('messageTimestamp')
-            dt_timestamp = datetime.utcfromtimestamp(timestamp) if timestamp else datetime.utcnow()
-            
-            new_msg = WhatsappMessage(
-                company_id=company_id,
-                conversation_id=conv.id,
-                message_id=message_id,
-                direction=direction,
-                type=msg_type,
-                content=content,
-                media_url=media_url,
-                status=conv.last_message_status,
-                timestamp=dt_timestamp,
-                sender_name=push_name if direction == 'in' else "Você"
-            )
-            db.session.add(new_msg)
-            db.session.commit()
-            
-            # Forward to NORA (n8n Webhook) if it's an incoming message
-            if direction == 'in':
-                nora_url = os.environ.get('NORA_WEBHOOK_URL')
-                if nora_url:
-                    try:
-                        nora_payload = {
-                            'company_id': company_id,
-                            'remote_jid': remote_jid,
-                            'message_id': message_id,
-                            'content': content,
-                            'type': msg_type,
-                            'sender_name': push_name,
-                            'lead_id': conv.lead_id,
-                            'client_id': conv.client_id
-                        }
-                        requests.post(nora_url, json=nora_payload, timeout=5)
-                    except Exception as e:
-                        current_app.logger.error(f"Error forwarding to Nora: {e}")
-        else:
-            # If msg exists, update status
-            db.session.commit()
+                remote_jid = key.get('remoteJid')
+                message_id = key.get('id')
+                push_name = message_data.get('pushName') or (remote_jid.split('@')[0] if remote_jid else "Unknown")
+                
+                current_app.logger.info(f"Processing message {message_id} from {remote_jid} ({direction})")
+                
+                # 3.2. Content Extraction
+                content = ""
+                msg_type = "text"
+                msg_object = message_data.get('message', {})
+                media_url = None
+                
+                if 'conversation' in msg_object:
+                    content = msg_object['conversation']
+                elif 'extendedTextMessage' in msg_object:
+                    content = msg_object['extendedTextMessage'].get('text', '')
+                elif 'imageMessage' in msg_object:
+                    msg_type = "image"
+                    content = msg_object['imageMessage'].get('caption', '')
+                    media_url = "image_media" # Placeholder, actual media handle depends on API
+                elif 'audioMessage' in msg_object:
+                    msg_type = "audio"
+                elif 'videoMessage' in msg_object:
+                    msg_type = "video"
+                elif 'documentMessage' in msg_object:
+                    msg_type = "document"
+                    
+                if not content and msg_type == 'text':
+                    content = "[Mensagem do Sistema]"
+                
+                # 3.3. Conversation Management
+                conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
+                if not conv:
+                    current_app.logger.info(f"Creating new conversation for {remote_jid}")
+                    conv = WhatsappConversation(
+                        company_id=company_id,
+                        instance_id=instance.id,
+                        remote_jid=remote_jid,
+                        name=push_name,
+                        last_message_preview=content[:200]
+                    )
+                    db.session.add(conv)
+                    db.session.flush()
+                
+                conv.last_message_preview = content[:255]
+                conv.last_message_at = datetime.utcnow()
+                conv.last_message_dir = direction
+                conv.last_message_status = 'sent' if direction == 'out' else 'received'
+                conv.updated_at = datetime.utcnow()
+                
+                if direction == 'in':
+                    conv.unread_count = (conv.unread_count or 0) + 1
+                    if push_name and (not conv.name or conv.name == remote_jid.split('@')[0]):
+                        conv.name = push_name
+                
+                # 3.4. Message Persistence
+                existing_msg = WhatsappMessage.query.filter_by(message_id=message_id).first()
+                if not existing_msg:
+                    timestamp = message_data.get('messageTimestamp')
+                    dt_timestamp = datetime.utcfromtimestamp(timestamp) if timestamp else datetime.utcnow()
+                    
+                    new_msg = WhatsappMessage(
+                        company_id=company_id,
+                        conversation_id=conv.id,
+                        message_id=message_id,
+                        direction=direction,
+                        type=msg_type,
+                        content=content,
+                        media_url=media_url,
+                        status=conv.last_message_status,
+                        timestamp=dt_timestamp,
+                        sender_name=push_name if direction == 'in' else "Você"
+                    )
+                    db.session.add(new_msg)
+                    db.session.commit()
+                    current_app.logger.info(f"Successfully saved message {message_id}")
+                    
+                    # 3.5. Forward to NORA (n8n Webhook)
+                    if direction == 'in':
+                        nora_url = os.environ.get('NORA_WEBHOOK_URL')
+                        if nora_url:
+                            try:
+                                nora_payload = {
+                                    'company_id': company_id,
+                                    'remote_jid': remote_jid,
+                                    'message_id': message_id,
+                                    'content': content,
+                                    'type': msg_type,
+                                    'sender_name': push_name,
+                                    'lead_id': conv.lead_id,
+                                    'client_id': conv.client_id
+                                }
+                                requests.post(nora_url, json=nora_payload, timeout=5)
+                            except Exception as e:
+                                current_app.logger.error(f"Error forwarding to Nora: {e}")
+                else:
+                    db.session.commit() # Update conversation state
+            except Exception as e:
+                current_app.logger.error(f"Error processing message in loop: {e}")
+                db.session.rollback()
 
     # 4. Handle Message Status Updates (Delivered, Read etc)
     elif event == 'MESSAGES_UPDATE':
