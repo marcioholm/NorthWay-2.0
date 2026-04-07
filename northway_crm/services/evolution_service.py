@@ -62,10 +62,25 @@ class EvolutionService:
 
     @staticmethod
     def get_qrcode(instance_name):
-        """Fetches the QR code for an existing instance using /instance/connect"""
+        """Fetches the QR code for an existing instance using GET /instance/connect"""
         url = f"{EvolutionService.get_api_url()}/instance/connect/{instance_name}"
         try:
             response = requests.get(
+                url, 
+                headers=EvolutionService.get_headers(), 
+                timeout=15,
+                verify=False
+            )
+            return response.json()
+        except Exception as e:
+            return {"error": str(e)}
+
+    @staticmethod
+    def connect_instance(instance_name):
+        """Initiates connection and gets QR via POST /instance/connect (Evolution v2 style)"""
+        url = f"{EvolutionService.get_api_url()}/instance/connect/{instance_name}"
+        try:
+            response = requests.post(
                 url, 
                 headers=EvolutionService.get_headers(), 
                 timeout=15,

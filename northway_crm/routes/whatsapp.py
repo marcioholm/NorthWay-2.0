@@ -138,16 +138,20 @@ def get_instance_status(instance_name):
         res = EvolutionService.get_connection_status(instance_name)
         # Evolution status check
         # Response might contain "base64" for QR if state is "connecting"
-        state = res.get('instance', {}).get('state', 'disconnected')
+        state = res.get('instance', {}).get('state', 'disconnected').lower()
         
         qr_code_base64 = None
         debug_info = None
-        if state == 'connecting' or state == 'close':
-            # Try to get QR Code via /instance/connect
-            qr_res = EvolutionService.get_qrcode(instance_name)
-            current_app.logger.info(f"QR Response for {instance_name}: {qr_res}")
+        
+        if state in ['connecting', 'close', 'disconnected']:
+            # For v2, if it's disconnected, we should explicitly 'POST' to connect
+            if state == 'disconnected':
+                qr_res = EvolutionService.connect_instance(instance_name)
+            else:
+                # If already connecting, the 'GET' might bring the current QR
+                qr_res = EvolutionService.get_qrcode(instance_name)
             
-            # Deep search for base64 in the response
+            # Helper to find 'base64' in any nested dictionary
             def find_base64(data):
                 if isinstance(data, dict):
                     if 'base64' in data and data['base64']:
@@ -163,9 +167,12 @@ def get_instance_status(instance_name):
 
             qr_code_base64 = find_base64(qr_res)
             
-            # If still not found, send the whole response to debug
+            # FALLBACK: If connect didn't work, try create (some versions return QR on re-creation)
             if not qr_code_base64:
-                debug_info = f"Keys: {list(qr_res.keys())} | Full: {str(qr_res)[:100]}"
+                qr_res_alt = EvolutionService.create_instance(instance_name)
+                qr_code_base64 = find_base64(qr_res_alt)
+                if not qr_code_base64:
+                    debug_info = f"State: {state} | Connect Res: {str(qr_res)[:60]} | Create Res: {str(qr_res_alt)[:60]}"
             
             # Ensure it has the data URI prefix
             if qr_code_base64 and isinstance(qr_code_base64, str) and not qr_code_base64.startswith('data:'):
