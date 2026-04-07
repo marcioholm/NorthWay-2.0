@@ -130,9 +130,11 @@ def get_instance_status(instance_name):
         
         qr_code_base64 = None
         if state == 'connecting' or state == 'close':
-            # Try to get QR Code if not provided in the first response
-            qr_res = EvolutionService.create_instance(instance_name) # RE-create instance might provide QR if it's not open
-            qr_code_base64 = qr_res.get('qrcode', {}).get('base64')
+            # Try to get QR Code via /instance/connect
+            qr_res = EvolutionService.get_qrcode(instance_name)
+            qr_code_base64 = qr_res.get('base64') # Evolution returns "base64" directly or in qrcode object
+            if not qr_code_base64 and qr_res.get('qrcode'):
+                qr_code_base64 = qr_res.get('qrcode', {}).get('base64')
             
         instance.status = state
         db.session.commit()

@@ -46,10 +46,20 @@ class EvolutionService:
     def get_connection_status(instance_name):
         url = f"{EvolutionService.get_api_url()}/instance/connectionState/{instance_name}"
         try:
-            response = requests.get(url, headers=EvolutionService.get_headers())
+            response = requests.get(url, headers=EvolutionService.get_headers(), timeout=5)
             return response.json()
         except:
             return {"instance": {"state": "disconnected"}}
+
+    @staticmethod
+    def get_qrcode(instance_name):
+        """Fetches the QR code for an existing instance using /instance/connect"""
+        url = f"{EvolutionService.get_api_url()}/instance/connect/{instance_name}"
+        try:
+            response = requests.get(url, headers=EvolutionService.get_headers(), timeout=10)
+            return response.json()
+        except Exception as e:
+            return {"error": str(e)}
 
     @staticmethod
     def logout_instance(instance_name):
