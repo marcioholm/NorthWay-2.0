@@ -247,6 +247,72 @@ def debug_schema():
 def ping_whatsapp():
     return jsonify({'status': 'alive', 'version': 'v2.4.1-DEBUG'})
 
+@whatsapp_bp.route('/api/whatsapp/test-loopback')
+@login_required
+def test_loopback():
+    """Simulates an incoming message to test internal logic (DB save, NORA forward)"""
+    import requests
+    # Find first instance for this company
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        return jsonify({"error": "No instance found for your company"}), 404
+        
+    # Standard Evolution v2 payload for message.upsert
+    webhook_url = f"{request.host_url.rstrip('/')}/api/webhooks/evolution"
+    payload = {
+        "event": "messages.upsert",
+        "instance": instance.instance_name,
+        "data": {
+            "key": {
+                "remoteJid": "5511999999999@s.whatsapp.net",
+                "fromMe": False,
+                "id": f"TEST-{int(datetime.utcnow().timestamp())}"
+            },
+            "pushName": "Antigravity Test",
+            "message": {
+                "conversation": "Teste de Loopback - NorthWay CRM"
+            },
+            "messageTimestamp": int(datetime.utcnow().timestamp())
+        }
+    }
+    
+    try:
+        # We hit our own endpoint (publicly available on Vercel)
+        resp = requests.post(webhook_url, json=payload, timeout=10)
+        return jsonify({
+            "test": "loopback",
+            "target_url": webhook_url,
+            "payload_sent": payload,
+            "response_status": resp.status_code,
+            "response_body": resp.json() if resp.status_code == 200 else resp.text
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "webhook_url": webhook_url}), 500
+
+@whatsapp_bp.route('/api/whatsapp/sync-webhook')
+@login_required
+def sync_webhook():
+    """Forces Evolution API to use the correct Webhook URL for the active instance"""
+    from services.evolution_service import EvolutionService
+    # Find first instance for this company
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        return jsonify({"error": "No instance found"}), 404
+        
+    # The URL MUST be the public one
+    webhook_url = f"https://{request.host}/api/webhooks/evolution"
+    
+    try:
+        result = EvolutionService.configure_webhook(instance.instance_name, webhook_url)
+        return jsonify({
+            "status": "success",
+            "instance": instance.instance_name,
+            "new_url": webhook_url,
+            "evolution_response": result
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @whatsapp_bp.route('/api/whatsapp/inspect-webhook')
 def inspect_webhook():
     try:
