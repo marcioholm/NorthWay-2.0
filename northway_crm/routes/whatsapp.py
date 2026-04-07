@@ -240,31 +240,13 @@ def debug_schema():
         'version': 'v2.4.0-FINAL-FIX',
         'tables': results,
         'instances': instances,
-# Global list to store last webhook events for debugging
-LAST_EVENTS = []
-
 @whatsapp_bp.route('/api/whatsapp/inspect-webhook')
-@login_required
 def inspect_webhook():
+    from utils.webhook_logger import get_last_events
     return jsonify({
-        'last_events': LAST_EVENTS[-10:] if LAST_EVENTS else "No events received yet",
+        'last_events': get_last_events() if get_last_events() else "No events received yet",
         'server_time': datetime.utcnow().isoformat()
     })
-
-def log_webhook_event(data):
-    """Helper to store last events in memory for live debugging"""
-    try:
-        event_summary = {
-            'time': datetime.utcnow().isoformat(),
-            'event': data.get('event'),
-            'instance': data.get('instance'),
-            'data_keys': list(data.keys())
-        }
-        LAST_EVENTS.append(event_summary)
-        # Keep only last 20
-        if len(LAST_EVENTS) > 20:
-            LAST_EVENTS.pop(0)
-    except: pass
 
 @whatsapp_bp.route('/api/whatsapp/conversations')
 @login_required
