@@ -237,7 +237,7 @@ def debug_schema():
         instances = f"ERROR: {str(e)}"
 
     return jsonify({
-        'version': 'v2.3.9-debug-webhook',
+        'version': 'v2.4.0-FINAL-FIX',
         'tables': results,
         'instances': instances,
         'user_company_id': current_user.company_id
