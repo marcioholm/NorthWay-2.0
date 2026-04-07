@@ -10,6 +10,10 @@ class EvolutionService:
         url = os.environ.get('EVOLUTION_API_URL', '').rstrip('/')
         if not url:
             raise ValueError("EVOLUTION_API_URL não configurada no ambiente (Vercel).")
+        
+        if not url.startswith('http'):
+            url = f"https://{url}"
+            
         return url
         
     @staticmethod
