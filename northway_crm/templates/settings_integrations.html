@@ -318,6 +318,8 @@
             const res = await fetch(`/api/whatsapp/instances/${instanceName}/status`);
             const data = await res.json();
             
+            console.log("QR Code Status Data:", data);
+            
             if (data.status === 'open') {
                 imgContainer.innerHTML = '<div class="text-green-600 text-center"><i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2"></i><span class="text-xs font-bold">Já Conectado!</span></div>';
                 lucide.createIcons();
@@ -327,9 +329,10 @@
             if (data.qr_code_base64) {
                 imgContainer.innerHTML = `<img src="${data.qr_code_base64}" class="w-full h-full object-contain" />`;
             } else {
-                imgContainer.innerHTML = '<div class="text-red-500 text-center text-xs">QR Code<br>indisponível</div>';
+                imgContainer.innerHTML = `<div class="text-red-500 text-center text-[10px] leading-tight">QR Indisponível<br><span class="opacity-50">${data.debug || 'Sem dados'}</span></div>`;
             }
         } catch (e) {
+            console.error("Fetch Error:", e);
             imgContainer.innerHTML = '<div class="text-red-500 p-2 text-xs text-center">Falha ao carregar API</div>';
         }
     }

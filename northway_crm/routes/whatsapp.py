@@ -129,24 +129,24 @@ def get_instance_status(instance_name):
         state = res.get('instance', {}).get('state', 'disconnected')
         
         qr_code_base64 = None
+        debug_info = None
         if state == 'connecting' or state == 'close':
             # Try to get QR Code via /instance/connect
             qr_res = EvolutionService.get_qrcode(instance_name)
             current_app.logger.info(f"QR Response for {instance_name}: {qr_res}")
             
             # Evolution v1/v2 response mapping
-            # Pattern 1: { "base64": "..." }
-            # Pattern 2: { "qrcode": { "base64": "..." } }
-            # Pattern 3: { "code": { "base64": "..." } }
-            # Pattern 4: { "base64": "data:image/png;base64,..." }
-            
             qr_code_base64 = qr_res.get('base64')
             if not qr_code_base64:
                 qr_code_base64 = qr_res.get('qrcode', {}).get('base64')
             if not qr_code_base64:
                 qr_code_base64 = qr_res.get('code', {}).get('base64')
             
-            # Ensure it has the data URI prefix if it's just raw base64
+            # If still not found, send the whole response to debug in frontend console if needed
+            if not qr_code_base64:
+                debug_info = str(qr_res)
+            
+            # Ensure it has the data URI prefix
             if qr_code_base64 and not qr_code_base64.startswith('data:'):
                 qr_code_base64 = f"data:image/png;base64,{qr_code_base64}"
             
@@ -155,7 +155,8 @@ def get_instance_status(instance_name):
         
         return jsonify({
             'status': state,
-            'qr_code_base64': qr_code_base64
+            'qr_code_base64': qr_code_base64,
+            'debug': debug_info
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
