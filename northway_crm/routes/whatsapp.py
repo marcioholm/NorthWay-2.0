@@ -135,19 +135,28 @@ def get_instance_status(instance_name):
             qr_res = EvolutionService.get_qrcode(instance_name)
             current_app.logger.info(f"QR Response for {instance_name}: {qr_res}")
             
-            # Evolution v1/v2 response mapping
-            qr_code_base64 = qr_res.get('base64')
-            if not qr_code_base64:
-                qr_code_base64 = qr_res.get('qrcode', {}).get('base64')
-            if not qr_code_base64:
-                qr_code_base64 = qr_res.get('code', {}).get('base64')
+            # Deep search for base64 in the response
+            def find_base64(data):
+                if isinstance(data, dict):
+                    if 'base64' in data and data['base64']:
+                        return data['base64']
+                    for v in data.values():
+                        res = find_base64(v)
+                        if res: return res
+                elif isinstance(data, list):
+                    for item in data:
+                        res = find_base64(item)
+                        if res: return res
+                return None
+
+            qr_code_base64 = find_base64(qr_res)
             
-            # If still not found, send the whole response to debug in frontend console if needed
+            # If still not found, send the whole response to debug
             if not qr_code_base64:
-                debug_info = str(qr_res)
+                debug_info = f"Keys: {list(qr_res.keys())} | Full: {str(qr_res)[:100]}"
             
             # Ensure it has the data URI prefix
-            if qr_code_base64 and not qr_code_base64.startswith('data:'):
+            if qr_code_base64 and isinstance(qr_code_base64, str) and not qr_code_base64.startswith('data:'):
                 qr_code_base64 = f"data:image/png;base64,{qr_code_base64}"
             
         instance.status = state
