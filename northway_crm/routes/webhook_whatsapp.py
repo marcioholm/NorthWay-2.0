@@ -84,6 +84,8 @@ def evolution_webhook():
             db.session.flush()
             
         conv.last_message_preview = content
+        conv.last_message_dir = direction
+        conv.last_message_status = 'sent' if direction == 'out' else 'received'
         conv.updated_at = datetime.utcnow()
         if direction == 'in':
             conv.unread_count += 1
@@ -104,7 +106,7 @@ def evolution_webhook():
                 type=msg_type,
                 content=content,
                 media_url=media_url,
-                status='received' if direction == 'in' else 'sent',
+                status=conv.last_message_status,
                 timestamp=dt_timestamp,
                 sender_name=push_name if direction == 'in' else "Você"
             )
@@ -135,15 +137,27 @@ def evolution_webhook():
 
     # 4. Handle Message Status Updates (Delivered, Read etc)
     elif event == 'MESSAGES_UPDATE':
-        for update in data.get('data', []):
+        # Evolution can send a list of updates
+        updates = data.get('data', [])
+        if not isinstance(updates, list):
+            updates = [updates]
+            
+        for update in updates:
             msg_id = update.get('key', {}).get('id')
-            status_map = {1: 'sent', 2: 'received', 3: 'read', 4: 'played'}
+            status_map = {1: 'sent', 2: 'delivered', 3: 'read', 4: 'played'}
             num_status = update.get('update', {}).get('status')
             
             if msg_id and num_status in status_map:
                 msg = WhatsappMessage.query.filter_by(message_id=msg_id).first()
                 if msg:
-                    msg.status = status_map[num_status]
+                    new_status = status_map[num_status]
+                    msg.status = new_status
+                    
+                    # Also update conversation if this was the last message
+                    conv = WhatsappConversation.query.get(msg.conversation_id)
+                    if conv:
+                        conv.last_message_status = new_status
+                        
                     db.session.commit()
                     
     return jsonify({'success': True}), 200

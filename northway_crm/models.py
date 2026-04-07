@@ -666,6 +666,8 @@ class WhatsappConversation(db.Model):
     unread_count = db.Column(db.Integer, default=0)
     last_message_at = db.Column(db.DateTime, nullable=True)
     last_message_preview = db.Column(db.Text, nullable=True)
+    last_message_dir = db.Column(db.String(10), default='in') # in, out
+    last_message_status = db.Column(db.String(20), default='sent') # sent, delivered, read
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)

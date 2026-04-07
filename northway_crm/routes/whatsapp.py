@@ -126,16 +126,17 @@ def get_conversations():
                 contact_id = c.client_id
                 
             data.append({
-                'id': c.id,
+                'id': contact_id,
+                'type': contact_type,
                 'phone': c.remote_jid,
                 'name': c.name or c.remote_jid.split('@')[0],
-                'profilePic': c.profile_pic_url,
-                'lastMessage': c.last_message_preview,
-                'lastMessageTime': c.updated_at.isoformat() if c.updated_at else None,
-                'unreadCount': c.unread_count,
-                'isGroup': "@g.us" in c.remote_jid,
-                'contactType': contact_type,
-                'contactId': contact_id
+                'profile_pic_url': c.profile_pic_url,
+                'last_message_content': c.last_message_preview,
+                'last_message_at': c.updated_at.isoformat() if c.updated_at else None,
+                'last_message_dir': c.last_message_dir,
+                'last_message_status': c.last_message_status,
+                'unread_count': c.unread_count,
+                'is_group': "@g.us" in c.remote_jid
             })
             
         return jsonify({'conversations': data})
