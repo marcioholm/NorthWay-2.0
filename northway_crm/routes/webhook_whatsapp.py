@@ -16,12 +16,31 @@ def evolution_webhook():
     event = data.get('event')
     instance_name = data.get('instance')
     
-    current_app.logger.info(f"Evolution Webhook Event: {event} for instance {instance_name}")
+    # NORMALIZATION: Robust matching for instance names (case-insensitive, ignore hyphens/spaces)
+    def normalize(s):
+        if not s: return ""
+        return s.lower().replace(' ', '').replace('-', '').replace('_', '')
+
+    normalized_name = normalize(instance_name)
+    
+    current_app.logger.info(f"Evolution Webhook Event: {event} for instance {instance_name} (normalized: {normalized_name})")
     
     # 1. Verification of instance
-    instance = WhatsappInstance.query.filter_by(instance_name=instance_name).first()
+    instance = None
+    all_instances = WhatsappInstance.query.all()
+    for inst in all_instances:
+        if normalize(inst.instance_name) == normalized_name:
+            instance = inst
+            break
+
     if not instance:
-        current_app.logger.warning(f"Webhook from unknown instance: {instance_name}")
+        current_app.logger.warning(f"Webhook from unknown instance: {instance_name}. Known instances: {[i.instance_name for i in all_instances]}")
+        # Save raw debug info for the administrator if it's missing
+        try:
+            with open('/tmp/last_whatsapp_webhook_error.json', 'w') as f:
+                import json
+                json.dump(data, f)
+        except: pass
         return jsonify({'success': True}), 200 # Accept but ignore
         
     company_id = instance.company_id
