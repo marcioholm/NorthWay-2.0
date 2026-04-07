@@ -32,21 +32,30 @@ class EvolutionService:
 
     @staticmethod
     def create_instance(instance_name):
-        """Creates a new WhatsApp instance in Evolution API"""
         url = f"{EvolutionService.get_api_url()}/instance/create"
         payload = {
             "instanceName": instance_name,
             "token": "",
             "qrcode": True
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(
+            url, 
+            json=payload, 
+            headers=EvolutionService.get_headers(),
+            verify=False # Bypass SSL issues common on VPS
+        )
         return response.json()
 
     @staticmethod
     def get_connection_status(instance_name):
         url = f"{EvolutionService.get_api_url()}/instance/connectionState/{instance_name}"
         try:
-            response = requests.get(url, headers=EvolutionService.get_headers(), timeout=5)
+            response = requests.get(
+                url, 
+                headers=EvolutionService.get_headers(), 
+                timeout=5,
+                verify=False
+            )
             return response.json()
         except:
             return {"instance": {"state": "disconnected"}}
@@ -56,7 +65,12 @@ class EvolutionService:
         """Fetches the QR code for an existing instance using /instance/connect"""
         url = f"{EvolutionService.get_api_url()}/instance/connect/{instance_name}"
         try:
-            response = requests.get(url, headers=EvolutionService.get_headers(), timeout=10)
+            response = requests.get(
+                url, 
+                headers=EvolutionService.get_headers(), 
+                timeout=15,
+                verify=False
+            )
             return response.json()
         except Exception as e:
             return {"error": str(e)}

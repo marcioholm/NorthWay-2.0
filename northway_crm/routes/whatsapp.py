@@ -132,9 +132,23 @@ def get_instance_status(instance_name):
         if state == 'connecting' or state == 'close':
             # Try to get QR Code via /instance/connect
             qr_res = EvolutionService.get_qrcode(instance_name)
-            qr_code_base64 = qr_res.get('base64') # Evolution returns "base64" directly or in qrcode object
-            if not qr_code_base64 and qr_res.get('qrcode'):
+            current_app.logger.info(f"QR Response for {instance_name}: {qr_res}")
+            
+            # Evolution v1/v2 response mapping
+            # Pattern 1: { "base64": "..." }
+            # Pattern 2: { "qrcode": { "base64": "..." } }
+            # Pattern 3: { "code": { "base64": "..." } }
+            # Pattern 4: { "base64": "data:image/png;base64,..." }
+            
+            qr_code_base64 = qr_res.get('base64')
+            if not qr_code_base64:
                 qr_code_base64 = qr_res.get('qrcode', {}).get('base64')
+            if not qr_code_base64:
+                qr_code_base64 = qr_res.get('code', {}).get('base64')
+            
+            # Ensure it has the data URI prefix if it's just raw base64
+            if qr_code_base64 and not qr_code_base64.startswith('data:'):
+                qr_code_base64 = f"data:image/png;base64,{qr_code_base64}"
             
         instance.status = state
         db.session.commit()
