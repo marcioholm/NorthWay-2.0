@@ -228,9 +228,18 @@ def debug_schema():
             results[table] = [c['name'] for c in inspector.get_columns(table)]
         except Exception as e:
             results[table] = f"ERROR: {str(e)}"
+    # Also list instances for name matching verification
+    instances = []
+    try:
+        raw_instances = WhatsappInstance.query.all()
+        instances = [{'id': i.id, 'name': i.instance_name, 'company_id': i.company_id} for i in raw_instances]
+    except Exception as e:
+        instances = f"ERROR: {str(e)}"
+
     return jsonify({
-        'version': 'v2.3.8-resilienct',
+        'version': 'v2.3.9-debug-webhook',
         'tables': results,
+        'instances': instances,
         'user_company_id': current_user.company_id
     })
 
