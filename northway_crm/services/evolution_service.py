@@ -137,7 +137,7 @@ class EvolutionService:
                 ]
             }
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=15)
         return response.json()
 
     @staticmethod
@@ -151,7 +151,7 @@ class EvolutionService:
             "text": text,
             "delay": 1200
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=15)
         return response.json()
 
     @staticmethod
@@ -159,27 +159,27 @@ class EvolutionService:
         url = f"{EvolutionService.get_api_url()}/message/sendMedia/{instance_name}"
         if not number.endswith("@s.whatsapp.net") and not number.endswith("@g.us"):
             number = f"{number}@s.whatsapp.net"
-            
+
         payload = {
             "number": number,
             "mediatype": media_type,
             "media": media_url,
             "caption": caption
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=15)
         return response.json()
-        
+
     @staticmethod
     def send_audio(instance_name, number, audio_url):
         url = f"{EvolutionService.get_api_url()}/message/sendWhatsAppAudio/{instance_name}"
         if not number.endswith("@s.whatsapp.net") and not number.endswith("@g.us"):
             number = f"{number}@s.whatsapp.net"
-            
+
         payload = {
             "number": number,
             "audio": audio_url
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=15)
         return response.json()
 
     @staticmethod
@@ -190,7 +190,7 @@ class EvolutionService:
             "messageId": message_id,
             "reaction": reaction
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=15)
         return response.json()
 
     @staticmethod
@@ -203,9 +203,9 @@ class EvolutionService:
             "latitude": latitude,
             "longitude": longitude
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=15)
         return response.json()
-        
+
     @staticmethod
     def send_contact_card(instance_name, number, contact_name, contact_phone):
         url = f"{EvolutionService.get_api_url()}/message/sendContact/{instance_name}"
@@ -216,13 +216,14 @@ class EvolutionService:
                 "wuid": contact_phone
             }
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=15)
         return response.json()
 
     @staticmethod
     def get_all_groups(instance_name):
         url = f"{EvolutionService.get_api_url()}/group/fetchAllGroups/{instance_name}?getParticipants=false"
-        response = requests.get(url, headers=EvolutionService.get_headers())
+        response = requests.get(url, headers=EvolutionService.get_headers(), timeout=15)
+        response.raise_for_status()
         return response.json()
 
     @staticmethod
@@ -232,11 +233,11 @@ class EvolutionService:
             "subject": subject,
             "participants": participants
         }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload)
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=15)
         return response.json()
-        
+
     @staticmethod
     def get_group_members(instance_name, group_jid):
         url = f"{EvolutionService.get_api_url()}/group/participants/{instance_name}?groupJid={group_jid}"
-        response = requests.get(url, headers=EvolutionService.get_headers())
+        response = requests.get(url, headers=EvolutionService.get_headers(), timeout=15)
         return response.json()

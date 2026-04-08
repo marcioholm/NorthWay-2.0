@@ -594,7 +594,13 @@
 
             const data = await res.json();
 
-            if (data.conversations.length === 0) {
+            if (data.debug_error) {
+                console.error("Conversations API error:", data.debug_error);
+                list.innerHTML = `<div class="p-4 text-center text-red-400 text-sm">Erro ao carregar conversas:<br><code class="text-xs">${data.debug_error}</code><br><a href="${data.repair_url || '#'}" class="text-blue-400 underline text-xs mt-2 block">Tentar reparar</a></div>`;
+                return;
+            }
+
+            if (!data.conversations || data.conversations.length === 0) {
                 list.innerHTML = `<div class="p-4 text-center text-gray-400 text-sm">Nenhuma conversa encontrada.</div>`;
                 return;
             }
@@ -604,7 +610,6 @@
 
         } catch (e) {
             console.error(e);
-            alert("Erro CRÍTICO no carregamento (Mostre ao suporte): " + e.message + "\nStack: " + e.stack);
             list.innerHTML = `<div class="p-4 text-center text-red-400 text-sm">Erro: ${e.message}</div>`;
         }
     }

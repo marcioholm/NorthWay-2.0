@@ -81,19 +81,23 @@
         
         try {
             const res = await fetch('/api/whatsapp/groups');
+            if (!res.ok) {
+                listDiv.innerHTML = `<div class="p-6 text-center text-red-500 text-sm">Erro HTTP ${res.status}: verifique a conexão com a Evolution API.</div>`;
+                return;
+            }
             const data = await res.json();
-            
+
             if (data.error) {
                 listDiv.innerHTML = `<div class="p-6 text-center text-red-500 text-sm">Erro: ${data.error}</div>`;
                 return;
             }
-            
-            // Depends on Evolution API exactly data structure
-            allGroups = Array.isArray(data) ? data : (data.data || []);
-            
+
+            // Depends on Evolution API data structure
+            allGroups = Array.isArray(data) ? data : (data.data || data.groups || []);
+
             renderGroupsList(allGroups);
         } catch (e) {
-            listDiv.innerHTML = `<div class="p-6 text-center text-red-500 text-sm">Erro de rede.</div>`;
+            listDiv.innerHTML = `<div class="p-6 text-center text-red-500 text-sm">Erro de rede: ${e.message}</div>`;
         }
     }
 
