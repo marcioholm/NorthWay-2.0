@@ -557,18 +557,25 @@ def debug_messages():
             return jsonify({'error': 'Nenhum chat encontrado'})
 
         remote_jid = target.get('remoteJid')
+
+        # Chama diretamente sem wrapper para ver a resposta crua
+        import requests as req
+        url = f"{EvolutionService.get_api_url()}/chat/findMessages/{instance.instance_name}"
+        payload = {"where": {"remoteJid": remote_jid}, "limit": 3}
         try:
-            msgs_data = EvolutionService.fetch_messages(instance.instance_name, remote_jid, limit=3)
+            r = req.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=30)
+            raw = r.json()
         except Exception as e:
             import traceback
-            return jsonify({'jid': remote_jid, 'error': str(e), 'trace': traceback.format_exc()})
+            return jsonify({'jid_used': remote_jid, 'error': str(e), 'trace': traceback.format_exc()})
 
-        msgs = msgs_data if isinstance(msgs_data, list) else msgs_data
         return jsonify({
             'jid_used': remote_jid,
-            'raw_type': type(msgs_data).__name__,
-            'raw_keys': list(msgs_data.keys()) if isinstance(msgs_data, dict) else 'list',
-            'sample': msgs[:3] if isinstance(msgs, list) else msgs
+            'status': r.status_code,
+            'raw_type': type(raw).__name__,
+            'raw_keys': list(raw.keys()) if isinstance(raw, dict) else 'list',
+            'total_items': len(raw) if isinstance(raw, list) else None,
+            'sample': raw[:3] if isinstance(raw, list) else raw
         })
     except Exception as e:
         import traceback
