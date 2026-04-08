@@ -771,12 +771,17 @@ def get_history(type='lead', contact_id=None, id=None):
         if "@" not in remote_jid: remote_jid = f"{remote_jid}@s.whatsapp.net"
     else:
         return jsonify({'error': 'Invalid type'}), 400
-        
+
     instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
     if not instance:
         return jsonify({'messages': []})
-        
+
     conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
+    # Fallback: Evolution v2 may store conversation with @lid JID — look up by lead_id/client_id
+    if not conv and type == 'lead':
+        conv = WhatsappConversation.query.filter_by(instance_id=instance.id, lead_id=contact_id).first()
+    elif not conv and type == 'client':
+        conv = WhatsappConversation.query.filter_by(instance_id=instance.id, client_id=contact_id).first()
     if not conv:
         return jsonify({'messages': []})
         

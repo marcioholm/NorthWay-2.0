@@ -288,9 +288,14 @@ class EvolutionService:
         response = requests.post(url, headers=headers, json=payload, timeout=30)
         response.raise_for_status()
         data = response.json()
-        # Normalize: pode ser lista direta ou objeto com chave 'messages'/'data'
+        # Evolution v2 Prisma returns {"messages": {"records": [...], "total": N, ...}}
         if isinstance(data, list):
             return data
         if isinstance(data, dict):
-            return data.get('messages', data.get('data', []))
+            messages = data.get('messages')
+            if isinstance(messages, dict):
+                return messages.get('records', [])
+            if isinstance(messages, list):
+                return messages
+            return data.get('data', [])
         return []
