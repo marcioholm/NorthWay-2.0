@@ -244,22 +244,41 @@ class EvolutionService:
 
     @staticmethod
     def fetch_chats(instance_name):
-        """Fetches all chats/conversations from Evolution API v2."""
-        url = f"{EvolutionService.get_api_url()}/chat/findChats/{instance_name}"
-        response = requests.post(url, headers=EvolutionService.get_headers(), json={}, timeout=30)
+        """Fetches all chats/conversations from Evolution API v2.
+        Tries POST first (v2), falls back to GET (v1/v2 alt).
+        """
+        base_url = EvolutionService.get_api_url()
+        headers = EvolutionService.get_headers()
+        # Try v2 POST endpoint
+        try:
+            url = f"{base_url}/chat/findChats/{instance_name}"
+            response = requests.post(url, headers=headers, json={}, timeout=30)
+            if response.status_code < 400:
+                return response.json()
+        except Exception:
+            pass
+        # Fallback: GET endpoint
+        url = f"{base_url}/chat/findChats/{instance_name}"
+        response = requests.get(url, headers=headers, timeout=30)
         response.raise_for_status()
         return response.json()
 
     @staticmethod
     def fetch_messages(instance_name, remote_jid, limit=50):
         """Fetches recent messages for a specific chat from Evolution API v2."""
-        url = f"{EvolutionService.get_api_url()}/chat/findMessages/{instance_name}"
-        payload = {
-            "where": {
-                "key": {"remoteJid": remote_jid}
-            },
-            "limit": limit
-        }
-        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=30)
+        base_url = EvolutionService.get_api_url()
+        headers = EvolutionService.get_headers()
+        # Try v2 POST with where clause
+        try:
+            url = f"{base_url}/chat/findMessages/{instance_name}"
+            payload = {"where": {"key": {"remoteJid": remote_jid}}, "limit": limit}
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            if response.status_code < 400:
+                return response.json()
+        except Exception:
+            pass
+        # Fallback: query param style
+        url = f"{base_url}/chat/findMessages/{instance_name}?remoteJid={remote_jid}&limit={limit}"
+        response = requests.get(url, headers=headers, timeout=30)
         response.raise_for_status()
         return response.json()

@@ -16,8 +16,8 @@
         <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center h-16">
             <h1 class="text-xl font-bold text-gray-800">WhatsApp</h1>
             <div class="flex gap-2">
-                <button onclick="syncMessages()" id="sync-btn" title="Sincronizar mensagens da Evolution API" class="p-2 hover:bg-gray-200 rounded-full text-gray-600">
-                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                <button onclick="syncMessages()" id="sync-btn" title="Sincronizar mensagens da Evolution API" class="p-2 hover:bg-gray-200 rounded-full text-gray-600 transition-colors">
+                    <svg id="sync-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
                 </button>
                 <button class="p-2 hover:bg-gray-200 rounded-full text-gray-600">
                     <i data-lucide="message-square-plus" class="w-5 h-5"></i>
@@ -1359,30 +1359,93 @@
         }
     }
 
-    // --- Initialization ---
+    // --- Toast Notification ---
+    function showToast(message, type = 'info') {
+        const existing = document.getElementById('sync-toast');
+        if (existing) existing.remove();
+
+        const colors = { success: 'bg-green-600', error: 'bg-red-600', info: 'bg-gray-800' };
+        const toast = document.createElement('div');
+        toast.id = 'sync-toast';
+        toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-white text-sm font-medium shadow-xl transition-all duration-300 opacity-0 ${colors[type] || colors.info}`;
+        toast.style.maxWidth = '90vw';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.style.opacity = '1');
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 5000);
+    }
+
+    // --- Sync Overlay ---
+    function showSyncOverlay(text) {
+        let el = document.getElementById('sync-overlay');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'sync-overlay';
+            el.className = 'fixed inset-0 z-50 bg-black/50 flex flex-col items-center justify-center gap-4';
+            el.innerHTML = `
+                <div class="bg-white rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl w-72">
+                    <svg id="sync-spinner" class="animate-spin text-green-600 w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <p id="sync-overlay-text" class="text-gray-700 font-semibold text-center text-sm"></p>
+                    <p class="text-gray-400 text-xs text-center">Isso pode levar alguns segundos…</p>
+                </div>`;
+            document.body.appendChild(el);
+        }
+        document.getElementById('sync-overlay-text').textContent = text;
+        el.classList.remove('hidden');
+    }
+
+    function hideSyncOverlay() {
+        const el = document.getElementById('sync-overlay');
+        if (el) el.remove();
+    }
+
+    // --- Sync Button ---
     async function syncMessages() {
         const btn = document.getElementById('sync-btn');
-        const icon = btn.querySelector('i');
+        const icon = document.getElementById('sync-icon');
+
         btn.disabled = true;
-        icon.classList.add('animate-spin');
+        icon.style.animation = 'spin 1s linear infinite';
+
+        showSyncOverlay('Buscando conversas na Evolution API…');
 
         try {
-            const res = await fetch('/api/whatsapp/sync-messages', { method: 'POST' });
+            const res = await fetch('/api/whatsapp/sync-messages', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+
+            hideSyncOverlay();
+
+            if (!res.ok) {
+                const text = await res.text();
+                showToast(`Erro HTTP ${res.status}: ${text.substring(0, 100)}`, 'error');
+                return;
+            }
+
             const data = await res.json();
+
             if (data.success) {
                 const s = data.stats;
-                alert(`Sincronização concluída!\n${s.chats_saved} conversas novas | ${s.messages_saved} mensagens salvas${s.errors.length ? '\n\nErros: ' + s.errors.slice(0,3).join(', ') : ''}`);
+                const msg = `✅ ${s.chats_saved} conversas e ${s.messages_saved} mensagens sincronizadas!`;
+                showToast(msg, 'success');
                 loadConversations();
             } else {
-                alert('Erro na sincronização: ' + (data.error || 'desconhecido'));
+                showToast('Erro: ' + (data.error || 'desconhecido'), 'error');
             }
         } catch (e) {
-            alert('Falha de rede: ' + e.message);
+            hideSyncOverlay();
+            showToast('Falha de rede: ' + e.message, 'error');
         } finally {
             btn.disabled = false;
-            icon.classList.remove('animate-spin');
+            icon.style.animation = '';
         }
     }
+
+    // spin keyframe inline
+    const _syncStyle = document.createElement('style');
+    _syncStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+    document.head.appendChild(_syncStyle);
 
     document.addEventListener('DOMContentLoaded', () => {
         loadConversations();
