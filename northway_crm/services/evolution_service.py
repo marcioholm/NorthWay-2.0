@@ -221,7 +221,7 @@ class EvolutionService:
 
     @staticmethod
     def get_all_groups(instance_name):
-        url = f"{EvolutionService.get_api_url()}/group/fetchAllGroups/{instance_name}"
+        url = f"{EvolutionService.get_api_url()}/group/fetchAllGroups/{instance_name}?getParticipants=false"
         response = requests.get(url, headers=EvolutionService.get_headers())
         return response.json()
 
