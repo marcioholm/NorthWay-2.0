@@ -243,6 +243,21 @@ class EvolutionService:
         return response.json()
 
     @staticmethod
+    def fetch_profile_pic(instance_name, number):
+        """Fetches profile picture URL for a contact."""
+        base_url = EvolutionService.get_api_url()
+        headers = EvolutionService.get_headers()
+        try:
+            url = f"{base_url}/misc/getProfilePicture/{instance_name}?number={number}"
+            response = requests.get(url, headers=headers, timeout=8)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get('profilePictureUrl') or data.get('url') or data.get('imgUrl')
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
     def fetch_chats(instance_name):
         """Fetches all chats/conversations from Evolution API v2.
         Tries POST first (v2), falls back to GET (v1/v2 alt).

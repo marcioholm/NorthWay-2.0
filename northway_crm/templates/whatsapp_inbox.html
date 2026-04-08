@@ -794,7 +794,7 @@
         if (!silent) container.innerHTML = `<div class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-northway-red"></div></div>`;
 
         try {
-            const res = await fetch(`/api/whatsapp/${type}/${id}/messages`);
+            const res = await fetch(`/api/whatsapp/${type}/${encodeURIComponent(id)}/messages`);
             if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
             const data = await res.json();

@@ -353,13 +353,30 @@ def sync_messages():
     chats = chats_data if isinstance(chats_data, list) else chats_data.get('chats', [])
     stats['chats_found'] = len(chats)
 
+    # Pré-carrega leads e clientes da empresa indexados por telefone (normalizado)
+    def normalize_phone(p):
+        if not p: return ''
+        return ''.join(c for c in str(p) if c.isdigit())[-11:]  # últimos 11 dígitos
+
+    leads_by_phone = {normalize_phone(l.phone): l for l in Lead.query.filter_by(company_id=company_id).all() if l.phone}
+    clients_by_phone = {normalize_phone(c.phone): c for c in Client.query.filter_by(company_id=company_id).all() if c.phone}
+
     for chat in chats[:50]:  # Limita a 50 chats para evitar timeout no Vercel
         try:
             remote_jid = chat.get('id') or chat.get('remoteJid')
             if not remote_jid:
                 continue
 
-            chat_name = chat.get('name') or chat.get('pushName') or remote_jid.split('@')[0]
+            # Tenta obter nome: prioridade Lead/Cliente CRM > pushName > número
+            phone_digits = normalize_phone(remote_jid.split('@')[0])
+            crm_lead = leads_by_phone.get(phone_digits)
+            crm_client = clients_by_phone.get(phone_digits)
+            crm_name = (crm_lead.name if crm_lead else None) or (crm_client.name if crm_client else None)
+            chat_name = crm_name or chat.get('name') or chat.get('pushName') or remote_jid.split('@')[0]
+
+            # Tenta obter foto do perfil (campo da Evolution API ou URL embutida)
+            pic_url = (chat.get('profilePictureUrl') or chat.get('imgUrl') or
+                       chat.get('profilePicUrl') or chat.get('photo'))
 
             # Upsert conversation
             conv = WhatsappConversation.query.filter_by(
@@ -372,12 +389,34 @@ def sync_messages():
                     instance_id=instance.id,
                     remote_jid=remote_jid,
                     name=chat_name,
+                    profile_pic_url=pic_url,
+                    lead_id=crm_lead.id if crm_lead else None,
+                    client_id=crm_client.id if crm_client else None,
                 )
                 db.session.add(conv)
                 db.session.flush()
                 stats['chats_saved'] += 1
-            elif not conv.name or conv.name == remote_jid.split('@')[0]:
-                conv.name = chat_name
+            else:
+                # Atualiza nome e foto se melhorou
+                if crm_name and conv.name != crm_name:
+                    conv.name = crm_name
+                elif not conv.name or conv.name == remote_jid.split('@')[0]:
+                    conv.name = chat_name
+                if pic_url and not conv.profile_pic_url:
+                    conv.profile_pic_url = pic_url
+                if crm_lead and not conv.lead_id:
+                    conv.lead_id = crm_lead.id
+                if crm_client and not conv.client_id:
+                    conv.client_id = crm_client.id
+
+            # Busca foto do perfil se ainda não tem (apenas grupos individuais, não @g.us)
+            if not conv.profile_pic_url and '@g.us' not in remote_jid:
+                try:
+                    fetched_pic = EvolutionService.fetch_profile_pic(instance.instance_name, remote_jid)
+                    if fetched_pic:
+                        conv.profile_pic_url = fetched_pic
+                except Exception:
+                    pass
 
             # Busca mensagens recentes
             try:
@@ -568,8 +607,9 @@ def get_conversations():
 @whatsapp_bp.route('/api/whatsapp/client/<int:id>/messages', methods=['GET'], endpoint='get_client_messages_legacy')
 @login_required
 def get_history(type='lead', contact_id=None, id=None):
-    contact_id = contact_id or id
-    
+    from urllib.parse import unquote
+    contact_id = unquote(contact_id) if contact_id else id
+
     if not contact_id:
         return jsonify({'error': 'Missing contact ID'}), 400
     if 'lead' in request.endpoint: type = 'lead'
