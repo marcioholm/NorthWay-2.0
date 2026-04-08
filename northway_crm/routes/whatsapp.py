@@ -509,6 +509,28 @@ def sync_messages():
     })
 
 
+@whatsapp_bp.route('/api/whatsapp/debug-chats')
+@login_required
+def debug_chats():
+    """Mostra os primeiros 3 chats crus da Evolution API para debug de nomes/campos."""
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        return jsonify({'error': 'Sem instância'}), 404
+    try:
+        chats_data = EvolutionService.fetch_chats(instance.instance_name)
+        chats = chats_data if isinstance(chats_data, list) else chats_data.get('chats', [])
+        sample = chats[:3]
+        return jsonify({
+            'total': len(chats),
+            'sample': sample,
+            'raw_type': type(chats_data).__name__,
+            'raw_keys': list(chats_data.keys()) if isinstance(chats_data, dict) else 'list'
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
 @whatsapp_bp.route('/api/whatsapp/sync-profile', methods=['POST'])
 @login_required
 def sync_profile():
