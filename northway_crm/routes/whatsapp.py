@@ -541,6 +541,40 @@ def debug_chats():
         return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
 
+@whatsapp_bp.route('/api/whatsapp/debug-messages')
+@login_required
+def debug_messages():
+    """Mostra mensagens cruas da Evolution API para o primeiro chat individual encontrado."""
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        return jsonify({'error': 'Sem instância'}), 404
+    try:
+        chats_data = EvolutionService.fetch_chats(instance.instance_name)
+        chats = chats_data if isinstance(chats_data, list) else chats_data.get('chats', [])
+        # Pega o primeiro chat individual
+        target = next((c for c in chats if '@g.us' not in (c.get('remoteJid') or '')), chats[0] if chats else None)
+        if not target:
+            return jsonify({'error': 'Nenhum chat encontrado'})
+
+        remote_jid = target.get('remoteJid')
+        try:
+            msgs_data = EvolutionService.fetch_messages(instance.instance_name, remote_jid, limit=3)
+        except Exception as e:
+            import traceback
+            return jsonify({'jid': remote_jid, 'error': str(e), 'trace': traceback.format_exc()})
+
+        msgs = msgs_data if isinstance(msgs_data, list) else msgs_data
+        return jsonify({
+            'jid_used': remote_jid,
+            'raw_type': type(msgs_data).__name__,
+            'raw_keys': list(msgs_data.keys()) if isinstance(msgs_data, dict) else 'list',
+            'sample': msgs[:3] if isinstance(msgs, list) else msgs
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
 @whatsapp_bp.route('/api/whatsapp/sync-profile', methods=['POST'])
 @login_required
 def sync_profile():
