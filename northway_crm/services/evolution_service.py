@@ -280,20 +280,64 @@ class EvolutionService:
 
     @staticmethod
     def fetch_messages(instance_name, remote_jid, limit=50):
-        """Fetches recent messages for a specific chat from Evolution API v2."""
+        """Fetches recent messages for a specific chat. Tries multiple Evolution API v2 formats."""
         base_url = EvolutionService.get_api_url()
         headers = EvolutionService.get_headers()
-        # Try v2 POST with where clause
+        attempts = []
+
+        # Format 1: POST /message/findMessages/{instance} with remoteJid filter
+        try:
+            url = f"{base_url}/message/findMessages/{instance_name}"
+            payload = {"where": {"remoteJid": remote_jid}, "limit": limit}
+            r = requests.post(url, headers=headers, json=payload, timeout=30)
+            attempts.append(('POST /message/findMessages + where.remoteJid', r.status_code))
+            if r.status_code < 400:
+                data = r.json()
+                msgs = data if isinstance(data, list) else data.get('messages', data.get('data', []))
+                if isinstance(msgs, list) and len(msgs) > 0 and 'key' in (msgs[0] if msgs else {}):
+                    return msgs
+        except Exception as e:
+            attempts.append(('POST /message/findMessages + where.remoteJid', str(e)))
+
+        # Format 2: POST /message/findMessages/{instance} with key.remoteJid
+        try:
+            url = f"{base_url}/message/findMessages/{instance_name}"
+            payload = {"where": {"key": {"remoteJid": remote_jid}}, "limit": limit}
+            r = requests.post(url, headers=headers, json=payload, timeout=30)
+            attempts.append(('POST /message/findMessages + where.key.remoteJid', r.status_code))
+            if r.status_code < 400:
+                data = r.json()
+                msgs = data if isinstance(data, list) else data.get('messages', data.get('data', []))
+                if isinstance(msgs, list) and len(msgs) > 0 and 'key' in (msgs[0] if msgs else {}):
+                    return msgs
+        except Exception as e:
+            attempts.append(('POST /message/findMessages + where.key.remoteJid', str(e)))
+
+        # Format 3: GET /message/findMessages/{instance}?remoteJid=...
+        try:
+            url = f"{base_url}/message/findMessages/{instance_name}?remoteJid={remote_jid}&limit={limit}"
+            r = requests.get(url, headers=headers, timeout=30)
+            attempts.append(('GET /message/findMessages?remoteJid', r.status_code))
+            if r.status_code < 400:
+                data = r.json()
+                msgs = data if isinstance(data, list) else data.get('messages', data.get('data', []))
+                if isinstance(msgs, list) and len(msgs) > 0 and 'key' in (msgs[0] if msgs else {}):
+                    return msgs
+        except Exception as e:
+            attempts.append(('GET /message/findMessages?remoteJid', str(e)))
+
+        # Format 4: POST /chat/findMessages/{instance}
         try:
             url = f"{base_url}/chat/findMessages/{instance_name}"
-            payload = {"where": {"key": {"remoteJid": remote_jid}}, "limit": limit}
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-            if response.status_code < 400:
-                return response.json()
-        except Exception:
-            pass
-        # Fallback: query param style
-        url = f"{base_url}/chat/findMessages/{instance_name}?remoteJid={remote_jid}&limit={limit}"
-        response = requests.get(url, headers=headers, timeout=30)
-        response.raise_for_status()
-        return response.json()
+            payload = {"where": {"remoteJid": remote_jid}, "limit": limit}
+            r = requests.post(url, headers=headers, json=payload, timeout=30)
+            attempts.append(('POST /chat/findMessages + where.remoteJid', r.status_code))
+            if r.status_code < 400:
+                data = r.json()
+                msgs = data if isinstance(data, list) else data.get('messages', data.get('data', []))
+                if isinstance(msgs, list) and len(msgs) > 0 and 'key' in (msgs[0] if msgs else {}):
+                    return msgs
+        except Exception as e:
+            attempts.append(('POST /chat/findMessages + where.remoteJid', str(e)))
+
+        raise ValueError(f"Nenhum formato de findMessages funcionou. Tentativas: {attempts}")
