@@ -363,20 +363,30 @@ def sync_messages():
 
     for chat in chats[:50]:  # Limita a 50 chats para evitar timeout no Vercel
         try:
-            remote_jid = chat.get('id') or chat.get('remoteJid')
+            # Usar remoteJid (JID real), não 'id' (ID interno da Evolution)
+            remote_jid = chat.get('remoteJid')
             if not remote_jid:
                 continue
 
-            # Tenta obter nome: prioridade Lead/Cliente CRM > pushName > número
-            phone_digits = normalize_phone(remote_jid.split('@')[0])
+            # Para contatos LID (@lid), o telefone real está em lastMessage.key.remoteJidAlt
+            last_msg = chat.get('lastMessage') or {}
+            last_key = last_msg.get('key') or {}
+            alt_jid = last_key.get('remoteJidAlt')  # Ex: "554396977498@s.whatsapp.net"
+
+            # JID para busca de telefone: preferir @s.whatsapp.net sobre @lid
+            phone_jid = alt_jid if (alt_jid and '@s.whatsapp.net' in alt_jid) else remote_jid
+            phone_digits = normalize_phone(phone_jid.split('@')[0])
+
+            # Nome: chat.pushName para grupos, lastMessage.pushName para contatos individuais
+            wa_name = chat.get('pushName') or last_msg.get('pushName') or ''
+
             crm_lead = leads_by_phone.get(phone_digits)
             crm_client = clients_by_phone.get(phone_digits)
             crm_name = (crm_lead.name if crm_lead else None) or (crm_client.name if crm_client else None)
-            chat_name = crm_name or chat.get('name') or chat.get('pushName') or remote_jid.split('@')[0]
+            chat_name = crm_name or wa_name or phone_jid.split('@')[0]
 
-            # Tenta obter foto do perfil (campo da Evolution API ou URL embutida)
-            pic_url = (chat.get('profilePictureUrl') or chat.get('imgUrl') or
-                       chat.get('profilePicUrl') or chat.get('photo'))
+            # Foto: campo correto é profilePicUrl
+            pic_url = chat.get('profilePicUrl') or chat.get('profilePictureUrl') or chat.get('imgUrl')
 
             # Upsert conversation
             conv = WhatsappConversation.query.filter_by(
@@ -640,11 +650,30 @@ def get_conversations():
                 else:
                     last_at = None
                 
+                # Prioriza nome do CRM (lead/cliente) sobre o nome salvo na conversa
+                display_name = getattr(c, 'name', '') or ''
+                if contact_type == 'lead' and getattr(c, 'lead_id', None):
+                    try:
+                        lead_obj = Lead.query.get(c.lead_id)
+                        if lead_obj and lead_obj.name:
+                            display_name = lead_obj.name
+                    except Exception:
+                        pass
+                elif contact_type == 'client' and getattr(c, 'client_id', None):
+                    try:
+                        client_obj = Client.query.get(c.client_id)
+                        if client_obj and client_obj.name:
+                            display_name = client_obj.name
+                    except Exception:
+                        pass
+                if not display_name:
+                    display_name = remote_jid.split('@')[0] if '@' in str(remote_jid) else 'Desconhecido'
+
                 data.append({
                     'id': contact_id,
                     'type': contact_type,
                     'phone': remote_jid,
-                    'name': getattr(c, 'name', '') or (remote_jid.split('@')[0] if '@' in str(remote_jid) else 'Unknown'),
+                    'name': display_name,
                     'profile_pic_url': getattr(c, 'profile_pic_url', None),
                     'last_message_content': getattr(c, 'last_message_preview', ''),
                     'last_message_at': last_at,
