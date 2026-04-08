@@ -241,3 +241,25 @@ class EvolutionService:
         url = f"{EvolutionService.get_api_url()}/group/participants/{instance_name}?groupJid={group_jid}"
         response = requests.get(url, headers=EvolutionService.get_headers(), timeout=15)
         return response.json()
+
+    @staticmethod
+    def fetch_chats(instance_name):
+        """Fetches all chats/conversations from Evolution API v2."""
+        url = f"{EvolutionService.get_api_url()}/chat/findChats/{instance_name}"
+        response = requests.post(url, headers=EvolutionService.get_headers(), json={}, timeout=30)
+        response.raise_for_status()
+        return response.json()
+
+    @staticmethod
+    def fetch_messages(instance_name, remote_jid, limit=50):
+        """Fetches recent messages for a specific chat from Evolution API v2."""
+        url = f"{EvolutionService.get_api_url()}/chat/findMessages/{instance_name}"
+        payload = {
+            "where": {
+                "key": {"remoteJid": remote_jid}
+            },
+            "limit": limit
+        }
+        response = requests.post(url, headers=EvolutionService.get_headers(), json=payload, timeout=30)
+        response.raise_for_status()
+        return response.json()

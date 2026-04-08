@@ -333,6 +333,143 @@ def sync_webhook():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@whatsapp_bp.route('/api/whatsapp/sync-messages', methods=['POST'])
+@login_required
+def sync_messages():
+    """Busca chats e mensagens recentes da Evolution API e salva no banco."""
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        return jsonify({'error': 'Nenhuma instância WhatsApp configurada'}), 404
+
+    company_id = current_user.company_id
+    stats = {'chats_found': 0, 'chats_saved': 0, 'messages_saved': 0, 'errors': []}
+
+    try:
+        chats_data = EvolutionService.fetch_chats(instance.instance_name)
+    except Exception as e:
+        return jsonify({'error': f'Falha ao buscar chats da Evolution API: {str(e)}'}), 500
+
+    # Evolution v2 pode retornar lista direta ou objeto com chave 'chats'
+    chats = chats_data if isinstance(chats_data, list) else chats_data.get('chats', [])
+    stats['chats_found'] = len(chats)
+
+    for chat in chats[:50]:  # Limita a 50 chats para evitar timeout no Vercel
+        try:
+            remote_jid = chat.get('id') or chat.get('remoteJid')
+            if not remote_jid:
+                continue
+
+            chat_name = chat.get('name') or chat.get('pushName') or remote_jid.split('@')[0]
+
+            # Upsert conversation
+            conv = WhatsappConversation.query.filter_by(
+                instance_id=instance.id, remote_jid=remote_jid
+            ).first()
+
+            if not conv:
+                conv = WhatsappConversation(
+                    company_id=company_id,
+                    instance_id=instance.id,
+                    remote_jid=remote_jid,
+                    name=chat_name,
+                )
+                db.session.add(conv)
+                db.session.flush()
+                stats['chats_saved'] += 1
+            elif not conv.name or conv.name == remote_jid.split('@')[0]:
+                conv.name = chat_name
+
+            # Busca mensagens recentes
+            try:
+                msgs_data = EvolutionService.fetch_messages(instance.instance_name, remote_jid, limit=30)
+                messages = msgs_data if isinstance(msgs_data, list) else msgs_data.get('messages', [])
+
+                for msg in messages:
+                    try:
+                        key = msg.get('key', {})
+                        message_id = key.get('id')
+                        if not message_id:
+                            continue
+
+                        # Evita duplicatas
+                        if WhatsappMessage.query.filter_by(message_id=message_id).first():
+                            continue
+
+                        is_from_me = key.get('fromMe', False)
+                        direction = 'out' if is_from_me else 'in'
+                        push_name = msg.get('pushName') or chat_name
+
+                        msg_object = msg.get('message', {})
+                        content = ''
+                        msg_type = 'text'
+                        media_url = None
+
+                        if 'conversation' in msg_object:
+                            content = msg_object['conversation']
+                        elif 'extendedTextMessage' in msg_object:
+                            content = msg_object['extendedTextMessage'].get('text', '')
+                        elif 'imageMessage' in msg_object:
+                            msg_type = 'image'
+                            content = msg_object['imageMessage'].get('caption', '[Imagem]')
+                        elif 'audioMessage' in msg_object:
+                            msg_type = 'audio'
+                            content = '[Áudio]'
+                        elif 'videoMessage' in msg_object:
+                            msg_type = 'video'
+                            content = '[Vídeo]'
+                        elif 'documentMessage' in msg_object:
+                            msg_type = 'document'
+                            content = msg_object['documentMessage'].get('title', '[Documento]')
+
+                        if not content:
+                            content = '[Mensagem]'
+
+                        timestamp = msg.get('messageTimestamp')
+                        dt_timestamp = datetime.utcfromtimestamp(int(timestamp)) if timestamp else datetime.utcnow()
+
+                        new_msg = WhatsappMessage(
+                            company_id=company_id,
+                            conversation_id=conv.id,
+                            message_id=message_id,
+                            direction=direction,
+                            type=msg_type,
+                            content=content,
+                            media_url=media_url,
+                            status='read',
+                            timestamp=dt_timestamp,
+                            sender_name=push_name if direction == 'in' else 'Você'
+                        )
+                        db.session.add(new_msg)
+                        stats['messages_saved'] += 1
+
+                        # Atualiza preview da conversa com a msg mais recente
+                        if not conv.last_message_preview or dt_timestamp > (conv.last_message_at or datetime.min):
+                            conv.last_message_preview = content[:255]
+                            conv.last_message_at = dt_timestamp
+                            conv.last_message_dir = direction
+
+                    except Exception as msg_e:
+                        stats['errors'].append(f'msg {message_id}: {str(msg_e)}')
+
+            except Exception as fetch_e:
+                stats['errors'].append(f'fetch msgs {remote_jid}: {str(fetch_e)}')
+
+        except Exception as chat_e:
+            stats['errors'].append(f'chat: {str(chat_e)}')
+
+    try:
+        db.session.commit()
+    except Exception as commit_e:
+        db.session.rollback()
+        return jsonify({'error': f'Erro ao salvar no banco: {str(commit_e)}'}), 500
+
+    return jsonify({
+        'success': True,
+        'stats': stats,
+        'message': f'{stats["chats_saved"]} conversas e {stats["messages_saved"]} mensagens sincronizadas.'
+    })
+
+
 @whatsapp_bp.route('/api/whatsapp/inspect-webhook')
 def inspect_webhook():
     try:

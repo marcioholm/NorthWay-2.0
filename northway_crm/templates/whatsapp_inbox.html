@@ -16,6 +16,9 @@
         <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center h-16">
             <h1 class="text-xl font-bold text-gray-800">WhatsApp</h1>
             <div class="flex gap-2">
+                <button onclick="syncMessages()" id="sync-btn" title="Sincronizar mensagens da Evolution API" class="p-2 hover:bg-gray-200 rounded-full text-gray-600">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                </button>
                 <button class="p-2 hover:bg-gray-200 rounded-full text-gray-600">
                     <i data-lucide="message-square-plus" class="w-5 h-5"></i>
                 </button>
@@ -1357,6 +1360,30 @@
     }
 
     // --- Initialization ---
+    async function syncMessages() {
+        const btn = document.getElementById('sync-btn');
+        const icon = btn.querySelector('i');
+        btn.disabled = true;
+        icon.classList.add('animate-spin');
+
+        try {
+            const res = await fetch('/api/whatsapp/sync-messages', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                const s = data.stats;
+                alert(`Sincronização concluída!\n${s.chats_saved} conversas novas | ${s.messages_saved} mensagens salvas${s.errors.length ? '\n\nErros: ' + s.errors.slice(0,3).join(', ') : ''}`);
+                loadConversations();
+            } else {
+                alert('Erro na sincronização: ' + (data.error || 'desconhecido'));
+            }
+        } catch (e) {
+            alert('Falha de rede: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            icon.classList.remove('animate-spin');
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         loadConversations();
         loadQuickMessages();
