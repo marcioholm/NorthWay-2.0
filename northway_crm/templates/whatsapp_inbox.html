@@ -1328,13 +1328,13 @@
 
                 // Update in list (lazy reload)
                 loadConversations();
-                if (!silent) alert("Foto atualizada com sucesso!");
+                if (!silent) showToast('Foto atualizada!', 'success');
             } else {
-                if (!silent) alert("Não foi possível atualizar a foto. " + (data.message || ""));
+                if (!silent) showToast('Foto não encontrada: ' + (data.message || ''), 'error');
             }
         } catch (e) {
             console.error(e);
-            if (!silent) alert("Erro ao sincronizar perfil.");
+            if (!silent) showToast('Erro ao sincronizar perfil: ' + e.message, 'error');
         } finally {
             if (icon) icon.classList.remove('animate-spin');
         }

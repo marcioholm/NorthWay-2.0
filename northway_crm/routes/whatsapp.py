@@ -509,6 +509,54 @@ def sync_messages():
     })
 
 
+@whatsapp_bp.route('/api/whatsapp/sync-profile', methods=['POST'])
+@login_required
+def sync_profile():
+    from urllib.parse import unquote
+    data = request.json or {}
+    chat_type = data.get('type', 'atendimento')
+    contact_id = unquote(str(data.get('id', '')))
+
+    if not contact_id:
+        return jsonify({'success': False, 'message': 'ID não informado'}), 400
+
+    instance = WhatsappInstance.query.filter_by(company_id=current_user.company_id).first()
+    if not instance:
+        return jsonify({'success': False, 'message': 'Nenhuma instância configurada'}), 404
+
+    # Resolve remote_jid
+    remote_jid = contact_id
+    if chat_type == 'lead':
+        obj = Lead.query.get(contact_id)
+        if obj:
+            remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
+    elif chat_type == 'client':
+        obj = Client.query.get(contact_id)
+        if obj:
+            remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
+    elif '@' not in remote_jid:
+        remote_jid = f"{remote_jid}@s.whatsapp.net"
+
+    try:
+        pic_url = EvolutionService.fetch_profile_pic(instance.instance_name, remote_jid)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+    if not pic_url:
+        return jsonify({'success': False, 'message': 'Foto não encontrada no WhatsApp'})
+
+    # Persiste na conversa
+    conv = WhatsappConversation.query.filter_by(instance_id=instance.id, remote_jid=remote_jid).first()
+    if conv:
+        conv.profile_pic_url = pic_url
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+    return jsonify({'success': True, 'url': pic_url})
+
+
 @whatsapp_bp.route('/api/whatsapp/inspect-webhook')
 def inspect_webhook():
     try:
