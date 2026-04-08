@@ -371,7 +371,10 @@ def create_app():
         # --- ERROR HANDLERS ---
         @app.errorhandler(404)
         def not_found_error(error):
-            return render_template('404.html'), 404
+            try:
+                return render_template('404.html'), 404
+            except Exception:
+                return "<html><body style='font-family:sans-serif;background:#111827;color:#f9fafb;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'><div style='text-align:center'><h1 style='color:#ef4444'>404</h1><p>Página não encontrada</p><a href='/home' style='color:#ef4444'>Voltar ao início</a></div></body></html>", 404
 
         @app.errorhandler(500)
         def internal_error(error):

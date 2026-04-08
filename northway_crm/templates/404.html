@@ -1,20 +1,58 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6 lg:px-8">
-    <div class="text-center">
-        <p class="text-base font-semibold text-northway-red">404</p>
-        <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Página não encontrada</h1>
-        <p class="mt-6 text-base leading-7 text-gray-600">Desculpe, não conseguimos encontrar a página que você está
-            procurando.</p>
-        <div class="mt-10 flex items-center justify-center gap-x-6">
-            <a href="/"
-                class="rounded-md bg-northway-red px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-northway-red">
-                Voltar para o Início
-            </a>
-            <a href="#" onclick="history.back()" class="text-sm font-semibold text-gray-900">Voltar <span
-                    aria-hidden="true">&rarr;</span></a>
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Página não encontrada | NorthWay CRM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #f9fafb;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .container { text-align: center; max-width: 480px; }
+        .code { font-size: 1rem; font-weight: 600; color: #ef4444; letter-spacing: 0.05em; }
+        h1 { margin-top: 1rem; font-size: 2rem; font-weight: 700; color: #f9fafb; }
+        p { margin-top: 1.5rem; font-size: 1rem; color: #9ca3af; line-height: 1.6; }
+        .actions { margin-top: 2.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn-primary {
+            background-color: #ef4444;
+            color: #fff;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover { background-color: #b91c1c; }
+        .btn-secondary {
+            color: #f9fafb;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 0.625rem 1.25rem;
+        }
+        .btn-secondary:hover { color: #d1d5db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p class="code">404</p>
+        <h1>Página não encontrada</h1>
+        <p>Desculpe, não conseguimos encontrar a página que você está procurando.</p>
+        <div class="actions">
+            <a href="/home" class="btn-primary">Voltar para o Início</a>
+            <a href="#" onclick="history.back()" class="btn-secondary">Voltar &rarr;</a>
         </div>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>
