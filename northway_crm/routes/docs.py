@@ -175,6 +175,14 @@ def view_book(id):
     if not is_super and current_user.company not in book.allowed_companies:
         abort(403)
         
+    # If book has a custom route_name, redirect to it to use the full-screen template
+    if book.route_name:
+        try:
+             from flask import url_for, redirect
+             return redirect(url_for(book.route_name))
+        except:
+             pass 
+             
     return render_template('docs/view_book.html', book=book)
 
 @docs_bp.route('/apresentacao-crm-v2')
@@ -196,6 +204,11 @@ def manual_edicao():
 @login_required
 def presentation_optics():
     return render_template('docs/presentation_optics.html')
+
+@docs_bp.route('/apresentacao-mk-fitness')
+@login_required
+def presentation_mk_fitness():
+    return render_template('docs/presentation_mk_fitness.html')
 @docs_bp.route('/api/docs/sync-library')
 @docs_bp.route('/master/api/docs/sync-library')
 @login_required
@@ -285,6 +298,32 @@ def sync_library():
             existing_ot.description = desc_ot
             existing_ot.route_name = 'docs.presentation_optics'
             results.append(f"Updated: {title_ot}")
+            
+        # --- REGISTER: M&K Fitness Presentation ---
+        title_mk = "Posicionamento Comercial — M&K Fitness Center"
+        desc_mk = "Apresentação estratégica para academias femininas, focada em mulheres reais, acolhimento e jornada da aluna."
+        
+        existing_mk = LibraryBook.query.filter_by(title=title_mk).first()
+        if not existing_mk:
+            new_book_mk = LibraryBook(
+                title=title_mk, 
+                description=desc_mk, 
+                category="Apresentação", 
+                route_name='docs.presentation_mk_fitness', 
+                active=True
+            )
+            db.session.add(new_book_mk)
+            db.session.flush()
+            
+            companies = Company.query.all()
+            for company in companies:
+                if company not in new_book_mk.allowed_companies:
+                    new_book_mk.allowed_companies.append(company)
+            results.append(f"Registered: {title_mk}")
+        else:
+            existing_mk.description = desc_mk
+            existing_mk.route_name = 'docs.presentation_mk_fitness'
+            results.append(f"Updated: {title_mk}")
                 
         db.session.commit()
         return jsonify({

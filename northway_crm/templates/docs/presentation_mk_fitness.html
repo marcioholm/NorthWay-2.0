@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&K Fitness Center — Posicionamento Estratégico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #fa0102;
+            --secondary: #050505;
+            --accent: #2d2d2d;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--secondary);
+            color: white;
+            overflow: hidden;
+        }
+
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* 16:9 Aspect Ratio Container Logic - Snap Scroll */
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            background-color: var(--secondary);
+        }
+
+        .slide {
+            scroll-snap-align: start;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: var(--secondary);
+            color: white;
+            padding: 0;
+        }
+
+        /* Aesthetics */
+        .bg-pattern-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .stack-bg {
+            background: radial-gradient(circle at center, #1a0505 0%, #050505 70%);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+
+        @media print {
+            @page { size: landscape; margin: 0; }
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: var(--secondary) !important; color: white !important; }
+            .slide-container { width: 100% !important; height: auto !important; overflow: visible !important; scroll-snap-type: none !important; }
+            .slide { width: 100vw !important; height: 100vh !important; page-break-after: always !important; break-after: page !important; display: flex !important; position: relative !important; }
+            #controls { display: none !important; }
+            .animate-fade-up { opacity: 1 !important; transform: none !important; animation: none !important; }
+        }
+    </style>
+</head>
+
+<body class="selection:bg-[--primary] selection:text-white">
+
+    <!-- Controls -->
+    <div id="controls" class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference">
+        <a href="{{ url_for('docs.library') }}"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Voltar
+        </a>
+        <button onclick="window.print()"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+        </button>
+    </div>
+
+    <div class="slide-container">
+
+        <!-- SLIDE 1: ABERTURA -->
+        <section class="slide bg-pattern-grid">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/10 via-black to-black"></div>
+            <div class="relative z-10 text-center max-w-5xl px-6">
+                <div class="inline-block mb-6 px-4 py-1 rounded-full border border-[--primary]/30 bg-[--primary]/10 animate-fade-up">
+                    <span class="text-[--primary] text-xs font-bold uppercase tracking-[0.2em]">Posicionamento Comercial</span>
+                </div>
+                <h1 class="text-6xl md:text-9xl font-black font-display tracking-tighter mb-8 leading-[0.9] animate-fade-up delay-1">
+                    M&K Fitness <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">Center</span>
+                </h1>
+                <div class="h-1 w-24 bg-[--primary] mx-auto mb-12 animate-fade-up delay-2"></div>
+                <p class="text-2xl text-gray-400 font-light tracking-wide max-w-3xl mx-auto animate-fade-up delay-3">
+                    Academia para <span class="text-white font-medium border-b border-[--primary]">mulheres reais</span> — acolhimento, conforto e evolução no seu próprio tempo.
+                </p>
+                <div class="mt-16 opacity-50 animate-fade-up delay-3">
+                    <p class="text-xs uppercase tracking-widest font-bold text-gray-600">Northway • Marketing com direção</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: O POSICIONAMENTO -->
+        <section class="slide bg-black">
+            <div class="max-w-5xl w-full grid md:grid-cols-2 gap-16 items-center px-6">
+                <div class="animate-fade-up">
+                    <span class="text-[--primary] font-bold tracking-widest uppercase text-sm mb-4 block">A Visão</span>
+                    <h2 class="text-5xl font-black font-display mb-8 leading-tight">Um espaço feito para <span class="text-gray-600">ser livre de</span> <span class="text-[--primary]">julgamentos.</span></h2>
+                    <p class="text-xl text-gray-400 leading-relaxed mb-8">
+                        Diferente de academias tradicionais focadas em performance intimidante, a M&K nasce para ser o espaço onde a mulher se sente à vontade para começar e permanecer.
+                    </p>
+                    <p class="text-3xl text-white font-medium italic border-l-4 border-[--primary] pl-6 py-2">
+                        Evolução no seu próprio ritmo.
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 gap-4 animate-fade-up delay-1">
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-l-gray-700 hover:border-l-[--primary] transition-colors group">
+                        <i data-lucide="heart" class="w-8 h-8 text-gray-500 group-hover:text-[--primary] mb-4 transition-colors"></i>
+                        <p class="text-lg font-bold text-white">Saúde e Autoestima</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-l-gray-700 hover:border-l-[--primary] transition-colors group">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-gray-500 group-hover:text-[--primary] mb-4 transition-colors"></i>
+                        <p class="text-lg font-bold text-white">Ambiente Acolhedor</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: O PROBLEMA QUE RESOLVEMOS -->
+        <section class="slide bg-pattern-grid">
+            <div class="text-center max-w-4xl px-6">
+                <h2 class="text-5xl font-black font-display mb-16 animate-fade-up">A Barreira do <span class="text-gray-600 line-through decoration-[--primary]">Pertencimento</span></h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left animate-fade-up delay-1">
+                    <div class="glass-panel p-10 rounded-2xl border-t border-t-white/5">
+                        <p class="text-gray-500 uppercase text-xs font-bold tracking-widest mb-4">O Diagnóstico</p>
+                        <p class="text-2xl font-light text-gray-300 leading-relaxed">
+                            Muitas mulheres não deixam de treinar por falta de interesse, mas por <span class="text-white font-bold underline decoration-[--primary]">não se sentirem parte</span> do ambiente.
+                        </p>
+                    </div>
+                    <div class="p-10 bg-[--primary] rounded-2xl shadow-2xl flex flex-col justify-center">
+                        <p class="text-white/80 uppercase text-xs font-bold tracking-widest mb-4">A Nossa Missão</p>
+                        <p class="text-2xl font-display font-black text-white italic">
+                            Romper essa barreira emocional e acolher quem quer recomeçar.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: PROPOSTA DE VALOR -->
+        <section class="slide bg-[#080808]">
+            <div class="text-center max-w-5xl px-6">
+                <h2 class="text-sm font-bold uppercase tracking-[0.4em] text-gray-600 mb-16 animate-fade-up">Proposta de Valor NorthWay</h2>
+                <div class="glass-panel p-16 rounded-3xl relative overflow-hidden animate-fade-up delay-1 border border-white/5">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[--primary]/10 to-transparent"></div>
+                    <p class="text-4xl md:text-5xl font-display font-black text-white leading-tight relative z-10">
+                        "Encontre um espaço feito para <span class="text-[--primary]">mulheres reais</span>, inclusive se você é <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 font-bold">mãe.</span>"
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: DIFERENCIAIS -->
+        <section class="slide bg-pattern-grid">
+            <div class="max-w-6xl w-full px-6">
+                <div class="flex items-center gap-6 mb-16 animate-fade-up">
+                    <h2 class="text-4xl font-black font-display">Diferenciais Comerciais</h2>
+                    <div class="h-px flex-1 bg-gray-800"></div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-6 animate-fade-up delay-1">
+                    <div class="glass-panel p-8 rounded-2xl hover:bg-white/5 transition-all group">
+                        <i data-lucide="venus" class="w-8 h-8 text-[--primary] mb-6"></i>
+                        <h3 class="font-bold text-white mb-2">100% Feminino</h3>
+                        <p class="text-xs text-gray-500">Privacidade e segurança absoluta para a aluna.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl hover:bg-white/5 transition-all group">
+                        <i data-lucide="sparkles" class="w-8 h-8 text-[--primary] mb-6"></i>
+                        <h3 class="font-bold text-white mb-2">Espaço p/ Iniciantes</h3>
+                        <p class="text-xs text-gray-500">Módulo exclusivo que reduz o medo e a vergonha.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl hover:bg-white/5 transition-all group">
+                        <i data-lucide="baby" class="w-8 h-8 text-[--primary] mb-6"></i>
+                        <h3 class="font-bold text-white mb-2">Espaço Kids</h3>
+                        <p class="text-xs text-gray-500">Solução logística para a barreira real das mães.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl hover:bg-white/5 transition-all group">
+                        <i data-lucide="user-x" class="w-8 h-8 text-[--primary] mb-6"></i>
+                        <h3 class="font-bold text-white mb-2">Sem Julgamento</h3>
+                        <p class="text-xs text-gray-500">Cultura de acolhimento acima da performance.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl hover:bg-white/5 transition-all group">
+                        <i data-lucide="users" class="w-8 h-8 text-[--primary] mb-6"></i>
+                        <h3 class="font-bold text-white mb-2">Comunidade</h3>
+                        <p class="text-xs text-gray-500">Gera pertencimento e aumenta o LTV (retenção).</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl hover:bg-white/5 transition-all group">
+                        <i data-lucide="calendar" class="w-8 h-8 text-[--primary] mb-6"></i>
+                        <h3 class="font-bold text-white mb-2">Rotina Real</h3>
+                        <p class="text-xs text-gray-500">Treino desenhado para a vida como ela é.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: OFERTA -->
+        <section class="slide bg-black">
+            <div class="max-w-4xl text-center px-6">
+                <p class="text-[--primary] uppercase tracking-[0.4em] font-bold text-xs mb-12 animate-fade-up">Oferta de Entrada Recomendada</p>
+                <div class="glass-panel p-16 rounded-3xl border border-[--primary]/20 shadow-[0_0_50px_rgba(250,1,2,0.1)] animate-fade-up delay-1">
+                    <h3 class="text-5xl md:text-7xl font-black font-display text-white mb-8 tracking-tighter">Semana do <br><span class="text-[--primary] italic">Recomeço M&K</span></h3>
+                    <div class="w-20 h-1 bg-[--primary] mx-auto mb-10"></div>
+                    <p class="text-2xl text-gray-400 mb-0 font-light italic">"5 a 7 dias sem compromisso."</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: FRASES DE VENDA -->
+        <section class="slide bg-pattern-grid">
+            <div class="grid md:grid-cols-2 gap-6 max-w-6xl w-full px-6">
+                <div class="glass-panel p-12 rounded-2xl flex items-center justify-center text-center animate-fade-up">
+                    <p class="text-3xl font-display italic text-gray-400">"Aqui você não precisa estar pronta."</p>
+                </div>
+                <div class="glass-panel p-12 rounded-2xl flex items-center justify-center text-center animate-fade-up delay-1">
+                    <p class="text-3xl font-display font-black text-white uppercase tracking-tighter">"Esse pode ser o seu lugar."</p>
+                </div>
+                <div class="bg-[--primary] p-12 rounded-2xl flex items-center justify-center text-center animate-fade-up delay-2 shadow-2xl">
+                    <p class="text-3xl font-display font-bold text-white italic">"Seu momento também importa."</p>
+                </div>
+                <div class="glass-panel p-12 rounded-2xl flex items-center justify-center text-center animate-fade-up delay-3">
+                    <p class="text-3xl font-display text-gray-400">"Treinar pode ser mais leve do que você imagina."</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: EXPERIÊNCIA DA ALUNA -->
+        <section class="slide bg-black">
+            <div class="max-w-6xl w-full px-6">
+                <div class="flex flex-col items-center mb-20 animate-fade-up">
+                    <h2 class="text-4xl font-black font-display text-white">Princípios da Experiência</h2>
+                    <div class="h-1 w-20 bg-[--primary] mt-6"></div>
+                </div>
+                <div class="grid md:grid-cols-3 gap-12">
+                    <div class="animate-fade-up delay-1">
+                        <span class="text-6xl font-black font-display text-white/10 mb-6 block">01</span>
+                        <h3 class="text-2xl font-bold text-white mb-4">Acolhimento</h3>
+                        <p class="text-gray-500 leading-relaxed border-l-2 border-[--primary] pl-6">Fazer com que a aluna se sinta à vontade imediatamente.</p>
+                    </div>
+                    <div class="animate-fade-up delay-2">
+                        <span class="text-6xl font-black font-display text-white/10 mb-6 block">02</span>
+                        <h3 class="text-2xl font-bold text-white mb-4">Segurança</h3>
+                        <p class="text-gray-500 leading-relaxed border-l-2 border-[--primary] pl-6">Reduzir insegurança e eliminar o medo de julgamento.</p>
+                    </div>
+                    <div class="animate-fade-up delay-3">
+                        <span class="text-6xl font-black font-display text-white/10 mb-6 block">03</span>
+                        <h3 class="text-2xl font-bold text-white mb-4">Constância</h3>
+                        <p class="text-gray-500 leading-relaxed border-l-2 border-[--primary] pl-6">Incentivar a continuidade sem pressão de perfeição.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: JORNADA DA ALUNA -->
+        <section class="slide bg-pattern-grid">
+            <div class="max-w-6xl w-full px-6">
+                <h2 class="text-4xl font-black font-display text-white mb-12 text-center">Jornada da Aluna NorthWay</h2>
+                <div class="overflow-x-auto glass-panel rounded-3xl p-8 border border-white/5">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-gray-800">
+                                <th class="py-6 text-xs font-bold uppercase tracking-widest text-[--primary]">Etapa</th>
+                                <th class="py-6 text-xs font-bold uppercase tracking-widest text-gray-500">Objetivo</th>
+                                <th class="py-6 text-xs font-bold uppercase tracking-widest text-gray-500">Diretriz de Sucesso</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td class="py-6 font-bold text-white">01 — Descoberta</td>
+                                <td class="py-6 text-gray-400">Gerar identificação</td>
+                                <td class="py-6 text-gray-300">Mostrar mulheres reais, reforçar acolhimento seguro.</td>
+                            </tr>
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td class="py-6 font-bold text-white">03 — Visita</td>
+                                <td class="py-6 text-gray-400">Gerar confiança</td>
+                                <td class="py-6 text-gray-300">Recepção pelo nome, escuta ativa, reforço do ambiente.</td>
+                            </tr>
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td class="py-6 font-bold text-white">04 — Início</td>
+                                <td class="py-6 text-gray-400">Entrada leve</td>
+                                <td class="py-6 text-gray-300">O primeiro dia não precisa ser perfeito, apenas possível.</td>
+                            </tr>
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td class="py-6 font-bold text-white">06 — 1º Mês</td>
+                                <td class="py-6 text-gray-400">Transformar em hábito</td>
+                                <td class="py-6 text-gray-300">Reconhecer presença, comunicação próxima e cuidado.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 10: RESUMO EXECUTIVO -->
+        <section class="slide bg-black overflow-hidden stack-bg">
+            <div class="absolute inset-0 bg-pattern-grid opacity-20"></div>
+            <div class="relative z-10 text-center max-w-5xl px-6">
+                <div class="inline-block flex flex-col items-center mb-16 animate-fade-up">
+                    <span class="text-[--primary] text-xs font-bold uppercase tracking-[0.5em] mb-4">Resumo Estratégico Executivo</span>
+                    <div class="h-1 w-12 bg-[--primary]"></div>
+                </div>
+                <h2 class="text-5xl md:text-7xl font-black font-display text-white mb-16 leading-tight tracking-tighter animate-fade-up delay-1">
+                    "A M&K vence sendo a academia onde a mulher comum <br><span class="text-[--primary] italic underline decoration-white/20">realmente consegue ficar.</span>"
+                </h2>
+                <div class="mt-20 opacity-30 text-[10px] uppercase tracking-[0.5em] font-bold text-gray-500 animate-fade-up delay-2">
+                    Northway Assessoria • Inteligência Comercial
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
