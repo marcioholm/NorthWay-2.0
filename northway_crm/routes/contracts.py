@@ -624,6 +624,71 @@ def terminate_contract(id):
             flash(f"Erro ao cancelar contrato: {str(e)}", 'error')
             return redirect(url_for('contracts.view_contract', id=id))
 
+@contracts_bp.route('/contracts/<int:id>/penalty', methods=['POST'])
+@login_required
+def add_penalty(id):
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    contract = Contract.query.get_or_404(id)
+    if contract.company_id != current_user.company_id:
+        abort(403)
+        
+    try:
+        penalty_str = request.form.get('fee_amount', '0').replace('R$', '').replace('.', '').replace(',', '.')
+        try:
+            penalty = float(penalty_str) if penalty_str else 0.0
+        except:
+            penalty = 0.0
+            
+        due_date_str = request.form.get('fee_due_date')
+        
+        if penalty > 0:
+            from models import Integration
+            from services.asaas_service import create_payment
+            tenant_integration = Integration.query.filter_by(
+                company_id=current_user.company_id, 
+                service='asaas', 
+                is_active=True
+            ).first()
+            tenant_api_key = tenant_integration.api_key if tenant_integration else None
+
+            due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date() if due_date_str else date.today()
+            fee_tx = Transaction(
+                contract_id=contract.id, company_id=contract.company_id, client_id=contract.client_id,
+                description=f"Multa Rescisória - Contrato #{contract.id}", amount=penalty,
+                due_date=due_date, status='pending'
+            )
+            db.session.add(fee_tx)
+            db.session.commit()
+            
+            if tenant_api_key and contract.client.asaas_customer_id:
+                try:
+                    payment, err = create_payment(
+                        customer_id=contract.client.asaas_customer_id,
+                        value=penalty,
+                        due_date=due_date.strftime('%Y-%m-%d'),
+                        description=f"Multa Rescisória - Contrato #{contract.id}",
+                        external_ref=fee_tx.id,
+                        api_key=tenant_api_key
+                    )
+                    if payment:
+                        fee_tx.asaas_id = payment.get('id')
+                        fee_tx.asaas_invoice_url = payment.get('invoiceUrl')
+                        db.session.commit()
+                except Exception as e:
+                    current_app.logger.error(f"❌ Failed to create penalty payment: {e}")
+                    
+            flash('Multa rescisória gerada com sucesso.', 'success')
+        else:
+            flash('Valor da multa deve ser maior que zero.', 'warning')
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Erro ao gerar multa: {str(e)}", 'error')
+        
+    return redirect(url_for('contracts.view_contract', id=contract.id))
+
 @contracts_bp.route('/contracts/<int:id>/duplicate', methods=['POST'])
 @login_required
 def duplicate_contract(id):
