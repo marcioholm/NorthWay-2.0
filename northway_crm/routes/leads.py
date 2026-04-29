@@ -295,6 +295,10 @@ def pipeline(pipeline_id=None):
         except Exception as e:
             pass
 
+    filter_responsible = request.args.get('responsible_id')
+    if filter_responsible:
+        base_query = base_query.filter(Lead.assigned_to_id == filter_responsible)
+
     leads_list = base_query.options(
         db.joinedload(Lead.assigned_user),
         db.joinedload(Lead.interactions)
