@@ -280,18 +280,20 @@ def pipeline(pipeline_id=None):
 
     filter_date = request.args.get('date')
     filter_month = request.args.get('month')
+    filter_by = request.args.get('filter_by', 'created') # 'created' or 'lost'
+    date_col = Lead.lost_at if filter_by == 'lost' else Lead.created_at
     
     if filter_date:
         try:
             from datetime import datetime
-            base_query = base_query.filter(db.func.date(Lead.created_at) == filter_date)
+            base_query = base_query.filter(db.func.date(date_col) == filter_date)
         except Exception as e:
             pass
             
     if filter_month:
         try:
             year, month = map(int, filter_month.split('-'))
-            base_query = base_query.filter(db.extract('year', Lead.created_at) == year, db.extract('month', Lead.created_at) == month)
+            base_query = base_query.filter(db.extract('year', date_col) == year, db.extract('month', date_col) == month)
         except Exception as e:
             pass
 
@@ -846,6 +848,7 @@ def lose_lead(id):
     lead.status = LEAD_STATUS_LOST
     lead.lost_reason = reason
     lead.pipeline_stage_id = perdido_stage.id
+    lead.lost_at = datetime.now()
     
     # Create History Note
     interaction = Interaction(

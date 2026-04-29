@@ -57,6 +57,19 @@
 
                     <div class="h-6 w-px bg-gray-200 mx-1"></div>
 
+                    <div class="relative group/filter-by">
+                        <span class="text-xs font-bold text-gray-400 absolute -top-5 left-1 uppercase tracking-wider">Filtrar por</span>
+                        <select name="filter_by"
+                            class="pl-3 pr-8 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 appearance-none cursor-pointer h-9 w-32 font-medium">
+                            <option value="created" {% if request.args.get('filter_by') != 'lost' %}selected{% endif %}>📅 Criação</option>
+                            <option value="lost" {% if request.args.get('filter_by') == 'lost' %}selected{% endif %}>🗑️ Descarte</option>
+                        </select>
+                        <i data-lucide="chevron-down"
+                            class="w-4 h-4 text-gray-400 absolute right-2 top-2.5 pointer-events-none"></i>
+                    </div>
+
+                    <div class="h-6 w-px bg-gray-200 mx-1"></div>
+
                     <div class="relative group/responsible">
                         <span class="text-xs font-bold text-gray-400 absolute -top-5 left-1 uppercase tracking-wider">Responsável</span>
                         <select name="responsible_id" id="responsibleFilter"
@@ -272,7 +285,11 @@
                         <div class="flex flex-col gap-1">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">
-                                    {{ lead.created_at.strftime('%d/%m') }}
+                                    {% if request.args.get('filter_by') == 'lost' and lead.lost_at %}
+                                        <span class="text-red-500 font-bold" title="Data do Descarte">🚫 {{ lead.lost_at.strftime('%d/%m') }}</span>
+                                    {% else %}
+                                        {{ lead.created_at.strftime('%d/%m') }}
+                                    {% endif %}
                                 </span>
                                 <span
                                     class="text-[9px] font-black text-northway-red uppercase bg-red-50 px-1.5 py-0.5 rounded border border-red-100 flex items-center gap-1"
