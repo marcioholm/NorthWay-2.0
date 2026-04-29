@@ -273,10 +273,29 @@ def pipeline(pipeline_id=None):
     # Optimized query: Eager load interactions (for days_inactive) and assigned user
     # Fixed visibility: Removed status restriction to show leads in 'Fechado' (Won/Lost)
     # Filter by company and pipeline
-    leads_list = Lead.query.filter(
+    base_query = Lead.query.filter(
         Lead.pipeline_id == pipeline_id, 
         Lead.company_id == current_user.company_id
-    ).options(
+    )
+
+    filter_date = request.args.get('date')
+    filter_month = request.args.get('month')
+    
+    if filter_date:
+        try:
+            from datetime import datetime
+            base_query = base_query.filter(db.func.date(Lead.created_at) == filter_date)
+        except Exception as e:
+            pass
+            
+    if filter_month:
+        try:
+            year, month = map(int, filter_month.split('-'))
+            base_query = base_query.filter(db.extract('year', Lead.created_at) == year, db.extract('month', Lead.created_at) == month)
+        except Exception as e:
+            pass
+
+    leads_list = base_query.options(
         db.joinedload(Lead.assigned_user),
         db.joinedload(Lead.interactions)
     ).all()
