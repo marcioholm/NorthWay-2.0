@@ -593,22 +593,43 @@ def terminate_contract(id):
             db.session.add(fee_tx)
             db.session.commit()
             
-            if tenant_api_key and contract.client.asaas_customer_id:
-                try:
-                    payment, err = create_payment(
-                        customer_id=contract.client.asaas_customer_id,
-                        value=penalty,
-                        due_date=due_date.strftime('%Y-%m-%d'),
-                        description=f"Multa Rescisória - Contrato #{contract.id}",
-                        external_ref=fee_tx.id,
+            if tenant_api_key:
+                if not contract.client.asaas_customer_id:
+                    from services.asaas_service import create_customer
+                    cust_id, cust_err = create_customer(
+                        name=contract.client.name,
+                        email=contract.client.email,
+                        cpf_cnpj=contract.client.document,
+                        phone=contract.client.phone,
+                        external_id=contract.client.id,
                         api_key=tenant_api_key
                     )
-                    if payment:
-                        fee_tx.asaas_id = payment.get('id')
-                        fee_tx.asaas_invoice_url = payment.get('invoiceUrl')
+                    if cust_id:
+                        contract.client.asaas_customer_id = cust_id
                         db.session.commit()
-                except Exception as e:
-                    current_app.logger.error(f"❌ Failed to create penalty payment: {e}")
+
+                if contract.client.asaas_customer_id:
+                    try:
+                        payment, err = create_payment(
+                            customer_id=contract.client.asaas_customer_id,
+                            value=penalty,
+                            due_date=due_date.strftime('%Y-%m-%d'),
+                            description=f"Multa Rescisória - Contrato #{contract.id}",
+                            external_ref=fee_tx.id,
+                            api_key=tenant_api_key
+                        )
+                        if payment:
+                            fee_tx.asaas_id = payment.get('id')
+                            fee_tx.asaas_invoice_url = payment.get('invoiceUrl')
+                            db.session.commit()
+                        else:
+                            flash(f"Atenção: A multa foi registrada no CRM, mas não pôde ser gerada no Asaas: {err}", 'warning')
+                            current_app.logger.error(f"❌ Failed to create penalty payment in Asaas: {err}")
+                    except Exception as e:
+                        flash(f"Erro ao integrar com Asaas: {str(e)}", 'error')
+                        current_app.logger.error(f"❌ Failed to create penalty payment: {e}")
+                else:
+                    flash("Atenção: A multa foi registrada no CRM, mas não pôde ser gerada no Asaas pois o cliente não possui ID no Asaas.", 'warning')
     
         if request.is_json:
             return jsonify({'message': 'Contrato encerrado com sucesso.'})
@@ -662,22 +683,43 @@ def add_penalty(id):
             db.session.add(fee_tx)
             db.session.commit()
             
-            if tenant_api_key and contract.client.asaas_customer_id:
-                try:
-                    payment, err = create_payment(
-                        customer_id=contract.client.asaas_customer_id,
-                        value=penalty,
-                        due_date=due_date.strftime('%Y-%m-%d'),
-                        description=f"Multa Rescisória - Contrato #{contract.id}",
-                        external_ref=fee_tx.id,
+            if tenant_api_key:
+                if not contract.client.asaas_customer_id:
+                    from services.asaas_service import create_customer
+                    cust_id, cust_err = create_customer(
+                        name=contract.client.name,
+                        email=contract.client.email,
+                        cpf_cnpj=contract.client.document,
+                        phone=contract.client.phone,
+                        external_id=contract.client.id,
                         api_key=tenant_api_key
                     )
-                    if payment:
-                        fee_tx.asaas_id = payment.get('id')
-                        fee_tx.asaas_invoice_url = payment.get('invoiceUrl')
+                    if cust_id:
+                        contract.client.asaas_customer_id = cust_id
                         db.session.commit()
-                except Exception as e:
-                    current_app.logger.error(f"❌ Failed to create penalty payment: {e}")
+
+                if contract.client.asaas_customer_id:
+                    try:
+                        payment, err = create_payment(
+                            customer_id=contract.client.asaas_customer_id,
+                            value=penalty,
+                            due_date=due_date.strftime('%Y-%m-%d'),
+                            description=f"Multa Rescisória - Contrato #{contract.id}",
+                            external_ref=fee_tx.id,
+                            api_key=tenant_api_key
+                        )
+                        if payment:
+                            fee_tx.asaas_id = payment.get('id')
+                            fee_tx.asaas_invoice_url = payment.get('invoiceUrl')
+                            db.session.commit()
+                        else:
+                            flash(f"Atenção: A multa foi registrada no CRM, mas não pôde ser gerada no Asaas: {err}", 'warning')
+                            current_app.logger.error(f"❌ Failed to create penalty payment in Asaas: {err}")
+                    except Exception as e:
+                        flash(f"Erro ao integrar com Asaas: {str(e)}", 'error')
+                        current_app.logger.error(f"❌ Failed to create penalty payment: {e}")
+                else:
+                    flash("Atenção: A multa foi registrada no CRM, mas não pôde ser gerada no Asaas pois o cliente não possui ID no Asaas.", 'warning')
                     
             flash('Multa rescisória gerada com sucesso.', 'success')
         else:

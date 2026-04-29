@@ -202,6 +202,7 @@ def cancel_payment(payment_id, api_key=None):
             return True, None
         else:
             error_data = response.json()
+            error_msg = error_data.get('errors', [{}])[0].get('description', response.text)
             print(f"⚠️ Error cancelling payment: {error_msg}")
             return False, error_msg
     except Exception as e:
