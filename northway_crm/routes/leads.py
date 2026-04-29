@@ -119,6 +119,8 @@ def leads():
     source = request.args.get('source')
     assigned_to = request.args.get('assigned_to')
     stage_id = request.args.get('stage_id')
+    filter_date = request.args.get('date')
+    filter_month = request.args.get('month')
     
     if search_q:
         search_term = f"%{search_q}%"
@@ -144,6 +146,20 @@ def leads():
         query = query.filter_by(assigned_to_id=int(assigned_to))
     if stage_id:
         query = query.filter_by(pipeline_stage_id=int(stage_id))
+        
+    if filter_date:
+        try:
+            from datetime import datetime
+            query = query.filter(db.func.date(Lead.created_at) == filter_date)
+        except Exception as e:
+            pass
+            
+    if filter_month:
+        try:
+            year, month = map(int, filter_month.split('-'))
+            query = query.filter(db.extract('year', Lead.created_at) == year, db.extract('month', Lead.created_at) == month)
+        except Exception as e:
+            pass
         
     pagination = query.options(
         db.joinedload(Lead.assigned_user),
