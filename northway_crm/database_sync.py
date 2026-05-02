@@ -233,7 +233,10 @@ def sync_database():
                 ('gmb_reviews', "INTEGER DEFAULT 0"),
                 ('gmb_photos', "INTEGER DEFAULT 0"),
                 ('gmb_last_sync', "TIMESTAMP"),
-                ('profile_pic_url', "VARCHAR(500)")
+                ('profile_pic_url', "VARCHAR(500)"),
+                ('lost_at', "TIMESTAMP"),
+                ('lost_reason', "VARCHAR(500)"),
+                ('lost_at_stage_name', "VARCHAR(100)")
             ]
             for t in ['lead', 'client']:
                 for c, d in shared_cols: add_column_if_missing(t, c, d)
