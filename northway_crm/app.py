@@ -497,9 +497,9 @@ def create_app():
             ('routes.goals', 'goals_bp', 'goals_bp', None),
             ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None),
             ('routes.internal_api', 'internal_api_bp', 'internal_api_bp', None),
-            ('routes.ai_settings', 'ai_settings_bp', 'ai_settings_bp', None),
             ('routes.integrations', 'integrations_bp', 'integrations_bp', None),
             ('routes.admin', 'admin_bp', 'admin_bp', None),
+            ('routes.ai_settings', 'ai_settings_bp', 'ai_settings_bp', None),
             ('routes.api_debug', 'api_debug_bp', 'api_debug_bp', None),
             ('routes.jobs', 'jobs_bp', 'jobs_bp', None),
             ('routes.api_extension', 'api_ext', 'api_ext', None),
@@ -537,7 +537,11 @@ def create_app():
                 else:
                     app.register_blueprint(bp)
             except Exception as e:
-                print(f"❌ Failed to load blueprint {var_name}: {e}")
+                error_msg = f"❌ Failed to load blueprint {var_name} from {module_path}: {e}"
+                print(error_msg)
+                # Fallback log for Vercel
+                with open('/tmp/blueprint_error.log', 'a') as f:
+                    f.write(error_msg + "\n")
                 
         # --- BLUEPRINT FALLBACKS (Safety for router build errors) ---
         @app.route('/prospecting')
