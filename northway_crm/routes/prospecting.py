@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 import requests
-from models import db, Lead, Interaction, ProspectingSearch, Company, ProspectingCampaign, ProspectingMessage, ProspectingSetting
+from models import db, Lead, Interaction, ProspectingSearch, Company, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration
 from datetime import datetime, timedelta
 from services.cnpj_service import CNPJAService
+from utils.crypto import encrypt_api_key, decrypt_api_key
 
 prospecting_bp = Blueprint('prospecting', __name__)
 
