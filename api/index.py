@@ -14,6 +14,7 @@ if crm_dir not in sys.path:
 try:
     import northway_crm.models
     import northway_crm.services.supabase_service
+    import northway_crm.routes.ai_settings
 except ImportError:
     pass
 

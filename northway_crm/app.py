@@ -501,7 +501,6 @@ def create_app():
             ('routes.integrations', 'integrations_bp', 'integrations_bp', None),
             ('routes.admin', 'admin_bp', 'admin_bp', None),
             ('routes.api_debug', 'api_debug_bp', 'api_debug_bp', None),
-            ('routes.forms', 'forms_bp', 'forms_bp', '/forms'),
             ('routes.jobs', 'jobs_bp', 'jobs_bp', None),
             ('routes.api_extension', 'api_ext', 'api_ext', None),
             ('routes.whatsapp', 'whatsapp_bp', 'whatsapp_bp', None),
@@ -525,7 +524,6 @@ def create_app():
             ('routes.crepi_routes', 'crepi_bp', 'crepi_bp', None),
             ('routes.swot_routes', 'swot_bp', 'swot_bp', None),
             ('routes.marketing', 'marketing_bp', 'marketing_bp', None),
-            ('routes.integrations_admin', 'integrations_admin_bp', 'integrations_admin_bp', None),
             ('routes.api_v1', 'api_v1_bp', 'api_v1_bp', None)
         ]
 
