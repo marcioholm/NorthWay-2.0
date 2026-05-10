@@ -2,7 +2,7 @@ import os
 import requests
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from models import db, TenantAICredential, TenantIntegration
+from models import db, TenantAICredential, ProspectingIntegration
 from utils.crypto import encrypt_api_key, decrypt_api_key
 from datetime import datetime
 
@@ -19,7 +19,7 @@ def index():
     company_id = current_user.company_id
 
     credentials = TenantAICredential.query.filter_by(company_id=company_id).all()
-    integrations = TenantIntegration.query.filter_by(company_id=company_id).all()
+    integrations = ProspectingIntegration.query.filter_by(company_id=company_id).all()
 
     return render_template('settings_ai.html',
                            credentials=credentials,
@@ -157,7 +157,7 @@ def save_integration():
     if api_key:
         encrypted, last4 = encrypt_api_key(api_key)
 
-    integration = TenantIntegration.query.filter_by(
+    integration = ProspectingIntegration.query.filter_by(
         company_id=company_id,
         provider=provider
     ).first()
@@ -170,7 +170,7 @@ def save_integration():
             integration.api_key_last4 = last4
         integration.updated_at = datetime.utcnow()
     else:
-        integration = TenantIntegration(
+        integration = ProspectingIntegration(
             company_id=company_id,
             provider=provider,
             api_base_url=api_base_url,
@@ -197,7 +197,7 @@ def test_integration():
 
     provider = data.get('provider')
 
-    integration = TenantIntegration.query.filter_by(
+    integration = ProspectingIntegration.query.filter_by(
         company_id=company_id,
         provider=provider
     ).first()
@@ -245,7 +245,7 @@ def delete_integration():
 
     provider = data.get('provider')
 
-    integration = TenantIntegration.query.filter_by(
+    integration = ProspectingIntegration.query.filter_by(
         company_id=company_id,
         provider=provider
     ).first()
@@ -269,7 +269,7 @@ def toggle_integration():
     provider = data.get('provider')
     active = data.get('active', False)
 
-    integration = TenantIntegration.query.filter_by(
+    integration = ProspectingIntegration.query.filter_by(
         company_id=company_id,
         provider=provider
     ).first()

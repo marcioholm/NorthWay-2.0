@@ -1531,8 +1531,8 @@ class TenantAICredential(db.Model):
     __table_args__ = (db.UniqueConstraint('company_id', 'provider', name='unique_company_ai_provider'),)
 
 
-class TenantIntegration(db.Model):
-    __tablename__ = 'tenant_integrations'
+class ProspectingIntegration(db.Model):
+    __tablename__ = 'prospecting_integrations'
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     provider = db.Column(db.String(50), nullable=False) # evolution_api, whatsapp_business, smtp, sendgrid
@@ -1544,6 +1544,6 @@ class TenantIntegration(db.Model):
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
 
-    company = db.relationship('Company', backref='tenant_integrations')
+    company = db.relationship('Company', backref='prospecting_integrations')
 
-    __table_args__ = (db.UniqueConstraint('company_id', 'provider', name='unique_company_integration_provider'),)
+    __table_args__ = (db.UniqueConstraint('company_id', 'provider', name='unique_company_prospecting_integration_provider'),)

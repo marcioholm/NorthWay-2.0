@@ -2,7 +2,7 @@ import os
 import requests
 from flask import Blueprint, request, jsonify
 from functools import wraps
-from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, TenantIntegration, Interaction
+from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction
 from datetime import datetime, timedelta
 from utils.crypto import decrypt_api_key
 
@@ -218,7 +218,7 @@ def get_send_context():
 
     integration = None
     if channel == 'whatsapp':
-        integration = TenantIntegration.query.filter_by(
+        integration = ProspectingIntegration.query.filter_by(
             company_id=tenant_id,
             provider='evolution_api',
             status='active'
@@ -234,7 +234,7 @@ def get_send_context():
         else:
             integration_data = None
     elif channel == 'email':
-        integration = TenantIntegration.query.filter_by(
+        integration = ProspectingIntegration.query.filter_by(
             company_id=tenant_id,
             provider='smtp',
             status='active'
