@@ -464,14 +464,44 @@
                 {% endif %}
 
                 <!-- Prospecting -->
-                <!-- Prospecting -->
                 {% if current_user.company.has_feature('prospecting') and
                 current_user.has_permission('prospecting_view') %}
-                <a href="{{ url_for('prospecting.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint and 'prospecting' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
-                    <i data-lucide="globe" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="sidebar-text transition-opacity duration-300">Prospecção</span>
-                </a>
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open"
+                        class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint and 'prospecting' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
+                        <i data-lucide="globe" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="sidebar-text transition-opacity duration-300 flex-1 text-left">Prospecção</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 sidebar-text transition-transform duration-300" :class="{'rotate-180': open}"></i>
+                    </button>
+                    <div x-show="open" @click.away="open = false"
+                        class="mt-2 ml-4 pl-4 border-l border-white/10 space-y-1">
+                        <a href="{{ url_for('prospecting.dashboard') }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.dashboard' %}text-white font-semibold{% endif %}">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span class="sidebar-text">Dashboard</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.leads') }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.leads' or request.endpoint == 'prospecting.lead_detail' %}text-white font-semibold{% endif %}">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span class="sidebar-text">Leads</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.campaigns') }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.campaigns' %}text-white font-semibold{% endif %}">
+                            <i data-lucide="megaphone" class="w-4 h-4"></i>
+                            <span class="sidebar-text">Campanhas</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.messages') }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.messages' %}text-white font-semibold{% endif %}">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            <span class="sidebar-text">Mensagens</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.settings') }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.settings' %}text-white font-semibold{% endif %}">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            <span class="sidebar-text">Configurações</span>
+                        </a>
+                    </div>
+                </div>
                 {% endif %}
 
                 <!-- Diagnostic Form -->

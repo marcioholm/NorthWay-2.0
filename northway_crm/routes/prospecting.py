@@ -1,11 +1,20 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 import requests
-from models import db, Lead, Interaction, ProspectingSearch, Company
-from datetime import datetime
+from models import db, Lead, Interaction, ProspectingSearch, Company, ProspectingCampaign, ProspectingMessage, ProspectingSetting
+from datetime import datetime, timedelta
 from services.cnpj_service import CNPJAService
 
 prospecting_bp = Blueprint('prospecting', __name__)
+
+
+def api_response(success=True, data=None, error=None, status=200):
+    return jsonify({
+        'success': success,
+        'data': data,
+        'error': error
+    }), status
+
 
 @prospecting_bp.route('/prospecting')
 @login_required
@@ -13,7 +22,590 @@ def index():
     if not current_user.company.has_feature('prospecting'):
         flash('Sua empresa não possui acesso a este módulo.', 'error')
         return redirect(url_for('dashboard.home'))
-    return render_template('prospecting.html')
+    return redirect(url_for('prospecting.dashboard'))
+
+
+@prospecting_bp.route('/prospecting/discover')
+@login_required
+def discover():
+    if not current_user.company.has_feature('prospecting'):
+        flash('Sua empresa não possui acesso a este módulo.', 'error')
+        return redirect(url_for('dashboard.home'))
+    return render_template('prospecting/discover.html')
+
+
+@prospecting_bp.route('/prospecting/dashboard')
+@login_required
+def dashboard():
+    if not current_user.company.has_feature('prospecting'):
+        flash('Sua empresa não possui acesso a este módulo.', 'error')
+        return redirect(url_for('dashboard.home'))
+
+    company_id = current_user.company_id
+
+    total_leads = Lead.query.filter_by(company_id=company_id).filter(
+        Lead.prospecting_status.isnot(None)
+    ).count()
+
+    aguardando = Lead.query.filter_by(company_id=company_id, prospecting_status='novo').count()
+    em_execucao = Lead.query.filter_by(company_id=company_id, prospecting_status='em_execucao').count()
+    aguardando_aprovacao = Lead.query.filter_by(company_id=company_id, prospecting_status='aguardando_aprovacao').count()
+    contatados = Lead.query.filter_by(company_id=company_id, prospecting_status='contatado').count()
+    responderam = Lead.query.filter_by(company_id=company_id, prospecting_status='respondeu').count()
+    interessados = Lead.query.filter_by(company_id=company_id, prospecting_status='interessado').count()
+    reunioes = Lead.query.filter_by(company_id=company_id, prospecting_status='reuniao').count()
+    sem_resposta = Lead.query.filter_by(company_id=company_id, prospecting_status='sem_resposta').count()
+    erro_envio = Lead.query.filter_by(company_id=company_id, prospecting_status='erro').count()
+
+    campaigns = ProspectingCampaign.query.filter_by(company_id=company_id, is_active=True).all()
+
+    return render_template('prospecting/dashboard.html',
+                           total_leads=total_leads,
+                           aguardando=aguardando,
+                           em_execucao=em_execucao,
+                           aguardando_aprovacao=aguardando_aprovacao,
+                           contatados=contatados,
+                           responderam=responderam,
+                           interessados=interessados,
+                           reunioes=reunioes,
+                           sem_resposta=sem_resposta,
+                           erro_envio=erro_envio,
+                           campaigns=campaigns)
+
+
+@prospecting_bp.route('/prospecting/leads')
+@login_required
+def leads():
+    if not current_user.company.has_feature('prospecting'):
+        flash('Sua empresa não possui acesso a este módulo.', 'error')
+        return redirect(url_for('dashboard.home'))
+
+    company_id = current_user.company_id
+
+    filters = {
+        'empresa': request.args.get('empresa'),
+        'responsavel': request.args.get('responsavel'),
+        'segmento': request.args.get('segmento'),
+        'status': request.args.get('status'),
+        'canal': request.args.get('canal'),
+        'campanha': request.args.get('campanha')
+    }
+
+    query = Lead.query.filter_by(company_id=company_id).filter(
+        Lead.prospecting_status.isnot(None)
+    )
+
+    if filters.get('status'):
+        query = query.filter(Lead.prospecting_status == filters['status'])
+    if filters.get('canal'):
+        query = query.filter(Lead.preferred_channel == filters['canal'])
+    if filters.get('campanha'):
+        query = query.filter(Lead.prospecting_campaign_id == filters['campanha'])
+    if filters.get('segmento'):
+        query = query.filter(Lead.interest == filters['segmento'])
+
+    leads_list = query.order_by(Lead.created_at.desc()).limit(100).all()
+
+    campaigns = ProspectingCampaign.query.filter_by(company_id=company_id).all()
+    users = current_user.company.users
+
+    return render_template('prospecting/leads.html',
+                           leads=leads_list,
+                           campaigns=campaigns,
+                           users=users,
+                           filters=filters)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>')
+@login_required
+def lead_detail(lead_id):
+    if not current_user.company.has_feature('prospecting'):
+        flash('Sua empresa não possui acesso a este módulo.', 'error')
+        return redirect(url_for('dashboard.home'))
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+
+    messages = ProspectingMessage.query.filter_by(lead_id=lead_id).order_by(ProspectingMessage.created_at.desc()).all()
+    interactions = Interaction.query.filter_by(lead_id=lead_id).order_by(Interaction.created_at.desc()).limit(20).all()
+
+    campaigns = ProspectingCampaign.query.filter_by(company_id=current_user.company_id, is_active=True).all()
+
+    return render_template('prospecting/lead_detail.html',
+                           lead=lead,
+                           messages=messages,
+                           interactions=interactions,
+                           campaigns=campaigns)
+
+
+@prospecting_bp.route('/prospecting/campaigns')
+@login_required
+def campaigns():
+    if not current_user.company.has_feature('prospecting'):
+        flash('Sua empresa não possui acesso a este módulo.', 'error')
+        return redirect(url_for('dashboard.home'))
+
+    company_id = current_user.company_id
+
+    campaigns_list = ProspectingCampaign.query.filter_by(company_id=company_id).order_by(ProspectingCampaign.created_at.desc()).all()
+
+    return render_template('prospecting/campaigns.html', campaigns=campaigns_list)
+
+
+@prospecting_bp.route('/prospecting/campaign/create', methods=['POST'])
+@login_required
+def create_campaign():
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    data = request.json
+    company_id = current_user.company_id
+
+    campaign = ProspectingCampaign(
+        company_id=company_id,
+        name=data.get('name'),
+        description=data.get('description'),
+        target_segment=data.get('target_segment'),
+        objective=data.get('objective'),
+        tone_of_voice=data.get('tone_of_voice'),
+        offer=data.get('offer'),
+        main_angle=data.get('main_angle'),
+        default_cta=data.get('default_cta'),
+        restrictions=data.get('restrictions'),
+        max_attempts=data.get('max_attempts', 3),
+        followup_interval_days=data.get('followup_interval_days', 3),
+        status='rascunho',
+        is_active=True
+    )
+
+    db.session.add(campaign)
+    db.session.commit()
+
+    return api_response(data={'id': campaign.id, 'name': campaign.name})
+
+
+@prospecting_bp.route('/prospecting/campaign/<int:campaign_id>', methods=['GET', 'PUT', 'DELETE'])
+@login_required
+def manage_campaign(campaign_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
+
+    if request.method == 'GET':
+        return api_response(data={
+            'id': campaign.id,
+            'name': campaign.name,
+            'description': campaign.description,
+            'target_segment': campaign.target_segment,
+            'objective': campaign.objective,
+            'tone_of_voice': campaign.tone_of_voice,
+            'offer': campaign.offer,
+            'main_angle': campaign.main_angle,
+            'default_cta': campaign.default_cta,
+            'restrictions': campaign.restrictions,
+            'max_attempts': campaign.max_attempts,
+            'followup_interval_days': campaign.followup_interval_days,
+            'status': campaign.status,
+            'is_active': campaign.is_active
+        })
+
+    if request.method == 'PUT':
+        data = request.json
+        campaign.name = data.get('name', campaign.name)
+        campaign.description = data.get('description', campaign.description)
+        campaign.target_segment = data.get('target_segment', campaign.target_segment)
+        campaign.objective = data.get('objective', campaign.objective)
+        campaign.tone_of_voice = data.get('tone_of_voice', campaign.tone_of_voice)
+        campaign.offer = data.get('offer', campaign.offer)
+        campaign.main_angle = data.get('main_angle', campaign.main_angle)
+        campaign.default_cta = data.get('default_cta', campaign.default_cta)
+        campaign.restrictions = data.get('restrictions', campaign.restrictions)
+        campaign.max_attempts = data.get('max_attempts', campaign.max_attempts)
+        campaign.followup_interval_days = data.get('followup_interval_days', campaign.followup_interval_days)
+        campaign.status = data.get('status', campaign.status)
+        campaign.is_active = data.get('is_active', campaign.is_active)
+
+        db.session.commit()
+        return api_response(success=True)
+
+    if request.method == 'DELETE':
+        db.session.delete(campaign)
+        db.session.commit()
+        return api_response(success=True)
+
+
+@prospecting_bp.route('/prospecting/messages')
+@login_required
+def messages():
+    if not current_user.company.has_feature('prospecting'):
+        flash('Sua empresa não possui acesso a este módulo.', 'error')
+        return redirect(url_for('dashboard.home'))
+
+    company_id = current_user.company_id
+
+    status_filter = request.args.get('status')
+    channel_filter = request.args.get('channel')
+
+    query = ProspectingMessage.query.filter_by(company_id=company_id)
+
+    if status_filter:
+        query = query.filter(ProspectingMessage.status == status_filter)
+    if channel_filter:
+        query = query.filter(ProspectingMessage.channel == channel_filter)
+
+    messages_list = query.order_by(ProspectingMessage.created_at.desc()).limit(100).all()
+
+    return render_template('prospecting/messages.html', messages=messages_list)
+
+
+@prospecting_bp.route('/prospecting/settings')
+@login_required
+def settings():
+    if not current_user.company.has_feature('prospecting'):
+        flash('Sua empresa não possui acesso a este módulo.', 'error')
+        return redirect(url_for('dashboard.home'))
+
+    setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
+
+    if not setting:
+        setting = ProspectingSetting(
+            company_id=current_user.company_id,
+            manual_approval_required=True,
+            default_ai_model='gpt-4.1-mini',
+            default_tone='profissional'
+        )
+        db.session.add(setting)
+        db.session.commit()
+
+    return render_template('prospecting/settings.html', setting=setting)
+
+
+@prospecting_bp.route('/prospecting/settings/update', methods=['POST'])
+@login_required
+def update_settings():
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    data = request.json
+    company_id = current_user.company_id
+
+    setting = ProspectingSetting.query.filter_by(company_id=company_id).first()
+
+    if not setting:
+        setting = ProspectingSetting(company_id=company_id)
+        db.session.add(setting)
+
+    setting.generate_message_webhook_url = data.get('generate_message_webhook_url')
+    setting.send_whatsapp_webhook_url = data.get('send_whatsapp_webhook_url')
+    setting.send_email_webhook_url = data.get('send_email_webhook_url')
+    setting.daily_send_limit = data.get('daily_send_limit', 50)
+    setting.sending_start_time = data.get('sending_start_time', '09:00')
+    setting.sending_end_time = data.get('sending_end_time', '18:00')
+    setting.manual_approval_required = data.get('manual_approval_required', True)
+    setting.default_ai_model = data.get('default_ai_model', 'gpt-4.1-mini')
+    setting.default_tone = data.get('default_tone', 'profissional')
+
+    db.session.commit()
+
+    return api_response(success=True)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>/generate-message', methods=['POST'])
+@login_required
+def generate_message(lead_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+
+    if lead.in_execution or lead.prospecting_status == 'em_execucao':
+        return api_response(success=False, error='Já existe uma mensagem sendo gerada para este lead', status=400)
+
+    setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
+
+    if not setting or not setting.generate_message_webhook_url:
+        return api_response(success=False, error='Webhook de geração de mensagem não configurado', status=400)
+
+    lead.in_execution = True
+    lead.prospecting_status = 'em_execucao'
+    db.session.commit()
+
+    campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id) if lead.prospecting_campaign_id else None
+
+    payload = {
+        'company_id': current_user.company_id,
+        'lead_id': lead.id,
+        'company_name': lead.name,
+        'responsible_name': lead.name,
+        'phone': lead.phone,
+        'email': lead.email,
+        'segment': lead.interest,
+        'preferred_channel': lead.preferred_channel or 'whatsapp',
+        'last_angle': lead.last_angle,
+        'campaign': {
+            'name': campaign.name if campaign else 'Sem campanha',
+            'objective': campaign.objective if campaign else '',
+            'tone_of_voice': campaign.tone_of_voice if campaign else 'profissional',
+            'offer': campaign.offer if campaign else '',
+            'main_angle': campaign.main_angle if campaign else '',
+            'default_cta': campaign.default_cta if campaign else 'Agende uma conversa',
+            'restrictions': campaign.restrictions if campaign else ''
+        }
+    }
+
+    try:
+        response = requests.post(
+            setting.generate_message_webhook_url,
+            json=payload,
+            timeout=30,
+            headers={'Content-Type': 'application/json'}
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            message_text = result.get('message', '')
+            angle = result.get('angle', 'Atrair')
+            model = result.get('model', 'gpt-4.1-mini')
+
+            prospecting_msg = ProspectingMessage(
+                company_id=current_user.company_id,
+                lead_id=lead.id,
+                campaign_id=lead.prospecting_campaign_id,
+                channel=lead.preferred_channel or 'whatsapp',
+                type='outbound',
+                status='aguardando_aprovacao',
+                content=message_text,
+                ai_model=model,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(prospecting_msg)
+
+            lead.prospecting_status = 'aguardando_aprovacao'
+            lead.last_angle = angle
+            lead.in_execution = False
+
+            db.session.commit()
+
+            return api_response(data={
+                'message_id': prospecting_msg.id,
+                'content': message_text,
+                'status': 'aguardando_aprovacao'
+            })
+        else:
+            raise Exception(f"Webhook retornou status {response.status_code}")
+
+    except Exception as e:
+        lead.in_execution = False
+        lead.prospecting_status = 'erro'
+        db.session.commit()
+
+        prospecting_msg = ProspectingMessage(
+            company_id=current_user.company_id,
+            lead_id=lead.id,
+            campaign_id=lead.prospecting_campaign_id,
+            channel=lead.preferred_channel or 'whatsapp',
+            type='outbound',
+            status='erro',
+            content='',
+            error_message=str(e)
+        )
+        db.session.add(prospecting_msg)
+        db.session.commit()
+
+        return api_response(success=False, error=f'Erro ao gerar mensagem: {str(e)}', status=500)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>/approve-message/<int:message_id>', methods=['POST'])
+@login_required
+def approve_message(lead_id, message_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+    message = ProspectingMessage.query.filter_by(id=message_id, lead_id=lead_id).first_or_404()
+
+    if message.status not in ['pendente', 'aguardando_aprovacao']:
+        return api_response(success=False, error='Mensagem não pode ser aprovada neste status', status=400)
+
+    setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
+
+    webhook_url = None
+    if message.channel == 'whatsapp':
+        webhook_url = setting.send_whatsapp_webhook_url if setting else None
+    elif message.channel == 'email':
+        webhook_url = setting.send_email_webhook_url if setting else None
+
+    if not webhook_url:
+        return api_response(success=False, error=f'Webhook de envio por {message.channel} não configurado', status=400)
+
+    payload = {
+        'lead_id': lead.id,
+        'message_id': message.id,
+        'channel': message.channel,
+        'phone': lead.phone,
+        'email': lead.email,
+        'content': message.content,
+        'company_id': current_user.company_id
+    }
+
+    try:
+        response = requests.post(
+            webhook_url,
+            json=payload,
+            timeout=30,
+            headers={'Content-Type': 'application/json'}
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+
+            if result.get('success'):
+                message.status = 'enviada'
+                message.approved_by = current_user.id
+                message.approved_at = datetime.utcnow()
+                message.sent_at = datetime.utcnow()
+
+                if message.channel == 'whatsapp':
+                    lead.wa_attempts = (lead.wa_attempts or 0) + 1
+                elif message.channel == 'email':
+                    lead.email_attempts = (lead.email_attempts or 0) + 1
+
+                lead.last_contact_at = datetime.utcnow()
+                lead.prospecting_status = 'contatado'
+
+                if lead.prospecting_campaign_id:
+                    campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
+                    if campaign and campaign.followup_interval_days:
+                        lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days)
+
+                interaction = Interaction(
+                    lead_id=lead.id,
+                    company_id=current_user.company_id,
+                    user_id=current_user.id,
+                    type=message.channel,
+                    content=message.content
+                )
+                db.session.add(interaction)
+
+                db.session.commit()
+
+                return api_response(data={'status': 'enviada', 'sent_at': message.sent_at.isoformat()})
+            else:
+                raise Exception(result.get('error', 'Erro desconhecido'))
+        else:
+            raise Exception(f"Webhook retornou status {response.status_code}")
+
+    except Exception as e:
+        message.status = 'erro'
+        message.error_message = str(e)
+        db.session.commit()
+
+        lead.prospecting_status = 'erro'
+        db.session.commit()
+
+        return api_response(success=False, error=f'Erro ao enviar mensagem: {str(e)}', status=500)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>/reject-message/<int:message_id>', methods=['POST'])
+@login_required
+def reject_message(lead_id, message_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+    message = ProspectingMessage.query.filter_by(id=message_id, lead_id=lead_id).first_or_404()
+
+    message.status = 'rejeitada'
+    db.session.commit()
+
+    lead.prospecting_status = 'novo'
+    lead.in_execution = False
+    db.session.commit()
+
+    return api_response(success=True)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>/update-status', methods=['POST'])
+@login_required
+def update_lead_status(lead_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+    data = request.json
+
+    lead.prospecting_status = data.get('status', lead.prospecting_status)
+    lead.preferred_channel = data.get('preferred_channel', lead.preferred_channel)
+    lead.prospecting_campaign_id = data.get('campaign_id', lead.prospecting_campaign_id)
+    lead.lead_score = data.get('score', lead.lead_score)
+
+    db.session.commit()
+
+    return api_response(success=True)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>/pause', methods=['POST'])
+@login_required
+def pause_lead(lead_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+
+    lead.prospecting_status = 'pausado'
+    lead.in_execution = False
+    db.session.commit()
+
+    return api_response(success=True)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>/resume', methods=['POST'])
+@login_required
+def resume_lead(lead_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+
+    lead.prospecting_status = 'novo'
+    db.session.commit()
+
+    return api_response(success=True)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>/discard', methods=['POST'])
+@login_required
+def discard_lead(lead_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+
+    lead.prospecting_status = 'descartado'
+    lead.in_execution = False
+    db.session.commit()
+
+    return api_response(success=True)
+
+
+@prospecting_bp.route('/prospecting/lead/<int:lead_id>/add-to-campaign', methods=['POST'])
+@login_required
+def add_to_campaign(lead_id):
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+    data = request.json
+
+    campaign_id = data.get('campaign_id')
+    if campaign_id:
+        campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
+        lead.prospecting_campaign_id = campaign_id
+        lead.prospecting_status = 'novo'
+        db.session.commit()
+
+    return api_response(success=True)
+
 
 @prospecting_bp.route('/api/prospecting/search')
 @login_required
@@ -21,34 +613,31 @@ def search_places():
     query = request.args.get('query')
     city = request.args.get('city')
     state = request.args.get('state')
-    radius = request.args.get('radius', type=int) # in km
+    radius = request.args.get('radius', type=int)
     min_rating = request.args.get('min_rating', type=float)
     min_reviews = request.args.get('min_reviews', type=int)
     pagetoken = request.args.get('pagetoken')
-    
+
     if not query and not pagetoken:
         return api_response(success=False, error='Query or pagetoken is required', status=400)
-        
-    # Get API Key
+
     from models import Integration
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='google_maps').first()
     api_key = integration.api_key if integration and integration.is_active else None
-    
+
     if not api_key:
         return api_response(success=False, error='API Key not configured', status=500)
 
     all_results = []
     next_page_token = None
-    
+
     try:
-        # If we have a pagetoken, we just fetch the next page directly
         if pagetoken:
             url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
             params = {
                 'pagetoken': pagetoken,
                 'key': api_key
             }
-            # Google needs a small delay before the token becomes valid
             import time
             time.sleep(1.5)
             response = requests.get(url, params=params, timeout=10)
@@ -56,7 +645,6 @@ def search_places():
             all_results = data.get('results', [])
             next_page_token = data.get('next_page_token')
         else:
-            # New search
             cities = [c.strip() for c in city.split(',')] if city else [None]
             for current_city in cities:
                 search_query = query
@@ -70,41 +658,38 @@ def search_places():
                     'key': api_key,
                     'language': 'pt-BR'
                 }
-                
-                # Radius logic: needs location (lat,lng)
+
                 if radius and current_city:
-                    # Geocode city to get coordinates
                     geo_url = "https://maps.googleapis.com/maps/api/geocode/json"
                     geo_params = {'address': f"{current_city}, {state or ''}, Brasil", 'key': api_key}
                     geo_resp = requests.get(geo_url, params=geo_params).json()
                     if geo_resp.get('status') == 'OK':
                         loc = geo_resp['results'][0]['geometry']['location']
                         params['location'] = f"{loc['lat']},{loc['lng']}"
-                        params['radius'] = radius * 1000 # maps api uses meters
-                
+                        params['radius'] = radius * 1000
+
                 response = requests.get(url, params=params, timeout=10)
                 data = response.json()
-                
+
                 if data.get('status') == 'OK':
                     all_results.extend(data.get('results', []))
                     if not next_page_token:
                         next_page_token = data.get('next_page_token')
 
-        # Deduplicate and Filter
         unique_results = {p['place_id']: p for p in all_results}.values()
         existing_place_ids = {l.google_place_id for l in Lead.query.filter_by(company_id=current_user.company_id).filter(Lead.google_place_id != None).all()}
-        
+
         final_results = []
         for place in unique_results:
             rating = place.get('rating', 0)
             reviews = place.get('user_ratings_total', 0)
-            
+
             if min_rating and rating < min_rating: continue
             if min_reviews and reviews < min_reviews: continue
-            
+
             place_id = place.get('place_id')
             is_duplicate = place_id in existing_place_ids
-            
+
             final_results.append({
                 'place_id': place_id,
                 'name': place.get('name'),
@@ -113,7 +698,7 @@ def search_places():
                 'user_ratings_total': reviews,
                 'types': place.get('types', []),
                 'is_duplicate': is_duplicate,
-                'phone': place.get('formatted_phone_number'), 
+                'phone': place.get('formatted_phone_number'),
                 'website': place.get('website')
             })
 
@@ -122,9 +707,10 @@ def search_places():
             'count': len(final_results),
             'next_page_token': next_page_token
         })
-        
+
     except Exception as e:
         return api_response(success=False, error=str(e), status=500)
+
 
 @prospecting_bp.route('/api/prospecting/search-cnae')
 @login_required
@@ -132,42 +718,40 @@ def search_cnae():
     cnae = request.args.get('cnae')
     city = request.args.get('city')
     state = request.args.get('state')
-    
+
     if not cnae:
         return api_response(success=False, error='CNAE is required', status=400)
-        
-    # Get CNPJA Integration
-    from models import Integration, Lead
+
+    from models import Integration
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='cnpja').first()
     api_key = integration.api_key if integration and integration.is_active else None
-    
+
     if not api_key:
         return api_response(success=False, error='A busca por CNAE requer integração com CNPJA ativa.', status=400)
 
     try:
         results = CNPJAService.search_by_cnae(cnae, city, state, api_key)
-        
+
         if isinstance(results, dict) and "error" in results:
             return api_response(success=False, error=results.get('error'), status=500)
-            
-        # Check for duplicates in CRM
+
         existing_tax_ids = {l.cnpj.replace('.', '').replace('/', '').replace('-', '') for l in Lead.query.filter(Lead.company_id == current_user.company_id, Lead.cnpj != None).all()}
-        
+
         final_results = []
         for r in results:
             tax_id_clean = r.get('tax_id', '').replace('.', '').replace('/', '').replace('-', '')
             addr = r.get('address', {})
             formatted_addr = f"{addr.get('street', '')}, {addr.get('number', 'S/N')} - {addr.get('district', '')}, {addr.get('city', '')}/{addr.get('state', '')}"
-            
+
             final_results.append({
-                'place_id': r.get('tax_id'), # Use Tax ID as identifier for CNAE results
+                'place_id': r.get('tax_id'),
                 'name': r.get('name'),
                 'formatted_address': formatted_addr,
                 'rating': 0,
                 'user_ratings_total': 0,
                 'types': [r.get('mainActivity', {}).get('text', 'Empresa')],
                 'is_duplicate': tax_id_clean in existing_tax_ids,
-                'phone': None, # CNPJA search usually needs details call for phone, but let's see what we get
+                'phone': None,
                 'website': None,
                 'tax_id': r.get('tax_id')
             })
@@ -175,10 +759,11 @@ def search_cnae():
         return api_response(data={
             'results': final_results,
             'count': len(final_results),
-            'next_page_token': None # CNAE search pagination not implemented yet
+            'next_page_token': None
         })
     except Exception as e:
         return api_response(success=False, error=str(e), status=500)
+
 
 @prospecting_bp.route('/api/prospecting/favorites', methods=['GET', 'POST'])
 @login_required
@@ -201,9 +786,10 @@ def handle_favorites():
     else:
         favs = ProspectingSearch.query.filter_by(company_id=current_user.company_id).order_by(ProspectingSearch.created_at.desc()).all()
         return api_response(data=[{
-            'id': f.id, 'name': f.name, 'query': f.query, 'city': f.city, 
+            'id': f.id, 'name': f.name, 'query': f.query, 'city': f.city,
             'state': f.state, 'radius': f.radius, 'min_rating': f.min_rating, 'min_reviews': f.min_reviews
         } for f in favs])
+
 
 @prospecting_bp.route('/api/prospecting/favorites/<int:fav_id>', methods=['DELETE'])
 @login_required
@@ -213,16 +799,15 @@ def delete_favorite(fav_id):
     db.session.commit()
     return api_response(success=True)
 
+
 @prospecting_bp.route('/api/prospecting/history')
 @login_required
 def get_import_history():
-    """Returns recent imports for the current company."""
-    # Simplified: Get last 50 leads with google_place_id
     history = Lead.query.filter(
         Lead.company_id == current_user.company_id,
         Lead.google_place_id != None
     ).order_by(Lead.created_at.desc()).limit(50).all()
-    
+
     return jsonify({
         'success': True,
         'data': [{
@@ -232,10 +817,10 @@ def get_import_history():
         } for l in history]
     })
 
+
 @prospecting_bp.route('/api/prospecting/pipelines')
 @login_required
 def get_prospecting_pipelines():
-    """Helper for the web UI to get stages for import selection."""
     from models import Pipeline, PipelineStage
     pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
     result = []
@@ -248,13 +833,14 @@ def get_prospecting_pipelines():
         })
     return jsonify({'success': True, 'data': result})
 
+
 @prospecting_bp.route('/api/prospecting/import', methods=['POST'])
 @login_required
 def import_lead():
     data = request.json
     places = data.get('places', [])
     stage_id = data.get('stage_id')
-    
+
     if not places and data.get('place_id'):
         places = [data]
 
@@ -264,7 +850,7 @@ def import_lead():
     from models import Pipeline, PipelineStage
     target_stage_id = stage_id
     target_pipeline_id = None
-    
+
     if target_stage_id:
         s = PipelineStage.query.get(target_stage_id)
         if s: target_pipeline_id = s.pipeline_id
@@ -282,18 +868,16 @@ def import_lead():
 
     imported_count = 0
     errors = []
-    
+
     for p in places:
         place_id = p.get('place_id')
         if not place_id: continue
-        
+
         phone = p.get('phone')
         website = p.get('website')
-        
-        # Hydrate missing phone data via Place Details API if possible
+
         if api_key and not phone:
             try:
-                import requests
                 details_url = "https://maps.googleapis.com/maps/api/place/details/json"
                 details_params = {
                     'place_id': place_id,
@@ -307,11 +891,11 @@ def import_lead():
                     website = result_data.get('website') or website
             except:
                 pass
-        
+
         try:
             if Lead.query.filter_by(company_id=current_user.company_id, google_place_id=place_id).first():
                 continue
-            
+
             with db.session.begin_nested():
                 name_val = p.get('name') or 'Sem Nome'
                 new_lead = Lead(
@@ -328,7 +912,8 @@ def import_lead():
                     google_place_id=place_id[:100] if place_id else None,
                     gmb_rating=p.get('rating', 0),
                     gmb_reviews=p.get('user_ratings_total', 0),
-                    notes=f"Importado via Google Maps em {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+                    notes=f"Importado via Google Maps em {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}",
+                    prospecting_status='novo'
                 )
                 db.session.add(new_lead)
             imported_count += 1
@@ -342,6 +927,7 @@ def import_lead():
         errors.append(f"Commit error: {str(e)}")
     return api_response(data={'imported_count': imported_count, 'errors': errors})
 
+
 @prospecting_bp.route('/api/prospecting/backfill-phones', methods=['POST'])
 @login_required
 def backfill_phones():
@@ -351,25 +937,24 @@ def backfill_phones():
 
     if not api_key:
         return api_response(success=False, error='API Key not configured', status=500)
-        
+
     data = request.json or {}
     lead_ids = data.get('lead_ids', [])
 
-    # Find leads that have a google place id but NO phone
     query = Lead.query.filter(
         Lead.company_id == current_user.company_id,
         Lead.google_place_id != None,
         (Lead.phone == None) | (Lead.phone == '')
     )
-    
+
     if lead_ids:
         query = query.filter(Lead.id.in_(lead_ids))
-        
+
     leads = query.all()
 
     import requests
     import time
-    
+
     updated_count = 0
     errors = []
 
@@ -386,24 +971,16 @@ def backfill_phones():
                 result_data = res.get('result', {})
                 phone = result_data.get('international_phone_number') or result_data.get('formatted_phone_number')
                 website = result_data.get('website')
-                
+
                 if phone:
                     lead.phone = phone
                     updated_count += 1
                 if website and not lead.website:
                     lead.website = website
-            
-            # Sleep slightly to avoid rate limit spikes
+
             time.sleep(0.3)
         except Exception as e:
             errors.append(f"Error {lead.id}: {str(e)}")
 
     db.session.commit()
     return api_response(data={'updated_count': updated_count, 'errors': errors, 'total_scanned': len(leads)})
-
-def api_response(success=True, data=None, error=None, status=200):
-    return jsonify({
-        'success': success,
-        'data': data,
-        'error': error
-    }), status

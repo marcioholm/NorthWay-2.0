@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div class="px-8 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center shrink-0">
+        <div>
+            <h1 class="text-3xl font-display font-extrabold text-gray-900 tracking-tight">
+                Leads <span class="text-northway-red">Prospecção</span>
+            </h1>
+            <p class="text-gray-400 text-xs mt-1 font-medium italic">
+                Gerencie e acompanhe seus leads de prospecção.
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('prospecting.dashboard') }}"
+                class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="bg-white rounded-2xl border border-gray-100 mb-6">
+            <div class="p-4 border-b border-gray-100">
+                <div class="flex flex-wrap gap-3">
+                    <select id="filterStatus" onchange="applyFilters()"
+                        class="px-4 py-2 rounded-xl border border-gray-200 text-sm focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5">
+                        <option value="">Status</option>
+                        <option value="novo" {% if filters.status == 'novo' %}selected{% endif %}>Novo</option>
+                        <option value="em_execucao" {% if filters.status == 'em_execucao' %}selected{% endif %}>Em Execução</option>
+                        <option value="aguardando_aprovacao" {% if filters.status == 'aguardando_aprovacao' %}selected{% endif %}>Aguardando Aprovação</option>
+                        <option value="contatado" {% if filters.status == 'contatado' %}selected{% endif %}>Contatado</option>
+                        <option value="respondeu" {% if filters.status == 'respondeu' %}selected{% endif %}>Respondeu</option>
+                        <option value="interessado" {% if filters.status == 'interessado' %}selected{% endif %}>Interessado</option>
+                        <option value="reuniao" {% if filters.status == 'reuniao' %}selected{% endif %}>Reunião</option>
+                        <option value="sem_resposta" {% if filters.status == 'sem_resposta' %}selected{% endif %}>Sem Resposta</option>
+                        <option value="pausado" {% if filters.status == 'pausado' %}selected{% endif %}>Pausado</option>
+                    </select>
+
+                    <select id="filterCanal" onchange="applyFilters()"
+                        class="px-4 py-2 rounded-xl border border-gray-200 text-sm focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5">
+                        <option value="">Canal</option>
+                        <option value="whatsapp" {% if filters.canal == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+                        <option value="email" {% if filters.canal == 'email' %}selected{% endif %}>Email</option>
+                    </select>
+
+                    <select id="filterCampanha" onchange="applyFilters()"
+                        class="px-4 py-2 rounded-xl border border-gray-200 text-sm focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5">
+                        <option value="">Campanha</option>
+                        {% for campaign in campaigns %}
+                        <option value="{{ campaign.id }}" {% if filters.campaign == campaign.id|string %}selected{% endif %}>
+                            {{ campaign.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Lead</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Contato</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Canal</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tentativas</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Último Contato</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for lead in leads %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-northway-red to-red-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                        {{ lead.name[:2]|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-900">{{ lead.name }}</p>
+                                        <p class="text-xs text-gray-400">{{ lead.interest or 'Sem segmento' }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm text-gray-700">{{ lead.phone or '-' }}</p>
+                                <p class="text-xs text-gray-400">{{ lead.email or '-' }}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% set status_colors = {
+                                    'novo': 'bg-gray-100 text-gray-700',
+                                    'em_execucao': 'bg-purple-100 text-purple-700',
+                                    'aguardando_aprovacao': 'bg-yellow-100 text-yellow-700',
+                                    'contatado': 'bg-green-100 text-green-700',
+                                    'respondeu': 'bg-teal-100 text-teal-700',
+                                    'interessado': 'bg-indigo-100 text-indigo-700',
+                                    'reuniao': 'bg-rose-100 text-rose-700',
+                                    'sem_resposta': 'bg-orange-100 text-orange-700',
+                                    'erro': 'bg-red-100 text-red-700',
+                                    'pausado': 'bg-gray-100 text-gray-500'
+                                } %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase {{ status_colors.get(lead.prospecting_status, 'bg-gray-100 text-gray-700') }}">
+                                    {{ lead.prospecting_status|replace('_', ' ') if lead.prospecting_status else 'Novo' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if lead.preferred_channel == 'whatsapp' %}
+                                <span class="text-green-600 text-sm"><i data-lucide="message-circle" class="w-4 h-4 inline"></i> WhatsApp</span>
+                                {% elif lead.preferred_channel == 'email' %}
+                                <span class="text-blue-600 text-sm"><i data-lucide="mail" class="w-4 h-4 inline"></i> Email</span>
+                                {% else %}
+                                <span class="text-gray-400 text-sm">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex gap-3 text-xs">
+                                    <span class="text-green-600"><i data-lucide="message-circle" class="w-3 h-3 inline"></i> {{ lead.wa_attempts or 0 }}</span>
+                                    <span class="text-blue-600"><i data-lucide="mail" class="w-3 h-3 inline"></i> {{ lead.email_attempts or 0 }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if lead.last_contact_at %}
+                                <p class="text-sm text-gray-600">{{ lead.last_contact_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                                {% else %}
+                                <span class="text-gray-400 text-sm">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex gap-2">
+                                    <a href="{{ url_for('prospecting.lead_detail', lead_id=lead.id) }}"
+                                        class="p-2 text-gray-400 hover:text-northway-red hover:bg-red-50 rounded-lg transition-colors" title="Ver Detalhe">
+                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    </a>
+                                    {% if lead.prospecting_status == 'novo' %}
+                                    <button onclick="generateMessage({{ lead.id }})"
+                                        class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Gerar Mensagem IA">
+                                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                    </button>
+                                    {% endif %}
+                                    {% if lead.prospecting_status == 'pausado' %}
+                                    <button onclick="resumeLead({{ lead.id }})"
+                                        class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Retomar">
+                                        <i data-lucide="play" class="w-4 h-4"></i>
+                                    </button>
+                                    {% elif lead.prospecting_status and lead.prospecting_status != 'pausado' %}
+                                    <button onclick="pauseLead({{ lead.id }})"
+                                        class="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title="Pausar">
+                                        <i data-lucide="pause" class="w-4 h-4"></i>
+                                    </button>
+                                    {% endif %}
+                                    {% if lead.prospecting_status and lead.prospecting_status not in ['descartado', 'reuniao', 'interessado'] %}
+                                    <button onclick="discardLead({{ lead.id }})"
+                                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Descartar">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i data-lucide="users" class="w-8 h-8 text-gray-400"></i>
+                                </div>
+                                <p class="text-gray-500 font-medium">Nenhum lead encontrado</p>
+                                <p class="text-gray-400 text-sm mt-1">Importe leads do módulo de prospecção Google Maps</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+
+function applyFilters() {
+    const status = document.getElementById('filterStatus').value;
+    const canal = document.getElementById('filterCanal').value;
+    const campanha = document.getElementById('filterCampanha').value;
+
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (canal) params.set('canal', canal);
+    if (campanha) params.set('campanha', campanha);
+
+    window.location.href = '{{ url_for("prospecting.leads") }}?' + params.toString();
+}
+
+async function generateMessage(leadId) {
+    try {
+        const response = await fetch(`/prospecting/lead/${leadId}/generate-message`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.error || 'Erro ao gerar mensagem');
+        }
+    } catch(err) {
+        alert('Erro ao gerar mensagem');
+    }
+}
+
+async function pauseLead(leadId) {
+    try {
+        const response = await fetch(`/prospecting/lead/${leadId}/pause`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        if (response.ok) location.reload();
+    } catch(err) {
+        alert('Erro ao pausar lead');
+    }
+}
+
+async function resumeLead(leadId) {
+    try {
+        const response = await fetch(`/prospecting/lead/${leadId}/resume`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        if (response.ok) location.reload();
+    } catch(err) {
+        alert('Erro ao retomar lead');
+    }
+}
+
+async function discardLead(leadId) {
+    if (!confirm('Tem certeza que deseja descartar este lead?')) return;
+    try {
+        const response = await fetch(`/prospecting/lead/${leadId}/discard`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        if (response.ok) location.reload();
+    } catch(err) {
+        alert('Erro ao descartar lead');
+    }
+}
+</script>
+{% endblock %}

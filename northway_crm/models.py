@@ -369,6 +369,18 @@ class Lead(db.Model):
     drive_last_scan_at = db.Column(db.DateTime, nullable=True)
     drive_unread_files_count = db.Column(db.Integer, default=0)
 
+    # Prospecting Fields
+    prospecting_status = db.Column(db.String(50), nullable=True) # novo, em_execucao, aguardando_aprovacao, contatado, respondeu, interessado, reuniao, sem_resposta, erro
+    preferred_channel = db.Column(db.String(20), nullable=True) # whatsapp, email
+    wa_attempts = db.Column(db.Integer, default=0)
+    email_attempts = db.Column(db.Integer, default=0)
+    last_contact_at = db.Column(db.DateTime, nullable=True)
+    next_action_at = db.Column(db.DateTime, nullable=True)
+    last_angle = db.Column(db.String(100), nullable=True)
+    in_execution = db.Column(db.Boolean, default=False)
+    prospecting_campaign_id = db.Column(db.Integer, db.ForeignKey('prospecting_campaigns.id'), nullable=True)
+    lead_score = db.Column(db.Integer, nullable=True)
+
     @property
     def task_progress(self):
         tasks = [t for t in self.tasks if not t.is_recurring] # Only count one-off tasks for progress usually
@@ -1416,16 +1428,122 @@ class MessageQueue(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
     lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True)
-    
+
     phone = db.Column(db.String(50), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    
+
     status = db.Column(db.String(20), default='pending') # pending, sent, failed, cancelled
     scheduled_at = db.Column(db.DateTime, default=get_now_br)
     sent_at = db.Column(db.DateTime, nullable=True)
-    
+
     # Metadata for tracking
     rule_id = db.Column(db.Integer, db.ForeignKey('automation_rules.id'), nullable=True)
     execution_id = db.Column(db.Integer, db.ForeignKey('automation_executions.id'), nullable=True)
-    
+
+
+# ==========================================
+# PROSPECTING MODELS
+# ==========================================
+
+class ProspectingCampaign(db.Model):
+    __tablename__ = 'prospecting_campaigns'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    target_segment = db.Column(db.String(100), nullable=True)
+    objective = db.Column(db.Text, nullable=True)
+    tone_of_voice = db.Column(db.String(100), nullable=True)
+    offer = db.Column(db.Text, nullable=True)
+    main_angle = db.Column(db.String(100), nullable=True)
+    default_cta = db.Column(db.String(255), nullable=True)
+    restrictions = db.Column(db.Text, nullable=True)
+    max_attempts = db.Column(db.Integer, default=3)
+    followup_interval_days = db.Column(db.Integer, default=3)
+    status = db.Column(db.String(20), default='rascunho') # rascunho, ativa, pausada, concluida
+    is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='prospecting_campaigns')
+    leads = db.relationship('Lead', backref='prospecting_campaign', lazy=True)
+    messages = db.relationship('ProspectingMessage', backref='campaign', lazy=True)
+
+
+class ProspectingMessage(db.Model):
+    __tablename__ = 'prospecting_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=False)
+    campaign_id = db.Column(db.Integer, db.ForeignKey('prospecting_campaigns.id'), nullable=True)
+    channel = db.Column(db.String(20), nullable=False) # whatsapp, email
+    type = db.Column(db.String(20), default='outbound')
+    status = db.Column(db.String(30), default='pendente') # pendente, aguardando_aprovacao, aprovada, enviada, erro
+    content = db.Column(db.Text, nullable=True)
+    ai_model = db.Column(db.String(50), nullable=True)
+    ai_prompt = db.Column(db.Text, nullable=True)
+    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    approved_at = db.Column(db.DateTime, nullable=True)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    error_message = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='prospecting_messages')
+    lead = db.relationship('Lead', backref='prospecting_messages')
+    approver = db.relationship('User', foreign_keys=[approved_by])
+
+
+class ProspectingSetting(db.Model):
+    __tablename__ = 'prospecting_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, unique=True)
+    generate_message_webhook_url = db.Column(db.Text, nullable=True)
+    send_whatsapp_webhook_url = db.Column(db.Text, nullable=True)
+    send_email_webhook_url = db.Column(db.Text, nullable=True)
+    daily_send_limit = db.Column(db.Integer, default=50)
+    sending_start_time = db.Column(db.String(5), default='09:00')
+    sending_end_time = db.Column(db.String(5), default='18:00')
+    manual_approval_required = db.Column(db.Boolean, default=True)
+    default_ai_model = db.Column(db.String(50), default='gpt-4.1-mini')
+    default_tone = db.Column(db.String(50), default='profissional')
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='prospecting_settings', uselist=False)
+
+
+class TenantAICredential(db.Model):
+    __tablename__ = 'tenant_ai_credentials'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    provider = db.Column(db.String(50), nullable=False) # openai, anthropic, google
+    api_key_encrypted = db.Column(db.Text, nullable=False)
+    api_key_last4 = db.Column(db.String(4), nullable=True)
+    default_model = db.Column(db.String(50), nullable=True)
+    status = db.Column(db.String(20), default='active') # active, inactive, error
+    last_test_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='ai_credentials')
+
+    __table_args__ = (db.UniqueConstraint('company_id', 'provider', name='unique_company_ai_provider'),)
+
+
+class TenantIntegration(db.Model):
+    __tablename__ = 'tenant_integrations'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    provider = db.Column(db.String(50), nullable=False) # evolution_api, whatsapp_business, smtp, sendgrid
+    api_base_url = db.Column(db.Text, nullable=True)
+    instance_name = db.Column(db.String(100), nullable=True)
+    api_key_encrypted = db.Column(db.Text, nullable=True)
+    api_key_last4 = db.Column(db.String(4), nullable=True)
+    status = db.Column(db.String(20), default='inactive') # active, inactive, error
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='tenant_integrations')
+
+    __table_args__ = (db.UniqueConstraint('company_id', 'provider', name='unique_company_integration_provider'),)

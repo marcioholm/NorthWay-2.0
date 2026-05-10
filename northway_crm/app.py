@@ -496,6 +496,8 @@ def create_app():
             ('routes.docs', 'docs_bp', 'docs_bp', None),
             ('routes.goals', 'goals_bp', 'goals_bp', None),
             ('routes.prospecting', 'prospecting_bp', 'prospecting_bp', None),
+            ('routes.internal_api', 'internal_api_bp', 'internal_api_bp', None),
+            ('routes.ai_settings', 'ai_settings_bp', 'ai_settings_bp', None),
             ('routes.integrations', 'integrations_bp', 'integrations_bp', None),
             ('routes.admin', 'admin_bp', 'admin_bp', None),
             ('routes.api_debug', 'api_debug_bp', 'api_debug_bp', None),

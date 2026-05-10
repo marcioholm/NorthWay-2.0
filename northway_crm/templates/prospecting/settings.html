@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div class="px-8 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('prospecting.dashboard') }}"
+                class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5 text-gray-600"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-display font-extrabold text-gray-900 tracking-tight">
+                    Configurações <span class="text-northway-red">Prospecção</span>
+                </h1>
+                <p class="text-gray-400 text-xs mt-1">
+                    Configure webhooks e parâmetros de automação.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-3xl space-y-6">
+            <a href="{{ url_for('ai_settings.index') }}"
+                class="block bg-gradient-to-r from-northway-red to-red-500 rounded-2xl p-6 text-white hover:from-red-600 hover:to-red-600 transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold">Configurações de IA</h3>
+                        <p class="text-white/70 text-sm mt-1">Gerencie suas chaves de API e integrações</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                </div>
+            </a>
+
+        <form id="settingsForm" class="space-y-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="webhook" class="w-5 h-5 text-northway-red"></i>
+                    Webhooks n8n
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Webhook de Geração de Mensagem
+                        </label>
+                        <input type="url" name="generate_message_webhook_url" value="{{ setting.generate_message_webhook_url or '' }}"
+                            placeholder="https://seu-n8n.com/webhook/generate-message"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                        <p class="text-xs text-gray-400 mt-1">URL do webhook que gera mensagens com IA</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Webhook de Envio WhatsApp
+                        </label>
+                        <input type="url" name="send_whatsapp_webhook_url" value="{{ setting.send_whatsapp_webhook_url or '' }}"
+                            placeholder="https://seu-n8n.com/webhook/send-whatsapp"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                        <p class="text-xs text-gray-400 mt-1">URL do webhook que envia mensagens via WhatsApp</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Webhook de Envio Email
+                        </label>
+                        <input type="url" name="send_email_webhook_url" value="{{ setting.send_email_webhook_url or '' }}"
+                            placeholder="https://seu-n8n.com/webhook/send-email"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                        <p class="text-xs text-gray-400 mt-1">URL do webhook que envia mensagens via Email</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-northway-red"></i>
+                    Configurações de Envio
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Limite Diário de Envios
+                        </label>
+                        <input type="number" name="daily_send_limit" value="{{ setting.daily_send_limit or 50 }}" min="1" max="500"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Modelo IA Padrão
+                        </label>
+                        <select name="default_ai_model"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                            <option value="gpt-4.1-mini" {% if setting.default_ai_model == 'gpt-4.1-mini' %}selected{% endif %}>GPT-4.1 Mini</option>
+                            <option value="gpt-4.1" {% if setting.default_ai_model == 'gpt-4.1' %}selected{% endif %}>GPT-4.1</option>
+                            <option value="gpt-4o-mini" {% if setting.default_ai_model == 'gpt-4o-mini' %}selected{% endif %}>GPT-4o Mini</option>
+                            <option value="gpt-4o" {% if setting.default_ai_model == 'gpt-4o' %}selected{% endif %}>GPT-4o</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Início do Expediente
+                        </label>
+                        <input type="time" name="sending_start_time" value="{{ setting.sending_start_time or '09:00' }}"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Fim do Expediente
+                        </label>
+                        <input type="time" name="sending_end_time" value="{{ setting.sending_end_time or '18:00' }}"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                    </div>
+
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                            Tom de Voz Padrão
+                        </label>
+                        <select name="default_tone"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                            <option value="profissional" {% if setting.default_tone == 'profissional' %}selected{% endif %}>Profissional</option>
+                            <option value="amigavel" {% if setting.default_tone == 'amigavel' %}selected{% endif %}>Amigável</option>
+                            <option value="formal" {% if setting.default_tone == 'formal' %}selected{% endif %}>Formal</option>
+                            <option value="casual" {% if setting.default_tone == 'casual' %}selected{% endif %}>Casual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="shield" class="w-5 h-5 text-northway-red"></i>
+                    Aprovação
+                </h3>
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" id="manual_approval_required" name="manual_approval_required"
+                        {% if setting.manual_approval_required %}checked{% endif %}
+                        class="w-5 h-5 rounded border-gray-300 text-northway-red focus:ring-northway-red">
+                    <label for="manual_approval_required" class="text-sm text-gray-700">
+                        Exigir aprovação manual antes do envio
+                    </label>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                    Quando ativado, todas as mensagens geradas precisarão ser revisadas e aprovadas manualmente antes do envio.
+                </p>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit"
+                    class="px-6 py-3 bg-northway-red text-white rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-red-700 transition-all flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    Salvar Configurações
+                </button>
+            </div>
+        </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+
+document.getElementById('settingsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+
+    data.daily_send_limit = parseInt(data.daily_send_limit);
+    data.manual_approval_required = document.getElementById('manual_approval_required').checked;
+
+    try {
+        const response = await fetch('{{ url_for("prospecting.update_settings") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Salvo!',
+                text: 'Configurações salvas com sucesso',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else {
+            alert(result.error || 'Erro ao salvar configurações');
+        }
+    } catch(err) {
+        alert('Erro ao salvar configurações');
+    }
+});
+</script>
+{% endblock %}

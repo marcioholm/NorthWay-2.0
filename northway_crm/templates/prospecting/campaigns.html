@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div class="px-8 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('prospecting.dashboard') }}"
+                class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5 text-gray-600"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-display font-extrabold text-gray-900 tracking-tight">
+                    Campanhas <span class="text-northway-red">Prospecção</span>
+                </h1>
+                <p class="text-gray-400 text-xs mt-1">
+                    Gerencie suas campanhas de outbound.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="bg-white rounded-2xl border border-gray-100">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">Todas as Campanhas</h2>
+                <button onclick="openCampaignModal()"
+                    class="px-4 py-2.5 bg-northway-red text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all">
+                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                    Nova Campanha
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nome</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Segmento</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tom de Voz</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tentativas</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Intervalo</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for campaign in campaigns %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <p class="font-bold text-gray-900">{{ campaign.name }}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ campaign.objective[:50] if campaign.objective else 'Sem objetivo' }}...</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm text-gray-600">{{ campaign.target_segment or '-' }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm text-gray-600">{{ campaign.tone_of_voice or '-' }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm text-gray-600">{{ campaign.max_attempts }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm text-gray-600">{{ campaign.followup_interval_days }} dias</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% set status_colors = {
+                                    'rascunho': 'bg-gray-100 text-gray-700',
+                                    'ativa': 'bg-green-100 text-green-700',
+                                    'pausada': 'bg-yellow-100 text-yellow-700',
+                                    'concluida': 'bg-blue-100 text-blue-700'
+                                } %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase {{ status_colors.get(campaign.status, 'bg-gray-100 text-gray-700') }}">
+                                    {{ campaign.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex gap-2">
+                                    <button onclick="editCampaign({{ campaign.id }})"
+                                        class="p-2 text-gray-400 hover:text-northway-red hover:bg-red-50 rounded-lg transition-colors" title="Editar">
+                                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="toggleCampaignStatus({{ campaign.id }})"
+                                        class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Alternar Status">
+                                        <i data-lucide="toggle-{% if campaign.is_active %}right{% else %}left{% endif %}" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="deleteCampaign({{ campaign.id }})"
+                                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i data-lucide="megaphone" class="w-8 h-8 text-gray-400"></i>
+                                </div>
+                                <p class="text-gray-500 font-medium">Nenhuma campanha encontrada</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="campaignModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Nova Campanha</h3>
+            <button onclick="closeCampaignModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <form id="campaignForm" class="p-6 space-y-4">
+            <input type="hidden" id="campaignId" name="campaignId">
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nome da Campanha</label>
+                <input type="text" id="name" name="name" required
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Descrição</label>
+                <textarea id="description" name="description" rows="2"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Segmento Alvo</label>
+                    <input type="text" id="target_segment" name="target_segment"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Tom de Voz</label>
+                    <select id="tone_of_voice" name="tone_of_voice"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                        <option value="profissional">Profissional</option>
+                        <option value="amigavel">Amigável</option>
+                        <option value="formal">Formal</option>
+                        <option value="casual">Casual</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Objetivo</label>
+                <textarea id="objective" name="objective" rows="2"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"></textarea>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Oferta</label>
+                <textarea id="offer" name="offer" rows="2"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"></textarea>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Ângulo Principal</label>
+                <input type="text" id="main_angle" name="main_angle"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">CTA Padrão</label>
+                <input type="text" id="default_cta" name="default_cta"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Máx. Tentativas</label>
+                    <input type="number" id="max_attempts" name="max_attempts" value="3" min="1" max="10"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Intervalo (dias)</label>
+                    <input type="number" id="followup_interval_days" name="followup_interval_days" value="3" min="1" max="30"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Restrições</label>
+                <textarea id="restrictions" name="restrictions" rows="2"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" onclick="closeCampaignModal()"
+                    class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    class="px-5 py-2.5 bg-northway-red text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all">
+                    Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    lucide.createIcons();
+});
+
+function openCampaignModal() {
+    document.getElementById('modalTitle').textContent = 'Nova Campanha';
+    document.getElementById('campaignForm').reset();
+    document.getElementById('campaignId').value = '';
+    document.getElementById('campaignModal').classList.remove('hidden');
+    document.getElementById('campaignModal').classList.add('flex');
+}
+
+function closeCampaignModal() {
+    document.getElementById('campaignModal').classList.add('hidden');
+    document.getElementById('campaignModal').classList.remove('flex');
+}
+
+async function editCampaign(campaignId) {
+    try {
+        const response = await fetch(`/prospecting/campaign/${campaignId}`);
+        const result = await response.json();
+        if (result.success === false) {
+            alert(result.error);
+            return;
+        }
+
+        document.getElementById('modalTitle').textContent = 'Editar Campanha';
+        document.getElementById('campaignId').value = campaignId;
+        document.getElementById('name').value = result.data.name || '';
+        document.getElementById('description').value = result.data.description || '';
+        document.getElementById('target_segment').value = result.data.target_segment || '';
+        document.getElementById('tone_of_voice').value = result.data.tone_of_voice || 'profissional';
+        document.getElementById('objective').value = result.data.objective || '';
+        document.getElementById('offer').value = result.data.offer || '';
+        document.getElementById('main_angle').value = result.data.main_angle || '';
+        document.getElementById('default_cta').value = result.data.default_cta || '';
+        document.getElementById('max_attempts').value = result.data.max_attempts || 3;
+        document.getElementById('followup_interval_days').value = result.data.followup_interval_days || 3;
+        document.getElementById('restrictions').value = result.data.restrictions || '';
+
+        document.getElementById('campaignModal').classList.remove('hidden');
+        document.getElementById('campaignModal').classList.add('flex');
+    } catch(err) {
+        alert('Erro ao carregar campanha');
+    }
+}
+
+document.getElementById('campaignForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const campaignId = document.getElementById('campaignId').value;
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    data.max_attempts = parseInt(data.max_attempts);
+    data.followup_interval_days = parseInt(data.followup_interval_days);
+
+    const url = campaignId ? `/prospecting/campaign/${campaignId}` : '{{ url_for("prospecting.create_campaign") }}';
+    const method = campaignId ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            closeCampaignModal();
+            location.reload();
+        } else {
+            alert(result.error || 'Erro ao salvar campanha');
+        }
+    } catch(err) {
+        alert('Erro ao salvar campanha');
+    }
+});
+
+async function deleteCampaign(campaignId) {
+    if (!confirm('Tem certeza que deseja excluir esta campanha?')) return;
+    try {
+        const response = await fetch(`/prospecting/campaign/${campaignId}`, {method: 'DELETE'});
+        const result = await response.json();
+        if (result.success) location.reload();
+        else alert(result.error);
+    } catch(err) {
+        alert('Erro ao excluir campanha');
+    }
+}
+
+async function toggleCampaignStatus(campaignId) {
+    try {
+        const response = await fetch(`/prospecting/campaign/${campaignId}`);
+        const result = await response.json();
+        if (!result.success) return;
+
+        const campaign = result.data;
+        const newStatus = campaign.is_active ? 'pausada' : 'ativa';
+
+        await fetch(`/prospecting/campaign/${campaignId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status: newStatus, is_active: !campaign.is_active})
+        });
+        location.reload();
+    } catch(err) {
+        alert('Erro ao alternar status');
+    }
+}
+</script>
+{% endblock %}
