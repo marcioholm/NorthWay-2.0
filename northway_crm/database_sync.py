@@ -236,7 +236,18 @@ def sync_database():
                 ('profile_pic_url', "VARCHAR(500)"),
                 ('lost_at', "TIMESTAMP"),
                 ('lost_reason', "VARCHAR(500)"),
-                ('lost_at_stage_name', "VARCHAR(100)")
+                ('lost_at_stage_name', "VARCHAR(100)"),
+                # Prospecting Module Columns
+                ('prospecting_status', "VARCHAR(50) DEFAULT 'novo'"),
+                ('preferred_channel', "VARCHAR(20) DEFAULT 'whatsapp'"),
+                ('wa_attempts', "INTEGER DEFAULT 0"),
+                ('email_attempts', "INTEGER DEFAULT 0"),
+                ('last_contact_at', "TIMESTAMP"),
+                ('next_action_at', "TIMESTAMP"),
+                ('last_angle', "VARCHAR(100)"),
+                ('in_execution', "BOOLEAN DEFAULT FALSE"),
+                ('prospecting_campaign_id', "INTEGER REFERENCES prospecting_campaigns(id)"),
+                ('lead_score', "INTEGER DEFAULT 0")
             ]
             for t in ['lead', 'client']:
                 for c, d in shared_cols: add_column_if_missing(t, c, d)

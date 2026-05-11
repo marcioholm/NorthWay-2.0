@@ -67,21 +67,34 @@ def get_prospecting_context():
     tenant_id = data.get('tenant_id')
     lead_id = data.get('lead_id')
     campaign_id = data.get('campaign_id')
+    action = data.get('action', 'generate_message')
 
     if not tenant_id or not lead_id:
         return jsonify({'success': False, 'error': 'tenant_id and lead_id are required'}), 400
 
+    # In this CRM, company_id is the tenant_id
     lead = Lead.query.filter_by(id=lead_id, company_id=tenant_id).first()
     if not lead:
-        return jsonify({'success': False, 'error': 'Lead not found'}), 404
+        return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
+    # Get campaign: requested, or from lead, or default for company
     campaign = None
-    if campaign_id or lead.prospecting_campaign_id:
-        campaign = ProspectingCampaign.query.get(campaign_id or lead.prospecting_campaign_id)
+    if campaign_id:
+        campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=tenant_id).first()
+    
+    if not campaign and lead.prospecting_campaign_id:
+        campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
+        
+    if not campaign:
+        # Fallback to the first active campaign for this company
+        campaign = ProspectingCampaign.query.filter_by(company_id=tenant_id, is_active=True).first()
 
     settings = ProspectingSetting.query.filter_by(company_id=tenant_id).first()
 
-    context = {
+    # Build the flattened response as requested by the user
+    response = {
+        'success': True,
+        'tenant_id': tenant_id,
         'lead': {
             'id': lead.id,
             'name': lead.name,
@@ -90,14 +103,10 @@ def get_prospecting_context():
             'interest': lead.interest,
             'preferred_channel': lead.preferred_channel or 'whatsapp',
             'last_angle': lead.last_angle,
-            'notes': lead.notes
+            'notes': lead.notes,
+            'prospecting_status': lead.prospecting_status
         },
-        'campaign': None,
-        'settings': None
-    }
-
-    if campaign:
-        context['campaign'] = {
+        'campaign': {
             'id': campaign.id,
             'name': campaign.name,
             'objective': campaign.objective,
@@ -108,17 +117,15 @@ def get_prospecting_context():
             'restrictions': campaign.restrictions,
             'max_attempts': campaign.max_attempts,
             'followup_interval_days': campaign.followup_interval_days
+        } if campaign else None,
+        'settings': {
+            'default_ai_model': settings.default_ai_model if settings else 'gpt-4o-mini',
+            'default_tone': settings.default_tone if settings else 'profissional',
+            'manual_approval_required': settings.manual_approval_required if settings else True
         }
+    }
 
-    if settings:
-        context['settings'] = {
-            'default_ai_model': settings.default_ai_model,
-            'default_tone': settings.default_tone,
-            'manual_approval_required': settings.manual_approval_required
-        }
-
-    return jsonify({'success': True, 'data': context})
-
+    return jsonify(response)
 
 @internal_api_bp.route('/prospecting/message-generated', methods=['POST'])
 @require_internal_auth
@@ -137,7 +144,7 @@ def message_generated():
 
     lead = Lead.query.filter_by(id=lead_id, company_id=tenant_id).first()
     if not lead:
-        return jsonify({'success': False, 'error': 'Lead not found'}), 404
+        return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
     if success:
         prospecting_msg = ProspectingMessage(
@@ -161,10 +168,8 @@ def message_generated():
 
         return jsonify({
             'success': True,
-            'data': {
-                'message_id': prospecting_msg.id,
-                'lead_status': lead.prospecting_status
-            }
+            'message_id': prospecting_msg.id,
+            'lead_status': lead.prospecting_status
         })
     else:
         lead.prospecting_status = 'erro'
@@ -185,10 +190,8 @@ def message_generated():
 
         return jsonify({
             'success': True,
-            'data': {
-                'lead_status': lead.prospecting_status,
-                'error': error
-            }
+            'lead_status': lead.prospecting_status,
+            'error': error
         })
 
 
@@ -199,281 +202,127 @@ def get_send_context():
     tenant_id = data.get('tenant_id')
     lead_id = data.get('lead_id')
     message_id = data.get('message_id')
-    channel = data.get('channel', 'whatsapp')
-
+    
     if not tenant_id or not lead_id or not message_id:
         return jsonify({'success': False, 'error': 'tenant_id, lead_id and message_id are required'}), 400
 
     lead = Lead.query.filter_by(id=lead_id, company_id=tenant_id).first()
-    if not lead:
-        return jsonify({'success': False, 'error': 'Lead not found'}), 404
+    message = ProspectingMessage.query.filter_by(id=message_id, company_id=tenant_id).first()
+    
+    if not lead or not message:
+        return jsonify({'success': False, 'error': 'Lead or Message not found'}), 404
 
-    message = ProspectingMessage.query.filter_by(id=message_id, lead_id=lead_id).first()
-    if not message:
-        return jsonify({'success': False, 'error': 'Message not found'}), 404
+    # Get integration for WhatsApp (Evolution API)
+    integration = ProspectingIntegration.query.filter_by(
+        company_id=tenant_id, 
+        provider='evolution_api', 
+        status='active'
+    ).first()
 
-    campaign = None
-    if lead.prospecting_campaign_id:
-        campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
-
-    integration = None
-    if channel == 'whatsapp':
-        integration = ProspectingIntegration.query.filter_by(
-            company_id=tenant_id,
-            provider='evolution_api',
-            status='active'
-        ).first()
-
-        if integration:
-            integration_data = {
-                'provider': integration.provider,
-                'api_base_url': integration.api_base_url,
-                'instance_name': integration.instance_name,
-                'api_key': decrypt_api_key(integration.api_key_encrypted) if integration.api_key_encrypted else None
-            }
-        else:
-            integration_data = None
-    elif channel == 'email':
-        integration = ProspectingIntegration.query.filter_by(
-            company_id=tenant_id,
-            provider='smtp',
-            status='active'
-        ).first()
-
-        if integration:
-            integration_data = {
-                'provider': integration.provider,
-                'api_base_url': integration.api_base_url,
-                'api_key': decrypt_api_key(integration.api_key_encrypted) if integration.api_key_encrypted else None
-            }
-        else:
-            integration_data = None
-    else:
-        integration_data = None
-
-    context = {
+    return jsonify({
+        'success': True,
+        'tenant_id': tenant_id,
         'lead': {
             'id': lead.id,
             'name': lead.name,
-            'phone': lead.phone,
-            'email': lead.email
+            'phone': lead.phone
         },
         'message': {
             'id': message.id,
-            'content': message.content,
-            'channel': message.channel
+            'content': message.content
         },
-        'campaign': None,
-        'integration': integration_data
-    }
-
-    if campaign:
-        context['campaign'] = {
-            'name': campaign.name,
-            'tone_of_voice': campaign.tone_of_voice
-        }
-
-    return jsonify({'success': True, 'data': context})
+        'integration': {
+            'api_base_url': integration.api_base_url if integration else None,
+            'instance_name': integration.instance_name if integration else None,
+            'api_key': decrypt_api_key(integration.api_key_encrypted) if integration and integration.api_key_encrypted else None
+        } if integration else None
+    })
 
 
 @internal_api_bp.route('/prospecting/send-result', methods=['POST'])
 @require_internal_auth
-def send_result():
+def prospecting_send_result():
     data = request.json
     tenant_id = data.get('tenant_id')
     message_id = data.get('message_id')
     success = data.get('success', False)
     error = data.get('error')
-    sent_at = data.get('sent_at')
 
     if not tenant_id or not message_id:
         return jsonify({'success': False, 'error': 'tenant_id and message_id are required'}), 400
 
-    message = ProspectingMessage.query.filter_by(id=message_id).first()
+    message = ProspectingMessage.query.filter_by(id=message_id, company_id=tenant_id).first()
     if not message:
         return jsonify({'success': False, 'error': 'Message not found'}), 404
 
-    lead = Lead.query.filter_by(id=message.lead_id, company_id=tenant_id).first()
-    if not lead:
-        return jsonify({'success': False, 'error': 'Lead not found'}), 404
+    lead = Lead.query.get(message.lead_id)
 
     if success:
         message.status = 'enviada'
-        message.sent_at = datetime.fromisoformat(sent_at.replace('Z', '+00:00')) if sent_at else datetime.utcnow()
-        message.updated_at = datetime.utcnow()
-
-        if message.channel == 'whatsapp':
-            lead.wa_attempts = (lead.wa_attempts or 0) + 1
-        elif message.channel == 'email':
-            lead.email_attempts = (lead.email_attempts or 0) + 1
-
-        lead.last_contact_at = datetime.utcnow()
-        lead.prospecting_status = 'contatado'
-
-        campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id) if lead.prospecting_campaign_id else None
-        if campaign and campaign.followup_interval_days:
-            lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days)
-
-        interaction = Interaction(
-            lead_id=lead.id,
-            company_id=tenant_id,
-            user_id=None,
-            type=message.channel,
-            content=message.content
-        )
-        db.session.add(interaction)
-
-        db.session.commit()
-
-        return jsonify({
-            'success': True,
-            'data': {
-                'message_status': message.status,
-                'lead_status': lead.prospecting_status
-            }
-        })
+        message.sent_at = datetime.utcnow()
+        if lead:
+            lead.prospecting_status = 'contatado'
+            lead.last_contact_at = datetime.utcnow()
+            # Update next action based on campaign
+            campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
+            if campaign:
+                lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days or 3)
     else:
         message.status = 'erro'
         message.error_message = error
-        message.updated_at = datetime.utcnow()
+        if lead:
+            lead.prospecting_status = 'erro'
 
-        lead.prospecting_status = 'erro'
-        lead.in_execution = False
-        db.session.commit()
-
-        return jsonify({
-            'success': True,
-            'data': {
-                'message_status': message.status,
-                'lead_status': lead.prospecting_status,
-                'error': error
-            }
-        })
+    db.session.commit()
+    return jsonify({'success': True})
 
 
 @internal_api_bp.route('/prospecting/inbound-context', methods=['POST'])
 @require_internal_auth
-def get_inbound_context():
+def get_prospecting_inbound_context():
     data = request.json
     tenant_id = data.get('tenant_id')
-    inbound = data.get('inbound', {})
+    phone = data.get('phone')
+    
+    if not tenant_id or not phone:
+        return jsonify({'success': False, 'error': 'tenant_id and phone are required'}), 400
 
-    if not tenant_id:
-        return jsonify({'success': False, 'error': 'tenant_id is required'}), 400
-
-    phone = inbound.get('phone')
-    email = inbound.get('email')
-
-    lead = None
-    if phone:
-        lead = Lead.query.filter_by(company_id=tenant_id, phone=phone).first()
-    if not lead and email:
-        lead = Lead.query.filter_by(company_id=tenant_id, email=email).first()
-
+    lead = Lead.query.filter_by(company_id=tenant_id, phone=phone).first()
     if not lead:
-        return jsonify({'success': True, 'data': {'lead': None}})
-
-    recent_interactions = Interaction.query.filter_by(lead_id=lead.id).order_by(
-        Interaction.created_at.desc()
-    ).limit(10).all()
-
-    recent_messages = ProspectingMessage.query.filter_by(lead_id=lead.id).order_by(
-        ProspectingMessage.created_at.desc()
-    ).limit(5).all()
+        return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
     return jsonify({
         'success': True,
-        'data': {
-            'lead': {
-                'id': lead.id,
-                'name': lead.name,
-                'phone': lead.phone,
-                'email': lead.email,
-                'interest': lead.interest,
-                'prospecting_status': lead.prospecting_status,
-                'lead_score': lead.lead_score
-            },
-            'recent_interactions': [
-                {
-                    'type': i.type,
-                    'content': i.content,
-                    'created_at': i.created_at.isoformat() if i.created_at else None
-                } for i in recent_interactions
-            ],
-            'recent_messages': [
-                {
-                    'channel': m.channel,
-                    'status': m.status,
-                    'created_at': m.created_at.isoformat() if m.created_at else None
-                } for m in recent_messages
-            ]
+        'tenant_id': tenant_id,
+        'lead': {
+            'id': lead.id,
+            'name': lead.name,
+            'prospecting_status': lead.prospecting_status,
+            'last_angle': lead.last_angle
         }
     })
 
 
 @internal_api_bp.route('/prospecting/inbound-result', methods=['POST'])
 @require_internal_auth
-def inbound_result():
+def prospecting_inbound_result():
     data = request.json
     tenant_id = data.get('tenant_id')
-    inbound = data.get('inbound', {})
-    suggested_status = data.get('suggested_status')
-    lead_score_delta = data.get('lead_score_delta', 0)
-    summary = data.get('summary')
-    suggested_reply = data.get('suggested_reply')
+    lead_id = data.get('lead_id')
+    new_status = data.get('status')
+    
+    if not tenant_id or not lead_id:
+        return jsonify({'success': False, 'error': 'tenant_id and lead_id are required'}), 400
 
-    if not tenant_id:
-        return jsonify({'success': False, 'error': 'tenant_id is required'}), 400
-
-    phone = inbound.get('phone')
-    email = inbound.get('email')
-    content = inbound.get('content', '')
-
-    lead = None
-    if phone:
-        lead = Lead.query.filter_by(company_id=tenant_id, phone=phone).first()
-    if not lead and email:
-        lead = Lead.query.filter_by(company_id=tenant_id, email=email).first()
-
+    lead = Lead.query.filter_by(id=lead_id, company_id=tenant_id).first()
     if not lead:
-        return jsonify({'success': False, 'error': 'Lead not found'}), 404
+        return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
-    channel = 'whatsapp' if phone else 'email'
-
-    interaction = Interaction(
-        lead_id=lead.id,
-        company_id=tenant_id,
-        user_id=None,
-        type=channel,
-        content=content
-    )
-    db.session.add(interaction)
-
-    if suggested_status:
-        status_map = {
-            'respondeu': 'respondeu',
-            'interessado': 'interessado',
-            'reuniao': 'reuniao',
-            'sem_resposta': 'sem_resposta',
-            'pausado': 'pausado'
-        }
-        if suggested_status in status_map:
-            lead.prospecting_status = status_map[suggested_status]
-
-    if lead_score_delta != 0:
-        current_score = lead.lead_score or 0
-        lead.lead_score = max(0, current_score + lead_score_delta)
-
+    if new_status:
+        lead.prospecting_status = new_status
+    
     db.session.commit()
-
-    return jsonify({
-        'success': True,
-        'data': {
-            'lead_id': lead.id,
-            'lead_status': lead.prospecting_status,
-            'lead_score': lead.lead_score
-        }
-    })
+    return jsonify({'success': True})
 
 
 @internal_api_bp.route('/health', methods=['GET'])
