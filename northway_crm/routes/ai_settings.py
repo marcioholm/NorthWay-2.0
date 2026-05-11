@@ -37,7 +37,8 @@ def save_credential():
 
     provider = data.get('provider')
     api_key = data.get('api_key')
-    default_model = data.get('default_model')
+    model = data.get('model')
+    base_url = data.get('base_url')
 
     if not provider or not api_key:
         return jsonify({'success': False, 'error': 'Provider e API Key são obrigatórios'}), 400
@@ -52,7 +53,8 @@ def save_credential():
     if credential:
         credential.api_key_encrypted = encrypted
         credential.api_key_last4 = last4
-        credential.default_model = default_model
+        credential.model = model
+        credential.base_url = base_url
         credential.status = 'active'
         credential.updated_at = datetime.utcnow()
     else:
@@ -61,7 +63,8 @@ def save_credential():
             provider=provider,
             api_key_encrypted=encrypted,
             api_key_last4=last4,
-            default_model=default_model,
+            model=model,
+            base_url=base_url,
             status='active'
         )
         db.session.add(credential)
@@ -93,23 +96,45 @@ def test_credential():
 
     api_key = decrypt_api_key(credential.api_key_encrypted)
 
-    if provider == 'openai':
-        try:
-            response = requests.get(
-                'https://api.openai.com/v1/models',
-                headers={'Authorization': f'Bearer {api_key}'},
-                timeout=10
-            )
-            if response.status_code == 200:
-                credential.last_test_at = datetime.utcnow()
-                db.session.commit()
-                return jsonify({'success': True, 'data': {'status': 'connected', 'models': response.json().get('data', [])[:5]}})
-            else:
-                return jsonify({'success': False, 'error': f'API retornou erro: {response.status_code}'}), 400
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)}), 500
+    test_url = credential.base_url
+    headers = {'Authorization': f'Bearer {api_key}'}
 
-    return jsonify({'success': False, 'error': 'Provider não suportado para teste'}), 400
+    if provider == 'openai':
+        test_url = test_url or 'https://api.openai.com/v1/models'
+    elif provider == 'groq':
+        test_url = test_url or 'https://api.groq.com/openai/v1/models'
+    elif provider == 'openrouter':
+        test_url = test_url or 'https://openrouter.ai/api/v1/models'
+        headers['HTTP-Referer'] = 'https://crm.northwaycompany.com.br' # OpenRouter requirement
+        headers['X-Title'] = 'NorthWay CRM'
+    elif provider == 'anthropic':
+        test_url = 'https://api.anthropic.com/v1/messages' # Anthropic test is harder, but we can try simple check
+        headers = {
+            'x-api-key': api_key,
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json'
+        }
+        # Just a dummy check for Anthropic
+        try:
+             response = requests.post(test_url, headers=headers, json={"model": "claude-3-haiku-20240307", "max_tokens": 1, "messages": [{"role": "user", "content": "hi"}]}, timeout=10)
+             if response.status_code in [200, 400]: # 400 might be just param error but auth worked
+                 credential.last_test_at = datetime.utcnow()
+                 db.session.commit()
+                 return jsonify({'success': True, 'data': {'status': 'connected'}})
+        except:
+             pass
+        return jsonify({'success': False, 'error': 'Anthropic verification failed'}), 400
+
+    try:
+        response = requests.get(test_url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            credential.last_test_at = datetime.utcnow()
+            db.session.commit()
+            return jsonify({'success': True, 'data': {'status': 'connected', 'models': response.json().get('data', [])[:5]}})
+        else:
+            return jsonify({'success': False, 'error': f'API retornou erro: {response.status_code} - {response.text[:100]}'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @ai_settings_bp.route('/settings/ai/credential/delete', methods=['POST'])

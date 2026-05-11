@@ -9,6 +9,19 @@ from utils.crypto import decrypt_api_key
 internal_api_bp = Blueprint('internal_api', __name__, url_prefix='/api/internal')
 
 
+def model_to_dict(obj):
+    """Helper to convert SQLAlchemy model to dict, handling datetime objects."""
+    if not obj:
+        return None
+    d = {}
+    for c in obj.__table__.columns:
+        val = getattr(obj, c.name)
+        if isinstance(val, (datetime, timedelta)):
+            val = str(val)
+        d[c.name] = val
+    return d
+
+
 def require_internal_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -55,7 +68,8 @@ def get_ai_credential():
         'data': {
             'provider': credential.provider,
             'api_key': decrypted_key,
-            'default_model': credential.default_model
+            'model': credential.model,
+            'base_url': credential.base_url
         }
     })
 

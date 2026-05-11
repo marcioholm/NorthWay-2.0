@@ -543,15 +543,19 @@ def create_app():
                 with open('/tmp/blueprint_error.log', 'a') as f:
                     f.write(error_msg + "\n")
                 
-        # --- BLUEPRINT FALLBACKS (Safety for router build errors) ---
-        @app.route('/prospecting')
-        @login_required
-        def prospecting_fallback():
-            try:
-                # Try to redirect to leads if prospecting is totally broken
-                return redirect(url_for('leads.leads'))
-            except:
-                return "The prospecting module is currently offline. Please contact support.", 503
+        # --- GLOBAL ERROR HANDLER ---
+        @app.errorhandler(500)
+        def handle_500(e):
+            import traceback
+            tb = traceback.format_exc()
+            app.logger.error(f"500 ERROR: {e}\n{tb}")
+            return f"""
+            <div style="font-family: sans-serif; padding: 40px; border: 2px solid red; margin: 20px;">
+                <h1 style="color: red;">❌ Internal Server Error (500)</h1>
+                <p>The server encountered an error and could not complete your request.</p>
+                <pre style="background: #f4f4f4; padding: 15px; overflow: auto;">{tb}</pre>
+            </div>
+            """, 500
 
         # --- BILLING MIDDLEWARE ---
             
@@ -643,28 +647,6 @@ def create_app():
         def ping(): return "pong_emergency"
         
         return fallback
-
-app = create_app()
-
-
-@app.route('/checkout')
-def checkout_fallback():
-    return render_template('checkout_page.html')
-
-
-
-@app.cli.command("db-sync")
-def db_sync_command():
-    """Manually synchronize database schema and seed data."""
-    print("🔄 Starting database synchronization...")
-    try:
-        results = sync_database()
-        for res in results:
-            print(res)
-        print("✅ Database synchronization completed.")
-    except Exception as e:
-        print(f"❌ Database synchronization failed: {e}")
-        exit(1)
 
 if __name__ == '__main__':
     app = create_app()

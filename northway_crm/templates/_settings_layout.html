@@ -67,6 +67,15 @@
                 Aplicativos (Nativos)
             </a>
 
+            <!-- AI Settings -->
+            {% if current_user.company.has_feature('prospecting') %}
+            <a href="{{ url_for('ai_settings.index') }}"
+                class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors {{ 'bg-red-50 text-northway-red font-bold' if 'ai_settings' in request.endpoint else 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <i data-lucide="sparkles" class="w-4 h-4" aria-hidden="true"></i>
+                Inteligência Artificial
+            </a>
+            {% endif %}
+
 
         </nav>
     </aside>
@@ -102,6 +111,12 @@
             class="p-2 {{ 'text-northway-red' if 'settings_integrations' in request.endpoint else 'text-gray-500' }}">
             <i data-lucide="plug" class="w-5 h-5"></i>
         </a>
+        {% if current_user.company.has_feature('prospecting') %}
+        <a href="{{ url_for('ai_settings.index') }}"
+            class="p-2 {{ 'text-northway-red' if 'ai_settings' in request.endpoint else 'text-gray-500' }}">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+        </a>
+        {% endif %}
     </div>
 
     <!-- Main Content Area -->

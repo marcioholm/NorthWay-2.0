@@ -13,50 +13,54 @@ if crm_dir not in sys.path:
 # 2. Add explicit dummy imports to force Vercel's Serverless Builder to package the folders
 try:
     # Core
-    import northway_crm.models
-    import northway_crm.app
-    import northway_crm.database_sync
-    import northway_crm.utils
-    import northway_crm.utils.crypto
-    import northway_crm.services.supabase_service
+    import models
+    import app
+    import database_sync
+    import utils
+    import utils.crypto
+    import services.supabase_service
     
     # Blueprints/Routes
-    import northway_crm.routes.auth
-    import northway_crm.routes.master
-    import northway_crm.routes.financial
-    import northway_crm.routes.financial_strategic
-    import northway_crm.routes.docs
-    import northway_crm.routes.goals
-    import northway_crm.routes.prospecting
-    import northway_crm.routes.internal_api
-    import northway_crm.routes.integrations
-    import northway_crm.routes.admin
-    import northway_crm.routes.ai_settings
-    import northway_crm.routes.api_debug
-    import northway_crm.routes.jobs
-    import northway_crm.routes.api_extension
-    import northway_crm.routes.whatsapp
-    import northway_crm.routes.webhook_whatsapp
-    import northway_crm.routes.clients
-    import northway_crm.routes.leads
-    import northway_crm.routes.leads_enrichment
-    import northway_crm.routes.contracts
-    import northway_crm.routes.dashboard
-    import northway_crm.routes.tasks
-    import northway_crm.routes.templates
-    import northway_crm.routes.checklists
-    import northway_crm.routes.notifications
-    import northway_crm.routes.roles
-    import northway_crm.routes.billing
-    import northway_crm.routes.service_orders
-    import northway_crm.routes.pdf_routes
-    import northway_crm.routes.financial_payable
-    import northway_crm.routes.commercial_performance
-    import northway_crm.routes.matrix_routes
-    import northway_crm.routes.crepi_routes
-    import northway_crm.routes.swot_routes
-    import northway_crm.routes.marketing
-    import northway_crm.routes.api_v1
+    import auth
+    import master
+    import routes.financial
+    import routes.financial_strategic
+    import routes.docs
+    import routes.goals
+    import routes.prospecting
+    import routes.internal_api
+    import routes.integrations
+    import routes.admin
+    import routes.ai_settings
+    import routes.api_debug
+    import routes.jobs
+    import routes.api_extension
+    import routes.whatsapp
+    import routes.webhook_whatsapp
+    import routes.clients
+    import routes.leads
+    import routes.leads_enrichment
+    import routes.contracts
+    import routes.dashboard
+    import routes.tasks
+    import routes.templates
+    import routes.checklists
+    import routes.notifications
+    import routes.roles
+    import routes.billing
+    import routes.service_orders
+    import routes.pdf_routes
+    import routes.financial_payable
+    import routes.commercial_performance
+    import routes.matrix_routes
+    import routes.crepi_routes
+    import routes.swot_routes
+    import routes.marketing
+    import routes.api_v1
+    
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 except ImportError as e:
     # We ignore ImportErrors here as these are just for the builder
     # but we print it to stderr for debugging in Vercel logs if needed
@@ -66,12 +70,16 @@ except ImportError as e:
 # 3. Create App Instance
 def get_app():
     try:
-        from northway_crm.app import create_app
+        from app import create_app
         return create_app()
     except Exception as e:
+        import traceback
+        traceback.print_exc() # Print to Vercel logs (stdout/stderr)
+        # Capture error for closure
+        error_msg = str(e)
+        tb_str = traceback.format_exc()
         # Fail-safe error page
         from flask import Flask
-        import traceback
         error_app = Flask(__name__)
         
         # Log to stderr so it shows up in Vercel Logs

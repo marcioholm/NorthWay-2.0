@@ -1520,7 +1520,8 @@ class TenantAICredential(db.Model):
     provider = db.Column(db.String(50), nullable=False) # openai, anthropic, google
     api_key_encrypted = db.Column(db.Text, nullable=False)
     api_key_last4 = db.Column(db.String(4), nullable=True)
-    default_model = db.Column(db.String(50), nullable=True)
+    base_url = db.Column(db.Text, nullable=True)
+    model = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), default='active') # active, inactive, error
     last_test_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
