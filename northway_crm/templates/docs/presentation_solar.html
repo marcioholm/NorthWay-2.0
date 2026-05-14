@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energia Solar — Inteligência e Sustentabilidade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Montserrat:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #fbbf24; /* Amber 400 */
+            --secondary: #050505;
+            --accent: #10b981; /* Emerald 500 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--secondary);
+            color: white;
+            overflow: hidden;
+        }
+
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* Snap Scroll */
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            background-color: var(--secondary);
+        }
+
+        .slide {
+            scroll-snap-align: start;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-color: var(--secondary);
+            color: white;
+            padding: 0;
+        }
+
+        /* Aesthetics */
+        .bg-pattern-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        }
+
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+
+        @media print {
+            @page { size: landscape; margin: 0; }
+            body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: var(--secondary) !important; color: white !important; }
+            .slide-container { width: 100% !important; height: auto !important; overflow: visible !important; scroll-snap-type: none !important; }
+            .slide { width: 100vw !important; height: 100vh !important; page-break-after: always !important; break-after: page !important; display: flex !important; position: relative !important; }
+            #controls { display: none !important; }
+            .animate-fade-up { opacity: 1 !important; transform: none !important; animation: none !important; }
+        }
+    </style>
+</head>
+
+<body class="selection:bg-[--primary] selection:text-black">
+
+    <!-- Controls -->
+    <div id="controls" class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference">
+        <a href="/library"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Voltar
+        </a>
+        <button onclick="window.print()"
+            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+        </button>
+    </div>
+
+    <div class="slide-container">
+
+        <!-- SLIDE 1: ABERTURA -->
+        <section class="slide bg-pattern-grid">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/10 via-black to-black"></div>
+            <div class="relative z-10 text-center max-w-5xl px-6">
+                <div class="inline-block mb-6 px-4 py-1 rounded-full border border-[--primary]/30 bg-[--primary]/10 animate-fade-up">
+                    <span class="text-[--primary] text-xs font-bold uppercase tracking-[0.2em]">Inteligência Energética</span>
+                </div>
+                <h1 class="text-6xl md:text-9xl font-black font-display tracking-tighter mb-8 leading-[0.9] animate-fade-up delay-1">
+                    Energia <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">Solar</span>
+                </h1>
+                <div class="h-1 w-24 bg-[--primary] mx-auto mb-12 animate-fade-up delay-2"></div>
+                <p class="text-2xl text-gray-400 font-light tracking-wide max-w-3xl mx-auto animate-fade-up delay-3">
+                    Transforme o custo da sua conta de luz em um <span class="text-white font-medium border-b border-[--primary]">investimento estratégico</span> de alta rentabilidade.
+                </p>
+                <div class="mt-16 opacity-50 animate-fade-up delay-3">
+                    <p class="text-xs uppercase tracking-widest font-bold text-gray-600">Apresentação Comercial • Northway</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 2: O CENÁRIO -->
+        <section class="slide bg-black">
+            <div class="max-w-5xl w-full grid md:grid-cols-2 gap-16 items-center px-6">
+                <div class="animate-fade-up">
+                    <span class="text-[--primary] font-bold tracking-widest uppercase text-sm mb-4 block">O Problema</span>
+                    <h2 class="text-5xl font-black font-display mb-8 leading-tight">O dinheiro que <span class="text-gray-600 font-normal">você queima</span> todos os <span class="text-[--primary]">meses.</span></h2>
+                    <p class="text-xl text-gray-400 leading-relaxed mb-8">
+                        A inflação energética no Brasil cresce acima de qualquer índice. Pagar a conta de luz é aceitar um custo fixo variável que você não controla.
+                    </p>
+                    <p class="text-3xl text-white font-medium italic border-l-4 border-[--primary] pl-6 py-2">
+                        Você prefere pagar para a concessionária ou investir no seu próprio patrimônio?
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 gap-4 animate-fade-up delay-1">
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-l-red-900 group">
+                        <i data-lucide="trending-up" class="w-8 h-8 text-red-500 mb-4"></i>
+                        <p class="text-lg font-bold text-white">Tarifas em Ascensão</p>
+                        <p class="text-xs text-gray-500">Aumento médio de 10-15% ao ano.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-l-amber-700 group">
+                        <i data-lucide="shield-off" class="w-8 h-8 text-amber-500 mb-4"></i>
+                        <p class="text-lg font-bold text-white">Dependência Total</p>
+                        <p class="text-xs text-gray-500">Sem controle sobre taxas extras e bandeiras.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 3: A SOLUÇÃO -->
+        <section class="slide bg-pattern-grid">
+            <div class="text-center max-w-4xl px-6">
+                <h2 class="text-5xl font-black font-display mb-16 animate-fade-up">Sua Própria <span class="text-[--primary]">Usina de Valor</span></h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left animate-fade-up delay-1">
+                    <div class="glass-panel p-10 rounded-2xl border-t border-t-white/5">
+                        <i data-lucide="sun" class="w-10 h-10 text-[--primary] mb-6"></i>
+                        <h3 class="text-xl font-bold mb-4">Autonomia</h3>
+                        <p class="text-gray-400">Produza sua própria energia e reduza até 95% do custo mensal.</p>
+                    </div>
+                    <div class="glass-panel p-10 rounded-2xl border-t border-t-white/5">
+                        <i data-lucide="leaf" class="w-10 h-10 text-emerald-500 mb-6"></i>
+                        <h3 class="text-xl font-bold mb-4">Sustentabilidade</h3>
+                        <p class="text-gray-400">Energia limpa, renovável e alinhada com as práticas de ESG.</p>
+                    </div>
+                    <div class="glass-panel p-10 rounded-2xl border-t border-t-white/5">
+                        <i data-lucide="home" class="w-10 h-10 text-blue-500 mb-6"></i>
+                        <h3 class="text-xl font-bold mb-4">Valorização</h3>
+                        <p class="text-gray-400">Imóveis com energia solar valem até 10% mais no mercado.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 4: MATEMÁTICA DO INVESTIMENTO -->
+        <section class="slide bg-[#080808]">
+            <div class="max-w-6xl w-full px-6 grid md:grid-cols-2 gap-16 items-center">
+                <div class="animate-fade-up">
+                    <h2 class="text-5xl font-black font-display mb-8">A Matemática <br><span class="text-[--primary]">do Lucro</span></h2>
+                    <div class="space-y-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
+                                <span class="text-[--primary] font-bold">1</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xl">Payback Rápido</h4>
+                                <p class="text-gray-500">Retorno do investimento entre 3 a 5 anos.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
+                                <span class="text-[--primary] font-bold">2</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xl">Durabilidade</h4>
+                                <p class="text-gray-500">Sistemas com vida útil superior a 25 anos.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
+                                <span class="text-[--primary] font-bold">3</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xl">Rentabilidade</h4>
+                                <p class="text-gray-500">ROI superior a quase todas as aplicações de renda fixa.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel p-10 rounded-3xl animate-fade-up delay-1 border border-[--primary]/20">
+                    <p class="text-gray-500 uppercase text-xs font-bold tracking-widest mb-6">Exemplo Prático</p>
+                    <div class="space-y-6">
+                        <div class="flex justify-between border-b border-white/5 pb-4">
+                            <span class="text-gray-400">Conta Mensal</span>
+                            <span class="text-white font-bold">R$ 1.000,00</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-4">
+                            <span class="text-gray-400">Economia Anual</span>
+                            <span class="text-emerald-500 font-bold">R$ 11.400,00</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/5 pb-4">
+                            <span class="text-gray-400">Economia em 25 anos</span>
+                            <span class="text-[--primary] font-bold text-2xl">R$ 285.000,00*</span>
+                        </div>
+                        <p class="text-[10px] text-gray-600 mt-4">*Considerando valores atuais sem inflação energética.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 5: COMO FUNCIONA -->
+        <section class="slide bg-pattern-grid">
+            <div class="max-w-6xl w-full px-6">
+                <h2 class="text-4xl font-black font-display mb-16 text-center">Jornada da Instalação</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 animate-fade-up delay-1">
+                    <div class="glass-panel p-8 rounded-2xl text-center">
+                        <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 text-amber-500 font-bold text-xl">1</div>
+                        <h4 class="font-bold mb-2">Diagnóstico</h4>
+                        <p class="text-xs text-gray-500">Análise técnica do consumo e local.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl text-center">
+                        <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 text-amber-500 font-bold text-xl">2</div>
+                        <h4 class="font-bold mb-2">Projeto</h4>
+                        <p class="text-xs text-gray-500">Engenharia e aprovação na concessionária.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl text-center">
+                        <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 text-amber-500 font-bold text-xl">3</div>
+                        <h4 class="font-bold mb-2">Instalação</h4>
+                        <p class="text-xs text-gray-500">Montagem rápida e segura pela equipe.</p>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl text-center">
+                        <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 text-amber-500 font-bold text-xl">4</div>
+                        <h4 class="font-bold mb-2">Ativação</h4>
+                        <p class="text-xs text-gray-500">Início da geração e economia imediata.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: RESUMO EXECUTIVO -->
+        <section class="slide bg-black overflow-hidden">
+            <div class="absolute inset-0 bg-pattern-grid opacity-20"></div>
+            <div class="relative z-10 text-center max-w-5xl px-6">
+                <div class="inline-block flex flex-col items-center mb-16 animate-fade-up">
+                    <span class="text-[--primary] text-xs font-bold uppercase tracking-[0.5em] mb-4">Conclusão Estratégica</span>
+                    <div class="h-1 w-12 bg-[--primary]"></div>
+                </div>
+                <h2 class="text-5xl md:text-7xl font-black font-display text-white mb-16 leading-tight tracking-tighter animate-fade-up delay-1">
+                    "O sol nasce para todos, <br><span class="text-[--primary] italic underline decoration-white/20">mas o lucro é de quem captura ele.</span>"
+                </h2>
+                <div class="mt-20 opacity-30 text-[10px] uppercase tracking-[0.5em] font-bold text-gray-500 animate-fade-up delay-2">
+                    Northway • Assessoria em Inteligência Energética
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

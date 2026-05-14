@@ -115,6 +115,11 @@ def ebook_institutional():
 def playbook_dia_das_maes_marka_moveis():
     return render_template('docs/playbook_dia_das_maes_marka_moveis.html')
 
+@docs_bp.route('/presentation-solar')
+@login_required
+def presentation_solar():
+    return render_template('docs/presentation_solar.html')
+
 @docs_bp.route('/library')
 @login_required
 def library():
