@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Energia Solar — Inteligência e Sustentabilidade</title>
+    <title>NorthWay — Inteligência Comercial & Crescimento</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Montserrat:wght@400;600;700;800;900&display=swap"
@@ -12,9 +12,11 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --primary: #fbbf24; /* Amber 400 */
-            --secondary: #050505;
-            --accent: #10b981; /* Emerald 500 */
+            --primary: #fa0102; /* NorthWay Red */
+            --secondary: #0a0a0a;
+            --surface: #121212;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-muted: #94a3b8;
         }
 
         body {
@@ -58,19 +60,31 @@
 
         /* Aesthetics */
         .bg-pattern-grid {
-            background-size: 40px 40px;
-            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
         }
 
         .glass-panel {
-            background: rgba(20, 20, 20, 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
         }
 
-        .gradient-text {
-            background: linear-gradient(to right, #fbbf24, #f59e0b);
+        .premium-card {
+            background: linear-gradient(145deg, rgba(30, 30, 30, 0.4) 0%, rgba(10, 10, 10, 0.4) 100%);
+            border: 1px solid var(--border);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .premium-card:hover {
+            border-color: rgba(250, 1, 2, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .text-gradient {
+            background: linear-gradient(to bottom right, #fff 30%, #64748b 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -85,9 +99,10 @@
             opacity: 0;
         }
 
-        .delay-1 { animation-delay: 0.2s; }
-        .delay-2 { animation-delay: 0.4s; }
-        .delay-3 { animation-delay: 0.6s; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
 
         @media print {
             @page { size: landscape; margin: 0; }
@@ -100,17 +115,17 @@
     </style>
 </head>
 
-<body class="selection:bg-[--primary] selection:text-black">
+<body class="selection:bg-[--primary] selection:text-white">
 
     <!-- Controls -->
     <div id="controls" class="fixed top-6 right-6 z-50 flex gap-4 mix-blend-difference">
         <a href="/library"
-            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
-            <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i> Voltar
+            class="text-white/40 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-3 h-3"></i> Voltar
         </a>
         <button onclick="window.print()"
-            class="text-white/50 hover:text-white transition-colors text-sm font-bold flex items-center gap-2">
-            <i data-lucide="download" class="w-4 h-4"></i> Baixar PDF
+            class="text-white/40 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+            <i data-lucide="download" class="w-3 h-3"></i> PDF
         </button>
     </div>
 
@@ -118,175 +133,364 @@
 
         <!-- SLIDE 1: ABERTURA -->
         <section class="slide bg-pattern-grid">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-900/10 via-black to-black"></div>
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black"></div>
             <div class="relative z-10 text-center max-w-5xl px-6">
-                <div class="inline-block mb-6 px-4 py-1 rounded-full border border-[--primary]/30 bg-[--primary]/10 animate-fade-up">
-                    <span class="text-[--primary] text-xs font-bold uppercase tracking-[0.2em]">Inteligência Energética</span>
+                <div class="inline-block mb-8 px-5 py-1.5 rounded-full border border-white/10 bg-white/5 animate-fade-up">
+                    <span class="text-[--primary] text-[10px] font-black uppercase tracking-[0.3em]">Proposta de Crescimento Estruturado</span>
                 </div>
-                <h1 class="text-6xl md:text-9xl font-black font-display tracking-tighter mb-8 leading-[0.9] animate-fade-up delay-1">
-                    Energia <br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">Solar</span>
+                <h1 class="text-6xl md:text-8xl font-black font-display tracking-tighter mb-10 leading-[0.9] animate-fade-up delay-1">
+                    <span class="text-white">North</span><span class="text-[--primary]">Way</span><br>
+                    <span class="text-3xl md:text-4xl font-light tracking-[0.2em] text-white/40 uppercase mt-4 block">Inteligência Comercial</span>
                 </h1>
-                <div class="h-1 w-24 bg-[--primary] mx-auto mb-12 animate-fade-up delay-2"></div>
-                <p class="text-2xl text-gray-400 font-light tracking-wide max-w-3xl mx-auto animate-fade-up delay-3">
-                    Transforme o custo da sua conta de luz em um <span class="text-white font-medium border-b border-[--primary]">investimento estratégico</span> de alta rentabilidade.
+                <div class="h-0.5 w-16 bg-[--primary] mx-auto mb-12 animate-fade-up delay-2"></div>
+                <p class="text-xl md:text-2xl text-slate-400 font-light tracking-wide max-w-3xl mx-auto leading-relaxed animate-fade-up delay-3">
+                    Acelerando o setor solar com <span class="text-white font-medium italic">estratégia empresarial</span> e processos de alta performance.
                 </p>
-                <div class="mt-16 opacity-50 animate-fade-up delay-3">
-                    <p class="text-xs uppercase tracking-widest font-bold text-gray-600">Apresentação Comercial • Northway</p>
+                <div class="mt-20 opacity-30 animate-fade-up delay-4">
+                    <p class="text-[10px] uppercase tracking-[0.5em] font-bold">Direcionamento Comercial • 2024</p>
                 </div>
             </div>
         </section>
 
-        <!-- SLIDE 2: O CENÁRIO -->
+        <!-- SLIDE 2: O CUSTO OCULTO -->
         <section class="slide bg-black">
-            <div class="max-w-5xl w-full grid md:grid-cols-2 gap-16 items-center px-6">
+            <div class="max-w-6xl w-full px-6 grid md:grid-cols-2 gap-20 items-center">
                 <div class="animate-fade-up">
-                    <span class="text-[--primary] font-bold tracking-widest uppercase text-sm mb-4 block">O Problema</span>
-                    <h2 class="text-5xl font-black font-display mb-8 leading-tight">O dinheiro que <span class="text-gray-600 font-normal">você queima</span> todos os <span class="text-[--primary]">meses.</span></h2>
-                    <p class="text-xl text-gray-400 leading-relaxed mb-8">
-                        A inflação energética no Brasil cresce acima de qualquer índice. Pagar a conta de luz é aceitar um custo fixo variável que você não controla.
+                    <span class="text-[--primary] font-black tracking-[0.3em] uppercase text-[10px] mb-6 block">O Desafio Interno</span>
+                    <h2 class="text-5xl font-black font-display mb-10 leading-[1.1] tracking-tight">O custo invisível de uma <span class="text-white/30">operação própria.</span></h2>
+                    <p class="text-lg text-slate-400 leading-relaxed mb-12">
+                        Para montar internamente uma estrutura mínima capaz de gerar crescimento real, o investimento mensal em folha e ferramentas é proibitivo para a maioria das empresas.
                     </p>
-                    <p class="text-3xl text-white font-medium italic border-l-4 border-[--primary] pl-6 py-2">
-                        Você prefere pagar para a concessionária ou investir no seu próprio patrimônio?
-                    </p>
-                </div>
-                <div class="grid grid-cols-1 gap-4 animate-fade-up delay-1">
-                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-l-red-900 group">
-                        <i data-lucide="trending-up" class="w-8 h-8 text-red-500 mb-4"></i>
-                        <p class="text-lg font-bold text-white">Tarifas em Ascensão</p>
-                        <p class="text-xs text-gray-500">Aumento médio de 10-15% ao ano.</p>
+                    <div class="p-8 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <p class="text-sm text-slate-500 uppercase font-bold tracking-widest mb-2">Estimativa de Mercado</p>
+                        <p class="text-4xl font-black text-white font-display">R$ 12k — 20k<span class="text-lg text-slate-500 font-medium italic"> / mês</span></p>
                     </div>
-                    <div class="glass-panel p-8 rounded-2xl border-l-4 border-l-amber-700 group">
-                        <i data-lucide="shield-off" class="w-8 h-8 text-amber-500 mb-4"></i>
-                        <p class="text-lg font-bold text-white">Dependência Total</p>
-                        <p class="text-xs text-gray-500">Sem controle sobre taxas extras e bandeiras.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4 animate-fade-up delay-2">
+                    <div class="glass-panel p-6 rounded-xl">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-3">Time Necessário</p>
+                        <ul class="text-xs space-y-2 font-medium text-slate-300">
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> Gestor de Marketing</li>
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> Designer & Copywriter</li>
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> Gestor de Tráfego</li>
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> Coordenador Comercial</li>
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> Social Media</li>
+                        </ul>
+                    </div>
+                    <div class="glass-panel p-6 rounded-xl">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-3">Infraestrutura</p>
+                        <ul class="text-xs space-y-2 font-medium text-slate-300">
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> Licenças de CRM</li>
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> Automações de Vendas</li>
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> Ferramentas de Design</li>
+                            <li class="flex items-center gap-2"><div class="w-1 h-1 bg-[--primary] rounded-full"></div> IA & Data Intelligence</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- SLIDE 3: A SOLUÇÃO -->
+        <!-- SLIDE 3: O POSICIONAMENTO NORTHWAY -->
         <section class="slide bg-pattern-grid">
             <div class="text-center max-w-4xl px-6">
-                <h2 class="text-5xl font-black font-display mb-16 animate-fade-up">Sua Própria <span class="text-[--primary]">Usina de Valor</span></h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left animate-fade-up delay-1">
-                    <div class="glass-panel p-10 rounded-2xl border-t border-t-white/5">
-                        <i data-lucide="sun" class="w-10 h-10 text-[--primary] mb-6"></i>
-                        <h3 class="text-xl font-bold mb-4">Autonomia</h3>
-                        <p class="text-gray-400">Produza sua própria energia e reduza até 95% do custo mensal.</p>
+                <h2 class="text-4xl md:text-6xl font-black font-display mb-20 animate-fade-up">Mais que marketing,<br><span class="text-white/20">somos seu</span> <span class="text-[--primary]">braço estratégico.</span></h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-up delay-2">
+                    <div class="premium-card p-12 rounded-3xl text-left">
+                        <h3 class="text-2xl font-black mb-6">"Não vendemos apenas marketing. Estruturamos <span class="text-[--primary]">crescimento.</span>"</h3>
+                        <p class="text-slate-400 leading-relaxed font-light">
+                            Nossa abordagem é consultiva. Entramos na operação para organizar processos, treinar pessoas e implementar tecnologia que converte.
+                        </p>
                     </div>
-                    <div class="glass-panel p-10 rounded-2xl border-t border-t-white/5">
-                        <i data-lucide="leaf" class="w-10 h-10 text-emerald-500 mb-6"></i>
-                        <h3 class="text-xl font-bold mb-4">Sustentabilidade</h3>
-                        <p class="text-gray-400">Energia limpa, renovável e alinhada com as práticas de ESG.</p>
+                    <div class="premium-card p-12 rounded-3xl text-left border-l-[--primary]/30">
+                        <h3 class="text-2xl font-black mb-6">"Transformamos marketing em <span class="text-[--primary]">processo.</span>"</h3>
+                        <p class="text-slate-400 leading-relaxed font-light">
+                            O segredo da escala não é o gênio criativo, mas a constância de um método validado. Trazemos a direção que sua empresa precisa.
+                        </p>
                     </div>
-                    <div class="glass-panel p-10 rounded-2xl border-t border-t-white/5">
-                        <i data-lucide="home" class="w-10 h-10 text-blue-500 mb-6"></i>
-                        <h3 class="text-xl font-bold mb-4">Valorização</h3>
-                        <p class="text-gray-400">Imóveis com energia solar valem até 10% mais no mercado.</p>
-                    </div>
+                </div>
+                <div class="mt-16 flex justify-center gap-12 opacity-40 animate-fade-up delay-3">
+                    <span class="text-xs font-black tracking-[0.3em] uppercase">Marketing com Direção</span>
+                    <span class="text-xs font-black tracking-[0.3em] uppercase">Autoridade Setorial</span>
                 </div>
             </div>
         </section>
 
-        <!-- SLIDE 4: MATEMÁTICA DO INVESTIMENTO -->
-        <section class="slide bg-[#080808]">
-            <div class="max-w-6xl w-full px-6 grid md:grid-cols-2 gap-16 items-center">
+        <!-- SLIDE 4: PLANO 1 -->
+        <section class="slide bg-black">
+            <div class="max-w-6xl w-full px-6 grid md:grid-cols-2 gap-20 items-center">
                 <div class="animate-fade-up">
-                    <h2 class="text-5xl font-black font-display mb-8">A Matemática <br><span class="text-[--primary]">do Lucro</span></h2>
-                    <div class="space-y-6">
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
-                                <span class="text-[--primary] font-bold">1</span>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-xl">Payback Rápido</h4>
-                                <p class="text-gray-500">Retorno do investimento entre 3 a 5 anos.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
-                                <span class="text-[--primary] font-bold">2</span>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-xl">Durabilidade</h4>
-                                <p class="text-gray-500">Sistemas com vida útil superior a 25 anos.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
-                                <span class="text-[--primary] font-bold">3</span>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-xl">Rentabilidade</h4>
-                                <p class="text-gray-500">ROI superior a quase todas as aplicações de renda fixa.</p>
-                            </div>
-                        </div>
+                    <div class="text-[--primary] font-black text-6xl font-display mb-4">01</div>
+                    <h2 class="text-5xl font-black font-display mb-6">Gestão de <br><span class="text-white/30 italic">Tráfego Pago</span></h2>
+                    <div class="h-1 w-12 bg-[--primary] mb-10"></div>
+                    <p class="text-lg text-slate-400 leading-relaxed mb-10">
+                        Foco absoluto em geração de oportunidades qualificadas e redução do CPL (Custo por Lead).
+                    </p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-black font-display">R$ 1.800</span>
+                        <span class="text-slate-500 font-medium">/ mês</span>
                     </div>
                 </div>
-                <div class="glass-panel p-10 rounded-3xl animate-fade-up delay-1 border border-[--primary]/20">
-                    <p class="text-gray-500 uppercase text-xs font-bold tracking-widest mb-6">Exemplo Prático</p>
+                <div class="glass-panel p-10 rounded-3xl animate-fade-up delay-2">
                     <div class="space-y-6">
-                        <div class="flex justify-between border-b border-white/5 pb-4">
-                            <span class="text-gray-400">Conta Mensal</span>
-                            <span class="text-white font-bold">R$ 1.000,00</span>
+                        <div class="flex items-center gap-4 border-b border-white/5 pb-4">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-[--primary]"></i>
+                            <span class="text-sm font-medium">Gestão Meta Ads & Google Ads</span>
                         </div>
-                        <div class="flex justify-between border-b border-white/5 pb-4">
-                            <span class="text-gray-400">Economia Anual</span>
-                            <span class="text-emerald-500 font-bold">R$ 11.400,00</span>
+                        <div class="flex items-center gap-4 border-b border-white/5 pb-4">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-[--primary]"></i>
+                            <span class="text-sm font-medium">Estratégias de Remarketing Ativo</span>
                         </div>
-                        <div class="flex justify-between border-b border-white/5 pb-4">
-                            <span class="text-gray-400">Economia em 25 anos</span>
-                            <span class="text-[--primary] font-bold text-2xl">R$ 285.000,00*</span>
+                        <div class="flex items-center gap-4 border-b border-white/5 pb-4">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-[--primary]"></i>
+                            <span class="text-sm font-medium">Otimizações Semanais de Campanha</span>
                         </div>
-                        <p class="text-[10px] text-gray-600 mt-4">*Considerando valores atuais sem inflação energética.</p>
+                        <div class="flex items-center gap-4 border-b border-white/5 pb-4">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-[--primary]"></i>
+                            <span class="text-sm font-medium">Relatórios Estratégicos Mensais</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <i data-lucide="x-circle" class="text-slate-700 w-5 h-5"></i>
+                            <span class="text-sm font-medium text-slate-600 italic">NÃO inclui Social Media</span>
+                        </div>
+                    </div>
+                    <div class="mt-10 p-6 bg-[--primary]/5 rounded-xl border border-[--primary]/10">
+                        <p class="text-[10px] font-bold text-[--primary] uppercase tracking-widest mb-2">Objetivo Central</p>
+                        <p class="text-xs text-slate-300 leading-relaxed">Máxima eficiência em conversão e geração de demanda para o seu time comercial.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- SLIDE 5: COMO FUNCIONA -->
+        <!-- SLIDE 5: PLANO 2 -->
+        <section class="slide bg-pattern-grid">
+            <div class="max-w-6xl w-full px-6 grid md:grid-cols-2 gap-20 items-center">
+                <div class="animate-fade-up">
+                    <div class="text-[--primary] font-black text-6xl font-display mb-4">02</div>
+                    <h2 class="text-5xl font-black font-display mb-6">Tráfego + <br><span class="text-white/30 italic">Social Media</span></h2>
+                    <div class="h-1 w-12 bg-[--primary] mb-10"></div>
+                    <p class="text-lg text-slate-400 leading-relaxed mb-10">
+                        A união da performance com a autoridade. Criamos um ecossistema digital que gera confiança imediata.
+                    </p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-black font-display">R$ 2.500</span>
+                        <span class="text-slate-500 font-medium">/ mês</span>
+                    </div>
+                </div>
+                <div class="glass-panel p-10 rounded-3xl animate-fade-up delay-2 shadow-2xl">
+                    <p class="text-[10px] font-bold text-[--primary] uppercase tracking-[0.3em] mb-8">Tudo do Plano 01 +</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+                            <i data-lucide="palette" class="w-4 h-4 text-[--primary] mb-3"></i>
+                            <p class="text-xs font-bold mb-1">Design Premium</p>
+                            <p class="text-[10px] text-slate-500">Identidade visual executiva.</p>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+                            <i data-lucide="video" class="w-4 h-4 text-[--primary] mb-3"></i>
+                            <p class="text-xs font-bold mb-1">Reels & Edição</p>
+                            <p class="text-[10px] text-slate-500">Vídeos de alto impacto.</p>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+                            <i data-lucide="pen-tool" class="w-4 h-4 text-[--primary] mb-3"></i>
+                            <p class="text-xs font-bold mb-1">Copy Estratégica</p>
+                            <p class="text-[10px] text-slate-500">Conteúdo que vende.</p>
+                        </div>
+                        <div class="p-4 bg-white/5 rounded-xl border border-white/5">
+                            <i data-lucide="layout" class="w-4 h-4 text-[--primary] mb-3"></i>
+                            <p class="text-xs font-bold mb-1">Planejamento</p>
+                            <p class="text-[10px] text-slate-500">Calendário institucional.</p>
+                        </div>
+                    </div>
+                    <div class="mt-8 pt-8 border-t border-white/5 text-center">
+                        <p class="text-sm text-slate-300 font-medium italic">"Fortalecimento de marca e autoridade setorial."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 6: PLANO 3 -->
+        <section class="slide bg-black">
+            <div class="max-w-6xl w-full px-6 grid md:grid-cols-2 gap-20 items-center">
+                <div class="animate-fade-up">
+                    <div class="text-[--primary] font-black text-6xl font-display mb-4">03</div>
+                    <h2 class="text-5xl font-black font-display mb-6">Estrutura <br><span class="text-white/30 italic">Comercial Completa</span></h2>
+                    <div class="h-1 w-12 bg-[--primary] mb-10"></div>
+                    <p class="text-lg text-slate-400 leading-relaxed mb-10">
+                        O nível máximo de parceria. Atuamos no coração da sua empresa para garantir que o lead vire contrato.
+                    </p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-4xl font-black font-display">R$ 3.100</span>
+                        <span class="text-slate-500 font-medium">/ mês</span>
+                    </div>
+                </div>
+                <div class="glass-panel p-10 rounded-3xl animate-fade-up delay-2 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <i data-lucide="award" class="w-20 h-20"></i>
+                    </div>
+                    <p class="text-[10px] font-bold text-[--primary] uppercase tracking-[0.3em] mb-8">O Braço Estrutural</p>
+                    <div class="space-y-4">
+                        <div class="p-5 bg-white/5 rounded-2xl flex items-center gap-5">
+                            <div class="w-10 h-10 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="git-branch" class="w-4 h-4 text-[--primary]"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold">Organização de Funil</h4>
+                                <p class="text-[10px] text-slate-500">Processos de vendas mapeados.</p>
+                            </div>
+                        </div>
+                        <div class="p-5 bg-white/5 rounded-2xl flex items-center gap-5">
+                            <div class="w-10 h-10 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="message-square" class="w-4 h-4 text-[--primary]"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold">Scripts & Propostas</h4>
+                                <p class="text-[10px] text-slate-500">Direcionamento de atendimento.</p>
+                            </div>
+                        </div>
+                        <div class="p-5 bg-white/5 rounded-2xl flex items-center gap-5">
+                            <div class="w-10 h-10 rounded-full bg-[--primary]/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="refresh-cw" class="w-4 h-4 text-[--primary]"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold">Follow-up Estratégico</h4>
+                                <p class="text-[10px] text-slate-500">Aumento real na taxa de fechamento.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-8 text-[10px] text-slate-600 text-center uppercase tracking-widest font-bold italic">
+                        *CRM NorthWay não incluso neste valor.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 7: NORTHWAY CRM -->
+        <section class="slide bg-pattern-grid">
+            <div class="max-w-6xl w-full px-6 grid md:grid-cols-2 gap-20 items-center">
+                <div class="animate-fade-up">
+                    <span class="text-[--primary] font-black tracking-[0.3em] uppercase text-[10px] mb-6 block">Tecnologia Própria</span>
+                    <h2 class="text-5xl font-black font-display mb-10 leading-[1.1]">NorthWay <span class="text-[--primary]">CRM.</span></h2>
+                    <p class="text-lg text-slate-400 leading-relaxed mb-12">
+                        O centro de inteligência da sua operação. Desenhado para o mercado solar, com foco em previsibilidade e gestão de dados.
+                    </p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-6 rounded-2xl border border-white/5 bg-white/5">
+                            <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Implementação</p>
+                            <p class="text-2xl font-black">R$ 2.000</p>
+                        </div>
+                        <div class="p-6 rounded-2xl border border-[--primary]/20 bg-[--primary]/5">
+                            <p class="text-[10px] uppercase font-bold text-[--primary] mb-1">Recorrência</p>
+                            <p class="text-2xl font-black">R$ 297<span class="text-sm">,90/mês</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-panel p-10 rounded-3xl animate-fade-up delay-2">
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-8 border-b border-white/5 pb-4">O que inclui a implementação?</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-[--primary]"></i> Configuração inicial & operacional</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-[--primary]"></i> Estruturação de funis personalizados</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-[--primary]"></i> Parametrização de dados e automações</li>
+                        <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-[--primary]"></i> Treinamento da equipe comercial</li>
+                    </ul>
+                    <div class="mt-12 pt-8 border-t border-white/5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-slate-400 font-medium">Usuário adicional</span>
+                            <span class="text-sm font-bold">R$ 50,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 8: CONDIÇÕES COMERCIAIS -->
+        <section class="slide bg-black">
+            <div class="max-w-6xl w-full px-6">
+                <div class="text-center mb-20 animate-fade-up">
+                    <h2 class="text-4xl font-black font-display uppercase tracking-widest">Planos de Engajamento</h2>
+                    <div class="h-1 w-20 bg-[--primary] mx-auto mt-6"></div>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6 animate-fade-up delay-2">
+                    <!-- Mensal -->
+                    <div class="p-10 rounded-3xl bg-white/[0.02] border border-white/5">
+                        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">Plano Mensal</h4>
+                        <div class="text-4xl font-black font-display mb-8">Recorrência<br><span class="text-lg font-light text-slate-400">Padrão</span></div>
+                        <p class="text-xs text-slate-500 leading-relaxed">Flexibilidade total mês a mês, sem compromisso de longo prazo.</p>
+                    </div>
+                    <!-- Semestral -->
+                    <div class="p-10 rounded-3xl bg-white/[0.02] border border-white/5 relative">
+                        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">Plano Semestral</h4>
+                        <div class="text-4xl font-black font-display mb-8">6x de R$ 2.500<br><span class="text-lg font-light text-slate-400">Sem Desconto</span></div>
+                        <p class="text-xs text-slate-500 leading-relaxed">Fidelidade semestral para estabilidade estratégica na operação.</p>
+                    </div>
+                    <!-- Anual -->
+                    <div class="p-10 rounded-3xl bg-[--primary]/5 border border-[--primary]/20 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 bg-[--primary] text-white text-[10px] font-black px-4 py-1 uppercase tracking-widest -rotate-45 translate-x-4 translate-y-2">Benefício</div>
+                        <h4 class="text-xs font-bold uppercase tracking-widest text-[--primary] mb-6">Plano Anual</h4>
+                        <div class="text-4xl font-black font-display mb-2">11x de R$ 2.500</div>
+                        <div class="text-sm font-bold text-emerald-500 mb-8 uppercase tracking-widest">1 Mensalidade Grátis</div>
+                        <p class="text-xs text-slate-400 leading-relaxed">Comprometimento anual com foco em resultados estruturais e ROI de longo prazo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLIDE 9: RESUMO EXECUTIVO -->
         <section class="slide bg-pattern-grid">
             <div class="max-w-6xl w-full px-6">
-                <h2 class="text-4xl font-black font-display mb-16 text-center">Jornada da Instalação</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 animate-fade-up delay-1">
-                    <div class="glass-panel p-8 rounded-2xl text-center">
-                        <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 text-amber-500 font-bold text-xl">1</div>
-                        <h4 class="font-bold mb-2">Diagnóstico</h4>
-                        <p class="text-xs text-gray-500">Análise técnica do consumo e local.</p>
-                    </div>
-                    <div class="glass-panel p-8 rounded-2xl text-center">
-                        <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 text-amber-500 font-bold text-xl">2</div>
-                        <h4 class="font-bold mb-2">Projeto</h4>
-                        <p class="text-xs text-gray-500">Engenharia e aprovação na concessionária.</p>
-                    </div>
-                    <div class="glass-panel p-8 rounded-2xl text-center">
-                        <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 text-amber-500 font-bold text-xl">3</div>
-                        <h4 class="font-bold mb-2">Instalação</h4>
-                        <p class="text-xs text-gray-500">Montagem rápida e segura pela equipe.</p>
-                    </div>
-                    <div class="glass-panel p-8 rounded-2xl text-center">
-                        <div class="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mx-auto mb-6 text-amber-500 font-bold text-xl">4</div>
-                        <h4 class="font-bold mb-2">Ativação</h4>
-                        <p class="text-xs text-gray-500">Início da geração e economia imediata.</p>
-                    </div>
+                <div class="mb-12 animate-fade-up">
+                    <h2 class="text-3xl font-black font-display uppercase tracking-widest border-l-4 border-[--primary] pl-6">Resumo Executivo de Investimento</h2>
+                </div>
+                <div class="overflow-x-auto glass-panel rounded-3xl p-8 animate-fade-up delay-2">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-white/10">
+                                <th class="py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Configuração</th>
+                                <th class="py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Mensal</th>
+                                <th class="py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Semestral (Total)</th>
+                                <th class="py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Anual (Condição Especial)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm font-medium">
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td class="py-6 text-white">01. Tráfego Pago</td>
+                                <td class="py-6">R$ 1.800</td>
+                                <td class="py-6">R$ 10.800</td>
+                                <td class="py-6 text-[--primary]">R$ 19.800 <span class="text-[10px] opacity-40 ml-1">(11x 1.800)</span></td>
+                            </tr>
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                <td class="py-6 text-white font-bold">02. Tráfego + Social</td>
+                                <td class="py-6">R$ 2.500</td>
+                                <td class="py-6">R$ 15.000</td>
+                                <td class="py-6 text-[--primary]">R$ 27.500 <span class="text-[10px] opacity-40 ml-1">(11x 2.500)</span></td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="py-6 text-white">03. Comercial +</td>
+                                <td class="py-6">R$ 3.100</td>
+                                <td class="py-6">R$ 18.600</td>
+                                <td class="py-6 text-[--primary]">R$ 34.100 <span class="text-[10px] opacity-40 ml-1">(11x 3.100)</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-8 flex justify-between items-center px-8 text-[10px] uppercase font-bold tracking-[0.2em] text-slate-600 animate-fade-up delay-3">
+                    <span>Válido por 15 dias</span>
+                    <span>NorthWay Intelligence Business</span>
                 </div>
             </div>
         </section>
 
-        <!-- SLIDE 6: RESUMO EXECUTIVO -->
+        <!-- SLIDE 10: FECHAMENTO -->
         <section class="slide bg-black overflow-hidden">
-            <div class="absolute inset-0 bg-pattern-grid opacity-20"></div>
-            <div class="relative z-10 text-center max-w-5xl px-6">
-                <div class="inline-block flex flex-col items-center mb-16 animate-fade-up">
-                    <span class="text-[--primary] text-xs font-bold uppercase tracking-[0.5em] mb-4">Conclusão Estratégica</span>
-                    <div class="h-1 w-12 bg-[--primary]"></div>
-                </div>
-                <h2 class="text-5xl md:text-7xl font-black font-display text-white mb-16 leading-tight tracking-tighter animate-fade-up delay-1">
-                    "O sol nasce para todos, <br><span class="text-[--primary] italic underline decoration-white/20">mas o lucro é de quem captura ele.</span>"
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/10 via-black to-black opacity-50"></div>
+            <div class="relative z-10 text-center max-w-4xl px-6">
+                <h2 class="text-5xl md:text-8xl font-black font-display text-white mb-16 leading-tight tracking-tighter animate-fade-up">
+                    Pronto para <br><span class="text-[--primary] italic">escalar com direção?</span>
                 </h2>
-                <div class="mt-20 opacity-30 text-[10px] uppercase tracking-[0.5em] font-bold text-gray-500 animate-fade-up delay-2">
-                    Northway • Assessoria em Inteligência Energética
+                <div class="h-1 w-24 bg-[--primary] mx-auto mb-16 animate-fade-up delay-1"></div>
+                <p class="text-xl text-slate-400 font-light max-w-2xl mx-auto animate-fade-up delay-2">
+                    A NorthWay não é uma agência de entregas. Somos o braço estratégico que transforma seu marketing em uma <span class="text-white font-bold italic">máquina de vendas.</span>
+                </p>
+                <div class="mt-20 flex flex-col items-center animate-fade-up delay-3">
+                    <p class="text-[10px] uppercase tracking-[0.5em] font-black text-slate-600 mb-4">NorthWay Company • 2024</p>
                 </div>
             </div>
         </section>

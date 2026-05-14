@@ -37,8 +37,8 @@ print(f"🔌 Connecting to database...")
 engine = create_engine(db_url)
 
 target_email = "marciogholmm@gmail.com"
-title = "Apresentação Comercial — Energia Solar"
-desc = "Apresentação estratégica de alta performance para o setor fotovoltaico, focada em ROI, economia e sustentabilidade."
+title = "Proposta Comercial — Crescimento Estruturado"
+desc = "Apresentação oficial da NorthWay: Inteligência comercial, gestão de tráfego e processos de escala para o setor solar."
 route = "docs.presentation_solar"
 
 is_postgres = 'postgresql' in db_url
@@ -64,7 +64,6 @@ with engine.connect() as conn:
     
     if not book_res:
         print(f"🌱 Creating new library book: {title}")
-        # Use Python booleans for compatibility with both SQLite (0/1) and Postgres (true/false) via SQLAlchemy
         conn.execute(text("""
             INSERT INTO library_book (title, description, category, route_name, active, created_at)
             VALUES (:title, :desc, 'Apresentação', :route, :active, CURRENT_TIMESTAMP)
@@ -76,8 +75,9 @@ with engine.connect() as conn:
             book_id = conn.execute(text("SELECT last_insert_rowid()")).scalar()
     else:
         book_id = book_res[0]
-        print(f"ℹ️ Book already exists (ID: {book_id}). Updating description...")
-        conn.execute(text("UPDATE library_book SET description = :desc WHERE id = :id"), {"desc": desc, "id": book_id})
+        print(f"ℹ️ Book already exists (ID: {book_id}). Updating details...")
+        conn.execute(text("UPDATE library_book SET title = :title, description = :desc WHERE id = :id"), 
+                     {"title": title, "desc": desc, "id": book_id})
 
     assoc_res = conn.execute(text("SELECT 1 FROM library_book_company_association WHERE book_id = :b_id AND company_id = :c_id"),
                              {"b_id": book_id, "c_id": company_id}).fetchone()
