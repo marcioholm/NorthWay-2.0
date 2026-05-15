@@ -124,10 +124,60 @@ def get_prospecting_context():
 
     settings = ProspectingSetting.query.filter_by(company_id=tenant_id).first()
 
+    # Building context for the requested action
+    is_automated = action == 'generate_and_send_whatsapp'
+    
+    # Get AI Credentials if automated
+    ai_creds = None
+    if is_automated:
+        # Try to get the provider from settings or default to openai
+        provider = settings.default_ai_model.split('-')[0] if settings and settings.default_ai_model else 'openai'
+        if 'gpt' in provider: provider = 'openai'
+        elif 'claude' in provider: provider = 'anthropic'
+        elif 'gemini' in provider: provider = 'google'
+        
+        credential = TenantAICredential.query.filter_by(
+            company_id=tenant_id,
+            provider=provider,
+            status='active'
+        ).first()
+        
+        if credential:
+            ai_creds = {
+                'provider': credential.provider,
+                'api_key': decrypt_api_key(credential.api_key_encrypted),
+                'model': credential.model or settings.default_ai_model,
+                'base_url': credential.base_url
+            }
+
+    # Get WhatsApp Integration if automated
+    whatsapp_integration = None
+    if is_automated:
+        integration = ProspectingIntegration.query.filter_by(
+            company_id=tenant_id, 
+            provider='evolution_api', 
+            status='active'
+        ).first()
+        
+        if integration:
+            whatsapp_integration = {
+                'api_base_url': integration.api_base_url,
+                'instance_name': integration.instance_name,
+                'display_name': integration.display_name,
+                'sender_name': integration.sender_name or integration.display_name,
+                'api_key': decrypt_api_key(integration.api_key_encrypted)
+            }
+
+    # Get Company Name
+    from models import Company
+    company_obj = Company.query.get(tenant_id)
+
     # Build the flattened response as requested by the user
     response = {
         'success': True,
         'tenant_id': tenant_id,
+        'company_name': company_obj.name if company_obj else "NorthWay",
+        'action': action,
         'lead': {
             'id': lead.id,
             'name': lead.name,
@@ -155,7 +205,13 @@ def get_prospecting_context():
             'default_ai_model': settings.default_ai_model if settings else 'gpt-4o-mini',
             'default_tone': settings.default_tone if settings else 'profissional',
             'manual_approval_required': settings.manual_approval_required if settings else True
-        }
+        },
+        # Full Context for Automation
+        'ai_credentials': ai_creds,
+        'whatsapp_integration': whatsapp_integration,
+        'evolution_base_url': whatsapp_integration['api_base_url'] if whatsapp_integration else None,
+        'evolution_api_key': whatsapp_integration['api_key'] if whatsapp_integration else None,
+        'evolution_instance': whatsapp_integration['instance_name'] if whatsapp_integration else None
     }
 
     return jsonify(response)
@@ -330,6 +386,65 @@ def prospecting_send_result():
 
     db.session.commit()
     return jsonify({'success': True})
+
+
+@internal_api_bp.route('/prospecting/save-automated-send', methods=['POST'])
+@require_internal_auth
+def save_automated_send():
+    data = request.json
+    tenant_id = data.get('tenant_id')
+    lead_id = data.get('lead_id')
+    content = data.get('content')
+    success = data.get('success', False)
+    provider_message_id = data.get('provider_message_id')
+    error = data.get('error')
+    model = data.get('model')
+
+    if not tenant_id or not lead_id or not content:
+        return jsonify({'success': False, 'error': 'tenant_id, lead_id and content are required'}), 400
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=tenant_id).first()
+    if not lead:
+        return jsonify({'success': False, 'error': 'Lead not found'}), 404
+
+    # Save the message
+    prospecting_msg = ProspectingMessage(
+        company_id=tenant_id,
+        lead_id=lead_id,
+        campaign_id=lead.prospecting_campaign_id,
+        channel='whatsapp',
+        type='outbound',
+        status='enviada' if success else 'erro',
+        content=content,
+        ai_model=model,
+        error_message=error if not success else None,
+        sent_at=datetime.utcnow() if success else None,
+        created_at=datetime.utcnow()
+    )
+    db.session.add(prospecting_msg)
+    
+    # Update Lead Status
+    if success:
+        lead.prospecting_status = 'contatado'
+        lead.last_contact_at = datetime.utcnow()
+        lead.in_execution = False
+        
+        # Update next action based on campaign
+        campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
+        if campaign:
+            lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days or 3)
+    else:
+        lead.prospecting_status = 'erro'
+        lead.in_execution = False
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message_id': prospecting_msg.id,
+        'provider_message_id': provider_message_id,
+        'sent': success
+    })
 
 
 @internal_api_bp.route('/prospecting/inbound-context', methods=['POST'])
