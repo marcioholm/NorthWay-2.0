@@ -336,13 +336,16 @@ def generate_message(lead_id):
     payload = {
         'company_id': current_user.company_id,
         'lead_id': lead.id,
-        'company_name': lead.name,
-        'responsible_name': lead.name,
+        'company_name': current_user.company.name,
+        'responsible_name': current_user.name,
+        'sender_name': current_user.name,
         'phone': lead.phone,
         'email': lead.email,
+        'lead_name': lead.name,
         'segment': lead.interest,
         'preferred_channel': lead.preferred_channel or 'whatsapp',
         'last_angle': lead.last_angle,
+        'system_prompt_rule': "Nunca use placeholders como [Seu Nome], [Empresa], [Nome da Empresa] ou similares. Use sempre os dados reais do remetente e da empresa fornecidos no contexto.",
         'campaign': {
             'name': campaign.name if campaign else 'Sem campanha',
             'objective': campaign.objective if campaign else '',
@@ -350,7 +353,7 @@ def generate_message(lead_id):
             'offer': campaign.offer if campaign else '',
             'main_angle': campaign.main_angle if campaign else '',
             'default_cta': campaign.default_cta if campaign else 'Agende uma conversa',
-            'restrictions': campaign.restrictions if campaign else ''
+            'restrictions': (campaign.restrictions if campaign else '') + "\nREGRA OBRIGATÓRIA: Nunca use placeholders como [Seu Nome], [Empresa], [Nome da Empresa] ou similares. Use sempre os dados reais."
         }
     }
 

@@ -252,13 +252,30 @@ def get_send_context():
         status='active'
     ).first()
 
+    # Get Sender/Owner Info
+    # If message was approved, use the approver's name. Fallback to Lead's assigned user.
+    owner = None
+    if message.approved_by:
+        from models import User
+        owner = User.query.get(message.approved_by)
+    elif lead.assigned_to_id:
+        from models import User
+        owner = User.query.get(lead.assigned_to_id)
+    
+    owner_name = owner.name if owner else "Equipe NorthWay"
+    company_name = lead.company.name if lead.company else "NorthWay"
+
     return jsonify({
         'success': True,
         'tenant_id': tenant_id,
+        'owner_name': owner_name,
+        'company_name': company_name,
+        'sender_name': integration.sender_name if (integration and integration.sender_name) else (integration.display_name if integration else owner_name),
         'lead': {
             'id': lead.id,
             'name': lead.name,
-            'phone': lead.phone
+            'phone': lead.phone,
+            'email': lead.email
         },
         'message': {
             'id': message.id,
@@ -270,7 +287,7 @@ def get_send_context():
             'display_name': integration.display_name if integration else None,
             'api_key': decrypt_api_key(integration.api_key_encrypted) if integration and integration.api_key_encrypted else None
         } if integration else None,
-        # Flattened for N8N as requested
+        # Standardized for N8N as requested
         'evolution_base_url': integration.api_base_url if integration else None,
         'evolution_api_key': decrypt_api_key(integration.api_key_encrypted) if integration and integration.api_key_encrypted else None,
         'evolution_instance': integration.instance_name if integration else None
