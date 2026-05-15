@@ -19,6 +19,7 @@ try:
     import utils
     import utils.crypto
     import services.supabase_service
+    import services.form_service
     
     # Blueprints/Routes
     import auth
@@ -37,6 +38,7 @@ try:
     import routes.api_extension
     import routes.whatsapp
     import routes.webhook_whatsapp
+    import routes.forms
     import routes.clients
     import routes.leads
     import routes.leads_enrichment

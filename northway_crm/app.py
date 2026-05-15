@@ -259,6 +259,17 @@ def create_app():
 
         # --- INITIALIZE EXTENSIONS ---
         db.init_app(app)
+        
+        # --- AUTOMATIC DB SYNC (Vercel) ---
+        if os.environ.get('VERCEL'):
+            with app.app_context():
+                try:
+                    from database_sync import sync_database
+                    sync_database()
+                    print("✅ Startup Sync Complete")
+                except Exception as e:
+                    print(f"📡 Startup Sync Warning: {e}")
+
         migrate = Migrate(app, db)
         
         login_manager = LoginManager()
@@ -305,7 +316,7 @@ def create_app():
             
             # EXEMPTIONS: Always allow access to maintenance and auth routes
             # This is critical to recover from DB errors
-            exempt_paths = ['/sys_admin', '/forms/public', '/admin/run-initial-migrations', '/emergency-migration', '/debug_schema']
+            exempt_paths = ['/sys_admin', '/forms/public', '/admin/run-initial-migrations', '/emergency-migration', '/debug_schema', '/master/migrate-integrations']
             if any(request.path.startswith(p) for p in exempt_paths):
                 return
 
@@ -467,6 +478,19 @@ def create_app():
             return "DEPLOY_V9_LIVE_2026-03-30_09:50"
 
 
+        @app.route('/master/migrate-integrations')
+        def migrate_integrations():
+            secret = request.args.get('secret')
+            if secret != os.environ.get('MIGRATION_SECRET', 'northway_sync_2026'):
+                return "Unauthorized", 403
+            try:
+                from sqlalchemy import text
+                db.session.execute(text("ALTER TABLE prospecting_integrations ADD COLUMN IF NOT EXISTS display_name VARCHAR(100)"))
+                db.session.commit()
+                return "Migration completed: display_name added to prospecting_integrations"
+            except Exception as e:
+                return str(e), 500
+
         @app.route('/sys-admin/sync-db')
         def admin_sync_db():
             secret = request.args.get('secret')
@@ -505,6 +529,7 @@ def create_app():
             ('routes.api_extension', 'api_ext', 'api_ext', None),
             ('routes.whatsapp', 'whatsapp_bp', 'whatsapp_bp', None),
             ('routes.webhook_whatsapp', 'evolution_webhook_bp', 'evolution_webhook_bp', None),
+            ('routes.forms', 'forms_bp', 'forms_bp', None),
             ('routes.clients', 'clients_bp', 'clients_bp', None),
             ('routes.leads', 'leads_bp', 'leads_bp', None),
             ('routes.leads_enrichment', 'enrichment_bp', 'enrichment_bp', None),
@@ -648,6 +673,7 @@ def create_app():
         
         return fallback
 
+app = create_app()
+
 if __name__ == '__main__':
-    app = create_app()
     app.run(debug=True, port=5050)

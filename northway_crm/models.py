@@ -1539,9 +1539,19 @@ class ProspectingIntegration(db.Model):
     provider = db.Column(db.String(50), nullable=False) # evolution_api, whatsapp_business, smtp, sendgrid
     api_base_url = db.Column(db.Text, nullable=True)
     instance_name = db.Column(db.String(100), nullable=True)
+    display_name = db.Column(db.String(100), nullable=True)
     api_key_encrypted = db.Column(db.Text, nullable=True)
     api_key_last4 = db.Column(db.String(4), nullable=True)
     status = db.Column(db.String(20), default='inactive') # active, inactive, error
+    
+    # Professional SMTP Fields
+    smtp_host = db.Column(db.Text, nullable=True)
+    smtp_port = db.Column(db.Integer, nullable=True)
+    smtp_user = db.Column(db.Text, nullable=True)
+    sender_name = db.Column(db.Text, nullable=True)
+    sender_email = db.Column(db.Text, nullable=True)
+    ssl_tls = db.Column(db.Boolean, default=True)
+
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
 

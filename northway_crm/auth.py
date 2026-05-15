@@ -568,21 +568,17 @@ def google_callback_server():
         
         if not user:
             # First time Google Login -> Auto Register
-            print(f"🆕 Google User New: {email} -> Creating Account...")
+            print(f"🆕 Google User New: {email} -> Creating Account (Orphan)...")
             
             # Create minimal User with safe defaults to avoid IntegrityError (NOT NULL constraints)
             temp_pass = secrets.token_urlsafe(16)
-            
-            # Find a default company or create one if strictly needed by DB schema
-            default_company = Company.query.first()
-            default_company_id = default_company.id if default_company else 1 # Fallback to 1
             
             user = User(
                 name=name,
                 email=email,
                 supabase_uid=sb_user.id,
                 password_hash=generate_password_hash(temp_pass),
-                company_id=user.company_id if 'user' in locals() and user and user.company_id else default_company_id,
+                company_id=None, # MUST be None for new users to trigger setup_company
                 role='admin',
                 created_at=get_now_br(),
                 last_login=get_now_br()
@@ -596,6 +592,7 @@ def google_callback_server():
             db.session.commit()
             
             login_user(user)
+            print(f"✅ Google Account Created: {email}. Redirecting to setup_company.")
             return redirect(url_for('auth.setup_company'))
             
         else:

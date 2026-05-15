@@ -20,6 +20,42 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #d1d5db;
         }
+
+        /* Script Studio Sidebar Offset Fix */
+        #sidebar.w-20 ~ main #script-explorer,
+        #sidebar.w-20 ~ main #script-explorer-overlay,
+        #sidebar.w-20 ~ main #script-templates-modal {
+            left: 80px !important;
+        }
+        #sidebar.w-64 ~ main #script-explorer,
+        #sidebar.w-64 ~ main #script-explorer-overlay,
+        #sidebar.w-64 ~ main #script-templates-modal {
+            left: 256px !important;
+        }
+        
+        #sidebar.w-20 ~ main #content-client-script-studio {
+            padding-left: 80px;
+            transition: padding-left 0.3s ease;
+        }
+        #sidebar.w-64 ~ main #content-client-script-studio {
+            padding-left: 256px;
+            transition: padding-left 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar.w-20 ~ main #script-explorer,
+            #sidebar.w-64 ~ main #script-explorer,
+            #sidebar.w-20 ~ main #script-explorer-overlay,
+            #sidebar.w-64 ~ main #script-explorer-overlay,
+            #sidebar.w-20 ~ main #script-templates-modal,
+            #sidebar.w-64 ~ main #script-templates-modal {
+                left: 0 !important;
+            }
+            #sidebar.w-20 ~ main #content-client-script-studio,
+            #sidebar.w-64 ~ main #content-client-script-studio {
+                padding-left: 0 !important;
+            }
+        }
     </style>
     <div class="max-w-[1700px] mx-auto pb-20">
 

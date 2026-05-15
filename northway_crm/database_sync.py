@@ -18,6 +18,16 @@ def sync_database():
             inspector = inspect(db.engine)
             
             def add_column_if_missing(table_name, col_name, dtype):
+                if is_postgres:
+                    try:
+                        conn.execute(text(f"ALTER TABLE \"{table_name}\" ADD COLUMN IF NOT EXISTS {col_name} {dtype}"))
+                        conn.commit()
+                    except Exception as e:
+                        conn.rollback()
+                        results.append(f"⚠️ Failed {table_name}.{col_name}: {e}")
+                    return
+
+                # SQLite fallback
                 results.append(f"🔍 Checking table '{table_name}' for column '{col_name}'...")
                 if inspector.has_table(table_name):
                     columns = [c['name'] for c in inspector.get_columns(table_name)]
@@ -251,6 +261,16 @@ def sync_database():
             ]
             for t in ['lead', 'client']:
                 for c, d in shared_cols: add_column_if_missing(t, c, d)
+
+            # Prospecting Integrations (SMTP)
+            for c, d in [
+                ('smtp_host', "TEXT"),
+                ('smtp_port', "INTEGER"),
+                ('smtp_user', "TEXT"),
+                ('sender_name', "TEXT"),
+                ('sender_email', "TEXT"),
+                ('ssl_tls', "BOOLEAN DEFAULT TRUE")
+            ]: add_column_if_missing("prospecting_integrations", c, d)
 
             # Transaction & Expense
             nfse_cols = [

@@ -5,6 +5,9 @@ from functools import wraps
 from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction
 from datetime import datetime, timedelta
 from utils.crypto import decrypt_api_key
+import logging
+
+logger = logging.getLogger(__name__)
 
 internal_api_bp = Blueprint('internal_api', __name__, url_prefix='/api/internal')
 
@@ -49,29 +52,45 @@ def get_ai_credential():
     tenant_id = data.get('tenant_id')
     provider = data.get('provider')
 
+    logger.info(f"[INTERNAL_AI] Fetching credential: tenant_id={tenant_id}, provider={provider}")
+
     if not tenant_id or not provider:
+        logger.warning(f"[INTERNAL_AI] Missing required fields: tenant_id={tenant_id}, provider={provider}")
         return jsonify({'success': False, 'error': 'tenant_id and provider are required'}), 400
 
-    credential = TenantAICredential.query.filter_by(
-        company_id=tenant_id,
-        provider=provider,
-        status='active'
-    ).first()
+    try:
+        credential = TenantAICredential.query.filter_by(
+            company_id=tenant_id,
+            provider=provider,
+            status='active'
+        ).first()
 
-    if not credential:
-        return jsonify({'success': False, 'error': 'Credential not found or inactive'}), 404
+        if not credential:
+            logger.warning(f"[INTERNAL_AI] Credential not found or inactive for tenant_id={tenant_id}, provider={provider}")
+            return jsonify({'success': False, 'error': f'Credential not found or inactive for {provider}'}), 404
 
-    decrypted_key = decrypt_api_key(credential.api_key_encrypted)
+        logger.info(f"[INTERNAL_AI] Credential found (ID={credential.id}). Decrypting key...")
+        
+        decrypted_key = decrypt_api_key(credential.api_key_encrypted)
+        
+        if not decrypted_key:
+            logger.error(f"[INTERNAL_AI] Decryption failed for credential ID={credential.id}")
+            return jsonify({'success': False, 'error': 'Failed to decrypt API key'}), 500
 
-    return jsonify({
-        'success': True,
-        'data': {
-            'provider': credential.provider,
-            'api_key': decrypted_key,
-            'model': credential.model,
-            'base_url': credential.base_url
-        }
-    })
+        logger.info(f"[INTERNAL_AI] Successfully retrieved and decrypted credential for {provider}")
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'provider': credential.provider,
+                'api_key': decrypted_key,
+                'model': credential.model,
+                'base_url': credential.base_url
+            }
+        })
+    except Exception as e:
+        logger.error(f"[INTERNAL_AI] Critical error fetching credential: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': f'Internal server error: {str(e)}'}), 500
 
 
 @internal_api_bp.route('/prospecting/context', methods=['POST'])
@@ -248,8 +267,13 @@ def get_send_context():
         'integration': {
             'api_base_url': integration.api_base_url if integration else None,
             'instance_name': integration.instance_name if integration else None,
+            'display_name': integration.display_name if integration else None,
             'api_key': decrypt_api_key(integration.api_key_encrypted) if integration and integration.api_key_encrypted else None
-        } if integration else None
+        } if integration else None,
+        # Flattened for N8N as requested
+        'evolution_base_url': integration.api_base_url if integration else None,
+        'evolution_api_key': decrypt_api_key(integration.api_key_encrypted) if integration and integration.api_key_encrypted else None,
+        'evolution_instance': integration.instance_name if integration else None
     })
 
 

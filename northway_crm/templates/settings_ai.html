@@ -57,7 +57,7 @@
                             </div>
                             <button onclick="openProviderModal('{{ p.id }}', '{{ p.name }}')"
                                 class="px-4 py-2 bg-northway-red text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all">
-                                {% for cred in credentials %}{% if cred.provider == p.id %}Editar{% else %}{% endfor %}{% if not credentials|selectattr('provider', 'equalto', p.id)|list %}Adicionar{% endif %}
+                                {% if credentials|selectattr('provider', 'equalto', p.id)|list %}Editar{% else %}Adicionar{% endif %}
                             </button>
                         </div>
                     </div>
@@ -98,7 +98,7 @@
                                         {% else %}
                                         <span class="text-gray-400">● Inativo</span>
                                         {% endif %}
-                                        {% if integration.instance_name %} • {{ integration.instance_name }}{% endif %}
+                                        {% if integration.display_name %} • {{ integration.display_name }}{% elif integration.instance_name %} • {{ integration.instance_name }}{% endif %}
                                     </p>
                                         {% endif %}
                                     {% endfor %}
@@ -106,7 +106,7 @@
                             </div>
                             <button onclick="openIntegrationModal('{{ int.id }}', '{{ int.name }}')"
                                 class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
-                                {% for integration in integrations %}{% if integration.provider == int.id %}Editar{% else %}{% endfor %}{% if not integrations|selectattr('provider', 'equalto', int.id)|list %}Adicionar{% endif %}
+                                {% if integrations|selectattr('provider', 'equalto', int.id)|list %}Editar{% else %}Adicionar{% endif %}
                             </button>
                         </div>
                     </div>
@@ -188,26 +188,88 @@
                         placeholder="https://evolution-api.seudominio.com">
                 </div>
                 <div class="mt-4">
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Instance Name</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nome de Exibição (Painel)</label>
+                    <input type="text" id="displayName" name="displayName"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
+                        placeholder="Ex: Marcio Holm, NorthWay Company">
+                    <p class="text-[10px] text-gray-400 mt-1">Nome amigável exibido apenas no painel do CRM.</p>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nome Técnico da Instância (API/N8N)</label>
                     <input type="text" id="instanceName" name="instanceName"
                         class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
-                        placeholder="minha-instancia">
+                        placeholder="Ex: marcioholm"
+                        pattern="^[a-z0-9_-]+$"
+                        title="Apenas letras minúsculas, números, hífen ou underline. Sem espaços ou acentos.">
+                    <p class="text-[10px] text-gray-400 mt-1">Este nome será usado na URL da API. Use apenas letras minúsculas, números, - ou _.</p>
                 </div>
             </div>
 
-            <div id="smtpFields" class="hidden">
+            <div id="smtpFields" class="hidden space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">SMTP Host</label>
-                    <input type="text" id="smtpHost" name="smtpHost"
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Preset Configuração</label>
+                    <select id="smtpPreset" onchange="applySmtpPreset()"
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                        <option value="">Configuração Manual</option>
+                        <option value="gmail">Gmail</option>
+                        <option value="outlook">Outlook / Office 365</option>
+                        <option value="hostinger">Hostinger</option>
+                        <option value="zoho">Zoho Mail</option>
+                        <option value="sendgrid">SendGrid</option>
+                        <option value="ses">Amazon SES</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">SMTP Host</label>
+                        <input type="text" id="smtpHost" name="smtpHost"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
+                            placeholder="smtp.exemplo.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Porta</label>
+                        <input type="number" id="smtpPort" name="smtpPort"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
+                            placeholder="587">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Usuário (User)</label>
+                    <input type="text" id="smtpUser" name="smtpUser"
                         class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
-                        placeholder="smtp.gmail.com">
+                        placeholder="seu@email.com">
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="smtpSsl" name="smtpSsl" checked
+                            class="w-4 h-4 rounded border-gray-300 text-northway-red focus:ring-northway-red">
+                        <span class="text-sm font-medium text-gray-700">Usar SSL (Porta 465)</span>
+                    </label>
+                    <span class="text-[10px] text-gray-400">Se desmarcado, usará STARTTLS (Porta 587)</span>
+                </div>
+                <hr class="border-gray-100">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nome do Remetente</label>
+                        <input type="text" id="senderName" name="senderName"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
+                            placeholder="NorthWay CRM">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">E-mail do Remetente</label>
+                        <input type="email" id="senderEmail" name="senderEmail"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
+                            placeholder="contato@empresa.com">
+                    </div>
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">API Key (opcional)</label>
+                <label id="apiKeyLabel" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">API Key</label>
                 <input type="password" id="integrationApiKey" name="apiKey"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
+                    placeholder="Cole aqui">
+                <p id="apiKeyHelp" class="text-[10px] text-gray-400 mt-1 hidden">Para SMTP, esta é a sua senha de e-mail (ou senha de app).</p>
             </div>
 
             <div class="flex gap-3 pt-2">
@@ -290,9 +352,23 @@ function closeProviderModal() {
 
 document.getElementById('providerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    const apiKey = document.getElementById('apiKey').value;
+    const provider = document.getElementById('providerId').value;
+    
+    if (!apiKey && !existingCredentials.find(c => c.provider === provider)) {
+        alert('API Key é obrigatória para salvar');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Salvando...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading() }
+    });
+
     const data = {
-        provider: document.getElementById('providerId').value,
-        api_key: document.getElementById('apiKey').value,
+        provider: provider,
+        api_key: apiKey,
         model: document.getElementById('model').value,
         base_url: document.getElementById('baseUrl').value
     };
@@ -305,32 +381,46 @@ document.getElementById('providerForm').addEventListener('submit', async functio
         });
         const result = await response.json();
         if (result.success) {
-            closeProviderModal();
-            location.reload();
+            Swal.fire({icon: 'success', title: 'Salvo!', text: 'Credencial salva com sucesso'});
+            setTimeout(() => location.reload(), 1500);
         } else {
-            alert(result.error || 'Erro ao salvar');
+            Swal.fire({icon: 'error', title: 'Erro ao Salvar', text: result.error || 'Erro desconhecido'});
         }
     } catch(err) {
-        alert('Erro ao salvar credencial');
+        Swal.fire({icon: 'error', title: 'Erro', text: 'Falha de rede ao salvar credencial'});
     }
 });
 
 async function testCredential() {
     const provider = document.getElementById('providerId').value;
+    const apiKey = document.getElementById('apiKey').value;
+    const baseUrl = document.getElementById('baseUrl').value;
+
+    Swal.fire({
+        title: 'Testando conexão...',
+        text: 'Isso pode levar alguns segundos.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading() }
+    });
+
     try {
         const response = await fetch('{{ url_for("ai_settings.test_credential") }}', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({provider: provider})
+            body: JSON.stringify({
+                provider: provider,
+                api_key: apiKey,
+                base_url: baseUrl
+            })
         });
         const result = await response.json();
         if (result.success) {
             Swal.fire({icon: 'success', title: 'Sucesso!', text: 'Conexão estabelecida com a API'});
         } else {
-            Swal.fire({icon: 'error', title: 'Erro', text: result.error});
+            Swal.fire({icon: 'error', title: 'Falha no Teste', text: result.error || 'Erro desconhecido'});
         }
     } catch(err) {
-        Swal.fire({icon: 'error', title: 'Erro', text: 'Falha ao testar conexão'});
+        Swal.fire({icon: 'error', title: 'Erro', text: 'Falha ao processar o teste de conexão'});
     }
 }
 
@@ -359,17 +449,41 @@ function openIntegrationModal(provider, name) {
 
     document.getElementById('evolutionFields').classList.add('hidden');
     document.getElementById('smtpFields').classList.add('hidden');
+    document.getElementById('apiKeyLabel').textContent = 'API Key';
+    document.getElementById('apiKeyHelp').classList.add('hidden');
 
     if (provider === 'evolution_api') {
         document.getElementById('evolutionFields').classList.remove('hidden');
     } else if (provider === 'smtp' || provider === 'sendgrid') {
         document.getElementById('smtpFields').classList.remove('hidden');
+        document.getElementById('apiKeyLabel').textContent = 'Senha (SMTP Password)';
+        document.getElementById('apiKeyHelp').classList.remove('hidden');
     }
 
     const existing = existingIntegrations.find(i => i.provider === provider);
     if (existing) {
         if (existing.api_base_url) document.getElementById('apiBaseUrl').value = existing.api_base_url;
         if (existing.instance_name) document.getElementById('instanceName').value = existing.instance_name;
+        if (existing.display_name) document.getElementById('displayName').value = existing.display_name;
+        
+        // SMTP specific fields
+        if (existing.smtp_host) document.getElementById('smtpHost').value = existing.smtp_host;
+        if (existing.smtp_port) document.getElementById('smtpPort').value = existing.smtp_port;
+        if (existing.smtp_user) document.getElementById('smtpUser').value = existing.smtp_user;
+        if (existing.sender_name) document.getElementById('senderName').value = existing.sender_name;
+        if (existing.sender_email) document.getElementById('senderEmail').value = existing.sender_email;
+        if (existing.ssl_tls !== undefined) document.getElementById('smtpSsl').checked = existing.ssl_tls;
+    } else {
+        // Clear fields if no existing config
+        document.getElementById('apiBaseUrl').value = '';
+        document.getElementById('instanceName').value = '';
+        document.getElementById('displayName').value = '';
+        document.getElementById('smtpHost').value = '';
+        document.getElementById('smtpPort').value = '';
+        document.getElementById('smtpUser').value = '';
+        document.getElementById('senderName').value = '';
+        document.getElementById('senderEmail').value = '';
+        document.getElementById('smtpSsl').checked = true;
     }
 
     document.getElementById('integrationApiKey').value = '';
@@ -385,6 +499,28 @@ function openIntegrationModal(provider, name) {
     document.getElementById('integrationModal').classList.add('flex');
 }
 
+function applySmtpPreset() {
+    const preset = document.getElementById('smtpPreset').value;
+    const host = document.getElementById('smtpHost');
+    const port = document.getElementById('smtpPort');
+    const ssl = document.getElementById('smtpSsl');
+
+    const configs = {
+        'gmail': { host: 'smtp.gmail.com', port: 587, ssl: false },
+        'outlook': { host: 'smtp.office365.com', port: 587, ssl: false },
+        'hostinger': { host: 'smtp.hostinger.com', port: 465, ssl: true },
+        'zoho': { host: 'smtp.zoho.com', port: 465, ssl: true },
+        'sendgrid': { host: 'smtp.sendgrid.net', port: 587, ssl: false },
+        'ses': { host: 'email-smtp.us-east-1.amazonaws.com', port: 587, ssl: false }
+    };
+
+    if (configs[preset]) {
+        host.value = configs[preset].host;
+        port.value = configs[preset].port;
+        ssl.checked = configs[preset].ssl;
+    }
+}
+
 function closeIntegrationModal() {
     document.getElementById('integrationModal').classList.add('hidden');
     document.getElementById('integrationModal').classList.remove('flex');
@@ -393,11 +529,26 @@ function closeIntegrationModal() {
 document.getElementById('integrationForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const provider = document.getElementById('integrationProviderId').value;
+
+    Swal.fire({
+        title: 'Salvando integração...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading() }
+    });
+
     const data = {
         provider: provider,
         api_base_url: document.getElementById('apiBaseUrl').value || null,
         instance_name: document.getElementById('instanceName').value || null,
-        api_key: document.getElementById('integrationApiKey').value || null
+        display_name: document.getElementById('displayName').value || null,
+        api_key: document.getElementById('integrationApiKey').value || null,
+        // SMTP specific
+        smtp_host: document.getElementById('smtpHost').value || null,
+        smtp_port: document.getElementById('smtpPort').value || null,
+        smtp_user: document.getElementById('smtpUser').value || null,
+        sender_name: document.getElementById('senderName').value || null,
+        sender_email: document.getElementById('senderEmail').value || null,
+        ssl_tls: document.getElementById('smtpSsl').checked
     };
 
     try {
@@ -420,6 +571,14 @@ document.getElementById('integrationForm').addEventListener('submit', async func
 
 async function testIntegration() {
     const provider = document.getElementById('integrationProviderId').value;
+    
+    Swal.fire({
+        title: 'Testando integração...',
+        text: 'Por favor, aguarde.',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading() }
+    });
+
     try {
         const response = await fetch('{{ url_for("ai_settings.test_integration") }}', {
             method: 'POST',
@@ -430,7 +589,7 @@ async function testIntegration() {
         if (result.success) {
             Swal.fire({icon: 'success', title: 'Sucesso!', text: 'Integração conectada com sucesso'});
         } else {
-            Swal.fire({icon: 'error', title: 'Erro', text: result.error});
+            Swal.fire({icon: 'error', title: 'Erro de Conexão', text: result.error || 'Falha na resposta da API'});
         }
     } catch(err) {
         Swal.fire({icon: 'error', title: 'Erro', text: 'Falha ao testar integração'});
