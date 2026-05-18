@@ -2,8 +2,10 @@ import os
 import requests
 from flask import Blueprint, request, jsonify
 from functools import wraps
-from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction
+from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction, CrmConversation, CrmConversationMessage, CrmConversationMemory, CrmAiLog, CrmChannelIntegration
 from datetime import datetime, timedelta
+from utils.crypto import decrypt_api_key
+from utils.phone import phone_variants
 from utils.crypto import decrypt_api_key
 import logging
 
@@ -452,15 +454,127 @@ def save_automated_send():
 def get_prospecting_inbound_context():
     data = request.json
     tenant_id = data.get('tenant_id')
+    provider = data.get('provider')
+    instance_name = data.get('instance')
     phone = data.get('phone')
+    phone_variants_list = data.get('phone_variants', [])
+    message_id = data.get('message_id')
+    inbound_data = data.get('inbound', {})
     
-    if not tenant_id or not phone:
-        return jsonify({'success': False, 'error': 'tenant_id and phone are required'}), 400
+    if not phone:
+        return jsonify({'success': False, 'error': 'phone is required'}), 400
 
-    lead = Lead.query.filter_by(company_id=tenant_id, phone=phone).first()
+    # Idempotency check
+    if message_id:
+        existing_msg = CrmConversationMessage.query.filter_by(message_id=message_id).first()
+        if existing_msg:
+            return jsonify({'ignored': True, 'reason': 'already processed'}), 200
+
+    # 1. Resolve tenant_id
+    integration_data = {}
+    if not tenant_id:
+        if not provider or not instance_name:
+            return jsonify({'success': False, 'error': 'tenant_id OR (provider and instance) are required'}), 400
+            
+        integration = CrmChannelIntegration.query.filter_by(
+            provider=provider,
+            instance_name=instance_name,
+            active=True
+        ).first()
+        
+        if not integration:
+            return jsonify({'success': False, 'error': 'No active integration found for this provider and instance'}), 404
+            
+        tenant_id = integration.tenant_id
+        integration_data = {
+            'provider': integration.provider,
+            'instance_name': integration.instance_name
+        }
+
+    # 2. Find lead using phone variations
+    search_phones = phone_variants_list if phone_variants_list else phone_variants(phone)
+    if phone not in search_phones:
+        search_phones.append(phone)
+        
+    lead = Lead.query.filter(
+        Lead.company_id == tenant_id,
+        db.or_(
+            Lead.phone.in_(search_phones),
+            Lead.whatsapp.in_(search_phones),
+            Lead.mobile_phone.in_(search_phones)
+        )
+    ).first()
+
     if not lead:
         return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
+    # 3. Handle Conversation
+    remote_jid = inbound_data.get('remote_jid') or f"{phone}@s.whatsapp.net"
+    conversation = CrmConversation.query.filter_by(
+        tenant_id=tenant_id,
+        lead_id=lead.id,
+        status='open'
+    ).first()
+    
+    if not conversation:
+        conversation = CrmConversation(
+            tenant_id=tenant_id,
+            lead_id=lead.id,
+            channel='whatsapp',
+            provider=provider,
+            instance_name=instance_name,
+            remote_jid=remote_jid,
+            phone=phone,
+            status='open',
+            last_message_at=datetime.utcnow()
+        )
+        db.session.add(conversation)
+        db.session.commit()
+    else:
+        conversation.last_message_at = datetime.utcnow()
+        db.session.commit()
+
+    # 4. Save Inbound Message
+    inbound_msg = CrmConversationMessage(
+        conversation_id=conversation.id,
+        tenant_id=tenant_id,
+        lead_id=lead.id,
+        direction='inbound',
+        channel='whatsapp',
+        provider=provider,
+        instance_name=instance_name,
+        remote_jid=remote_jid,
+        phone=phone,
+        message_id=message_id,
+        message_type='text',
+        text_content=inbound_data.get('text', ''),
+        raw_payload=inbound_data
+    )
+    db.session.add(inbound_msg)
+    db.session.commit()
+
+    # 5. Fetch History and Memory
+    history = []
+    messages = CrmConversationMessage.query.filter_by(conversation_id=conversation.id).order_by(CrmConversationMessage.created_at.asc()).limit(50).all()
+    for m in messages:
+        history.append({
+            'direction': m.direction,
+            'text': m.text_content,
+            'timestamp': m.created_at.isoformat() if m.created_at else None
+        })
+        
+    memory = CrmConversationMemory.query.filter_by(conversation_id=conversation.id).first()
+    memory_data = {}
+    if memory:
+        memory_data = {
+            'summary': memory.summary,
+            'last_intention': memory.last_intention,
+            'last_objection': memory.last_objection,
+            'interest_level': memory.interest_level,
+            'next_best_action': memory.next_best_action
+        }
+
+    # 6. Return full context
     return jsonify({
         'success': True,
         'tenant_id': tenant_id,
@@ -468,8 +582,17 @@ def get_prospecting_inbound_context():
             'id': lead.id,
             'name': lead.name,
             'prospecting_status': lead.prospecting_status,
-            'last_angle': lead.last_angle
-        }
+            'last_angle': lead.last_angle,
+            'phone': lead.phone
+        },
+        'conversation': {
+            'id': conversation.id,
+            'status': conversation.status
+        },
+        'history': history,
+        'memory': memory_data,
+        'inbound': inbound_data,
+        'integration': integration_data
     })
 
 
@@ -479,8 +602,23 @@ def prospecting_inbound_result():
     data = request.json
     tenant_id = data.get('tenant_id')
     lead_id = data.get('lead_id')
-    new_status = data.get('status')
+    conversation_id = data.get('conversation_id')
+    classification = data.get('classification')
+    lead_score_delta = data.get('lead_score_delta', 0)
+    suggested_status = data.get('suggested_status')
+    summary = data.get('summary')
     
+    # Optional fields for AI Log
+    action = data.get('action')
+    provider = data.get('provider')
+    model_name = data.get('model')
+    prompt = data.get('prompt')
+    input_data = data.get('input')
+    output_data = data.get('output')
+    error = data.get('error')
+    tokens_used = data.get('tokens_used')
+    duration_ms = data.get('duration_ms')
+
     if not tenant_id or not lead_id:
         return jsonify({'success': False, 'error': 'tenant_id and lead_id are required'}), 400
 
@@ -488,8 +626,48 @@ def prospecting_inbound_result():
     if not lead:
         return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
-    if new_status:
-        lead.prospecting_status = new_status
+    # 1. Update status
+    if suggested_status:
+        lead.prospecting_status = suggested_status
+    if lead_score_delta:
+        try:
+            lead.lead_score = int(lead.lead_score or 0) + int(lead_score_delta)
+        except ValueError:
+            pass
+
+    # 2. Update Memory
+    if conversation_id and summary:
+        memory = CrmConversationMemory.query.filter_by(conversation_id=conversation_id).first()
+        if not memory:
+            memory = CrmConversationMemory(
+                tenant_id=tenant_id,
+                lead_id=lead.id,
+                conversation_id=conversation_id
+            )
+            db.session.add(memory)
+        memory.summary = summary
+        memory.last_intention = data.get('last_intention')
+        memory.last_objection = data.get('last_objection')
+        memory.interest_level = data.get('interest_level')
+        memory.next_best_action = data.get('next_best_action')
+
+    # 3. Save AI Log
+    ai_log = CrmAiLog(
+        tenant_id=tenant_id,
+        lead_id=lead.id,
+        conversation_id=conversation_id,
+        action=action,
+        provider=provider,
+        model_name=model_name,
+        prompt=prompt,
+        input_data=input_data,
+        output_data=output_data,
+        classification=classification,
+        error_message=error,
+        tokens_used=tokens_used,
+        duration_ms=duration_ms
+    )
+    db.session.add(ai_log)
     
     db.session.commit()
     return jsonify({'success': True})

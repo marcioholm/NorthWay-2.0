@@ -294,6 +294,8 @@ class Lead(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(50))
+    whatsapp = db.Column(db.String(50), nullable=True)
+    mobile_phone = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(120))
     source = db.Column(db.String(50))
     
@@ -1558,3 +1560,104 @@ class ProspectingIntegration(db.Model):
     company = db.relationship('Company', backref='prospecting_integrations')
 
     __table_args__ = (db.UniqueConstraint('company_id', 'provider', name='unique_company_prospecting_integration_provider'),)
+
+class CrmChannelIntegration(db.Model):
+    __tablename__ = 'crm_channel_integrations'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    provider = db.Column(db.String(50), nullable=False)
+    instance_name = db.Column(db.String(100), nullable=False)
+    display_name = db.Column(db.String(255), nullable=True)
+    api_url = db.Column(db.String(255), nullable=True)
+    api_key = db.Column(db.String(255), nullable=True)
+    active = db.Column(db.Boolean, default=True)
+    metadata_json = db.Column(db.JSON, default={})
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='crm_channel_integrations')
+
+    __table_args__ = (
+        db.UniqueConstraint('provider', 'instance_name', name='uq_provider_instance'),
+        db.Index('idx_provider_instance', 'provider', 'instance_name')
+    )
+
+class CrmConversation(db.Model):
+    __tablename__ = 'crm_conversations'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True, index=True)
+    channel = db.Column(db.String(50), nullable=False)
+    provider = db.Column(db.String(50), nullable=True)
+    instance_name = db.Column(db.String(100), nullable=True)
+    remote_jid = db.Column(db.String(255), nullable=True)
+    phone = db.Column(db.String(50), nullable=True)
+    status = db.Column(db.String(50), default='open')
+    last_message_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='crm_conversations')
+    lead = db.relationship('Lead', backref='crm_conversations')
+
+class CrmConversationMessage(db.Model):
+    __tablename__ = 'crm_conversation_messages'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    conversation_id = db.Column(db.String(36), db.ForeignKey('crm_conversations.id'), nullable=True, index=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True, index=True)
+    direction = db.Column(db.String(50), nullable=False) # inbound/outbound
+    channel = db.Column(db.String(50), nullable=False)
+    provider = db.Column(db.String(50), nullable=True)
+    instance_name = db.Column(db.String(100), nullable=True)
+    remote_jid = db.Column(db.String(255), nullable=True)
+    phone = db.Column(db.String(50), nullable=True)
+    message_id = db.Column(db.String(255), nullable=True, index=True)
+    message_type = db.Column(db.String(50), default='text')
+    text_content = db.Column(db.Text, nullable=True)
+    raw_payload = db.Column(db.JSON, default={})
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    conversation = db.relationship('CrmConversation', backref='messages')
+    company = db.relationship('Company', backref='crm_conversation_messages')
+    lead = db.relationship('Lead', backref='crm_conversation_messages')
+
+class CrmConversationMemory(db.Model):
+    __tablename__ = 'crm_conversation_memory'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=False, index=True)
+    conversation_id = db.Column(db.String(36), db.ForeignKey('crm_conversations.id'), nullable=True)
+    summary = db.Column(db.Text, nullable=True)
+    last_intention = db.Column(db.String(255), nullable=True)
+    last_objection = db.Column(db.String(255), nullable=True)
+    interest_level = db.Column(db.String(50), nullable=True)
+    next_best_action = db.Column(db.String(255), nullable=True)
+    metadata_json = db.Column(db.JSON, default={})
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    conversation = db.relationship('CrmConversation', backref='memory')
+    company = db.relationship('Company', backref='crm_conversation_memory')
+    lead = db.relationship('Lead', backref='crm_conversation_memory')
+
+class CrmAiLog(db.Model):
+    __tablename__ = 'crm_ai_logs'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True, index=True)
+    conversation_id = db.Column(db.String(36), db.ForeignKey('crm_conversations.id'), nullable=True)
+    action = db.Column(db.String(100), nullable=True)
+    provider = db.Column(db.String(50), nullable=True)
+    model_name = db.Column(db.String(100), nullable=True)
+    prompt = db.Column(db.JSON, nullable=True)
+    input_data = db.Column(db.JSON, nullable=True)
+    output_data = db.Column(db.JSON, nullable=True)
+    classification = db.Column(db.String(100), nullable=True)
+    error_message = db.Column(db.Text, nullable=True)
+    tokens_used = db.Column(db.Integer, nullable=True)
+    duration_ms = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    company = db.relationship('Company', backref='crm_ai_logs')
+    lead = db.relationship('Lead', backref='crm_ai_logs')
