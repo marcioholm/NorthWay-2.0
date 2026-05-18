@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from flask import Blueprint, request, jsonify
 from functools import wraps
@@ -452,148 +453,168 @@ def save_automated_send():
 @internal_api_bp.route('/prospecting/inbound-context', methods=['POST'])
 @require_internal_auth
 def get_prospecting_inbound_context():
-    data = request.json
-    tenant_id = data.get('tenant_id')
-    provider = data.get('provider')
-    instance_name = data.get('instance')
-    phone = data.get('phone')
-    phone_variants_list = data.get('phone_variants', [])
-    message_id = data.get('message_id')
-    inbound_data = data.get('inbound', {})
+    start_time = time.time()
+    logger.info("[INBOUND] started inbound-context")
     
-    if not phone:
-        return jsonify({'success': False, 'error': 'phone is required'}), 400
+    try:
+        data = request.json
+        tenant_id = data.get('tenant_id')
+        provider = data.get('provider')
+        instance_name = data.get('instance')
+        phone = data.get('phone')
+        phone_variants_list = data.get('phone_variants', [])
+        message_id = data.get('message_id')
+        inbound_data = data.get('inbound', {})
+        
+        if not phone:
+            return jsonify({'success': False, 'error': 'phone is required'}), 400
 
-    # Idempotency check
-    if message_id:
-        existing_msg = CrmConversationMessage.query.filter_by(message_id=message_id).first()
-        if existing_msg:
-            return jsonify({'ignored': True, 'reason': 'already processed'}), 200
+        # Idempotency check
+        if message_id:
+            existing_msg = CrmConversationMessage.query.filter_by(message_id=message_id).first()
+            if existing_msg:
+                logger.info(f"[INBOUND] checked processed message in {time.time() - start_time:.3f}s: ignored")
+                return jsonify({'ignored': True, 'reason': 'already processed'}), 200
 
-    # 1. Resolve tenant_id
-    integration_data = {}
-    if not tenant_id:
-        if not provider or not instance_name:
-            return jsonify({'success': False, 'error': 'tenant_id OR (provider and instance) are required'}), 400
+        # 1. Resolve tenant_id
+        integration_data = {}
+        if not tenant_id:
+            if not provider or not instance_name:
+                return jsonify({'success': False, 'error': 'tenant_id OR (provider and instance) are required'}), 400
+                
+            integration = CrmChannelIntegration.query.filter_by(
+                provider=provider,
+                instance_name=instance_name,
+                active=True
+            ).first()
             
-        integration = CrmChannelIntegration.query.filter_by(
-            provider=provider,
-            instance_name=instance_name,
-            active=True
+            if not integration:
+                return jsonify({'success': False, 'error': 'No active integration found for this provider and instance'}), 404
+                
+            tenant_id = integration.tenant_id
+            integration_data = {
+                'provider': integration.provider,
+                'instance_name': integration.instance_name
+            }
+        logger.info(f"[INBOUND] resolved tenant {tenant_id} in {time.time() - start_time:.3f}s")
+
+        # 2. Find lead using phone variations
+        search_phones = phone_variants_list if phone_variants_list else phone_variants(phone)
+        if phone not in search_phones:
+            search_phones.append(phone)
+            
+        lead = Lead.query.filter(
+            Lead.company_id == tenant_id,
+            db.or_(
+                Lead.phone.in_(search_phones),
+                Lead.whatsapp.in_(search_phones),
+                Lead.mobile_phone.in_(search_phones)
+            )
         ).first()
-        
-        if not integration:
-            return jsonify({'success': False, 'error': 'No active integration found for this provider and instance'}), 404
-            
-        tenant_id = integration.tenant_id
-        integration_data = {
-            'provider': integration.provider,
-            'instance_name': integration.instance_name
-        }
 
-    # 2. Find lead using phone variations
-    search_phones = phone_variants_list if phone_variants_list else phone_variants(phone)
-    if phone not in search_phones:
-        search_phones.append(phone)
-        
-    lead = Lead.query.filter(
-        Lead.company_id == tenant_id,
-        db.or_(
-            Lead.phone.in_(search_phones),
-            Lead.whatsapp.in_(search_phones),
-            Lead.mobile_phone.in_(search_phones)
-        )
-    ).first()
+        if not lead:
+            logger.info(f"[INBOUND] lead not found in {time.time() - start_time:.3f}s")
+            return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
-    if not lead:
-        return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
+        logger.info(f"[INBOUND] found lead {lead.id} in {time.time() - start_time:.3f}s")
 
-    # 3. Handle Conversation
-    remote_jid = inbound_data.get('remote_jid') or f"{phone}@s.whatsapp.net"
-    conversation = CrmConversation.query.filter_by(
-        tenant_id=tenant_id,
-        lead_id=lead.id,
-        status='open'
-    ).first()
-    
-    if not conversation:
-        conversation = CrmConversation(
+        # 3. Handle Conversation
+        remote_jid = inbound_data.get('remote_jid') or f"{phone}@s.whatsapp.net"
+        conversation = CrmConversation.query.filter_by(
             tenant_id=tenant_id,
             lead_id=lead.id,
+            status='open'
+        ).first()
+        
+        if not conversation:
+            conversation = CrmConversation(
+                tenant_id=tenant_id,
+                lead_id=lead.id,
+                channel='whatsapp',
+                provider=provider,
+                instance_name=instance_name,
+                remote_jid=remote_jid,
+                phone=phone,
+                status='open',
+                last_message_at=datetime.utcnow()
+            )
+            db.session.add(conversation)
+            db.session.commit()
+        else:
+            conversation.last_message_at = datetime.utcnow()
+            db.session.commit()
+        logger.info(f"[INBOUND] upserted conversation {conversation.id} in {time.time() - start_time:.3f}s")
+
+        # 4. Save Inbound Message
+        inbound_msg = CrmConversationMessage(
+            conversation_id=conversation.id,
+            tenant_id=tenant_id,
+            lead_id=lead.id,
+            direction='inbound',
             channel='whatsapp',
             provider=provider,
             instance_name=instance_name,
             remote_jid=remote_jid,
             phone=phone,
-            status='open',
-            last_message_at=datetime.utcnow()
+            message_id=message_id,
+            message_type='text',
+            text_content=inbound_data.get('text', ''),
+            raw_payload=inbound_data
         )
-        db.session.add(conversation)
+        db.session.add(inbound_msg)
         db.session.commit()
-    else:
-        conversation.last_message_at = datetime.utcnow()
-        db.session.commit()
+        logger.info(f"[INBOUND] inserted message in {time.time() - start_time:.3f}s")
 
-    # 4. Save Inbound Message
-    inbound_msg = CrmConversationMessage(
-        conversation_id=conversation.id,
-        tenant_id=tenant_id,
-        lead_id=lead.id,
-        direction='inbound',
-        channel='whatsapp',
-        provider=provider,
-        instance_name=instance_name,
-        remote_jid=remote_jid,
-        phone=phone,
-        message_id=message_id,
-        message_type='text',
-        text_content=inbound_data.get('text', ''),
-        raw_payload=inbound_data
-    )
-    db.session.add(inbound_msg)
-    db.session.commit()
+        # 5. Fetch History and Memory
+        history = []
+        messages = CrmConversationMessage.query.filter_by(conversation_id=conversation.id).order_by(CrmConversationMessage.created_at.asc()).limit(50).all()
+        for m in messages:
+            history.append({
+                'direction': m.direction,
+                'text': m.text_content,
+                'timestamp': m.created_at.isoformat() if m.created_at else None
+            })
+        logger.info(f"[INBOUND] loaded history ({len(history)} items) in {time.time() - start_time:.3f}s")
+            
+        memory = CrmConversationMemory.query.filter_by(conversation_id=conversation.id).first()
+        memory_data = {}
+        if memory:
+            memory_data = {
+                'summary': memory.summary,
+                'last_intention': memory.last_intention,
+                'last_objection': memory.last_objection,
+                'interest_level': memory.interest_level,
+                'next_best_action': memory.next_best_action
+            }
+        logger.info(f"[INBOUND] loaded memory in {time.time() - start_time:.3f}s")
 
-    # 5. Fetch History and Memory
-    history = []
-    messages = CrmConversationMessage.query.filter_by(conversation_id=conversation.id).order_by(CrmConversationMessage.created_at.asc()).limit(50).all()
-    for m in messages:
-        history.append({
-            'direction': m.direction,
-            'text': m.text_content,
-            'timestamp': m.created_at.isoformat() if m.created_at else None
-        })
-        
-    memory = CrmConversationMemory.query.filter_by(conversation_id=conversation.id).first()
-    memory_data = {}
-    if memory:
-        memory_data = {
-            'summary': memory.summary,
-            'last_intention': memory.last_intention,
-            'last_objection': memory.last_objection,
-            'interest_level': memory.interest_level,
-            'next_best_action': memory.next_best_action
+        # 6. Return full context
+        response_data = {
+            'success': True,
+            'tenant_id': tenant_id,
+            'lead': {
+                'id': lead.id,
+                'name': lead.name,
+                'prospecting_status': lead.prospecting_status,
+                'last_angle': lead.last_angle,
+                'phone': lead.phone
+            },
+            'conversation': {
+                'id': conversation.id,
+                'status': conversation.status
+            },
+            'history': history,
+            'memory': memory_data,
+            'inbound': inbound_data,
+            'integration': integration_data
         }
-
-    # 6. Return full context
-    return jsonify({
-        'success': True,
-        'tenant_id': tenant_id,
-        'lead': {
-            'id': lead.id,
-            'name': lead.name,
-            'prospecting_status': lead.prospecting_status,
-            'last_angle': lead.last_angle,
-            'phone': lead.phone
-        },
-        'conversation': {
-            'id': conversation.id,
-            'status': conversation.status
-        },
-        'history': history,
-        'memory': memory_data,
-        'inbound': inbound_data,
-        'integration': integration_data
-    })
+        
+        logger.info(f"[INBOUND] returned response in {time.time() - start_time:.3f}s")
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"[INBOUND] error in inbound-context after {time.time() - start_time:.3f}s: {str(e)}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @internal_api_bp.route('/prospecting/inbound-result', methods=['POST'])
