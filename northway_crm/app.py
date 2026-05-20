@@ -308,28 +308,6 @@ def create_app():
         @app.context_processor
         def inject_globals():
             now_br = datetime.utcnow() - timedelta(hours=3)
-            
-            try:
-                if current_user and current_user.is_authenticated:
-                    # Cache the pending count in session to avoid DB hit every request
-                    from flask import session
-                    cache_key = f'pending_tasks_{current_user.id}'
-                    
-                    if cache_key not in session:
-                        from models import Task
-                        try:
-                            pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
-                            session[cache_key] = pending_count
-                        except:
-                            pending_count = 0
-                            session[cache_key] = 0
-                    else:
-                        pending_count = session.get(cache_key, 0)
-                    
-                    return dict(pending_tasks_count=pending_count, now=now_br, dict=dict)
-            except:
-                pass
-
             return dict(pending_tasks_count=0, now=now_br, dict=dict)
 
         # --- UNIFIED RESILIENT MIDDLEWARE ---
