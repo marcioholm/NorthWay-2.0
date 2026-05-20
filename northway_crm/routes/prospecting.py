@@ -258,6 +258,9 @@ def manage_campaign(campaign_id):
     campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
 
     if request.method == 'GET':
+        # Contar leads da campanha
+        lead_count = Lead.query.filter_by(prospecting_campaign_id=campaign.id).count()
+        
         return api_response(data={
             'id': campaign.id,
             'name': campaign.name,
@@ -274,11 +277,7 @@ def manage_campaign(campaign_id):
             'status': campaign.status,
             'is_active': campaign.is_active,
             'stats': {
-                'total_leads': campaign.total_leads or 0,
-                'total_queued': campaign.total_queued or 0,
-                'total_sent': campaign.total_sent or 0,
-                'total_delivered': campaign.total_delivered or 0,
-                'total_failed': campaign.total_failed or 0
+                'total_leads': lead_count
             }
         })
 
@@ -334,6 +333,10 @@ def campaign_details(campaign_id):
             'created_at': msg.created_at.isoformat() if msg.created_at else None
         })
     
+    # Contar status das mensagens
+    sent_count = ProspectingMessage.query.filter_by(campaign_id=campaign_id, status='enviada').count()
+    error_count = ProspectingMessage.query.filter_by(campaign_id=campaign_id, status='erro').count()
+    
     return api_response(data={
         'campaign': {
             'id': campaign.id,
@@ -341,10 +344,10 @@ def campaign_details(campaign_id):
             'status': campaign.status,
             'stats': {
                 'total_leads': len(leads),
-                'total_queued': campaign.total_queued or 0,
-                'total_sent': campaign.total_sent or 0,
-                'total_delivered': campaign.total_delivered or 0,
-                'total_failed': campaign.total_failed or 0,
+                'total_queued': 0,
+                'total_sent': sent_count,
+                'total_delivered': 0,
+                'total_failed': error_count,
                 'pending_approval': len(pending_messages)
             }
         },

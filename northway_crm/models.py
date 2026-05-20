@@ -1464,14 +1464,6 @@ class ProspectingCampaign(db.Model):
     followup_interval_days = db.Column(db.Integer, default=3)
     status = db.Column(db.String(20), default='rascunho') # rascunho, ativa, pausada, concluida
     is_active = db.Column(db.Boolean, default=True)
-    # Tracking de envio
-    total_leads = db.Column(db.Integer, default=0)
-    total_queued = db.Column(db.Integer, default=0)
-    total_sent = db.Column(db.Integer, default=0)
-    total_delivered = db.Column(db.Integer, default=0)
-    total_failed = db.Column(db.Integer, default=0)
-    last_sync_at = db.Column(db.DateTime, nullable=True)
-    n8n_workflow_id = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
     pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True)
