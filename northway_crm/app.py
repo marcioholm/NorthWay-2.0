@@ -49,6 +49,15 @@ def create_app():
             response.headers['X-Content-Type-Options'] = 'nosniff'
             response.headers['X-XSS-Protection'] = '1; mode=block'
             response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+            
+            # Cache optimization for static assets and API
+            if request.endpoint and (request.endpoint.startswith('static') or request.path.startswith('/api')):
+                response.headers['Cache-Control'] = 'public, max-age=3600'
+            elif request.endpoint and request.endpoint not in ['auth.login', 'auth.register']:
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+            
             # Content Security Policy (Base safe policy)
             csp = (
                 "default-src 'self' https:; "
@@ -275,6 +284,13 @@ def create_app():
         login_manager = LoginManager()
         login_manager.login_view = 'auth.login'
         login_manager.init_app(app)
+        
+        # Optimized Session Configuration
+        app.config['SESSION_COOKIE_HTTPONLY'] = True
+        app.config['SESSION_COOKIE_SECURE'] = os.environ.get('VERCEL', False)  # Only secure on Vercel
+        app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+        app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+        app.config['SESSION_COOKIE_NAME'] = 'northway_session'
 
         @login_manager.user_loader
         def load_user(user_id):
@@ -291,20 +307,28 @@ def create_app():
 
         @app.context_processor
         def inject_globals():
-            # Brasília Time (UTC-3)
             now_br = datetime.utcnow() - timedelta(hours=3)
             
-            # FAST FAIL: If DB isn't ready or schema is updating, don't crash
             try:
                 if current_user and current_user.is_authenticated:
-                     from models import Task
-                     try:
-                         pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
-                         return dict(pending_tasks_count=pending_count, now=now_br, dict=dict)
-                     except:
-                         return dict(pending_tasks_count=0, now=now_br, dict=dict)
+                    # Cache the pending count in session to avoid DB hit every request
+                    from flask import session
+                    cache_key = f'pending_tasks_{current_user.id}'
+                    
+                    if cache_key not in session:
+                        from models import Task
+                        try:
+                            pending_count = Task.query.filter_by(assigned_to_id=current_user.id, status='pendente').count()
+                            session[cache_key] = pending_count
+                        except:
+                            pending_count = 0
+                            session[cache_key] = 0
+                    else:
+                        pending_count = session.get(cache_key, 0)
+                    
+                    return dict(pending_tasks_count=pending_count, now=now_br, dict=dict)
             except:
-                 pass
+                pass
 
             return dict(pending_tasks_count=0, now=now_br, dict=dict)
 

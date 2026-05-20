@@ -1,10 +1,31 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, abort
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, abort, session
 from flask_login import login_required, current_user
 from models import db, Lead, Client, Task, Interaction, User, Integration, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
 from datetime import datetime, date, timedelta
 from utils import update_client_health, api_response
 
 dashboard_bp = Blueprint('dashboard', __name__)
+
+# Cache timeout in seconds
+DASHBOARD_CACHE_TTL = 60
+
+def get_cached_data(key, func, ttl=DASHBOARD_CACHE_TTL):
+    """Simple in-memory cache using session"""
+    cache_key = f"cache_{key}_{current_user.id}"
+    if cache_key in session:
+        cached = session.get(cache_key)
+        if cached and cached.get('expires', 0) > datetime.now().timestamp():
+            return cached.get('data')
+    # Compute and cache
+    data = func()
+    session[cache_key] = {'data': data, 'expires': datetime.now().timestamp() + ttl}
+    return data
+
+def clear_dashboard_cache():
+    """Clear dashboard cache for current user"""
+    keys_to_remove = [k for k in session.keys() if k.startswith('cache_') and str(current_user.id) in k]
+    for key in keys_to_remove:
+        session.pop(key, None)
 
 @dashboard_bp.route('/')
 def index():
@@ -28,16 +49,26 @@ def home():
         
     company_id = current_user.company_id
     user_id = current_user.id
+    
+    # Use cache to avoid repeated DB queries
+    cache_key = f"home_data_{company_id}_{user_id}"
+    cached = session.get(cache_key)
+    now = datetime.now()
+    
+    # Use cached data if less than 30 seconds old
+    if cached and cached.get('ts') and (now.timestamp() - cached.get('ts', 0)) < 30:
+        return render_template('home.html', **cached.get('data', {}), _cache_hit=True)
 
-    # 1. Summary stats
-    lead_count = Lead.query.filter(Lead.company_id == company_id).count()
-    client_count = Client.query.filter(Client.company_id == company_id).count()
-    
-    recent_leads = Lead.query.filter(Lead.company_id == company_id).order_by(Lead.created_at.desc()).limit(5).all()
-    
-    # 2. Daily items (Tasks and Attention Leads)
-    today_tasks = get_today_tasks(company_id, user_id)
-    attention_leads = get_attention_leads(company_id, user_id)
+    try:
+        # 1. Summary stats
+        lead_count = Lead.query.filter(Lead.company_id == company_id).count()
+        client_count = Client.query.filter(Client.company_id == company_id).count()
+        
+        recent_leads = Lead.query.filter(Lead.company_id == company_id).order_by(Lead.created_at.desc()).limit(5).all()
+        
+        # 2. Daily items (Tasks and Attention Leads)
+        today_tasks = get_today_tasks(company_id, user_id)
+        attention_leads = get_attention_leads(company_id, user_id)
     
     # 3. Today Stats
     # 3. Today Stats
@@ -75,16 +106,39 @@ def home():
     now = datetime.now()
     overdue_count = len([t for t in today_tasks if t.due_date and t.due_date < now])
 
-    return render_template('home.html', 
-                           lead_count=lead_count, 
-                           client_count=client_count,
-                           recent_leads=recent_leads,
-                           today_tasks=today_tasks,
-                           overdue_count=overdue_count, # Passed explicitly
-                           attention_leads=attention_leads,
-                           today_stats=today_stats,
-                           onboarding=onboarding,
-                           now=now)
+    render_data = {
+        'lead_count': lead_count,
+        'client_count': client_count,
+        'recent_leads': recent_leads,
+        'today_tasks': today_tasks,
+        'overdue_count': overdue_count,
+        'attention_leads': attention_leads,
+        'today_stats': today_stats,
+        'onboarding': onboarding,
+        'now': now
+    }
+    
+    # Cache the data for 30 seconds
+    session[cache_key] = {
+        'data': render_data,
+        'ts': now.timestamp()
+    }
+    
+    return render_template('home.html', **render_data)
+    
+    except Exception as e:
+        print(f"Error in home route: {e}")
+        # Return basic data if cache fails
+        return render_template('home.html',
+                               lead_count=0,
+                               client_count=0,
+                               recent_leads=[],
+                               today_tasks=[],
+                               overdue_count=0,
+                               attention_leads=[],
+                               today_stats={'leads_new': 0, 'tasks_done': 0},
+                               onboarding=None,
+                               now=datetime.now())
 
 @dashboard_bp.route('/dashboard')
 @login_required
