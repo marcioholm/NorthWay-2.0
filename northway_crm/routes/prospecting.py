@@ -286,10 +286,12 @@ def manage_campaign(campaign_id):
 @login_required
 def campaign_details(campaign_id):
     """Retorna os detalhes da campanha com contatos e mensagens"""
-    if not current_user.company.has_feature('prospecting'):
+    if not current_user.company_id:
         return api_response(success=False, error='Acesso negado', status=403)
     
-    campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
+    campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first()
+    if not campaign:
+        return api_response(success=False, error='Campanha não encontrada', status=404)
     
     # Buscar leads da campanha
     leads = Lead.query.filter_by(prospecting_campaign_id=campaign_id).all()
