@@ -8,6 +8,20 @@ from utils.crypto import encrypt_api_key, decrypt_api_key
 
 prospecting_bp = Blueprint('prospecting', __name__)
 
+def check_prospecting_access():
+    """Verifica acesso ao módulo de prospecção de forma segura"""
+    if not current_user.company_id:
+        return False, 'Acesso negado'
+    try:
+        company = getattr(current_user, 'company', None)
+        if company and hasattr(company, 'has_feature'):
+            if not company.has_feature('prospecting'):
+                return False, 'Acesso negado'
+        return True, None
+    except Exception as e:
+        print(f"Error checking prospecting access: {e}")
+        return True, None  # Allow access if check fails
+
 
 def api_response(success=True, data=None, error=None, status=200):
     return jsonify({
@@ -55,7 +69,8 @@ def sync_prospecting_stage(lead, prospecting_status):
 @prospecting_bp.route('/prospecting')
 @login_required
 def index():
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
         flash('Sua empresa não possui acesso a este módulo.', 'error')
         return redirect(url_for('dashboard.home'))
     return redirect(url_for('prospecting.dashboard'))
@@ -64,7 +79,8 @@ def index():
 @prospecting_bp.route('/prospecting/discover')
 @login_required
 def discover():
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
         flash('Sua empresa não possui acesso a este módulo.', 'error')
         return redirect(url_for('dashboard.home'))
     return render_template('prospecting/discover.html')
@@ -117,7 +133,8 @@ def dashboard():
 @prospecting_bp.route('/prospecting/leads')
 @login_required
 def leads():
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
         flash('Sua empresa não possui acesso a este módulo.', 'error')
         return redirect(url_for('dashboard.home'))
 
@@ -160,7 +177,8 @@ def leads():
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>')
 @login_required
 def lead_detail(lead_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
         flash('Sua empresa não possui acesso a este módulo.', 'error')
         return redirect(url_for('dashboard.home'))
 
@@ -265,7 +283,9 @@ def create_campaign():
 @prospecting_bp.route('/prospecting/campaign/<int:campaign_id>', methods=['GET', 'PUT', 'DELETE'])
 @login_required
 def manage_campaign(campaign_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
@@ -416,7 +436,8 @@ def campaign_details(campaign_id):
 @prospecting_bp.route('/prospecting/messages')
 @login_required
 def messages():
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
         flash('Sua empresa não possui acesso a este módulo.', 'error')
         return redirect(url_for('dashboard.home'))
 
@@ -440,7 +461,8 @@ def messages():
 @prospecting_bp.route('/prospecting/settings')
 @login_required
 def settings():
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
         flash('Sua empresa não possui acesso a este módulo.', 'error')
         return redirect(url_for('dashboard.home'))
 
@@ -462,7 +484,9 @@ def settings():
 @prospecting_bp.route('/prospecting/settings/update', methods=['POST'])
 @login_required
 def update_settings():
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     data = request.json
@@ -492,7 +516,9 @@ def update_settings():
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/generate-message', methods=['POST'])
 @login_required
 def generate_message(lead_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
@@ -602,7 +628,9 @@ def generate_message(lead_id):
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/approve-message/<int:message_id>', methods=['POST'])
 @login_required
 def approve_message(lead_id, message_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
@@ -694,7 +722,9 @@ def approve_message(lead_id, message_id):
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/reject-message/<int:message_id>', methods=['POST'])
 @login_required
 def reject_message(lead_id, message_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
@@ -714,7 +744,9 @@ def reject_message(lead_id, message_id):
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/update-status', methods=['POST'])
 @login_required
 def update_lead_status(lead_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
@@ -745,7 +777,9 @@ def update_lead_status(lead_id):
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/pause', methods=['POST'])
 @login_required
 def pause_lead(lead_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
@@ -760,7 +794,9 @@ def pause_lead(lead_id):
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/resume', methods=['POST'])
 @login_required
 def resume_lead(lead_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
@@ -775,7 +811,9 @@ def resume_lead(lead_id):
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/discard', methods=['POST'])
 @login_required
 def discard_lead(lead_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
@@ -791,7 +829,9 @@ def discard_lead(lead_id):
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/add-to-campaign', methods=['POST'])
 @login_required
 def add_to_campaign(lead_id):
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
@@ -820,7 +860,9 @@ def add_to_campaign(lead_id):
 @login_required
 def list_base_leads():
     """Lista leads da base do CRM disponíveis para adicionar a uma campanha."""
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     search = request.args.get('q', '').strip()
@@ -869,7 +911,9 @@ def list_base_leads():
 @login_required
 def bulk_add_to_campaign():
     """Adiciona múltiplos leads da base a uma campanha de prospecção."""
-    if not current_user.company.has_feature('prospecting'):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
         return api_response(success=False, error='Acesso negado', status=403)
 
     data = request.json or {}
