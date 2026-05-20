@@ -198,63 +198,68 @@ def campaigns():
 @prospecting_bp.route('/prospecting/campaign/create', methods=['POST'])
 @login_required
 def create_campaign():
-    if not current_user.company.has_feature('prospecting'):
+    if not current_user.company_id:
         return api_response(success=False, error='Acesso negado', status=403)
 
     data = request.json
     company_id = current_user.company_id
 
-    from models import Pipeline, PipelineStage
-    
-    # Criar funil correspondente para a campanha
-    new_pipeline = Pipeline(
-        name=f"Prospecção: {data.get('name')}",
-        company_id=company_id
-    )
-    db.session.add(new_pipeline)
-    db.session.flush() # Obter o id do pipeline
-
-    # Criar etapas padrão do funil de prospecção
-    stages = [
-        "Lista Fria",
-        "Aguardando Aprovação",
-        "Contatado",
-        "Respondeu",
-        "Reunião Agendada",
-        "Descartado"
-    ]
-    for i, s_name in enumerate(stages):
-        stage = PipelineStage(
-            name=s_name,
-            pipeline_id=new_pipeline.id,
-            company_id=company_id,
-            order=i
+    try:
+        from models import Pipeline, PipelineStage
+        
+        # Criar funil correspondente para a campanha
+        new_pipeline = Pipeline(
+            name=f"Prospecção: {data.get('name')}",
+            company_id=company_id
         )
-        db.session.add(stage)
-    db.session.flush()
+        db.session.add(new_pipeline)
+        db.session.flush() # Obter o id do pipeline
 
-    campaign = ProspectingCampaign(
-        company_id=company_id,
-        name=data.get('name'),
-        description=data.get('description'),
-        target_segment=data.get('target_segment'),
-        objective=data.get('objective'),
-        tone_of_voice=data.get('tone_of_voice'),
-        offer=data.get('offer'),
-        main_angle=data.get('main_angle'),
-        default_cta=data.get('default_cta'),
-        restrictions=data.get('restrictions'),
-        max_attempts=data.get('max_attempts', 3),
-        followup_interval_days=data.get('followup_interval_days', 3),
-        status='rascunho',
-        is_active=True,
-        pipeline_id=new_pipeline.id
-    )
+        # Criar etapas padrão do funil de prospecção
+        stages = [
+            "Lista Fria",
+            "Aguardando Aprovação",
+            "Contatado",
+            "Respondeu",
+            "Reunião Agendada",
+            "Descartado"
+        ]
+        for i, s_name in enumerate(stages):
+            stage = PipelineStage(
+                name=s_name,
+                pipeline_id=new_pipeline.id,
+                company_id=company_id,
+                order=i
+            )
+            db.session.add(stage)
+        db.session.flush()
 
-    db.session.add(campaign)
-    db.session.commit()
+        campaign = ProspectingCampaign(
+            company_id=company_id,
+            name=data.get('name'),
+            description=data.get('description'),
+            target_segment=data.get('target_segment'),
+            objective=data.get('objective'),
+            tone_of_voice=data.get('tone_of_voice'),
+            offer=data.get('offer'),
+            main_angle=data.get('main_angle'),
+            default_cta=data.get('default_cta'),
+            restrictions=data.get('restrictions'),
+            max_attempts=data.get('max_attempts', 3),
+            followup_interval_days=data.get('followup_interval_days', 3),
+            status='rascunho',
+            is_active=True,
+            pipeline_id=new_pipeline.id
+        )
 
-    return api_response(data={'id': campaign.id, 'name': campaign.name})
+        db.session.add(campaign)
+        db.session.commit()
+
+        return api_response(data={'id': campaign.id, 'name': campaign.name})
+    except Exception as e:
+        print(f"Error creating campaign: {e}")
+        db.session.rollback()
+        return api_response(success=False, error='Erro ao criar campanha', status=500)
 
 
 @prospecting_bp.route('/prospecting/campaign/<int:campaign_id>', methods=['GET', 'PUT', 'DELETE'])
