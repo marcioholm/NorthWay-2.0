@@ -286,7 +286,6 @@ def manage_campaign(campaign_id):
     allowed, error = check_prospecting_access()
     if not allowed:
         return api_response(success=False, error=error, status=403)
-        return api_response(success=False, error='Acesso negado', status=403)
 
     campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
 
@@ -313,6 +312,48 @@ def manage_campaign(campaign_id):
                 'total_leads': lead_count
             }
         })
+
+    if request.method == 'PUT':
+        data = request.json
+        old_name = campaign.name
+        campaign.name = data.get('name', campaign.name)
+        campaign.description = data.get('description', campaign.description)
+        campaign.target_segment = data.get('target_segment', campaign.target_segment)
+        campaign.objective = data.get('objective', campaign.objective)
+        campaign.tone_of_voice = data.get('tone_of_voice', campaign.tone_of_voice)
+        campaign.offer = data.get('offer', campaign.offer)
+        campaign.main_angle = data.get('main_angle', campaign.main_angle)
+        campaign.default_cta = data.get('default_cta', campaign.default_cta)
+        campaign.restrictions = data.get('restrictions', campaign.restrictions)
+        campaign.max_attempts = data.get('max_attempts', campaign.max_attempts)
+        campaign.followup_interval_days = data.get('followup_interval_days', campaign.followup_interval_days)
+        campaign.status = data.get('status', campaign.status)
+        campaign.is_active = data.get('is_active', campaign.is_active)
+
+        # Atualizar nome do pipeline correspondente se o nome da campanha mudou
+        if campaign.name != old_name and campaign.pipeline_id:
+            from models import Pipeline
+            p = Pipeline.query.get(campaign.pipeline_id)
+            if p:
+                p.name = f"Prospecção: {campaign.name}"
+
+        db.session.commit()
+        return api_response(success=True)
+
+    if request.method == 'DELETE':
+        if campaign.pipeline_id:
+            from models import Pipeline, Lead
+            p = Pipeline.query.get(campaign.pipeline_id)
+            if p:
+                # Desassociar os leads desse pipeline/estágios para evitar violação de integridade referencial
+                Lead.query.filter_by(pipeline_id=p.id).update({
+                    'pipeline_id': None,
+                    'pipeline_stage_id': None
+                }, synchronize_session=False)
+                db.session.delete(p)
+        db.session.delete(campaign)
+        db.session.commit()
+        return api_response(success=True)
 
 
 @prospecting_bp.route('/prospecting/campaign/<int:campaign_id>/details')
@@ -390,47 +431,6 @@ def campaign_details(campaign_id):
         'pending_messages': pending_data
     })
 
-    if request.method == 'PUT':
-        data = request.json
-        old_name = campaign.name
-        campaign.name = data.get('name', campaign.name)
-        campaign.description = data.get('description', campaign.description)
-        campaign.target_segment = data.get('target_segment', campaign.target_segment)
-        campaign.objective = data.get('objective', campaign.objective)
-        campaign.tone_of_voice = data.get('tone_of_voice', campaign.tone_of_voice)
-        campaign.offer = data.get('offer', campaign.offer)
-        campaign.main_angle = data.get('main_angle', campaign.main_angle)
-        campaign.default_cta = data.get('default_cta', campaign.default_cta)
-        campaign.restrictions = data.get('restrictions', campaign.restrictions)
-        campaign.max_attempts = data.get('max_attempts', campaign.max_attempts)
-        campaign.followup_interval_days = data.get('followup_interval_days', campaign.followup_interval_days)
-        campaign.status = data.get('status', campaign.status)
-        campaign.is_active = data.get('is_active', campaign.is_active)
-
-        # Atualizar nome do pipeline correspondente se o nome da campanha mudou
-        if campaign.name != old_name and campaign.pipeline_id:
-            from models import Pipeline
-            p = Pipeline.query.get(campaign.pipeline_id)
-            if p:
-                p.name = f"Prospecção: {campaign.name}"
-
-        db.session.commit()
-        return api_response(success=True)
-
-    if request.method == 'DELETE':
-        if campaign.pipeline_id:
-            from models import Pipeline, Lead
-            p = Pipeline.query.get(campaign.pipeline_id)
-            if p:
-                # Desassociar os leads desse pipeline/estágios para evitar violação de integridade referencial
-                Lead.query.filter_by(pipeline_id=p.id).update({
-                    'pipeline_id': None,
-                    'pipeline_stage_id': None
-                }, synchronize_session=False)
-                db.session.delete(p)
-        db.session.delete(campaign)
-        db.session.commit()
-        return api_response(success=True)
 
 
 @prospecting_bp.route('/prospecting/messages')
