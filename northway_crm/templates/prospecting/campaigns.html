@@ -252,6 +252,39 @@
                 </label>
             </div>
         </div>
+
+        <!-- Lead List -->
+        <div class="flex-1 overflow-y-auto">
+            <div id="baseLeadsList" class="divide-y divide-gray-50">
+                <div class="flex items-center justify-center py-12 text-gray-400">
+                    <i data-lucide="loader" class="w-6 h-6 animate-spin mr-2"></i>
+                    Carregando leads...
+                </div>
+            </div>
+            <div id="baseLeadsLoadMore" class="hidden p-4 text-center">
+                <button onclick="loadMoreBaseLeads()" class="text-xs text-northway-red font-bold hover:underline">Carregar mais</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-5 border-t border-gray-100 shrink-0 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSelectAllBase()" class="text-xs text-gray-500 hover:text-northway-red font-medium transition-colors">
+                    Selecionar / Desmarcar Todos
+                </button>
+                <span id="baseLeadsSelectedCount" class="text-xs font-bold text-indigo-600"></span>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeBaseLeadsModal()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
+                    Cancelar
+                </button>
+                <button onclick="confirmBaseLeads()" id="confirmBaseLeadsBtn"
+                    class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
+                    Adicionar Selecionados
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -341,40 +374,6 @@
         </div>
     </div>
 </div>
-        </div>
-
-        <!-- Lead List -->
-        <div class="flex-1 overflow-y-auto">
-            <div id="baseLeadsList" class="divide-y divide-gray-50">
-                <div class="flex items-center justify-center py-12 text-gray-400">
-                    <i data-lucide="loader" class="w-6 h-6 animate-spin mr-2"></i>
-                    Carregando leads...
-                </div>
-            </div>
-            <div id="baseLeadsLoadMore" class="hidden p-4 text-center">
-                <button onclick="loadMoreBaseLeads()" class="text-xs text-northway-red font-bold hover:underline">Carregar mais</button>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="p-5 border-t border-gray-100 shrink-0 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleSelectAllBase()" class="text-xs text-gray-500 hover:text-northway-red font-medium transition-colors">
-                    Selecionar / Desmarcar Todos
-                </button>
-                <span id="baseLeadsSelectedCount" class="text-xs font-bold text-indigo-600"></span>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="closeBaseLeadsModal()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
-                    Cancelar
-                </button>
-                <button onclick="confirmBaseLeads()" id="confirmBaseLeadsBtn"
-                    class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
-                    Adicionar Selecionados
-                </button>
-            </div>
-        </div>
     </div>
 </div>
 
