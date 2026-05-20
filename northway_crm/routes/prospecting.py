@@ -272,8 +272,85 @@ def manage_campaign(campaign_id):
             'max_attempts': campaign.max_attempts,
             'followup_interval_days': campaign.followup_interval_days,
             'status': campaign.status,
-            'is_active': campaign.is_active
+            'is_active': campaign.is_active,
+            'stats': {
+                'total_leads': campaign.total_leads or 0,
+                'total_queued': campaign.total_queued or 0,
+                'total_sent': campaign.total_sent or 0,
+                'total_delivered': campaign.total_delivered or 0,
+                'total_failed': campaign.total_failed or 0
+            }
         })
+
+
+@prospecting_bp.route('/prospecting/campaign/<int:campaign_id>/details')
+@login_required
+def campaign_details(campaign_id):
+    """Retorna os detalhes da campanha com contatos e mensagens"""
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+    
+    campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
+    
+    # Buscar leads da campanha
+    leads = Lead.query.filter_by(prospecting_campaign_id=campaign_id).all()
+    leads_data = []
+    for lead in leads:
+        # Buscar última mensagem do lead
+        last_msg = ProspectingMessage.query.filter_by(lead_id=lead.id, campaign_id=campaign_id).order_by(ProspectingMessage.created_at.desc()).first()
+        
+        leads_data.append({
+            'id': lead.id,
+            'name': lead.name,
+            'email': lead.email,
+            'phone': lead.phone,
+            'status': lead.prospecting_status,
+            'preferred_channel': lead.preferred_channel,
+            'message': {
+                'id': last_msg.id if last_msg else None,
+                'status': last_msg.status if last_msg else None,
+                'channel': last_msg.channel if last_msg else None,
+                'content': last_msg.content[:200] + '...' if last_msg and last_msg.content and len(last_msg.content) > 200 else last_msg.content if last_msg else None,
+                'created_at': last_msg.created_at.isoformat() if last_msg and last_msg.created_at else None
+            } if last_msg else None
+        })
+    
+    # Buscar mensagens aguardando aprovação
+    pending_messages = ProspectingMessage.query.filter_by(
+        campaign_id=campaign_id, 
+        status='aguardando_aprovacao'
+    ).order_by(ProspectingMessage.created_at.desc()).all()
+    
+    pending_data = []
+    for msg in pending_messages:
+        pending_data.append({
+            'id': msg.id,
+            'lead_id': msg.lead_id,
+            'lead_name': msg.lead.name if msg.lead else 'Lead não encontrado',
+            'lead_phone': msg.lead.phone if msg.lead else None,
+            'lead_email': msg.lead.email if msg.lead else None,
+            'channel': msg.channel,
+            'content': msg.content,
+            'created_at': msg.created_at.isoformat() if msg.created_at else None
+        })
+    
+    return api_response(data={
+        'campaign': {
+            'id': campaign.id,
+            'name': campaign.name,
+            'status': campaign.status,
+            'stats': {
+                'total_leads': len(leads),
+                'total_queued': campaign.total_queued or 0,
+                'total_sent': campaign.total_sent or 0,
+                'total_delivered': campaign.total_delivered or 0,
+                'total_failed': campaign.total_failed or 0,
+                'pending_approval': len(pending_messages)
+            }
+        },
+        'leads': leads_data,
+        'pending_messages': pending_data
+    })
 
     if request.method == 'PUT':
         data = request.json
