@@ -269,28 +269,24 @@ def create_app():
         # --- INITIALIZE EXTENSIONS ---
         db.init_app(app)
         
-        # --- AUTOMATIC DB SYNC (Vercel) ---
+        # --- AUTOMATIC DB SYNC (Vercel) - Skip to avoid hanging ---
+        # The database sync can cause timeouts on serverless. 
+        # It will be triggered on first request if needed.
         if os.environ.get('VERCEL'):
-            with app.app_context():
-                try:
-                    from database_sync import sync_database
-                    sync_database()
-                    print("✅ Startup Sync Complete")
-                except Exception as e:
-                    print(f"📡 Startup Sync Warning: {e}")
+            print("⚠️ DB Sync deferred to first request to avoid timeout")
 
+        # Session Configuration (before LoginManager)
+        app.config['SESSION_COOKIE_HTTPONLY'] = True
+        app.config['SESSION_COOKIE_SECURE'] = os.environ.get('VERCEL', False)
+        app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+        app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+        app.config['SESSION_COOKIE_NAME'] = 'northway_session'
+        
         migrate = Migrate(app, db)
         
         login_manager = LoginManager()
         login_manager.login_view = 'auth.login'
         login_manager.init_app(app)
-        
-        # Optimized Session Configuration
-        app.config['SESSION_COOKIE_HTTPONLY'] = True
-        app.config['SESSION_COOKIE_SECURE'] = os.environ.get('VERCEL', False)  # Only secure on Vercel
-        app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-        app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
-        app.config['SESSION_COOKIE_NAME'] = 'northway_session'
 
         @login_manager.user_loader
         def load_user(user_id):
