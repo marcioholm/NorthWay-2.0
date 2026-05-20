@@ -490,6 +490,25 @@ def create_app():
             except Exception as e:
                 return str(e), 500
 
+        @app.route('/master/migrate-campaign-stats')
+        def migrate_campaign_stats():
+            secret = request.args.get('secret')
+            if secret != os.environ.get('MIGRATION_SECRET', 'northway_sync_2026'):
+                return "Unauthorized", 403
+            try:
+                from sqlalchemy import text
+                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_leads INTEGER DEFAULT 0"))
+                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_queued INTEGER DEFAULT 0"))
+                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_sent INTEGER DEFAULT 0"))
+                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_delivered INTEGER DEFAULT 0"))
+                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_failed INTEGER DEFAULT 0"))
+                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMP"))
+                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS n8n_workflow_id VARCHAR(100)"))
+                db.session.commit()
+                return "Migration completed: campaign stats columns added"
+            except Exception as e:
+                return str(e), 500
+
         @app.route('/sys-admin/sync-db')
         def admin_sync_db():
             secret = request.args.get('secret')
