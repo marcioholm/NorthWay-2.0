@@ -73,27 +73,32 @@ def discover():
 @prospecting_bp.route('/prospecting/dashboard')
 @login_required
 def dashboard():
-    if not current_user.company.has_feature('prospecting'):
-        flash('Sua empresa não possui acesso a este módulo.', 'error')
+    if not current_user.company_id:
         return redirect(url_for('dashboard.home'))
 
     company_id = current_user.company_id
 
-    total_leads = Lead.query.filter_by(company_id=company_id).filter(
-        Lead.prospecting_status.isnot(None)
-    ).count()
+    try:
+        total_leads = Lead.query.filter_by(company_id=company_id).filter(
+            Lead.prospecting_status.isnot(None)
+        ).count()
 
-    aguardando = Lead.query.filter_by(company_id=company_id, prospecting_status='novo').count()
-    em_execucao = Lead.query.filter_by(company_id=company_id, prospecting_status='em_execucao').count()
-    aguardando_aprovacao = Lead.query.filter_by(company_id=company_id, prospecting_status='aguardando_aprovacao').count()
-    contatados = Lead.query.filter_by(company_id=company_id, prospecting_status='contatado').count()
-    responderam = Lead.query.filter_by(company_id=company_id, prospecting_status='respondeu').count()
-    interessados = Lead.query.filter_by(company_id=company_id, prospecting_status='interessado').count()
-    reunioes = Lead.query.filter_by(company_id=company_id, prospecting_status='reuniao').count()
-    sem_resposta = Lead.query.filter_by(company_id=company_id, prospecting_status='sem_resposta').count()
-    erro_envio = Lead.query.filter_by(company_id=company_id, prospecting_status='erro').count()
+        aguardando = Lead.query.filter_by(company_id=company_id, prospecting_status='novo').count()
+        em_execucao = Lead.query.filter_by(company_id=company_id, prospecting_status='em_execucao').count()
+        aguardando_aprovacao = Lead.query.filter_by(company_id=company_id, prospecting_status='aguardando_aprovacao').count()
+        contatados = Lead.query.filter_by(company_id=company_id, prospecting_status='contatado').count()
+        responderam = Lead.query.filter_by(company_id=company_id, prospecting_status='respondeu').count()
+        interessados = Lead.query.filter_by(company_id=company_id, prospecting_status='interessado').count()
+        reunioes = Lead.query.filter_by(company_id=company_id, prospecting_status='reuniao').count()
+        sem_resposta = Lead.query.filter_by(company_id=company_id, prospecting_status='sem_resposta').count()
+        erro_envio = Lead.query.filter_by(company_id=company_id, prospecting_status='erro').count()
 
-    campaigns = ProspectingCampaign.query.filter_by(company_id=company_id, is_active=True).all()
+        campaigns = ProspectingCampaign.query.filter_by(company_id=company_id, is_active=True).all()
+    except Exception as e:
+        print(f"Error in dashboard: {e}")
+        total_leads = aguardando = em_execucao = aguardando_aprovacao = contatados = 0
+        responderam = interessados = reunioes = sem_resposta = erro_envio = 0
+        campaigns = []
 
     return render_template('prospecting/dashboard.html',
                            total_leads=total_leads,
@@ -176,13 +181,16 @@ def lead_detail(lead_id):
 @prospecting_bp.route('/prospecting/campaigns')
 @login_required
 def campaigns():
-    if not current_user.company.has_feature('prospecting'):
-        flash('Sua empresa não possui acesso a este módulo.', 'error')
+    if not current_user.company_id:
         return redirect(url_for('dashboard.home'))
 
     company_id = current_user.company_id
 
-    campaigns_list = ProspectingCampaign.query.filter_by(company_id=company_id).order_by(ProspectingCampaign.created_at.desc()).all()
+    try:
+        campaigns_list = ProspectingCampaign.query.filter_by(company_id=company_id).order_by(ProspectingCampaign.created_at.desc()).all()
+    except Exception as e:
+        print(f"Error loading campaigns: {e}")
+        campaigns_list = []
 
     return render_template('prospecting/campaigns.html', campaigns=campaigns_list)
 
