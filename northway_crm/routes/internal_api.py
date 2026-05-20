@@ -693,6 +693,38 @@ def prospecting_inbound_result():
     db.session.commit()
     return jsonify({'success': True})
 
+@internal_api_bp.route('/prospecting/batch-completed', methods=['POST'])
+@require_internal_auth
+def prospecting_batch_completed():
+    data = request.json
+    tenant_id = data.get('tenant_id')
+    campaign_id = data.get('campaign_id')
+    processed_count = data.get('processed_count', 0)
+    success_count = data.get('success_count', 0)
+
+    if not tenant_id or not campaign_id:
+        return jsonify({'success': False, 'error': 'tenant_id and campaign_id are required'}), 400
+
+    from models import ProspectingCampaign, User
+    from utils import create_notification
+
+    campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=tenant_id).first()
+    if not campaign:
+        return jsonify({'success': False, 'error': 'Campanha não encontrada'}), 404
+
+    # Enviar notificação de término para todos os usuários da empresa
+    users = User.query.filter_by(company_id=tenant_id).all()
+    for user in users:
+        create_notification(
+            user_id=user.id,
+            company_id=tenant_id,
+            type='campaign_end',
+            title=f"Campanha '{campaign.name}' Concluída",
+            message=f"O disparo diário para a campanha '{campaign.name}' foi concluído. {processed_count} contatos processados e {success_count} mensagens enviadas com sucesso."
+        )
+
+    return jsonify({'success': True})
+
 
 @internal_api_bp.route('/health', methods=['GET'])
 def health_check():

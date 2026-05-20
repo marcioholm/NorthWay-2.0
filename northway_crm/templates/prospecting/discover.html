@@ -143,6 +143,14 @@
             </div>
         </div>
 
+        <!-- Campaign Import Banner -->
+        <div id="campaignImportBanner" class="hidden w-full max-w-5xl px-6 mt-4 shrink-0">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm font-semibold text-blue-700 flex items-center gap-2">
+                <i data-lucide="megaphone" class="w-4 h-4 shrink-0"></i>
+                <span id="campaignImportBannerText"></span>
+            </div>
+        </div>
+
         <!-- Results Header -->
         <div id="resultsHeader"
             class="w-full max-w-5xl px-6 mt-8 mb-4 flex flex-col md:flex-row items-center justify-between gap-4 hidden">
@@ -300,13 +308,34 @@
             const select = document.getElementById('importStage');
             if (!select) return;
 
+            const urlParams = new URLSearchParams(window.location.search);
+            const preselectedPipelineId = urlParams.get('pipeline_id');
+
             const resp = await fetch('/api/prospecting/pipelines');
             const data = await resp.json();
             if (data.success && data.data && data.data.length > 0) {
-                const mainPipeline = data.data[0];
-                select.innerHTML = mainPipeline.stages.map(s =>
-                    `<option value="${s.id}">${s.name}</option>`
-                ).join('');
+                select.innerHTML = data.data.map(p => `
+                    <optgroup label="${p.name}">
+                        ${p.stages.map(s => `<option value="${s.id}" data-pipeline-id="${p.id}">${s.name}</option>`).join('')}
+                    </optgroup>
+                `).join('');
+
+                // Pré-selecionar o pipeline se veio da tela de campanhas
+                if (preselectedPipelineId) {
+                    const pipeline = data.data.find(p => String(p.id) === preselectedPipelineId);
+                    if (pipeline && pipeline.stages.length > 0) {
+                        // Selecionar o primeiro estágio (Lista Fria)
+                        select.value = pipeline.stages[0].id;
+
+                        // Exibir banner informativo
+                        const bannerWrapper = document.getElementById('campaignImportBanner');
+                        const bannerText = document.getElementById('campaignImportBannerText');
+                        if (bannerWrapper && bannerText) {
+                            bannerText.textContent = `Importando para a campanha: ${pipeline.name.replace('Prospecção: ', '')}`;
+                            bannerWrapper.classList.remove('hidden');
+                        }
+                    }
+                }
             }
         } catch (e) {
             console.error("Error loading stages", e);

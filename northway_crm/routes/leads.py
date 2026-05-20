@@ -725,9 +725,12 @@ def update_lead_info(id):
     est_val = request.form.get('estimated_value')
     if est_val:
         try:
-            lead.estimated_value = float(est_val)
+            clean_est = est_val.replace('R$', '').replace('.', '').replace(',', '.').strip()
+            lead.estimated_value = float(clean_est)
         except (ValueError, TypeError):
             pass
+    else:
+        lead.estimated_value = 0.0
             
     # Stage Update
     pipeline_stage_id = request.form.get('pipeline_stage_id')

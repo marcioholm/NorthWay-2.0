@@ -59,6 +59,7 @@ try:
     import routes.swot_routes
     import routes.marketing
     import routes.api_v1
+    import routes.diagnostic_raiox
     
     import logging
     logging.basicConfig(level=logging.INFO)

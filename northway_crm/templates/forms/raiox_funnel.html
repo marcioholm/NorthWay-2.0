@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raio-X de Escala Digital — NorthWay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        northway: {
+                            red: '#fa0102',
+                            dark: '#0a0a0a',
+                            gray: '#171717',
+                            light: '#262626'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.4s ease-out forwards',
+                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(250, 1, 2, 0.3)' },
+                            '50%': { opacity: '.7', boxShadow: '0 0 30px rgba(250, 1, 2, 0.6)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(250, 1, 2, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(250, 1, 2, 0.05), transparent 25%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+        
+        .glass-panel {
+            background: rgba(23, 23, 23, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .nw-input {
+            background: rgba(38, 38, 38, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .nw-input:focus {
+            outline: none;
+            border-color: #fa0102;
+            box-shadow: 0 0 0 2px rgba(250, 1, 2, 0.2);
+            background: rgba(38, 38, 38, 0.8);
+        }
+        
+        /* Custom Select styling to make it dark */
+        select option {
+            background-color: #171717;
+            color: white;
+        }
+
+        .option-card {
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .option-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(250, 1, 2, 0.4);
+        }
+        .option-card.selected {
+            border-color: #fa0102;
+            background: rgba(250, 1, 2, 0.1);
+            box-shadow: 0 4px 20px rgba(250, 1, 2, 0.15);
+        }
+
+        [x-cloak] { display: none !important; }
+        
+        /* Progress Bar Animation */
+        .progress-bar-fill {
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-northway-red selection:text-white" x-data="diagnosticFunnel()">
+
+    <!-- Header / Progress Area -->
+    <header class="fixed top-0 w-full z-50 glass-panel border-b border-white/5">
+        <div class="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="{{ url_for('static', filename='images/logo-white.png') }}" onerror="this.src='https://crm.northwaycompany.com.br/static/images/logo-white.png'" alt="NorthWay" class="h-8">
+            </div>
+            
+            <!-- Progress Tracker -->
+            <div class="flex-1 max-w-md ml-8 hidden sm:block" x-show="step > 0" x-transition.opacity>
+                <div class="flex justify-between text-xs text-gray-400 font-medium mb-2">
+                    <span x-text="stepName()"></span>
+                    <span x-text="Math.round(progress) + '%'"></span>
+                </div>
+                <div class="h-1.5 w-full bg-northway-light rounded-full overflow-hidden">
+                    <div class="h-full bg-northway-red progress-bar-fill shadow-[0_0_10px_#fa0102]" :style="`width: ${progress}%`"></div>
+                </div>
+            </div>
+            
+            <div class="text-sm text-gray-400 font-medium hidden sm:block">
+                <i data-lucide="timer" class="w-4 h-4 inline-block mr-1 mb-0.5"></i>
+                <span x-show="step === 0">Leva menos de 3 minutos</span>
+                <span x-show="step > 0" x-text="`${currentPilarIndex()}/4 Pilares`"></span>
+            </div>
+        </div>
+        <!-- Mobile Progress Bar -->
+        <div class="h-1 w-full bg-northway-light sm:hidden" x-show="step > 0">
+            <div class="h-full bg-northway-red progress-bar-fill" :style="`width: ${progress}%`"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col items-center justify-center pt-28 pb-20 px-4">
+        
+        <!-- ==================== STEP 0: INTRO & LEAD CAPTURE ==================== -->
+        <div x-show="step === 0" x-transition:enter="animation-fade-in" class="w-full max-w-2xl w-full">
+            <div class="text-center mb-10 animate-slide-up">
+                <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-gray-300 mb-6">
+                    <span class="w-2 h-2 rounded-full bg-northway-red mr-2 animate-pulse"></span>
+                    Diagnóstico Estratégico
+                </div>
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
+                    RAIO-X DE <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">ESCALA DIGITAL</span>
+                </h1>
+                <p class="text-lg text-gray-400 max-w-xl mx-auto leading-relaxed">
+                    Descubra o nível de maturidade do seu negócio e identifique os gargalos que estão impedindo sua empresa de crescer no digital.
+                </p>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6 sm:p-10 animate-slide-up" style="animation-delay: 0.1s;">
+                <form @submit.prevent="nextStep(0)" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 ml-1">Nome Completo</label>
+                            <input type="text" x-model="lead.nome" required class="w-full nw-input rounded-xl px-4 py-3" placeholder="Seu nome">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 ml-1">E-mail Corporativo</label>
+                            <input type="email" x-model="lead.email" required class="w-full nw-input rounded-xl px-4 py-3" placeholder="voce@empresa.com">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 ml-1">WhatsApp</label>
+                            <input type="tel" x-model="lead.whatsapp" required class="w-full nw-input rounded-xl px-4 py-3" placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 ml-1">Nome da Empresa</label>
+                            <input type="text" x-model="lead.empresa" required class="w-full nw-input rounded-xl px-4 py-3" placeholder="Sua empresa">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 ml-1">Quantidade de Funcionários</label>
+                            <select x-model="lead.quantidade_funcionarios" required class="w-full nw-input rounded-xl px-4 py-3 appearance-none">
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="1-5">1 a 5</option>
+                                <option value="6-20">6 a 20</option>
+                                <option value="21-50">21 a 50</option>
+                                <option value="50+">Mais de 50</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-sm font-medium text-gray-300 ml-1">Faturamento Mensal Estimado</label>
+                            <select x-model="lead.faturamento_mensal" required class="w-full nw-input rounded-xl px-4 py-3 appearance-none">
+                                <option value="" disabled selected>Selecione uma faixa</option>
+                                <option value="0-50k">Até R$ 50.000</option>
+                                <option value="50k-100k">R$ 50.000 a R$ 100.000</option>
+                                <option value="100k-150k">R$ 100.000 a R$ 150.000</option>
+                                <option value="150k-200k">R$ 150.000 a R$ 200.000</option>
+                                <option value="200k+">Acima de R$ 200.000</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-northway-red text-white font-bold text-lg rounded-xl py-4 transition-all hover:bg-red-700 active:scale-[0.98] shadow-[0_0_20px_rgba(250,1,2,0.3)] hover:shadow-[0_0_30px_rgba(250,1,2,0.5)] flex justify-center items-center gap-2">
+                            Iniciar Diagnóstico
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <p class="text-center text-xs text-gray-500 mt-4">
+                        <i data-lucide="lock" class="w-3 h-3 inline-block mr-1 mb-0.5"></i> Seus dados estão seguros conosco.
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==================== STEPS 1-20: QUESTIONS ==================== -->
+        <template x-for="(q, idx) in flatQuestions" :key="idx">
+            <div x-show="step === idx + 1" x-transition:enter="animation-slide-up" class="w-full max-w-3xl" x-cloak>
+                
+                <div class="mb-8 text-center sm:text-left flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                    <div>
+                        <div class="text-northway-red font-semibold text-sm tracking-wider uppercase mb-2 flex items-center justify-center sm:justify-start gap-2">
+                            <i :data-lucide="getPilarIcon(q.pilarId)" class="w-4 h-4"></i>
+                            <span x-text="q.pilarName"></span>
+                        </div>
+                        <h2 class="text-3xl sm:text-4xl font-bold text-white leading-tight" x-text="q.text"></h2>
+                    </div>
+                    <div class="text-5xl font-extrabold text-white/10 shrink-0">
+                        <span x-text="String(idx + 1).padStart(2, '0')"></span><span class="text-2xl">/20</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <template x-for="option in answerOptions" :key="option.value">
+                        <label class="option-card block w-full rounded-xl border border-white/10 bg-white/5 p-5 cursor-pointer flex items-center gap-4 relative overflow-hidden"
+                               :class="{'selected': answers[q.pilarId][q.index] === option.value}">
+                            <input type="radio" :name="`q_${idx}`" :value="option.value" class="sr-only" 
+                                   @change="selectAnswer(q.pilarId, q.index, option.value)">
+                            
+                            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
+                                 :class="answers[q.pilarId][q.index] === option.value ? 'border-northway-red' : 'border-gray-500'">
+                                <div class="w-3 h-3 rounded-full bg-northway-red transition-transform scale-0"
+                                     :class="answers[q.pilarId][q.index] === option.value ? 'scale-100' : ''"></div>
+                            </div>
+                            
+                            <div class="flex-1">
+                                <span class="text-lg font-medium text-gray-200" :class="answers[q.pilarId][q.index] === option.value ? 'text-white' : ''" x-text="option.label"></span>
+                            </div>
+                            
+                            <!-- Highlight sweep effect -->
+                            <div class="absolute inset-0 bg-gradient-to-r from-northway-red/0 via-northway-red/5 to-northway-red/0 translate-x-[-100%] transition-transform duration-500"
+                                 :class="answers[q.pilarId][q.index] === option.value ? 'translate-x-[100%]' : ''"></div>
+                        </label>
+                    </template>
+                </div>
+
+                <div class="mt-10 flex items-center justify-between">
+                    <button @click="prevStep()" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors py-2 px-4 rounded-lg hover:bg-white/5">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                        Voltar
+                    </button>
+                    
+                    <button @click="nextStep(idx + 1)" 
+                            class="bg-white text-black font-bold rounded-xl px-8 py-3.5 transition-all hover:bg-gray-200 active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            :disabled="answers[q.pilarId][q.index] === null">
+                        <span x-text="idx === 19 ? 'Ver Resultado' : 'Próxima'"></span>
+                        <i data-lucide="arrow-right" class="w-5 h-5" x-show="idx < 19"></i>
+                        <i data-lucide="check-circle" class="w-5 h-5" x-show="idx === 19"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+        
+        <!-- Loading State -->
+        <div x-show="isSubmitting" class="fixed inset-0 z-[100] bg-northway-dark/90 backdrop-blur-md flex flex-col items-center justify-center" x-cloak>
+            <div class="w-20 h-20 border-4 border-northway-red/30 border-t-northway-red rounded-full animate-spin mb-8"></div>
+            <h3 class="text-2xl font-bold text-white mb-2">Processando Diagnóstico...</h3>
+            <p class="text-gray-400 animate-pulse">Cruzando dados e calculando maturidade.</p>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            lucide.createIcons();
+            
+            Alpine.data('diagnosticFunnel', () => ({
+                step: 0,
+                progress: 0,
+                isSubmitting: false,
+                
+                lead: {
+                    nome: '',
+                    email: '',
+                    whatsapp: '',
+                    empresa: '',
+                    quantidade_funcionarios: '',
+                    faturamento_mensal: ''
+                },
+                
+                answerOptions: [
+                    { value: 0, label: 'Não fazemos' },
+                    { value: 1, label: 'Fazemos parcialmente' },
+                    { value: 2, label: 'Fazemos com alguma consistência' },
+                    { value: 3, label: 'Fazemos e acompanhamos métricas' }
+                ],
+                
+                pillars: [
+                    {
+                        id: 'presenca_digital',
+                        name: 'Presença Digital',
+                        icon: 'globe',
+                        questions: [
+                            'Sua empresa possui um site profissional funcionando?',
+                            'Sua empresa publica conteúdo com frequência?',
+                            'Você roda anúncios pagos atualmente?',
+                            'Sua empresa possui rastreamento de dados (Pixel/Analytics)?',
+                            'Sua marca é facilmente encontrada no Google?'
+                        ]
+                    },
+                    {
+                        id: 'comercial_conversao',
+                        name: 'Comercial & Conversão',
+                        icon: 'target',
+                        questions: [
+                            'Quando um lead chega, existe processo definido?',
+                            'O tempo de resposta ao lead é rápido?',
+                            'Existe follow-up estruturado?',
+                            'Você acompanha métricas comerciais?',
+                            'Existe CRM ou sistema de gestão de leads?'
+                        ]
+                    },
+                    {
+                        id: 'posicionamento_autoridade',
+                        name: 'Posicionamento & Autoridade',
+                        icon: 'award',
+                        questions: [
+                            'Sua empresa possui diferencial claro?',
+                            'Você sabe quem são seus principais concorrentes?',
+                            'Sua comunicação gera autoridade?',
+                            'Sua empresa possui provas sociais?',
+                            'Seu marketing comunica transformação ou apenas serviço?'
+                        ]
+                    },
+                    {
+                        id: 'escala_estrategia',
+                        name: 'Escala & Estratégia',
+                        icon: 'trending-up',
+                        questions: [
+                            'Sua empresa possui metas trimestrais claras?',
+                            'Existe planejamento de campanhas?',
+                            'Você sabe quanto pode investir para crescer?',
+                            'Sua empresa possui previsibilidade de vendas?',
+                            'Seu negócio consegue crescer sem depender totalmente do dono?'
+                        ]
+                    }
+                ],
+                
+                flatQuestions: [],
+                answers: {},
+                
+                init() {
+                    // Flatten questions for easy navigation
+                    let counter = 0;
+                    this.pillars.forEach((pilar) => {
+                        this.answers[pilar.id] = [null, null, null, null, null];
+                        pilar.questions.forEach((qText, idx) => {
+                            this.flatQuestions.push({
+                                globalIndex: counter,
+                                pilarId: pilar.id,
+                                pilarName: pilar.name,
+                                index: idx,
+                                text: qText
+                            });
+                            counter++;
+                        });
+                    });
+                    
+                    // Allow external init
+                    this.$watch('step', value => {
+                        this.updateProgress();
+                        // Re-init lucide icons on step change
+                        setTimeout(() => lucide.createIcons(), 50);
+                    });
+                },
+                
+                getPilarIcon(pilarId) {
+                    const p = this.pillars.find(p => p.id === pilarId);
+                    return p ? p.icon : 'circle';
+                },
+                
+                updateProgress() {
+                    if (this.step === 0) {
+                        this.progress = 0;
+                    } else {
+                        // Progress based on answered questions
+                        this.progress = ((this.step - 1) / 20) * 100;
+                    }
+                },
+                
+                stepName() {
+                    if (this.step === 0) return 'Informações Básicas';
+                    return this.flatQuestions[this.step - 1].pilarName;
+                },
+                
+                currentPilarIndex() {
+                    if (this.step === 0) return 0;
+                    const pilarId = this.flatQuestions[this.step - 1].pilarId;
+                    return this.pillars.findIndex(p => p.id === pilarId) + 1;
+                },
+                
+                selectAnswer(pilarId, index, value) {
+                    this.answers[pilarId][index] = value;
+                    // Auto advance after slight delay for better UX
+                    setTimeout(() => {
+                        this.nextStep(this.step);
+                    }, 400);
+                },
+                
+                nextStep(currentStep) {
+                    if (currentStep === 0) {
+                        // Form validation happens natively by required attributes
+                        // Just checking if form is valid
+                        const form = document.querySelector('form');
+                        if (form && !form.checkValidity()) {
+                            form.reportValidity();
+                            return;
+                        }
+                        this.step = 1;
+                    } else if (currentStep < 20) {
+                        // Check if current question is answered
+                        const q = this.flatQuestions[currentStep - 1];
+                        if (this.answers[q.pilarId][q.index] !== null) {
+                            this.step++;
+                        }
+                    } else if (currentStep === 20) {
+                        this.submitDiagnostic();
+                    }
+                },
+                
+                prevStep() {
+                    if (this.step > 0) {
+                        this.step--;
+                    }
+                },
+                
+                async submitDiagnostic() {
+                    this.isSubmitting = true;
+                    
+                    const payload = {
+                        lead_info: this.lead,
+                        answers: this.answers
+                    };
+                    
+                    try {
+                        const response = await fetch('/raiox/submit', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.status === 'success') {
+                            window.location.href = result.redirect_url;
+                        } else {
+                            alert('Ocorreu um erro: ' + result.message);
+                            this.isSubmitting = false;
+                        }
+                    } catch (error) {
+                        console.error('Submit error:', error);
+                        alert('Falha na conexão. Tente novamente.');
+                        this.isSubmitting = false;
+                    }
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

@@ -323,7 +323,8 @@ def create_app():
             exempt_endpoints = ['auth.login', 'auth.register', 'auth.logout', 
                                 'billing.asaas_webhook', 'billing.payment_pending',
                                 'auth.suspended_account', 'master.revert_access',
-                                'master.sync_schema']
+                                'master.sync_schema', 'diagnostic_raiox.index', 
+                                'diagnostic_raiox.submit', 'diagnostic_raiox.resultado']
             if request.endpoint in exempt_endpoints:
                 return
 
@@ -549,7 +550,8 @@ def create_app():
             ('routes.crepi_routes', 'crepi_bp', 'crepi_bp', None),
             ('routes.swot_routes', 'swot_bp', 'swot_bp', None),
             ('routes.marketing', 'marketing_bp', 'marketing_bp', None),
-            ('routes.api_v1', 'api_v1_bp', 'api_v1_bp', None)
+            ('routes.api_v1', 'api_v1_bp', 'api_v1_bp', None),
+            ('routes.diagnostic_raiox', 'diagnostic_raiox_bp', 'diagnostic_raiox_bp', None)
         ]
 
         import importlib

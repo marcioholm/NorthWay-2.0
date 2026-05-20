@@ -161,6 +161,36 @@ def evolution_webhook():
                     db.session.commit()
                     current_app.logger.info(f"Successfully saved message {message_id}")
                     
+                    # Se for uma mensagem de entrada, verificar se o lead está em campanha de prospecção ativa
+                    if direction == 'in':
+                        lead = None
+                        if conv.lead_id:
+                            from models import Lead
+                            lead = Lead.query.get(conv.lead_id)
+                        else:
+                            jid_phone = remote_jid.split('@')[0]
+                            clean_jid_phone = ''.join(filter(str.isdigit, jid_phone))
+                            if clean_jid_phone:
+                                from models import Lead
+                                lead = Lead.query.filter(
+                                    Lead.company_id == company_id,
+                                    Lead.phone.endswith(clean_jid_phone[-8:])
+                                ).first()
+                                if lead:
+                                    conv.lead_id = lead.id
+                                    db.session.commit()
+
+                        if lead and lead.prospecting_campaign_id and lead.prospecting_status == 'contatado':
+                            lead.prospecting_status = 'respondeu'
+                            try:
+                                from northway_crm.routes.prospecting import sync_prospecting_stage
+                                sync_prospecting_stage(lead, 'respondeu')
+                            except ImportError:
+                                from routes.prospecting import sync_prospecting_stage
+                                sync_prospecting_stage(lead, 'respondeu')
+                            db.session.commit()
+                            current_app.logger.info(f"Lead {lead.id} movido para respondeu e sincronizado no pipeline")
+
                     # 3.5. Forward to NORA (n8n Webhook)
                     if direction == 'in':
                         nora_url = os.environ.get('NORA_WEBHOOK_URL')

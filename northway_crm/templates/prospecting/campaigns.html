@@ -75,13 +75,24 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex gap-2">
+                                    {% if campaign.pipeline_id %}
+                                    <a href="{{ url_for('prospecting.discover') }}?pipeline_id={{ campaign.pipeline_id }}"
+                                        class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Buscar Leads no Maps">
+                                        <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                    </a>
+                                    <button onclick="openBaseLeadsModal({{ campaign.id }}, '{{ campaign.name|replace("'", "\\'") }}')"
+                                        class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Adicionar Leads da Base">
+                                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                    </button>
+                                    {% endif %}
                                     <button onclick="editCampaign({{ campaign.id }})"
                                         class="p-2 text-gray-400 hover:text-northway-red hover:bg-red-50 rounded-lg transition-colors" title="Editar">
                                         <i data-lucide="edit-2" class="w-4 h-4"></i>
                                     </button>
-                                    <button onclick="toggleCampaignStatus({{ campaign.id }})"
-                                        class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Alternar Status">
-                                        <i data-lucide="toggle-{% if campaign.is_active %}right{% else %}left{% endif %}" class="w-4 h-4"></i>
+                                    <button onclick="toggleCampaignStatus({{ campaign.id }}, '{{ campaign.status }}')"
+                                        class="p-2 {% if campaign.status == 'ativa' %}text-green-500 hover:text-yellow-600 hover:bg-yellow-50{% elif campaign.status == 'pausada' %}text-yellow-500 hover:text-green-600 hover:bg-green-50{% else %}text-gray-400 hover:text-green-600 hover:bg-green-50{% endif %} rounded-lg transition-colors"
+                                        title="{% if campaign.status == 'ativa' %}Pausar Campanha{% elif campaign.status == 'pausada' %}Reativar Campanha{% else %}Ativar Campanha{% endif %}">
+                                        <i data-lucide="{% if campaign.status == 'ativa' %}pause-circle{% elif campaign.status == 'pausada' %}play-circle{% else %}play{% endif %}" class="w-4 h-4"></i>
                                     </button>
                                     <button onclick="deleteCampaign({{ campaign.id }})"
                                         class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Excluir">
@@ -195,15 +206,239 @@
     </div>
 </div>
 
+<!-- Modal: Adicionar Leads da Base -->
+<div id="baseLeadsModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col m-4 shadow-2xl">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center shrink-0">
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">Adicionar Leads da Base</h3>
+                <p id="baseLeadsModalSubtitle" class="text-xs text-gray-400 mt-1"></p>
+            </div>
+            <button onclick="closeBaseLeadsModal()" class="text-gray-400 hover:text-gray-600">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="px-6 py-4 border-b border-gray-50 shrink-0 flex flex-col gap-3">
+            <div class="flex gap-3">
+                <div class="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                    <i data-lucide="search" class="w-4 h-4 text-gray-400 shrink-0"></i>
+                    <input type="text" id="baseLeadsSearch"
+                        class="flex-1 bg-transparent text-sm focus:outline-none text-gray-700 placeholder:text-gray-400"
+                        placeholder="Buscar por nome, e-mail ou telefone..."
+                        oninput="debounceSearch()">
+                </div>
+                <label class="flex items-center gap-2 text-xs text-gray-500 font-medium cursor-pointer whitespace-nowrap">
+                    <input type="checkbox" id="onlyFreeLeads" class="rounded" onchange="searchBaseLeads()">
+                    Apenas sem campanha
+                </label>
+            </div>
+            <div class="flex items-center gap-4">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Canal Padrão:</label>
+                <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                    <input type="radio" name="bulkChannel" value="whatsapp" checked> WhatsApp
+                </label>
+                <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                    <input type="radio" name="bulkChannel" value="email"> E-mail
+                </label>
+                <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                    <input type="radio" name="bulkChannel" value="ambos"> Ambos
+                </label>
+            </div>
+        </div>
+
+        <!-- Lead List -->
+        <div class="flex-1 overflow-y-auto">
+            <div id="baseLeadsList" class="divide-y divide-gray-50">
+                <div class="flex items-center justify-center py-12 text-gray-400">
+                    <i data-lucide="loader" class="w-6 h-6 animate-spin mr-2"></i>
+                    Carregando leads...
+                </div>
+            </div>
+            <div id="baseLeadsLoadMore" class="hidden p-4 text-center">
+                <button onclick="loadMoreBaseLeads()" class="text-xs text-northway-red font-bold hover:underline">Carregar mais</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-5 border-t border-gray-100 shrink-0 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSelectAllBase()" class="text-xs text-gray-500 hover:text-northway-red font-medium transition-colors">
+                    Selecionar / Desmarcar Todos
+                </button>
+                <span id="baseLeadsSelectedCount" class="text-xs font-bold text-indigo-600"></span>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeBaseLeadsModal()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
+                    Cancelar
+                </button>
+                <button onclick="confirmBaseLeads()" id="confirmBaseLeadsBtn"
+                    class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i>
+                    Adicionar Selecionados
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
 });
 
+// ─── Adicionar da Base ─────────────────────────────────────────────────────
+let _baseLeadsCampaignId = null;
+let _baseLeadsPage = 1;
+let _baseLeadsSearchTimer = null;
+let _baseLeadsAllIds = [];
+
+function openBaseLeadsModal(campaignId, campaignName) {
+    _baseLeadsCampaignId = campaignId;
+    _baseLeadsPage = 1;
+    document.getElementById('baseLeadsSearch').value = '';
+    document.getElementById('onlyFreeLeads').checked = false;
+    document.getElementById('baseLeadsModalSubtitle').textContent = `Campanha: ${campaignName}`;
+    document.getElementById('baseLeadsModal').classList.remove('hidden');
+    document.getElementById('baseLeadsModal').classList.add('flex');
+    lucide.createIcons();
+    searchBaseLeads();
+}
+
+function closeBaseLeadsModal() {
+    document.getElementById('baseLeadsModal').classList.add('hidden');
+    document.getElementById('baseLeadsModal').classList.remove('flex');
+    _baseLeadsCampaignId = null;
+}
+
+function debounceSearch() {
+    clearTimeout(_baseLeadsSearchTimer);
+    _baseLeadsSearchTimer = setTimeout(() => searchBaseLeads(), 350);
+}
+
+function updateSelectedCount() {
+    const checked = document.querySelectorAll('#baseLeadsList input[type=checkbox]:checked').length;
+    const el = document.getElementById('baseLeadsSelectedCount');
+    el.textContent = checked > 0 ? `${checked} selecionado(s)` : '';
+}
+
+async function searchBaseLeads(append = false) {
+    if (!append) {
+        _baseLeadsPage = 1;
+        _baseLeadsAllIds = [];
+    }
+    const q = document.getElementById('baseLeadsSearch').value.trim();
+    const onlyFree = document.getElementById('onlyFreeLeads').checked;
+    const params = new URLSearchParams({
+        q,
+        page: _baseLeadsPage,
+        only_free: onlyFree ? 'true' : 'false'
+    });
+    const listEl = document.getElementById('baseLeadsList');
+    if (!append) {
+        listEl.innerHTML = '<div class="flex items-center justify-center py-8 text-gray-400"><span class="text-sm">Carregando...</span></div>';
+    }
+
+    try {
+        const resp = await fetch(`/api/prospecting/base-leads?${params}`);
+        const data = await resp.json();
+        if (!data.success) return;
+
+        const leads = data.data.leads;
+        const hasMore = leads.length === data.data.per_page;
+
+        if (!append) listEl.innerHTML = '';
+
+        if (leads.length === 0 && !append) {
+            listEl.innerHTML = '<div class="py-10 text-center text-gray-400 text-sm">Nenhum lead encontrado.</div>';
+            document.getElementById('baseLeadsLoadMore').classList.add('hidden');
+            return;
+        }
+
+        leads.forEach(lead => {
+            _baseLeadsAllIds.push(lead.id);
+            const channelIcon = lead.has_campaign
+                ? '<span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full">Em campanha</span>'
+                : '<span class="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded-full">Livre</span>';
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-3 px-6 py-3 hover:bg-gray-50 transition-colors cursor-pointer';
+            row.onclick = () => { const cb = row.querySelector('input'); cb.checked = !cb.checked; updateSelectedCount(); };
+            row.innerHTML = `
+                <input type="checkbox" value="${lead.id}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shrink-0" onclick="event.stopPropagation(); updateSelectedCount();">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-900 truncate">${lead.name}</p>
+                    <p class="text-xs text-gray-400 truncate">${lead.phone || lead.email || 'Sem contato'}</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    ${lead.interest ? `<span class="text-xs text-gray-400">${lead.interest}</span>` : ''}
+                    ${channelIcon}
+                </div>
+            `;
+            listEl.appendChild(row);
+        });
+
+        document.getElementById('baseLeadsLoadMore').classList.toggle('hidden', !hasMore);
+        lucide.createIcons();
+    } catch (e) {
+        listEl.innerHTML = '<div class="py-10 text-center text-red-400 text-sm">Erro ao carregar leads.</div>';
+    }
+}
+
+function loadMoreBaseLeads() {
+    _baseLeadsPage++;
+    searchBaseLeads(true);
+}
+
+function toggleSelectAllBase() {
+    const checkboxes = document.querySelectorAll('#baseLeadsList input[type=checkbox]');
+    const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+    checkboxes.forEach(cb => cb.checked = anyUnchecked);
+    updateSelectedCount();
+}
+
+async function confirmBaseLeads() {
+    const selected = Array.from(document.querySelectorAll('#baseLeadsList input[type=checkbox]:checked')).map(cb => parseInt(cb.value));
+    if (selected.length === 0) { alert('Selecione ao menos um lead.'); return; }
+
+    const channel = document.querySelector('input[name="bulkChannel"]:checked')?.value || 'whatsapp';
+    const btn = document.getElementById('confirmBaseLeadsBtn');
+    btn.disabled = true;
+    btn.textContent = 'Adicionando...';
+
+    try {
+        const resp = await fetch('/api/prospecting/bulk-add-to-campaign', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                campaign_id: _baseLeadsCampaignId,
+                lead_ids: selected,
+                preferred_channel: channel
+            })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert(result.data.message);
+            closeBaseLeadsModal();
+        } else {
+            alert(result.error || 'Erro ao adicionar leads.');
+        }
+    } catch(e) {
+        alert('Erro ao adicionar leads.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="user-check" class="w-4 h-4 inline mr-1"></i> Adicionar Selecionados';
+        lucide.createIcons();
+    }
+}
+
+// ─── Modal Campanha ─────────────────────────────────────────────────────────
 function openCampaignModal() {
     document.getElementById('modalTitle').textContent = 'Nova Campanha';
-    document.getElementById('campaignForm').reset();
     document.getElementById('campaignId').value = '';
+    document.getElementById('campaignForm').reset();
     document.getElementById('campaignModal').classList.remove('hidden');
     document.getElementById('campaignModal').classList.add('flex');
 }
@@ -217,6 +452,7 @@ async function editCampaign(campaignId) {
     try {
         const response = await fetch(`/prospecting/campaign/${campaignId}`);
         const result = await response.json();
+
         if (result.success === false) {
             alert(result.error);
             return;
@@ -284,21 +520,32 @@ async function deleteCampaign(campaignId) {
     }
 }
 
-async function toggleCampaignStatus(campaignId) {
+async function toggleCampaignStatus(campaignId, currentStatus) {
     try {
-        const response = await fetch(`/prospecting/campaign/${campaignId}`);
-        const result = await response.json();
-        if (!result.success) return;
+        let newStatus, newIsActive;
+        if (currentStatus === 'ativa') {
+            newStatus = 'pausada';
+            newIsActive = false;
+        } else {
+            // rascunho ou pausada → ativar
+            newStatus = 'ativa';
+            newIsActive = true;
+        }
 
-        const campaign = result.data;
-        const newStatus = campaign.is_active ? 'pausada' : 'ativa';
+        const label = newStatus === 'ativa' ? 'ativar' : 'pausar';
+        if (!confirm(`Deseja ${label} esta campanha?`)) return;
 
-        await fetch(`/prospecting/campaign/${campaignId}`, {
+        const resp = await fetch(`/prospecting/campaign/${campaignId}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({status: newStatus, is_active: !campaign.is_active})
+            body: JSON.stringify({status: newStatus, is_active: newIsActive})
         });
-        location.reload();
+        const result = await resp.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.error || 'Erro ao alternar status');
+        }
     } catch(err) {
         alert('Erro ao alternar status');
     }

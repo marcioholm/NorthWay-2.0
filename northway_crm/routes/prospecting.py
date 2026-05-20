@@ -17,6 +17,41 @@ def api_response(success=True, data=None, error=None, status=200):
     }), status
 
 
+def sync_prospecting_stage(lead, prospecting_status):
+    """
+    Sincroniza o estágio do pipeline do lead com base no status da prospecção.
+    """
+    if not lead or not lead.prospecting_campaign_id:
+        return
+    campaign = lead.prospecting_campaign
+    if not campaign or not campaign.pipeline_id:
+        return
+
+    status_to_stage_name = {
+        'novo': 'Lista Fria',
+        'em_execucao': 'Lista Fria',
+        'aguardando_aprovacao': 'Aguardando Aprovação',
+        'contatado': 'Contatado',
+        'respondeu': 'Respondeu',
+        'interessado': 'Respondeu',
+        'reuniao': 'Reunião Agendada',
+        'descartado': 'Descartado'
+    }
+
+    target_stage_name = status_to_stage_name.get(prospecting_status)
+    if not target_stage_name:
+        return
+
+    from models import PipelineStage
+    stage = PipelineStage.query.filter_by(pipeline_id=campaign.pipeline_id).filter(
+        PipelineStage.name.ilike(f"%{target_stage_name}%")
+    ).first()
+
+    if stage:
+        lead.pipeline_id = campaign.pipeline_id
+        lead.pipeline_stage_id = stage.id
+
+
 @prospecting_bp.route('/prospecting')
 @login_required
 def index():
@@ -161,6 +196,35 @@ def create_campaign():
     data = request.json
     company_id = current_user.company_id
 
+    from models import Pipeline, PipelineStage
+    
+    # Criar funil correspondente para a campanha
+    new_pipeline = Pipeline(
+        name=f"Prospecção: {data.get('name')}",
+        company_id=company_id
+    )
+    db.session.add(new_pipeline)
+    db.session.flush() # Obter o id do pipeline
+
+    # Criar etapas padrão do funil de prospecção
+    stages = [
+        "Lista Fria",
+        "Aguardando Aprovação",
+        "Contatado",
+        "Respondeu",
+        "Reunião Agendada",
+        "Descartado"
+    ]
+    for i, s_name in enumerate(stages):
+        stage = PipelineStage(
+            name=s_name,
+            pipeline_id=new_pipeline.id,
+            company_id=company_id,
+            order=i
+        )
+        db.session.add(stage)
+    db.session.flush()
+
     campaign = ProspectingCampaign(
         company_id=company_id,
         name=data.get('name'),
@@ -175,7 +239,8 @@ def create_campaign():
         max_attempts=data.get('max_attempts', 3),
         followup_interval_days=data.get('followup_interval_days', 3),
         status='rascunho',
-        is_active=True
+        is_active=True,
+        pipeline_id=new_pipeline.id
     )
 
     db.session.add(campaign)
@@ -212,6 +277,7 @@ def manage_campaign(campaign_id):
 
     if request.method == 'PUT':
         data = request.json
+        old_name = campaign.name
         campaign.name = data.get('name', campaign.name)
         campaign.description = data.get('description', campaign.description)
         campaign.target_segment = data.get('target_segment', campaign.target_segment)
@@ -226,10 +292,27 @@ def manage_campaign(campaign_id):
         campaign.status = data.get('status', campaign.status)
         campaign.is_active = data.get('is_active', campaign.is_active)
 
+        # Atualizar nome do pipeline correspondente se o nome da campanha mudou
+        if campaign.name != old_name and campaign.pipeline_id:
+            from models import Pipeline
+            p = Pipeline.query.get(campaign.pipeline_id)
+            if p:
+                p.name = f"Prospecção: {campaign.name}"
+
         db.session.commit()
         return api_response(success=True)
 
     if request.method == 'DELETE':
+        if campaign.pipeline_id:
+            from models import Pipeline, Lead
+            p = Pipeline.query.get(campaign.pipeline_id)
+            if p:
+                # Desassociar os leads desse pipeline/estágios para evitar violação de integridade referencial
+                Lead.query.filter_by(pipeline_id=p.id).update({
+                    'pipeline_id': None,
+                    'pipeline_stage_id': None
+                }, synchronize_session=False)
+                db.session.delete(p)
         db.session.delete(campaign)
         db.session.commit()
         return api_response(success=True)
@@ -329,6 +412,7 @@ def generate_message(lead_id):
 
     lead.in_execution = True
     lead.prospecting_status = 'em_execucao'
+    sync_prospecting_stage(lead, 'em_execucao')
     db.session.commit()
 
     campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id) if lead.prospecting_campaign_id else None
@@ -387,6 +471,7 @@ def generate_message(lead_id):
             lead.prospecting_status = 'aguardando_aprovacao'
             lead.last_angle = angle
             lead.in_execution = False
+            sync_prospecting_stage(lead, 'aguardando_aprovacao')
 
             db.session.commit()
 
@@ -476,6 +561,7 @@ def approve_message(lead_id, message_id):
 
                 lead.last_contact_at = datetime.utcnow()
                 lead.prospecting_status = 'contatado'
+                sync_prospecting_stage(lead, 'contatado')
 
                 if lead.prospecting_campaign_id:
                     campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
@@ -524,6 +610,7 @@ def reject_message(lead_id, message_id):
 
     lead.prospecting_status = 'novo'
     lead.in_execution = False
+    sync_prospecting_stage(lead, 'novo')
     db.session.commit()
 
     return api_response(success=True)
@@ -540,9 +627,21 @@ def update_lead_status(lead_id):
 
     lead.prospecting_status = data.get('status', lead.prospecting_status)
     lead.preferred_channel = data.get('preferred_channel', lead.preferred_channel)
-    lead.prospecting_campaign_id = data.get('campaign_id', lead.prospecting_campaign_id)
     lead.lead_score = data.get('score', lead.lead_score)
 
+    new_campaign_id = data.get('campaign_id')
+    if new_campaign_id and new_campaign_id != lead.prospecting_campaign_id:
+        campaign = ProspectingCampaign.query.get(new_campaign_id)
+        if campaign and campaign.company_id == current_user.company_id:
+            lead.prospecting_campaign_id = campaign.id
+            if campaign.pipeline_id:
+                lead.pipeline_id = campaign.pipeline_id
+                from models import PipelineStage
+                first_stage = PipelineStage.query.filter_by(pipeline_id=campaign.pipeline_id).order_by(PipelineStage.order).first()
+                if first_stage:
+                    lead.pipeline_stage_id = first_stage.id
+
+    sync_prospecting_stage(lead, lead.prospecting_status)
     db.session.commit()
 
     return api_response(success=True)
@@ -572,6 +671,7 @@ def resume_lead(lead_id):
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
 
     lead.prospecting_status = 'novo'
+    sync_prospecting_stage(lead, 'novo')
     db.session.commit()
 
     return api_response(success=True)
@@ -587,6 +687,7 @@ def discard_lead(lead_id):
 
     lead.prospecting_status = 'descartado'
     lead.in_execution = False
+    sync_prospecting_stage(lead, 'descartado')
     db.session.commit()
 
     return api_response(success=True)
@@ -606,9 +707,126 @@ def add_to_campaign(lead_id):
         campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
         lead.prospecting_campaign_id = campaign_id
         lead.prospecting_status = 'novo'
+        
+        # Associar o lead ao pipeline e primeiro estágio correspondente
+        if campaign.pipeline_id:
+            lead.pipeline_id = campaign.pipeline_id
+            from models import PipelineStage
+            first_stage = PipelineStage.query.filter_by(pipeline_id=campaign.pipeline_id).order_by(PipelineStage.order).first()
+            if first_stage:
+                lead.pipeline_stage_id = first_stage.id
+        
         db.session.commit()
 
     return api_response(success=True)
+
+
+@prospecting_bp.route('/api/prospecting/base-leads')
+@login_required
+def list_base_leads():
+    """Lista leads da base do CRM disponíveis para adicionar a uma campanha."""
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    search = request.args.get('q', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = 30
+    only_without_campaign = request.args.get('only_free', 'false').lower() == 'true'
+
+    query = Lead.query.filter_by(company_id=current_user.company_id)
+
+    # Filtro: apenas leads sem campanha associada
+    if only_without_campaign:
+        query = query.filter(Lead.prospecting_campaign_id.is_(None))
+
+    # Busca por nome, empresa ou telefone
+    if search:
+        like = f'%{search}%'
+        query = query.filter(
+            db.or_(
+                Lead.name.ilike(like),
+                Lead.email.ilike(like),
+                Lead.phone.ilike(like)
+            )
+        )
+
+    total = query.count()
+    leads = query.order_by(Lead.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    data = []
+    for l in leads:
+        data.append({
+            'id': l.id,
+            'name': l.name,
+            'email': l.email or '',
+            'phone': l.phone or l.whatsapp or '',
+            'interest': l.interest or '',
+            'status': l.status or '',
+            'has_campaign': l.prospecting_campaign_id is not None,
+            'campaign_id': l.prospecting_campaign_id,
+            'preferred_channel': l.preferred_channel or 'whatsapp',
+        })
+
+    return api_response(data={'leads': data, 'total': total, 'page': page, 'per_page': per_page})
+
+
+@prospecting_bp.route('/api/prospecting/bulk-add-to-campaign', methods=['POST'])
+@login_required
+def bulk_add_to_campaign():
+    """Adiciona múltiplos leads da base a uma campanha de prospecção."""
+    if not current_user.company.has_feature('prospecting'):
+        return api_response(success=False, error='Acesso negado', status=403)
+
+    data = request.json or {}
+    campaign_id = data.get('campaign_id')
+    lead_ids = data.get('lead_ids', [])
+    preferred_channel = data.get('preferred_channel', 'whatsapp')
+
+    if not campaign_id or not lead_ids:
+        return api_response(success=False, error='Informe a campanha e ao menos um lead.', status=400)
+
+    campaign = ProspectingCampaign.query.filter_by(
+        id=campaign_id, company_id=current_user.company_id
+    ).first_or_404()
+
+    from models import PipelineStage
+    first_stage = None
+    if campaign.pipeline_id:
+        first_stage = PipelineStage.query.filter_by(
+            pipeline_id=campaign.pipeline_id
+        ).order_by(PipelineStage.order).first()
+
+    added = 0
+    already_in = 0
+    for lead_id in lead_ids:
+        lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first()
+        if not lead:
+            continue
+
+        if lead.prospecting_campaign_id and lead.prospecting_campaign_id == campaign_id:
+            already_in += 1
+            continue
+
+        lead.prospecting_campaign_id = campaign_id
+        lead.prospecting_status = 'novo'
+        if not lead.preferred_channel:
+            lead.preferred_channel = preferred_channel
+
+        if campaign.pipeline_id:
+            lead.pipeline_id = campaign.pipeline_id
+            if first_stage:
+                lead.pipeline_stage_id = first_stage.id
+
+        added += 1
+
+    db.session.commit()
+
+    return api_response(data={
+        'added': added,
+        'already_in': already_in,
+        'message': f'{added} lead(s) adicionado(s) à campanha "{campaign.name}".'
+    })
+
 
 
 @prospecting_bp.route('/api/prospecting/search')
@@ -866,6 +1084,9 @@ def import_lead():
             first_s = PipelineStage.query.filter_by(pipeline_id=default_p.id).order_by(PipelineStage.order).first()
             if first_s: target_stage_id = first_s.id
 
+    # Verificar se o pipeline de destino pertence a alguma campanha de prospecção
+    campaign = ProspectingCampaign.query.filter_by(pipeline_id=target_pipeline_id, company_id=current_user.company_id).first()
+
     from models import Integration
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='google_maps').first()
     api_key = integration.api_key if integration and integration.is_active else None
@@ -917,7 +1138,8 @@ def import_lead():
                     gmb_rating=p.get('rating', 0),
                     gmb_reviews=p.get('user_ratings_total', 0),
                     notes=f"Importado via Google Maps em {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}",
-                    prospecting_status='novo'
+                    prospecting_status='novo',
+                    prospecting_campaign_id=campaign.id if campaign else None
                 )
                 db.session.add(new_lead)
             imported_count += 1

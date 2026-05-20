@@ -335,7 +335,7 @@ def save_integration():
         integration.api_key_last4 = last4
     
     # SMTP specific fields
-    if provider == 'smtp':
+    if provider == 'smtp' or provider == 'sendgrid':
         integration.smtp_host = data.get('smtp_host')
         try:
             integration.smtp_port = int(data.get('smtp_port')) if data.get('smtp_port') else None
@@ -344,7 +344,14 @@ def save_integration():
         integration.smtp_user = data.get('smtp_user')
         integration.sender_name = data.get('sender_name')
         integration.sender_email = data.get('sender_email')
-        integration.ssl_tls = data.get('ssl_tls', True)
+        
+        # Normalizar ssl_tls com base nas convenções de porta
+        ssl_tls_val = data.get('ssl_tls', True)
+        if integration.smtp_port in [587, 25]:
+            ssl_tls_val = False
+        elif integration.smtp_port == 465:
+            ssl_tls_val = True
+        integration.ssl_tls = ssl_tls_val
 
     integration.updated_at = datetime.utcnow()
     db.session.commit()
@@ -397,7 +404,7 @@ def test_integration():
             db.session.commit()
             return jsonify({'success': False, 'error': str(e)}), 500
 
-    elif provider == 'smtp':
+    elif provider == 'smtp' or provider == 'sendgrid':
         try:
             password = decrypt_api_key(integration.api_key_encrypted) if integration.api_key_encrypted else None
             host = integration.smtp_host
@@ -417,23 +424,52 @@ def test_integration():
             msg['From'] = f"{sender_display} <{sender_addr}>"
             msg['To'] = sender_addr
             
-            logger.info(f"[SMTP_TEST] Connecting to {host}:{port} (SSL: {integration.ssl_tls})")
+            # Resolver flag de SSL/TLS com base nas convenções de porta para evitar erros de handshake
+            use_ssl = integration.ssl_tls
+            if port in [587, 25]:
+                use_ssl = False
+            elif port == 465:
+                use_ssl = True
+
+            logger.info(f"[SMTP_TEST] Connecting to {host}:{port} (Requested SSL: {integration.ssl_tls}, Resolved SSL: {use_ssl})")
             
-            if integration.ssl_tls:
+            if use_ssl:
                 # SSL (Port 465)
-                context = ssl.create_default_context()
-                with smtplib.SMTP_SSL(host, port, context=context, timeout=15) as server:
-                    server.login(user, password)
-                    server.send_message(msg)
+                try:
+                    context = ssl.create_default_context()
+                    with smtplib.SMTP_SSL(host, port, context=context, timeout=15) as server:
+                        server.login(user, password)
+                        server.send_message(msg)
+                except Exception as ssl_err:
+                    logger.warning(f"Standard SMTP_SSL verification failed ({ssl_err}), retrying with verification disabled...")
+                    context = ssl.create_default_context()
+                    context.check_hostname = False
+                    context.verify_mode = ssl.CERT_NONE
+                    with smtplib.SMTP_SSL(host, port, context=context, timeout=15) as server:
+                        server.login(user, password)
+                        server.send_message(msg)
             else:
                 # STARTTLS (Port 587) or Plain
-                with smtplib.SMTP(host, port, timeout=15) as server:
-                    try:
-                        server.starttls(context=ssl.create_default_context())
-                    except Exception as stls_err:
-                        logger.warning(f"STARTTLS failed (might be plain connection): {stls_err}")
-                    server.login(user, password)
-                    server.send_message(msg)
+                try:
+                    with smtplib.SMTP(host, port, timeout=15) as server:
+                        try:
+                            server.starttls(context=ssl.create_default_context())
+                        except Exception as stls_err:
+                            logger.warning(f"STARTTLS failed (might be plain connection): {stls_err}")
+                        server.login(user, password)
+                        server.send_message(msg)
+                except Exception as first_try_err:
+                    logger.warning(f"Standard STARTTLS/SMTP connection failed ({first_try_err}), retrying with verification disabled...")
+                    with smtplib.SMTP(host, port, timeout=15) as server:
+                        try:
+                            context = ssl.create_default_context()
+                            context.check_hostname = False
+                            context.verify_mode = ssl.CERT_NONE
+                            server.starttls(context=context)
+                        except Exception as stls_err_2:
+                            logger.warning(f"Fallback STARTTLS failed: {stls_err_2}")
+                        server.login(user, password)
+                        server.send_message(msg)
             
             integration.status = 'active'
             integration.updated_at = datetime.utcnow()

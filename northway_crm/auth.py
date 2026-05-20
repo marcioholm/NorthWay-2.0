@@ -114,8 +114,8 @@ def check_saas_status():
         if not request.endpoint:
             return
             
-        if 'static' in request.endpoint or 'auth.' in request.endpoint or 'checkout' in request.endpoint or 'master.sync_schema' in request.endpoint or 'ebook_institutional' in request.endpoint:
-            # Explicitly allow setup_company, payment routes, and checkout
+        if 'static' in request.endpoint or 'auth.' in request.endpoint or 'checkout' in request.endpoint or 'master.sync_schema' in request.endpoint or 'ebook_institutional' in request.endpoint or 'diagnostic_raiox.' in request.endpoint:
+            # Explicitly allow setup_company, payment routes, checkout and public diagnostic
             return
             
         # ALLOW SYSTEM ADMIN ROUTES (FORCE MIGRATIONS)

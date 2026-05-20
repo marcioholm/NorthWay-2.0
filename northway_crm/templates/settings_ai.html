@@ -142,9 +142,15 @@
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Modelo Padrão</label>
-                <select id="model" name="model"
+                <select id="model" name="model" onchange="toggleCustomModelInput()"
                     class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
                 </select>
+            </div>
+            <div id="customModelContainer" class="hidden">
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">ID do Modelo Personalizado</label>
+                <input type="text" id="customModel" name="customModel"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"
+                    placeholder="Ex: openai/gpt-oss-120b:free">
             </div>
             <div class="flex gap-3 pt-2">
                 <button type="button" onclick="testCredential()"
@@ -313,6 +319,16 @@ let currentIntegration = null;
 const existingCredentials = {{ credentials|tojson }};
 const existingIntegrations = {{ integrations|tojson }};
 
+function toggleCustomModelInput() {
+    const modelSelect = document.getElementById('model');
+    const customModelContainer = document.getElementById('customModelContainer');
+    if (modelSelect.value === 'custom') {
+        customModelContainer.classList.remove('hidden');
+    } else {
+        customModelContainer.classList.add('hidden');
+    }
+}
+
 function openProviderModal(provider, name) {
     currentProvider = provider;
     document.getElementById('providerModalTitle').textContent = 'Configurar ' + name;
@@ -320,15 +336,30 @@ function openProviderModal(provider, name) {
 
     const modelSelect = document.getElementById('model');
     modelSelect.innerHTML = '';
-    providerModels[provider].forEach(m => {
-        modelSelect.innerHTML += `<option value="${m}">${m}</option>`;
-    });
+    
+    if (providerModels[provider]) {
+        providerModels[provider].forEach(m => {
+            modelSelect.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+    }
+    modelSelect.innerHTML += `<option value="custom">Outro (Digitar ID do Modelo)...</option>`;
 
     document.getElementById('baseUrl').value = '';
+    document.getElementById('customModel').value = '';
+    document.getElementById('customModelContainer').classList.add('hidden');
 
     const existing = existingCredentials.find(c => c.provider === provider);
     if (existing) {
-        if (existing.model) modelSelect.value = existing.model;
+        if (existing.model) {
+            const isStandard = providerModels[provider] && providerModels[provider].includes(existing.model);
+            if (isStandard) {
+                modelSelect.value = existing.model;
+            } else {
+                modelSelect.value = 'custom';
+                document.getElementById('customModel').value = existing.model;
+                document.getElementById('customModelContainer').classList.remove('hidden');
+            }
+        }
         if (existing.base_url) document.getElementById('baseUrl').value = existing.base_url;
     }
 
@@ -360,6 +391,15 @@ document.getElementById('providerForm').addEventListener('submit', async functio
         return;
     }
 
+    let modelVal = document.getElementById('model').value;
+    if (modelVal === 'custom') {
+        modelVal = document.getElementById('customModel').value.trim();
+        if (!modelVal) {
+            Swal.fire({icon: 'warning', title: 'Atenção', text: 'Por favor, informe o ID do modelo personalizado.'});
+            return;
+        }
+    }
+
     Swal.fire({
         title: 'Salvando...',
         allowOutsideClick: false,
@@ -369,7 +409,7 @@ document.getElementById('providerForm').addEventListener('submit', async functio
     const data = {
         provider: provider,
         api_key: apiKey,
-        model: document.getElementById('model').value,
+        model: modelVal,
         base_url: document.getElementById('baseUrl').value
     };
 

@@ -1466,8 +1466,10 @@ class ProspectingCampaign(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+    pipeline_id = db.Column(db.Integer, db.ForeignKey('pipeline.id'), nullable=True)
 
     company = db.relationship('Company', backref='prospecting_campaigns')
+    pipeline = db.relationship('Pipeline', backref=db.backref('prospecting_campaign', uselist=False))
     leads = db.relationship('Lead', backref='prospecting_campaign', lazy=True)
     messages = db.relationship('ProspectingMessage', backref='campaign', lazy=True)
 
