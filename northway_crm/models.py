@@ -1663,3 +1663,22 @@ class CrmAiLog(db.Model):
 
     company = db.relationship('Company', backref='crm_ai_logs')
     lead = db.relationship('Lead', backref='crm_ai_logs')
+
+
+class CRMWebhookLog(db.Model):
+    __tablename__ = 'crm_webhook_logs'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey('company.id'), nullable=True, index=True)
+    lead_id = db.Column(db.BigInteger, db.ForeignKey('lead.id'), nullable=True, index=True)
+    action = db.Column(db.Text, nullable=True)
+    webhook_url = db.Column(db.Text, nullable=True)
+    request_payload = db.Column(db.JSON, nullable=True)
+    response_payload = db.Column(db.JSON, nullable=True)
+    status_code = db.Column(db.Integer, nullable=True)
+    success = db.Column(db.Boolean, default=False)
+    error_message = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+
+    company = db.relationship('Company', backref='crm_webhook_logs')
+    lead = db.relationship('Lead', backref='crm_webhook_logs')
+

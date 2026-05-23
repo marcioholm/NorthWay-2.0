@@ -706,12 +706,15 @@ async function loadCampaignDetails(campaignId) {
                     'novo': 'bg-blue-100 text-blue-700',
                     'em_execucao': 'bg-yellow-100 text-yellow-700',
                     'aguardando_aprovacao': 'bg-purple-100 text-purple-700',
+                    'pending_approval': 'bg-purple-100 text-purple-700',
                     'contatado': 'bg-green-100 text-green-700',
+                    'sent': 'bg-green-100 text-green-700',
                     'respondeu': 'bg-green-200 text-green-800',
                     'interessado': 'bg-green-300 text-green-900',
                     'reuniao': 'bg-emerald-100 text-emerald-700',
                     'descartado': 'bg-gray-100 text-gray-700',
-                    'erro': 'bg-red-100 text-red-700'
+                    'erro': 'bg-red-100 text-red-700',
+                    'failed': 'bg-red-100 text-red-700'
                 };
                 
                 const channelIcon = lead.preferred_channel === 'whatsapp' ? 'message-circle' : 'mail';
@@ -759,7 +762,7 @@ async function loadCampaignDetails(campaignId) {
                                     class="px-3 py-1 bg-green-500 text-white rounded text-xs font-bold hover:bg-green-600">
                                     <i data-lucide="check" class="w-3 h-3 inline mr-1"></i>Aprovar
                                 </button>
-                                <button onclick="rejectMessage(${msg.id})" 
+                                <button onclick="rejectMessage(${msg.lead_id}, ${msg.id})" 
                                     class="px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs font-bold hover:bg-gray-300">
                                     <i data-lucide="x" class="w-3 h-3 inline mr-1"></i>Rejeitar
                                 </button>
@@ -787,56 +790,104 @@ async function loadCampaignDetails(campaignId) {
 }
 
 async function approveMessage(leadId, messageId) {
-    if (!confirm('Aprovar esta mensagem e enviar via N8N?')) return;
+    const confirmResult = await Swal.fire({
+        title: 'Aprovar e Enviar?',
+        text: 'A mensagem será disparada via motor N8N.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Aprovar e Enviar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Disparando mensagem...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
     
     try {
         const resp = await fetch(`/prospecting/lead/${leadId}/approve-message/${messageId}`, {method: 'POST'});
         const result = await resp.json();
         
         if (result.success) {
-            alert('Mensagem aprovada e enviada!');
+            Swal.fire({
+                icon: 'success',
+                title: 'Enviado!',
+                text: 'Mensagem aprovada e disparada com sucesso.',
+                timer: 1500,
+                showConfirmButton: false
+            });
             loadCampaignDetails(currentCampaignId);
         } else {
-            alert(result.error || 'Erro ao aprovar mensagem');
+            Swal.fire({
+                icon: 'error',
+                title: 'Falha ao disparar',
+                text: result.error || 'Erro ao aprovar mensagem'
+            });
         }
     } catch(err) {
-        alert('Erro ao aprovar mensagem');
+        Swal.fire({
+            icon: 'error',
+            title: 'Falha ao disparar',
+            text: 'Não foi possível se comunicar com o servidor.'
+        });
     }
 }
 
-async function rejectMessage(messageId) {
-    if (!confirm('Rejeitar esta mensagem?')) return;
-    
-    // We need lead_id from the message - let's find it from pending messages
-    const pendingEl = document.getElementById('pendingMessagesList');
-    const messageDiv = pendingEl.querySelector(`[onclick*="rejectMessage(${messageId})"]`)?.closest('.p-4');
+async function rejectMessage(leadId, messageId) {
+    const confirmResult = await Swal.fire({
+        title: 'Rejeitar abordagem?',
+        text: 'A mensagem será descartada e o lead voltará para novo status.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Sim, rejeitar!',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Rejeitando abordagem...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
     
     try {
-        // Get first pending message to find lead_id or fetch details
-        const resp = await fetch(`/prospecting/campaign/${currentCampaignId}/details`);
-        const result = await resp.json();
-        
-        if (!result.success) {
-            alert('Erro ao buscar informações da mensagem');
-            return;
-        }
-        
-        const msg = result.data.pending_messages.find(m => m.id === messageId);
-        if (!msg) {
-            alert('Mensagem não encontrada');
-            return;
-        }
-        
-        const rejectResp = await fetch(`/prospecting/lead/${msg.lead_id}/reject-message/${messageId}`, {method: 'POST'});
+        const rejectResp = await fetch(`/prospecting/lead/${leadId}/reject-message/${messageId}`, {method: 'POST'});
         const rejectResult = await rejectResp.json();
         
         if (rejectResult.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Rejeitada!',
+                text: 'Abordagem rejeitada com sucesso.',
+                timer: 1500,
+                showConfirmButton: false
+            });
             loadCampaignDetails(currentCampaignId);
         } else {
-            alert(rejectResult.error || 'Erro ao rejeitar mensagem');
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro ao rejeitar',
+                text: rejectResult.error || 'Erro ao rejeitar mensagem'
+            });
         }
     } catch(err) {
-        alert('Erro ao rejeitar mensagem');
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro ao rejeitar',
+            text: 'Não foi possível se comunicar com o servidor.'
+        });
     }
 }
 

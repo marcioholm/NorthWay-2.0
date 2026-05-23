@@ -239,6 +239,32 @@ def message_generated():
         return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
     if success:
+        # Evitar duplicatas: se já existe uma mensagem pendente para este lead, não criar outra
+        existing = ProspectingMessage.query.filter(
+            ProspectingMessage.lead_id == lead_id,
+            ProspectingMessage.status.in_(['aguardando_aprovacao', 'pending_approval'])
+        ).first()
+
+        if existing:
+            # Atualizar a mensagem existente com o conteúdo gerado
+            existing.content = message
+            if model:
+                existing.ai_model = model
+            db.session.commit()
+
+            lead.prospecting_status = 'aguardando_aprovacao'
+            if angle:
+                lead.last_angle = angle
+            lead.in_execution = False
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'message_id': existing.id,
+                'lead_status': lead.prospecting_status,
+                'updated': True
+            })
+
         prospecting_msg = ProspectingMessage(
             company_id=tenant_id,
             lead_id=lead_id,

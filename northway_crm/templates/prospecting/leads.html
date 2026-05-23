@@ -93,12 +93,15 @@
                                     'novo': 'bg-gray-100 text-gray-700',
                                     'em_execucao': 'bg-purple-100 text-purple-700',
                                     'aguardando_aprovacao': 'bg-yellow-100 text-yellow-700',
+                                    'pending_approval': 'bg-yellow-100 text-yellow-700',
                                     'contatado': 'bg-green-100 text-green-700',
+                                    'sent': 'bg-green-100 text-green-700',
                                     'respondeu': 'bg-teal-100 text-teal-700',
                                     'interessado': 'bg-indigo-100 text-indigo-700',
                                     'reuniao': 'bg-rose-100 text-rose-700',
                                     'sem_resposta': 'bg-orange-100 text-orange-700',
                                     'erro': 'bg-red-100 text-red-700',
+                                    'failed': 'bg-red-100 text-red-700',
                                     'pausado': 'bg-gray-100 text-gray-500'
                                 } %}
                                 <span class="px-3 py-1 rounded-full text-xs font-bold uppercase {{ status_colors.get(lead.prospecting_status, 'bg-gray-100 text-gray-700') }}">
@@ -133,7 +136,7 @@
                                         class="p-2 text-gray-400 hover:text-northway-red hover:bg-red-50 rounded-lg transition-colors" title="Ver Detalhe">
                                         <i data-lucide="eye" class="w-4 h-4"></i>
                                     </a>
-                                    {% if lead.prospecting_status == 'novo' %}
+                                    {% if lead.prospecting_status in ['novo', 'failed', 'erro'] or not lead.prospecting_status %}
                                     <button onclick="generateMessage({{ lead.id }})"
                                         class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Gerar Mensagem IA">
                                         <i data-lucide="sparkles" class="w-4 h-4"></i>
@@ -196,6 +199,15 @@ function applyFilters() {
 }
 
 async function generateMessage(leadId) {
+    Swal.fire({
+        title: 'Gerando mensagem...',
+        text: 'Por favor, aguarde enquanto o motor IA elabora a mensagem.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
     try {
         const response = await fetch(`/prospecting/lead/${leadId}/generate-message`, {
             method: 'POST',
@@ -203,12 +215,28 @@ async function generateMessage(leadId) {
         });
         const result = await response.json();
         if (result.success) {
-            location.reload();
+            Swal.fire({
+                icon: 'success',
+                title: 'Mensagem gerada com sucesso',
+                text: 'A abordagem foi salva e está aguardando aprovação.',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
         } else {
-            alert(result.error || 'Erro ao gerar mensagem');
+            Swal.fire({
+                icon: 'error',
+                title: 'Falha ao conectar ao motor IA',
+                text: result.error || 'Erro ao gerar mensagem'
+            });
         }
     } catch(err) {
-        alert('Erro ao gerar mensagem');
+        Swal.fire({
+            icon: 'error',
+            title: 'Falha ao conectar ao motor IA',
+            text: 'Não foi possível se comunicar com o servidor.'
+        });
     }
 }
 
