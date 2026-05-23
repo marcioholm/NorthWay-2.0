@@ -570,6 +570,23 @@ def update_settings():
     return api_response(success=True)
 
 
+def _save_message(lead, channel, content, angle, model):
+    """Cria um registro ProspectingMessage e retorna o resultado."""
+    msg = ProspectingMessage(
+        company_id=lead.company_id,
+        lead_id=lead.id,
+        campaign_id=lead.prospecting_campaign_id,
+        channel=channel,
+        type='outbound',
+        status='pending_approval',
+        content=content,
+        ai_model=model,
+        created_at=datetime.utcnow()
+    )
+    db.session.add(msg)
+    return {'channel': channel, 'message_id': msg.id, 'content': content, 'status': 'pending_approval'}
+
+
 def _generate_single_message(lead, setting, channel):
     """Gera uma mensagem para um lead em um canal específico."""
     payload = {
@@ -595,19 +612,7 @@ def _generate_single_message(lead, setting, channel):
     if message_text:
         angle = response_payload.get('angle', 'Atrair')
         model = response_payload.get('model', 'llama-3.1-8b-instant')
-        msg = ProspectingMessage(
-            company_id=lead.company_id,
-            lead_id=lead.id,
-            campaign_id=lead.prospecting_campaign_id,
-            channel=channel,
-            type='outbound',
-            status='pending_approval',
-            content=message_text,
-            ai_model=model,
-            created_at=datetime.utcnow()
-        )
-        db.session.add(msg)
-        return {'channel': channel, 'message_id': msg.id, 'content': message_text, 'status': 'pending_approval'}
+        return _save_message(lead, channel, message_text, angle, model)
 
     return {'channel': channel, 'status': 'processing'}
 
@@ -632,31 +637,35 @@ def generate_message(lead_id):
     if request.is_json:
         channel = request.json.get('channel', channel)
 
-    channels = ['whatsapp', 'email'] if channel == 'ambos' else [channel]
+    try:
+        lead.in_execution = True
+        lead.prospecting_status = 'em_execucao'
+        sync_prospecting_stage(lead, 'em_execucao')
+        db.session.commit()
 
-    final_status = 'novo'
-    results = []
-    has_any_success = False
+        # Sempre chama o webhook uma vez com o channel padrão (n8n gera 1 texto)
+        result = _generate_single_message(lead, setting, 'whatsapp')
 
-    for ch in channels:
-        try:
-            lead.in_execution = True
-            lead.prospecting_status = 'em_execucao'
-            sync_prospecting_stage(lead, 'em_execucao')
-            db.session.commit()
+        if channel == 'ambos' and result.get('status') == 'pending_approval':
+            # Duplica a mensagem para email com o mesmo conteúdo
+            email_result = _save_message(lead, 'email', result['content'],
+                                          result.get('angle'), result.get('model'))
+            results = [result, email_result]
+        else:
+            results = [result]
 
-            result = _generate_single_message(lead, setting, ch)
-            results.append(result)
+        if any(r.get('status') == 'pending_approval' for r in results):
+            lead.prospecting_status = 'pending_approval'
 
-            if result.get('status') == 'pending_approval':
-                has_any_success = True
-                final_status = 'pending_approval'
-        except Exception as e:
-            results.append({'channel': ch, 'status': 'failed', 'error': str(e)})
+    except Exception as e:
+        lead.in_execution = False
+        lead.prospecting_status = 'failed'
+        db.session.commit()
+        return api_response(success=False, error=f'Erro ao gerar mensagem: {str(e)}', status=500)
 
     lead.in_execution = False
-    lead.prospecting_status = final_status
-    sync_prospecting_stage(lead, final_status)
+    if lead.prospecting_status != 'pending_approval':
+        lead.prospecting_status = 'novo'
     db.session.commit()
 
     return api_response(data={'results': results})
