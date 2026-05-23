@@ -79,7 +79,7 @@
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Em Execução</p>
             </div>
 
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <a href="{{ url_for('prospecting.approvals') }}" class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm block hover:ring-2 hover:ring-yellow-300 transition-all">
                 <div class="flex items-center justify-between mb-3">
                     <div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center">
                         <i data-lucide="check-circle" class="w-5 h-5 text-yellow-500"></i>
@@ -87,7 +87,7 @@
                 </div>
                 <p class="text-3xl font-black text-gray-900">{{ aguardando_aprovacao }}</p>
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Aguardando Aprovação</p>
-            </div>
+            </a>
 
             <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                 <div class="flex items-center justify-between mb-3">

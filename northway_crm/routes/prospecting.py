@@ -146,6 +146,22 @@ def dashboard():
                            campaigns=campaigns)
 
 
+@prospecting_bp.route('/prospecting/approvals')
+@login_required
+def approvals():
+    if not current_user.company_id:
+        return redirect(url_for('dashboard.home'))
+
+    company_id = current_user.company_id
+
+    pending_messages = ProspectingMessage.query.filter(
+        ProspectingMessage.company_id == company_id,
+        ProspectingMessage.status.in_(['aguardando_aprovacao', 'pending_approval'])
+    ).order_by(ProspectingMessage.created_at.desc()).all()
+
+    return render_template('prospecting/approvals.html', messages=pending_messages)
+
+
 @prospecting_bp.route('/prospecting/leads')
 @login_required
 def leads():
