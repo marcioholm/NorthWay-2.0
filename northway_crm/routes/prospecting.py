@@ -795,7 +795,12 @@ def approve_message(lead_id, message_id):
         'action': action,
         'tenant_id': current_user.company_id,
         'lead_id': lead.id,
-        'message_id': message.id
+        'message_id': message.id,
+        'channel': message.channel,
+        'content': message.content,
+        'lead_name': lead.name,
+        'lead_email': lead.email,
+        'lead_phone': lead.phone
     }
 
     try:
