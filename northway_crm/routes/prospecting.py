@@ -887,6 +887,29 @@ def reject_message(lead_id, message_id):
     return api_response(success=True)
 
 
+@prospecting_bp.route('/prospecting/message/<int:message_id>/edit', methods=['PUT'])
+@login_required
+def edit_message(message_id):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
+
+    message = ProspectingMessage.query.filter_by(id=message_id, company_id=current_user.company_id).first_or_404()
+
+    if message.status not in ['pendente', 'aguardando_aprovacao', 'pending_approval']:
+        return api_response(success=False, error='Só é possível editar mensagens pendentes', status=400)
+
+    data = request.json or {}
+    new_content = data.get('content')
+    if not new_content or not new_content.strip():
+        return api_response(success=False, error='Conteúdo não pode ficar vazio', status=400)
+
+    message.content = new_content.strip()
+    db.session.commit()
+
+    return api_response(data={'message_id': message.id, 'content': message.content})
+
+
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/update-status', methods=['POST'])
 @login_required
 def update_lead_status(lead_id):
