@@ -1076,15 +1076,6 @@ async function rejectMessage(leadId, messageId) {
 }
 
 // ─── Geração de Mensagens ────────────────────────────────────────────────
-async function _callGenerate(leadId, channel) {
-    const resp = await fetch(`/prospecting/lead/${leadId}/generate-message`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({channel})
-    });
-    return resp.json();
-}
-
 async function generateLeadMessage(leadId, btn) {
     const originalHtml = btn.innerHTML;
     btn.disabled = true;
@@ -1092,22 +1083,23 @@ async function generateLeadMessage(leadId, btn) {
     lucide.createIcons();
 
     const channel = document.getElementById('genChannelLeads')?.value || document.getElementById('genChannelFunnel')?.value || 'whatsapp';
-    const channels = channel === 'ambos' ? ['whatsapp', 'email'] : [channel];
-    let success = true;
 
     try {
-        for (const ch of channels) {
-            const result = await _callGenerate(leadId, ch);
-            if (!result.success && !result.data) {
-                success = false;
-                Swal.fire({icon: 'error', title: 'Erro', text: result.error || `Erro ao gerar via ${ch}`});
-                break;
-            }
-        }
+        const resp = await fetch(`/prospecting/lead/${leadId}/generate-message`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({channel})
+        });
+        const result = await resp.json();
 
-        if (success) {
-            Swal.fire({icon: 'success', title: 'Gerada!', text: `Mensagem(ns) gerada(s) com sucesso.`, timer: 1500, showConfirmButton: false});
+        if (result.success || result.data) {
+            const count = result.data?.results?.length || 1;
+            Swal.fire({icon: 'success', title: `Gerada(s)!`, text: `${count} mensagem(ns) gerada(s).`, timer: 1500, showConfirmButton: false});
             loadCampaignDetails(currentCampaignId);
+        } else {
+            Swal.fire({icon: 'error', title: 'Erro', text: result.error || 'Erro ao gerar mensagem'});
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
         }
     } catch(err) {
         Swal.fire({icon: 'error', title: 'Erro', text: 'Erro ao gerar mensagem'});
