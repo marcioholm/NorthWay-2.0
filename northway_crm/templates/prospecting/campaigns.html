@@ -349,8 +349,18 @@
 
             <!-- Tab: Pending Messages -->
             <div id="tabContentPending" class="hidden">
-                <div id="pendingMessagesSection" class="hidden">
+                <div id="pendingMessagesSection">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                            <i data-lucide="alert-circle" class="w-4 h-4 text-purple-500"></i>
+                            Mensagens Aguardando Aprovação
+                        </h4>
+                        <span class="text-xs text-gray-400">Atualiza automaticamente a cada 30s</span>
+                    </div>
                     <div id="pendingMessagesList" class="space-y-2"></div>
+                </div>
+                <div id="noPendingMessages" class="hidden py-10 text-center text-gray-400 text-sm">
+                    Nenhuma mensagem aguardando aprovação.
                 </div>
             </div>
 
@@ -818,9 +828,11 @@ async function loadCampaignDetails(campaignId) {
         // Renderizar Mensagens Pendentes
         const pendingContainer = document.getElementById('pendingMessagesList');
         pendingContainer.innerHTML = '';
+        const noPendingEl = document.getElementById('noPendingMessages');
         
         if (data.pending_messages && data.pending_messages.length > 0) {
             document.getElementById('tabContentPending').classList.remove('hidden');
+            noPendingEl.classList.add('hidden');
             data.pending_messages.forEach(msg => {
                 const channelIcon = msg.channel === 'whatsapp' ? 'message-circle' : 'mail';
                 pendingContainer.innerHTML += `
@@ -848,6 +860,9 @@ async function loadCampaignDetails(campaignId) {
                     </div>
                 `;
             });
+        } else {
+            document.getElementById('tabContentPending').classList.remove('hidden');
+            noPendingEl.classList.remove('hidden');
         }
         
         // Renderizar Funil

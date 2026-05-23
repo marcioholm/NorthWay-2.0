@@ -570,6 +570,48 @@ def update_settings():
     return api_response(success=True)
 
 
+def _generate_single_message(lead, setting, channel):
+    """Gera uma mensagem para um lead em um canal específico."""
+    payload = {
+        'action': 'generate_message',
+        'tenant_id': lead.company_id,
+        'lead_id': lead.id,
+        'campaign_id': lead.prospecting_campaign_id,
+        'channel': channel
+    }
+
+    success, response_payload, error_msg = send_outbound_webhook(
+        tenant_id=lead.company_id,
+        lead_id=lead.id,
+        action='generate_message',
+        webhook_url=setting.generate_message_webhook_url,
+        payload=payload
+    )
+
+    if not success:
+        raise Exception(error_msg or "Erro ao chamar o webhook do n8n")
+
+    message_text = response_payload.get('message', '') if response_payload else ''
+    if message_text:
+        angle = response_payload.get('angle', 'Atrair')
+        model = response_payload.get('model', 'llama-3.1-8b-instant')
+        msg = ProspectingMessage(
+            company_id=lead.company_id,
+            lead_id=lead.id,
+            campaign_id=lead.prospecting_campaign_id,
+            channel=channel,
+            type='outbound',
+            status='pending_approval',
+            content=message_text,
+            ai_model=model,
+            created_at=datetime.utcnow()
+        )
+        db.session.add(msg)
+        return {'channel': channel, 'message_id': msg.id, 'content': message_text, 'status': 'pending_approval'}
+
+    return {'channel': channel, 'status': 'processing'}
+
+
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/generate-message', methods=['POST'])
 @login_required
 def generate_message(lead_id):
@@ -583,7 +625,6 @@ def generate_message(lead_id):
         return api_response(success=False, error='Já existe uma mensagem sendo gerada para este lead', status=400)
 
     setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
-
     if not setting or not setting.generate_message_webhook_url:
         return api_response(success=False, error='Webhook de geração de mensagem não configurado', status=400)
 
@@ -591,13 +632,7 @@ def generate_message(lead_id):
     if request.is_json:
         channel = request.json.get('channel', channel)
 
-    payload = {
-        'action': 'generate_message',
-        'tenant_id': current_user.company_id,
-        'lead_id': lead.id,
-        'campaign_id': lead.prospecting_campaign_id,
-        'channel': channel
-    }
+    channels = ['whatsapp', 'email'] if channel == 'ambos' else [channel]
 
     try:
         lead.in_execution = True
@@ -605,85 +640,43 @@ def generate_message(lead_id):
         sync_prospecting_stage(lead, 'em_execucao')
         db.session.commit()
 
-        success, response_payload, error_msg = send_outbound_webhook(
-            tenant_id=current_user.company_id,
-            lead_id=lead.id,
-            action='generate_message',
-            webhook_url=setting.generate_message_webhook_url,
-            payload=payload
-        )
-
-        if success:
-            message_text = response_payload.get('message', '') if response_payload else ''
-
-            if message_text:
-                # Resposta síncrona com mensagem pronta
-                angle = response_payload.get('angle', 'Atrair')
-                model = response_payload.get('model', 'llama-3.1-8b-instant')
-
-                prospecting_msg = ProspectingMessage(
-                    company_id=current_user.company_id,
-                    lead_id=lead.id,
-                    campaign_id=lead.prospecting_campaign_id,
-                    channel=channel,
-                    type='outbound',
-                    status='pending_approval',
-                    content=message_text,
-                    ai_model=model,
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(prospecting_msg)
-
+        results = []
+        for ch in channels:
+            result = _generate_single_message(lead, setting, ch)
+            results.append(result)
+            if result.get('status') == 'pending_approval':
                 lead.prospecting_status = 'pending_approval'
-                lead.last_angle = angle
-                lead.in_execution = False
-                sync_prospecting_stage(lead, 'pending_approval')
 
-                db.session.commit()
-
-                return api_response(data={
-                    'message_id': prospecting_msg.id,
-                    'content': message_text,
-                    'status': 'pending_approval'
-                })
-
-            # Webhook retornou 202 Accepted (processamento assíncrono)
-            # O n8n chamará o callback /api/internal/prospecting/message-generated
-            lead.in_execution = False
+        lead.in_execution = False
+        if lead.prospecting_status == 'em_execucao':
             lead.prospecting_status = 'novo'
-            db.session.commit()
+        db.session.commit()
 
-            return api_response(data={
-                'status': 'processing',
-                'message': 'Mensagem sendo gerada em segundo plano. Atualize a página em instantes.'
-            })
-
-        raise Exception(error_msg or "Erro ao chamar o webhook do n8n")
+        return api_response(data={'results': results, 'status': 'completed'})
 
     except Exception as e:
         lead.in_execution = False
         lead.prospecting_status = 'failed'
         db.session.commit()
 
-        # Só criar mensagem de erro se ainda não houver uma pendente (evita sobrescrever callback)
         existing_pending = ProspectingMessage.query.filter(
             ProspectingMessage.lead_id == lead.id,
             ProspectingMessage.status.in_(['aguardando_aprovacao', 'pending_approval'])
         ).first()
 
         if not existing_pending:
-            prospecting_msg = ProspectingMessage(
+            msg = ProspectingMessage(
                 company_id=current_user.company_id,
                 lead_id=lead.id,
                 campaign_id=lead.prospecting_campaign_id,
-                channel=channel,
+                channel=channels[0],
                 type='outbound',
                 status='failed',
                 content='',
                 error_message=str(e),
                 created_at=datetime.utcnow()
             )
-            db.session.add(prospecting_msg)
+            db.session.add(msg)
             db.session.commit()
 
         return api_response(success=False, error=f'Erro ao gerar mensagem: {str(e)}', status=500)
