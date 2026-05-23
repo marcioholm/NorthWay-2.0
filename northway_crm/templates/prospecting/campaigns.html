@@ -958,7 +958,19 @@ async function loadCampaignDetails(campaignId) {
         
         loadingEl.classList.add('hidden');
         contentEl.classList.remove('hidden');
-        switchDetailsTab('leads');
+        
+        // Debug: log mensagens pendentes
+        if (data.pending_messages) {
+            console.log('[CampaignDetails] Pending messages:', data.pending_messages.length,
+                        data.pending_messages.map(m => ({id: m.id, ch: m.channel, lead: m.lead_name})));
+        }
+        
+        // Mostrar aba Pendentes se tiver mensagens aguardando
+        if (data.pending_messages && data.pending_messages.length > 0) {
+            switchDetailsTab('pending');
+        } else {
+            switchDetailsTab('leads');
+        }
         lucide.createIcons();
         
     } catch(err) {

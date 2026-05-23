@@ -584,7 +584,9 @@ def _save_message(lead, channel, content, angle, model):
         created_at=datetime.utcnow()
     )
     db.session.add(msg)
-    return {'channel': channel, 'message_id': msg.id, 'content': content, 'status': 'pending_approval'}
+    db.session.flush()
+    return {'channel': channel, 'message_id': msg.id, 'content': content, 'status': 'pending_approval',
+            'angle': angle, 'model': model}
 
 
 def _generate_single_message(lead, setting, channel):
@@ -651,6 +653,8 @@ def generate_message(lead_id):
             email_result = _save_message(lead, 'email', result['content'],
                                           result.get('angle'), result.get('model'))
             results = [result, email_result]
+            logger.info(f"[AMBOS] Created 2 messages for lead {lead.id}: "
+                        f"whatsapp_id={result['message_id']}, email_id={email_result['message_id']}")
         else:
             results = [result]
 
