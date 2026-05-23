@@ -634,52 +634,32 @@ def generate_message(lead_id):
 
     channels = ['whatsapp', 'email'] if channel == 'ambos' else [channel]
 
-    try:
-        lead.in_execution = True
-        lead.prospecting_status = 'em_execucao'
-        sync_prospecting_stage(lead, 'em_execucao')
-        db.session.commit()
+    final_status = 'novo'
+    results = []
+    has_any_success = False
 
-        results = []
-        for ch in channels:
-            result = _generate_single_message(lead, setting, ch)
-            results.append(result)
-            if result.get('status') == 'pending_approval':
-                lead.prospecting_status = 'pending_approval'
-
-        lead.in_execution = False
-        if lead.prospecting_status == 'em_execucao':
-            lead.prospecting_status = 'novo'
-        db.session.commit()
-
-        return api_response(data={'results': results, 'status': 'completed'})
-
-    except Exception as e:
-        lead.in_execution = False
-        lead.prospecting_status = 'failed'
-        db.session.commit()
-
-        existing_pending = ProspectingMessage.query.filter(
-            ProspectingMessage.lead_id == lead.id,
-            ProspectingMessage.status.in_(['aguardando_aprovacao', 'pending_approval'])
-        ).first()
-
-        if not existing_pending:
-            msg = ProspectingMessage(
-                company_id=current_user.company_id,
-                lead_id=lead.id,
-                campaign_id=lead.prospecting_campaign_id,
-                channel=channels[0],
-                type='outbound',
-                status='failed',
-                content='',
-                error_message=str(e),
-                created_at=datetime.utcnow()
-            )
-            db.session.add(msg)
+    for ch in channels:
+        try:
+            lead.in_execution = True
+            lead.prospecting_status = 'em_execucao'
+            sync_prospecting_stage(lead, 'em_execucao')
             db.session.commit()
 
-        return api_response(success=False, error=f'Erro ao gerar mensagem: {str(e)}', status=500)
+            result = _generate_single_message(lead, setting, ch)
+            results.append(result)
+
+            if result.get('status') == 'pending_approval':
+                has_any_success = True
+                final_status = 'pending_approval'
+        except Exception as e:
+            results.append({'channel': ch, 'status': 'failed', 'error': str(e)})
+
+    lead.in_execution = False
+    lead.prospecting_status = final_status
+    sync_prospecting_stage(lead, final_status)
+    db.session.commit()
+
+    return api_response(data={'results': results})
 
 
 @prospecting_bp.route('/prospecting/campaign/<int:campaign_id>/generate-messages', methods=['POST'])
