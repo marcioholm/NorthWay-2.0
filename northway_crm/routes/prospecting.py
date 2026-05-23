@@ -639,27 +639,20 @@ def generate_message(lead_id):
     if request.is_json:
         channel = request.json.get('channel', channel)
 
+    channels_to_gen = ['whatsapp', 'email'] if channel == 'ambos' else [channel]
+
     try:
         lead.in_execution = True
         lead.prospecting_status = 'em_execucao'
         sync_prospecting_stage(lead, 'em_execucao')
         db.session.commit()
 
-        # Sempre chama o webhook uma vez com o channel padrão (n8n gera 1 texto)
-        result = _generate_single_message(lead, setting, 'whatsapp')
-
-        if channel == 'ambos' and result.get('status') == 'pending_approval':
-            # Duplica a mensagem para email com o mesmo conteúdo
-            email_result = _save_message(lead, 'email', result['content'],
-                                          result.get('angle'), result.get('model'))
-            results = [result, email_result]
-            logger.info(f"[AMBOS] Created 2 messages for lead {lead.id}: "
-                        f"whatsapp_id={result['message_id']}, email_id={email_result['message_id']}")
-        else:
-            results = [result]
-
-        if any(r.get('status') == 'pending_approval' for r in results):
-            lead.prospecting_status = 'pending_approval'
+        results = []
+        for ch in channels_to_gen:
+            r = _generate_single_message(lead, setting, ch)
+            results.append(r)
+            if r.get('status') == 'pending_approval':
+                lead.prospecting_status = 'pending_approval'
 
     except Exception as e:
         lead.in_execution = False
@@ -668,7 +661,7 @@ def generate_message(lead_id):
         return api_response(success=False, error=f'Erro ao gerar mensagem: {str(e)}', status=500)
 
     lead.in_execution = False
-    if lead.prospecting_status != 'pending_approval':
+    if lead.prospecting_status == 'em_execucao':
         lead.prospecting_status = 'novo'
     db.session.commit()
 
