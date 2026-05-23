@@ -785,7 +785,7 @@ def approve_message(lead_id, message_id):
         webhook_url = setting.send_whatsapp_webhook_url if setting else None
         action = 'send_whatsapp'
     elif message.channel == 'email':
-        webhook_url = setting.send_email_webhook_url if setting else None
+        webhook_url = (setting.send_email_webhook_url or setting.send_whatsapp_webhook_url) if setting else None
         action = 'send_email'
 
     if not webhook_url:
