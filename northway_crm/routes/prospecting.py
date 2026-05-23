@@ -639,8 +639,6 @@ def generate_message(lead_id):
     if request.is_json:
         channel = request.json.get('channel', channel)
 
-    channels_to_gen = ['whatsapp', 'email'] if channel == 'ambos' else [channel]
-
     results = []
     any_success = False
     last_error = None
@@ -650,15 +648,32 @@ def generate_message(lead_id):
     sync_prospecting_stage(lead, 'em_execucao')
     db.session.commit()
 
-    for ch in channels_to_gen:
-        try:
-            r = _generate_single_message(lead, setting, ch)
-            results.append(r)
-            if r.get('status') == 'pending_approval':
-                any_success = True
-        except Exception as e:
-            results.append({'channel': ch, 'status': 'failed', 'error': str(e)})
-            last_error = str(e)
+    try:
+        result = _generate_single_message(lead, setting, 'whatsapp')
+        results.append(result)
+
+        if result.get('status') == 'pending_approval':
+            any_success = True
+            content = result.get('content', '')
+            angle = result.get('angle')
+            model = result.get('model')
+
+            if channel == 'email':
+                email_result = _save_message(lead, 'email', content, angle, model)
+                results = [email_result]
+            elif channel == 'ambos':
+                # Duplica a mesma mensagem para email (n8n gera 1x)
+                email_result = _save_message(lead, 'email', content, angle, model)
+                results = [result, email_result]
+                logger.info(f"[AMBOS] Duplicated message for lead {lead.id}: "
+                            f"whatsapp_id={result['message_id']}, email_id={email_result['message_id']}")
+        elif channel in ('email', 'ambos'):
+            # n8n retornou processing ou vazio
+            if not last_error:
+                last_error = f"n8n retornou status {result.get('status')} para whatsapp"
+    except Exception as e:
+        last_error = str(e)
+        results.append({'channel': 'whatsapp', 'status': 'failed', 'error': str(e)})
 
     lead.in_execution = False
     if any_success:
