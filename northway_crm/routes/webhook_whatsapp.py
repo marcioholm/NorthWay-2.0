@@ -180,7 +180,7 @@ def evolution_webhook():
                                     conv.lead_id = lead.id
                                     db.session.commit()
 
-                        if lead and lead.prospecting_campaign_id and lead.prospecting_status == 'contatado':
+                        if lead and lead.prospecting_status in ('contatado', 'sent', 'approved'):
                             lead.prospecting_status = 'respondeu'
                             try:
                                 from northway_crm.routes.prospecting import sync_prospecting_stage

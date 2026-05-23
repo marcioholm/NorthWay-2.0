@@ -54,6 +54,7 @@ def sync_prospecting_stage(lead, prospecting_status):
         'respondeu': 'Respondeu',
         'interessado': 'Respondeu',
         'reuniao': 'Reunião Agendada',
+        'cliente': 'Cliente',
         'descartado': 'Descartado',
         'erro': 'Descartado',
         'failed': 'Descartado'
@@ -117,6 +118,7 @@ def dashboard():
         responderam = Lead.query.filter_by(company_id=company_id, prospecting_status='respondeu').count()
         interessados = Lead.query.filter_by(company_id=company_id, prospecting_status='interessado').count()
         reunioes = Lead.query.filter_by(company_id=company_id, prospecting_status='reuniao').count()
+        clientes = Lead.query.filter_by(company_id=company_id, prospecting_status='cliente').count()
         sem_resposta = Lead.query.filter_by(company_id=company_id, prospecting_status='sem_resposta').count()
         erro_envio = Lead.query.filter_by(company_id=company_id).filter(
             Lead.prospecting_status.in_(['erro', 'failed'])
@@ -126,7 +128,7 @@ def dashboard():
     except Exception as e:
         print(f"Error in dashboard: {e}")
         total_leads = aguardando = em_execucao = aguardando_aprovacao = contatados = 0
-        responderam = interessados = reunioes = sem_resposta = erro_envio = 0
+        responderam = interessados = reunioes = clientes = sem_resposta = erro_envio = 0
         campaigns = []
 
     return render_template('prospecting/dashboard.html',
@@ -137,8 +139,9 @@ def dashboard():
                            contatados=contatados,
                            responderam=responderam,
                            interessados=interessados,
-                           reunioes=reunioes,
-                           sem_resposta=sem_resposta,
+        reunioes=reunioes,
+        clientes=clientes,
+        sem_resposta=sem_resposta,
                            erro_envio=erro_envio,
                            campaigns=campaigns)
 
@@ -432,6 +435,41 @@ def campaign_details(campaign_id):
         ProspectingMessage.status.in_(['erro', 'failed'])
     ).count()
     
+    # Funnel data: leads grouped by prospecting status
+    funnel_groups = {
+        'respondeu': [],
+        'interessado': [],
+        'reuniao': [],
+        'cliente': [],
+        'sem_resposta': [],
+        'descartado': []
+    }
+    for lead in leads:
+        status = lead.prospecting_status
+        if status == 'respondeu':
+            funnel_groups['respondeu'].append(lead.id)
+        if status == 'interessado':
+            funnel_groups['interessado'].append(lead.id)
+        if status == 'reuniao':
+            funnel_groups['reuniao'].append(lead.id)
+        if status == 'cliente':
+            funnel_groups['cliente'].append(lead.id)
+        if status == 'sem_resposta':
+            funnel_groups['sem_resposta'].append(lead.id)
+        if status in ('descartado', 'erro', 'failed'):
+            funnel_groups['descartado'].append(lead.id)
+    
+    funnel = {
+        'total': len(leads),
+        'responderam': len(funnel_groups['respondeu']),
+        'interessados': len(funnel_groups['interessado']),
+        'reunioes': len(funnel_groups['reuniao']),
+        'clientes': len(funnel_groups['cliente']),
+        'sem_resposta': len(funnel_groups['sem_resposta']),
+        'descartados': len(funnel_groups['descartado']),
+        'restante': len(leads) - sum(len(v) for v in funnel_groups.values())
+    }
+    
     return api_response(data={
         'campaign': {
             'id': campaign.id,
@@ -444,7 +482,8 @@ def campaign_details(campaign_id):
                 'total_delivered': 0,
                 'total_failed': error_count,
                 'pending_approval': len(pending_messages)
-            }
+            },
+            'funnel': funnel
         },
         'leads': leads_data,
         'pending_messages': pending_data
@@ -548,11 +587,16 @@ def generate_message(lead_id):
     if not setting or not setting.generate_message_webhook_url:
         return api_response(success=False, error='Webhook de geração de mensagem não configurado', status=400)
 
+    channel = lead.preferred_channel or 'whatsapp'
+    if request.is_json:
+        channel = request.json.get('channel', channel)
+
     payload = {
         'action': 'generate_message',
         'tenant_id': current_user.company_id,
         'lead_id': lead.id,
-        'campaign_id': lead.prospecting_campaign_id
+        'campaign_id': lead.prospecting_campaign_id,
+        'channel': channel
     }
 
     try:
@@ -581,7 +625,7 @@ def generate_message(lead_id):
                     company_id=current_user.company_id,
                     lead_id=lead.id,
                     campaign_id=lead.prospecting_campaign_id,
-                    channel=lead.preferred_channel or 'whatsapp',
+                    channel=channel,
                     type='outbound',
                     status='pending_approval',
                     content=message_text,
@@ -632,7 +676,7 @@ def generate_message(lead_id):
                 company_id=current_user.company_id,
                 lead_id=lead.id,
                 campaign_id=lead.prospecting_campaign_id,
-                channel=lead.preferred_channel or 'whatsapp',
+                channel=channel,
                 type='outbound',
                 status='failed',
                 content='',
@@ -643,6 +687,108 @@ def generate_message(lead_id):
             db.session.commit()
 
         return api_response(success=False, error=f'Erro ao gerar mensagem: {str(e)}', status=500)
+
+
+@prospecting_bp.route('/prospecting/campaign/<int:campaign_id>/generate-messages', methods=['POST'])
+@login_required
+def generate_campaign_messages(campaign_id):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
+
+    campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
+    data = request.json or {}
+    lead_ids = data.get('lead_ids', [])
+    channel = data.get('channel', 'whatsapp')
+
+    if not lead_ids:
+        # Generate for all leads in campaign
+        leads = Lead.query.filter_by(prospecting_campaign_id=campaign_id, company_id=current_user.company_id).all()
+        lead_ids = [l.id for l in leads]
+
+    setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
+    if not setting or not setting.generate_message_webhook_url:
+        return api_response(success=False, error='Webhook de geração não configurado', status=400)
+
+    triggered = 0
+    errors = []
+
+    def _generate_for_lead(lid, ch):
+        nonlocal triggered
+        lead = Lead.query.filter_by(id=lid, company_id=current_user.company_id).first()
+        if not lead:
+            return
+        if lead.in_execution or lead.prospecting_status == 'em_execucao':
+            errors.append(f'Lead {lid} ({ch}): já em execução')
+            return
+
+        try:
+            lead.in_execution = True
+            lead.prospecting_status = 'em_execucao'
+            sync_prospecting_stage(lead, 'em_execucao')
+            db.session.commit()
+
+            payload = {
+                'action': 'generate_message',
+                'tenant_id': current_user.company_id,
+                'lead_id': lead.id,
+                'campaign_id': lead.prospecting_campaign_id,
+                'channel': ch
+            }
+
+            success, response_payload, error_msg = send_outbound_webhook(
+                tenant_id=current_user.company_id,
+                lead_id=lead.id,
+                action='generate_message',
+                webhook_url=setting.generate_message_webhook_url,
+                payload=payload
+            )
+
+            if success:
+                message_text = response_payload.get('message', '') if response_payload else ''
+                if message_text:
+                    angle = response_payload.get('angle', 'Atrair')
+                    model = response_payload.get('model', 'llama-3.1-8b-instant')
+                    msg = ProspectingMessage(
+                        company_id=current_user.company_id,
+                        lead_id=lead.id,
+                        campaign_id=lead.prospecting_campaign_id,
+                        channel=ch,
+                        type='outbound',
+                        status='pending_approval',
+                        content=message_text,
+                        ai_model=model,
+                        created_at=datetime.utcnow()
+                    )
+                    db.session.add(msg)
+                    lead.prospecting_status = 'pending_approval'
+                    lead.last_angle = angle
+                else:
+                    lead.prospecting_status = 'novo'
+                lead.in_execution = False
+                db.session.commit()
+                triggered += 1
+            else:
+                raise Exception(error_msg or 'Erro webhook')
+
+        except Exception as e:
+            lead.in_execution = False
+            lead.prospecting_status = 'failed'
+            sync_prospecting_stage(lead, 'failed')
+            db.session.commit()
+            errors.append(f'Lead {lid} ({ch}): {str(e)}')
+
+    channels = ['whatsapp', 'email'] if channel == 'ambos' else [channel]
+
+    for lid in lead_ids:
+        for ch in channels:
+            _generate_for_lead(lid, ch)
+
+    return api_response(data={
+        'triggered': triggered,
+        'errors': errors,
+        'total': len(lead_ids) * len(channels)
+    })
 
 
 @prospecting_bp.route('/prospecting/lead/<int:lead_id>/approve-message/<int:message_id>', methods=['POST'])

@@ -372,7 +372,7 @@ class Lead(db.Model):
     drive_unread_files_count = db.Column(db.Integer, default=0)
 
     # Prospecting Fields
-    prospecting_status = db.Column(db.String(50), nullable=True) # novo, em_execucao, aguardando_aprovacao, contatado, respondeu, interessado, reuniao, sem_resposta, erro
+    prospecting_status = db.Column(db.String(50), nullable=True) # novo, em_execucao, aguardando_aprovacao, contatado, respondeu, interessado, reuniao, sem_resposta, cliente, erro
     preferred_channel = db.Column(db.String(20), nullable=True) # whatsapp, email
     wa_attempts = db.Column(db.Integer, default=0)
     email_attempts = db.Column(db.Integer, default=0)

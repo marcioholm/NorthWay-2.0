@@ -29,6 +29,7 @@
                 'respondeu': 'bg-teal-100 text-teal-700',
                 'interessado': 'bg-indigo-100 text-indigo-700',
                 'reuniao': 'bg-rose-100 text-rose-700',
+                'cliente': 'bg-blue-100 text-blue-700',
                 'sem_resposta': 'bg-orange-100 text-orange-700',
                 'erro': 'bg-red-100 text-red-700',
                 'failed': 'bg-red-100 text-red-700',
@@ -245,6 +246,7 @@
                         <option value="respondeu" {% if lead.prospecting_status == 'respondeu' %}selected{% endif %}>Respondeu</option>
                         <option value="interessado" {% if lead.prospecting_status == 'interessado' %}selected{% endif %}>Interessado</option>
                         <option value="reuniao" {% if lead.prospecting_status == 'reuniao' %}selected{% endif %}>Reunião Agendada</option>
+                        <option value="cliente" {% if lead.prospecting_status == 'cliente' %}selected{% endif %}>Cliente</option>
                         <option value="sem_resposta" {% if lead.prospecting_status == 'sem_resposta' %}selected{% endif %}>Sem Resposta</option>
                         <option value="pausado" {% if lead.prospecting_status == 'pausado' %}selected{% endif %}>Pausado</option>
                     </select>
@@ -304,18 +306,23 @@ async function generateMessage(leadId) {
 async function approveMessage(leadId, messageId) {
     Swal.fire({
         title: 'Enviando mensagem...',
-        text: 'Aguarde o envio pelo motor N8N.',
+        text: 'Aguarde o envio pelo motor N8N. Pode levar até 2 minutos no primeiro envio.',
         allowOutsideClick: false,
         didOpen: () => {
             Swal.showLoading();
         }
     });
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
+
     try {
         const response = await fetch(`/prospecting/lead/${leadId}/approve-message/${messageId}`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: {'Content-Type': 'application/json'},
+            signal: controller.signal
         });
+        clearTimeout(timeout);
         const result = await response.json();
         if (result.success) {
             Swal.fire({
@@ -335,10 +342,14 @@ async function approveMessage(leadId, messageId) {
             });
         }
     } catch(err) {
+        clearTimeout(timeout);
+        const msg = err.name === 'AbortError'
+            ? 'O servidor demorou muito para responder, mas a mensagem pode ter sido enviada. Verifique o lead novamente.'
+            : 'Não foi possível se comunicar com o servidor.';
         Swal.fire({
-            icon: 'error',
-            title: 'Erro ao enviar',
-            text: 'Não foi possível se comunicar com o servidor.'
+            icon: 'warning',
+            title: 'Tempo excedido',
+            text: msg
         });
     }
 }
