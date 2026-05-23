@@ -641,28 +641,33 @@ def generate_message(lead_id):
 
     channels_to_gen = ['whatsapp', 'email'] if channel == 'ambos' else [channel]
 
-    try:
-        lead.in_execution = True
-        lead.prospecting_status = 'em_execucao'
-        sync_prospecting_stage(lead, 'em_execucao')
-        db.session.commit()
+    results = []
+    any_success = False
+    last_error = None
 
-        results = []
-        for ch in channels_to_gen:
+    lead.in_execution = True
+    lead.prospecting_status = 'em_execucao'
+    sync_prospecting_stage(lead, 'em_execucao')
+    db.session.commit()
+
+    for ch in channels_to_gen:
+        try:
             r = _generate_single_message(lead, setting, ch)
             results.append(r)
             if r.get('status') == 'pending_approval':
-                lead.prospecting_status = 'pending_approval'
-
-    except Exception as e:
-        lead.in_execution = False
-        lead.prospecting_status = 'failed'
-        db.session.commit()
-        return api_response(success=False, error=f'Erro ao gerar mensagem: {str(e)}', status=500)
+                any_success = True
+        except Exception as e:
+            results.append({'channel': ch, 'status': 'failed', 'error': str(e)})
+            last_error = str(e)
 
     lead.in_execution = False
-    if lead.prospecting_status == 'em_execucao':
+    if any_success:
+        lead.prospecting_status = 'pending_approval'
+    elif last_error:
+        lead.prospecting_status = 'failed'
+    else:
         lead.prospecting_status = 'novo'
+    sync_prospecting_stage(lead, lead.prospecting_status)
     db.session.commit()
 
     return api_response(data={'results': results})
