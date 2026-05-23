@@ -673,9 +673,16 @@ def prospecting_inbound_result():
     if not lead:
         return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
 
-    # 1. Update status
+    # 1. Update status — só avança no funil, não regride
     if suggested_status:
-        lead.prospecting_status = suggested_status
+        order = {'novo': 0, 'em_execucao': 1, 'aguardando_aprovacao': 2, 'pending_approval': 2,
+                 'contatado': 3, 'sent': 3, 'approved': 3,
+                 'respondeu': 4, 'interessado': 5, 'reuniao': 6, 'cliente': 7,
+                 'sem_resposta': 4, 'descartado': 0, 'erro': 0, 'failed': 0}
+        current = order.get(lead.prospecting_status, 0)
+        target = order.get(suggested_status, 0)
+        if target > current:
+            lead.prospecting_status = suggested_status
     if lead_score_delta:
         try:
             lead.lead_score = int(lead.lead_score or 0) + int(lead_score_delta)
