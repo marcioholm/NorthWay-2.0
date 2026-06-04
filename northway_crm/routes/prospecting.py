@@ -159,6 +159,9 @@ def approvals():
     pending_messages = ProspectingMessage.query.filter(
         ProspectingMessage.company_id == company_id,
         ProspectingMessage.status.in_([MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL])
+    ).options(
+        db.joinedload(ProspectingMessage.lead),
+        db.joinedload(ProspectingMessage.campaign)
     ).order_by(ProspectingMessage.created_at.desc()).all()
 
     return render_template('prospecting/approvals.html', messages=pending_messages)
