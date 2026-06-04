@@ -9,6 +9,7 @@ from utils.crypto import decrypt_api_key
 from utils.phone import phone_variants
 from utils.crypto import decrypt_api_key
 import logging
+from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatus, MessageType, NotificationType, IntegrationProvider, AIProvider
 
 logger = logging.getLogger(__name__)
 
@@ -134,10 +135,10 @@ def get_prospecting_context():
     ai_creds = None
     if is_automated:
         # Try to get the provider from settings or default to openai
-        provider = settings.default_ai_model.split('-')[0] if settings and settings.default_ai_model else 'openai'
-        if 'gpt' in provider: provider = 'openai'
-        elif 'claude' in provider: provider = 'anthropic'
-        elif 'gemini' in provider: provider = 'google'
+        provider = settings.default_ai_model.split('-')[0] if settings and settings.default_ai_model else AIProvider.OPENAI
+        if 'gpt' in provider: provider = AIProvider.OPENAI
+        elif 'claude' in provider: provider = AIProvider.ANTHROPIC
+        elif 'gemini' in provider: provider = AIProvider.GOOGLE
         
         credential = TenantAICredential.query.filter_by(
             company_id=tenant_id,
@@ -158,7 +159,7 @@ def get_prospecting_context():
     if is_automated:
         integration = ProspectingIntegration.query.filter_by(
             company_id=tenant_id, 
-            provider='evolution_api', 
+            provider=IntegrationProvider.EVOLUTION_API, 
             status='active'
         ).first()
         
@@ -175,6 +176,13 @@ def get_prospecting_context():
     from models import Company
     company_obj = Company.query.get(tenant_id)
 
+    # Calculate current step for this lead in this campaign
+    step_count = ProspectingMessage.query.filter_by(
+        lead_id=lead.id,
+        campaign_id=lead.prospecting_campaign_id,
+        type=MessageType.OUTBOUND
+    ).count()
+
     # Build the flattened response as requested by the user
     response = {
         'success': True,
@@ -187,10 +195,13 @@ def get_prospecting_context():
             'phone': lead.phone,
             'email': lead.email,
             'interest': lead.interest,
-            'preferred_channel': lead.preferred_channel or 'whatsapp',
+            'preferred_channel': lead.preferred_channel or LeadChannel.WHATSAPP,
             'last_angle': lead.last_angle,
             'notes': lead.notes,
-            'prospecting_status': lead.prospecting_status
+            'prospecting_status': lead.prospecting_status,
+            'intent_status': lead.intent_status,
+            'current_step': step_count + 1,
+            'attempts_so_far': step_count
         },
         'campaign': {
             'id': campaign.id,
@@ -242,7 +253,7 @@ def message_generated():
         # Evitar duplicatas: se já existe uma mensagem pendente para este lead, não criar outra
         existing = ProspectingMessage.query.filter(
             ProspectingMessage.lead_id == lead_id,
-            ProspectingMessage.status.in_(['aguardando_aprovacao', 'pending_approval'])
+            ProspectingMessage.status.in_([MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL])
         ).first()
 
         if existing:
@@ -252,7 +263,7 @@ def message_generated():
                 existing.ai_model = model
             db.session.commit()
 
-            lead.prospecting_status = 'aguardando_aprovacao'
+            lead.prospecting_status = ProspectingStatus.AGUARDANDO_APROVACAO
             if angle:
                 lead.last_angle = angle
             lead.in_execution = False
@@ -269,16 +280,16 @@ def message_generated():
             company_id=tenant_id,
             lead_id=lead_id,
             campaign_id=lead.prospecting_campaign_id,
-            channel=lead.preferred_channel or 'whatsapp',
-            type='outbound',
-            status='aguardando_aprovacao',
+            channel=lead.preferred_channel or LeadChannel.WHATSAPP,
+            type=MessageType.OUTBOUND,
+            status=MessageStatus.AGUARDANDO_APROVACAO,
             content=message,
             ai_model=model,
             created_at=datetime.utcnow()
         )
         db.session.add(prospecting_msg)
 
-        lead.prospecting_status = 'aguardando_aprovacao'
+        lead.prospecting_status = ProspectingStatus.AGUARDANDO_APROVACAO
         if angle:
             lead.last_angle = angle
         lead.in_execution = False
@@ -290,16 +301,16 @@ def message_generated():
             'lead_status': lead.prospecting_status
         })
     else:
-        lead.prospecting_status = 'erro'
+        lead.prospecting_status = ProspectingStatus.ERRO
         lead.in_execution = False
 
         prospecting_msg = ProspectingMessage(
             company_id=tenant_id,
             lead_id=lead_id,
             campaign_id=lead.prospecting_campaign_id,
-            channel=lead.preferred_channel or 'whatsapp',
-            type='outbound',
-            status='erro',
+            channel=lead.preferred_channel or LeadChannel.WHATSAPP,
+            type=MessageType.OUTBOUND,
+            status=MessageStatus.ERRO,
             content='',
             error_message=error
         )
@@ -333,7 +344,7 @@ def get_send_context():
     # Get integration for WhatsApp (Evolution API)
     integration = ProspectingIntegration.query.filter_by(
         company_id=tenant_id, 
-        provider='evolution_api', 
+        provider=IntegrationProvider.EVOLUTION_API, 
         status='active'
     ).first()
 
@@ -398,20 +409,20 @@ def prospecting_send_result():
     lead = Lead.query.get(message.lead_id)
 
     if success:
-        message.status = 'enviada'
+        message.status = MessageStatus.ENVIADA
         message.sent_at = datetime.utcnow()
         if lead:
-            lead.prospecting_status = 'contatado'
+            lead.prospecting_status = ProspectingStatus.CONTATADO
             lead.last_contact_at = datetime.utcnow()
             # Update next action based on campaign
             campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
             if campaign:
                 lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days or 3)
     else:
-        message.status = 'erro'
+        message.status = MessageStatus.ERRO
         message.error_message = error
         if lead:
-            lead.prospecting_status = 'erro'
+            lead.prospecting_status = ProspectingStatus.ERRO
 
     db.session.commit()
     return jsonify({'success': True})
@@ -441,9 +452,9 @@ def save_automated_send():
         company_id=tenant_id,
         lead_id=lead_id,
         campaign_id=lead.prospecting_campaign_id,
-        channel='whatsapp',
-        type='outbound',
-        status='enviada' if success else 'erro',
+        channel=LeadChannel.WHATSAPP,
+        type=MessageType.OUTBOUND,
+        status=MessageStatus.ENVIADA if success else MessageStatus.ERRO,
         content=content,
         ai_model=model,
         error_message=error if not success else None,
@@ -454,7 +465,7 @@ def save_automated_send():
     
     # Update Lead Status
     if success:
-        lead.prospecting_status = 'contatado'
+        lead.prospecting_status = ProspectingStatus.CONTATADO
         lead.last_contact_at = datetime.utcnow()
         lead.in_execution = False
         
@@ -463,7 +474,7 @@ def save_automated_send():
         if campaign:
             lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days or 3)
     else:
-        lead.prospecting_status = 'erro'
+        lead.prospecting_status = ProspectingStatus.ERRO
         lead.in_execution = False
 
     db.session.commit()
@@ -556,7 +567,7 @@ def get_prospecting_inbound_context():
             conversation = CrmConversation(
                 tenant_id=tenant_id,
                 lead_id=lead.id,
-                channel='whatsapp',
+                channel=LeadChannel.WHATSAPP,
                 provider=provider,
                 instance_name=instance_name,
                 remote_jid=remote_jid,
@@ -576,8 +587,8 @@ def get_prospecting_inbound_context():
             conversation_id=conversation.id,
             tenant_id=tenant_id,
             lead_id=lead.id,
-            direction='inbound',
-            channel='whatsapp',
+            direction=MessageType.INBOUND,
+            channel=LeadChannel.WHATSAPP,
             provider=provider,
             instance_name=instance_name,
             remote_jid=remote_jid,
@@ -675,12 +686,8 @@ def prospecting_inbound_result():
 
     # 1. Update status — só avança no funil, não regride
     if suggested_status:
-        order = {'novo': 0, 'em_execucao': 1, 'aguardando_aprovacao': 2, 'pending_approval': 2,
-                 'contatado': 3, 'sent': 3, 'approved': 3,
-                 'respondeu': 4, 'interessado': 5, 'reuniao': 6, 'cliente': 7,
-                 'sem_resposta': 4, 'descartado': 0, 'erro': 0, 'failed': 0}
-        current = order.get(lead.prospecting_status, 0)
-        target = order.get(suggested_status, 0)
+        current = ProspectingStatus.FUNNEL_ORDER.get(lead.prospecting_status, 0)
+        target = ProspectingStatus.FUNNEL_ORDER.get(suggested_status, 0)
         if target > current:
             lead.prospecting_status = suggested_status
     if lead_score_delta:
@@ -688,6 +695,10 @@ def prospecting_inbound_result():
             lead.lead_score = int(lead.lead_score or 0) + int(lead_score_delta)
         except ValueError:
             pass
+
+    # Gravar intent_status separadamente quando vier da classificação de IA
+    if classification and classification in IntentStatus.ALL:
+        lead.intent_status = classification
 
     # 2. Update Memory
     if conversation_id and summary:
@@ -751,12 +762,214 @@ def prospecting_batch_completed():
         create_notification(
             user_id=user.id,
             company_id=tenant_id,
-            type='campaign_end',
+            type=NotificationType.CAMPAIGN_END,
             title=f"Campanha '{campaign.name}' Concluída",
             message=f"O disparo diário para a campanha '{campaign.name}' foi concluído. {processed_count} contatos processados e {success_count} mensagens enviadas com sucesso."
         )
 
     return jsonify({'success': True})
+
+
+@internal_api_bp.route('/prospecting/pending-batch', methods=['POST'])
+@require_internal_auth
+def get_pending_batch():
+    """
+    Retorna leads prontos para próximo step da cadência.
+    Chamado pelo scheduler n8n a cada 15 minutos.
+
+    Body (opcional):
+    {
+        "tenant_id": 1,
+        "campaign_id": 5,
+        "limit": 50
+    }
+    """
+    data = request.json or {}
+    tenant_id = data.get('tenant_id')
+    campaign_id = data.get('campaign_id')
+    limit = min(int(data.get('limit', 50)), 200)
+
+    now = datetime.utcnow()
+
+    query = Lead.query.filter(
+        db.or_(Lead.prospecting_status.is_(None), Lead.prospecting_status.notin_(ProspectingStatus.BLOCKED)),
+        db.or_(Lead.in_execution == False, Lead.in_execution.is_(None)),
+        Lead.next_action_at <= now,
+        Lead.prospecting_campaign_id.isnot(None)
+    )
+
+    if tenant_id:
+        query = query.filter(Lead.company_id == tenant_id)
+    if campaign_id:
+        query = query.filter(Lead.prospecting_campaign_id == campaign_id)
+
+    leads = query.order_by(Lead.next_action_at.asc()).limit(limit).all()
+
+    if not leads:
+        return jsonify({'success': True, 'leads': [], 'count': 0})
+
+    company_ids = list({l.company_id for l in leads})
+    campaign_ids = list({l.prospecting_campaign_id for l in leads})
+
+    settings_map = {
+        s.company_id: s
+        for s in ProspectingSetting.query.filter(
+            ProspectingSetting.company_id.in_(company_ids)
+        ).all()
+    }
+
+    campaign_map = {
+        c.id: c
+        for c in ProspectingCampaign.query.filter(
+            ProspectingCampaign.id.in_(campaign_ids)
+        ).all()
+    }
+
+    result = []
+    for lead in leads:
+        campaign = campaign_map.get(lead.prospecting_campaign_id)
+        settings = settings_map.get(lead.company_id)
+
+        if not campaign or not campaign.is_active:
+            continue
+
+        step_count = ProspectingMessage.query.filter_by(
+            lead_id=lead.id,
+            campaign_id=campaign.id,
+            type=MessageType.OUTBOUND
+        ).count()
+        next_step = step_count + 1
+
+        max_attempts = campaign.max_attempts or 3
+        if step_count >= max_attempts:
+            lead.prospecting_status = ProspectingStatus.SEM_RESPOSTA
+            lead.next_action_at = None
+            continue
+
+        result.append({
+            'lead_id': lead.id,
+            'tenant_id': lead.company_id,
+            'campaign_id': campaign.id,
+            'campaign_name': campaign.name,
+            'lead_name': lead.name,
+            'lead_phone': lead.phone,
+            'lead_email': lead.email,
+            'preferred_channel': lead.preferred_channel or LeadChannel.WHATSAPP,
+            'next_step': next_step,
+            'attempts_so_far': step_count,
+            'max_attempts': max_attempts,
+            'next_action_at': lead.next_action_at.isoformat() if lead.next_action_at else None,
+            'manual_approval_required': settings.manual_approval_required if settings else True
+        })
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'leads': result,
+        'count': len(result),
+        'timestamp': now.isoformat()
+    })
+
+
+@internal_api_bp.route('/prospecting/schedule-next', methods=['POST'])
+@require_internal_auth
+def schedule_next_step():
+    """
+    Chamado pelo n8n após classificar a resposta de um lead.
+    Decide o próximo passo da cadência com base na intenção detectada.
+    """
+    data = request.json or {}
+    tenant_id = data.get('tenant_id')
+    lead_id = data.get('lead_id')
+    campaign_id = data.get('campaign_id')
+    classification = data.get('classification')
+    conversation_id = data.get('conversation_id')
+
+    if not tenant_id or not lead_id or not classification:
+        return jsonify({'success': False, 'error': 'tenant_id, lead_id e classification são obrigatórios'}), 400
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=tenant_id).first()
+    if not lead:
+        return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
+
+    campaign = ProspectingCampaign.query.filter_by(
+        id=campaign_id or lead.prospecting_campaign_id,
+        company_id=tenant_id
+    ).first()
+
+    now = datetime.utcnow()
+
+    lead.intent_status = classification
+
+    if conversation_id and data.get('summary'):
+        try:
+            memory = CrmConversationMemory.query.filter_by(conversation_id=conversation_id).first()
+            if not memory:
+                memory = CrmConversationMemory(
+                    tenant_id=tenant_id,
+                    lead_id=lead.id,
+                    conversation_id=conversation_id
+                )
+                db.session.add(memory)
+            memory.summary = data.get('summary')
+            memory.last_intention = data.get('last_intention')
+            memory.last_objection = data.get('last_objection')
+            memory.interest_level = data.get('interest_level')
+            memory.next_best_action = data.get('next_best_action')
+        except Exception as e:
+            logger.warning(f"[SCHEDULE_NEXT] Erro ao atualizar memória: {e}")
+
+    action_taken = None
+
+    if classification in IntentStatus.HOT:
+        lead.prospecting_status = classification if classification in (IntentStatus.REUNIAO, IntentStatus.INTERESSADO) else ProspectingStatus.RESPONDEU
+        lead.next_action_at = None
+        lead.in_execution = False
+        action_taken = 'paused_for_human'
+
+        try:
+            from utils import create_notification
+            from models import User
+            users = User.query.filter_by(company_id=tenant_id).all()
+            for user in users:
+                create_notification(
+                    user_id=user.id,
+                    company_id=tenant_id,
+                    type=NotificationType.LEAD_REPLIED,
+                    title=f"🔥 {lead.name} respondeu!",
+                    message=(
+                        f"Classificação: {classification}. "
+                        f"{data.get('next_best_action', 'Entrar em contato agora.')}"
+                    )
+                )
+        except Exception as e:
+            logger.warning(f"[SCHEDULE_NEXT] Erro ao criar notificação: {e}")
+
+    elif classification in IntentStatus.COLD:
+        lead.prospecting_status = ProspectingStatus.DESCARTADO
+        lead.next_action_at = None
+        lead.in_execution = False
+        action_taken = 'cadence_ended'
+
+    else:
+        lead.prospecting_status = ProspectingStatus.RESPONDEU
+        interval_days = campaign.followup_interval_days if campaign else 3
+        lead.next_action_at = now + timedelta(days=interval_days)
+        lead.in_execution = False
+        action_taken = f'scheduled_followup_in_{interval_days}_days'
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'lead_id': lead.id,
+        'classification': classification,
+        'new_status': lead.prospecting_status,
+        'intent_status': lead.intent_status,
+        'next_action_at': lead.next_action_at.isoformat() if lead.next_action_at else None,
+        'action_taken': action_taken
+    })
 
 
 @internal_api_bp.route('/health', methods=['GET'])

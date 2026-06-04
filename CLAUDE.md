@@ -50,3 +50,33 @@ Principais:
 - `GOOGLE_OAUTH_ID` / `GOOGLE_OAUTH_SECRET` — Google OAuth
 - `DATABASE_URL` — Conexão PostgreSQL
 - `SECRET_KEY` — Chave secreta Flask
+- `CRM_INTERNAL_API_KEY` — Chave para autenticação entre n8n e CRM (via header `Authorization: Bearer <token>`)
+
+## Endpoints internos para integração n8n
+
+Todos os endpoints abaixo exigem header: `Authorization: Bearer <valor da env CRM_INTERNAL_API_KEY>`
+
+### POST /api/internal/prospecting/context
+Retorna contexto completo para geração de mensagem de um lead.
+Inclui: current_step, attempts_so_far, intent_status, campaign, settings, ai_credentials, whatsapp_integration.
+
+### POST /api/internal/prospecting/pending-batch
+Retorna leads prontos para próximo step da cadência (next_action_at <= now, status não bloqueado).
+Chamado pelo scheduler n8n a cada 15 minutos.
+Body opcional: `{ "tenant_id": 1, "campaign_id": 5, "limit": 50 }`
+Retorna: lista de leads com tenant_id, campaign_id, next_step, preferred_channel, manual_approval_required
+
+### POST /api/internal/prospecting/schedule-next
+Avança ou pausa a cadência de um lead após classificação de IA.
+Chamado pelo n8n após processar a resposta de um lead.
+Body: `{ "tenant_id", "lead_id", "campaign_id", "classification", "summary", ... }`
+Classifications de pausa (notifica comercial): interessado, pediu_preco, pediu_material, reuniao
+Classifications de encerramento: sem_interesse, ja_tem_agencia, descartado
+Classifications de reagendamento: agora_nao, duvida, respondeu
+
+### POST /api/internal/prospecting/inbound-context
+Resolve tenant, lead e histórico a partir do telefone do remetente.
+Grava mensagem inbound e retorna contexto para classificação.
+
+### POST /api/internal/prospecting/inbound-result
+Salva resultado da classificação IA (intent, memória, ai_log).

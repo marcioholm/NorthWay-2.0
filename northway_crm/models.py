@@ -309,7 +309,8 @@ class Lead(db.Model):
     assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br, index=True)
-    
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br, index=True)
+
     interactions = db.relationship('Interaction', backref='lead', cascade='all, delete-orphan', lazy=True)
     tasks = db.relationship('Task', backref='lead', cascade='all, delete-orphan', lazy=True)
     # WhatsApp relationship will be added later
@@ -372,16 +373,17 @@ class Lead(db.Model):
     drive_unread_files_count = db.Column(db.Integer, default=0)
 
     # Prospecting Fields
-    prospecting_status = db.Column(db.String(50), nullable=True) # novo, em_execucao, aguardando_aprovacao, contatado, respondeu, interessado, reuniao, sem_resposta, cliente, erro
+    prospecting_status = db.Column(db.String(50), nullable=True, index=True) # novo, em_execucao, aguardando_aprovacao, contatado, respondeu, interessado, reuniao, sem_resposta, cliente, erro
     preferred_channel = db.Column(db.String(20), nullable=True) # whatsapp, email
     wa_attempts = db.Column(db.Integer, default=0)
     email_attempts = db.Column(db.Integer, default=0)
     last_contact_at = db.Column(db.DateTime, nullable=True)
-    next_action_at = db.Column(db.DateTime, nullable=True)
+    next_action_at = db.Column(db.DateTime, nullable=True, index=True)
     last_angle = db.Column(db.String(100), nullable=True)
     in_execution = db.Column(db.Boolean, default=False)
     prospecting_campaign_id = db.Column(db.Integer, db.ForeignKey('prospecting_campaigns.id'), nullable=True)
     lead_score = db.Column(db.Integer, nullable=True)
+    intent_status = db.Column(db.String(50), nullable=True, index=True)
 
     @property
     def task_progress(self):
@@ -1482,6 +1484,8 @@ class ProspectingMessage(db.Model):
     campaign_id = db.Column(db.Integer, db.ForeignKey('prospecting_campaigns.id'), nullable=True)
     channel = db.Column(db.String(20), nullable=False) # whatsapp, email
     type = db.Column(db.String(20), default='outbound')
+    step_number = db.Column(db.Integer, default=1, nullable=False)
+    cadence_day = db.Column(db.Integer, nullable=True)
     status = db.Column(db.String(30), default='pendente') # pendente, aguardando_aprovacao, aprovada, enviada, erro
     content = db.Column(db.Text, nullable=True)
     ai_model = db.Column(db.String(50), nullable=True)

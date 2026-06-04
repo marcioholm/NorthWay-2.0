@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 import requests
+from sqlalchemy import func
 from models import db, Lead, Interaction, ProspectingSearch, Company, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, CRMWebhookLog
 from datetime import datetime, timedelta
 from utils.webhooks import send_outbound_webhook
+from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatus, MessageType, NotificationType, IntegrationProvider, AIProvider, CampaignStatus
 
 from services.cnpj_service import CNPJAService
 from utils.crypto import encrypt_api_key, decrypt_api_key
@@ -44,20 +46,20 @@ def sync_prospecting_stage(lead, prospecting_status):
         return
 
     status_to_stage_name = {
-        'novo': 'Lista Fria',
-        'em_execucao': 'Lista Fria',
-        'aguardando_aprovacao': 'Aguardando Aprovação',
-        'pending_approval': 'Aguardando Aprovação',
-        'contatado': 'Contatado',
-        'sent': 'Contatado',
-        'approved': 'Contatado',
-        'respondeu': 'Respondeu',
-        'interessado': 'Respondeu',
-        'reuniao': 'Reunião Agendada',
-        'cliente': 'Cliente',
-        'descartado': 'Descartado',
-        'erro': 'Descartado',
-        'failed': 'Descartado'
+        ProspectingStatus.NOVO: 'Lista Fria',
+        ProspectingStatus.EM_EXECUCAO: 'Lista Fria',
+        ProspectingStatus.AGUARDANDO_APROVACAO: 'Aguardando Aprovação',
+        ProspectingStatus.PENDING_APPROVAL: 'Aguardando Aprovação',
+        ProspectingStatus.CONTATADO: 'Contatado',
+        ProspectingStatus.SENT: 'Contatado',
+        ProspectingStatus.APPROVED: 'Contatado',
+        ProspectingStatus.RESPONDEU: 'Respondeu',
+        ProspectingStatus.INTERESSADO: 'Respondeu',
+        ProspectingStatus.REUNIAO: 'Reunião Agendada',
+        ProspectingStatus.CLIENTE: 'Cliente',
+        ProspectingStatus.DESCARTADO: 'Descartado',
+        ProspectingStatus.ERRO: 'Descartado',
+        ProspectingStatus.FAILED: 'Descartado'
     }
 
     target_stage_name = status_to_stage_name.get(prospecting_status)
@@ -103,26 +105,26 @@ def dashboard():
     company_id = current_user.company_id
 
     try:
-        total_leads = Lead.query.filter_by(company_id=company_id).filter(
+        status_counts = db.session.query(
+            Lead.prospecting_status,
+            func.count(Lead.id).label('count')
+        ).filter(
+            Lead.company_id == company_id,
             Lead.prospecting_status.isnot(None)
-        ).count()
+        ).group_by(Lead.prospecting_status).all()
 
-        aguardando = Lead.query.filter_by(company_id=company_id, prospecting_status='novo').count()
-        em_execucao = Lead.query.filter_by(company_id=company_id, prospecting_status='em_execucao').count()
-        aguardando_aprovacao = Lead.query.filter_by(company_id=company_id).filter(
-            Lead.prospecting_status.in_(['aguardando_aprovacao', 'pending_approval'])
-        ).count()
-        contatados = Lead.query.filter_by(company_id=company_id).filter(
-            Lead.prospecting_status.in_(['contatado', 'sent', 'approved'])
-        ).count()
-        responderam = Lead.query.filter_by(company_id=company_id, prospecting_status='respondeu').count()
-        interessados = Lead.query.filter_by(company_id=company_id, prospecting_status='interessado').count()
-        reunioes = Lead.query.filter_by(company_id=company_id, prospecting_status='reuniao').count()
-        clientes = Lead.query.filter_by(company_id=company_id, prospecting_status='cliente').count()
-        sem_resposta = Lead.query.filter_by(company_id=company_id, prospecting_status='sem_resposta').count()
-        erro_envio = Lead.query.filter_by(company_id=company_id).filter(
-            Lead.prospecting_status.in_(['erro', 'failed'])
-        ).count()
+        counts = {row.prospecting_status: row.count for row in status_counts}
+        total_leads = sum(counts.values())
+        aguardando = counts.get(ProspectingStatus.NOVO, 0)
+        em_execucao = counts.get(ProspectingStatus.EM_EXECUCAO, 0)
+        aguardando_aprovacao = counts.get(ProspectingStatus.AGUARDANDO_APROVACAO, 0) + counts.get(ProspectingStatus.PENDING_APPROVAL, 0)
+        contatados = counts.get(ProspectingStatus.CONTATADO, 0) + counts.get(ProspectingStatus.SENT, 0) + counts.get(ProspectingStatus.APPROVED, 0)
+        responderam = counts.get(ProspectingStatus.RESPONDEU, 0)
+        interessados = counts.get(ProspectingStatus.INTERESSADO, 0)
+        reunioes = counts.get(ProspectingStatus.REUNIAO, 0)
+        clientes = counts.get(ProspectingStatus.CLIENTE, 0)
+        sem_resposta = counts.get(ProspectingStatus.SEM_RESPOSTA, 0)
+        erro_envio = counts.get(ProspectingStatus.ERRO, 0) + counts.get(ProspectingStatus.FAILED, 0)
 
         campaigns = ProspectingCampaign.query.filter_by(company_id=company_id, is_active=True).all()
     except Exception as e:
@@ -156,7 +158,7 @@ def approvals():
 
     pending_messages = ProspectingMessage.query.filter(
         ProspectingMessage.company_id == company_id,
-        ProspectingMessage.status.in_(['aguardando_aprovacao', 'pending_approval'])
+        ProspectingMessage.status.in_([MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL])
     ).order_by(ProspectingMessage.created_at.desc()).all()
 
     return render_template('prospecting/approvals.html', messages=pending_messages)
@@ -297,7 +299,7 @@ def create_campaign():
             restrictions=data.get('restrictions'),
             max_attempts=data.get('max_attempts', 3),
             followup_interval_days=data.get('followup_interval_days', 3),
-            status='rascunho',
+            status=CampaignStatus.RASCUNHO,
             is_active=True,
             pipeline_id=new_pipeline.id
         )
@@ -399,13 +401,25 @@ def campaign_details(campaign_id):
     if not campaign:
         return api_response(success=False, error='Campanha não encontrada', status=404)
     
-    # Buscar leads da campanha
+    # Subquery: última mensagem por lead nesta campanha
+    last_msg_subq = db.session.query(
+        ProspectingMessage.lead_id,
+        func.max(ProspectingMessage.id).label('max_id')
+    ).filter(
+        ProspectingMessage.campaign_id == campaign_id
+    ).group_by(ProspectingMessage.lead_id).subquery()
+
+    last_msgs = db.session.query(ProspectingMessage).join(
+        last_msg_subq,
+        ProspectingMessage.id == last_msg_subq.c.max_id
+    ).all()
+
+    msg_by_lead = {m.lead_id: m for m in last_msgs}
+
     leads = Lead.query.filter_by(prospecting_campaign_id=campaign_id).all()
     leads_data = []
     for lead in leads:
-        # Buscar última mensagem do lead
-        last_msg = ProspectingMessage.query.filter_by(lead_id=lead.id, campaign_id=campaign_id).order_by(ProspectingMessage.created_at.desc()).first()
-        
+        last_msg = msg_by_lead.get(lead.id)
         leads_data.append({
             'id': lead.id,
             'name': lead.name,
@@ -425,7 +439,7 @@ def campaign_details(campaign_id):
     # Buscar mensagens aguardando aprovação
     pending_messages = ProspectingMessage.query.filter(
         ProspectingMessage.campaign_id == campaign_id,
-        ProspectingMessage.status.in_(['aguardando_aprovacao', 'pending_approval'])
+        ProspectingMessage.status.in_([MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL])
     ).order_by(ProspectingMessage.created_at.desc()).all()
     
     pending_data = []
@@ -444,45 +458,45 @@ def campaign_details(campaign_id):
     # Contar status das mensagens
     sent_count = ProspectingMessage.query.filter(
         ProspectingMessage.campaign_id == campaign_id,
-        ProspectingMessage.status.in_(['enviada', 'sent', 'approved'])
+        ProspectingMessage.status.in_([MessageStatus.ENVIADA, MessageStatus.SENT, ProspectingStatus.APPROVED])
     ).count()
     error_count = ProspectingMessage.query.filter(
         ProspectingMessage.campaign_id == campaign_id,
-        ProspectingMessage.status.in_(['erro', 'failed'])
+        ProspectingMessage.status.in_([MessageStatus.ERRO, MessageStatus.FAILED])
     ).count()
     
     # Funnel data: leads grouped by prospecting status
     funnel_groups = {
-        'respondeu': [],
-        'interessado': [],
-        'reuniao': [],
-        'cliente': [],
-        'sem_resposta': [],
-        'descartado': []
+        ProspectingStatus.RESPONDEU: [],
+        ProspectingStatus.INTERESSADO: [],
+        ProspectingStatus.REUNIAO: [],
+        ProspectingStatus.CLIENTE: [],
+        ProspectingStatus.SEM_RESPOSTA: [],
+        ProspectingStatus.DESCARTADO: []
     }
     for lead in leads:
         status = lead.prospecting_status
-        if status == 'respondeu':
-            funnel_groups['respondeu'].append(lead.id)
-        if status == 'interessado':
-            funnel_groups['interessado'].append(lead.id)
-        if status == 'reuniao':
-            funnel_groups['reuniao'].append(lead.id)
-        if status == 'cliente':
-            funnel_groups['cliente'].append(lead.id)
-        if status == 'sem_resposta':
-            funnel_groups['sem_resposta'].append(lead.id)
-        if status in ('descartado', 'erro', 'failed'):
-            funnel_groups['descartado'].append(lead.id)
+        if status == ProspectingStatus.RESPONDEU:
+            funnel_groups[ProspectingStatus.RESPONDEU].append(lead.id)
+        if status == ProspectingStatus.INTERESSADO:
+            funnel_groups[ProspectingStatus.INTERESSADO].append(lead.id)
+        if status == ProspectingStatus.REUNIAO:
+            funnel_groups[ProspectingStatus.REUNIAO].append(lead.id)
+        if status == ProspectingStatus.CLIENTE:
+            funnel_groups[ProspectingStatus.CLIENTE].append(lead.id)
+        if status == ProspectingStatus.SEM_RESPOSTA:
+            funnel_groups[ProspectingStatus.SEM_RESPOSTA].append(lead.id)
+        if status in (ProspectingStatus.DESCARTADO, ProspectingStatus.ERRO, ProspectingStatus.FAILED):
+            funnel_groups[ProspectingStatus.DESCARTADO].append(lead.id)
     
     funnel = {
         'total': len(leads),
-        'responderam': len(funnel_groups['respondeu']),
-        'interessados': len(funnel_groups['interessado']),
-        'reunioes': len(funnel_groups['reuniao']),
-        'clientes': len(funnel_groups['cliente']),
-        'sem_resposta': len(funnel_groups['sem_resposta']),
-        'descartados': len(funnel_groups['descartado']),
+        'responderam': len(funnel_groups[ProspectingStatus.RESPONDEU]),
+        'interessados': len(funnel_groups[ProspectingStatus.INTERESSADO]),
+        'reunioes': len(funnel_groups[ProspectingStatus.REUNIAO]),
+        'clientes': len(funnel_groups[ProspectingStatus.CLIENTE]),
+        'sem_resposta': len(funnel_groups[ProspectingStatus.SEM_RESPOSTA]),
+        'descartados': len(funnel_groups[ProspectingStatus.DESCARTADO]),
         'restante': len(leads) - sum(len(v) for v in funnel_groups.values())
     }
     
@@ -586,23 +600,77 @@ def update_settings():
     return api_response(success=True)
 
 
+@prospecting_bp.route('/api/prospecting/watchdog/reset-stuck', methods=['POST'])
+@login_required
+def reset_stuck_leads():
+    """
+    Reseta leads travados com in_execution=True por mais de 15 minutos.
+    Chamado pelo próprio CRM (botão no dashboard) ou pelo n8n a cada hora.
+    """
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
+
+    company_id = current_user.company_id
+    threshold = datetime.utcnow() - timedelta(minutes=15)
+
+    stuck_leads = Lead.query.filter(
+        Lead.company_id == company_id,
+        Lead.in_execution == True,
+        Lead.updated_at < threshold
+    ).all()
+
+    reset_count = 0
+    for lead in stuck_leads:
+        lead.in_execution = False
+        lead.prospecting_status = ProspectingStatus.NOVO
+        reset_count += 1
+
+    db.session.commit()
+
+    return api_response(data={
+        'reset_count': reset_count,
+        'message': f'{reset_count} lead(s) travado(s) foram resetados.'
+    })
+
+
 def _save_message(lead, channel, content, angle, model):
-    """Cria um registro ProspectingMessage e retorna o resultado."""
+    """Cria um registro ProspectingMessage com step_number calculado."""
+    existing_count = ProspectingMessage.query.filter_by(
+        lead_id=lead.id,
+        campaign_id=lead.prospecting_campaign_id,
+        type=MessageType.OUTBOUND
+    ).count()
+    step_number = existing_count + 1
+
+    first_msg = ProspectingMessage.query.filter_by(
+        lead_id=lead.id,
+        campaign_id=lead.prospecting_campaign_id,
+        type=MessageType.OUTBOUND
+    ).order_by(ProspectingMessage.created_at.asc()).first()
+
+    cadence_day = 0
+    if first_msg and step_number > 1:
+        delta = datetime.utcnow() - first_msg.created_at
+        cadence_day = delta.days
+
     msg = ProspectingMessage(
         company_id=lead.company_id,
         lead_id=lead.id,
         campaign_id=lead.prospecting_campaign_id,
         channel=channel,
-        type='outbound',
-        status='pending_approval',
+        type=MessageType.OUTBOUND,
+        status=MessageStatus.PENDING_APPROVAL,
         content=content,
         ai_model=model,
+        step_number=step_number,
+        cadence_day=cadence_day,
         created_at=datetime.utcnow()
     )
     db.session.add(msg)
     db.session.flush()
-    return {'channel': channel, 'message_id': msg.id, 'content': content, 'status': 'pending_approval',
-            'angle': angle, 'model': model}
+    return {'channel': channel, 'message_id': msg.id, 'content': content, 'status': MessageStatus.PENDING_APPROVAL,
+            'angle': angle, 'model': model, 'step_number': step_number, 'cadence_day': cadence_day}
 
 
 def _generate_single_message(lead, setting, channel):
@@ -644,14 +712,14 @@ def generate_message(lead_id):
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
 
-    if lead.in_execution or lead.prospecting_status == 'em_execucao':
+    if lead.in_execution or lead.prospecting_status == ProspectingStatus.EM_EXECUCAO:
         return api_response(success=False, error='Já existe uma mensagem sendo gerada para este lead', status=400)
 
     setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
     if not setting or not setting.generate_message_webhook_url:
         return api_response(success=False, error='Webhook de geração de mensagem não configurado', status=400)
 
-    channel = lead.preferred_channel or 'whatsapp'
+    channel = lead.preferred_channel or LeadChannel.WHATSAPP
     if request.is_json:
         channel = request.json.get('channel', channel)
 
@@ -660,44 +728,44 @@ def generate_message(lead_id):
     last_error = None
 
     lead.in_execution = True
-    lead.prospecting_status = 'em_execucao'
-    sync_prospecting_stage(lead, 'em_execucao')
+    lead.prospecting_status = ProspectingStatus.EM_EXECUCAO
+    sync_prospecting_stage(lead, ProspectingStatus.EM_EXECUCAO)
     db.session.commit()
 
     try:
-        result = _generate_single_message(lead, setting, 'whatsapp')
+        result = _generate_single_message(lead, setting, LeadChannel.WHATSAPP)
         results.append(result)
 
-        if result.get('status') == 'pending_approval':
+        if result.get('status') == MessageStatus.PENDING_APPROVAL:
             any_success = True
             content = result.get('content', '')
             angle = result.get('angle')
             model = result.get('model')
 
-            if channel == 'email':
-                email_result = _save_message(lead, 'email', content, angle, model)
+            if channel == LeadChannel.EMAIL:
+                email_result = _save_message(lead, LeadChannel.EMAIL, content, angle, model)
                 results = [email_result]
-            elif channel == 'ambos':
+            elif channel == LeadChannel.AMBOS:
                 # Duplica a mesma mensagem para email (n8n gera 1x)
-                email_result = _save_message(lead, 'email', content, angle, model)
+                email_result = _save_message(lead, LeadChannel.EMAIL, content, angle, model)
                 results = [result, email_result]
                 logger.info(f"[AMBOS] Duplicated message for lead {lead.id}: "
                             f"whatsapp_id={result['message_id']}, email_id={email_result['message_id']}")
-        elif channel in ('email', 'ambos'):
+        elif channel in (LeadChannel.EMAIL, LeadChannel.AMBOS):
             # n8n retornou processing ou vazio
             if not last_error:
                 last_error = f"n8n retornou status {result.get('status')} para whatsapp"
     except Exception as e:
         last_error = str(e)
-        results.append({'channel': 'whatsapp', 'status': 'failed', 'error': str(e)})
+        results.append({'channel': LeadChannel.WHATSAPP, 'status': ProspectingStatus.FAILED, 'error': str(e)})
 
     lead.in_execution = False
     if any_success:
-        lead.prospecting_status = 'pending_approval'
+        lead.prospecting_status = ProspectingStatus.PENDING_APPROVAL
     elif last_error:
-        lead.prospecting_status = 'failed'
+        lead.prospecting_status = ProspectingStatus.FAILED
     else:
-        lead.prospecting_status = 'novo'
+        lead.prospecting_status = ProspectingStatus.NOVO
     sync_prospecting_stage(lead, lead.prospecting_status)
     db.session.commit()
 
@@ -714,7 +782,7 @@ def generate_campaign_messages(campaign_id):
     campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
     data = request.json or {}
     lead_ids = data.get('lead_ids', [])
-    channel = data.get('channel', 'whatsapp')
+    channel = data.get('channel', LeadChannel.WHATSAPP)
 
     if not lead_ids:
         # Generate for all leads in campaign
@@ -733,14 +801,14 @@ def generate_campaign_messages(campaign_id):
         lead = Lead.query.filter_by(id=lid, company_id=current_user.company_id).first()
         if not lead:
             return
-        if lead.in_execution or lead.prospecting_status == 'em_execucao':
+        if lead.in_execution or lead.prospecting_status == ProspectingStatus.EM_EXECUCAO:
             errors.append(f'Lead {lid} ({ch}): já em execução')
             return
 
         try:
             lead.in_execution = True
-            lead.prospecting_status = 'em_execucao'
-            sync_prospecting_stage(lead, 'em_execucao')
+            lead.prospecting_status = ProspectingStatus.EM_EXECUCAO
+            sync_prospecting_stage(lead, ProspectingStatus.EM_EXECUCAO)
             db.session.commit()
 
             payload = {
@@ -769,17 +837,17 @@ def generate_campaign_messages(campaign_id):
                         lead_id=lead.id,
                         campaign_id=lead.prospecting_campaign_id,
                         channel=ch,
-                        type='outbound',
-                        status='pending_approval',
+                        type=MessageType.OUTBOUND,
+                        status=MessageStatus.PENDING_APPROVAL,
                         content=message_text,
                         ai_model=model,
                         created_at=datetime.utcnow()
                     )
                     db.session.add(msg)
-                    lead.prospecting_status = 'pending_approval'
+                    lead.prospecting_status = ProspectingStatus.PENDING_APPROVAL
                     lead.last_angle = angle
                 else:
-                    lead.prospecting_status = 'novo'
+                    lead.prospecting_status = ProspectingStatus.NOVO
                 lead.in_execution = False
                 db.session.commit()
                 triggered += 1
@@ -788,12 +856,12 @@ def generate_campaign_messages(campaign_id):
 
         except Exception as e:
             lead.in_execution = False
-            lead.prospecting_status = 'failed'
-            sync_prospecting_stage(lead, 'failed')
+            lead.prospecting_status = ProspectingStatus.FAILED
+            sync_prospecting_stage(lead, ProspectingStatus.FAILED)
             db.session.commit()
             errors.append(f'Lead {lid} ({ch}): {str(e)}')
 
-    channels = ['whatsapp', 'email'] if channel == 'ambos' else [channel]
+    channels = [LeadChannel.WHATSAPP, LeadChannel.EMAIL] if channel == LeadChannel.AMBOS else [channel]
 
     for lid in lead_ids:
         for ch in channels:
@@ -816,17 +884,17 @@ def approve_message(lead_id, message_id):
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
     message = ProspectingMessage.query.filter_by(id=message_id, lead_id=lead_id).first_or_404()
 
-    if message.status not in ['pendente', 'aguardando_aprovacao', 'pending_approval']:
+    if message.status not in [MessageStatus.PENDENTE, MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL]:
         return api_response(success=False, error='Mensagem não pode ser aprovada neste status', status=400)
 
     setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
 
     webhook_url = None
     action = None
-    if message.channel == 'whatsapp':
+    if message.channel == LeadChannel.WHATSAPP:
         webhook_url = setting.send_whatsapp_webhook_url if setting else None
         action = 'send_whatsapp'
-    elif message.channel == 'email':
+    elif message.channel == LeadChannel.EMAIL:
         webhook_url = (setting.send_email_webhook_url or setting.send_whatsapp_webhook_url) if setting else None
         action = 'send_email'
 
@@ -855,19 +923,19 @@ def approve_message(lead_id, message_id):
         )
 
         if success:
-            message.status = 'sent'
+            message.status = MessageStatus.SENT
             message.approved_by = current_user.id
             message.approved_at = datetime.utcnow()
             message.sent_at = datetime.utcnow()
 
-            if message.channel == 'whatsapp':
+            if message.channel == LeadChannel.WHATSAPP:
                 lead.wa_attempts = (lead.wa_attempts or 0) + 1
-            elif message.channel == 'email':
+            elif message.channel == LeadChannel.EMAIL:
                 lead.email_attempts = (lead.email_attempts or 0) + 1
 
             lead.last_contact_at = datetime.utcnow()
-            lead.prospecting_status = 'contatado'
-            sync_prospecting_stage(lead, 'contatado')
+            lead.prospecting_status = ProspectingStatus.CONTATADO
+            sync_prospecting_stage(lead, ProspectingStatus.CONTATADO)
 
             if lead.prospecting_campaign_id:
                 campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
@@ -884,16 +952,16 @@ def approve_message(lead_id, message_id):
             db.session.add(interaction)
             db.session.commit()
 
-            return api_response(data={'status': 'sent', 'sent_at': message.sent_at.isoformat()})
+            return api_response(data={'status': MessageStatus.SENT, 'sent_at': message.sent_at.isoformat()})
         else:
             raise Exception(error_msg or "Webhook retornou erro")
 
     except Exception as e:
-        message.status = 'failed'
+        message.status = MessageStatus.FAILED
         message.error_message = str(e)
         db.session.commit()
 
-        lead.prospecting_status = 'failed'
+        lead.prospecting_status = ProspectingStatus.FAILED
         db.session.commit()
 
         return api_response(success=False, error=f'Erro ao enviar mensagem: {str(e)}', status=500)
@@ -909,12 +977,12 @@ def reject_message(lead_id, message_id):
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
     message = ProspectingMessage.query.filter_by(id=message_id, lead_id=lead_id).first_or_404()
 
-    message.status = 'rejeitada'
+    message.status = MessageStatus.REJEITADA
     db.session.commit()
 
-    lead.prospecting_status = 'novo'
+    lead.prospecting_status = ProspectingStatus.NOVO
     lead.in_execution = False
-    sync_prospecting_stage(lead, 'novo')
+    sync_prospecting_stage(lead, ProspectingStatus.NOVO)
     db.session.commit()
 
     return api_response(success=True)
@@ -929,7 +997,7 @@ def edit_message(message_id):
 
     message = ProspectingMessage.query.filter_by(id=message_id, company_id=current_user.company_id).first_or_404()
 
-    if message.status not in ['pendente', 'aguardando_aprovacao', 'pending_approval']:
+    if message.status not in [MessageStatus.PENDENTE, MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL]:
         return api_response(success=False, error='Só é possível editar mensagens pendentes', status=400)
 
     data = request.json or {}
@@ -984,7 +1052,7 @@ def pause_lead(lead_id):
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
 
-    lead.prospecting_status = 'pausado'
+    lead.prospecting_status = ProspectingStatus.PAUSADO
     lead.in_execution = False
     db.session.commit()
 
@@ -1000,8 +1068,8 @@ def resume_lead(lead_id):
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
 
-    lead.prospecting_status = 'novo'
-    sync_prospecting_stage(lead, 'novo')
+    lead.prospecting_status = ProspectingStatus.NOVO
+    sync_prospecting_stage(lead, ProspectingStatus.NOVO)
     db.session.commit()
 
     return api_response(success=True)
@@ -1016,9 +1084,9 @@ def discard_lead(lead_id):
 
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
 
-    lead.prospecting_status = 'descartado'
+    lead.prospecting_status = ProspectingStatus.DESCARTADO
     lead.in_execution = False
-    sync_prospecting_stage(lead, 'descartado')
+    sync_prospecting_stage(lead, ProspectingStatus.DESCARTADO)
     db.session.commit()
 
     return api_response(success=True)
@@ -1038,7 +1106,7 @@ def add_to_campaign(lead_id):
     if campaign_id:
         campaign = ProspectingCampaign.query.filter_by(id=campaign_id, company_id=current_user.company_id).first_or_404()
         lead.prospecting_campaign_id = campaign_id
-        lead.prospecting_status = 'novo'
+        lead.prospecting_status = ProspectingStatus.NOVO
         
         # Associar o lead ao pipeline e primeiro estágio correspondente
         if campaign.pipeline_id:
@@ -1097,7 +1165,7 @@ def list_base_leads():
             'status': l.status or '',
             'has_campaign': l.prospecting_campaign_id is not None,
             'campaign_id': l.prospecting_campaign_id,
-            'preferred_channel': l.preferred_channel or 'whatsapp',
+            'preferred_channel': l.preferred_channel or LeadChannel.WHATSAPP,
         })
 
     return api_response(data={'leads': data, 'total': total, 'page': page, 'per_page': per_page})
@@ -1114,7 +1182,7 @@ def bulk_add_to_campaign():
     data = request.json or {}
     campaign_id = data.get('campaign_id')
     lead_ids = data.get('lead_ids', [])
-    preferred_channel = data.get('preferred_channel', 'whatsapp')
+    preferred_channel = data.get('preferred_channel', LeadChannel.WHATSAPP)
 
     if not campaign_id or not lead_ids:
         return api_response(success=False, error='Informe a campanha e ao menos um lead.', status=400)
@@ -1142,7 +1210,7 @@ def bulk_add_to_campaign():
             continue
 
         lead.prospecting_campaign_id = campaign_id
-        lead.prospecting_status = 'novo'
+        lead.prospecting_status = ProspectingStatus.NOVO
         if not lead.preferred_channel:
             lead.preferred_channel = preferred_channel
 
@@ -1197,7 +1265,7 @@ def search_places():
                 'pagetoken': pagetoken,
                 'key': api_key
             }
-            time.sleep(1.5)
+            time.sleep(0.5)
             response = requests.get(url, params=params, timeout=10)
             data = response.json()
             all_results = data.get('results', [])
@@ -1226,14 +1294,16 @@ def search_places():
                         params['location'] = f"{loc['lat']},{loc['lng']}"
                         params['radius'] = radius * 1000
 
-                # Auto-paginar até 3 páginas por cidade (limite da API Google = ~60 resultados)
+                # Paginação lazy: retorna 1 página por vez com next_page_token.
+                # O frontend chama novamente com pagetoken para carregar mais resultados.
+                # Isso evita timeout no Vercel (max 30s por função serverless).
                 city_token = None
                 page_count = 0
-                while page_count < 3:
+                while page_count < 1:
                     this_params = params.copy()
                     if city_token:
                         this_params = {'pagetoken': city_token, 'key': api_key}
-                        time.sleep(1.5)
+                        time.sleep(0.5)
 
                     response = requests.get(url, params=this_params, timeout=10)
                     data = response.json()
@@ -1480,6 +1550,21 @@ def import_lead():
             if Lead.query.filter_by(company_id=current_user.company_id, google_place_id=place_id).first():
                 continue
 
+            # Checagem de duplicata por telefone
+            if phone:
+                phone_clean = ''.join(filter(str.isdigit, phone))
+                if phone_clean:
+                    existing_by_phone = Lead.query.filter(
+                        Lead.company_id == current_user.company_id,
+                        db.or_(
+                            Lead.phone.contains(phone_clean[-8:]),
+                            Lead.whatsapp.contains(phone_clean[-8:])
+                        )
+                    ).first()
+                    if existing_by_phone:
+                        errors.append(f"Lead '{p.get('name')}' pulado: telefone já existe (lead #{existing_by_phone.id})")
+                        continue
+
             with db.session.begin_nested():
                 name_val = p.get('name') or 'Sem Nome'
                 new_lead = Lead(
@@ -1497,7 +1582,7 @@ def import_lead():
                     gmb_rating=p.get('rating', 0),
                     gmb_reviews=p.get('user_ratings_total', 0),
                     notes=f"Importado via Google Maps em {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}",
-                    prospecting_status='novo',
+                    prospecting_status=ProspectingStatus.NOVO,
                     prospecting_campaign_id=campaign.id if campaign else None
                 )
                 db.session.add(new_lead)

@@ -24,6 +24,12 @@
             </p>
         </div>
         <div class="flex items-center gap-3">
+            <button onclick="resetStuckLeads()"
+                class="px-4 py-2.5 bg-amber-50 text-amber-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-amber-100 transition-all"
+                title="Reseta leads travados em execução há mais de 15 minutos">
+                <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-1"></i>
+                Liberar travados
+            </button>
             <a href="{{ url_for('prospecting.discover') }}"
                 class="px-5 py-2.5 bg-northway-red text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all">
                 <i data-lucide="search" class="w-4 h-4 inline mr-2"></i>
@@ -303,6 +309,17 @@ function openCampaignModal() {
 function closeCampaignModal() {
     document.getElementById('campaignModal').classList.add('hidden');
     document.getElementById('campaignModal').classList.remove('flex');
+}
+
+async function resetStuckLeads() {
+  const res = await fetch('{{ url_for("prospecting.reset_stuck_leads") }}', { method: 'POST' });
+  const data = await res.json();
+  if (data.success) {
+    alert(data.data.message);
+    location.reload();
+  } else {
+    alert(data.error || 'Erro ao resetar leads');
+  }
 }
 
 document.getElementById('campaignForm').addEventListener('submit', async function(e) {
