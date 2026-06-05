@@ -1709,7 +1709,11 @@ class ProspectingNiche(db.Model):
     name = db.Column(db.String(100), nullable=False)
     search_query = db.Column(db.String(200), nullable=False)
 
-    city = db.Column(db.String(100), nullable=False)
+    cities = db.Column(db.JSON, default=list)
+
+    @property
+    def city(self):
+        return ', '.join(self.cities or [])
     state = db.Column(db.String(2), default='PR')
 
     min_rating = db.Column(db.Float, default=3.5)
