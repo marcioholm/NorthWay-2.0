@@ -1158,7 +1158,12 @@ def import_leads_internal():
             if first_stage:
                 target_stage_id = first_stage.id
 
+    from utils.segment_validation import is_segment_match
+    target_segment = campaign.target_segment if campaign else None
+
     imported_count = 0
+    rejected_segment = 0
+    duplicate_count = 0
     new_lead_ids = []
     errors = []
 
@@ -1167,7 +1172,14 @@ def import_leads_internal():
         if not place_id:
             continue
 
+        # Validação de segmento
+        if target_segment and not is_segment_match(p, target_segment):
+            logger.info(f"[IMPORT_LEADS] Segment mismatch: {p.get('name')} não corresponde ao segmento '{target_segment}'")
+            rejected_segment += 1
+            continue
+
         if Lead.query.filter_by(company_id=tenant_id, google_place_id=place_id).first():
+            duplicate_count += 1
             continue
 
         phone = p.get('phone')
@@ -1222,6 +1234,8 @@ def import_leads_internal():
     return jsonify({
         'success': True,
         'imported_count': imported_count,
+        'rejected_segment': rejected_segment,
+        'duplicate_count': duplicate_count,
         'lead_ids': new_lead_ids,
         'errors': errors
     })

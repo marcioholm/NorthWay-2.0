@@ -1553,18 +1553,29 @@ def import_lead():
 
     # Verificar se o pipeline de destino pertence a alguma campanha de prospecção
     campaign = ProspectingCampaign.query.filter_by(pipeline_id=target_pipeline_id, company_id=current_user.company_id).first()
+    target_segment = campaign.target_segment if campaign else None
 
     from models import Integration
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='google_maps').first()
     api_key = integration.api_key if integration and integration.is_active else None
 
+    from utils.segment_validation import is_segment_match
+
     imported_count = 0
+    rejected_segment = 0
+    duplicate_count = 0
     errors = []
     new_lead_ids = []
 
     for p in places:
         place_id = p.get('place_id')
         if not place_id: continue
+
+        # Validação de segmento
+        if target_segment and not is_segment_match(p, target_segment):
+            logger.info(f"Segment mismatch: {p.get('name')} não corresponde ao segmento '{target_segment}'")
+            rejected_segment += 1
+            continue
 
         phone = p.get('phone')
         website = p.get('website')
@@ -1587,6 +1598,7 @@ def import_lead():
 
         try:
             if Lead.query.filter_by(company_id=current_user.company_id, google_place_id=place_id).first():
+                duplicate_count += 1
                 continue
 
             # Checagem de duplicata por telefone
@@ -1636,7 +1648,13 @@ def import_lead():
     except Exception as e:
         db.session.rollback()
         errors.append(f"Commit error: {str(e)}")
-    return api_response(data={'imported_count': imported_count, 'lead_ids': new_lead_ids, 'errors': errors})
+    return api_response(data={
+        'imported_count': imported_count,
+        'lead_ids': new_lead_ids,
+        'rejected_segment': rejected_segment,
+        'duplicate_count': duplicate_count,
+        'errors': errors
+    })
 
 
 @prospecting_bp.route('/api/prospecting/backfill-phones', methods=['POST'])
