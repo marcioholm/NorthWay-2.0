@@ -105,19 +105,57 @@ def dashboard():
     company_id = current_user.company_id
 
     try:
+        # Reset stale prospecting_status: leads with status but no campaign and no messages
+        from models import ProspectingMessage, MessageQueue
+        stale_leads = Lead.query.filter(
+            Lead.company_id == company_id,
+            Lead.prospecting_status.isnot(None),
+            Lead.prospecting_campaign_id.is_(None)
+        ).all()
+        stale_ids = [l.id for l in stale_leads]
+        if stale_ids:
+            # Check which actually have messages
+            has_msgs = {r[0] for r in db.session.query(ProspectingMessage.lead_id).filter(
+                ProspectingMessage.lead_id.in_(stale_ids)
+            ).distinct().all()}
+            has_queue = {r[0] for r in db.session.query(MessageQueue.lead_id).filter(
+                MessageQueue.lead_id.in_(stale_ids)
+            ).distinct().all()}
+            truly_stale = [lid for lid in stale_ids if lid not in has_msgs and lid not in has_queue]
+            if truly_stale:
+                Lead.query.filter(Lead.id.in_(truly_stale)).update(
+                    {'prospecting_status': None, 'next_action_at': None, 'in_execution': False},
+                    synchronize_session=False
+                )
+                db.session.commit()
+
+        # Aguardando aprovação from prospecting_messages table
+        approval_count = db.session.query(func.count(func.distinct(ProspectingMessage.lead_id))).filter(
+            ProspectingMessage.company_id == company_id,
+            ProspectingMessage.status.in_([MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL])
+        ).scalar() or 0
+
+        # Message queue pending count
+        queue_count = db.session.query(func.count(func.distinct(MessageQueue.id))).filter(
+            MessageQueue.company_id == company_id,
+            MessageQueue.status == 'pending'
+        ).scalar() or 0
+
+        # Lead-based status counts (only leads with prospecting_campaign_id or messages)
         status_counts = db.session.query(
             Lead.prospecting_status,
             func.count(Lead.id).label('count')
         ).filter(
             Lead.company_id == company_id,
-            Lead.prospecting_status.isnot(None)
+            Lead.prospecting_status.isnot(None),
+            Lead.prospecting_campaign_id.isnot(None)
         ).group_by(Lead.prospecting_status).all()
 
         counts = {row.prospecting_status: row.count for row in status_counts}
         total_leads = sum(counts.values())
         aguardando = counts.get(ProspectingStatus.NOVO, 0)
         em_execucao = counts.get(ProspectingStatus.EM_EXECUCAO, 0)
-        aguardando_aprovacao = counts.get(ProspectingStatus.AGUARDANDO_APROVACAO, 0) + counts.get(ProspectingStatus.PENDING_APPROVAL, 0)
+        aguardando_aprovacao = approval_count
         contatados = counts.get(ProspectingStatus.CONTATADO, 0) + counts.get(ProspectingStatus.SENT, 0) + counts.get(ProspectingStatus.APPROVED, 0)
         responderam = counts.get(ProspectingStatus.RESPONDEU, 0)
         interessados = counts.get(ProspectingStatus.INTERESSADO, 0)
