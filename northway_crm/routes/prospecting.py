@@ -1665,11 +1665,18 @@ def backfill_phones():
 @prospecting_bp.route('/prospecting/niches', methods=['GET'])
 @login_required
 def niches_page():
-    from models import ProspectingNiche
+    from models import ProspectingNiche, ProspectingCampaign
+
     niches = ProspectingNiche.query.filter_by(
         company_id=current_user.company_id
     ).order_by(ProspectingNiche.name).all()
-    return render_template('prospecting/niches.html', niches=niches)
+
+    campaigns = ProspectingCampaign.query.filter_by(
+        company_id=current_user.company_id,
+        is_active=True
+    ).order_by(ProspectingCampaign.name).all()
+
+    return render_template('prospecting/niches.html', niches=niches, campaigns=campaigns)
 
 
 @prospecting_bp.route('/api/prospecting/niche/today', methods=['GET'])
