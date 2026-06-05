@@ -930,6 +930,35 @@ def schedule_next_step():
         except Exception as e:
             logger.warning(f"[SCHEDULE_NEXT] Erro ao criar notificação: {e}")
 
+        # Sincronizar com o pipeline quando lead responde com intenção quente
+        try:
+            from models import PipelineStage
+
+            target_stage = PipelineStage.query.filter(
+                PipelineStage.pipeline_id == lead.pipeline_id,
+                db.or_(
+                    PipelineStage.name.ilike('%responde%'),
+                    PipelineStage.name.ilike('%interest%'),
+                    PipelineStage.name.ilike('%qualific%'),
+                    PipelineStage.name.ilike('%prospect%')
+                )
+            ).first()
+
+            if not target_stage and lead.pipeline_stage_id:
+                current_stage = PipelineStage.query.get(lead.pipeline_stage_id)
+                if current_stage:
+                    target_stage = PipelineStage.query.filter_by(
+                        pipeline_id=lead.pipeline_id
+                    ).filter(
+                        PipelineStage.order > current_stage.order
+                    ).order_by(PipelineStage.order).first()
+
+            if target_stage:
+                lead.pipeline_stage_id = target_stage.id
+
+        except Exception as e:
+            logger.warning(f"[SCHEDULE_NEXT] Erro ao sincronizar pipeline: {e}")
+
     elif classification in IntentStatus.COLD:
         lead.prospecting_status = ProspectingStatus.DESCARTADO
         lead.next_action_at = None
