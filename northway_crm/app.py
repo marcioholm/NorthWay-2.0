@@ -398,33 +398,7 @@ def create_app():
             except Exception:
                 return "<html><body style='font-family:sans-serif;background:#111827;color:#f9fafb;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'><div style='text-align:center'><h1 style='color:#ef4444'>404</h1><p>Página não encontrada</p><a href='/home' style='color:#ef4444'>Voltar ao início</a></div></body></html>", 404
 
-        @app.errorhandler(500)
-        def internal_error(error):
-            # Fail-safe rollback
-            try: db.session.rollback()
-            except: pass
-            
-            error_msg = str(error)
-            
-            # CRITICAL: Log traceback to stderr/logs
-            import traceback
-            error_trace = traceback.format_exc()
-            app.logger.error(f"🚨 INTERNAL SERVER ERROR (500): {error_msg}\n{error_trace}")
 
-            # If it's an API request, return JSON so the frontend can parse the error
-            api_paths = ('/api/', '/internal/', '/prospecting/', '/leads/')
-            if request.path.startswith(api_paths) or request.is_xhr or \
-               request.accept_mimetypes.best == 'application/json':
-                return jsonify({
-                    'success': False,
-                    'error': 'Erro Interno do Servidor (500)',
-                    'message': error_msg
-                }), 500
-
-            if os.environ.get('VERCEL'):
-                error_msg = "Internal Server Error. Please contact support."
-                
-            return render_template('500.html', error=error_msg), 500
 
         @app.route('/debug_schema')
         @login_required
@@ -610,7 +584,16 @@ def create_app():
         def handle_500(e):
             import traceback
             tb = traceback.format_exc()
-            app.logger.error(f"500 ERROR: {e}\n{tb}")
+            error_msg = str(e)
+            app.logger.error(f"500 ERROR: {error_msg}\n{tb}")
+            api_paths = ('/api/', '/internal/', '/prospecting/', '/leads/')
+            if request.path.startswith(api_paths) or request.is_xhr or \
+               request.accept_mimetypes.best == 'application/json':
+                return jsonify({
+                    'success': False,
+                    'error': 'Erro Interno do Servidor (500)',
+                    'message': error_msg
+                }), 500
             return f"""
             <div style="font-family: sans-serif; padding: 40px; border: 2px solid red; margin: 20px;">
                 <h1 style="color: red;">❌ Internal Server Error (500)</h1>
