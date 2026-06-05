@@ -288,6 +288,12 @@ def create_app():
         login_manager.login_view = 'auth.login'
         login_manager.init_app(app)
 
+        @login_manager.unauthorized_handler
+        def unauthorized():
+            if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+                return jsonify({'success': False, 'error': 'Autenticação necessária'}), 401
+            return redirect(url_for('auth.login'))
+
         @login_manager.user_loader
         def load_user(user_id):
             try:
@@ -381,6 +387,9 @@ def create_app():
         # --- ERROR HANDLERS ---
         @app.errorhandler(404)
         def not_found_error(error):
+            if request.path.startswith('/api/') or request.path.startswith('/internal/') or \
+               request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+                return jsonify({'success': False, 'error': 'Recurso não encontrado'}), 404
             try:
                 return render_template('404.html'), 404
             except Exception:
