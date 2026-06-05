@@ -654,33 +654,6 @@ async function editCampaign(campaignId) {
     }
 }
 
-        document.getElementById('modalTitle').textContent = 'Editar Campanha';
-        document.getElementById('campaignId').value = campaignId;
-        document.getElementById('name').value = result.data.name || '';
-        document.getElementById('description').value = result.data.description || '';
-        document.getElementById('target_segment').value = result.data.target_segment || '';
-        document.getElementById('tone_of_voice').value = result.data.tone_of_voice || 'profissional';
-        document.getElementById('objective').value = result.data.objective || '';
-        document.getElementById('offer').value = result.data.offer || '';
-        document.getElementById('main_angle').value = result.data.main_angle || '';
-        document.getElementById('default_cta').value = result.data.default_cta || '';
-        document.getElementById('max_attempts').value = result.data.max_attempts || 3;
-        document.getElementById('followup_interval_days').value = result.data.followup_interval_days || 3;
-        document.getElementById('restrictions').value = result.data.restrictions || '';
-
-        document.getElementById('campaignModal').classList.remove('hidden');
-        document.getElementById('campaignModal').classList.add('flex');
-    } catch(err) {
-        console.error('editCampaign error:', err);
-        let msg = err.message;
-        try {
-            const text = await response.text();
-            try { const j = JSON.parse(text); msg = j.error || j.message || text; } catch(e) { msg = text.substring(0, 200); }
-        } catch(e) {}
-        alert('Erro ao carregar campanha: ' + msg);
-    }
-}
-
 document.getElementById('campaignForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const campaignId = document.getElementById('campaignId').value;
