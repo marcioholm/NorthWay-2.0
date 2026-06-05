@@ -4,3 +4,5 @@ ALTER TABLE prospecting_niche
 UPDATE prospecting_niche
 SET cities = jsonb_build_array(city)
 WHERE cities = '[]' AND city IS NOT NULL;
+
+ALTER TABLE prospecting_niche ALTER COLUMN city DROP NOT NULL;
