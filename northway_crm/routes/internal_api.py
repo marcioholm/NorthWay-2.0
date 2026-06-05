@@ -990,6 +990,24 @@ def health_check():
     return jsonify({'status': 'ok', 'service': 'internal-api'})
 
 
+@internal_api_bp.route('/prospecting/niches/<int:niche_id>', methods=['PUT'])
+@require_internal_auth
+def update_niche_internal(niche_id):
+    from models import ProspectingNiche
+    data = request.json or {}
+    tenant_id = data.get('tenant_id') or request.args.get('tenant_id', type=int)
+
+    niche = ProspectingNiche.query.filter_by(id=niche_id).first_or_404()
+
+    for field in ['name', 'search_query', 'cities', 'state', 'min_rating',
+                  'min_reviews', 'active_weekdays', 'default_campaign_id', 'is_active']:
+        if field in data:
+            setattr(niche, field, data[field])
+
+    db.session.commit()
+    return jsonify({'success': True, 'id': niche.id, 'updated': True})
+
+
 @internal_api_bp.route('/prospecting/niche/today', methods=['GET'])
 @require_internal_auth
 def get_niche_today_internal():
