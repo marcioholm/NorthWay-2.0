@@ -13,7 +13,7 @@ from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatu
 
 logger = logging.getLogger(__name__)
 
-internal_api_bp = Blueprint('internal_api', __name__, url_prefix='/api/internal')
+internal_api_bp = Blueprint('internal_api', __name__)
 
 
 def model_to_dict(obj):
