@@ -1036,3 +1036,56 @@ def get_niche_today_internal():
             'tenant_id': tenant_id
         }
     })
+
+
+@internal_api_bp.route('/prospecting/search-places', methods=['GET'])
+@require_internal_auth
+def search_places_internal():
+    from models import Integration
+    import requests as req
+
+    tenant_id = request.args.get('tenant_id', type=int)
+    query = request.args.get('query')
+    city = request.args.get('city')
+    state = request.args.get('state', 'PR')
+    min_rating = request.args.get('min_rating', type=float, default=3.5)
+
+    if not tenant_id or not query:
+        return jsonify({'success': False, 'error': 'tenant_id e query são obrigatórios'}), 400
+
+    integration = Integration.query.filter_by(
+        company_id=tenant_id,
+        service='google_maps',
+        is_active=True
+    ).first()
+
+    if not integration or not integration.api_key:
+        return jsonify({'success': False, 'error': 'Google Maps API Key não configurada'}), 400
+
+    api_key = integration.api_key
+    cities = [c.strip() for c in city.split(',')] if city else ['Brasil']
+    all_results = []
+
+    for current_city in cities:
+        search_query = f"{query}, {current_city}, {state}, Brasil"
+        url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
+        params = {'query': search_query, 'key': api_key, 'language': 'pt-BR'}
+
+        try:
+            response = req.get(url, params=params, timeout=10)
+            data = response.json()
+            if data.get('status') == 'OK':
+                all_results.extend(data.get('results', []))
+        except Exception as e:
+            logger.warning(f"[SEARCH_PLACES] Erro cidade {current_city}: {e}")
+
+    if min_rating:
+        all_results = [p for p in all_results if p.get('rating', 0) >= min_rating]
+
+    unique = {p['place_id']: p for p in all_results}
+
+    return jsonify({
+        'success': True,
+        'places': list(unique.values()),
+        'total': len(unique)
+    })
