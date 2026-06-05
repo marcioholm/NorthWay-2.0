@@ -9,7 +9,7 @@ from utils.crypto import decrypt_api_key
 from utils.phone import phone_variants
 from utils.crypto import decrypt_api_key
 import logging
-from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatus, MessageType, NotificationType, IntegrationProvider, AIProvider
+from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatus, MessageType, NotificationType, IntegrationProvider
 
 logger = logging.getLogger(__name__)
 
@@ -128,49 +128,35 @@ def get_prospecting_context():
 
     settings = ProspectingSetting.query.filter_by(company_id=tenant_id).first()
 
-    # Building context for the requested action
-    is_automated = action == 'generate_and_send_whatsapp'
-    
-    # Get AI Credentials if automated
+    # Get AI Credentials — busca sem filtro de provider (usa o primeiro ativo)
     ai_creds = None
-    if is_automated:
-        # Try to get the provider from settings or default to openai
-        provider = settings.default_ai_model.split('-')[0] if settings and settings.default_ai_model else AIProvider.OPENAI
-        if 'gpt' in provider: provider = AIProvider.OPENAI
-        elif 'claude' in provider: provider = AIProvider.ANTHROPIC
-        elif 'gemini' in provider: provider = AIProvider.GOOGLE
-        
-        credential = TenantAICredential.query.filter_by(
-            company_id=tenant_id,
-            provider=provider,
-            status='active'
-        ).first()
-        
-        if credential:
-            ai_creds = {
-                'provider': credential.provider,
-                'api_key': decrypt_api_key(credential.api_key_encrypted),
-                'model': credential.model or settings.default_ai_model,
-                'base_url': credential.base_url
-            }
+    credential = TenantAICredential.query.filter_by(
+        company_id=tenant_id
+    ).first()
 
-    # Get WhatsApp Integration if automated
+    if credential and credential.status == 'active':
+        ai_creds = {
+            'provider': credential.provider,
+            'api_key': decrypt_api_key(credential.api_key_encrypted),
+            'model': credential.model or (settings.default_ai_model if settings else None),
+            'base_url': credential.base_url
+        }
+
+    # Get WhatsApp Integration — busca a Evolution API ativa
     whatsapp_integration = None
-    if is_automated:
-        integration = ProspectingIntegration.query.filter_by(
-            company_id=tenant_id, 
-            provider=IntegrationProvider.EVOLUTION_API, 
-            status='active'
-        ).first()
-        
-        if integration:
-            whatsapp_integration = {
-                'api_base_url': integration.api_base_url,
-                'instance_name': integration.instance_name,
-                'display_name': integration.display_name,
-                'sender_name': integration.sender_name or integration.display_name,
-                'api_key': decrypt_api_key(integration.api_key_encrypted)
-            }
+    integration = ProspectingIntegration.query.filter_by(
+        company_id=tenant_id,
+        status='active'
+    ).first()
+
+    if integration:
+        whatsapp_integration = {
+            'api_base_url': integration.api_base_url,
+            'instance_name': integration.instance_name,
+            'display_name': integration.display_name,
+            'sender_name': integration.sender_name or integration.display_name,
+            'api_key': decrypt_api_key(integration.api_key_encrypted)
+        }
 
     # Get Company Name
     from models import Company
