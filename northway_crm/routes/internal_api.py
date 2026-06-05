@@ -5,9 +5,7 @@ from flask import Blueprint, request, jsonify
 from functools import wraps
 from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction, CrmConversation, CrmConversationMessage, CrmConversationMemory, CrmAiLog, CrmChannelIntegration
 from datetime import datetime, timedelta
-from utils.crypto import decrypt_api_key
 from utils.phone import phone_variants
-from utils.crypto import decrypt_api_key
 import logging
 from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatus, MessageType, NotificationType, IntegrationProvider
 
@@ -75,7 +73,7 @@ def get_ai_credential():
 
         logger.info(f"[INTERNAL_AI] Credential found (ID={credential.id}). Decrypting key...")
         
-        decrypted_key = decrypt_api_key(credential.api_key_encrypted)
+        decrypted_key = credential.api_key
         
         if not decrypted_key:
             logger.error(f"[INTERNAL_AI] Decryption failed for credential ID={credential.id}")
@@ -137,7 +135,7 @@ def get_prospecting_context():
     if credential and credential.status == 'active':
         ai_creds = {
             'provider': credential.provider,
-            'api_key': decrypt_api_key(credential.api_key_encrypted),
+            'api_key': credential.api_key,
             'model': credential.model or (settings.default_ai_model if settings else None),
             'base_url': credential.base_url
         }
@@ -155,7 +153,7 @@ def get_prospecting_context():
             'instance_name': integration.instance_name,
             'display_name': integration.display_name,
             'sender_name': integration.sender_name or integration.display_name,
-            'api_key': decrypt_api_key(integration.api_key_encrypted)
+            'api_key': integration.api_key
         }
 
     # Get Company Name
@@ -367,11 +365,11 @@ def get_send_context():
             'api_base_url': integration.api_base_url if integration else None,
             'instance_name': integration.instance_name if integration else None,
             'display_name': integration.display_name if integration else None,
-            'api_key': decrypt_api_key(integration.api_key_encrypted) if integration and integration.api_key_encrypted else None
+            'api_key': integration.api_key if integration else None
         } if integration else None,
         # Standardized for N8N as requested
         'evolution_base_url': integration.api_base_url if integration else None,
-        'evolution_api_key': decrypt_api_key(integration.api_key_encrypted) if integration and integration.api_key_encrypted else None,
+        'evolution_api_key': integration.api_key if integration else None,
         'evolution_instance': integration.instance_name if integration else None
     })
 

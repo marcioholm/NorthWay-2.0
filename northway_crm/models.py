@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 import uuid
+from utils.crypto import decrypt_api_key
 
 def get_now_br():
     return datetime.utcnow() - timedelta(hours=3)
@@ -1539,6 +1540,12 @@ class TenantAICredential(db.Model):
 
     __table_args__ = (db.UniqueConstraint('company_id', 'provider', name='unique_company_ai_provider'),)
 
+    @property
+    def api_key(self):
+        if self.api_key_encrypted:
+            return decrypt_api_key(self.api_key_encrypted).strip()
+        return None
+
 
 class ProspectingIntegration(db.Model):
     __tablename__ = 'prospecting_integrations'
@@ -1566,6 +1573,12 @@ class ProspectingIntegration(db.Model):
     company = db.relationship('Company', backref='prospecting_integrations')
 
     __table_args__ = (db.UniqueConstraint('company_id', 'provider', name='unique_company_prospecting_integration_provider'),)
+
+    @property
+    def api_key(self):
+        if self.api_key_encrypted:
+            return decrypt_api_key(self.api_key_encrypted).strip()
+        return None
 
 class CrmChannelIntegration(db.Model):
     __tablename__ = 'crm_channel_integrations'
