@@ -1525,6 +1525,7 @@ def import_lead():
 
     imported_count = 0
     errors = []
+    new_lead_ids = []
 
     for p in places:
         place_id = p.get('place_id')
@@ -1589,6 +1590,8 @@ def import_lead():
                     prospecting_campaign_id=campaign.id if campaign else None
                 )
                 db.session.add(new_lead)
+                db.session.flush()
+                new_lead_ids.append(new_lead.id)
             imported_count += 1
         except Exception as e:
             errors.append(f"Error {p.get('name')}: {str(e)}")
@@ -1598,7 +1601,7 @@ def import_lead():
     except Exception as e:
         db.session.rollback()
         errors.append(f"Commit error: {str(e)}")
-    return api_response(data={'imported_count': imported_count, 'errors': errors})
+    return api_response(data={'imported_count': imported_count, 'lead_ids': new_lead_ids, 'errors': errors})
 
 
 @prospecting_bp.route('/api/prospecting/backfill-phones', methods=['POST'])
@@ -1657,3 +1660,124 @@ def backfill_phones():
 
     db.session.commit()
     return api_response(data={'updated_count': updated_count, 'errors': errors, 'total_scanned': len(leads)})
+
+
+@prospecting_bp.route('/api/prospecting/niche/today', methods=['GET'])
+@login_required
+def get_niche_today():
+    from datetime import datetime
+    from models import ProspectingNiche
+
+    company_id = current_user.company_id
+    today_weekday = datetime.utcnow().weekday()
+
+    niches = ProspectingNiche.query.filter_by(
+        company_id=company_id,
+        is_active=True
+    ).all()
+
+    today_niche = None
+    for niche in niches:
+        weekdays = niche.active_weekdays or []
+        if today_weekday in weekdays:
+            today_niche = niche
+            break
+
+    if not today_niche and niches:
+        today_niche = niches[0]
+
+    if not today_niche:
+        return api_response(success=False, error='Nenhum nicho configurado.')
+
+    return api_response(data={
+        'niche': {
+            'id': today_niche.id,
+            'name': today_niche.name,
+            'query': today_niche.query,
+            'city': today_niche.city,
+            'state': today_niche.state,
+            'min_rating': today_niche.min_rating,
+            'min_reviews': today_niche.min_reviews,
+            'default_campaign_id': today_niche.default_campaign_id,
+            'tenant_id': company_id
+        }
+    })
+
+
+@prospecting_bp.route('/api/prospecting/niches', methods=['GET'])
+@login_required
+def list_niches():
+    from models import ProspectingNiche
+    niches = ProspectingNiche.query.filter_by(
+        company_id=current_user.company_id
+    ).order_by(ProspectingNiche.name).all()
+
+    return api_response(data={'niches': [{
+        'id': n.id,
+        'name': n.name,
+        'query': n.query,
+        'city': n.city,
+        'state': n.state,
+        'min_rating': n.min_rating,
+        'min_reviews': n.min_reviews,
+        'active_weekdays': n.active_weekdays or [],
+        'default_campaign_id': n.default_campaign_id,
+        'is_active': n.is_active
+    } for n in niches]})
+
+
+@prospecting_bp.route('/api/prospecting/niches', methods=['POST'])
+@login_required
+def create_niche():
+    from models import ProspectingNiche
+    data = request.json or {}
+
+    if not data.get('query') or not data.get('city'):
+        return api_response(success=False, error='query e city são obrigatórios', status=400)
+
+    niche = ProspectingNiche(
+        company_id=current_user.company_id,
+        name=data.get('name') or data['query'],
+        query=data['query'],
+        city=data['city'],
+        state=data.get('state', 'PR'),
+        min_rating=float(data.get('min_rating', 3.5)),
+        min_reviews=int(data.get('min_reviews', 5)),
+        active_weekdays=data.get('active_weekdays', [0, 1, 2, 3, 4]),
+        default_campaign_id=data.get('default_campaign_id'),
+        is_active=True
+    )
+    db.session.add(niche)
+    db.session.commit()
+
+    return api_response(data={'id': niche.id, 'name': niche.name})
+
+
+@prospecting_bp.route('/api/prospecting/niches/<int:niche_id>', methods=['PUT'])
+@login_required
+def update_niche(niche_id):
+    from models import ProspectingNiche
+    niche = ProspectingNiche.query.filter_by(
+        id=niche_id, company_id=current_user.company_id
+    ).first_or_404()
+
+    data = request.json or {}
+    for field in ['name', 'query', 'city', 'state', 'min_rating',
+                  'min_reviews', 'active_weekdays', 'default_campaign_id', 'is_active']:
+        if field in data:
+            setattr(niche, field, data[field])
+
+    db.session.commit()
+    return api_response(data={'id': niche.id, 'updated': True})
+
+
+@prospecting_bp.route('/api/prospecting/niches/<int:niche_id>', methods=['DELETE'])
+@login_required
+def delete_niche(niche_id):
+    from models import ProspectingNiche
+    niche = ProspectingNiche.query.filter_by(
+        id=niche_id, company_id=current_user.company_id
+    ).first_or_404()
+    niche.is_active = False
+    db.session.commit()
+    return api_response(data={'deleted': True})

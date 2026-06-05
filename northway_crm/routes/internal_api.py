@@ -959,3 +959,50 @@ def schedule_next_step():
 @internal_api_bp.route('/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'ok', 'service': 'internal-api'})
+
+
+@internal_api_bp.route('/prospecting/niche/today', methods=['GET'])
+@require_internal_auth
+def get_niche_today_internal():
+    from datetime import datetime
+    from models import ProspectingNiche
+
+    tenant_id = request.args.get('tenant_id', type=int) or \
+                int(request.headers.get('X-Tenant-ID', 0))
+
+    if not tenant_id:
+        return jsonify({'success': False, 'error': 'tenant_id obrigatório'}), 400
+
+    today_weekday = datetime.utcnow().weekday()
+
+    niches = ProspectingNiche.query.filter_by(
+        company_id=tenant_id,
+        is_active=True
+    ).all()
+
+    today_niche = None
+    for niche in niches:
+        if today_weekday in (niche.active_weekdays or []):
+            today_niche = niche
+            break
+
+    if not today_niche and niches:
+        today_niche = niches[0]
+
+    if not today_niche:
+        return jsonify({'success': False, 'error': 'Nenhum nicho configurado'}), 404
+
+    return jsonify({
+        'success': True,
+        'niche': {
+            'id': today_niche.id,
+            'name': today_niche.name,
+            'query': today_niche.query,
+            'city': today_niche.city,
+            'state': today_niche.state,
+            'min_rating': today_niche.min_rating,
+            'min_reviews': today_niche.min_reviews,
+            'default_campaign_id': today_niche.default_campaign_id,
+            'tenant_id': tenant_id
+        }
+    })

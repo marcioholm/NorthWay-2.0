@@ -1700,3 +1700,29 @@ class CRMWebhookLog(db.Model):
     company = db.relationship('Company', backref='crm_webhook_logs')
     lead = db.relationship('Lead', backref='crm_webhook_logs')
 
+class ProspectingNiche(db.Model):
+    __tablename__ = 'prospecting_niche'
+
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+
+    name = db.Column(db.String(100), nullable=False)
+    query = db.Column(db.String(200), nullable=False)
+
+    city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(2), default='PR')
+
+    min_rating = db.Column(db.Float, default=3.5)
+    min_reviews = db.Column(db.Integer, default=5)
+
+    active_weekdays = db.Column(db.JSON, default=list)
+
+    default_campaign_id = db.Column(db.Integer, db.ForeignKey('prospecting_campaign.id'), nullable=True)
+
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='prospecting_niches')
+    default_campaign = db.relationship('ProspectingCampaign', backref='niches')
+
