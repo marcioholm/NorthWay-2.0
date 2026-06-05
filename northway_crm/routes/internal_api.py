@@ -126,13 +126,15 @@ def get_prospecting_context():
 
     settings = ProspectingSetting.query.filter_by(company_id=tenant_id).first()
 
-    # Get AI Credentials — busca sem filtro de provider (usa o primeiro ativo)
+    # Get AI Credentials — busca sem filtro de provider (usa o primeiro conectado)
     ai_creds = None
     credential = TenantAICredential.query.filter_by(
         company_id=tenant_id
+    ).filter(
+        TenantAICredential.status == 'connected'
     ).first()
 
-    if credential and credential.status == 'active':
+    if credential:
         ai_creds = {
             'provider': credential.provider,
             'api_key': credential.api_key,
