@@ -379,7 +379,7 @@ def manage_campaign(campaign_id):
 
     if request.method == 'DELETE':
         if campaign.pipeline_id:
-            from models import Pipeline, Lead
+            from models import Pipeline
             p = Pipeline.query.get(campaign.pipeline_id)
             if p:
                 # Desassociar os leads desse pipeline/estágios para evitar violação de integridade referencial
