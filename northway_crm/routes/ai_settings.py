@@ -173,21 +173,37 @@ def test_credential():
     headers = {'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'}
 
     if provider == 'openai':
-        test_url = test_url or 'https://api.openai.com/v1/chat/completions'
+        if test_url:
+            if not test_url.endswith('/chat/completions'):
+                test_url = test_url.rstrip('/') + '/chat/completions'
+        else:
+            test_url = 'https://api.openai.com/v1/chat/completions'
         test_payload = {"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1}
         method = 'POST'
     elif provider == 'groq':
-        test_url = test_url or 'https://api.groq.com/openai/v1/chat/completions'
+        if test_url:
+            if not test_url.endswith('/chat/completions'):
+                test_url = test_url.rstrip('/') + '/chat/completions'
+        else:
+            test_url = 'https://api.groq.com/openai/v1/chat/completions'
         test_payload = {"model": "llama-3.1-8b-instant", "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1}
         method = 'POST'
     elif provider == 'openrouter':
-        test_url = test_url or 'https://openrouter.ai/api/v1/chat/completions'
+        if test_url:
+            if not test_url.endswith('/chat/completions'):
+                test_url = test_url.rstrip('/') + '/chat/completions'
+        else:
+            test_url = 'https://openrouter.ai/api/v1/chat/completions'
         headers['HTTP-Referer'] = 'https://crm.northwaycompany.com.br'
         headers['X-Title'] = 'NorthWay CRM'
         test_payload = {"model": "google/gemini-pro-1.5", "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1}
         method = 'POST'
     elif provider == 'anthropic':
-        test_url = test_url or 'https://api.anthropic.com/v1/messages'
+        if test_url:
+            if not test_url.endswith('/v1/messages') and not test_url.endswith('/messages'):
+                test_url = test_url.rstrip('/') + '/v1/messages'
+        else:
+            test_url = 'https://api.anthropic.com/v1/messages'
         headers = {
             'x-api-key': api_key,
             'anthropic-version': '2023-06-01',
@@ -197,7 +213,11 @@ def test_credential():
         method = 'POST'
     elif provider == 'google':
         # Gemini test
-        test_url = test_url or f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
+        if test_url:
+            if 'generateContent' not in test_url:
+                test_url = test_url.rstrip('/') + f'/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
+        else:
+            test_url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
         headers = {'Content-Type': 'application/json'}
         test_payload = {"contents": [{"parts": [{"text": "ping"}]}]}
         method = 'POST'
