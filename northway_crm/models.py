@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, date
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 import uuid
-from utils.crypto import decrypt_api_key
 
 def get_now_br():
     return datetime.utcnow() - timedelta(hours=3)
@@ -1543,6 +1542,7 @@ class TenantAICredential(db.Model):
     @property
     def api_key(self):
         if self.api_key_encrypted:
+            from utils.crypto import decrypt_api_key
             return decrypt_api_key(self.api_key_encrypted).strip()
         return None
 
@@ -1577,6 +1577,7 @@ class ProspectingIntegration(db.Model):
     @property
     def api_key(self):
         if self.api_key_encrypted:
+            from utils.crypto import decrypt_api_key
             return decrypt_api_key(self.api_key_encrypted).strip()
         return None
 
