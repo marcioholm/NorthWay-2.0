@@ -38,6 +38,7 @@ def index():
             "base_url": c.base_url,
             "model": c.model,
             "status": c.status,
+            "last_test_at_formatted": c.last_test_at.strftime('%d/%m/%Y %H:%M') if c.last_test_at else None,
             "last_test_at": c.last_test_at.isoformat() if c.last_test_at else None,
             "created_at": c.created_at.isoformat() if c.created_at else None,
             "updated_at": c.updated_at.isoformat() if c.updated_at else None
@@ -217,6 +218,7 @@ def test_credential():
             saved_cred = TenantAICredential.query.filter_by(company_id=company_id, provider=provider).first()
             if saved_cred:
                 saved_cred.last_test_at = datetime.utcnow()
+                saved_cred.status = 'connected'
                 db.session.commit()
             return jsonify({'success': True, 'data': {'status': 'connected'}})
         else:
@@ -228,10 +230,18 @@ def test_credential():
             except:
                 pass
             logger.error(f"[AI_TEST] API Error: {response.status_code} - {error_data}")
+            saved_cred = TenantAICredential.query.filter_by(company_id=company_id, provider=provider).first()
+            if saved_cred:
+                saved_cred.status = 'error'
+                db.session.commit()
             return jsonify({'success': False, 'error': f'Erro na API ({response.status_code}): {error_data[:200]}'}), 400
 
     except Exception as e:
         logger.error(f"[AI_TEST] Connection exception: {str(e)}", exc_info=True)
+        saved_cred = TenantAICredential.query.filter_by(company_id=company_id, provider=provider).first()
+        if saved_cred:
+            saved_cred.status = 'error'
+            db.session.commit()
         return jsonify({'success': False, 'error': f'Falha de conexão: {str(e)}'}), 500
 
 @ai_settings_bp.route('/settings/ai/debug', methods=['GET'])

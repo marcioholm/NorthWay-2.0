@@ -50,7 +50,21 @@
                                     <p class="font-bold text-gray-900">{{ p.name }}</p>
                                     {% for cred in credentials %}
                                         {% if cred.provider == p.id %}
-                                    <p class="text-xs text-gray-400">Chave salva: ****{{ cred.api_key_last4 }}</p>
+                                    <div class="flex flex-col gap-0.5 mt-0.5">
+                                        <p class="text-xs text-gray-400">Chave salva: ****{{ cred.api_key_last4 }}</p>
+                                        <p class="text-[11px] flex items-center gap-1.5">
+                                            {% if cred.status == 'connected' %}
+                                            <span class="text-green-600 font-bold">● Conectado</span>
+                                            {% elif cred.status == 'error' %}
+                                            <span class="text-red-500 font-bold">● Falha na última conexão</span>
+                                            {% else %}
+                                            <span class="text-amber-500 font-bold">● Configurado</span>
+                                            {% endif %}
+                                            {% if cred.last_test_at_formatted %}
+                                            <span class="text-gray-400">• Testado em {{ cred.last_test_at_formatted }}</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
                                         {% endif %}
                                     {% endfor %}
                                 </div>
@@ -127,6 +141,9 @@
         </div>
         <form id="providerForm" class="p-6 space-y-4">
             <input type="hidden" id="providerId" name="providerId">
+            <div id="credentialStatusContainer" class="hidden p-3.5 rounded-xl text-xs font-medium">
+                <span id="credentialStatusText"></span>
+            </div>
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">API Key</label>
                 <input type="password" id="apiKey" name="apiKey" required
@@ -348,8 +365,27 @@ function openProviderModal(provider, name) {
     document.getElementById('customModel').value = '';
     document.getElementById('customModelContainer').classList.add('hidden');
 
+    const apiKeyInput = document.getElementById('apiKey');
+    const statusContainer = document.getElementById('credentialStatusContainer');
+    const statusText = document.getElementById('credentialStatusText');
+
     const existing = existingCredentials.find(c => c.provider === provider);
     if (existing) {
+        apiKeyInput.removeAttribute('required');
+        apiKeyInput.placeholder = 'Chave salva: ****' + existing.api_key_last4 + ' (Deixe em branco para manter a atual)';
+        
+        statusContainer.classList.remove('hidden');
+        if (existing.status === 'connected') {
+            statusContainer.className = 'p-3.5 rounded-xl text-xs font-semibold bg-green-50 text-green-700 border border-green-100 mb-2';
+            statusText.innerHTML = `● Status: Conectado (Testado em ${existing.last_test_at_formatted || existing.last_test_at})`;
+        } else if (existing.status === 'error') {
+            statusContainer.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-50 text-red-700 border border-red-100 mb-2';
+            statusText.innerHTML = `● Status: Falha na última conexão`;
+        } else {
+            statusContainer.className = 'p-3.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100 mb-2';
+            statusText.innerHTML = `● Status: Configurado (Não testado)`;
+        }
+
         if (existing.model) {
             const isStandard = providerModels[provider] && providerModels[provider].includes(existing.model);
             if (isStandard) {
@@ -361,9 +397,13 @@ function openProviderModal(provider, name) {
             }
         }
         if (existing.base_url) document.getElementById('baseUrl').value = existing.base_url;
+    } else {
+        apiKeyInput.setAttribute('required', '');
+        apiKeyInput.placeholder = 'Cole sua API Key aqui';
+        statusContainer.classList.add('hidden');
     }
 
-    document.getElementById('apiKey').value = '';
+    apiKeyInput.value = '';
 
     const deleteBtn = document.getElementById('deleteCredBtn');
     if (existing) {
@@ -456,8 +496,16 @@ async function testCredential() {
         const result = await response.json();
         if (result.success) {
             Swal.fire({icon: 'success', title: 'Sucesso!', text: 'Conexão estabelecida com a API'});
+            const existing = existingCredentials.find(c => c.provider === provider);
+            if (existing) {
+                setTimeout(() => location.reload(), 1500);
+            }
         } else {
             Swal.fire({icon: 'error', title: 'Falha no Teste', text: result.error || 'Erro desconhecido'});
+            const existing = existingCredentials.find(c => c.provider === provider);
+            if (existing) {
+                setTimeout(() => location.reload(), 2000);
+            }
         }
     } catch(err) {
         Swal.fire({icon: 'error', title: 'Erro', text: 'Falha ao processar o teste de conexão'});
