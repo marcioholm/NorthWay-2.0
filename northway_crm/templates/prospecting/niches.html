@@ -164,6 +164,7 @@ function openCreateModal() {
   document.getElementById('field-rating').value = '3.5';
   document.getElementById('field-reviews').value = '5';
   document.querySelectorAll('.weekday-checkbox').forEach(cb => cb.checked = true);
+  document.getElementById('field-campaign').value = '';
   document.getElementById('niche-modal').classList.remove('hidden');
   lucide.createIcons();
 }
@@ -224,5 +225,6 @@ function saveNiche(e) {
       if (resp.success) location.reload();
       else alert('Erro: ' + (resp.error || 'Erro ao salvar'));
     });
+}
 </script>
 {% endblock %}
