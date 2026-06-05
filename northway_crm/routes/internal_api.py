@@ -1089,3 +1089,119 @@ def search_places_internal():
         'places': list(unique.values()),
         'total': len(unique)
     })
+
+
+@internal_api_bp.route('/prospecting/import-leads', methods=['POST'])
+@require_internal_auth
+def import_leads_internal():
+    from models import Lead, ProspectingCampaign, Pipeline, PipelineStage, Integration
+    import requests as req
+
+    data = request.json or {}
+    tenant_id = data.get('tenant_id')
+    places = data.get('places', [])
+    campaign_id = data.get('campaign_id')
+
+    if not tenant_id or not places:
+        return jsonify({'success': False, 'error': 'tenant_id e places são obrigatórios'}), 400
+
+    integration = Integration.query.filter_by(
+        company_id=tenant_id,
+        service='google_maps',
+        is_active=True
+    ).first()
+    api_key = integration.api_key if integration else None
+
+    campaign = None
+    target_pipeline_id = None
+    target_stage_id = None
+
+    if campaign_id:
+        campaign = ProspectingCampaign.query.filter_by(
+            id=campaign_id, company_id=tenant_id
+        ).first()
+        if campaign and campaign.pipeline_id:
+            target_pipeline_id = campaign.pipeline_id
+            first_stage = PipelineStage.query.filter_by(
+                pipeline_id=target_pipeline_id
+            ).order_by(PipelineStage.order).first()
+            if first_stage:
+                target_stage_id = first_stage.id
+
+    if not target_pipeline_id:
+        default_pipeline = Pipeline.query.filter_by(company_id=tenant_id).first()
+        if default_pipeline:
+            target_pipeline_id = default_pipeline.id
+            first_stage = PipelineStage.query.filter_by(
+                pipeline_id=default_pipeline.id
+            ).order_by(PipelineStage.order).first()
+            if first_stage:
+                target_stage_id = first_stage.id
+
+    imported_count = 0
+    new_lead_ids = []
+    errors = []
+
+    for p in places:
+        place_id = p.get('place_id')
+        if not place_id:
+            continue
+
+        if Lead.query.filter_by(company_id=tenant_id, google_place_id=place_id).first():
+            continue
+
+        phone = p.get('phone')
+
+        if api_key and not phone:
+            try:
+                details_url = "https://maps.googleapis.com/maps/api/place/details/json"
+                details_params = {
+                    'place_id': place_id,
+                    'fields': 'formatted_phone_number,international_phone_number',
+                    'key': api_key
+                }
+                res = req.get(details_url, params=details_params, timeout=5).json()
+                if res.get('status') == 'OK':
+                    result_data = res.get('result', {})
+                    phone = result_data.get('international_phone_number') or \
+                            result_data.get('formatted_phone_number')
+            except Exception as e:
+                logger.warning(f"[IMPORT_LEADS] Erro ao buscar telefone: {e}")
+
+        try:
+            new_lead = Lead(
+                name=(p.get('name') or 'Sem Nome')[:100],
+                company_id=tenant_id,
+                status='new',
+                pipeline_id=target_pipeline_id,
+                pipeline_stage_id=target_stage_id,
+                source='google_maps',
+                phone=phone[:50] if phone else None,
+                address=p.get('formatted_address', '')[:255],
+                google_place_id=place_id[:100],
+                gmb_rating=p.get('rating', 0),
+                gmb_reviews=p.get('user_ratings_total', 0),
+                notes=f"Importado via prospecção diária automática",
+                prospecting_status=ProspectingStatus.NOVO,
+                prospecting_campaign_id=campaign.id if campaign else None,
+                preferred_channel=LeadChannel.WHATSAPP
+            )
+            db.session.add(new_lead)
+            db.session.flush()
+            new_lead_ids.append(new_lead.id)
+            imported_count += 1
+        except Exception as e:
+            errors.append(f"Erro {p.get('name')}: {str(e)}")
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    return jsonify({
+        'success': True,
+        'imported_count': imported_count,
+        'lead_ids': new_lead_ids,
+        'errors': errors
+    })
