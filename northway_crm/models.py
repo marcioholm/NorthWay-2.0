@@ -1717,7 +1717,7 @@ class ProspectingNiche(db.Model):
 
     active_weekdays = db.Column(db.JSON, default=list)
 
-    default_campaign_id = db.Column(db.Integer, db.ForeignKey('prospecting_campaign.id'), nullable=True)
+    default_campaign_id = db.Column(db.Integer, db.ForeignKey('prospecting_campaigns.id'), nullable=True)
 
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
