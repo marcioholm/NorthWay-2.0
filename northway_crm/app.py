@@ -412,7 +412,9 @@ def create_app():
             app.logger.error(f"🚨 INTERNAL SERVER ERROR (500): {error_msg}\n{error_trace}")
 
             # If it's an API request, return JSON so the frontend can parse the error
-            if request.path.startswith('/api/'):
+            api_paths = ('/api/', '/internal/', '/prospecting/', '/leads/')
+            if request.path.startswith(api_paths) or request.is_xhr or \
+               request.accept_mimetypes.best == 'application/json':
                 return jsonify({
                     'success': False,
                     'error': 'Erro Interno do Servidor (500)',
