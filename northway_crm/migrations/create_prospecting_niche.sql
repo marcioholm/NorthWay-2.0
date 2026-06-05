@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS prospecting_niche (
     id SERIAL PRIMARY KEY,
     company_id INTEGER NOT NULL REFERENCES company(id),
     name VARCHAR(100) NOT NULL,
-    query VARCHAR(200) NOT NULL,
+    search_query VARCHAR(200) NOT NULL,
     city VARCHAR(100) NOT NULL,
     state VARCHAR(2) DEFAULT 'PR',
     min_rating FLOAT DEFAULT 3.5,

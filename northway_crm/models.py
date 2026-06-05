@@ -1707,7 +1707,7 @@ class ProspectingNiche(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
 
     name = db.Column(db.String(100), nullable=False)
-    query = db.Column(db.String(200), nullable=False)
+    search_query = db.Column(db.String(200), nullable=False)
 
     city = db.Column(db.String(100), nullable=False)
     state = db.Column(db.String(2), default='PR')

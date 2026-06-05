@@ -997,7 +997,7 @@ def get_niche_today_internal():
         'niche': {
             'id': today_niche.id,
             'name': today_niche.name,
-            'query': today_niche.query,
+            'search_query': today_niche.search_query,
             'city': today_niche.city,
             'state': today_niche.state,
             'min_rating': today_niche.min_rating,

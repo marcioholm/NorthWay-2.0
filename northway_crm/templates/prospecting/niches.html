@@ -28,7 +28,7 @@
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <h3 class="text-base font-bold text-gray-900">{{ niche.name }}</h3>
-            <p class="text-sm text-gray-500 mt-1">{{ niche.query }} — {{ niche.city }}/{{ niche.state }}</p>
+            <p class="text-sm text-gray-500 mt-1">{{ niche.search_query }} — {{ niche.city }}/{{ niche.state }}</p>
             <div class="flex items-center gap-3 mt-2 flex-wrap text-xs text-gray-400">
               <span>⭐ {{ niche.min_rating }}</span>
               <span>💬 {{ niche.min_reviews }} reviews</span>
@@ -179,7 +179,7 @@ function editNiche(id) {
       document.getElementById('modal-title').textContent = 'Editar Nicho';
       document.getElementById('niche-id').value = n.id;
       document.getElementById('field-name').value = n.name || '';
-      document.getElementById('field-query').value = n.query;
+      document.getElementById('field-query').value = n.search_query;
       document.getElementById('field-city').value = n.city;
       document.getElementById('field-state').value = n.state;
       document.getElementById('field-rating').value = n.min_rating;
@@ -206,7 +206,7 @@ function saveNiche(e) {
   const id = document.getElementById('niche-id').value;
   const data = {
     name: document.getElementById('field-name').value,
-    query: document.getElementById('field-query').value,
+    search_query: document.getElementById('field-query').value,
     city: document.getElementById('field-city').value,
     state: document.getElementById('field-state').value,
     min_rating: parseFloat(document.getElementById('field-rating').value) || 3.5,

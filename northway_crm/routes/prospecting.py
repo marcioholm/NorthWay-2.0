@@ -1703,7 +1703,7 @@ def get_niche_today():
         'niche': {
             'id': today_niche.id,
             'name': today_niche.name,
-            'query': today_niche.query,
+            'search_query': today_niche.search_query,
             'city': today_niche.city,
             'state': today_niche.state,
             'min_rating': today_niche.min_rating,
@@ -1725,7 +1725,7 @@ def list_niches():
     return api_response(data={'niches': [{
         'id': n.id,
         'name': n.name,
-        'query': n.query,
+        'search_query': n.search_query,
         'city': n.city,
         'state': n.state,
         'min_rating': n.min_rating,
@@ -1742,13 +1742,13 @@ def create_niche():
     from models import ProspectingNiche
     data = request.json or {}
 
-    if not data.get('query') or not data.get('city'):
-        return api_response(success=False, error='query e city são obrigatórios', status=400)
+    if not data.get('search_query') or not data.get('city'):
+        return api_response(success=False, error='search_query e city são obrigatórios', status=400)
 
     niche = ProspectingNiche(
         company_id=current_user.company_id,
-        name=data.get('name') or data['query'],
-        query=data['query'],
+        name=data.get('name') or data['search_query'],
+        search_query=data['search_query'],
         city=data['city'],
         state=data.get('state', 'PR'),
         min_rating=float(data.get('min_rating', 3.5)),
@@ -1772,7 +1772,7 @@ def update_niche(niche_id):
     ).first_or_404()
 
     data = request.json or {}
-    for field in ['name', 'query', 'city', 'state', 'min_rating',
+    for field in ['name', 'search_query', 'city', 'state', 'min_rating',
                   'min_reviews', 'active_weekdays', 'default_campaign_id', 'is_active']:
         if field in data:
             setattr(niche, field, data[field])
