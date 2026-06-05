@@ -221,7 +221,7 @@ def message_generated():
     tenant_id = data.get('tenant_id')
     lead_id = data.get('lead_id')
     success = data.get('success', False)
-    message = data.get('message', '')
+    message = (data.get('message') or '').strip('"').strip("'")
     angle = data.get('angle')
     model = data.get('model')
     error = data.get('error')
@@ -418,7 +418,7 @@ def save_automated_send():
     data = request.json
     tenant_id = data.get('tenant_id')
     lead_id = data.get('lead_id')
-    content = data.get('content')
+    content = (data.get('content') or '').strip('"').strip("'")
     success = data.get('success', False)
     provider_message_id = data.get('provider_message_id')
     error = data.get('error')
