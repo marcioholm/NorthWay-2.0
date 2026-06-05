@@ -614,7 +614,9 @@ function closeCampaignModal() {
 
 async function editCampaign(campaignId) {
     try {
-        const response = await fetch(`/prospecting/campaign/${campaignId}`);
+        const response = await fetch(`/prospecting/campaign/${campaignId}`, {
+            headers: {'Accept': 'application/json'}
+        });
         const result = await response.json();
 
         if (result.success === false) {
@@ -639,7 +641,8 @@ async function editCampaign(campaignId) {
         document.getElementById('campaignModal').classList.remove('hidden');
         document.getElementById('campaignModal').classList.add('flex');
     } catch(err) {
-        alert('Erro ao carregar campanha');
+        console.error('editCampaign error:', err);
+        alert('Erro ao carregar campanha: ' + err.message + '\n\nVerifique o console (F12) para mais detalhes.');
     }
 }
 

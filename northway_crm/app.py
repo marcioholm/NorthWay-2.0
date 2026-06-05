@@ -290,7 +290,9 @@ def create_app():
 
         @login_manager.unauthorized_handler
         def unauthorized():
-            if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+            if request.path.startswith('/api/') or request.path.startswith('/internal/') or \
+               request.path.startswith('/prospecting/') or request.path.startswith('/leads/') or \
+               request.is_xhr or request.accept_mimetypes.best == 'application/json':
                 return jsonify({'success': False, 'error': 'Autenticação necessária'}), 401
             return redirect(url_for('auth.login'))
 
@@ -387,8 +389,9 @@ def create_app():
         # --- ERROR HANDLERS ---
         @app.errorhandler(404)
         def not_found_error(error):
-            if request.path.startswith('/api/') or request.path.startswith('/internal/') or \
-               request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+            api_paths = ('/api/', '/internal/', '/prospecting/', '/leads/')
+            if request.path.startswith(api_paths) or request.is_xhr or \
+               request.accept_mimetypes.best == 'application/json':
                 return jsonify({'success': False, 'error': 'Recurso não encontrado'}), 404
             try:
                 return render_template('404.html'), 404
