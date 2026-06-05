@@ -1662,6 +1662,16 @@ def backfill_phones():
     return api_response(data={'updated_count': updated_count, 'errors': errors, 'total_scanned': len(leads)})
 
 
+@prospecting_bp.route('/prospecting/niches', methods=['GET'])
+@login_required
+def niches_page():
+    from models import ProspectingNiche
+    niches = ProspectingNiche.query.filter_by(
+        company_id=current_user.company_id
+    ).order_by(ProspectingNiche.name).all()
+    return render_template('prospecting/niches.html', niches=niches)
+
+
 @prospecting_bp.route('/api/prospecting/niche/today', methods=['GET'])
 @login_required
 def get_niche_today():

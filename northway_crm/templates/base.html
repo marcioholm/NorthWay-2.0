@@ -503,8 +503,8 @@
                             <i data-lucide="settings" class="w-4 h-4"></i>
                             <span class="sidebar-text">Configurações</span>
                         </a>
-                        <a href="/prospecting/niches"
-                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                        <a href="{{ url_for('prospecting.niches_page') }}"
+                            class="flex items-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.niches_page' %}text-white font-semibold{% endif %}">
                             <i data-lucide="map-pin" class="w-4 h-4"></i>
                             <span class="sidebar-text">Nichos</span>
                         </a>
