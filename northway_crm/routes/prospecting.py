@@ -105,23 +105,21 @@ def dashboard():
     company_id = current_user.company_id
 
     try:
-        # Reset stale prospecting_status: leads with status but no campaign and no messages
+        # Reset stale prospecting_status: leads with status but zero messages in prospection tables
         from models import ProspectingMessage, MessageQueue
-        stale_leads = Lead.query.filter(
+        all_prospecting_leads = Lead.query.filter(
             Lead.company_id == company_id,
-            Lead.prospecting_status.isnot(None),
-            Lead.prospecting_campaign_id.is_(None)
+            Lead.prospecting_status.isnot(None)
         ).all()
-        stale_ids = [l.id for l in stale_leads]
-        if stale_ids:
-            # Check which actually have messages
+        all_ids = [l.id for l in all_prospecting_leads]
+        if all_ids:
             has_msgs = {r[0] for r in db.session.query(ProspectingMessage.lead_id).filter(
-                ProspectingMessage.lead_id.in_(stale_ids)
+                ProspectingMessage.lead_id.in_(all_ids)
             ).distinct().all()}
             has_queue = {r[0] for r in db.session.query(MessageQueue.lead_id).filter(
-                MessageQueue.lead_id.in_(stale_ids)
+                MessageQueue.lead_id.in_(all_ids)
             ).distinct().all()}
-            truly_stale = [lid for lid in stale_ids if lid not in has_msgs and lid not in has_queue]
+            truly_stale = [lid for lid in all_ids if lid not in has_msgs and lid not in has_queue]
             if truly_stale:
                 Lead.query.filter(Lead.id.in_(truly_stale)).update(
                     {'prospecting_status': None, 'next_action_at': None, 'in_execution': False},
@@ -141,14 +139,13 @@ def dashboard():
             MessageQueue.status == 'pending'
         ).scalar() or 0
 
-        # Lead-based status counts (only leads with prospecting_campaign_id or messages)
+        # Lead-based status counts (only leads still with status after stale reset)
         status_counts = db.session.query(
             Lead.prospecting_status,
             func.count(Lead.id).label('count')
         ).filter(
             Lead.company_id == company_id,
-            Lead.prospecting_status.isnot(None),
-            Lead.prospecting_campaign_id.isnot(None)
+            Lead.prospecting_status.isnot(None)
         ).group_by(Lead.prospecting_status).all()
 
         counts = {row.prospecting_status: row.count for row in status_counts}
