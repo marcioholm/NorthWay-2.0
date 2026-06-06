@@ -32,7 +32,7 @@
             <div class="flex items-center gap-3 mt-2 flex-wrap text-xs text-gray-400">
               <span>⭐ {{ niche.min_rating }}</span>
               <span>💬 {{ niche.min_reviews }} reviews</span>
-              <span>📅 {{ ['Seg','Ter','Qua','Qui','Sex'] | selectattr('__index__', 'in', niche.active_weekdays or []) | list | join(', ') or 'Todos' }}</span>
+              <span>📅 {% for idx in niche.active_weekdays or [] %}{{ ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][idx|int] }}{% if not loop.last %}, {% endif %}{% else %}Todos{% endfor %}</span>
               {% if niche.default_campaign_id %}
               <span class="px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 font-medium">Campanha vinculada</span>
               {% endif %}
@@ -131,7 +131,7 @@
         <div>
           <label class="block text-xs font-bold text-gray-600 mb-2">Dias da Semana</label>
           <div class="flex gap-2 flex-wrap">
-            {% for i, day in [('0','Seg'),('1','Ter'),('2','Qua'),('3','Qui'),('4','Sex')] %}
+            {% for i, day in [('0','Seg'),('1','Ter'),('2','Qua'),('3','Qui'),('4','Sex'),('5','Sáb'),('6','Dom')] %}
             <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
               <input type="checkbox" value="{{ i }}" class="weekday-checkbox rounded border-gray-300 text-northway-red focus:ring-northway-red">
               {{ day }}
