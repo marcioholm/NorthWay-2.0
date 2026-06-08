@@ -200,22 +200,24 @@ def approvals():
         db.joinedload(ProspectingMessage.campaign).joinedload(ProspectingCampaign.niches)
     ).order_by(ProspectingMessage.created_at.desc()).all()
 
-    # Collect unique niches and check for messages without niche
-    niches_with_pending = []
-    seen_niche_ids = set()
-    has_messages_without_niche = False
+    # Load all active niches for the company so the filter bar is always visible
+    niches_with_pending = ProspectingNiche.query.filter_by(
+        company_id=company_id, is_active=True
+    ).order_by(ProspectingNiche.name).all()
 
+    # Check if there are messages that don't belong to any active niche
+    has_messages_without_niche = False
+    active_niche_ids = {n.id for n in niches_with_pending}
     for msg in pending_messages:
+        has_niche = False
         if msg.campaign and msg.campaign.niches:
             for niche in msg.campaign.niches:
-                if niche.id not in seen_niche_ids:
-                    seen_niche_ids.add(niche.id)
-                    niches_with_pending.append(niche)
-        else:
+                if niche.id in active_niche_ids:
+                    has_niche = True
+                    break
+        if not has_niche:
             has_messages_without_niche = True
-
-    # Sort niches by name
-    niches_with_pending.sort(key=lambda x: x.name)
+            break
 
     return render_template(
         'prospecting/approvals.html',
