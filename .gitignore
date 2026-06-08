@@ -24,3 +24,9 @@ cnpja_test_results.txt
 debug_enrichment_v2.py
 northway_crm/fix_company_schema_v2.py
 northway_crm/seed_crm_data.py
+
+# Scratch and Temp files
+scratch/
+northway_crm/scratch/
+northway_crm/check_*.py
+

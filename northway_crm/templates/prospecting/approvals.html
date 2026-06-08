@@ -246,13 +246,14 @@ function getInitials(name) {
 function toggleCard(msgId) {
   const card = document.getElementById(`card-${msgId}`);
   if (!card || statuses[msgId] !== 'pending') return;
-  if (selected.has(msgId)) {
-    selected.delete(msgId);
+  const msgIdStr = String(msgId);
+  if (selected.has(msgIdStr)) {
+    selected.delete(msgIdStr);
     card.classList.remove('is-selected');
     card.querySelector('.check-box').classList.remove('checked');
     card.querySelector('.check-box').innerHTML = '';
   } else {
-    selected.add(msgId);
+    selected.add(msgIdStr);
     card.classList.add('is-selected');
     const box = card.querySelector('.check-box');
     box.classList.add('checked');
@@ -824,5 +825,6 @@ async function rejectSelected() {
       showConfirmButton: false
     });
   }
+}
 </script>
 {% endblock %}
