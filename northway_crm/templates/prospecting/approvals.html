@@ -231,6 +231,17 @@ document.addEventListener('DOMContentLoaded', function() {
   lucide.createIcons();
 });
 
+function formatTime(ms) {
+  if (ms <= 0) return '0s';
+  const totalSecs = Math.ceil(ms / 1000);
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+  if (mins > 0) {
+    return `${mins}m ${secs}s`;
+  }
+  return `${secs}s`;
+}
+
 const selected = new Set();
 const statuses = {};
 
@@ -424,7 +435,9 @@ async function approveOne(leadId, msgId) {
   await saveEditAndGetContent(msgId);
 
   const loading = Swal.fire({
-    title: 'Enviando...', allowOutsideClick: false,
+    title: 'Enviando...',
+    allowOutsideClick: false,
+    showConfirmButton: false,
     didOpen: () => Swal.showLoading()
   });
 
@@ -622,13 +635,26 @@ async function approveSelected() {
   });
   if (!confirmed.isConfirmed) return;
 
-  Swal.fire({ title: `Enviando 0/${ids.length}...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+  const startTime = Date.now();
+  let estRemainingMs = ids.length * 1500; // Estimativa inicial: 1.5s por envio
+
+  Swal.fire({
+    title: `Enviando 0/${ids.length}...`,
+    html: `Tempo restante estimado: <strong>${formatTime(estRemainingMs)}</strong>`,
+    allowOutsideClick: false,
+    showConfirmButton: false,
+    didOpen: () => Swal.showLoading()
+  });
 
   let ok = 0;
+  let idx = 0;
   for (const msgId of ids) {
     const card = document.getElementById(`card-${msgId}`);
     const leadId = card ? card.dataset.leadId : null;
-    if (!leadId) continue;
+    if (!leadId) {
+      idx++;
+      continue;
+    }
     await saveEditAndGetContent(msgId);
     try {
       const resp = await fetch(`/prospecting/lead/${leadId}/approve-message/${msgId}`, { method: 'POST' });
@@ -638,7 +664,17 @@ async function approveSelected() {
         ok++;
       }
     } catch(e) {}
-    Swal.update({ title: `Enviando ${ok}/${ids.length}...` });
+    
+    idx++;
+    const elapsed = Date.now() - startTime;
+    const avgTime = elapsed / idx;
+    const remaining = ids.length - idx;
+    estRemainingMs = avgTime * remaining;
+
+    Swal.update({
+      title: `Enviando ${ok}/${ids.length}...`,
+      html: `Tempo restante estimado: <strong>${formatTime(estRemainingMs)}</strong>`
+    });
     await new Promise(r => setTimeout(r, 800));
   }
 
@@ -730,17 +766,26 @@ async function rejectSelected() {
     }
     Swal.fire({ icon: 'success', title: `${ids.length} rejeitada${ids.length > 1 ? 's' : ''}`, timer: 1500, showConfirmButton: false });
   } else {
+    const startTime = Date.now();
+    let estRemainingMs = ids.length * 3500; // Estimativa inicial: 3.5s por regeneração
+
     Swal.fire({
       title: `Regenerando 0/${ids.length}...`,
+      html: `Tempo restante estimado: <strong>${formatTime(estRemainingMs)}</strong>`,
       allowOutsideClick: false,
+      showConfirmButton: false,
       didOpen: () => Swal.showLoading()
     });
 
     let ok = 0;
+    let idx = 0;
     for (const msgId of ids) {
       const card = document.getElementById(`card-${msgId}`);
       const leadId = card ? card.dataset.leadId : null;
-      if (!leadId) continue;
+      if (!leadId) {
+        idx++;
+        continue;
+      }
       
       const textarea = card.querySelector('textarea');
       const footer = card.querySelector('.bg-gray-50');
@@ -811,7 +856,16 @@ async function rejectSelected() {
       }
       
       selected.delete(msgId);
-      Swal.update({ title: `Regenerando ${ok}/${ids.length}...` });
+      idx++;
+      const elapsed = Date.now() - startTime;
+      const avgTime = elapsed / idx;
+      const remaining = ids.length - idx;
+      estRemainingMs = avgTime * remaining;
+
+      Swal.update({
+        title: `Regenerando ${ok}/${ids.length}...`,
+        html: `Tempo restante estimado: <strong>${formatTime(estRemainingMs)}</strong>`
+      });
       await new Promise(r => setTimeout(r, 500));
     }
     
