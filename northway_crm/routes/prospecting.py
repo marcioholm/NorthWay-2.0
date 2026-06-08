@@ -190,16 +190,40 @@ def approvals():
         return redirect(url_for('dashboard.home'))
 
     company_id = current_user.company_id
+    from models import ProspectingNiche
 
     pending_messages = ProspectingMessage.query.filter(
         ProspectingMessage.company_id == company_id,
         ProspectingMessage.status.in_([MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL])
     ).options(
         db.joinedload(ProspectingMessage.lead),
-        db.joinedload(ProspectingMessage.campaign)
+        db.joinedload(ProspectingMessage.campaign).joinedload(ProspectingCampaign.niches)
     ).order_by(ProspectingMessage.created_at.desc()).all()
 
-    return render_template('prospecting/approvals.html', messages=pending_messages)
+    # Collect unique niches and check for messages without niche
+    niches_with_pending = []
+    seen_niche_ids = set()
+    has_messages_without_niche = False
+
+    for msg in pending_messages:
+        if msg.campaign and msg.campaign.niches:
+            for niche in msg.campaign.niches:
+                if niche.id not in seen_niche_ids:
+                    seen_niche_ids.add(niche.id)
+                    niches_with_pending.append(niche)
+        else:
+            has_messages_without_niche = True
+
+    # Sort niches by name
+    niches_with_pending.sort(key=lambda x: x.name)
+
+    return render_template(
+        'prospecting/approvals.html',
+        messages=pending_messages,
+        niches_with_pending=niches_with_pending,
+        has_messages_without_niche=has_messages_without_niche
+    )
+
 
 
 @prospecting_bp.route('/prospecting/leads')

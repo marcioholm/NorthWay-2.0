@@ -51,6 +51,32 @@
       </button>
     </div>
 
+    {# ── FILTROS DE NICHO ── #}
+    {% if niches_with_pending %}
+    <div class="flex items-center gap-1.5 mb-4 flex-wrap bg-white p-3 rounded-xl border border-gray-100">
+      <span class="text-xs font-bold text-gray-400 mr-2 flex items-center gap-1">
+        <i data-lucide="filter" class="w-3.5 h-3.5"></i> Nicho:
+      </span>
+      <button onclick="setNicheFilter('all', this)"
+              class="niche-filter-btn active px-2.5 py-1 rounded-lg text-xs font-bold border border-transparent bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all">
+        Todos
+      </button>
+      {% for niche in niches_with_pending %}
+      <button onclick="setNicheFilter('{{ niche.id }}', this)"
+              class="niche-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold border border-transparent bg-white text-gray-500 hover:bg-gray-50 transition-all">
+        {{ niche.name }}
+      </button>
+      {% endfor %}
+      {% if has_messages_without_niche %}
+      <button onclick="setNicheFilter('none', this)"
+              class="niche-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold border border-transparent bg-white text-gray-500 hover:bg-gray-50 transition-all">
+        Sem Nicho
+      </button>
+      {% endif %}
+    </div>
+    {% endif %}
+
+
     {# ── SELECT ALL BAR ── #}
     <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 mb-4 text-xs text-gray-500">
       <label class="flex items-center gap-2 cursor-pointer select-none">
@@ -68,10 +94,12 @@
       {% for msg in messages %}
       {% set step_label = 'D' + (msg.cadence_day|string if msg.cadence_day is not none else '1') %}
       {% set step_num = msg.step_number if msg.step_number else 1 %}
+      {% set niche_id = msg.campaign.niches[0].id|string if msg.campaign and msg.campaign.niches else 'none' %}
       <div class="msg-card bg-white border border-gray-100 rounded-xl overflow-hidden transition-all"
            id="card-{{ msg.id }}"
            data-msg-id="{{ msg.id }}"
            data-lead-id="{{ msg.lead_id }}"
+           data-niche-id="{{ niche_id }}"
            data-status="pending">
 
         {# Card Header #}
@@ -95,6 +123,13 @@
                 <i data-lucide="clock" class="w-2.5 h-2.5 inline -mt-0.5"></i>
                 Passo {{ step_num }} · {{ step_label }}
               </span>
+              {# Nicho #}
+              {% if msg.campaign and msg.campaign.niches %}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-800">
+                <i data-lucide="tag" class="w-2.5 h-2.5 inline -mt-0.5"></i>
+                {{ msg.campaign.niches[0].name }}
+              </span>
+              {% endif %}
               {# Campanha #}
               {% if msg.campaign %}
               <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-50 text-teal-800">
@@ -185,6 +220,10 @@
   background-color: #185FA5;
   border-color: #185FA5;
 }
+.niche-filter-btn.active {
+  background-color: #4f46e5 !important;
+  color: #fff !important;
+}
 </style>
 
 <script>
@@ -222,11 +261,22 @@ function toggleCard(msgId) {
   updateSelectAll();
 }
 
+let currentStatusFilter = 'all';
+let currentNicheFilter = 'all';
+
 function toggleSelectAll() {
-  const pendingIds = Object.entries(statuses).filter(([,v]) => v === 'pending').map(([k]) => k);
-  const allSel = pendingIds.every(id => selected.has(id));
+  const visiblePendingCards = Array.from(document.querySelectorAll('.msg-card')).filter(card => {
+    const msgId = card.dataset.msgId;
+    return statuses[msgId] === 'pending' && card.style.display !== 'none';
+  });
+  
+  const visiblePendingIds = visiblePendingCards.map(card => card.dataset.msgId);
+  if (visiblePendingIds.length === 0) return;
+  
+  const allSel = visiblePendingIds.every(id => selected.has(id));
+  
   if (allSel) {
-    pendingIds.forEach(id => {
+    visiblePendingIds.forEach(id => {
       selected.delete(id);
       const card = document.getElementById(`card-${id}`);
       if (card) {
@@ -236,7 +286,7 @@ function toggleSelectAll() {
       }
     });
   } else {
-    pendingIds.forEach(id => {
+    visiblePendingIds.forEach(id => {
       selected.add(id);
       const card = document.getElementById(`card-${id}`);
       if (card) {
@@ -251,17 +301,28 @@ function toggleSelectAll() {
 }
 
 function updateSelectAll() {
-  const pendingIds = Object.entries(statuses).filter(([,v]) => v === 'pending').map(([k]) => k);
-  const allSel = pendingIds.length > 0 && pendingIds.every(id => selected.has(id));
+  const visiblePendingCards = Array.from(document.querySelectorAll('.msg-card')).filter(card => {
+    const msgId = card.dataset.msgId;
+    return statuses[msgId] === 'pending' && card.style.display !== 'none';
+  });
+  const visiblePendingIds = visiblePendingCards.map(card => card.dataset.msgId);
+  const allSel = visiblePendingIds.length > 0 && visiblePendingIds.every(id => selected.has(id));
   const box = document.getElementById('select-all-box');
   const label = document.getElementById('select-label');
-  box.classList.toggle('checked', allSel);
-  box.innerHTML = allSel
-    ? '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
-    : '';
-  label.textContent = selected.size > 0
-    ? `${selected.size} selecionada${selected.size > 1 ? 's' : ''}`
-    : 'Selecionar todas as pendentes';
+  
+  if (box) {
+    box.classList.toggle('checked', allSel);
+    box.innerHTML = allSel
+      ? '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+      : '';
+  }
+  
+  const visibleSelectedCount = visiblePendingIds.filter(id => selected.has(id)).length;
+  if (label) {
+    label.textContent = visibleSelectedCount > 0
+      ? `${visibleSelectedCount} selecionada${visibleSelectedCount > 1 ? 's' : ''}`
+      : 'Selecionar todas as pendentes visíveis';
+  }
 }
 
 function markCard(msgId, status) {
@@ -289,7 +350,7 @@ function markCard(msgId, status) {
     footer.innerHTML = `<span class="text-xs text-gray-400">${status === 'approved' ? '✓ Mensagem aprovada e enviada.' : '✕ Mensagem rejeitada.'}</span>`;
   }
   selected.delete(msgId);
-  updateSelectAll();
+  applyFilters();
   updateCounts();
 }
 
@@ -309,14 +370,37 @@ function updateCounts() {
 function setFilter(f, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  currentStatusFilter = f;
+  applyFilters();
+}
+
+function setNicheFilter(n, btn) {
+  document.querySelectorAll('.niche-filter-btn').forEach(b => {
+    b.classList.remove('active', 'bg-gray-100', 'text-gray-700');
+    b.classList.add('bg-white', 'text-gray-500');
+  });
+  btn.classList.remove('bg-white', 'text-gray-500');
+  btn.classList.add('active', 'bg-gray-100', 'text-gray-700');
+  currentNicheFilter = n;
+  applyFilters();
+}
+
+function applyFilters() {
   document.querySelectorAll('.msg-card').forEach(card => {
-    const s = statuses[card.dataset.msgId];
-    if (f === 'all' || s === f) {
+    const msgId = card.dataset.msgId;
+    const s = statuses[msgId];
+    const nicheId = card.dataset.nicheId || 'none';
+    
+    const matchesStatus = (currentStatusFilter === 'all' || s === currentStatusFilter);
+    const matchesNiche = (currentNicheFilter === 'all' || nicheId === currentNicheFilter);
+    
+    if (matchesStatus && matchesNiche) {
       card.style.display = '';
     } else {
       card.style.display = 'none';
     }
   });
+  updateSelectAll();
 }
 
 async function saveEditAndGetContent(msgId) {
