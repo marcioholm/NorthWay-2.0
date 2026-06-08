@@ -371,13 +371,151 @@ async function approveOne(leadId, msgId) {
 }
 
 async function rejectOne(leadId, msgId) {
-  try {
-    const resp = await fetch(`/prospecting/lead/${leadId}/reject-message/${msgId}`, { method: 'POST' });
-    const result = await resp.json();
-    if (result.success) markCard(msgId, 'rejected');
-    else Swal.fire({ icon: 'error', title: 'Erro', text: result.error });
-  } catch(e) {
-    Swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível conectar.' });
+  const { value: formValues } = await Swal.fire({
+    title: 'Rejeitar Mensagem',
+    html:
+      '<div class="text-left">' +
+      '  <p class="text-xs text-gray-500 mb-3">Escolha como deseja prosseguir com a rejeição desta mensagem:</p>' +
+      '  <div class="mb-4">' +
+      '    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">' +
+      '      <input type="radio" name="reject-option" value="only" checked onchange="toggleRejectFeedback(false)">' +
+      '      <span>Apenas rejeitar (voltar o lead para Novo)</span>' +
+      '    </label>' +
+      '  </div>' +
+      '  <div class="mb-4">' +
+      '    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">' +
+      '      <input type="radio" name="reject-option" value="regenerate" onchange="toggleRejectFeedback(true)">' +
+      '      <span>Refazer com novas orientações</span>' +
+      '    </label>' +
+      '  </div>' +
+      '  <div id="reject-feedback-container" class="hidden mt-3 pl-6">' +
+      '    <textarea id="reject-feedback" class="w-full text-xs border border-gray-200 rounded-lg p-2" rows="3" placeholder="Ex: Seja mais formal, não ofereça desconto..."></textarea>' +
+      '    <label class="flex items-center gap-2 text-[11px] text-gray-500 mt-2 cursor-pointer">' +
+      '      <input type="checkbox" id="reject-save-campaign" class="rounded border-gray-300">' +
+      '      <span>Salvar orientações nas restrições da campanha (script)</span>' +
+      '    </label>' +
+      '  </div>' +
+      '</div>',
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'Confirmar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#E8191A',
+    didOpen: () => {
+      window.toggleRejectFeedback = function(show) {
+        const container = document.getElementById('reject-feedback-container');
+        if (show) {
+          container.classList.remove('hidden');
+          document.getElementById('reject-feedback').focus();
+        } else {
+          container.classList.add('hidden');
+        }
+      };
+    },
+    willClose: () => {
+      delete window.toggleRejectFeedback;
+    },
+    preConfirm: () => {
+      const option = document.querySelector('input[name="reject-option"]:checked').value;
+      const feedback = document.getElementById('reject-feedback').value.trim();
+      const saveToCampaign = document.getElementById('reject-save-campaign').checked;
+      
+      if (option === 'regenerate' && !feedback) {
+        Swal.showValidationMessage('Por favor, insira as orientações para refazer a mensagem.');
+        return false;
+      }
+      
+      return { option, feedback, saveToCampaign };
+    }
+  });
+
+  if (!formValues) return;
+
+  if (formValues.option === 'only') {
+    try {
+      const resp = await fetch(`/prospecting/lead/${leadId}/reject-message/${msgId}`, { method: 'POST' });
+      const result = await resp.json();
+      if (result.success) markCard(msgId, 'rejected');
+      else Swal.fire({ icon: 'error', title: 'Erro', text: result.error });
+    } catch(e) {
+      Swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível conectar.' });
+    }
+  } else {
+    const card = document.getElementById(`card-${msgId}`);
+    const textarea = card ? card.querySelector('textarea') : null;
+    const footer = card ? card.querySelector('.bg-gray-50') : null;
+
+    if (card) {
+      if (textarea) textarea.disabled = true;
+      if (footer) {
+        footer.innerHTML = `<span class="text-xs text-gray-400 flex items-center gap-1.5"><i class="animate-spin w-3 h-3 text-gray-400 border-2 border-gray-400 border-t-transparent rounded-full inline-block"></i> Regenerando mensagem...</span>`;
+      }
+    }
+    
+    try {
+      const resp = await fetch(`/prospecting/lead/${leadId}/reject-message/${msgId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          feedback: formValues.feedback,
+          save_to_campaign: formValues.saveToCampaign
+        })
+      });
+      const result = await resp.json();
+      if (result.success && result.data && result.data.regenerated) {
+        const newMsg = result.data.result;
+        
+        if (card) {
+          card.id = `card-${newMsg.message_id}`;
+          card.dataset.msgId = newMsg.message_id;
+          
+          if (textarea) {
+            textarea.disabled = false;
+            textarea.id = `msg-text-${newMsg.message_id}`;
+            textarea.value = newMsg.content;
+          }
+          
+          if (footer) {
+            footer.innerHTML = `
+              <button onclick="rejectOne(${leadId}, ${newMsg.message_id})"
+                      class="px-3 py-1.5 bg-white border border-gray-200 text-red-500 rounded-lg text-xs font-bold hover:bg-red-50 transition-all flex items-center gap-1">
+                <i data-lucide="x" class="w-3 h-3"></i> Rejeitar
+              </button>
+              <button onclick="approveOne(${leadId}, ${newMsg.message_id})"
+                      class="px-3 py-1.5 bg-northway-red text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-all flex items-center gap-1">
+                <i data-lucide="check" class="w-3 h-3"></i> Aprovar e enviar
+              </button>
+              <span class="text-[10px] text-gray-400 ml-auto">
+                Regenerada agora · ${newMsg.model || ''}
+              </span>
+            `;
+            if (window.lucide) window.lucide.createIcons();
+          }
+          
+          const checkBox = card.querySelector('.check-box');
+          if (checkBox) {
+            checkBox.setAttribute('onclick', `toggleCard(${newMsg.message_id})`);
+            checkBox.classList.remove('checked');
+            checkBox.innerHTML = '';
+          }
+          card.classList.remove('is-selected');
+          
+          delete statuses[msgId];
+          statuses[newMsg.message_id] = 'pending';
+        }
+        selected.delete(msgId);
+        updateSelectAll();
+        updateCounts();
+        
+        Swal.fire({ icon: 'success', title: 'Mensagem regenerada!', timer: 1500, showConfirmButton: false });
+      } else {
+        if (card) markCard(msgId, 'rejected');
+        Swal.fire({ icon: 'error', title: 'Erro ao regenerar', text: result.error || 'Ocorreu um erro.' });
+      }
+    } catch(e) {
+      if (card) markCard(msgId, 'rejected');
+      Swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível conectar ao servidor.' });
+    }
   }
 }
 
@@ -416,7 +554,6 @@ async function approveSelected() {
       }
     } catch(e) {}
     Swal.update({ title: `Enviando ${ok}/${ids.length}...` });
-    // Delay entre envios para não sobrecarregar
     await new Promise(r => setTimeout(r, 800));
   }
 
@@ -435,27 +572,173 @@ async function rejectSelected() {
   }
 
   const ids = [...selected];
-  const confirmed = await Swal.fire({
-    title: `Rejeitar ${ids.length} mensagem${ids.length > 1 ? 's' : ''}?`,
-    icon: 'warning',
+  
+  const { value: formValues } = await Swal.fire({
+    title: `Rejeitar ${ids.length} Mensage${ids.length > 1 ? 'ns' : 'm'}`,
+    html:
+      '<div class="text-left">' +
+      '  <p class="text-xs text-gray-500 mb-3">Escolha como deseja prosseguir com a rejeição das mensagens selecionadas:</p>' +
+      '  <div class="mb-4">' +
+      '    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">' +
+      '      <input type="radio" name="reject-bulk-option" value="only" checked onchange="toggleRejectBulkFeedback(false)">' +
+      '      <span>Apenas rejeitar (voltar leads para Novo)</span>' +
+      '    </label>' +
+      '  </div>' +
+      '  <div class="mb-4">' +
+      '    <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">' +
+      '      <input type="radio" name="reject-bulk-option" value="regenerate" onchange="toggleRejectBulkFeedback(true)">' +
+      '      <span>Refazer com novas orientações</span>' +
+      '    </label>' +
+      '  </div>' +
+      '  <div id="reject-bulk-feedback-container" class="hidden mt-3 pl-6">' +
+      '    <textarea id="reject-bulk-feedback" class="w-full text-xs border border-gray-200 rounded-lg p-2" rows="3" placeholder="Ex: Seja mais formal, não ofereça desconto..."></textarea>' +
+      '    <label class="flex items-center gap-2 text-[11px] text-gray-500 mt-2 cursor-pointer">' +
+      '      <input type="checkbox" id="reject-bulk-save-campaign" class="rounded border-gray-300">' +
+      '      <span>Salvar orientações nas restrições da campanha (script)</span>' +
+      '    </label>' +
+      '  </div>' +
+      '</div>',
+    focusConfirm: false,
     showCancelButton: true,
-    confirmButtonColor: '#ef4444',
-    confirmButtonText: 'Rejeitar',
-    cancelButtonText: 'Cancelar'
+    confirmButtonText: 'Confirmar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#E8191A',
+    didOpen: () => {
+      window.toggleRejectBulkFeedback = function(show) {
+        const container = document.getElementById('reject-bulk-feedback-container');
+        if (show) {
+          container.classList.remove('hidden');
+          document.getElementById('reject-bulk-feedback').focus();
+        } else {
+          container.classList.add('hidden');
+        }
+      };
+    },
+    willClose: () => {
+      delete window.toggleRejectBulkFeedback;
+    },
+    preConfirm: () => {
+      const option = document.querySelector('input[name="reject-bulk-option"]:checked').value;
+      const feedback = document.getElementById('reject-bulk-feedback').value.trim();
+      const saveToCampaign = document.getElementById('reject-bulk-save-campaign').checked;
+      
+      if (option === 'regenerate' && !feedback) {
+        Swal.showValidationMessage('Por favor, insira as orientações para refazer as mensagens.');
+        return false;
+      }
+      
+      return { option, feedback, saveToCampaign };
+    }
   });
-  if (!confirmed.isConfirmed) return;
 
-  for (const msgId of ids) {
-    const card = document.getElementById(`card-${msgId}`);
-    const leadId = card ? card.dataset.leadId : null;
-    if (!leadId) continue;
-    try {
-      await fetch(`/prospecting/lead/${leadId}/reject-message/${msgId}`, { method: 'POST' });
-      markCard(msgId, 'rejected');
-    } catch(e) {}
+  if (!formValues) return;
+
+  if (formValues.option === 'only') {
+    for (const msgId of ids) {
+      const card = document.getElementById(`card-${msgId}`);
+      const leadId = card ? card.dataset.leadId : null;
+      if (!leadId) continue;
+      try {
+        await fetch(`/prospecting/lead/${leadId}/reject-message/${msgId}`, { method: 'POST' });
+        markCard(msgId, 'rejected');
+      } catch(e) {}
+    }
+    Swal.fire({ icon: 'success', title: `${ids.length} rejeitada${ids.length > 1 ? 's' : ''}`, timer: 1500, showConfirmButton: false });
+  } else {
+    Swal.fire({
+      title: `Regenerando 0/${ids.length}...`,
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    let ok = 0;
+    for (const msgId of ids) {
+      const card = document.getElementById(`card-${msgId}`);
+      const leadId = card ? card.dataset.leadId : null;
+      if (!leadId) continue;
+      
+      const textarea = card.querySelector('textarea');
+      const footer = card.querySelector('.bg-gray-50');
+      if (card) {
+        if (textarea) textarea.disabled = true;
+        if (footer) {
+          footer.innerHTML = `<span class="text-xs text-gray-400 flex items-center gap-1.5"><i class="animate-spin w-3 h-3 text-gray-400 border-2 border-gray-400 border-t-transparent rounded-full inline-block"></i> Regenerando...</span>`;
+        }
+      }
+
+      try {
+        const resp = await fetch(`/prospecting/lead/${leadId}/reject-message/${msgId}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            feedback: formValues.feedback,
+            save_to_campaign: formValues.saveToCampaign
+          })
+        });
+        const result = await resp.json();
+        if (result.success && result.data && result.data.regenerated) {
+          const newMsg = result.data.result;
+          
+          if (card) {
+            card.id = `card-${newMsg.message_id}`;
+            card.dataset.msgId = newMsg.message_id;
+            
+            if (textarea) {
+              textarea.disabled = false;
+              textarea.id = `msg-text-${newMsg.message_id}`;
+              textarea.value = newMsg.content;
+            }
+            
+            if (footer) {
+              footer.innerHTML = `
+                <button onclick="rejectOne(${leadId}, ${newMsg.message_id})"
+                        class="px-3 py-1.5 bg-white border border-gray-200 text-red-500 rounded-lg text-xs font-bold hover:bg-red-50 transition-all flex items-center gap-1">
+                  <i data-lucide="x" class="w-3 h-3"></i> Rejeitar
+                </button>
+                <button onclick="approveOne(${leadId}, ${newMsg.message_id})"
+                        class="px-3 py-1.5 bg-northway-red text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-all flex items-center gap-1">
+                  <i data-lucide="check" class="w-3 h-3"></i> Aprovar e enviar
+                </button>
+                <span class="text-[10px] text-gray-400 ml-auto">
+                  Regenerada agora · ${newMsg.model || ''}
+                </span>
+              `;
+              if (window.lucide) window.lucide.createIcons();
+            }
+            
+            const checkBox = card.querySelector('.check-box');
+            if (checkBox) {
+              checkBox.setAttribute('onclick', `toggleCard(${newMsg.message_id})`);
+              checkBox.classList.remove('checked');
+              checkBox.innerHTML = '';
+            }
+            card.classList.remove('is-selected');
+            
+            delete statuses[msgId];
+            statuses[newMsg.message_id] = 'pending';
+          }
+          ok++;
+        } else {
+          if (card) markCard(msgId, 'rejected');
+        }
+      } catch(e) {
+        if (card) markCard(msgId, 'rejected');
+      }
+      
+      selected.delete(msgId);
+      Swal.update({ title: `Regenerando ${ok}/${ids.length}...` });
+      await new Promise(r => setTimeout(r, 500));
+    }
+    
+    updateSelectAll();
+    updateCounts();
+
+    Swal.fire({
+      icon: 'success',
+      title: `${ok} de ${ids.length} regenerada${ok > 1 ? 's' : ''}`,
+      timer: 2000,
+      showConfirmButton: false
+    });
   }
-
-  Swal.fire({ icon: 'success', title: `${ids.length} rejeitada${ids.length > 1 ? 's' : ''}`, timer: 1500, showConfirmButton: false });
-}
 </script>
 {% endblock %}

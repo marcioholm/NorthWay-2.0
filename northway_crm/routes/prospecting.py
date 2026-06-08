@@ -672,14 +672,21 @@ def reset_stuck_leads():
     })
 
 
-def _save_message(lead, channel, content, angle, model):
+def _save_message(lead, channel, content, angle, model, step_number=None):
     """Cria um registro ProspectingMessage com step_number calculado."""
-    existing_count = ProspectingMessage.query.filter_by(
-        lead_id=lead.id,
-        campaign_id=lead.prospecting_campaign_id,
-        type=MessageType.OUTBOUND
-    ).count()
-    step_number = existing_count + 1
+    if step_number is None:
+        existing_count = ProspectingMessage.query.filter(
+            ProspectingMessage.lead_id == lead.id,
+            ProspectingMessage.campaign_id == lead.prospecting_campaign_id,
+            ProspectingMessage.type == MessageType.OUTBOUND,
+            ProspectingMessage.status.in_([MessageStatus.SENT, MessageStatus.ENVIADA])
+        ).count()
+        step_number = existing_count + 1
+
+    try:
+        step_number = int(step_number)
+    except (TypeError, ValueError):
+        step_number = 1
 
     first_msg = ProspectingMessage.query.filter_by(
         lead_id=lead.id,
@@ -688,9 +695,12 @@ def _save_message(lead, channel, content, angle, model):
     ).order_by(ProspectingMessage.created_at.asc()).first()
 
     cadence_day = 0
-    if first_msg and step_number > 1:
-        delta = datetime.utcnow() - first_msg.created_at
-        cadence_day = delta.days
+    try:
+        if first_msg and step_number > 1:
+            delta = datetime.utcnow() - first_msg.created_at
+            cadence_day = delta.days
+    except TypeError:
+        cadence_day = 0
 
     msg = ProspectingMessage(
         company_id=lead.company_id,
@@ -711,7 +721,7 @@ def _save_message(lead, channel, content, angle, model):
             'angle': angle, 'model': model, 'step_number': step_number, 'cadence_day': cadence_day}
 
 
-def _generate_single_message(lead, setting, channel):
+def _generate_single_message(lead, setting, channel, feedback=None, step_number=None):
     """Gera uma mensagem para um lead em um canal específico."""
     payload = {
         'action': 'generate_message',
@@ -720,6 +730,8 @@ def _generate_single_message(lead, setting, channel):
         'campaign_id': lead.prospecting_campaign_id,
         'channel': channel
     }
+    if feedback:
+        payload['feedback'] = feedback
 
     success, response_payload, error_msg = send_outbound_webhook(
         tenant_id=lead.company_id,
@@ -736,7 +748,7 @@ def _generate_single_message(lead, setting, channel):
     if message_text:
         angle = response_payload.get('angle', 'Atrair')
         model = response_payload.get('model', 'llama-3.1-8b-instant')
-        return _save_message(lead, channel, message_text, angle, model)
+        return _save_message(lead, channel, message_text, angle, model, step_number=step_number)
 
     return {'channel': channel, 'status': 'processing'}
 
@@ -870,18 +882,7 @@ def generate_campaign_messages(campaign_id):
                 if message_text:
                     angle = response_payload.get('angle', 'Atrair')
                     model = response_payload.get('model', 'llama-3.1-8b-instant')
-                    msg = ProspectingMessage(
-                        company_id=current_user.company_id,
-                        lead_id=lead.id,
-                        campaign_id=lead.prospecting_campaign_id,
-                        channel=ch,
-                        type=MessageType.OUTBOUND,
-                        status=MessageStatus.PENDING_APPROVAL,
-                        content=message_text,
-                        ai_model=model,
-                        created_at=datetime.utcnow()
-                    )
-                    db.session.add(msg)
+                    _save_message(lead, ch, message_text, angle, model)
                     lead.prospecting_status = ProspectingStatus.PENDING_APPROVAL
                     lead.last_angle = angle
                 else:
@@ -1015,15 +1016,59 @@ def reject_message(lead_id, message_id):
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
     message = ProspectingMessage.query.filter_by(id=message_id, lead_id=lead_id).first_or_404()
 
+    feedback = None
+    save_to_campaign = False
+
+    if request.is_json:
+        data = request.json or {}
+        feedback = data.get('feedback')
+        save_to_campaign = data.get('save_to_campaign', False)
+
     message.status = MessageStatus.REJEITADA
     db.session.commit()
 
-    lead.prospecting_status = ProspectingStatus.NOVO
-    lead.in_execution = False
-    sync_prospecting_stage(lead, ProspectingStatus.NOVO)
-    db.session.commit()
+    if feedback:
+        if save_to_campaign and lead.prospecting_campaign:
+            campaign = lead.prospecting_campaign
+            if campaign.restrictions:
+                campaign.restrictions = f"{campaign.restrictions}\n- {feedback}"
+            else:
+                campaign.restrictions = f"- {feedback}"
+            db.session.commit()
 
-    return api_response(success=True)
+        setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
+        if not setting or not setting.generate_message_webhook_url:
+            return api_response(success=False, error='Webhook de geração de mensagem não configurado', status=400)
+
+        channel = message.channel or lead.preferred_channel or LeadChannel.WHATSAPP
+
+        lead.in_execution = True
+        lead.prospecting_status = ProspectingStatus.EM_EXECUCAO
+        sync_prospecting_stage(lead, ProspectingStatus.EM_EXECUCAO)
+        db.session.commit()
+
+        try:
+            result = _generate_single_message(lead, setting, channel, feedback=feedback, step_number=message.step_number)
+
+            lead.in_execution = False
+            lead.prospecting_status = ProspectingStatus.PENDING_APPROVAL
+            sync_prospecting_stage(lead, ProspectingStatus.PENDING_APPROVAL)
+            db.session.commit()
+
+            return api_response(data={'regenerated': True, 'result': result})
+        except Exception as e:
+            lead.in_execution = False
+            lead.prospecting_status = ProspectingStatus.FAILED
+            sync_prospecting_stage(lead, ProspectingStatus.FAILED)
+            db.session.commit()
+            return api_response(success=False, error=f'Erro ao regenerar mensagem: {str(e)}', status=500)
+    else:
+        lead.prospecting_status = ProspectingStatus.NOVO
+        lead.in_execution = False
+        sync_prospecting_stage(lead, ProspectingStatus.NOVO)
+        db.session.commit()
+
+        return api_response(success=True)
 
 
 @prospecting_bp.route('/prospecting/message/<int:message_id>/edit', methods=['PUT'])

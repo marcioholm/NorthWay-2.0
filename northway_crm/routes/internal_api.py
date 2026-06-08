@@ -163,10 +163,11 @@ def get_prospecting_context():
     company_obj = Company.query.get(tenant_id)
 
     # Calculate current step for this lead in this campaign
-    step_count = ProspectingMessage.query.filter_by(
-        lead_id=lead.id,
-        campaign_id=lead.prospecting_campaign_id,
-        type=MessageType.OUTBOUND
+    step_count = ProspectingMessage.query.filter(
+        ProspectingMessage.lead_id == lead.id,
+        ProspectingMessage.campaign_id == lead.prospecting_campaign_id,
+        ProspectingMessage.type == MessageType.OUTBOUND,
+        ProspectingMessage.status.in_([MessageStatus.SENT, MessageStatus.ENVIADA])
     ).count()
 
     # Build the flattened response as requested by the user
@@ -262,6 +263,34 @@ def message_generated():
                 'updated': True
             })
 
+        # Calculate step count from SENT messages
+        step_count = ProspectingMessage.query.filter(
+            ProspectingMessage.lead_id == lead_id,
+            ProspectingMessage.campaign_id == lead.prospecting_campaign_id,
+            ProspectingMessage.type == MessageType.OUTBOUND,
+            ProspectingMessage.status.in_([MessageStatus.SENT, MessageStatus.ENVIADA])
+        ).count()
+        step_number = step_count + 1
+
+        try:
+            step_number = int(step_number)
+        except (TypeError, ValueError):
+            step_number = 1
+
+        first_msg = ProspectingMessage.query.filter_by(
+            lead_id=lead_id,
+            campaign_id=lead.prospecting_campaign_id,
+            type=MessageType.OUTBOUND
+        ).order_by(ProspectingMessage.created_at.asc()).first()
+
+        cadence_day = 0
+        try:
+            if first_msg and step_number > 1:
+                delta = datetime.utcnow() - first_msg.created_at
+                cadence_day = delta.days
+        except TypeError:
+            cadence_day = 0
+
         prospecting_msg = ProspectingMessage(
             company_id=tenant_id,
             lead_id=lead_id,
@@ -271,6 +300,8 @@ def message_generated():
             status=MessageStatus.AGUARDANDO_APROVACAO,
             content=message,
             ai_model=model,
+            step_number=step_number,
+            cadence_day=cadence_day,
             created_at=datetime.utcnow()
         )
         db.session.add(prospecting_msg)
@@ -819,11 +850,16 @@ def get_pending_batch():
         if not campaign or not campaign.is_active:
             continue
 
-        step_count = ProspectingMessage.query.filter_by(
-            lead_id=lead.id,
-            campaign_id=campaign.id,
-            type=MessageType.OUTBOUND
+        step_count = ProspectingMessage.query.filter(
+            ProspectingMessage.lead_id == lead.id,
+            ProspectingMessage.campaign_id == campaign.id,
+            ProspectingMessage.type == MessageType.OUTBOUND,
+            ProspectingMessage.status.in_([MessageStatus.SENT, MessageStatus.ENVIADA])
         ).count()
+        try:
+            step_count = int(step_count)
+        except (TypeError, ValueError):
+            step_count = 0
         next_step = step_count + 1
 
         max_attempts = campaign.max_attempts or 3
