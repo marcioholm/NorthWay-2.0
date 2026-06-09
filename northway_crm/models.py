@@ -336,6 +336,7 @@ class Lead(db.Model):
     gmb_rating = db.Column(db.Float, default=0.0)
     gmb_reviews = db.Column(db.Integer, default=0)
     gmb_photos = db.Column(db.Integer, default=0)
+    gmb_types = db.Column(db.JSON, nullable=True)
     gmb_last_sync = db.Column(db.DateTime, nullable=True)
     
     # CNPJ Enrichment

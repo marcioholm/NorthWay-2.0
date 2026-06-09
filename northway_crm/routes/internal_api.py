@@ -1238,22 +1238,28 @@ def import_leads_internal():
             continue
 
         phone = p.get('phone')
+        website = p.get('website')
 
-        if api_key and not phone:
+        if api_key:
             try:
                 details_url = "https://maps.googleapis.com/maps/api/place/details/json"
                 details_params = {
                     'place_id': place_id,
-                    'fields': 'formatted_phone_number,international_phone_number',
+                    'fields': 'formatted_phone_number,international_phone_number,website,url,types,photos',
                     'key': api_key
                 }
                 res = req.get(details_url, params=details_params, timeout=5).json()
                 if res.get('status') == 'OK':
                     result_data = res.get('result', {})
                     phone = result_data.get('international_phone_number') or \
-                            result_data.get('formatted_phone_number')
+                            result_data.get('formatted_phone_number') or phone
+                    website = result_data.get('website') or website
+                    p['gmb_link'] = result_data.get('url')
+                    p['gmb_types'] = result_data.get('types')
+                    photos = result_data.get('photos', [])
+                    p['gmb_photos'] = len(photos) if photos else p.get('gmb_photos', 0)
             except Exception as e:
-                logger.warning(f"[IMPORT_LEADS] Erro ao buscar telefone: {e}")
+                logger.warning(f"[IMPORT_LEADS] Erro ao buscar detalhes: {e}")
 
         try:
             new_lead = Lead(
@@ -1264,10 +1270,14 @@ def import_leads_internal():
                 pipeline_stage_id=target_stage_id,
                 source='google_maps',
                 phone=phone[:50] if phone else None,
+                website=website[:200] if website else None,
                 address=p.get('formatted_address', '')[:255],
                 google_place_id=place_id[:100],
                 gmb_rating=p.get('rating', 0),
                 gmb_reviews=p.get('user_ratings_total', 0),
+                gmb_photos=p.get('gmb_photos', 0),
+                gmb_link=p.get('gmb_link'),
+                gmb_types=p.get('gmb_types'),
                 notes=f"Importado via prospecção diária automática",
                 prospecting_status=ProspectingStatus.NOVO,
                 prospecting_campaign_id=campaign.id if campaign else None,
