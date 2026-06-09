@@ -431,7 +431,7 @@ def prospecting_send_result():
         if lead:
             lead.prospecting_status = ProspectingStatus.CONTATADO
             lead.last_contact_at = datetime.utcnow()
-            # Update next action based on campaign
+            lead.in_execution = False
             campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
             if campaign:
                 lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days or 3)
@@ -440,6 +440,7 @@ def prospecting_send_result():
         message.error_message = error
         if lead:
             lead.prospecting_status = ProspectingStatus.ERRO
+            lead.in_execution = False
 
     db.session.commit()
     return jsonify({'success': True})
@@ -791,28 +792,42 @@ def prospecting_batch_completed():
 @require_internal_auth
 def get_pending_batch():
     """
-    Retorna leads prontos para próximo step da cadência.
-    Chamado pelo scheduler n8n a cada 15 minutos.
+    Retorna leads prontos para o próximo step da cadência (apenas WhatsApp).
+    Chamado pelo scheduler n8n a cada 10 minutos com limit 10.
+
+    Regras:
+    - Máximo 10 leads por execução
+    - Só busca leads com canal WhatsApp e campanha ativa
+    - Marca imediatamente como EM_EXECUCAO para evitar duplicidade entre lotes
+    - Após o disparo, o n8n chama send-result ou save-automated-send para atualizar o lead
 
     Body (opcional):
     {
         "tenant_id": 1,
         "campaign_id": 5,
-        "limit": 50
+        "limit": 10
     }
     """
     data = request.json or {}
     tenant_id = data.get('tenant_id')
     campaign_id = data.get('campaign_id')
-    limit = min(int(data.get('limit', 50)), 200)
+    limit = min(int(data.get('limit', 10)), 10)
 
     now = datetime.utcnow()
 
-    query = Lead.query.filter(
+    query = Lead.query.join(
+        ProspectingCampaign,
+        Lead.prospecting_campaign_id == ProspectingCampaign.id
+    ).filter(
+        ProspectingCampaign.is_active == True,
         db.or_(Lead.prospecting_status.is_(None), Lead.prospecting_status.notin_(ProspectingStatus.BLOCKED)),
         db.or_(Lead.in_execution == False, Lead.in_execution.is_(None)),
         Lead.next_action_at <= now,
-        Lead.prospecting_campaign_id.isnot(None)
+        Lead.prospecting_campaign_id.isnot(None),
+        db.or_(
+            Lead.preferred_channel == LeadChannel.WHATSAPP,
+            Lead.preferred_channel.is_(None)
+        )
     )
 
     if tenant_id:
@@ -825,8 +840,8 @@ def get_pending_batch():
     if not leads:
         return jsonify({'success': True, 'leads': [], 'count': 0})
 
-    company_ids = list({l.company_id for l in leads})
     campaign_ids = list({l.prospecting_campaign_id for l in leads})
+    company_ids = list({l.company_id for l in leads})
 
     settings_map = {
         s.company_id: s
@@ -847,7 +862,7 @@ def get_pending_batch():
         campaign = campaign_map.get(lead.prospecting_campaign_id)
         settings = settings_map.get(lead.company_id)
 
-        if not campaign or not campaign.is_active:
+        if not campaign:
             continue
 
         step_count = ProspectingMessage.query.filter(
@@ -867,6 +882,10 @@ def get_pending_batch():
             lead.prospecting_status = ProspectingStatus.SEM_RESPOSTA
             lead.next_action_at = None
             continue
+
+        # Lock: marca como em execução para evitar que seja pego em outro lote
+        lead.prospecting_status = ProspectingStatus.EM_EXECUCAO
+        lead.in_execution = True
 
         result.append({
             'lead_id': lead.id,
