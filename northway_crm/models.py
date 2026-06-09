@@ -1494,6 +1494,7 @@ class ProspectingMessage(db.Model):
     approved_at = db.Column(db.DateTime, nullable=True)
     sent_at = db.Column(db.DateTime, nullable=True)
     error_message = db.Column(db.Text, nullable=True)
+    batch_id = db.Column(db.Integer, db.ForeignKey('prospecting_batches.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
 
@@ -1729,4 +1730,24 @@ class ProspectingNiche(db.Model):
 
     company = db.relationship('Company', backref='prospecting_niches')
     default_campaign = db.relationship('ProspectingCampaign', backref='niches')
+
+
+class ProspectingBatch(db.Model):
+    __tablename__ = 'prospecting_batches'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    status = db.Column(db.String(20), default='pending') # pending, processing, completed, stopped, failed
+    total_count = db.Column(db.Integer, default=0)
+    processed_count = db.Column(db.Integer, default=0)
+    success_count = db.Column(db.Integer, default=0)
+    error_count = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    started_at = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+    company = db.relationship('Company', backref='prospecting_batches')
+    creator = db.relationship('User', foreign_keys=[created_by])
+    messages = db.relationship('ProspectingMessage', backref='batch', lazy=True)
+
 

@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 import requests
 from sqlalchemy import func
-from models import db, Lead, Interaction, ProspectingSearch, Company, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, CRMWebhookLog
+from models import db, Lead, Interaction, ProspectingSearch, Company, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, CRMWebhookLog, ProspectingBatch
 from datetime import datetime, timedelta
 from utils.webhooks import send_outbound_webhook
 from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatus, MessageType, NotificationType, IntegrationProvider, AIProvider, CampaignStatus
@@ -1924,3 +1924,265 @@ def delete_niche(niche_id):
     niche.is_active = False
     db.session.commit()
     return api_response(data={'deleted': True})
+
+
+def process_batch_async(app, batch_id, current_user_id):
+    with app.app_context():
+        try:
+            batch = ProspectingBatch.query.get(batch_id)
+            if not batch:
+                return
+            
+            if batch.status != 'pending':
+                return
+
+            batch.status = 'processing'
+            batch.started_at = datetime.utcnow()
+            db.session.commit()
+
+            for msg in batch.messages:
+                # Refresh batch to check if it was stopped
+                db.session.refresh(batch)
+                if batch.status == 'stopped':
+                    break
+
+                # Fetch message in thread's database session
+                msg = ProspectingMessage.query.get(msg.id)
+                if not msg or msg.status not in [MessageStatus.PENDENTE, MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL]:
+                    continue
+
+                lead = msg.lead
+                if not lead:
+                    continue
+
+                setting = ProspectingSetting.query.filter_by(company_id=batch.company_id).first()
+                webhook_url = None
+                action = None
+                if msg.channel == LeadChannel.WHATSAPP:
+                    webhook_url = setting.send_whatsapp_webhook_url if setting else None
+                    action = 'send_whatsapp'
+                elif msg.channel == LeadChannel.EMAIL:
+                    webhook_url = (setting.send_email_webhook_url or setting.send_whatsapp_webhook_url) if setting else None
+                    action = 'send_email'
+
+                if not webhook_url:
+                    msg.status = MessageStatus.FAILED
+                    msg.error_message = f"Webhook de envio por {msg.channel} não configurado"
+                    lead.prospecting_status = ProspectingStatus.FAILED
+                    batch.error_count += 1
+                    batch.processed_count += 1
+                    db.session.commit()
+                    continue
+
+                payload = {
+                    'action': action,
+                    'tenant_id': batch.company_id,
+                    'lead_id': lead.id,
+                    'message_id': msg.id,
+                    'channel': msg.channel,
+                    'content': msg.content,
+                    'lead_name': lead.name,
+                    'lead_email': lead.email,
+                    'lead_phone': lead.phone
+                }
+
+                try:
+                    success, response_payload, error_msg = send_outbound_webhook(
+                        tenant_id=batch.company_id,
+                        lead_id=lead.id,
+                        action=action,
+                        webhook_url=webhook_url,
+                        payload=payload
+                    )
+
+                    if success:
+                        msg.status = MessageStatus.SENT
+                        msg.approved_by = current_user_id
+                        msg.approved_at = datetime.utcnow()
+                        msg.sent_at = datetime.utcnow()
+
+                        if msg.channel == LeadChannel.WHATSAPP:
+                            lead.wa_attempts = (lead.wa_attempts or 0) + 1
+                        elif msg.channel == LeadChannel.EMAIL:
+                            lead.email_attempts = (lead.email_attempts or 0) + 1
+
+                        lead.last_contact_at = datetime.utcnow()
+                        lead.prospecting_status = ProspectingStatus.CONTATADO
+                        sync_prospecting_stage(lead, ProspectingStatus.CONTATADO)
+
+                        if lead.prospecting_campaign_id:
+                            campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
+                            if campaign and campaign.followup_interval_days:
+                                lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days)
+
+                        interaction = Interaction(
+                            lead_id=lead.id,
+                            company_id=batch.company_id,
+                            user_id=current_user_id,
+                            type=msg.channel,
+                            content=msg.content
+                        )
+                        db.session.add(interaction)
+                        batch.success_count += 1
+                    else:
+                        raise Exception(error_msg or "Webhook retornou erro")
+
+                except Exception as e:
+                    msg.status = MessageStatus.FAILED
+                    msg.error_message = str(e)
+                    lead.prospecting_status = ProspectingStatus.FAILED
+                    batch.error_count += 1
+
+                batch.processed_count += 1
+                db.session.commit()
+
+                # Small sleep to respect rate limiting
+                import time
+                time.sleep(1.2)
+
+            db.session.refresh(batch)
+            if batch.status != 'stopped':
+                batch.status = 'completed'
+                batch.completed_at = datetime.utcnow()
+                db.session.commit()
+
+        except Exception as e:
+            print(f"Error in process_batch_async: {e}")
+            try:
+                if batch:
+                    batch.status = 'failed'
+                    db.session.commit()
+            except:
+                pass
+        finally:
+            db.session.remove()
+
+
+@prospecting_bp.route('/prospecting/batch/start', methods=['POST'])
+@login_required
+def start_batch():
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
+
+    data = request.json or {}
+    message_ids = data.get('message_ids', [])
+    if not message_ids:
+        return api_response(success=False, error='Nenhuma mensagem informada', status=400)
+
+    # Validate that all messages belong to this company and are pending
+    pending_messages = ProspectingMessage.query.filter(
+        ProspectingMessage.id.in_(message_ids),
+        ProspectingMessage.company_id == current_user.company_id,
+        ProspectingMessage.status.in_([MessageStatus.PENDENTE, MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL])
+    ).all()
+
+    if not pending_messages:
+        return api_response(success=False, error='Nenhuma mensagem pendente válida encontrada', status=400)
+
+    # Check if there is already an active batch for this company
+    active_batch = ProspectingBatch.query.filter(
+        ProspectingBatch.company_id == current_user.company_id,
+        ProspectingBatch.status.in_(['pending', 'processing'])
+    ).first()
+
+    if active_batch:
+        return api_response(success=False, error='Já existe um disparo em lote em andamento para a sua empresa', status=400)
+
+    batch = ProspectingBatch(
+        company_id=current_user.company_id,
+        status='pending',
+        total_count=len(pending_messages),
+        processed_count=0,
+        success_count=0,
+        error_count=0,
+        created_by=current_user.id
+    )
+    db.session.add(batch)
+    db.session.flush() # get batch.id
+
+    # Associate messages to batch
+    for msg in pending_messages:
+        msg.batch_id = batch.id
+
+    db.session.commit()
+
+    # Start background thread
+    from flask import current_app
+    import threading
+    app = current_app._get_current_object()
+    thread = threading.Thread(
+        target=process_batch_async,
+        args=(app, batch.id, current_user.id)
+    )
+    thread.start()
+
+    return api_response(data={'batch_id': batch.id, 'total_count': batch.total_count})
+
+
+@prospecting_bp.route('/prospecting/batch/<int:batch_id>/status', methods=['GET'])
+@login_required
+def batch_status(batch_id):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
+
+    batch = ProspectingBatch.query.filter_by(
+        id=batch_id, company_id=current_user.company_id
+    ).first_or_404()
+
+    return api_response(data={
+        'id': batch.id,
+        'status': batch.status,
+        'total_count': batch.total_count,
+        'processed_count': batch.processed_count,
+        'success_count': batch.success_count,
+        'error_count': batch.error_count,
+        'created_at': batch.created_at.isoformat() if batch.created_at else None,
+        'started_at': batch.started_at.isoformat() if batch.started_at else None,
+        'completed_at': batch.completed_at.isoformat() if batch.completed_at else None
+    })
+
+
+@prospecting_bp.route('/prospecting/batch/<int:batch_id>/stop', methods=['POST'])
+@login_required
+def stop_batch(batch_id):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
+
+    batch = ProspectingBatch.query.filter_by(
+        id=batch_id, company_id=current_user.company_id
+    ).first_or_404()
+
+    if batch.status in ['pending', 'processing']:
+        batch.status = 'stopped'
+        batch.completed_at = datetime.utcnow()
+        db.session.commit()
+
+    return api_response(success=True)
+
+
+@prospecting_bp.route('/prospecting/batch/active', methods=['GET'])
+@login_required
+def get_active_batch():
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
+
+    batch = ProspectingBatch.query.filter(
+        ProspectingBatch.company_id == current_user.company_id,
+        ProspectingBatch.status.in_(['pending', 'processing'])
+    ).order_by(ProspectingBatch.created_at.desc()).first()
+
+    if not batch:
+        return api_response(data=None)
+
+    return api_response(data={
+        'id': batch.id,
+        'status': batch.status,
+        'total_count': batch.total_count,
+        'processed_count': batch.processed_count,
+        'success_count': batch.success_count,
+        'error_count': batch.error_count
+    })

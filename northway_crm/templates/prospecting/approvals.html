@@ -31,6 +31,66 @@
 
   <div class="flex-1 px-8 py-6 max-w-4xl mx-auto w-full">
 
+    {# ── MONITOR DE DISPARO EM SEGUNDO PLANO ── #}
+    <div id="batch-monitor-container" class="hidden mb-6 bg-slate-900 text-white rounded-2xl p-5 shadow-lg border border-slate-800 transition-all duration-300 relative overflow-hidden">
+      <!-- Background pulse effect -->
+      <div class="absolute inset-0 bg-gradient-to-r from-indigo-950/20 via-slate-900 to-indigo-950/20 pointer-events-none"></div>
+      
+      <div class="relative z-10 flex flex-col gap-4">
+        <!-- Header -->
+        <div class="flex justify-between items-start">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 animate-pulse">
+              <i data-lucide="send" class="w-5 h-5 text-indigo-400"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-slate-100 flex items-center gap-2">
+                Disparo em Segundo Plano
+                <span id="batch-status-badge" class="px-2 py-0.5 text-[9px] font-extrabold rounded bg-indigo-500/20 text-indigo-300 uppercase tracking-wide animate-pulse">
+                  Processando
+                </span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5" id="batch-summary-text">
+                Preparando mensagens...
+              </p>
+            </div>
+          </div>
+          
+          <button id="btn-stop-batch" onclick="stopActiveBatch()" 
+                  class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg text-xs font-bold border border-red-500/20 transition-all flex items-center gap-1">
+            <i data-lucide="square" class="w-3 h-3"></i> Parar envio
+          </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div>
+          <div class="flex justify-between text-xs font-semibold text-slate-400 mb-1">
+            <span id="batch-percent-text">0% concluído</span>
+            <span id="batch-eta-text" class="text-indigo-400 font-bold">Calculando tempo restante...</span>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+            <div id="batch-progress-bar" class="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Counters Grid -->
+        <div class="grid grid-cols-3 gap-3 bg-slate-950/40 border border-slate-800/50 rounded-xl p-3 text-center">
+          <div>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</p>
+            <p class="text-lg font-black text-slate-100 mt-0.5" id="count-batch-total">0</p>
+          </div>
+          <div class="border-l border-slate-800/60">
+            <p class="text-[10px] text-green-400 font-bold uppercase tracking-wider">Sucesso</p>
+            <p class="text-lg font-black text-green-400 mt-0.5" id="count-batch-success">0</p>
+          </div>
+          <div class="border-l border-slate-800/60">
+            <p class="text-[10px] text-red-400 font-bold uppercase tracking-wider">Falhas</p>
+            <p class="text-lg font-black text-red-400 mt-0.5" id="count-batch-error">0</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     {# ── FILTROS ── #}
     <div class="flex items-center gap-2 mb-4 flex-wrap">
       <button onclick="setFilter('all', this)"
@@ -229,6 +289,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   lucide.createIcons();
+  checkActiveBatchOnLoad();
 });
 
 function formatTime(ms) {
@@ -617,6 +678,10 @@ async function rejectOne(leadId, msgId) {
   }
 }
 
+let activeBatchId = null;
+let batchPollInterval = null;
+let batchStartTime = null;
+
 async function approveSelected() {
   if (selected.size === 0) {
     Swal.fire({ icon: 'info', title: 'Nenhuma selecionada', text: 'Marque ao menos uma mensagem.', timer: 1800, showConfirmButton: false });
@@ -626,7 +691,7 @@ async function approveSelected() {
   const ids = [...selected];
   const confirmed = await Swal.fire({
     title: `Aprovar ${ids.length} mensagem${ids.length > 1 ? 's' : ''}?`,
-    text: 'Serão disparadas em sequência via n8n.',
+    text: 'As mensagens serão enviadas em segundo plano.',
     icon: 'question',
     showCancelButton: true,
     confirmButtonColor: '#E8191A',
@@ -635,55 +700,201 @@ async function approveSelected() {
   });
   if (!confirmed.isConfirmed) return;
 
-  const startTime = Date.now();
-  let estRemainingMs = ids.length * 1500; // Estimativa inicial: 1.5s por envio
-
   Swal.fire({
-    title: `Enviando 0/${ids.length}...`,
-    html: `Tempo restante estimado: <strong>${formatTime(estRemainingMs)}</strong>`,
+    title: 'Iniciando envio em lote...',
     allowOutsideClick: false,
     showConfirmButton: false,
     didOpen: () => Swal.showLoading()
   });
 
-  let ok = 0;
-  let idx = 0;
-  for (const msgId of ids) {
-    const card = document.getElementById(`card-${msgId}`);
-    const leadId = card ? card.dataset.leadId : null;
-    if (!leadId) {
-      idx++;
-      continue;
+  try {
+    for (const msgId of ids) {
+      await saveEditAndGetContent(msgId);
     }
-    await saveEditAndGetContent(msgId);
-    try {
-      const resp = await fetch(`/prospecting/lead/${leadId}/approve-message/${msgId}`, { method: 'POST' });
-      const result = await resp.json();
-      if (result.success || resp.ok) {
-        markCard(msgId, 'approved');
-        ok++;
-      }
-    } catch(e) {}
-    
-    idx++;
-    const elapsed = Date.now() - startTime;
-    const avgTime = elapsed / idx;
-    const remaining = ids.length - idx;
-    estRemainingMs = avgTime * remaining;
 
-    Swal.update({
-      title: `Enviando ${ok}/${ids.length}...`,
-      html: `Tempo restante estimado: <strong>${formatTime(estRemainingMs)}</strong>`
+    const resp = await fetch('/prospecting/batch/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message_ids: ids })
     });
-    await new Promise(r => setTimeout(r, 800));
+    const result = await resp.json();
+    Swal.close();
+
+    if (resp.ok && result.success) {
+      // Clear selections in UI
+      ids.forEach(id => {
+        const card = document.getElementById(`card-${id}`);
+        if (card) {
+          card.classList.remove('is-selected');
+          const box = card.querySelector('.check-box');
+          if (box) {
+            box.classList.remove('checked');
+            box.innerHTML = '';
+          }
+        }
+      });
+      selected.clear();
+      updateSelectAll();
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Envio iniciado!',
+        text: 'Você pode acompanhar o progresso no painel.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
+      startPollingBatch(result.data.batch_id);
+    } else {
+      Swal.fire({ icon: 'error', title: 'Erro ao iniciar disparo', text: result.error || 'Tente novamente.' });
+    }
+  } catch (err) {
+    Swal.close();
+    Swal.fire({ icon: 'error', title: 'Erro de conexão', text: 'Não foi possível se comunicar com o servidor.' });
+  }
+}
+
+function startPollingBatch(batchId) {
+  activeBatchId = batchId;
+  batchStartTime = Date.now();
+  
+  // Show monitor
+  const monitor = document.getElementById('batch-monitor-container');
+  if (monitor) {
+    monitor.classList.remove('hidden');
+  }
+  
+  // Update status badge
+  const badge = document.getElementById('batch-status-badge');
+  if (badge) {
+    badge.className = 'px-2 py-0.5 text-[9px] font-extrabold rounded bg-indigo-500/20 text-indigo-300 uppercase tracking-wide animate-pulse';
+    badge.textContent = 'Processando';
   }
 
-  Swal.fire({
-    icon: 'success',
-    title: `${ok} de ${ids.length} enviada${ok > 1 ? 's' : ''}`,
-    timer: 2000,
-    showConfirmButton: false
+  if (batchPollInterval) clearInterval(batchPollInterval);
+  
+  pollBatchStatus(batchId);
+  batchPollInterval = setInterval(() => {
+    pollBatchStatus(batchId);
+  }, 2000);
+}
+
+async function pollBatchStatus(batchId) {
+  try {
+    const resp = await fetch(`/prospecting/batch/${batchId}/status`);
+    const result = await resp.json();
+    if (resp.ok && result.success) {
+      const batch = result.data;
+      
+      document.getElementById('count-batch-total').textContent = batch.total_count;
+      document.getElementById('count-batch-success').textContent = batch.success_count;
+      document.getElementById('count-batch-error').textContent = batch.error_count;
+      
+      const percent = batch.total_count > 0 ? Math.round((batch.processed_count / batch.total_count) * 100) : 0;
+      document.getElementById('batch-percent-text').textContent = `${percent}% concluído`;
+      document.getElementById('batch-progress-bar').style.width = `${percent}%`;
+      
+      document.getElementById('batch-summary-text').textContent = `Enviando: ${batch.processed_count} de ${batch.total_count} mensagens processadas...`;
+      
+      const badge = document.getElementById('batch-status-badge');
+      const stopBtn = document.getElementById('btn-stop-batch');
+      
+      if (batch.status === 'processing' || batch.status === 'pending') {
+        const elapsed = Date.now() - batchStartTime;
+        const remaining = batch.total_count - batch.processed_count;
+        
+        if (batch.processed_count > 0 && remaining > 0) {
+          const avgTime = elapsed / batch.processed_count;
+          const etaMs = avgTime * remaining;
+          document.getElementById('batch-eta-text').innerHTML = `Tempo restante: <strong>${formatTime(etaMs)}</strong>`;
+        } else {
+          const etaMs = remaining * 1200;
+          document.getElementById('batch-eta-text').innerHTML = `Tempo restante estimado: <strong>${formatTime(etaMs)}</strong>`;
+        }
+        if (stopBtn) stopBtn.classList.remove('hidden');
+      } else {
+        clearInterval(batchPollInterval);
+        batchPollInterval = null;
+        activeBatchId = null;
+        
+        if (stopBtn) stopBtn.classList.add('hidden');
+        
+        if (batch.status === 'completed') {
+          badge.className = 'px-2 py-0.5 text-[9px] font-extrabold rounded bg-green-500/20 text-green-300 uppercase tracking-wide';
+          badge.textContent = 'Concluído';
+          document.getElementById('batch-summary-text').textContent = `Disparo finalizado! ${batch.success_count} sucesso, ${batch.error_count} falhas.`;
+          document.getElementById('batch-eta-text').textContent = 'Envio concluído.';
+          
+          setTimeout(() => {
+            location.reload();
+          }, 3500);
+        } else if (batch.status === 'stopped') {
+          badge.className = 'px-2 py-0.5 text-[9px] font-extrabold rounded bg-amber-500/20 text-amber-300 uppercase tracking-wide';
+          badge.textContent = 'Parado';
+          document.getElementById('batch-summary-text').textContent = `Disparo interrompido pelo usuário.`;
+          document.getElementById('batch-eta-text').textContent = 'Envio cancelado.';
+          
+          setTimeout(() => {
+            location.reload();
+          }, 3500);
+        } else {
+          badge.className = 'px-2 py-0.5 text-[9px] font-extrabold rounded bg-red-500/20 text-red-300 uppercase tracking-wide';
+          badge.textContent = 'Falhou';
+          document.getElementById('batch-summary-text').textContent = `Erro no processamento do lote.`;
+          document.getElementById('batch-eta-text').textContent = 'Erro detectado.';
+          
+          setTimeout(() => {
+            location.reload();
+          }, 3500);
+        }
+      }
+      if (window.lucide) window.lucide.createIcons();
+    }
+  } catch (err) {
+    console.error("Error polling batch status", err);
+  }
+}
+
+async function stopActiveBatch() {
+  if (!activeBatchId) return;
+  
+  const confirmed = await Swal.fire({
+    title: 'Parar envio?',
+    text: 'O disparo em segundo plano será interrompido.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#E8191A',
+    confirmButtonText: 'Sim, parar envio',
+    cancelButtonText: 'Não, continuar'
   });
+  
+  if (!confirmed.isConfirmed) return;
+  
+  try {
+    const resp = await fetch(`/prospecting/batch/${activeBatchId}/stop`, { method: 'POST' });
+    if (resp.ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Disparo interrompido!',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
+  } catch (err) {
+    Swal.fire({ icon: 'error', title: 'Erro', text: 'Não foi possível parar o disparo.' });
+  }
+}
+
+async function checkActiveBatchOnLoad() {
+  try {
+    const resp = await fetch('/prospecting/batch/active');
+    const result = await resp.json();
+    if (resp.ok && result.success && result.data) {
+      startPollingBatch(result.data.id);
+    }
+  } catch (err) {
+    console.error("Error checking active batch", err);
+  }
 }
 
 async function rejectSelected() {
