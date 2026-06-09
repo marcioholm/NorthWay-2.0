@@ -45,6 +45,11 @@
                 <i data-lucide="megaphone" class="w-4 h-4 inline mr-2"></i>
                 Campanhas
             </a>
+            <a href="{{ url_for('prospecting.failure_report') }}"
+                class="px-5 py-2.5 bg-red-50 text-red-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-100 transition-all">
+                <i data-lucide="alert-triangle" class="w-4 h-4 inline mr-2"></i>
+                Falhas
+            </a>
             <a href="{{ url_for('prospecting.settings') }}"
                 class="px-5 py-2.5 bg-northway-dark text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-800 transition-all">
                 <i data-lucide="settings" class="w-4 h-4 inline mr-2"></i>
@@ -155,7 +160,7 @@
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Sem Resposta</p>
             </div>
 
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <a href="{{ url_for('prospecting.failure_report') }}" class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm block hover:ring-2 hover:ring-red-300 transition-all">
                 <div class="flex items-center justify-between mb-3">
                     <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
                         <i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>
@@ -163,7 +168,7 @@
                 </div>
                 <p class="text-3xl font-black text-gray-900">{{ erro_envio }}</p>
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Erro Envio</p>
-            </div>
+            </a>
         </div>
 
         <div class="bg-white rounded-2xl border border-gray-100 p-6">

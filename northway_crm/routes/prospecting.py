@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 import requests
 from sqlalchemy import func
-from models import db, Lead, Interaction, ProspectingSearch, Company, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, CRMWebhookLog, ProspectingBatch
+from models import db, Lead, Interaction, ProspectingSearch, Company, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, CRMWebhookLog, ProspectingBatch, CrmAiLog
 from datetime import datetime, timedelta
 from utils.webhooks import send_outbound_webhook
 from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatus, MessageType, NotificationType, IntegrationProvider, AIProvider, CampaignStatus
@@ -696,6 +696,24 @@ def reset_stuck_leads():
         'reset_count': reset_count,
         'message': f'{reset_count} lead(s) travado(s) foram resetados.'
     })
+
+
+@prospecting_bp.route('/prospecting/api/lead/<int:lead_id>/reset', methods=['POST'])
+@login_required
+def reset_single_lead(lead_id):
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=error, status=403)
+
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first()
+    if not lead:
+        return api_response(success=False, error='Lead não encontrado', status=404)
+
+    lead.in_execution = False
+    lead.prospecting_status = ProspectingStatus.NOVO
+    db.session.commit()
+
+    return api_response(data={'message': f'Lead {lead.name} resetado para novo.'})
 
 
 def _save_message(lead, channel, content, angle, model, step_number=None):
@@ -2186,3 +2204,118 @@ def get_active_batch():
         'success_count': batch.success_count,
         'error_count': batch.error_count
     })
+
+
+@prospecting_bp.route('/prospecting/failure-report')
+@login_required
+def failure_report():
+    allowed, error = check_prospecting_access()
+    if not allowed:
+        flash(error, 'error')
+        return redirect(url_for('dashboard.home'))
+
+    company_id = current_user.company_id
+    now = datetime.utcnow()
+    seven_days_ago = now - timedelta(days=7)
+    thirty_days_ago = now - timedelta(days=30)
+
+    campaigns = {c.id: c.name for c in ProspectingCampaign.query.filter_by(company_id=company_id).all()}
+
+    leads_erro = Lead.query.filter(
+        Lead.company_id == company_id,
+        Lead.prospecting_status.in_([ProspectingStatus.ERRO, ProspectingStatus.FAILED])
+    ).options(
+        db.joinedload(Lead.prospecting_campaign)
+    ).order_by(Lead.updated_at.desc()).limit(100).all()
+
+    messages_failed = ProspectingMessage.query.filter(
+        ProspectingMessage.company_id == company_id,
+        ProspectingMessage.status.in_([MessageStatus.ERRO, MessageStatus.FAILED]),
+        ProspectingMessage.created_at >= seven_days_ago
+    ).options(
+        db.joinedload(ProspectingMessage.lead)
+    ).order_by(ProspectingMessage.created_at.desc()).limit(100).all()
+
+    webhooks_failed = CRMWebhookLog.query.filter(
+        CRMWebhookLog.tenant_id == company_id,
+        CRMWebhookLog.success == False,
+        CRMWebhookLog.created_at >= seven_days_ago
+    ).options(
+        db.joinedload(CRMWebhookLog.lead)
+    ).order_by(CRMWebhookLog.created_at.desc()).limit(100).all()
+
+    ai_failed = CrmAiLog.query.filter(
+        CrmAiLog.tenant_id == company_id,
+        CrmAiLog.error_message.isnot(None),
+        CrmAiLog.error_message != '',
+        CrmAiLog.created_at >= seven_days_ago
+    ).options(
+        db.joinedload(CrmAiLog.lead)
+    ).order_by(CrmAiLog.created_at.desc()).limit(100).all()
+
+    batches_failed = ProspectingBatch.query.filter(
+        ProspectingBatch.company_id == company_id,
+        ProspectingBatch.status == 'failed',
+        ProspectingBatch.created_at >= thirty_days_ago
+    ).order_by(ProspectingBatch.created_at.desc()).all()
+
+    stuck_cutoff = now - timedelta(minutes=15)
+    leads_stuck = Lead.query.filter(
+        Lead.company_id == company_id,
+        Lead.in_execution == True,
+        Lead.updated_at < stuck_cutoff
+    ).options(
+        db.joinedload(Lead.prospecting_campaign)
+    ).order_by(Lead.updated_at.asc()).all()
+
+    error_counts = {
+        'leads_erro': len(leads_erro),
+        'messages_failed': len(messages_failed),
+        'webhooks_failed': len(webhooks_failed),
+        'ai_failed': len(ai_failed),
+        'batches_failed': len(batches_failed),
+        'leads_stuck': len(leads_stuck),
+    }
+
+    # Aggregate top error messages
+    error_messages = db.session.query(
+        ProspectingMessage.error_message,
+        func.count(ProspectingMessage.id).label('count')
+    ).filter(
+        ProspectingMessage.company_id == company_id,
+        ProspectingMessage.status.in_([MessageStatus.ERRO, MessageStatus.FAILED]),
+        ProspectingMessage.error_message.isnot(None),
+        ProspectingMessage.error_message != '',
+        ProspectingMessage.created_at >= seven_days_ago
+    ).group_by(ProspectingMessage.error_message).order_by(func.count(ProspectingMessage.id).desc()).limit(20).all()
+
+    # Errors by campaign
+    error_by_campaign_data = db.session.query(
+        func.coalesce(Lead.prospecting_campaign_id, 0).label('campaign_id'),
+        func.count(Lead.id).label('count')
+    ).filter(
+        Lead.company_id == company_id,
+        Lead.prospecting_status.in_([ProspectingStatus.ERRO, ProspectingStatus.FAILED])
+    ).group_by('campaign_id').order_by(func.count(Lead.id).desc()).all()
+
+    error_by_campaign = []
+    for row in error_by_campaign_data:
+        camp_id = row.campaign_id
+        name = campaigns.get(camp_id, 'Sem campanha') if camp_id else 'Sem campanha'
+        error_by_campaign.append({'name': name, 'count': row.count})
+
+    return render_template('prospecting/failure_report.html',
+        leads_erro=leads_erro,
+        messages_failed=messages_failed,
+        webhooks_failed=webhooks_failed,
+        ai_failed=ai_failed,
+        batches_failed=batches_failed,
+        leads_stuck=leads_stuck,
+        error_counts=error_counts,
+        error_messages=error_messages,
+        error_by_campaign=error_by_campaign,
+        campaigns=campaigns,
+        now=now,
+        ProspectingStatus=ProspectingStatus,
+        MessageStatus=MessageStatus
+    )

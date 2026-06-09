@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .failure-card { transition: all 0.2s ease; }
+    .failure-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -6px rgba(0,0,0,0.12); }
+    .error-cell { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .error-cell:hover { white-space: normal; overflow: visible; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div class="px-8 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center shrink-0">
+        <div>
+            <h1 class="text-3xl font-display font-extrabold text-gray-900 tracking-tight">
+                Relatório de <span class="text-red-500">Falhas</span>
+            </h1>
+            <p class="text-gray-400 text-xs mt-1 font-medium italic">
+                Diagnóstico completo de erros na máquina de prospecção.
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('prospecting.dashboard') }}"
+                class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline mr-2"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        {% set total_falhas = error_counts.leads_erro + error_counts.messages_failed + error_counts.webhooks_failed + error_counts.ai_failed + error_counts.batches_failed + error_counts.leads_stuck %}
+
+        {% if total_falhas == 0 %}
+        <div class="bg-white rounded-2xl border border-green-100 p-12 text-center">
+            <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check-circle-2" class="w-10 h-10 text-green-500"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Nenhuma falha encontrada</h2>
+            <p class="text-gray-500">Sua máquina de prospecção está operando sem erros no momento.</p>
+        </div>
+        {% else %}
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <div class="failure-card bg-red-50 rounded-2xl p-4 border border-red-100">
+                <p class="text-3xl font-black text-red-600">{{ error_counts.leads_erro }}</p>
+                <p class="text-xs font-bold text-red-500 uppercase tracking-wider mt-1">Leads c/ Erro</p>
+            </div>
+            <div class="failure-card bg-orange-50 rounded-2xl p-4 border border-orange-100">
+                <p class="text-3xl font-black text-orange-600">{{ error_counts.messages_failed }}</p>
+                <p class="text-xs font-bold text-orange-500 uppercase tracking-wider mt-1">Msgs c/ Falha</p>
+            </div>
+            <div class="failure-card bg-amber-50 rounded-2xl p-4 border border-amber-100">
+                <p class="text-3xl font-black text-amber-600">{{ error_counts.webhooks_failed }}</p>
+                <p class="text-xs font-bold text-amber-500 uppercase tracking-wider mt-1">Webhooks Falhos</p>
+            </div>
+            <div class="failure-card bg-purple-50 rounded-2xl p-4 border border-purple-100">
+                <p class="text-3xl font-black text-purple-600">{{ error_counts.ai_failed }}</p>
+                <p class="text-xs font-bold text-purple-500 uppercase tracking-wider mt-1">IA c/ Erro</p>
+            </div>
+            <div class="failure-card bg-rose-50 rounded-2xl p-4 border border-rose-100">
+                <p class="text-3xl font-black text-rose-600">{{ error_counts.batches_failed }}</p>
+                <p class="text-xs font-bold text-rose-500 uppercase tracking-wider mt-1">Batches Falhos</p>
+            </div>
+            <div class="failure-card bg-sky-50 rounded-2xl p-4 border border-sky-100">
+                <p class="text-3xl font-black text-sky-600">{{ error_counts.leads_stuck }}</p>
+                <p class="text-xs font-bold text-sky-500 uppercase tracking-wider mt-1">Leads Travados</p>
+            </div>
+        </div>
+
+        <!-- Errors by Campaign -->
+        {% if error_by_campaign %}
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">
+                <i data-lucide="pie-chart" class="w-5 h-5 inline mr-2 text-northway-red"></i>
+                Erros por Campanha
+            </h2>
+            <div class="space-y-3">
+                {% for item in error_by_campaign %}
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">{{ item.name }}</span>
+                    <div class="flex items-center gap-3">
+                        <div class="w-48 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            {% set max_count = error_by_campaign[0].count if error_by_campaign else 1 %}
+                            <div class="h-full bg-red-400 rounded-full" style="width: {{ (item.count / max_count * 100)|round }}%"></div>
+                        </div>
+                        <span class="text-sm font-bold text-gray-600 min-w-[2rem] text-right">{{ item.count }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Top Error Messages -->
+        {% if error_messages %}
+        <div class="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">
+                <i data-lucide="alert-triangle" class="w-5 h-5 inline mr-2 text-red-500"></i>
+                Erros Mais Frequentes
+            </h2>
+            <div class="space-y-2">
+                {% for err in error_messages %}
+                <div class="flex items-start gap-3 p-3 bg-red-50 rounded-xl">
+                    <span class="text-sm font-mono text-red-700 flex-1">{{ err.error_message }}</span>
+                    <span class="text-sm font-bold text-red-500 whitespace-nowrap">{{ err.count }}x</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Leads with Error Status -->
+        {% if leads_erro %}
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">
+                    <i data-lucide="users" class="w-5 h-5 inline mr-2 text-red-500"></i>
+                    Leads com Erro ({{ leads_erro|length }})
+                </h2>
+                <span class="text-xs text-gray-400">status: erro / failed</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Lead</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Campanha</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Canal</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Tentativas</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Atualizado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for lead in leads_erro %}
+                        <tr class="hover:bg-red-50/50 transition-colors">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                                <a href="{{ url_for('prospecting.lead_detail', lead_id=lead.id) }}" class="hover:text-northway-red">{{ lead.name }}</a>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ lead.prospecting_campaign.name if lead.prospecting_campaign else '-' }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-full 
+                                    {% if lead.prospecting_status == 'erro' %}bg-red-50 text-red-600
+                                    {% elif lead.prospecting_status == 'failed' %}bg-orange-50 text-orange-600
+                                    {% else %}bg-gray-50 text-gray-600{% endif %}">
+                                    {{ lead.prospecting_status }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ lead.preferred_channel or '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">WA: {{ lead.wa_attempts or 0 }} / E: {{ lead.email_attempts or 0 }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-400">{{ lead.updated_at.strftime('%d/%m %H:%M') if lead.updated_at else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Messages Failed -->
+        {% if messages_failed %}
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">
+                    <i data-lucide="message-square" class="w-5 h-5 inline mr-2 text-orange-500"></i>
+                    Mensagens com Falha ({{ messages_failed|length }})
+                </h2>
+                <span class="text-xs text-gray-400">últimos 7 dias</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Lead</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Canal</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Step</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Erro</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for msg in messages_failed %}
+                        <tr class="hover:bg-orange-50/50 transition-colors">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ msg.lead.name if msg.lead else 'Lead #' + msg.lead_id|string }}</td>
+                            <td class="px-4 py-3">
+                                <span class="text-xs font-bold uppercase {% if msg.channel == 'whatsapp' %}text-green-600{% else %}text-blue-600{% endif %}">
+                                    {{ msg.channel }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ msg.step_number }}</td>
+                            <td class="px-4 py-3 text-sm text-red-600 error-cell max-w-xs">
+                                <span title="{{ msg.error_message }}">{{ msg.error_message or 'Erro desconhecido' }}</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-400">{{ msg.created_at.strftime('%d/%m %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Webhooks Failed -->
+        {% if webhooks_failed %}
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">
+                    <i data-lucide="webhook" class="w-5 h-5 inline mr-2 text-amber-500"></i>
+                    Webhooks com Falha ({{ webhooks_failed|length }})
+                </h2>
+                <span class="text-xs text-gray-400">últimos 7 dias</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Ação</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Lead</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Erro</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for w in webhooks_failed %}
+                        <tr class="hover:bg-amber-50/50 transition-colors">
+                            <td class="px-4 py-3 text-sm font-mono text-gray-700">{{ w.action or '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ w.lead.name if w.lead else 'Lead #' + (w.lead_id|string if w.lead_id else '-') }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 text-[10px] font-bold rounded-full {% if w.status_code and w.status_code >= 200 and w.status_code < 300 %}bg-green-50 text-green-600{% else %}bg-red-50 text-red-600{% endif %}">
+                                    {{ w.status_code or 'sem resposta' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-red-600 error-cell max-w-xs">
+                                <span title="{{ w.error_message }}">{{ w.error_message or 'Falha sem mensagem' }}</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-400">{{ w.created_at.strftime('%d/%m %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- AI Errors -->
+        {% if ai_failed %}
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">
+                    <i data-lucide="brain" class="w-5 h-5 inline mr-2 text-purple-500"></i>
+                    Chamadas de IA com Erro ({{ ai_failed|length }})
+                </h2>
+                <span class="text-xs text-gray-400">últimos 7 dias</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Ação</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Modelo</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Lead</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Erro</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for ai in ai_failed %}
+                        <tr class="hover:bg-purple-50/50 transition-colors">
+                            <td class="px-4 py-3 text-sm font-mono text-gray-700">{{ ai.action or '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ ai.model_name or ai.provider or '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ ai.lead.name if ai.lead else 'Lead #' + (ai.lead_id|string if ai.lead_id else '-') }}</td>
+                            <td class="px-4 py-3 text-sm text-red-600 error-cell max-w-xs">
+                                <span title="{{ ai.error_message }}">{{ ai.error_message[:200] }}</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-400">{{ ai.created_at.strftime('%d/%m %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Batches Failed -->
+        {% if batches_failed %}
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">
+                    <i data-lucide="layers" class="w-5 h-5 inline mr-2 text-rose-500"></i>
+                    Lotes (Batches) com Falha ({{ batches_failed|length }})
+                </h2>
+                <span class="text-xs text-gray-400">últimos 30 dias</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Total</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sucesso</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Erros</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Data</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for b in batches_failed %}
+                        <tr class="hover:bg-rose-50/50 transition-colors">
+                            <td class="px-4 py-3 text-sm font-mono text-gray-700">#{{ b.id }}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 text-[10px] font-bold uppercase rounded-full bg-red-50 text-red-600">{{ b.status }}</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ b.total_count }}</td>
+                            <td class="px-4 py-3 text-sm text-green-600">{{ b.success_count }}</td>
+                            <td class="px-4 py-3 text-sm text-red-600 font-bold">{{ b.error_count }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-400">{{ b.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Stuck Leads -->
+        {% if leads_stuck %}
+        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900">
+                    <i data-lucide="clock" class="w-5 h-5 inline mr-2 text-sky-500"></i>
+                    Leads Travados em Execução ({{ leads_stuck|length }})
+                </h2>
+                <span class="text-xs text-gray-400">in_execution=True há >15 min</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Lead</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Campanha</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Canal</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Travado há</th>
+                            <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for lead in leads_stuck %}
+                        <tr class="hover:bg-sky-50/50 transition-colors">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                                <a href="{{ url_for('prospecting.lead_detail', lead_id=lead.id) }}" class="hover:text-northway-red">{{ lead.name }}</a>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ lead.prospecting_campaign.name if lead.prospecting_campaign else '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">{{ lead.preferred_channel or '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-gray-600">
+                                {% if lead.updated_at %}
+                                {{ ((now - lead.updated_at).total_seconds() / 60)|round|int }} min
+                                {% else %}-{% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                <button onclick="resetLead({{ lead.id }})"
+                                    class="px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg font-bold text-[10px] uppercase tracking-wider hover:bg-sky-100 transition-all">
+                                    Resetar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+    </div>
+</div>
+
+{% if leads_stuck %}
+<script>
+async function resetLead(leadId) {
+    if (!confirm('Resetar este lead para "novo"?')) return;
+    const res = await fetch('/prospecting/api/lead/' + leadId + '/reset', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+        location.reload();
+    } else {
+        alert(data.error || 'Erro ao resetar lead');
+    }
+}
+</script>
+{% endif %}
+{% endblock %}
