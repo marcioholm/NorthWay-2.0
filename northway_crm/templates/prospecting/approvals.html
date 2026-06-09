@@ -215,6 +215,7 @@
             id="msg-text-{{ msg.id }}"
             class="w-full text-sm text-gray-700 leading-relaxed bg-gray-50 border border-gray-100 rounded-lg px-3 py-2.5 resize-none focus:outline-none focus:border-gray-300 transition-colors font-sans"
             rows="4"
+            data-original="{{ msg.content or '' }}"
             placeholder="Conteúdo da mensagem...">{{ msg.content or '' }}</textarea>
         </div>
 
@@ -478,17 +479,22 @@ function applyFilters() {
 
 async function saveEditAndGetContent(msgId) {
   const textarea = document.getElementById(`msg-text-${msgId}`);
-  const newContent = textarea ? textarea.value.trim() : '';
+  if (!textarea) return null;
+  const newContent = textarea.value.trim();
+  const originalContent = textarea.getAttribute('data-original') || '';
   if (!newContent) return null;
 
-  // Salva edição se o conteúdo foi alterado
-  try {
-    await fetch(`/prospecting/message/${msgId}/edit`, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ content: newContent })
-    });
-  } catch(e) {}
+  // Salva edição apenas se o conteúdo foi alterado
+  if (newContent !== originalContent.trim()) {
+    try {
+      await fetch(`/prospecting/message/${msgId}/edit`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ content: newContent })
+      });
+      textarea.setAttribute('data-original', newContent);
+    } catch(e) {}
+  }
   return newContent;
 }
 
@@ -632,6 +638,7 @@ async function rejectOne(leadId, msgId) {
             textarea.disabled = false;
             textarea.id = `msg-text-${newMsg.message_id}`;
             textarea.value = newMsg.content;
+            textarea.setAttribute('data-original', newMsg.content);
           }
           
           if (footer) {
@@ -708,9 +715,8 @@ async function approveSelected() {
   });
 
   try {
-    for (const msgId of ids) {
-      await saveEditAndGetContent(msgId);
-    }
+    // Salva edições em paralelo para máxima velocidade
+    await Promise.all(ids.map(msgId => saveEditAndGetContent(msgId)));
 
     const resp = await fetch('/prospecting/batch/start', {
       method: 'POST',
@@ -1028,6 +1034,7 @@ async function rejectSelected() {
               textarea.disabled = false;
               textarea.id = `msg-text-${newMsg.message_id}`;
               textarea.value = newMsg.content;
+              textarea.setAttribute('data-original', newMsg.content);
             }
             
             if (footer) {
