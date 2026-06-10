@@ -1994,29 +1994,22 @@ def start_batch():
 
     db.session.commit()
 
-    # Notificar n8n para enviar cada mensagem individualmente (Motor v7)
-    setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
-    if setting and setting.generate_message_webhook_url:
-        for msg in pending_messages:
-            try:
-                webhook_payload = {
-                    'action': 'send_whatsapp',
-                    'tenant_id': current_user.company_id,
-                    'lead_id': msg.lead_id,
-                    'message_id': msg.id
-                }
-                requests.post(
-                    setting.generate_message_webhook_url,
-                    json=webhook_payload,
-                    timeout=5
-                )
-            except Exception as e:
-                logger.warning(f"[BATCH_START] Erro ao notificar n8n msg {msg.id}: {e}")
+    # Marcar mensagens como aprovadas e liberar leads para o Scheduler n8n
+    now = datetime.utcnow()
+    for msg in pending_messages:
+        msg.status = 'approved'
+        msg.approved_by = current_user.id
+        msg.approved_at = now
+        lead = Lead.query.get(msg.lead_id)
+        if lead:
+            lead.next_action_at = now
+
+    db.session.commit()
 
     return api_response(data={
         'batch_id': batch.id,
         'total_count': batch.total_count,
-        'processing_mode': 'n8n_async'
+        'approved_count': len(pending_messages)
     })
 
 
