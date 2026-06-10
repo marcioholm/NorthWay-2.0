@@ -465,6 +465,28 @@ def save_automated_send():
     if not lead:
         return jsonify({'success': False, 'error': 'Lead not found'}), 404
 
+    # Verificar max_attempts antes de enviar
+    campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
+    max_attempts = campaign.max_attempts or 3 if campaign else 3
+    sent_count = ProspectingMessage.query.filter(
+        ProspectingMessage.lead_id == lead.id,
+        ProspectingMessage.campaign_id == lead.prospecting_campaign_id,
+        ProspectingMessage.type == MessageType.OUTBOUND,
+        ProspectingMessage.status.in_([MessageStatus.SENT, MessageStatus.ENVIADA])
+    ).count()
+    step_count = int(sent_count or 0)
+    next_step = step_count + 1
+    if next_step > max_attempts:
+        lead.prospecting_status = ProspectingStatus.SEM_RESPOSTA
+        lead.next_action_at = None
+        lead.in_execution = False
+        db.session.commit()
+        return jsonify({
+            'success': False,
+            'error': f'Lead excedeu máximo de {max_attempts} tentativas',
+            'lead_status': lead.prospecting_status
+        })
+
     # Save the message
     prospecting_msg = ProspectingMessage(
         company_id=tenant_id,
@@ -475,6 +497,7 @@ def save_automated_send():
         status=MessageStatus.ENVIADA if success else MessageStatus.ERRO,
         content=content,
         ai_model=model,
+        step_number=next_step,
         error_message=error if not success else None,
         sent_at=datetime.utcnow() if success else None,
         created_at=datetime.utcnow()
@@ -488,7 +511,6 @@ def save_automated_send():
         lead.in_execution = False
         
         # Update next action based on campaign
-        campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
         if campaign:
             lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days or 3)
     else:
@@ -800,6 +822,7 @@ def get_pending_batch():
     - Só busca leads com canal WhatsApp e campanha ativa
     - Marca imediatamente como EM_EXECUCAO para evitar duplicidade entre lotes
     - Após o disparo, o n8n chama send-result ou save-automated-send para atualizar o lead
+    - Verifica horário comercial antes de retornar leads
 
     Body (opcional):
     {
@@ -813,7 +836,26 @@ def get_pending_batch():
     campaign_id = data.get('campaign_id')
     limit = min(int(data.get('limit', 10)), 10)
 
-    now = datetime.utcnow()
+    now_utc = datetime.utcnow()
+
+    # Verificar horário comercial (BRT) — se estiver fora, retorna vazio
+    if tenant_id:
+        from utils import get_now_br
+        br_now = get_now_br()
+        setting = ProspectingSetting.query.filter_by(company_id=tenant_id).first()
+        if setting:
+            start = setting.sending_start_time or '09:00'
+            end = setting.sending_end_time or '18:00'
+            br_str = br_now.strftime('%H:%M')
+            if br_now.weekday() >= 5 or not (start <= br_str <= end):
+                return jsonify({
+                    'success': True,
+                    'leads': [],
+                    'count': 0,
+                    'reason': 'outside_business_hours'
+                })
+
+    now = now_utc
 
     query = Lead.query.join(
         ProspectingCampaign,
@@ -1039,6 +1081,149 @@ def schedule_next_step():
         'intent_status': lead.intent_status,
         'next_action_at': lead.next_action_at.isoformat() if lead.next_action_at else None,
         'action_taken': action_taken
+    })
+
+
+@internal_api_bp.route('/prospecting/process-batch-message', methods=['POST'])
+@require_internal_auth
+def process_batch_message():
+    """
+    Retorna a próxima mensagem não processada de um lote pendente.
+    Chamado pelo n8n (ou pelo cron) para processar disparos manuais aprovados.
+    Processa UMA mensagem por chamada para evitar timeouts em serverless.
+
+    Body:
+    {
+        "tenant_id": 1,
+        "batch_id": 123  # opcional — processa o lote mais antigo se omitido
+    }
+
+    Retorna a mensagem ou null se não houver mais mensagens no lote.
+    """
+    data = request.json or {}
+    tenant_id = data.get('tenant_id')
+    batch_id = data.get('batch_id')
+
+    if not tenant_id:
+        return jsonify({'success': False, 'error': 'tenant_id é obrigatório'}), 400
+
+    # Buscar lote ativo mais antigo
+    query = ProspectingBatch.query.filter_by(
+        company_id=tenant_id,
+        status='pending'
+    ).order_by(ProspectingBatch.created_at.asc())
+
+    if batch_id:
+        query = query.filter(ProspectingBatch.id == batch_id)
+
+    batch = query.first()
+    if not batch:
+        return jsonify({'success': True, 'message': None, 'batch_completed': True})
+
+    # Buscar próximo lead do lote e webhook settings
+    setting = ProspectingSetting.query.filter_by(company_id=tenant_id).first()
+
+    # Próxima mensagem não processada no lote
+    msg = ProspectingMessage.query.filter(
+        ProspectingMessage.batch_id == batch.id,
+        ProspectingMessage.status.in_([
+            MessageStatus.PENDENTE,
+            MessageStatus.AGUARDANDO_APROVACAO,
+            MessageStatus.PENDING_APPROVAL,
+        ])
+    ).order_by(ProspectingMessage.id.asc()).first()
+
+    if not msg:
+        # Nenhuma mensagem pendente — marcar lote como concluído
+        batch.status = 'completed'
+        batch.completed_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'success': True, 'message': None, 'batch_completed': True})
+
+    lead = msg.lead
+
+    # Determinar webhook URL
+    webhook_url = None
+    action = None
+    if msg.channel == LeadChannel.WHATSAPP:
+        webhook_url = setting.send_whatsapp_webhook_url if setting else None
+        action = 'send_whatsapp'
+    elif msg.channel == LeadChannel.EMAIL:
+        webhook_url = (setting.send_email_webhook_url or setting.send_whatsapp_webhook_url) if setting else None
+        action = 'send_email'
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'message': {
+            'id': msg.id,
+            'lead_id': lead.id if lead else None,
+            'lead_name': lead.name if lead else None,
+            'lead_phone': lead.phone if lead else None,
+            'lead_email': lead.email if lead else None,
+            'channel': msg.channel,
+            'content': msg.content,
+            'step_number': msg.step_number,
+            'tenant_id': tenant_id,
+            'batch_id': batch.id
+        },
+        'webhook': {
+            'url': webhook_url,
+            'action': action
+        },
+        'batch': {
+            'id': batch.id,
+            'total_count': batch.total_count,
+            'processed_count': batch.processed_count,
+            'success_count': batch.success_count,
+            'error_count': batch.error_count
+        },
+        'batch_completed': False
+    })
+
+
+@internal_api_bp.route('/prospecting/recover-stuck-leads', methods=['POST'])
+@require_internal_auth
+def recover_stuck_leads():
+    """
+    Recupera leads presos em EM_EXECUCAO / in_execution=True por mais de 15 minutos.
+    Chamado periodicamente pelo n8n ou manualmente.
+    """
+    data = request.json or {}
+    tenant_id = data.get('tenant_id')
+    cutoff_minutes = int(data.get('cutoff_minutes', 15))
+
+    query = Lead.query.filter(
+        Lead.in_execution == True,
+        Lead.prospecting_status == ProspectingStatus.EM_EXECUCAO
+    )
+
+    if tenant_id:
+        query = query.filter(Lead.company_id == tenant_id)
+
+    stuck_cutoff = datetime.utcnow() - timedelta(minutes=cutoff_minutes)
+    query = query.filter(Lead.updated_at < stuck_cutoff)
+
+    stuck_leads = query.all()
+    recovered = []
+
+    for lead in stuck_leads:
+        lead.in_execution = False
+        lead.prospecting_status = ProspectingStatus.NOVO
+        recovered.append({
+            'lead_id': lead.id,
+            'name': lead.name,
+            'stuck_since': lead.updated_at.isoformat() if lead.updated_at else None,
+            'company_id': lead.company_id
+        })
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'recovered_count': len(recovered),
+        'recovered': recovered
     })
 
 
@@ -1281,7 +1466,8 @@ def import_leads_internal():
                 notes=f"Importado via prospecção diária automática",
                 prospecting_status=ProspectingStatus.NOVO,
                 prospecting_campaign_id=campaign.id if campaign else None,
-                preferred_channel=LeadChannel.WHATSAPP
+                preferred_channel=LeadChannel.WHATSAPP,
+                next_action_at=datetime.utcnow()
             )
             db.session.add(new_lead)
             db.session.flush()
