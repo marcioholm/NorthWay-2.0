@@ -768,225 +768,9 @@ def _save_message(lead, channel, content, angle, model, step_number=None):
 
 
 def _run_message_generation(lead, setting, channel, feedback=None, step_number=None):
-    """
-    Tenta gerar a mensagem diretamente usando as credenciais de IA da empresa (TenantAICredential).
-    Se não houver credencial ativa ou se falhar, faz o fallback para o webhook do n8n.
-    """
-    import time
-    import uuid
-    import requests
-
-    credential = TenantAICredential.query.filter_by(
-        company_id=lead.company_id,
-        status='connected'
-    ).first()
-
-    if credential:
-        start_time = time.time()
-        api_key = credential.api_key
-        provider = credential.provider
-        model = credential.model or (setting.default_ai_model if setting else None) or 'gpt-4o-mini'
-        base_url = credential.base_url
-        campaign = lead.prospecting_campaign
-
-        if step_number is None:
-            existing_count = ProspectingMessage.query.filter(
-                ProspectingMessage.lead_id == lead.id,
-                ProspectingMessage.campaign_id == lead.prospecting_campaign_id,
-                ProspectingMessage.type == MessageType.OUTBOUND,
-                ProspectingMessage.status.in_([MessageStatus.SENT, MessageStatus.ENVIADA])
-            ).count()
-            step_number = existing_count + 1
-
-        system_prompt = (
-            "Você é um assistente de vendas e prospecção altamente qualificado da empresa {company_name}. "
-            "Seu objetivo é redigir uma mensagem de prospecção personalizada e persuasiva para o lead {lead_name}.\n"
-            "As mensagens devem ser curtas, diretas, sem enrolação e adequadas para o canal especificado (como WhatsApp ou E-mail).\n"
-            "Use o tom de voz especificado nas instruções da campanha.\n"
-            "Mantenha a mensagem natural, como se fosse enviada por uma pessoa real, e não uma automação corporativa.\n"
-            "Por favor, gere APENAS o texto final da mensagem a ser enviada ao lead (se for e-mail, inclua 'Assunto: [Assunto]' na primeira linha, seguido pelo corpo do e-mail). "
-            "Não inclua nenhuma introdução ou explicação antes ou depois do texto da mensagem."
-        ).format(
-            company_name=lead.company.name if lead.company else "NorthWay",
-            lead_name=lead.name or "cliente"
-        )
-
-        user_prompt = f"Instruções para geração da mensagem:\n"
-        user_prompt += f"- Canal de envio: {channel}\n"
-        user_prompt += f"- Nome do Lead: {lead.name or ''}\n"
-        if lead.interest:
-            user_prompt += f"- Interesse/Nicho do Lead: {lead.interest}\n"
-        if lead.notes:
-            user_prompt += f"- Anotações/Contexto do Lead: {lead.notes}\n"
-
-        if campaign:
-            user_prompt += f"\nContexto da Campanha de Prospecção:\n"
-            user_prompt += f"- Nome da Campanha: {campaign.name}\n"
-            if campaign.objective:
-                user_prompt += f"- Objetivo: {campaign.objective}\n"
-            user_prompt += f"- Tom de Voz: {campaign.tone_of_voice or (setting.default_tone if setting else None) or 'profissional'}\n"
-            if campaign.offer:
-                user_prompt += f"- Oferta/Solução: {campaign.offer}\n"
-            if campaign.main_angle:
-                user_prompt += f"- Ângulo Principal: {campaign.main_angle}\n"
-            if campaign.default_cta:
-                user_prompt += f"- Chamada para Ação (CTA): {campaign.default_cta}\n"
-            if campaign.restrictions:
-                user_prompt += f"- Restrições da Campanha (IMPORTANTE): {campaign.restrictions}\n"
-            user_prompt += f"- Etapa da Cadência: {step_number}\n"
-        else:
-            user_prompt += f"\nContexto de Prospecção:\n"
-            user_prompt += f"- Tom de Voz: {(setting.default_tone if setting else None) or 'profissional'}\n"
-
-        if feedback:
-            user_prompt += f"\nFeedback/Instruções de Ajuste (IMPORTANTE - você DEVE aplicar estas correções na mensagem regenerada):\n{feedback}\n"
-
-        logger.info(f"[DIRECT_AI_GEN] Starting generation for lead={lead.id} using provider={provider}, model={model}")
-
-        headers = {'Content-Type': 'application/json'}
-        test_payload = {}
-
-        try:
-            if provider == 'openai':
-                if base_url:
-                    test_url = base_url.rstrip('/') + '/chat/completions' if not base_url.endswith('/chat/completions') else base_url
-                else:
-                    test_url = 'https://api.openai.com/v1/chat/completions'
-                headers['Authorization'] = f'Bearer {api_key}'
-                test_payload = {
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": 0.7
-                }
-            elif provider == 'groq':
-                if base_url:
-                    test_url = base_url.rstrip('/') + '/chat/completions' if not base_url.endswith('/chat/completions') else base_url
-                else:
-                    test_url = 'https://api.groq.com/openai/v1/chat/completions'
-                headers['Authorization'] = f'Bearer {api_key}'
-                test_payload = {
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": 0.7
-                }
-            elif provider == 'openrouter':
-                if base_url:
-                    test_url = base_url.rstrip('/') + '/chat/completions' if not base_url.endswith('/chat/completions') else base_url
-                else:
-                    test_url = 'https://openrouter.ai/api/v1/chat/completions'
-                headers['Authorization'] = f'Bearer {api_key}'
-                headers['HTTP-Referer'] = 'https://crm.northwaycompany.com.br'
-                headers['X-Title'] = 'NorthWay CRM'
-                test_payload = {
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": 0.7
-                }
-            elif provider == 'anthropic':
-                if base_url:
-                    test_url = base_url.rstrip('/') + '/v1/messages' if (not base_url.endswith('/v1/messages') and not base_url.endswith('/messages')) else base_url
-                else:
-                    test_url = 'https://api.anthropic.com/v1/messages'
-                headers = {
-                    'x-api-key': api_key,
-                    'anthropic-version': '2023-06-01',
-                    'Content-Type': 'application/json'
-                }
-                test_payload = {
-                    "model": model,
-                    "max_tokens": 1024,
-                    "system": system_prompt,
-                    "messages": [{"role": "user", "content": user_prompt}],
-                    "temperature": 0.7
-                }
-            elif provider == 'google':
-                if base_url:
-                    test_url = base_url.rstrip('/') + f'/v1beta/models/{model}:generateContent?key={api_key}' if 'generateContent' not in base_url else base_url
-                else:
-                    test_url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}'
-                test_payload = {
-                    "contents": [{"parts": [{"text": system_prompt + "\n\n" + user_prompt}]}]
-                }
-            else:
-                raise Exception(f"Provider {provider} não suportado para geração direta.")
-
-            response = requests.post(test_url, headers=headers, json=test_payload, timeout=30)
-            duration_ms = int((time.time() - start_time) * 1000)
-
-            if response.status_code in [200, 201]:
-                res_json = response.json()
-                message_text = ""
-
-                if provider in ['openai', 'groq', 'openrouter']:
-                    message_text = res_json['choices'][0]['message']['content'].strip()
-                elif provider == 'anthropic':
-                    message_text = res_json['content'][0]['text'].strip()
-                elif provider == 'google':
-                    message_text = res_json['candidates'][0]['content']['parts'][0]['text'].strip()
-
-                if (message_text.startswith('"') and message_text.endswith('"')) or (message_text.startswith("'") and message_text.endswith("'")):
-                    message_text = message_text[1:-1].strip()
-
-                logger.info(f"[DIRECT_AI_GEN] Success! Generated {len(message_text)} chars in {duration_ms}ms using {provider}")
-
-                try:
-                    ai_log = CrmAiLog(
-                        tenant_id=lead.company_id,
-                        lead_id=lead.id,
-                        action='generate_message',
-                        provider=provider,
-                        model_name=model,
-                        prompt={"system": system_prompt, "user": user_prompt},
-                        input_data=test_payload,
-                        output_data=res_json,
-                        duration_ms=duration_ms
-                    )
-                    db.session.add(ai_log)
-                    db.session.commit()
-                except Exception as log_err:
-                    logger.error(f"[DIRECT_AI_GEN] Failed to save AI log: {log_err}")
-                    db.session.rollback()
-
-                return message_text, (campaign.main_angle if (campaign and campaign.main_angle) else 'Atrair'), model
-            else:
-                error_body = response.text
-                logger.error(f"[DIRECT_AI_GEN] API error {response.status_code}: {error_body}")
-                raise Exception(f"API {provider} retornou status {response.status_code}: {error_body[:200]}")
-
-        except Exception as ai_err:
-            duration_ms = int((time.time() - start_time) * 1000)
-            logger.error(f"[DIRECT_AI_GEN] Critical error with {provider}: {ai_err}", exc_info=True)
-
-            try:
-                ai_log = CrmAiLog(
-                    tenant_id=lead.company_id,
-                    lead_id=lead.id,
-                    action='generate_message',
-                    provider=provider,
-                    model_name=model,
-                    prompt={"system": system_prompt, "user": user_prompt},
-                    error_message=str(ai_err),
-                    duration_ms=duration_ms
-                )
-                db.session.add(ai_log)
-                db.session.commit()
-            except Exception as log_err:
-                logger.error(f"[DIRECT_AI_GEN] Failed to save error AI log: {log_err}")
-                db.session.rollback()
-
-            logger.info("[DIRECT_AI_GEN] Falling back to n8n webhook...")
-
+    """Gera mensagem via n8n webhook (Motor v7). O CRM não chama APIs de IA diretamente."""
     if not setting or not setting.generate_message_webhook_url:
-        raise Exception("Nenhum provedor de IA conectado e Webhook do n8n não configurado")
+        raise Exception("Webhook do n8n não configurado")
 
     payload = {
         'action': 'generate_message',
@@ -1039,9 +823,8 @@ def generate_message(lead_id):
         return api_response(success=False, error='Já existe uma mensagem sendo gerada para este lead', status=400)
 
     setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
-    has_direct_ai = TenantAICredential.query.filter_by(company_id=current_user.company_id, status='connected').first() is not None
-    if not setting or (not setting.generate_message_webhook_url and not has_direct_ai):
-        return api_response(success=False, error='Nenhuma integração de geração de mensagens configurada (Webhook ou IA direta)', status=400)
+    if not setting or not setting.generate_message_webhook_url:
+        return api_response(success=False, error='Webhook do n8n não configurado', status=400)
 
     channel = lead.preferred_channel or LeadChannel.WHATSAPP
     if request.is_json:
@@ -1114,9 +897,8 @@ def generate_campaign_messages(campaign_id):
         lead_ids = [l.id for l in leads]
 
     setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
-    has_direct_ai = TenantAICredential.query.filter_by(company_id=current_user.company_id, status='connected').first() is not None
-    if not setting or (not setting.generate_message_webhook_url and not has_direct_ai):
-        return api_response(success=False, error='Nenhuma integração de geração de mensagens configurada (Webhook ou IA direta)', status=400)
+    if not setting or not setting.generate_message_webhook_url:
+        return api_response(success=False, error='Webhook do n8n não configurado', status=400)
 
     triggered = 0
     errors = []
@@ -1293,9 +1075,8 @@ def reject_message(lead_id, message_id):
             db.session.commit()
 
         setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
-        has_direct_ai = TenantAICredential.query.filter_by(company_id=current_user.company_id, status='connected').first() is not None
-        if not setting or (not setting.generate_message_webhook_url and not has_direct_ai):
-            return api_response(success=False, error='Nenhuma integração de geração de mensagens configurada (Webhook ou IA direta)', status=400)
+        if not setting or not setting.generate_message_webhook_url:
+            return api_response(success=False, error='Webhook do n8n não configurado', status=400)
 
         channel = message.channel or lead.preferred_channel or LeadChannel.WHATSAPP
 
@@ -2164,163 +1945,6 @@ def delete_niche(niche_id):
     return api_response(data={'deleted': True})
 
 
-def process_batch_async(app, batch_id, current_user_id):
-    with app.app_context():
-        try:
-            batch = ProspectingBatch.query.get(batch_id)
-            if not batch:
-                return
-            
-            if batch.status != 'pending':
-                return
-
-            batch.status = 'processing'
-            batch.started_at = datetime.utcnow()
-            db.session.commit()
-
-            for msg in batch.messages:
-                # Refresh batch to check if it was stopped
-                db.session.refresh(batch)
-                if batch.status == 'stopped':
-                    break
-
-                # Verificação de horário comercial (segunda a sexta, dentro da janela ativa)
-                from utils import get_now_br
-                now = get_now_br()
-                now_str = now.strftime('%H:%M')
-                setting = ProspectingSetting.query.filter_by(company_id=batch.company_id).first()
-                start_time = (setting.sending_start_time or '09:00') if setting else '09:00'
-                end_time = (setting.sending_end_time or '18:00') if setting else '18:00'
-
-                while not (start_time <= now_str <= end_time) or now.weekday() >= 5:
-                    db.session.rollback()
-                    batch = ProspectingBatch.query.get(batch_id)
-                    if not batch or batch.status == 'stopped':
-                        break
-                    
-                    import time
-                    time.sleep(60)
-                    
-                    now = get_now_br()
-                    now_str = now.strftime('%H:%M')
-
-                # Re-fetch batch after potential pause
-                batch = ProspectingBatch.query.get(batch_id)
-                if not batch or batch.status == 'stopped':
-                    break
-
-                # Fetch message in thread's database session
-                msg = ProspectingMessage.query.get(msg.id)
-                if not msg or msg.status not in [MessageStatus.PENDENTE, MessageStatus.AGUARDANDO_APROVACAO, MessageStatus.PENDING_APPROVAL]:
-                    continue
-
-                lead = msg.lead
-                if not lead:
-                    continue
-
-                setting = ProspectingSetting.query.filter_by(company_id=batch.company_id).first()
-                webhook_url = None
-                action = None
-                if msg.channel == LeadChannel.WHATSAPP:
-                    webhook_url = setting.send_whatsapp_webhook_url if setting else None
-                    action = 'send_whatsapp'
-                elif msg.channel == LeadChannel.EMAIL:
-                    webhook_url = (setting.send_email_webhook_url or setting.send_whatsapp_webhook_url) if setting else None
-                    action = 'send_email'
-
-                if not webhook_url:
-                    msg.status = MessageStatus.FAILED
-                    msg.error_message = f"Webhook de envio por {msg.channel} não configurado"
-                    lead.prospecting_status = ProspectingStatus.FAILED
-                    batch.error_count += 1
-                    batch.processed_count += 1
-                    db.session.commit()
-                    continue
-
-                payload = {
-                    'action': action,
-                    'tenant_id': batch.company_id,
-                    'lead_id': lead.id,
-                    'message_id': msg.id,
-                    'channel': msg.channel,
-                    'content': msg.content,
-                    'lead_name': lead.name,
-                    'lead_email': lead.email,
-                    'lead_phone': lead.phone
-                }
-
-                try:
-                    success, response_payload, error_msg = send_outbound_webhook(
-                        tenant_id=batch.company_id,
-                        lead_id=lead.id,
-                        action=action,
-                        webhook_url=webhook_url,
-                        payload=payload
-                    )
-
-                    if success:
-                        msg.status = MessageStatus.SENT
-                        msg.approved_by = current_user_id
-                        msg.approved_at = datetime.utcnow()
-                        msg.sent_at = datetime.utcnow()
-
-                        if msg.channel == LeadChannel.WHATSAPP:
-                            lead.wa_attempts = (lead.wa_attempts or 0) + 1
-                        elif msg.channel == LeadChannel.EMAIL:
-                            lead.email_attempts = (lead.email_attempts or 0) + 1
-
-                        lead.last_contact_at = datetime.utcnow()
-                        lead.prospecting_status = ProspectingStatus.CONTATADO
-                        sync_prospecting_stage(lead, ProspectingStatus.CONTATADO)
-
-                        if lead.prospecting_campaign_id:
-                            campaign = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
-                            if campaign and campaign.followup_interval_days:
-                                lead.next_action_at = datetime.utcnow() + timedelta(days=campaign.followup_interval_days)
-
-                        interaction = Interaction(
-                            lead_id=lead.id,
-                            company_id=batch.company_id,
-                            user_id=current_user_id,
-                            type=msg.channel,
-                            content=msg.content
-                        )
-                        db.session.add(interaction)
-                        batch.success_count += 1
-                    else:
-                        raise Exception(error_msg or "Webhook retornou erro")
-
-                except Exception as e:
-                    msg.status = MessageStatus.FAILED
-                    msg.error_message = str(e)
-                    lead.prospecting_status = ProspectingStatus.FAILED
-                    batch.error_count += 1
-
-                batch.processed_count += 1
-                db.session.commit()
-
-                # Small sleep to respect rate limiting
-                import time
-                time.sleep(1.2)
-
-            db.session.refresh(batch)
-            if batch.status != 'stopped':
-                batch.status = 'completed'
-                batch.completed_at = datetime.utcnow()
-                db.session.commit()
-
-        except Exception as e:
-            print(f"Error in process_batch_async: {e}")
-            try:
-                if batch:
-                    batch.status = 'failed'
-                    db.session.commit()
-            except:
-                pass
-        finally:
-            db.session.remove()
-
-
 @prospecting_bp.route('/prospecting/batch/start', methods=['POST'])
 @login_required
 def start_batch():
@@ -2341,7 +1965,7 @@ def start_batch():
     ).all()
 
     if not pending_messages:
-        return api_response(success=False, error='Nenhuma mensagem pendente válida encontrada', status=400)
+        return api_response(success=False, error='Nenhuma mensagem pendente valida encontrada', status=400)
 
     # Check if there is already an active batch for this company
     active_batch = ProspectingBatch.query.filter(
@@ -2350,7 +1974,7 @@ def start_batch():
     ).first()
 
     if active_batch:
-        return api_response(success=False, error='Já existe um disparo em lote em andamento para a sua empresa', status=400)
+        return api_response(success=False, error='Ja existe um disparo em lote em andamento para a sua empresa', status=400)
 
     batch = ProspectingBatch(
         company_id=current_user.company_id,
@@ -2362,7 +1986,7 @@ def start_batch():
         created_by=current_user.id
     )
     db.session.add(batch)
-    db.session.flush() # get batch.id
+    db.session.flush()
 
     # Associate messages to batch
     for msg in pending_messages:
@@ -2370,17 +1994,30 @@ def start_batch():
 
     db.session.commit()
 
-    # Start background thread
-    from flask import current_app
-    import threading
-    app = current_app._get_current_object()
-    thread = threading.Thread(
-        target=process_batch_async,
-        args=(app, batch.id, current_user.id)
-    )
-    thread.start()
+    # Notificar n8n via webhook para processar o lote (se configurado)
+    setting = ProspectingSetting.query.filter_by(company_id=current_user.company_id).first()
+    if setting and setting.generate_message_webhook_url:
+        try:
+            webhook_payload = {
+                'action': 'process_batch',
+                'batch_id': batch.id,
+                'company_id': current_user.company_id,
+                'company_name': current_user.company.name if current_user.company else None,
+                'total_messages': batch.total_count
+            }
+            requests.post(
+                setting.generate_message_webhook_url,
+                json=webhook_payload,
+                timeout=5
+            )
+        except Exception as e:
+            logger.warning(f"[BATCH_START] Erro ao notificar n8n: {e}")
 
-    return api_response(data={'batch_id': batch.id, 'total_count': batch.total_count})
+    return api_response(data={
+        'batch_id': batch.id,
+        'total_count': batch.total_count,
+        'processing_mode': 'n8n_async'
+    })
 
 
 @prospecting_bp.route('/prospecting/batch/<int:batch_id>/status', methods=['GET'])
