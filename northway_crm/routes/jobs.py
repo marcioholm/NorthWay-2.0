@@ -1,8 +1,10 @@
 from flask import Blueprint, jsonify, current_app
-from models import db, TenantIntegration, Client, DriveFileEvent, Lead, Task, Notification
+from models import db, TenantIntegration, Client, DriveFileEvent, Lead, Task, Notification, ProspectingBatch, ProspectingMessage, ProspectingSetting, ProspectingCampaign
 from services.google_drive_service import GoogleDriveService
 from datetime import datetime, timedelta
 from utils import create_notification, get_now_br
+from constants import ProspectingStatus, MessageStatus, LeadChannel
+from utils.webhooks import send_outbound_webhook
 
 jobs_bp = Blueprint('jobs_bp', __name__)
 
@@ -164,9 +166,134 @@ def task_reminders_job():
             results['overdue_alerts'] += 1
         except Exception as e:
             results['errors'].append(f"Error overdue alert for task {task.id}: {str(e)}")
-            
     db.session.commit()
     return jsonify(results)
+
+# --- Pending batch processing (fallback para Vercel/serverless) ---
+
+@jobs_bp.route('/api/cron/prospecting-batch-processor', methods=['GET', 'POST'])
+def prospecting_batch_processor():
+    """
+    Cron job to process pending approved batches (manual approval flow).
+    Fallback caso o n8n nao tenha processado.
+    Processa 1 mensagem por execucao para evitar timeouts em serverless.
+    Deve ser chamado a cada 1-2 minutos por cron externo.
+    """
+    results = {'processed': 0, 'errors': []}
+
+    batch = ProspectingBatch.query.filter_by(
+        status='pending'
+    ).order_by(ProspectingBatch.created_at.asc()).first()
+
+    if not batch:
+        return jsonify({'processed': 0, 'message': 'no_pending_batches'})
+
+    try:
+        batch.status = 'processing'
+        batch.started_at = datetime.utcnow()
+        db.session.commit()
+
+        msg = ProspectingMessage.query.filter(
+            ProspectingMessage.batch_id == batch.id,
+            ProspectingMessage.status.in_([
+                MessageStatus.PENDENTE,
+                MessageStatus.AGUARDANDO_APROVACAO,
+                MessageStatus.PENDING_APPROVAL,
+            ])
+        ).order_by(ProspectingMessage.id.asc()).first()
+
+        if not msg:
+            batch.status = 'completed'
+            batch.completed_at = datetime.utcnow()
+            db.session.commit()
+            return jsonify({'processed': 1, 'result': 'completed_no_messages', 'batch_id': batch.id})
+
+        lead = Lead.query.get(msg.lead_id)
+        if not lead:
+            msg.status = MessageStatus.FAILED
+            msg.error_message = "Lead nao encontrado"
+            batch.error_count += 1
+            batch.processed_count += 1
+            db.session.commit()
+            return jsonify({'processed': 1, 'result': 'lead_not_found', 'message_id': msg.id})
+
+        setting = ProspectingSetting.query.filter_by(company_id=batch.company_id).first()
+        webhook_url = None
+        action = None
+        if msg.channel == LeadChannel.WHATSAPP:
+            webhook_url = setting.send_whatsapp_webhook_url if setting else None
+            action = 'send_whatsapp'
+        elif msg.channel == LeadChannel.EMAIL:
+            webhook_url = (setting.send_email_webhook_url or setting.send_whatsapp_webhook_url) if setting else None
+            action = 'send_email'
+
+        if not webhook_url:
+            msg.status = MessageStatus.FAILED
+            msg.error_message = f"Webhook de envio por {msg.channel} nao configurado"
+            lead.prospecting_status = ProspectingStatus.FAILED
+            batch.error_count += 1
+            batch.processed_count += 1
+            db.session.commit()
+            return jsonify({'processed': 1, 'result': 'no_webhook', 'channel': msg.channel})
+
+        payload = {
+            'action': action,
+            'tenant_id': batch.company_id,
+            'lead_id': lead.id,
+            'message_id': msg.id,
+            'channel': msg.channel,
+            'content': msg.content,
+            'lead_name': lead.name,
+            'lead_email': lead.email,
+            'lead_phone': lead.phone
+        }
+
+        success, response_payload, error_msg = send_outbound_webhook(
+            tenant_id=batch.company_id,
+            lead_id=lead.id,
+            action=action,
+            webhook_url=webhook_url,
+            payload=payload
+        )
+
+        if success:
+            msg.status = MessageStatus.SENT
+            msg.sent_at = datetime.utcnow()
+            if msg.channel == LeadChannel.WHATSAPP:
+                lead.wa_attempts = (lead.wa_attempts or 0) + 1
+            elif msg.channel == LeadChannel.EMAIL:
+                lead.email_attempts = (lead.email_attempts or 0) + 1
+            lead.last_contact_at = datetime.utcnow()
+            lead.prospecting_status = ProspectingStatus.CONTATADO
+            if lead.prospecting_campaign_id:
+                campaign_obj = ProspectingCampaign.query.get(lead.prospecting_campaign_id)
+                if campaign_obj and campaign_obj.followup_interval_days:
+                    lead.next_action_at = datetime.utcnow() + timedelta(days=campaign_obj.followup_interval_days)
+            batch.success_count += 1
+        else:
+            msg.status = MessageStatus.FAILED
+            msg.error_message = error_msg or "Webhook retornou erro"
+            lead.prospecting_status = ProspectingStatus.FAILED
+            batch.error_count += 1
+
+        batch.processed_count += 1
+        db.session.commit()
+
+        results['processed'] = 1
+        results['batch_id'] = batch.id
+        results['message_id'] = msg.id
+        results['result'] = 'sent' if success else 'failed'
+
+    except Exception as e:
+        results['errors'].append(str(e))
+        try:
+            batch.status = 'failed'
+            db.session.commit()
+        except:
+            pass
+
+    return jsonify(results)
+
 
 @jobs_bp.route('/api/cron/prospecting-scheduler', methods=['GET', 'POST'])
 def prospecting_scheduler_job():

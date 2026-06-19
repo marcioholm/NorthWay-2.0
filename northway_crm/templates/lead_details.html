@@ -86,6 +86,12 @@
                         class="py-3 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
                         <i data-lucide="building-2" class="w-4 h-4"></i> Empresa & CNPJ
                     </button>
+                    {% if lead.source == 'Raio-X Digital' and lead.diagnostic_status == 'done' %}
+                    <button type="button" onclick="switchPageTab('raiox')" id="tab-page-raiox"
+                        class="py-3 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4"></i> Raio-X Digital
+                    </button>
+                    {% endif %}
                 </div>
 
                 <!-- Tab: Details (Existing Feed) -->
@@ -450,6 +456,93 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Tab: Raio-X Digital -->
+                {% if lead.source == 'Raio-X Digital' and lead.diagnostic_status == 'done' %}
+                <div id="content-page-raiox" class="hidden space-y-6 pt-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                            <i data-lucide="activity" class="w-4 h-4 text-northway-red"></i>
+                            Raio-X Digital
+                        </h3>
+
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                <span class="text-3xl font-black text-gray-900">{{ lead.diagnostic_score|int }}</span>
+                                <span class="text-[10px] text-gray-500 block uppercase font-bold">Score (0-60)</span>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                <span class="text-3xl font-black text-gray-900">{{ '%.1f'|format(lead.diagnostic_stars or 0) }}</span>
+                                <span class="text-[10px] text-gray-500 block uppercase font-bold">Estrelas (0-5)</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-lg border mb-6
+                            {% if lead.diagnostic_classification == 'N3' %}bg-green-50 border-green-200
+                            {% elif lead.diagnostic_classification == 'N2' %}bg-yellow-50 border-yellow-200
+                            {% else %}bg-red-50 border-red-200{% endif %}">
+                            <div class="text-xs font-bold uppercase mb-1
+                                {% if lead.diagnostic_classification == 'N3' %}text-green-800
+                                {% elif lead.diagnostic_classification == 'N2' %}text-yellow-800
+                                {% else %}text-red-800{% endif %}">
+                                Classificação
+                            </div>
+                            <p class="text-sm font-bold
+                                {% if lead.diagnostic_classification == 'N3' %}text-green-900
+                                {% elif lead.diagnostic_classification == 'N2' %}text-yellow-900
+                                {% else %}text-red-900{% endif %}">
+                                Nível {{ lead.diagnostic_classification }}
+                                {% if lead.diagnostic_classification == 'N3' %}— Escala
+                                {% elif lead.diagnostic_classification == 'N2' %}— Validação
+                                {% else %}— Estruturação{% endif %}
+                            </p>
+                        </div>
+
+                        {% set pillars = lead.diagnostic_pillars | from_json %}
+                        {% if pillars %}
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Pilares</h4>
+                        <div class="space-y-3">
+                            {% for name, val in pillars.items() %}
+                            {% set pct = (val / 15) * 100 %}
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium text-gray-700">{{ name }}</span>
+                                    <span class="text-gray-500 font-bold">{{ val }}/15</span>
+                                </div>
+                                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full transition-all
+                                        {% if pct <= 33 %}bg-red-500
+                                        {% elif pct <= 66 %}bg-yellow-500
+                                        {% else %}bg-green-500{% endif %}"
+                                        style="width: {{ pct }}%;"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        {% set sorted = pillars.items() | sort(attribute='1') %}
+                        {% set gap = sorted | first %}
+                        {% set strong = sorted | last %}
+                        <div class="grid grid-cols-2 gap-3 mt-6">
+                            <div class="p-3 bg-red-50 rounded-lg border border-red-100">
+                                <span class="text-[10px] text-red-600 uppercase font-bold">Gap</span>
+                                <p class="text-sm font-bold text-red-800">{{ gap[0] }}</p>
+                                <p class="text-xs text-red-600">{{ gap[1] }}/15</p>
+                            </div>
+                            <div class="p-3 bg-green-50 rounded-lg border border-green-100">
+                                <span class="text-[10px] text-green-600 uppercase font-bold">Fortaleza</span>
+                                <p class="text-sm font-bold text-green-800">{{ strong[0] }}</p>
+                                <p class="text-xs text-green-600">{{ strong[1] }}/15</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="text-[10px] text-gray-400 text-center mt-6 pt-3 border-t border-gray-100">
+                            Realizado em: {{ lead.diagnostic_date.strftime('%d/%m/%Y %H:%M') if lead.diagnostic_date else 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
 
                 <!-- Sidebar Info -->
                 <div class="space-y-6">
@@ -1179,13 +1272,15 @@
         const detailsTab = document.getElementById('tab-page-details');
         const whatsappTab = document.getElementById('tab-page-whatsapp');
         const enrichmentTab = document.getElementById('tab-page-enrichment');
+        const raioxTab = document.getElementById('tab-page-raiox');
 
         const contentDetails = document.getElementById('content-page-details');
         const contentWhatsapp = document.getElementById('content-page-whatsapp');
         const contentEnrichment = document.getElementById('content-page-enrichment');
+        const contentRaiox = document.getElementById('content-page-raiox');
 
         // Reset tabs
-        [detailsTab, whatsappTab, enrichmentTab].forEach(t => {
+        [detailsTab, whatsappTab, enrichmentTab, raioxTab].forEach(t => {
             if (t) {
                 t.classList.remove('text-northway-red', 'border-northway-red', 'text-green-600', 'border-green-600', 'text-purple-600', 'border-purple-600');
                 t.classList.add('text-gray-500', 'border-transparent');
@@ -1193,7 +1288,7 @@
         });
 
         // Reset content
-        [contentDetails, contentWhatsapp, contentEnrichment].forEach(c => {
+        [contentDetails, contentWhatsapp, contentEnrichment, contentRaiox].forEach(c => {
             if (c) c.classList.add('hidden');
         });
 
@@ -1213,6 +1308,13 @@
             enrichmentTab.classList.add('text-purple-600', 'border-purple-600');
             enrichmentTab.classList.remove('text-gray-500', 'border-transparent');
             contentEnrichment.classList.remove('hidden');
+            if (pagePollingInterval) clearInterval(pagePollingInterval);
+        } else if (tabName === 'raiox') {
+            if (raioxTab) {
+                raioxTab.classList.add('text-northway-red', 'border-northway-red');
+                raioxTab.classList.remove('text-gray-500', 'border-transparent');
+            }
+            if (contentRaiox) contentRaiox.classList.remove('hidden');
             if (pagePollingInterval) clearInterval(pagePollingInterval);
         }
     }

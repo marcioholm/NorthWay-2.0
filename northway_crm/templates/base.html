@@ -367,10 +367,15 @@
                             <i data-lucide="bar-chart-2" class="w-4 h-4 flex-shrink-0"></i>
                             <span class="text-sm">Diagnóstico</span>
                         </a>
+                        <a href="{{ url_for('diagnostic_raiox.leads_list') }}"
+                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'diagnostic_raiox.leads_list' %}bg-white/15 text-white font-semibold{% endif %}">
+                            <i data-lucide="activity" class="w-4 h-4 flex-shrink-0"></i>
+                            <span class="text-sm">Raio-X Digital</span>
+                        </a>
                         <a href="/raiox" target="_blank"
                             class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-                            <i data-lucide="activity" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm flex items-center gap-1">Raio-X Digital <i data-lucide="external-link" class="w-3 h-3 text-gray-500"></i></span>
+                            <i data-lucide="external-link" class="w-4 h-4 flex-shrink-0"></i>
+                            <span class="text-sm flex items-center gap-1">Novo Diagnóstico <i data-lucide="external-link" class="w-3 h-3 text-gray-500"></i></span>
                         </a>
                         {% if current_user.has_permission('goals_view') %}
                         <a href="{{ url_for('goals.dashboard') }}"

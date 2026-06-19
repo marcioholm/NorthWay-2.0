@@ -381,6 +381,8 @@ def create_app():
         @app.template_filter('from_json')
         def from_json_filter(s):
             if not s: return {}
+            if isinstance(s, dict):
+                return s
             try:
                 return json.loads(s)
             except:

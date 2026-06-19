@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
+from flask_login import login_required, current_user
 from models import db, Lead, Company, Pipeline, PipelineStage
 from datetime import datetime
 import json
@@ -192,3 +193,24 @@ def resultado():
         session['raiox_resultado'] = res
         
     return render_template('forms/raiox_resultado.html', res=res)
+
+
+@diagnostic_raiox_bp.route('/raiox/leads', methods=['GET'])
+@login_required
+def leads_list():
+    """
+    Lista todos os leads que fizeram o Raio-X Digital (source = 'Raio-X Digital')
+    com diagnóstico concluído.
+    """
+    company_id = current_user.company_id
+    if not company_id:
+        company_id = 1
+
+    leads = (Lead.query
+             .filter(Lead.source == 'Raio-X Digital')
+             .filter(Lead.diagnostic_status == 'done')
+             .filter(Lead.company_id == company_id)
+             .order_by(Lead.diagnostic_date.desc())
+             .all())
+
+    return render_template('forms/raiox_leads.html', leads=leads)
