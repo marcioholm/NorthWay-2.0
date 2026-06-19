@@ -42,6 +42,9 @@ def check_feature_access():
 # --- TEMPLATE FILTERS ---
 @whatsapp_bp.app_template_filter('from_json')
 def from_json_filter(value):
+    if not value: return {}
+    if isinstance(value, dict):
+        return value
     try:
         return json.loads(value)
     except:

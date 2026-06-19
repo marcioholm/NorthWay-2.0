@@ -520,7 +520,7 @@
                             {% endfor %}
                         </div>
 
-                        {% set sorted = pillars.items() | sort(attribute='1') %}
+                        {% set sorted = pillars | dictsort(false, 'value') %}
                         {% set gap = sorted | first %}
                         {% set strong = sorted | last %}
                         <div class="grid grid-cols-2 gap-3 mt-6">
