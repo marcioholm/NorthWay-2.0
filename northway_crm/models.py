@@ -359,6 +359,7 @@ class Lead(db.Model):
     diagnostic_classification = db.Column(db.String(50), nullable=True)
     diagnostic_date = db.Column(db.DateTime, nullable=True)
     diagnostic_pillars = db.Column(db.JSON, nullable=True) # Breakdown {"Atrair": 10, ...}
+    diagnostic_answers = db.Column(db.JSON, nullable=True) # Raw answers per pillar {"presenca_digital": [0,1,2,3,0], ...}
     estimated_value = db.Column(db.Numeric(12, 2), default=0.0)
 
     # Lead Loss Tracking
