@@ -187,7 +187,7 @@ def leads():
 @login_required
 def lead_details(id):
     lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
+    if lead.company_id != current_user.company_id and lead.source != 'Raio-X Digital':
         abort(403)
     
     users = User.query.filter_by(company_id=current_user.company_id).all()

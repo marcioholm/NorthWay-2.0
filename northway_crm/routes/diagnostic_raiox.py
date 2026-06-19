@@ -202,14 +202,9 @@ def leads_list():
     Lista todos os leads que fizeram o Raio-X Digital (source = 'Raio-X Digital')
     com diagnóstico concluído.
     """
-    company_id = current_user.company_id
-    if not company_id:
-        company_id = 1
-
     leads = (Lead.query
              .filter(Lead.source == 'Raio-X Digital')
              .filter(Lead.diagnostic_status == 'done')
-             .filter(Lead.company_id == company_id)
              .order_by(Lead.diagnostic_date.desc())
              .all())
 
