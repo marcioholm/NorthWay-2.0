@@ -47,7 +47,7 @@
         {% set gap_pillar = ('—', 0) %}
         {% set strong_pillar = ('—', 0) %}
         {% endif %}
-        <a href="{{ url_for('leads.lead_details', lead_id=lead.id) }}"
+        <a href="{{ url_for('leads.lead_details', id=lead.id) }}"
             class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-northway-red/30 hover:shadow-md transition-all group block">
             <div class="flex items-start justify-between mb-4">
                 <div class="min-w-0">
