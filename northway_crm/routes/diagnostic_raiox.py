@@ -275,10 +275,7 @@ def report(lead_id):
     pillars = lead.diagnostic_pillars or {}
     answers = pillars.pop('_answers', {}) if isinstance(pillars, dict) else {}
 
-    # Força modo simple se não tem respostas individuais
     has_answers = bool(answers and any(answers.values()))
-    if not has_answers:
-        mode = 'simple'
 
     return render_template(
         'forms/raiox_report.html',

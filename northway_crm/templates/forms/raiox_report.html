@@ -44,12 +44,10 @@
             {{ lead.legal_name or lead.name }} — Raio-X Digital
         </p>
         <div class="flex items-center gap-2">
-            {% if has_answers %}
             <a href="?mode={% if mode == 'simple' %}complete{% else %}simple{% endif %}&lead_id={{ lead.id }}"
                 class="text-xs font-bold text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                 {% if mode == 'simple' %}Visão Completa{% else %}Visão Simples{% endif %}
             </a>
-            {% endif %}
             <button onclick="window.print()"
                 class="bg-northway-red text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
@@ -139,7 +137,39 @@
             {% endfor %}
         </div>
 
-        <!-- Complete Mode: Per-Question Breakdown -->
+        <!-- Complete Mode: Executive Summary + Per-Question Breakdown -->
+        {% if mode == 'complete' %}
+        <div class="border-t border-gray-200 pt-5 mt-5">
+            <h2 class="text-sm font-bold text-gray-900 mb-4">Resumo Executivo</h2>
+            <div class="p-4 rounded-lg border {% if lead.diagnostic_classification == 'N1' %}bg-red-50 border-red-200{% elif lead.diagnostic_classification == 'N2' %}bg-yellow-50 border-yellow-200{% else %}bg-green-50 border-green-200{% endif %}">
+                <h3 class="text-base font-bold text-gray-900 mb-2">
+                    Nível {{ lead.diagnostic_classification }}
+                    {% if lead.diagnostic_classification == 'N1' %}— Estruturação
+                    {% elif lead.diagnostic_classification == 'N2' %}— Validação
+                    {% else %}— Escala{% endif %}
+                </h3>
+                <p class="text-sm text-gray-700 leading-relaxed">
+                    {% if lead.diagnostic_classification == 'N1' %}
+                    Hoje seu negócio ainda depende muito de esforço operacional e possui pouca previsibilidade. Antes de focar apenas em escalar, é necessário construir uma base sólida de marketing, refinar seu posicionamento e estruturar seus processos de vendas.
+                    {% elif lead.diagnostic_classification == 'N2' %}
+                    Seu negócio já possui sinais claros de crescimento e tração, porém ainda existem gargalos operacionais e estratégicos que impedem a previsibilidade e uma escala consistente de novos clientes.
+                    {% else %}
+                    Excelente! Sua empresa já possui maturidade suficiente para crescer de forma estruturada. Agora o foco é acelerar os canais de aquisição, otimizar a eficiência dos processos e aumentar exponencialmente a previsibilidade de receita.
+                    {% endif %}
+                </p>
+                <div class="flex items-center gap-3 mt-3">
+                    <span class="text-xs font-bold text-gray-500">Score:</span>
+                    <span class="text-2xl font-black">{{ lead.diagnostic_score|int }}</span>
+                    <span class="text-xs text-gray-400">/60</span>
+                    <span class="text-gray-300">·</span>
+                    <span class="text-xs font-bold text-gray-500">Estrelas:</span>
+                    <span class="text-lg font-bold">{{ '%.1f'|format(lead.diagnostic_stars or 0) }}</span>
+                    <span class="text-xs text-gray-400">/5.0</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         {% if mode == 'complete' and has_answers %}
         <div class="border-t border-gray-200 pt-5 mt-5">
             <h2 class="text-sm font-bold text-gray-900 mb-4">Detalhamento das Respostas</h2>
