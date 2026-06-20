@@ -211,7 +211,14 @@ def leads_list():
              .order_by(Lead.diagnostic_date.desc())
              .all())
 
-    return render_template('forms/raiox_leads.html', leads=leads)
+    # Remove _answers from pillars in Python to avoid TypeError in Jinja2 dictsort
+    clean_leads = []
+    for l in leads:
+        if isinstance(l.diagnostic_pillars, dict):
+            l.diagnostic_pillars = {k: v for k, v in l.diagnostic_pillars.items() if k != '_answers'}
+        clean_leads.append(l)
+
+    return render_template('forms/raiox_leads.html', leads=clean_leads)
 
 
 @diagnostic_raiox_bp.route('/raiox/report/<int:lead_id>', methods=['GET'])
