@@ -502,7 +502,7 @@
                         {% if pillars %}
                         <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Pilares</h4>
                         <div class="space-y-3">
-                            {% for name, val in pillars.items() %}
+                            {% for name, val in pillars.items() if name != '_answers' %}
                             {% set pct = (val / 15) * 100 %}
                             <div>
                                 <div class="flex justify-between text-sm mb-1">
@@ -857,7 +857,7 @@
 
                                 {% if lead.diagnostic_pillars %}
                                 <div class="grid grid-cols-2 gap-2">
-                                    {% for name, val in (lead.diagnostic_pillars | from_json).items() %}
+                                    {% for name, val in (lead.diagnostic_pillars | from_json).items() if name != '_answers' %}
                                     <div class="p-2 bg-gray-50 rounded border border-gray-100">
                                         <div class="text-[9px] text-gray-400 uppercase font-bold">{{ name }}</div>
                                         <div class="text-xs font-bold text-gray-700">{{ val }}/15</div>

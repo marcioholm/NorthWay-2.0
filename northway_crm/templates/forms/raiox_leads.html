@@ -75,7 +75,7 @@
             </div>
 
             <div class="space-y-1.5">
-                {% for name, val in pillars.items() %}
+                {% for name, val in pillars.items() if name != '_answers' %}
                 <div>
                     <div class="flex justify-between text-xs mb-0.5">
                         <span class="text-gray-500 truncate">{{ name }}</span>

@@ -137,12 +137,8 @@ def submit():
         lead.diagnostic_pillars = pillars_dict
         lead.diagnostic_stars = stars
         
-        # Save individual answers (gracefully handles missing column)
-        if hasattr(lead, 'diagnostic_answers'):
-            try:
-                lead.diagnostic_answers = {k: [int(x) for x in v] for k, v in answers.items()}
-            except Exception:
-                pass
+        # Store individual answers inside diagnostic_pillars for per-question breakdown
+        pillars_dict['_answers'] = {k: [int(x) for x in v] for k, v in answers.items()}
         
         # Append tags to 'interest' or notes
         tags = [nivel, 'Lead Diagnóstico', dest_type.capitalize(), gap_tag]
@@ -287,8 +283,8 @@ def report(lead_id):
         'Fazemos e acompanhamos métricas'
     ]
 
-    answers = lead.diagnostic_answers or {}
     pillars = lead.diagnostic_pillars or {}
+    answers = pillars.pop('_answers', {}) if isinstance(pillars, dict) else {}
 
     return render_template(
         'forms/raiox_report.html',

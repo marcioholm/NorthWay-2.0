@@ -233,7 +233,6 @@ def sync_database():
                 ('diagnostic_classification', "VARCHAR(50)"),
                 ('diagnostic_date', "TIMESTAMP"),
                 ('diagnostic_pillars', "JSONB" if is_postgres else "TEXT"),
-                ('diagnostic_answers', "JSONB" if is_postgres else "TEXT"),
                 ('drive_folder_id', "VARCHAR(100)"),
                 ('drive_folder_url', "VARCHAR(500)"),
                 ('drive_folder_name', "VARCHAR(255)"),
