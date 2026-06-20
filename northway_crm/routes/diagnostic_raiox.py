@@ -225,62 +225,44 @@ def leads_list():
 @login_required
 def report(lead_id):
     """
-    Relatório detalhado do Raio-X com todas as perguntas e respostas,
-    pronto para impressão/PDF.
+    Relatório do Raio-X.
+    ?mode=simple  → apenas gráfico + barras (para enviar ao cliente)
+    ?mode=complete → gráfico + barras + perguntas individuais
     """
+    mode = request.args.get('mode', 'simple')
     lead = Lead.query.get_or_404(lead_id)
     if lead.source != 'Raio-X Digital' or lead.diagnostic_status != 'done':
         return redirect(url_for('diagnostic_raiox.leads_list'))
 
     pillars_config = [
-        {
-            'key': 'presenca_digital',
-            'name': 'Presença Digital',
-            'icon': 'globe',
-            'questions': [
-                'Sua empresa possui um site profissional funcionando?',
-                'Sua empresa publica conteúdo com frequência?',
-                'Você roda anúncios pagos atualmente?',
-                'Sua empresa possui rastreamento de dados (Pixel/Analytics)?',
-                'Sua marca é facilmente encontrada no Google?',
-            ]
-        },
-        {
-            'key': 'comercial_conversao',
-            'name': 'Comercial & Conversão',
-            'icon': 'target',
-            'questions': [
-                'Quando um lead chega, existe processo definido?',
-                'O tempo de resposta ao lead é rápido?',
-                'Existe follow-up estruturado?',
-                'Você acompanha métricas comerciais?',
-                'Existe CRM ou sistema de gestão de leads?',
-            ]
-        },
-        {
-            'key': 'posicionamento_autoridade',
-            'name': 'Posicionamento & Autoridade',
-            'icon': 'award',
-            'questions': [
-                'Sua empresa possui diferencial claro?',
-                'Você sabe quem são seus principais concorrentes?',
-                'Sua comunicação gera autoridade?',
-                'Sua empresa possui provas sociais?',
-                'Seu marketing comunica transformação ou apenas serviço?',
-            ]
-        },
-        {
-            'key': 'escala_estrategia',
-            'name': 'Escala & Estratégia',
-            'icon': 'trending-up',
-            'questions': [
-                'Sua empresa possui metas trimestrais claras?',
-                'Existe planejamento de campanhas?',
-                'Você sabe quanto pode investir para crescer?',
-                'Sua empresa possui previsibilidade de vendas?',
-                'Seu negócio consegue crescer sem depender totalmente do dono?',
-            ]
-        }
+        {'key': 'presenca_digital', 'name': 'Presença Digital',
+         'questions': [
+             'Sua empresa possui um site profissional funcionando?',
+             'Sua empresa publica conteúdo com frequência?',
+             'Você roda anúncios pagos atualmente?',
+             'Sua empresa possui rastreamento de dados (Pixel/Analytics)?',
+             'Sua marca é facilmente encontrada no Google?']},
+        {'key': 'comercial_conversao', 'name': 'Comercial & Conversão',
+         'questions': [
+             'Quando um lead chega, existe processo definido?',
+             'O tempo de resposta ao lead é rápido?',
+             'Existe follow-up estruturado?',
+             'Você acompanha métricas comerciais?',
+             'Existe CRM ou sistema de gestão de leads?']},
+        {'key': 'posicionamento_autoridade', 'name': 'Posicionamento & Autoridade',
+         'questions': [
+             'Sua empresa possui diferencial claro?',
+             'Você sabe quem são seus principais concorrentes?',
+             'Sua comunicação gera autoridade?',
+             'Sua empresa possui provas sociais?',
+             'Seu marketing comunica transformação ou apenas serviço?']},
+        {'key': 'escala_estrategia', 'name': 'Escala & Estratégia',
+         'questions': [
+             'Sua empresa possui metas trimestrais claras?',
+             'Existe planejamento de campanhas?',
+             'Você sabe quanto pode investir para crescer?',
+             'Sua empresa possui previsibilidade de vendas?',
+             'Seu negócio consegue crescer sem depender totalmente do dono?']}
     ]
 
     option_labels = [
@@ -293,8 +275,10 @@ def report(lead_id):
     pillars = lead.diagnostic_pillars or {}
     answers = pillars.pop('_answers', {}) if isinstance(pillars, dict) else {}
 
-    # Flag: true se o lead tem respostas individuais salvas
+    # Força modo simple se não tem respostas individuais
     has_answers = bool(answers and any(answers.values()))
+    if not has_answers:
+        mode = 'simple'
 
     return render_template(
         'forms/raiox_report.html',
@@ -303,7 +287,8 @@ def report(lead_id):
         option_labels=option_labels,
         answers=answers,
         pillars=pillars,
-        has_answers=has_answers
+        has_answers=has_answers,
+        mode=mode
     )
 
 

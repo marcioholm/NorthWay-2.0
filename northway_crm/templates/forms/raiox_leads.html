@@ -100,7 +100,7 @@
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     Apagar
                 </button>
-                <a href="{{ url_for('diagnostic_raiox.report', lead_id=lead.id) }}" target="_blank"
+                <a href="{{ url_for('diagnostic_raiox.report', lead_id=lead.id, mode='simple') }}" target="_blank"
                     class="text-[10px] font-bold text-northway-red hover:text-red-700 underline shrink-0 flex items-center gap-0.5"
                     onclick="event.stopPropagation()">
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
