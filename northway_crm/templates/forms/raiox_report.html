@@ -9,177 +9,107 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: { sans: ['Outfit', 'sans-serif'] },
-                    colors: {
-                        northway: { red: '#fa0102', dark: '#0a0a0a' }
-                    }
+                    colors: { northway: { red: '#fa0102' } }
                 }
             }
         }
     </script>
     <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: #ffffff;
-            color: #111827;
-            padding: 0;
-            margin: 0;
-        }
-        .print-header {
-            display: none;
-        }
-        .page-break {
-            page-break-after: always;
-        }
+        body { font-family: 'Outfit', sans-serif; background: #fff; color: #111827; margin: 0; padding: 0; }
         .score-circle {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
+            width: 120px; height: 120px; border-radius: 50%;
             background: conic-gradient(#fa0102 var(--p, 0deg), #e5e7eb 0deg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            display: flex; align-items: center; justify-content: center; position: relative;
         }
         .score-circle::before {
-            content: "";
-            position: absolute;
-            inset: 5px;
-            background: #ffffff;
-            border-radius: 50%;
+            content: ""; position: absolute; inset: 5px; background: #fff; border-radius: 50%;
         }
-        .pillar-score-dot {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 0.75rem;
-            flex-shrink: 0;
-        }
-        .answer-bar {
-            height: 6px;
-            border-radius: 3px;
-            background: #f3f4f6;
-            overflow: hidden;
-        }
-        .answer-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.5s ease;
+        .answer-score {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.8rem; flex-shrink: 0;
         }
         @media print {
             .no-print { display: none !important; }
-            .print-header { display: flex !important; }
-            body { font-size: 12px; }
-            .text-3xl { font-size: 1.5rem; }
-            .text-2xl { font-size: 1.25rem; }
+            body { font-size: 11px; }
+            .text-3xl { font-size: 1.4rem; }
         }
+        @page { margin: 1.2cm; }
     </style>
 </head>
 <body>
 
-    <!-- Print Header -->
-    <div class="print-header items-center justify-between px-8 py-4 border-b border-gray-200">
-        <img src="https://crm.northwaycompany.com.br/static/images/logo-red.png" alt="NorthWay" class="h-8"
-            onerror="this.style.display='none'">
-        <div class="text-right">
-            <p class="text-sm font-bold text-gray-900">Raio-X de Escala Digital</p>
-            <p class="text-xs text-gray-500">Relatório de Diagnóstico</p>
-        </div>
-    </div>
-
-    <!-- No-print toolbar -->
+    <!-- Header -->
     <div class="no-print fixed top-0 inset-x-0 z-50 bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shadow-sm">
         <p class="text-sm font-bold text-gray-700">Relatório — {{ lead.name }}</p>
         <button onclick="window.print()"
             class="bg-northway-red text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
             Baixar PDF
         </button>
     </div>
 
-    <div class="max-w-4xl mx-auto px-6" style="padding-top: 60px;">
+    <div class="max-w-4xl mx-auto px-6" style="padding-top: 56px;">
 
-        <!-- Hero -->
-        <div class="text-center py-8 border-b border-gray-100">
-            <h1 class="text-3xl font-bold text-gray-900">Raio-X de Escala Digital</h1>
-            <p class="text-gray-500 mt-1">Relatório de Diagnóstico</p>
+        <!-- Title -->
+        <div class="text-center py-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">Raio-X de Escala Digital</h1>
+            <p class="text-gray-500 text-sm">Relatório de Diagnóstico</p>
         </div>
 
-        <!-- Client Info -->
-        <div class="grid grid-cols-2 gap-6 py-6 border-b border-gray-100">
-            <div>
-                <p class="text-xs text-gray-400 uppercase font-bold">Empresa</p>
-                <p class="text-lg font-bold text-gray-900">{{ lead.legal_name or '—' }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-400 uppercase font-bold">Responsável</p>
-                <p class="text-lg font-bold text-gray-900">{{ lead.name }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-400 uppercase font-bold">E-mail</p>
-                <p class="text-sm text-gray-700">{{ lead.email or '—' }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-400 uppercase font-bold">Telefone</p>
-                <p class="text-sm text-gray-700">{{ lead.whatsapp or lead.phone or '—' }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-400 uppercase font-bold">Funcionários</p>
-                <p class="text-sm text-gray-700">{{ lead.company_size or '—' }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-400 uppercase font-bold">Data do Diagnóstico</p>
-                <p class="text-sm text-gray-700">{{ lead.diagnostic_date.strftime('%d/%m/%Y') if lead.diagnostic_date else '—' }}</p>
-            </div>
+        <!-- Client -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 py-5 border-b border-gray-100 text-sm">
+            <div><span class="text-gray-400 text-xs uppercase font-bold block">Empresa</span><span class="font-bold">{{ lead.legal_name or '—' }}</span></div>
+            <div><span class="text-gray-400 text-xs uppercase font-bold block">Responsável</span><span class="font-bold">{{ lead.name }}</span></div>
+            <div><span class="text-gray-400 text-xs uppercase font-bold block">Data</span><span>{{ lead.diagnostic_date.strftime('%d/%m/%Y') if lead.diagnostic_date else '—' }}</span></div>
+            <div><span class="text-gray-400 text-xs uppercase font-bold block">E-mail</span><span class="truncate">{{ lead.email or '—' }}</span></div>
+            <div><span class="text-gray-400 text-xs uppercase font-bold block">WhatsApp</span><span>{{ lead.whatsapp or '—' }}</span></div>
+            <div><span class="text-gray-400 text-xs uppercase font-bold block">Funcionários</span><span>{{ lead.company_size or '—' }}</span></div>
         </div>
 
         <!-- Score Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
+        <div class="grid grid-cols-3 gap-6 py-6 border-b border-gray-100">
             <div class="text-center">
                 <div class="flex justify-center mb-2">
                     <div class="score-circle" style="--p: {{ (lead.diagnostic_score or 0) / 60 * 100 }}%;">
                         <div class="relative z-10 text-center">
                             <span class="text-3xl font-black text-gray-900">{{ lead.diagnostic_score|int }}</span>
-                            <span class="block text-[10px] text-gray-400 uppercase font-bold">de 60</span>
+                            <span class="block text-[10px] text-gray-400 uppercase font-bold">/60</span>
                         </div>
                     </div>
                 </div>
-                <p class="text-sm font-bold text-gray-900">Maturidade Digital</p>
+                <p class="text-xs font-bold text-gray-900">Maturidade Digital</p>
             </div>
             <div class="text-center flex flex-col justify-center">
-                <div class="inline-flex items-center justify-center mx-auto px-4 py-1 rounded-full font-bold text-lg mb-1
+                <div class="inline-flex items-center justify-center mx-auto px-4 py-1 rounded-full font-bold
                     {% if lead.diagnostic_classification == 'N3' %}bg-green-100 text-green-700
                     {% elif lead.diagnostic_classification == 'N2' %}bg-yellow-100 text-yellow-700
                     {% else %}bg-red-100 text-red-700{% endif %}">
                     Nível {{ lead.diagnostic_classification }}
                 </div>
-                <p class="text-xs text-gray-500 font-medium">
+                <p class="text-xs text-gray-500 mt-1 font-medium">
                     {% if lead.diagnostic_classification == 'N3' %}Escala
                     {% elif lead.diagnostic_classification == 'N2' %}Validação
                     {% else %}Estruturação{% endif %}
                 </p>
             </div>
             <div class="text-center flex flex-col justify-center">
-                <div class="flex items-center justify-center gap-1 text-yellow-500 mb-1">
+                <div class="flex items-center justify-center gap-0.5 text-yellow-500 mb-1">
                     {% set stars = lead.diagnostic_stars|default(0) %}
                     {% set full = stars|int %}
                     {% set half = 1 if (stars - full) >= 0.5 else 0 %}
                     {% set empty = 5 - full - half %}
                     {% for i in range(full) %}
-                    <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     {% endfor %}
                     {% if half %}
-                    <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2v15.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     {% endif %}
                     {% for i in range(empty) %}
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     {% endfor %}
                 </div>
                 <p class="text-xs text-gray-500 font-bold">{{ '%.1f'|format(stars) }} / 5.0</p>
@@ -187,9 +117,9 @@
         </div>
 
         <!-- Radar Chart -->
-        <div class="border-t border-gray-100 pt-6 pb-4">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Análise por Pilar</h2>
-            <div class="w-full max-w-md mx-auto" style="height: 280px;">
+        <div class="py-6 border-b border-gray-100">
+            <h2 class="text-base font-bold text-gray-900 mb-3">Análise por Pilar</h2>
+            <div class="w-full max-w-sm mx-auto" style="height: 260px;">
                 <canvas id="radarChart"></canvas>
             </div>
         </div>
@@ -198,22 +128,31 @@
         {% set gap = sorted_pillars | first %}
         {% set strong = sorted_pillars | last %}
 
-        <div class="grid grid-cols-2 gap-4 py-4 border-t border-gray-100">
-            <div class="p-4 bg-red-50 rounded-lg border border-red-100">
+        <div class="grid grid-cols-2 gap-3 py-4 border-b border-gray-100">
+            <div class="p-3 bg-red-50 rounded-lg border border-red-100">
                 <p class="text-xs text-red-600 uppercase font-bold">Gap Principal</p>
-                <p class="font-bold text-red-800">{{ gap[0] }}</p>
-                <p class="text-sm text-red-600">{{ gap[1] }}/15</p>
+                <p class="font-bold text-red-800 text-sm">{{ gap[0] }}</p>
+                <p class="text-xs text-red-600">{{ gap[1] }}/15</p>
             </div>
-            <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+            <div class="p-3 bg-green-50 rounded-lg border border-green-100">
                 <p class="text-xs text-green-600 uppercase font-bold">Fortaleza</p>
-                <p class="font-bold text-green-800">{{ strong[0] }}</p>
-                <p class="text-sm text-green-600">{{ strong[1] }}/15</p>
+                <p class="font-bold text-green-800 text-sm">{{ strong[0] }}</p>
+                <p class="text-xs text-green-600">{{ strong[1] }}/15</p>
             </div>
         </div>
 
-        <!-- Detailed Answers -->
-        <div class="border-t border-gray-100 pt-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-6">Detalhamento das Respostas</h2>
+        <!-- Per-Pillar Breakdown -->
+        <div class="py-6">
+            <h2 class="text-base font-bold text-gray-900 mb-4">
+                {% if has_answers %}Detalhamento das Respostas{% else %}Pontuação por Pilar{% endif %}
+            </h2>
+
+            {% if not has_answers %}
+            <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 mb-6">
+                As respostas individuais não foram salvas para este diagnóstico.
+                Utilize o gráfico acima para visualizar a pontuação por pilar.
+            </div>
+            {% endif %}
 
             {% for pillar in pillars_config %}
             {% set pillar_key = pillar.key %}
@@ -221,21 +160,18 @@
             {% set pillar_total = pillars.get(pillar_name, 0) %}
             {% set pillar_answers = answers.get(pillar_key, []) %}
 
-            <div class="mb-8 page-break-inside-avoid">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="pillar-score-dot 
+            <div class="mb-6 page-break-inside-avoid">
+                <!-- Pillar Header -->
+                <div class="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center font-extrabold text-sm
                         {% if pillar_total <= 5 %}bg-red-100 text-red-700
                         {% elif pillar_total <= 10 %}bg-yellow-100 text-yellow-700
                         {% else %}bg-green-100 text-green-700{% endif %}">
                         {{ pillar_total }}
                     </div>
-                    <div>
-                        <h3 class="font-bold text-gray-900">{{ pillar_name }}</h3>
-                        <p class="text-xs text-gray-500">{{ pillar_total }} de 15 pontos</p>
-                    </div>
-                    <div class="ml-auto">
-                        <div class="text-xs font-bold text-gray-400">Score</div>
-                        <div class="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-900 text-sm">{{ pillar_name }}</h3>
+                        <div class="w-full h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
                             <div class="h-full rounded-full
                                 {% if pillar_total <= 5 %}bg-red-500
                                 {% elif pillar_total <= 10 %}bg-yellow-500
@@ -243,39 +179,46 @@
                                 style="width: {{ (pillar_total / 15) * 100 }}%;"></div>
                         </div>
                     </div>
+                    <span class="text-xs font-bold text-gray-500">{{ pillar_total }}/15</span>
                 </div>
 
-                <div class="space-y-3">
+                <!-- Questions -->
+                <div class="space-y-2">
                     {% for q in pillar.questions %}
                     {% set idx = loop.index0 %}
-                    {% set val = pillar_answers[idx] if idx < pillar_answers|length else 0 %}
-                    <div class="flex items-start gap-3 p-3 rounded-lg border
-                        {% if val == 0 %}bg-red-50 border-red-100
+                    {% set val = pillar_answers[idx] if idx < pillar_answers|length and has_answers else None %}
+                    <div class="flex items-start gap-3 p-2.5 rounded-lg border
+                        {% if val is none %}bg-gray-50 border-gray-100
+                        {% elif val == 0 %}bg-red-50 border-red-100
                         {% elif val == 1 %}bg-orange-50 border-orange-100
                         {% elif val == 2 %}bg-yellow-50 border-yellow-100
                         {% else %}bg-green-50 border-green-100{% endif %}">
-                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5
+                        {% if val is not none %}
+                        <div class="answer-score
                             {% if val == 0 %}bg-red-200 text-red-800
                             {% elif val == 1 %}bg-orange-200 text-orange-800
                             {% elif val == 2 %}bg-yellow-200 text-yellow-800
                             {% else %}bg-green-200 text-green-800{% endif %}">
                             {{ val }}
                         </div>
+                        {% else %}
+                        <div class="answer-score bg-gray-200 text-gray-400">—</div>
+                        {% endif %}
                         <div class="min-w-0 flex-1">
-                            <p class="text-sm font-medium text-gray-900">{{ q }}</p>
+                            <p class="text-sm text-gray-900 leading-snug">{{ q }}</p>
+                            {% if val is not none %}
                             <div class="flex items-center gap-2 mt-1">
-                                <div class="answer-bar flex-1">
-                                    <div class="answer-bar-fill
+                                <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full
                                         {% if val == 0 %}bg-red-500
                                         {% elif val == 1 %}bg-orange-500
                                         {% elif val == 2 %}bg-yellow-500
                                         {% else %}bg-green-500{% endif %}"
                                         style="width: {{ (val / 3) * 100 }}%;"></div>
                                 </div>
-                                <span class="text-[10px] font-bold text-gray-500 shrink-0 w-16 text-right">
-                                    {{ option_labels[val] if val < option_labels|length else '—' }}
-                                </span>
+                                <span class="text-[10px] font-bold text-gray-500 shrink-0">{{ option_labels[val] }}</span>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
@@ -285,79 +228,49 @@
         </div>
 
         <!-- Footer -->
-        <div class="text-center py-8 border-t border-gray-100 mt-6">
-            <p class="text-xs text-gray-400">Gerado por NorthWay CRM — Raio-X de Escala Digital</p>
-            <p class="text-xs text-gray-400">{{ lead.diagnostic_date.strftime('%d/%m/%Y %H:%M') if lead.diagnostic_date else '' }}</p>
+        <div class="text-center py-4 border-t border-gray-100 text-xs text-gray-400">
+            Gerado por NorthWay CRM — Raio-X de Escala Digital<br>
+            {{ lead.diagnostic_date.strftime('%d/%m/%Y %H:%M') if lead.diagnostic_date else '' }}
         </div>
 
     </div>
 
     <script>
-        const radarData = {
-            labels: [
-                'Presença Digital',
-                'Comercial & Conversão',
-                'Posicionamento',
-                'Escala & Estratégia'
-            ],
-            datasets: [{
-                label: 'Pontuação',
-                data: [
-                    {{ pillars.get('Presença Digital', 0) }},
-                    {{ pillars.get('Comercial & Conversão', 0) }},
-                    {{ pillars.get('Posicionamento & Autoridade', 0) }},
-                    {{ pillars.get('Escala & Estratégia', 0) }}
-                ],
-                backgroundColor: 'rgba(250, 1, 2, 0.2)',
-                borderColor: '#fa0102',
-                pointBackgroundColor: '#ffffff',
-                pointBorderColor: '#fa0102',
-                borderWidth: 2,
-                pointRadius: 4
-            }]
-        };
-
-        const ctx = document.getElementById('radarChart');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'radar',
-                data: radarData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            min: 0,
-                            max: 15,
-                            ticks: { display: true, stepSize: 5 },
-                            grid: { color: 'rgba(0,0,0,0.08)', circular: true },
-                            angleLines: { color: 'rgba(0,0,0,0.08)' },
-                            pointLabels: {
-                                color: '#374151',
-                                font: { family: "'Outfit', sans-serif", size: 11, weight: 600 }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.raw + '/15';
-                                }
-                            }
-                        }
+        new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: {
+                labels: ['Presença Digital', 'Comercial & Conversão', 'Posicionamento', 'Escala & Estratégia'],
+                datasets: [{
+                    label: 'Pontuação',
+                    data: [
+                        {{ pillars.get('Presença Digital', 0) }},
+                        {{ pillars.get('Comercial & Conversão', 0) }},
+                        {{ pillars.get('Posicionamento & Autoridade', 0) }},
+                        {{ pillars.get('Escala & Estratégia', 0) }}
+                    ],
+                    backgroundColor: 'rgba(250, 1, 2, 0.15)',
+                    borderColor: '#fa0102',
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#fa0102',
+                    borderWidth: 2,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        min: 0, max: 15,
+                        ticks: { display: true, stepSize: 5, font: { size: 10 } },
+                        grid: { color: 'rgba(0,0,0,0.06)', circular: true },
+                        angleLines: { color: 'rgba(0,0,0,0.06)' },
+                        pointLabels: { color: '#374151', font: { size: 11, weight: 600 } }
                     }
-                }
-            });
-        }
-
-        window.onload = function() {
-            setTimeout(function() {
-                const toolbar = document.querySelector('.no-print');
-                if (toolbar) toolbar.style.opacity = '0';
-            }, 3000);
-        };
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
     </script>
 
 </body>

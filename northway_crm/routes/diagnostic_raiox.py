@@ -286,11 +286,38 @@ def report(lead_id):
     pillars = lead.diagnostic_pillars or {}
     answers = pillars.pop('_answers', {}) if isinstance(pillars, dict) else {}
 
+    # Flag: true se o lead tem respostas individuais salvas
+    has_answers = bool(answers and any(answers.values()))
+
     return render_template(
         'forms/raiox_report.html',
         lead=lead,
         pillars_config=pillars_config,
         option_labels=option_labels,
         answers=answers,
-        pillars=pillars
+        pillars=pillars,
+        has_answers=has_answers
     )
+
+
+@diagnostic_raiox_bp.route('/raiox/<int:lead_id>/delete', methods=['POST'])
+@login_required
+def delete(lead_id):
+    """
+    Remove os dados de diagnóstico de um lead (Raio-X).
+    """
+    lead = Lead.query.get_or_404(lead_id)
+    if lead.source != 'Raio-X Digital':
+        return jsonify({'status': 'error', 'message': 'Lead não é do Raio-X'}), 400
+
+    lead.diagnostic_status = 'pending'
+    lead.diagnostic_score = None
+    lead.diagnostic_stars = None
+    lead.diagnostic_classification = None
+    lead.diagnostic_date = None
+    lead.diagnostic_pillars = None
+    lead.source = None
+    lead.interest = None
+    db.session.commit()
+
+    return jsonify({'status': 'success'})

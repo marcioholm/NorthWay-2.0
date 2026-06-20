@@ -95,10 +95,15 @@
                 <span class="text-[10px] text-gray-300">·</span>
                 <span class="text-[10px] font-bold text-green-600">Fortaleza:</span>
                 <span class="text-[10px] text-gray-500 truncate">{{ strong_pillar[0] }}</span>
+                <button onclick="event.stopPropagation(); deleteDiagnostic({{ lead.id }})"
+                    class="text-[10px] font-bold text-red-400 hover:text-red-600 underline ml-auto shrink-0 flex items-center gap-0.5">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Apagar
+                </button>
                 <a href="{{ url_for('diagnostic_raiox.report', lead_id=lead.id) }}" target="_blank"
-                    class="text-[10px] font-bold text-northway-red hover:text-red-700 underline ml-auto shrink-0 flex items-center gap-0.5"
+                    class="text-[10px] font-bold text-northway-red hover:text-red-700 underline shrink-0 flex items-center gap-0.5"
                     onclick="event.stopPropagation()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                     PDF
                 </a>
             </div>
@@ -126,5 +131,20 @@
 {{ super() }}
 <script>
     lucide.createIcons();
+
+    async function deleteDiagnostic(leadId) {
+        if (!confirm('Tem certeza que deseja apagar este diagnóstico?')) return;
+        try {
+            const resp = await fetch('/raiox/' + leadId + '/delete', { method: 'POST' });
+            const data = await resp.json();
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Erro: ' + (data.message || 'desconhecido'));
+            }
+        } catch (e) {
+            alert('Erro ao apagar: ' + e.message);
+        }
+    }
 </script>
 {% endblock %}
