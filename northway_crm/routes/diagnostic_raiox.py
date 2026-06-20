@@ -135,8 +135,14 @@ def submit():
         lead.diagnostic_classification = nivel
         lead.diagnostic_date = datetime.utcnow()
         lead.diagnostic_pillars = pillars_dict
-        lead.diagnostic_answers = {k: [int(x) for x in v] for k, v in answers.items()}
         lead.diagnostic_stars = stars
+        
+        # Save individual answers (gracefully handles missing column)
+        if hasattr(lead, 'diagnostic_answers'):
+            try:
+                lead.diagnostic_answers = {k: [int(x) for x in v] for k, v in answers.items()}
+            except Exception:
+                pass
         
         # Append tags to 'interest' or notes
         tags = [nivel, 'Lead Diagnóstico', dest_type.capitalize(), gap_tag]
