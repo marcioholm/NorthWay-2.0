@@ -170,15 +170,21 @@
         </div>
         {% endif %}
 
-        {% if mode == 'complete' and has_answers %}
+        {% if mode == 'complete' %}
         <div class="border-t border-gray-200 pt-5 mt-5">
             <h2 class="text-sm font-bold text-gray-900 mb-4">Detalhamento das Respostas</h2>
+            {% if not has_answers %}
+            <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 text-center mb-4">
+                <p class="text-xs text-gray-500">Este diagnóstico foi realizado antes do registro individual de respostas. Apenas os totais por pilar estão disponíveis.</p>
+            </div>
+            {% endif %}
 
             {% for pillar in pillars_config %}
             {% set pk = pillar.key %}
             {% set pn = pillar.name %}
             {% set pt = pillars.get(pn, 0) %}
             {% set pa = answers.get(pk, []) %}
+            {% set has_pa = pa|length > 0 %}
 
             <div class="mb-6 page-break-inside-avoid">
                 <div class="flex items-center gap-2 mb-3 p-2.5 bg-gray-50 rounded-lg border border-gray-100">
@@ -196,7 +202,8 @@
                 <div class="space-y-1.5">
                     {% for q in pillar.questions %}
                     {% set idx = loop.index0 %}
-                    {% set val = pa[idx] if idx < pa|length else 0 %}
+                    {% if has_pa %}
+                    {% set val = pa[idx] %}
                     <div class="flex items-start gap-2 p-2 rounded-lg border
                         {% if val == 0 %}bg-red-50 border-red-100
                         {% elif val == 1 %}bg-orange-50 border-orange-100
@@ -216,6 +223,20 @@
                             </div>
                         </div>
                     </div>
+                    {% else %}
+                    <div class="flex items-start gap-2 p-2 rounded-lg border border-gray-100 bg-gray-50">
+                        <div class="ans bg-gray-200 text-gray-400">—</div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs text-gray-700 leading-snug">{{ q }}</p>
+                            <span class="text-[9px] font-bold text-gray-400">Não registrado</span>
+                        </div>
+                        <div class="w-12 shrink-0 mt-1">
+                            <div class="h-1 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full bg-gray-300" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                     {% endfor %}
                 </div>
             </div>
