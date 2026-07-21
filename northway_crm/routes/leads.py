@@ -999,9 +999,9 @@ def export_leads():
 
     import csv 
     import io
+    import json
     from flask import Response
     
-    # Filtering logic
     query = Lead.query.filter(Lead.company_id == current_user.company_id)
     
     stage_id = request.args.get('stage_id')
@@ -1032,14 +1032,65 @@ def export_leads():
         
     leads = query.order_by(Lead.created_at.desc()).all()
     
-    header = ['ID', 'Nome', 'Email', 'Telefone', 'Status', 'Origem', 'Etapa', 'Data Criação']
+    header = [
+        'ID', 'Nome', 'Email', 'Telefone', 'WhatsApp', 'Celular',
+        'Status', 'Origem', 'Etapa', 'Responsável',
+        'Data Criação', 'Data Último Contato',
+        'Website', 'Endereço',
+        'Google Place ID', 'GMB Link', 'GMB Avaliação', 'GMB Reviews', 'GMB Fotos', 'GMB Categorias',
+        'CNPJ', 'Razão Social', 'Situação Cadastral', 'Porte', 'Capital Social', 'Data Fundação', 'CNAE',
+        'Orçamento (BANT)', 'Autoridade (BANT)', 'Necessidade (BANT)', 'Prazo (BANT)',
+        'Status Prospecção', 'Canal Preferencial', 'Score', 'Intenção',
+        'Interesse', 'Observações'
+    ]
     si = io.StringIO()
     cw = csv.writer(si, delimiter=';')
     cw.writerow(header)
     
     for l in leads:
         stage_name = l.pipeline_stage.name if l.pipeline_stage else 'N/A'
-        cw.writerow([l.id, l.name, l.email or '', l.phone or '', l.status, l.source or '', stage_name, l.created_at.strftime('%d/%m/%Y') if l.created_at else 'N/A'])
+        assigned_name = l.assigned_user.name if l.assigned_user else 'N/A'
+        gmb_types = ', '.join(l.gmb_types) if l.gmb_types else ''
+        
+        cw.writerow([
+            l.id,
+            l.name,
+            l.email or '',
+            l.phone or '',
+            l.whatsapp or '',
+            l.mobile_phone or '',
+            l.status,
+            l.source or '',
+            stage_name,
+            assigned_name,
+            l.created_at.strftime('%d/%m/%Y') if l.created_at else 'N/A',
+            l.last_contact_at.strftime('%d/%m/%Y %H:%M') if l.last_contact_at else '',
+            l.website or '',
+            l.address or '',
+            l.google_place_id or '',
+            l.gmb_link or '',
+            l.gmb_rating if l.gmb_rating else '',
+            l.gmb_reviews if l.gmb_reviews else '',
+            l.gmb_photos if l.gmb_photos else '',
+            gmb_types,
+            l.cnpj or '',
+            l.legal_name or '',
+            l.registration_status or '',
+            l.company_size or '',
+            str(l.equity) if l.equity else '',
+            l.foundation_date or '',
+            l.cnae or '',
+            l.bant_budget or '',
+            l.bant_authority or '',
+            l.bant_need or '',
+            l.bant_timeline or '',
+            l.prospecting_status or '',
+            l.preferred_channel or '',
+            l.lead_score if l.lead_score is not None else '',
+            l.intent_status or '',
+            l.interest or '',
+            l.notes or ''
+        ])
         
     output = si.getvalue()
     return Response(
