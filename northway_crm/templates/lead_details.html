@@ -460,10 +460,52 @@
                 <!-- Tab: Raio-X Digital -->
                 {% if lead.source == 'Raio-X Digital' and lead.diagnostic_status == 'done' %}
                 <div id="content-page-raiox" class="hidden space-y-6 pt-6">
+                    <!-- Dados Coletados no Diagnóstico -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
+                            <i data-lucide="clipboard-list" class="w-4 h-4 text-northway-red"></i>
+                            Dados Coletados
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">Empresa</span>
+                                <span class="text-sm font-bold text-gray-900">{{ lead.legal_name or '—' }}</span>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">Colaboradores</span>
+                                <span class="text-sm font-bold text-gray-900">{{ lead.company_size or '—' }}</span>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">Faturamento Mensal</span>
+                                <span class="text-sm font-bold text-gray-900">{% if lead.estimated_value %}R$ {{ "{:,.2f}".format(lead.estimated_value | float).replace(',', 'X').replace('.', ',').replace('X', '.') }}{% else %}—{% endif %}</span>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">E-mail</span>
+                                <span class="text-sm font-bold text-gray-900 break-all">{{ lead.email or '—' }}</span>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">WhatsApp</span>
+                                <span class="text-sm font-bold text-gray-900">{{ lead.whatsapp or lead.phone or '—' }}</span>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block">Classificação</span>
+                                <span class="text-sm font-bold
+                                    {% if lead.diagnostic_classification == 'N3' %}text-green-700
+                                    {% elif lead.diagnostic_classification == 'N2' %}text-yellow-700
+                                    {% else %}text-red-700{% endif %}">
+                                    Nível {{ lead.diagnostic_classification }}
+                                    {% if lead.diagnostic_classification == 'N3' %}— Escala
+                                    {% elif lead.diagnostic_classification == 'N2' %}— Validação
+                                    {% else %}— Estruturação{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
                             <i data-lucide="activity" class="w-4 h-4 text-northway-red"></i>
-                            Raio-X Digital
+                            Resultado do Diagnóstico
                         </h3>
 
                         <div class="grid grid-cols-2 gap-4 mb-6">
