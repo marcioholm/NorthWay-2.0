@@ -577,6 +577,90 @@
                                 <p class="text-xs text-green-600">{{ strong[1] }}/15</p>
                             </div>
                         </div>
+
+                        {% set answers = pillars.get('_answers', {}) %}
+                        {% set has_answers = answers and answers.values() | selectattr('__len__', 'gt', 0) | list | length > 0 %}
+                        {% if has_answers %}
+                        <div class="mt-6 pt-3 border-t border-gray-100">
+                            <button onclick="toggleSection('respostas-raiox')" type="button"
+                                class="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-gray-700 uppercase tracking-wider transition-colors w-full text-left">
+                                <i data-lucide="chevron-right" id="chevron-respostas-raiox" class="w-4 h-4 transition-transform"></i>
+                                Respostas Individuais
+                            </button>
+                            <div id="respostas-raiox" class="hidden mt-4 space-y-6">
+                                {% set pillars_config = [
+                                    {'key': 'presenca_digital', 'name': 'Presença Digital',
+                                     'questions': [
+                                         'Sua empresa possui um site profissional funcionando?',
+                                         'Sua empresa publica conteúdo com frequência?',
+                                         'Você roda anúncios pagos atualmente?',
+                                         'Sua empresa possui rastreamento de dados (Pixel/Analytics)?',
+                                         'Sua marca é facilmente encontrada no Google?']},
+                                    {'key': 'comercial_conversao', 'name': 'Comercial & Conversão',
+                                     'questions': [
+                                         'Quando um lead chega, existe processo definido?',
+                                         'O tempo de resposta ao lead é rápido?',
+                                         'Existe follow-up estruturado?',
+                                         'Você acompanha métricas comerciais?',
+                                         'Existe CRM ou sistema de gestão de leads?']},
+                                    {'key': 'posicionamento_autoridade', 'name': 'Posicionamento & Autoridade',
+                                     'questions': [
+                                         'Sua empresa possui diferencial claro?',
+                                         'Você sabe quem são seus principais concorrentes?',
+                                         'Sua comunicação gera autoridade?',
+                                         'Sua empresa possui provas sociais?',
+                                         'Seu marketing comunica transformação ou apenas serviço?']},
+                                    {'key': 'escala_estrategia', 'name': 'Escala & Estratégia',
+                                     'questions': [
+                                         'Sua empresa possui metas trimestrais claras?',
+                                         'Existe planejamento de campanhas?',
+                                         'Você sabe quanto pode investir para crescer?',
+                                         'Sua empresa possui previsibilidade de vendas?',
+                                         'Seu negócio consegue crescer sem depender totalmente do dono?']}
+                                ] %}
+                                {% set option_labels = ['Não fazemos', 'Fazemos parcialmente', 'Fazemos com alguma consistência', 'Fazemos e acompanhamos métricas'] %}
+                                {% for pillar in pillars_config %}
+                                {% set pk = pillar.key %}
+                                {% set pa = answers.get(pk, []) %}
+                                {% set pt = pillars.get(pillar.name, 0) %}
+                                <div>
+                                    <div class="flex items-center gap-2 mb-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                                        <div class="w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-xs
+                                            {% if pt <= 5 %}bg-red-100 text-red-700{% elif pt <= 10 %}bg-yellow-100 text-yellow-700{% else %}bg-green-100 text-green-700{% endif %}">
+                                            {{ pt }}
+                                        </div>
+                                        <h4 class="font-bold text-gray-900 text-xs flex-1">{{ pillar.name }}</h4>
+                                        <span class="text-[10px] font-bold text-gray-400">{{ pt }}/15</span>
+                                    </div>
+                                    <div class="space-y-1">
+                                        {% for q in pillar.questions %}
+                                        {% set val = pa[loop.index0] if pa and pa|length > loop.index0 else None %}
+                                        <div class="flex items-start gap-2 p-2 rounded-lg border
+                                            {% if val == 0 %}bg-red-50 border-red-100
+                                            {% elif val == 1 %}bg-orange-50 border-orange-100
+                                            {% elif val == 2 %}bg-yellow-50 border-yellow-100
+                                            {% elif val == 3 %}bg-green-50 border-green-100
+                                            {% else %}bg-gray-50 border-gray-100{% endif %}">
+                                            <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0
+                                                {% if val == 0 %}bg-red-200 text-red-800
+                                                {% elif val == 1 %}bg-orange-200 text-orange-800
+                                                {% elif val == 2 %}bg-yellow-200 text-yellow-800
+                                                {% elif val == 3 %}bg-green-200 text-green-800
+                                                {% else %}bg-gray-200 text-gray-400{% endif %}">
+                                                {{ val if val is not none else '—' }}
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-xs text-gray-900 leading-snug">{{ q }}</p>
+                                                <span class="text-[9px] font-bold text-gray-500">{{ option_labels[val] if val is not none else 'Não respondida' }}</span>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
                         {% endif %}
 
                         <div class="flex items-center justify-between mt-6 pt-3 border-t border-gray-100">
@@ -1319,6 +1403,18 @@
 
 {% block scripts %}
 <script>
+    function toggleSection(id) {
+        const el = document.getElementById(id);
+        const chevron = document.getElementById('chevron-' + id);
+        if (el.classList.contains('hidden')) {
+            el.classList.remove('hidden');
+            if (chevron) chevron.style.transform = 'rotate(90deg)';
+        } else {
+            el.classList.add('hidden');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }
+    }
+
     function formatCurrency(input) {
         let value = input.value.replace(/\D/g, '');
         value = (value / 100).toFixed(2) + '';
