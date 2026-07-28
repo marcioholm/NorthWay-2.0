@@ -3,20 +3,12 @@
         {
             "src": "api/index.py",
             "use": "@vercel/python"
-        },
-        {
-            "src": "lp-north-way/**",
-            "use": "@vercel/static"
         }
     ],
     "routes": [
         {
-            "src": "/static/(.*)",
-            "dest": "/lp-north-way/static/$1"
-        },
-        {
-            "src": "/live",
-            "dest": "/lp-north-way/live.html"
+            "src": "/assets/(.*)",
+            "dest": "/lp-north-way/assets/$1"
         },
         {
             "src": "/(.*)",
