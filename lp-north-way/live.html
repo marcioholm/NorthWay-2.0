@@ -6,7 +6,6 @@
 <title>Marketing n&atilde;o &eacute; sorte. &Eacute; processo. &mdash; Live gratuita NorthWay</title>
 <meta name="description" content="45 minutos ao vivo para estruturar o marketing da sua empresa. Com Marcio Holm &mdash; NorthWay.">
 <meta name="robots" content="index, follow">
-
 <meta property="og:type" content="website">
 <meta property="og:title" content="Marketing n&atilde;o &eacute; sorte. &Eacute; processo.">
 <meta property="og:description" content="45 minutos ao vivo para estruturar o marketing da sua empresa.">
@@ -56,135 +55,98 @@ src="https://www.facebook.com/tr?id=1466705765145825&ev=PageView&noscript=1"/></
   --near-black: #111;
   --white: #f0ece4;
   --white-muted: rgba(240,236,228,0.6);
-  --red: #d9383a;
-  --red-soft: rgba(217,56,58,0.15);
+  --red: #E31B23;
+  --red-soft: rgba(227,27,35,0.15);
   --border: rgba(240,236,228,0.1);
   --glass: rgba(17,17,17,0.7);
+  --max-w: 720px;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
   font-family:Inter,system-ui,-apple-system,sans-serif;
-  background:var(--black);
-  color:var(--white);
-  line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-  overflow-x:hidden
+  background:var(--black);color:var(--white);
+  line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden
 }
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
 
-.hero{
-  position:relative;min-height:100vh;
-  display:flex;flex-direction:column;overflow:hidden
-}
-.hero-bg{
-  position:absolute;inset:0;z-index:0
-}
-.hero-bg img{
-  width:100%;height:100%;
-  object-fit:cover;object-position:center 25%;
-  filter:saturate(.65)brightness(.5)contrast(1.15)
-}
-.hero-bg::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(10,10,10,.1)0%,rgba(10,10,10,.35)30%,rgba(10,10,10,.92)70%,var(--black)100%);
-  pointer-events:none
-}
-.hero-bg::before{
-  content:'';position:absolute;inset:0;z-index:1;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
-  background-repeat:repeat;background-size:256px 256px;pointer-events:none
-}
-
+/* ── Hero ── */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg img{width:100%;height:100%;object-fit:cover;object-position:center 25%;filter:saturate(.65)brightness(.5)contrast(1.15)}
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,.1)0%,rgba(10,10,10,.35)30%,rgba(10,10,10,.92)70%,var(--black)100%);pointer-events:none}
+.hero-bg::before{content:'';position:absolute;inset:0;z-index:1;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");background-repeat:repeat;background-size:256px 256px;pointer-events:none}
 .hero-inner{position:relative;z-index:2;flex:1;display:flex;flex-direction:column}
-
 nav{display:flex;justify-content:center;padding:1.5rem}
 nav img{height:36px;width:auto}
-
-.hero-content{
-  flex:1;display:flex;flex-direction:column;
-  justify-content:center;align-items:center;text-align:center;
-  padding:1rem 1.5rem 3rem;max-width:640px;margin:0 auto;width:100%
-}
-
-.tag{
-  display:inline-flex;align-items:center;gap:.5rem;
-  font-family:'DM Mono',monospace;font-size:.68rem;text-transform:uppercase;
-  letter-spacing:.15em;color:var(--red);
-  border:1px solid var(--red-soft);padding:.35rem .9rem;margin-bottom:1.5rem;
-  animation:fadeUp .7s ease both
-}
-.tag .dot{
-  width:5px;height:5px;border-radius:50%;background:var(--red);
-  animation:pulse 2s ease-in-out infinite
-}
+.hero-content{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:1rem 1.5rem 3rem;max-width:640px;margin:0 auto;width:100%}
+.tag{display:inline-flex;align-items:center;gap:.5rem;font-family:'DM Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.15em;color:var(--red);border:1px solid var(--red-soft);padding:.35rem .9rem;margin-bottom:1.5rem;animation:fadeUp .7s ease both}
+.tag .dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-.hero-content h1{
-  font-weight:800;font-size:clamp(2rem,6vw,3.5rem);
-  line-height:1.05;letter-spacing:-.03em;margin-bottom:.8rem;
-  animation:fadeUp .7s .1s ease both
-}
+.hero-content h1{font-weight:800;font-size:clamp(2rem,6vw,3.5rem);line-height:1.05;letter-spacing:-.03em;margin-bottom:.8rem;animation:fadeUp .7s .1s ease both}
 .hero-content h1 em{font-style:normal;color:var(--red)}
+.hero-content p{font-size:clamp(.95rem,1.8vw,1.1rem);color:var(--white-muted);max-width:460px;margin-bottom:1.8rem;animation:fadeUp .7s .2s ease both}
 
-.hero-content p{
-  font-size:clamp(.95rem,1.8vw,1.1rem);
-  color:var(--white-muted);max-width:460px;margin-bottom:1.8rem;
-  animation:fadeUp .7s .2s ease both
-}
-
-.stats{
-  display:flex;justify-content:center;gap:2rem;
-  margin-bottom:2rem;animation:fadeUp .7s .3s ease both
-}
+.stats{display:flex;justify-content:center;gap:2rem;margin-bottom:2rem;animation:fadeUp .7s .3s ease both;flex-wrap:wrap}
 .stat{text-align:center}
 .stat .num{font-weight:700;font-size:1.5rem}
-.stat .lbl{
-  font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;
-  letter-spacing:.12em;color:var(--white-muted);margin-top:.1rem
-}
+.stat .lbl{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--white-muted);margin-top:.1rem}
+.stat-event{display:flex;align-items:center;gap:.5rem;background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:.55rem 1rem;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.stat-event .ico{font-size:1.1rem;line-height:1}
+.stat-event .txt{font-size:.78rem;color:var(--white-muted);text-align:left;line-height:1.3}
 
-.btn-whatsapp{
-  display:inline-flex;align-items:center;justify-content:center;gap:.6rem;
-  font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.04em;
-  background:#25D366;color:#0a0a0a;
-  padding:1rem 2.5rem;border-radius:100px;
-  transition:transform .2s ease,box-shadow .2s ease;
-  animation:fadeUp .7s .4s ease both
-}
-.btn-whatsapp:hover{
-  transform:translateY(-2px)scale(1.01);
-  box-shadow:0 14px 36px -8px rgba(37,211,102,.3)
-}
+.btn-whatsapp{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.04em;background:#25D366;color:#0a0a0a;padding:1rem 2.5rem;border-radius:100px;transition:transform .2s ease,box-shadow .2s ease;animation:fadeUp .7s .4s ease both;cursor:pointer}
+.btn-whatsapp:hover{transform:translateY(-2px)scale(1.01);box-shadow:0 14px 36px -8px rgba(37,211,102,.3)}
 .btn-whatsapp svg{width:20px;height:20px;flex-shrink:0}
-
 .micro{font-size:.75rem;color:var(--white-muted);margin-top:.85rem;animation:fadeUp .7s .5s ease both}
-
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
-.presenter{padding:3.5rem 1.5rem;max-width:720px;margin:0 auto;width:100%}
-.presenter-inner{
-  display:flex;gap:2rem;align-items:center;
-  background:var(--glass);border:1px solid var(--border);
-  border-radius:12px;padding:2rem;
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)
-}
-.presenter-photo{
-  width:120px;height:120px;border-radius:50%;
-  object-fit:cover;flex-shrink:0;border:2px solid var(--red-soft)
-}
+/* ── Sections ── */
+.section{padding:4rem 1.5rem;max-width:var(--max-w);margin:0 auto;width:100%}
+.section-head{margin-bottom:2rem;text-align:center}
+.section-head .label{font-family:'DM Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--red);margin-bottom:.6rem}
+.section-head h2{font-weight:700;font-size:clamp(1.3rem,3vw,1.7rem);line-height:1.2;letter-spacing:-.02em}
+.section-head p{font-size:.88rem;color:var(--white-muted);margin-top:.6rem;max-width:540px;margin-left:auto;margin-right:auto}
+.section.dark{background:var(--near-black)}
+.section.dark+div.section{border-top:1px solid var(--border)}
+
+.bullets{display:flex;flex-direction:column;gap:.85rem}
+.bullet{display:flex;gap:.85rem;align-items:flex-start}
+.bullet .num{width:28px;height:28px;border-radius:50%;background:var(--red-soft);color:var(--red);font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.bullet .dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:6px}
+.bullet-text{font-size:.85rem;color:var(--white-muted);line-height:1.6}
+
+/* ── Identificaçao ── */
+.id-section .bullet strong{color:var(--white)}
+
+/* ── Presenter ── */
+.presenter{padding:3.5rem 1.5rem;max-width:var(--max-w);margin:0 auto;width:100%}
+.presenter-inner{display:flex;gap:2rem;align-items:center;background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:2rem;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.presenter-photo{width:120px;height:120px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--red-soft)}
 .presenter-info h3{font-weight:700;font-size:1.15rem;margin-bottom:.15rem}
-.presenter-info .role{
-  font-family:'DM Mono',monospace;font-size:.68rem;text-transform:uppercase;
-  letter-spacing:.08em;color:var(--red);margin-bottom:.6rem
-}
+.presenter-info .role{font-family:'DM Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--red);margin-bottom:.6rem}
 .presenter-info p{font-size:.84rem;color:var(--white-muted);line-height:1.65}
 
-footer{
-  text-align:center;padding:1.5rem;max-width:640px;margin:0 auto;width:100%
-}
+/* ── CTA ── */
+.cta-wrap{text-align:center;padding:2.5rem 1.5rem 4rem;max-width:var(--max-w);margin:0 auto;width:100%}
+.cta-wrap .btn-whatsapp{animation:none}
+.cta-wrap p{margin-top:.85rem;font-size:.75rem;color:var(--white-muted)}
+
+/* ── FAQ ── */
+.faq-section{padding:3.5rem 1.5rem 4rem;max-width:600px;margin:0 auto;width:100%}
+.faq-item{border:1px solid var(--border);border-radius:8px;margin-bottom:.5rem;overflow:hidden}
+.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;font-size:.85rem;font-weight:600;text-align:left;background:none;color:var(--white);cursor:pointer;transition:background .2s;border:none;font-family:inherit}
+.faq-q:hover{background:rgba(255,255,255,.03)}
+.faq-q .ico{font-size:.9rem;transition:transform .3s;color:var(--white-muted)}
+.faq-item.open .faq-q .ico{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease}
+.faq-item.open .faq-a{max-height:400px;padding:0 1.25rem 1rem}
+.faq-a p{font-size:.82rem;color:var(--white-muted);line-height:1.65}
+
+/* ── Footer ── */
+footer{padding:1.5rem;max-width:640px;margin:0 auto;width:100%;text-align:center}
 footer .links{font-size:.78rem}
 footer .links a{color:var(--white-muted);transition:color .2s}
 footer .links a:hover{color:var(--red)}
@@ -194,15 +156,13 @@ footer .company{font-size:.68rem;color:rgba(240,236,228,.3);margin-top:.65rem;li
 @media(max-width:640px){
   nav{padding:1rem}nav img{height:28px}
   .hero-content{padding:.5rem 1rem 2rem}
-  .stats{gap:1.25rem}
+  .stat-event{width:100%}
+  .section{padding:2.5rem 1rem}
   .btn-whatsapp{width:100%;padding:.9rem 1.25rem;font-size:.85rem}
   .presenter-inner{flex-direction:column;text-align:center;padding:1.25rem}
   .presenter-photo{width:96px;height:96px}
 }
-
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
-}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
 </style>
 </head>
 <body>
@@ -221,7 +181,7 @@ footer .company{font-size:.68rem;color:rgba(240,236,228,.3);margin-top:.65rem;li
         Ao vivo e gratuito
       </div>
       <h1>Marketing n&atilde;o &eacute; sorte.<br><em>&Eacute; processo.</em></h1>
-      <p>45 minutos para descobrir como estruturar o marketing da sua empresa com um m&eacute;todo que funciona &mdash; sem achismo, sem mist&eacute;rio.</p>
+      <p id="heroSub">45 minutos para descobrir como estruturar o marketing da sua empresa com um m&eacute;todo que funciona &mdash; sem achismo, sem mist&eacute;rio.</p>
       <div class="stats">
         <div class="stat">
           <div class="num">45</div>
@@ -236,11 +196,71 @@ footer .company{font-size:.68rem;color:rgba(240,236,228,.3);margin-top:.65rem;li
           <div class="lbl">sem custo</div>
         </div>
       </div>
-      <a href="https://chat.whatsapp.com/FeyfeGKWVPdFBtLdMMSbTq?s=cl&p=i&ilr=0" target="_blank" rel="noopener" class="btn-whatsapp" onclick="fbq('trackCustom', 'cta_click')">
+      <div class="stats" id="eventMeta" style="margin-bottom:2rem">
+        <div class="stat-event"><span class="ico">📅</span><span class="txt" id="liveDate"></span></div>
+        <div class="stat-event"><span class="ico">🕘</span><span class="txt" id="liveTime"></span></div>
+        <div class="stat-event"><span class="ico">💻</span><span class="txt" id="livePlatform"></span></div>
+      </div>
+      <a href="https://chat.whatsapp.com/FeyfeGKWVPdFBtLdMMSbTq?s=cl&p=i&ilr=0" target="_blank" rel="noopener" class="btn-whatsapp" data-cta-location="hero">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
         Entrar no grupo do WhatsApp
       </a>
-      <p class="micro">Vagas limitadas &mdash; entre agora e garanta sua vaga</p>
+      <p class="micro" id="heroMicro">Vagas limitadas &mdash; entre agora e garanta sua vaga</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="identificacao">
+  <div class="section-head">
+    <div class="label">Diagn&oacute;stico r&aacute;pido</div>
+    <h2>Sua empresa faz marketing<br>ou s&oacute; executa a&ccedil;&otilde;es isoladas?</h2>
+  </div>
+  <div class="bullets">
+    <div class="bullet">
+      <div class="dot"></div>
+      <div class="bullet-text"><strong>Publica nas redes</strong> h&aacute; meses, mas n&atilde;o sabe exatamente o que vende &mdash; nem pra quem.</div>
+    </div>
+    <div class="bullet">
+      <div class="dot"></div>
+      <div class="bullet-text"><strong>Investe em an&uacute;ncio</strong> toda semana, mas n&atilde;o acompanha o que acontece depois do clique.</div>
+    </div>
+    <div class="bullet">
+      <div class="dot"></div>
+      <div class="bullet-text"><strong>Depende de indica&ccedil;&atilde;o</strong> para fechar &mdash; quando a indica&ccedil;&atilde;o n&atilde;o vem, o m&ecirc;s aperta.</div>
+    </div>
+    <div class="bullet">
+      <div class="dot"></div>
+      <div class="bullet-text"><strong>J&aacute; tentou ag&ecirc;ncia, contratou freela, comprou curso</strong> &mdash; mas nada virou um processo que funciona sem voc&ecirc; segurando.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="conteudo">
+  <div class="section-head">
+    <div class="label">O que voc&ecirc; vai levar</div>
+    <h2>Marketing n&atilde;o &eacute; algo abstrato.<br>&Eacute; parte do seu neg&oacute;cio.</h2>
+    <p>Na live, Marcio mostra como transformar marketing em um processo que vive dentro da sua empresa &mdash; n&atilde;o em algo terceirizado, isolado ou dependente de sorte.</p>
+  </div>
+  <div class="bullets">
+    <div class="bullet">
+      <div class="num">1</div>
+      <div class="bullet-text">Como os pilares do marketing &mdash; <strong>atrair, engajar, vender, reter e gerir</strong> &mdash; se conectam dentro da opera&ccedil;&atilde;o da sua empresa, e por que trat&aacute;-los separado &eacute; o que quebra o resultado.</div>
+    </div>
+    <div class="bullet">
+      <div class="num">2</div>
+      <div class="bullet-text">Quais <strong>indicadores</strong> mostram onde est&atilde;o os gargalos reais do seu processo comercial.</div>
+    </div>
+    <div class="bullet">
+      <div class="num">3</div>
+      <div class="bullet-text">Por que <strong>mais leads nem sempre significam mais vendas</strong> &mdash; e onde essa conta costuma travar.</div>
+    </div>
+    <div class="bullet">
+      <div class="num">4</div>
+      <div class="bullet-text">Como identificar <strong>oportunidades</strong> que sua empresa j&aacute; tem, mas ainda n&atilde;o est&aacute; aproveitando.</div>
+    </div>
+    <div class="bullet">
+      <div class="num">5</div>
+      <div class="bullet-text">Como transformar tudo isso em um <strong>processo gerenci&aacute;vel</strong> &mdash; algo que voc&ecirc; acompanha e ajusta, n&atilde;o uma aposta que voc&ecirc; refaz do zero a cada m&ecirc;s.</div>
     </div>
   </div>
 </section>
@@ -255,6 +275,33 @@ footer .company{font-size:.68rem;color:rgba(240,236,228,.3);margin-top:.65rem;li
     </div>
   </div>
 </div>
+
+<div class="cta-wrap">
+  <a href="https://chat.whatsapp.com/FeyfeGKWVPdFBtLdMMSbTq?s=cl&p=i&ilr=0" target="_blank" rel="noopener" class="btn-whatsapp" data-cta-location="final">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    Entrar no grupo do WhatsApp
+  </a>
+  <p>Vagas limitadas &mdash; entre agora e garanta sua vaga</p>
+</div>
+
+<section class="faq-section" id="faq">
+  <div class="section-head">
+    <div class="label">FAQ</div>
+    <h2>Perguntas frequentes</h2>
+  </div>
+  <div class="faq-item">
+    <button class="faq-q">A live &eacute; gravada?<span class="ico">+</span></button>
+    <div class="faq-a"><p>N&atilde;o. A live ser&aacute; ao vivo e n&atilde;o ficar&aacute; gravada. Por isso &eacute; importante participar no hor&aacute;rio marcado.</p></div>
+  </div>
+  <div class="faq-item">
+    <button class="faq-q">Para quem &eacute; essa live?<span class="ico">+</span></button>
+    <div class="faq-a"><p>Para empres&aacute;rios, s&oacute;cios e gestores que faturam acima de R$ 50 mil por m&ecirc;s e querem estruturar o marketing da sua empresa com um m&eacute;todo pr&aacute;tico, sem teorias soltas.</p></div>
+  </div>
+  <div class="faq-item">
+    <button class="faq-q">Vai ter alguma oferta ao final?<span class="ico">+</span></button>
+    <div class="faq-a"><p>Sim &mdash; ao final da live, Marcio vai apresentar um <strong>diagn&oacute;stico gratuito</strong> para quem quiser levar o marketing da sua empresa para o pr&oacute;ximo n&iacute;vel com acompanhamento estruturado. &Eacute; opcional e sem compromisso.</p></div>
+  </div>
+</section>
 
 <footer>
   <div class="links">
@@ -272,8 +319,45 @@ footer .company{font-size:.68rem;color:rgba(240,236,228,.3);margin-top:.65rem;li
 </footer>
 
 <script>
-document.addEventListener('DOMContentLoaded',function(){fbq('trackCustom','view_live_landing_page');
-var s50=!1,s90=!1;window.addEventListener('scroll',function(){var p=window.scrollY/(document.documentElement.scrollHeight-window.innerHeight);!s50&&p>.5&&(s50=!0,fbq('trackCustom','scroll_50'));!s90&&p>.9&&(s90=!0,fbq('trackCustom','scroll_90'))},{passive:!0})});
+/* ── Config ── */
+const LIVE = {
+  date: 'DATA',       // ex: '29 de julho'
+  time: 'HORÁRIO',     // ex: '20h'
+  platform: 'PLATAFORMA' // ex: 'Google Meet'
+};
+
+/* ── Render data ── */
+document.getElementById('liveDate').textContent = LIVE.date;
+document.getElementById('liveTime').textContent = LIVE.time;
+document.getElementById('livePlatform').textContent = LIVE.platform;
+
+/* ── Pixel events ── */
+fbq('trackCustom', 'ViewContent');
+
+/* Scroll tracking */
+let s50 = false, s90 = false;
+window.addEventListener('scroll', function() {
+  var pct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+  if (!s50 && pct > 0.5) { s50 = true; fbq('trackCustom', 'Scroll50'); }
+  if (!s90 && pct > 0.9) { s90 = true; fbq('trackCustom', 'Scroll90'); }
+}, { passive: true });
+
+/* CTA click tracking */
+document.querySelectorAll('[data-cta-location]').forEach(function(el) {
+  el.addEventListener('click', function() {
+    fbq('trackCustom', 'CTAClick', { location: this.dataset.ctaLocation });
+  });
+});
+
+/* ── FAQ accordion ── */
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var item = this.parentElement;
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(function(i) { i.classList.remove('open'); });
+    if (!isOpen) item.classList.add('open');
+  });
+});
 </script>
 
 </body>
