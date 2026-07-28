@@ -11,6 +11,14 @@
             "dest": "/lp-north-way/assets/$1"
         },
         {
+            "src": "/static/(.*)",
+            "dest": "/lp-north-way/static/$1"
+        },
+        {
+            "src": "/live",
+            "dest": "/lp-north-way/live.html"
+        },
+        {
             "src": "/(.*)",
             "dest": "api/index.py"
         }
