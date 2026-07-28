@@ -93,9 +93,10 @@ nav img{height:36px;width:auto}
 .stat{text-align:center}
 .stat .num{font-weight:700;font-size:1.5rem}
 .stat .lbl{font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.12em;color:var(--white-muted);margin-top:.1rem}
-.stat-event{display:flex;align-items:center;gap:.5rem;background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:.55rem 1rem;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.stat-event .ico{font-size:1.1rem;line-height:1}
-.stat-event .txt{font-size:.78rem;color:var(--white-muted);text-align:left;line-height:1.3}
+.stat-event{display:flex;align-items:center;justify-content:center;gap:.4rem;background:var(--glass);border:1px solid var(--border);border-radius:8px;padding:.4rem 1rem;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);flex-wrap:wrap}
+.stat-event .ico{font-size:1rem;line-height:1}
+.stat-event .txt{font-size:.78rem;color:var(--white-muted);line-height:1.3;white-space:nowrap}
+.stat-event .txt-sep{color:rgba(240,236,228,.2);font-size:.7rem}
 
 .btn-whatsapp{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.04em;background:#25D366;color:#0a0a0a;padding:1rem 2.5rem;border-radius:100px;transition:transform .2s ease,box-shadow .2s ease;animation:fadeUp .7s .4s ease both;cursor:pointer}
 .btn-whatsapp:hover{transform:translateY(-2px)scale(1.01);box-shadow:0 14px 36px -8px rgba(37,211,102,.3)}
@@ -109,14 +110,20 @@ nav img{height:36px;width:auto}
 .section-head .label{font-family:'DM Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--red);margin-bottom:.6rem}
 .section-head h2{font-weight:700;font-size:clamp(1.3rem,3vw,1.7rem);line-height:1.2;letter-spacing:-.02em}
 .section-head p{font-size:.88rem;color:var(--white-muted);margin-top:.6rem;max-width:540px;margin-left:auto;margin-right:auto}
-.section.dark{background:var(--near-black)}
-.section.dark+div.section{border-top:1px solid var(--border)}
 
 .bullets{display:flex;flex-direction:column;gap:.85rem}
 .bullet{display:flex;gap:.85rem;align-items:flex-start}
 .bullet .num{width:28px;height:28px;border-radius:50%;background:var(--red-soft);color:var(--red);font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .bullet .dot{width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:6px}
 .bullet-text{font-size:.85rem;color:var(--white-muted);line-height:1.6}
+
+/* ── Cards grid ── */
+.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.card-item{background:var(--glass);border:1px solid var(--border);border-radius:10px;padding:1.25rem;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.card-item .card-num{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--red);margin-bottom:.35rem}
+.card-item h4{font-weight:700;font-size:.9rem;margin-bottom:.25rem;line-height:1.3}
+.card-item h4 em{font-style:normal;color:var(--red)}
+.card-item p{font-size:.78rem;color:var(--white-muted);line-height:1.5}
 
 /* ── Identificaçao ── */
 .id-section .bullet strong{color:var(--white)}
@@ -153,11 +160,18 @@ footer .links a:hover{color:var(--red)}
 footer .sep{color:var(--border);margin:0 .6rem}
 footer .company{font-size:.68rem;color:rgba(240,236,228,.3);margin-top:.65rem;line-height:1.6}
 
+@media(min-width:641px){
+  .cards-grid{grid-template-columns:repeat(3,1fr)}
+}
+
 @media(max-width:640px){
   nav{padding:1rem}nav img{height:28px}
   .hero-content{padding:.5rem 1rem 2rem}
-  .stat-event{width:100%}
+  .stat-event{padding:.35rem .75rem;font-size:.75rem}
+  .stat-event .txt{font-size:.72rem}
   .section{padding:2.5rem 1rem}
+  .cards-grid{grid-template-columns:1fr 1fr;gap:.75rem}
+  .card-item{padding:1rem}
   .btn-whatsapp{width:100%;padding:.9rem 1.25rem;font-size:.85rem}
   .presenter-inner{flex-direction:column;text-align:center;padding:1.25rem}
   .presenter-photo{width:96px;height:96px}
@@ -196,10 +210,8 @@ footer .company{font-size:.68rem;color:rgba(240,236,228,.3);margin-top:.65rem;li
           <div class="lbl">sem custo</div>
         </div>
       </div>
-      <div class="stats" id="eventMeta" style="margin-bottom:2rem">
-        <div class="stat-event"><span class="ico">📅</span><span class="txt" id="liveDate"></span></div>
-        <div class="stat-event"><span class="ico">🕘</span><span class="txt" id="liveTime"></span></div>
-        <div class="stat-event"><span class="ico">💻</span><span class="txt" id="livePlatform"></span></div>
+      <div class="stats" id="eventMeta">
+        <div class="stat-event"><span class="ico">📅</span><span class="txt" id="liveDate"></span><span class="txt-sep">·</span><span class="ico">🕘</span><span class="txt" id="liveTime"></span><span class="txt-sep">·</span><span class="ico">💻</span><span class="txt" id="livePlatform"></span></div>
       </div>
       <a href="https://chat.whatsapp.com/FeyfeGKWVPdFBtLdMMSbTq?s=cl&p=i&ilr=0" target="_blank" rel="noopener" class="btn-whatsapp" data-cta-location="hero">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -241,26 +253,31 @@ footer .company{font-size:.68rem;color:rgba(240,236,228,.3);margin-top:.65rem;li
     <h2>Marketing n&atilde;o &eacute; algo abstrato.<br>&Eacute; parte do seu neg&oacute;cio.</h2>
     <p>Na live, Marcio mostra como transformar marketing em um processo que vive dentro da sua empresa &mdash; n&atilde;o em algo terceirizado, isolado ou dependente de sorte.</p>
   </div>
-  <div class="bullets">
-    <div class="bullet">
-      <div class="num">1</div>
-      <div class="bullet-text">Como os pilares do marketing &mdash; <strong>atrair, engajar, vender, reter e gerir</strong> &mdash; se conectam dentro da opera&ccedil;&atilde;o da sua empresa, e por que trat&aacute;-los separado &eacute; o que quebra o resultado.</div>
+  <div class="cards-grid">
+    <div class="card-item">
+      <div class="card-num">01</div>
+      <h4>Pilares conectados</h4>
+      <p>Como atrair, engajar, vender, reter e gerir funcionam juntos &mdash; n&atilde;o isolados</p>
     </div>
-    <div class="bullet">
-      <div class="num">2</div>
-      <div class="bullet-text">Quais <strong>indicadores</strong> mostram onde est&atilde;o os gargalos reais do seu processo comercial.</div>
+    <div class="card-item">
+      <div class="card-num">02</div>
+      <h4>Indicadores certos</h4>
+      <p>Quais n&uacute;meros mostram onde seu processo est&aacute; travando</p>
     </div>
-    <div class="bullet">
-      <div class="num">3</div>
-      <div class="bullet-text">Por que <strong>mais leads nem sempre significam mais vendas</strong> &mdash; e onde essa conta costuma travar.</div>
+    <div class="card-item">
+      <div class="card-num">03</div>
+      <h4><em>Leads &ne; vendas</em></h4>
+      <p>Por que mais contato nem sempre vira mais faturamento</p>
     </div>
-    <div class="bullet">
-      <div class="num">4</div>
-      <div class="bullet-text">Como identificar <strong>oportunidades</strong> que sua empresa j&aacute; tem, mas ainda n&atilde;o est&aacute; aproveitando.</div>
+    <div class="card-item">
+      <div class="card-num">04</div>
+      <h4>Oportunidades ocultas</h4>
+      <p>Onde sua empresa j&aacute; pode vender mais sem gastar mais</p>
     </div>
-    <div class="bullet">
-      <div class="num">5</div>
-      <div class="bullet-text">Como transformar tudo isso em um <strong>processo gerenci&aacute;vel</strong> &mdash; algo que voc&ecirc; acompanha e ajusta, n&atilde;o uma aposta que voc&ecirc; refaz do zero a cada m&ecirc;s.</div>
+    <div class="card-item">
+      <div class="card-num">05</div>
+      <h4>Processo gerenci&aacute;vel</h4>
+      <p>Sair do achismo e passar a medir, ajustar e repetir</p>
     </div>
   </div>
 </section>
