@@ -482,15 +482,17 @@ def create_app():
                 {'url': base_url + '/auth/forgot_password', 'changefreq': 'monthly', 'priority': '0.3'},
             ]
             
-            # Dynamic pages from database (public forms, presentations, playbooks)
+            # Dynamic pages from database (public forms, presentations)
             dynamic_pages = []
             try:
+                # Ensure DB session is fresh for serverless
+                db.session.remove()
                 from models import CommercialPresentation, FormInstance
                 
-                # Public presentations
+                # Public presentations (non-expired)
                 presentations = CommercialPresentation.query.filter(
                     CommercialPresentation.expira_em > datetime.utcnow()
-                ).all()
+                ).limit(500).all()
                 for p in presentations:
                     dynamic_pages.append({
                         'url': base_url + url_for('marketing.public_presentation', token=p.token),
@@ -500,7 +502,7 @@ def create_app():
                     })
                 
                 # Public forms
-                forms = FormInstance.query.filter_by(status='active').all()
+                forms = FormInstance.query.filter_by(status='active').limit(500).all()
                 for f in forms:
                     dynamic_pages.append({
                         'url': base_url + url_for('forms.get_form_schema', slug=f.public_slug),
@@ -510,6 +512,7 @@ def create_app():
                     })
             except Exception as e:
                 app.logger.warning(f"Sitemap dynamic pages error: {e}")
+                # Continue with static pages only
             
             # Build XML
             today = datetime.utcnow().strftime('%Y-%m-%d')
@@ -530,7 +533,7 @@ def create_app():
             xml_parts.append('</urlset>')
             
             response = make_response('\n'.join(xml_parts))
-            response.headers['Content-Type'] = 'application/xml'
+            response.headers['Content-Type'] = 'application/xml; charset=utf-8'
             response.headers['Cache-Control'] = 'public, max-age=86400'
             return response
 
