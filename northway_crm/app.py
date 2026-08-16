@@ -466,6 +466,110 @@ def create_app():
         def verify_deploy():
             return "DEPLOY_V9_LIVE_2026-03-30_09:50"
 
+        @app.route('/sitemap.xml')
+        def sitemap():
+            from flask import make_response
+            from datetime import datetime
+            
+            # Canonical domain for SEO
+            base_url = 'https://northwaycompany.com.br'
+            
+            # Static public pages (only indexable public pages)
+            static_pages = [
+                {'url': base_url + '/', 'changefreq': 'weekly', 'priority': '1.0'},
+                {'url': base_url + '/auth/login', 'changefreq': 'monthly', 'priority': '0.5'},
+                {'url': base_url + '/auth/register', 'changefreq': 'monthly', 'priority': '0.5'},
+                {'url': base_url + '/auth/forgot_password', 'changefreq': 'monthly', 'priority': '0.3'},
+            ]
+            
+            # Dynamic pages from database (public forms, presentations, playbooks)
+            dynamic_pages = []
+            try:
+                from models import CommercialPresentation, FormInstance
+                
+                # Public presentations
+                presentations = CommercialPresentation.query.filter(
+                    CommercialPresentation.expira_em > datetime.utcnow()
+                ).all()
+                for p in presentations:
+                    dynamic_pages.append({
+                        'url': base_url + url_for('marketing.public_presentation', token=p.token),
+                        'changefreq': 'monthly',
+                        'priority': '0.6',
+                        'lastmod': p.gerado_em.strftime('%Y-%m-%d') if p.gerado_em else None
+                    })
+                
+                # Public forms
+                forms = FormInstance.query.filter_by(status='active').all()
+                for f in forms:
+                    dynamic_pages.append({
+                        'url': base_url + url_for('forms.get_form_schema', slug=f.public_slug),
+                        'changefreq': 'weekly',
+                        'priority': '0.7',
+                        'lastmod': f.updated_at.strftime('%Y-%m-%d') if f.updated_at else None
+                    })
+            except Exception as e:
+                app.logger.warning(f"Sitemap dynamic pages error: {e}")
+            
+            # Build XML
+            today = datetime.utcnow().strftime('%Y-%m-%d')
+            xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>']
+            xml_parts.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+            
+            for page in static_pages + dynamic_pages:
+                xml_parts.append('  <url>')
+                xml_parts.append(f'    <loc>{page["url"]}</loc>')
+                if page.get('lastmod'):
+                    xml_parts.append(f'    <lastmod>{page["lastmod"]}</lastmod>')
+                else:
+                    xml_parts.append(f'    <lastmod>{today}</lastmod>')
+                xml_parts.append(f'    <changefreq>{page["changefreq"]}</changefreq>')
+                xml_parts.append(f'    <priority>{page["priority"]}</priority>')
+                xml_parts.append('  </url>')
+            
+            xml_parts.append('</urlset>')
+            
+            response = make_response('\n'.join(xml_parts))
+            response.headers['Content-Type'] = 'application/xml'
+            response.headers['Cache-Control'] = 'public, max-age=86400'
+            return response
+
+        @app.route('/robots.txt')
+        def robots_txt():
+            from flask import make_response
+            base_url = 'https://northwaycompany.com.br'
+            content = f"""User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /dashboard
+Disallow: /clients
+Disallow: /leads
+Disallow: /pipeline
+Disallow: /prospecting
+Disallow: /admin
+Disallow: /master
+Disallow: /api/
+Disallow: /internal/
+Disallow: /sys-admin
+Disallow: /checkout
+Disallow: /settings
+Disallow: /tasks
+Disallow: /contracts
+Disallow: /financial
+Disallow: /goals
+Disallow: /whatsapp
+Disallow: /playbook
+Disallow: /forms/
+Disallow: /webhook
+Disallow: /static/
+
+Sitemap: {base_url}/sitemap.xml
+"""
+            response = make_response(content)
+            response.headers['Content-Type'] = 'text/plain'
+            response.headers['Cache-Control'] = 'public, max-age=86400'
+            return response
+
 
         @app.route('/master/migrate-integrations')
         def migrate_integrations():
