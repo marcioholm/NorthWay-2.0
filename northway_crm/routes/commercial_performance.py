@@ -8,6 +8,13 @@ from decimal import Decimal
 
 commercial_bp = Blueprint('commercial', __name__)
 
+@commercial_bp.route('/commercial/budget_generator')
+@login_required
+def budget_generator():
+    if not current_user.company_id:
+        return "Unauthorized", 403
+    return render_template('commercial/budget_generator.html')
+
 @commercial_bp.route('/commercial/performance')
 @login_required
 def performance():
