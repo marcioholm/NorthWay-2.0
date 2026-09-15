@@ -316,7 +316,7 @@ class Lead(db.Model):
     # WhatsApp relationship will be added later
     pipeline_stage = db.relationship('PipelineStage', backref='stage_leads')
     # Link back to client if converted
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id', name='lead_client_id_fkey'), nullable=True)
     client_ref = db.relationship('Client', foreign_keys=[client_id], backref='leads_via_client_id')
 
     # BANT Methodology Fields
@@ -440,7 +440,7 @@ class Client(db.Model):
     
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
     account_manager_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
-    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True, unique=True) # Origin lead
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id', name='client_lead_id_fkey'), nullable=True, unique=True) # Origin lead
     
     status = db.Column(db.String(20), default='onboarding', index=True) # onboarding, ativo, pausado, cancelado
     health_status = db.Column(db.String(20), default='verde') # verde, amarelo, vermelho
