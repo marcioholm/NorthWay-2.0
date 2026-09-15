@@ -897,3 +897,10 @@ def save_client_process(id, tool_type, mode):
     flash(f'{deleted_count} arquivo(s) excluído(s) com sucesso!', 'success')
     return redirect(url_for('clients.client_details', id=id))
 
+@clients_bp.route('/clients/<int:id>/cronograma', methods=['GET'])
+@login_required
+def client_cronograma(id):
+    client = Client.query.get_or_404(id)
+    if client.company_id != current_user.company_id:
+        return "Unauthorized", 403
+    return render_template('clients/cronograma_postagens.html', client=client)

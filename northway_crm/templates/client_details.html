@@ -271,6 +271,11 @@
                                 class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
                                 <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Tráfego Meta
                             </button>
+                            <button type="button" onclick="switchClientTab('cronograma')"
+                                id="tab-client-cronograma"
+                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Cronograma
+                            </button>
                         </div>
                     </div>
 
@@ -1611,6 +1616,11 @@
                     <!-- Meta Ads Analyzer (Next.js Application iframe) -->
                     <div id="content-client-meta-ads" class="hidden w-full h-full min-h-[1000px]">
                         <iframe id="iframe-meta-ads" data-src="https://northway-crm-next.vercel.app/clientes/{{ client.id }}" width="100%" height="2000" frameborder="0" allowfullscreen class="transition-opacity duration-500"></iframe>
+                    </div>
+
+                    <!-- Cronograma de Postagens -->
+                    <div id="content-client-cronograma" class="hidden w-full h-full min-h-[1000px]">
+                        <iframe id="iframe-cronograma" data-src="{{ url_for('clients.client_cronograma', id=client.id) }}" width="100%" height="2000" frameborder="0" allowfullscreen class="transition-opacity duration-500"></iframe>
                     </div>
                 </div> <!-- Close lg:col-span-9 -->
 
@@ -3403,7 +3413,7 @@
             const sideCol = document.getElementById('side-info-column');
             const pageWrapper = document.getElementById('page-content-wrapper');
 
-            if (tabName === 'script-studio' || tabName === 'meta-ads') {
+            if (tabName === 'script-studio' || tabName === 'meta-ads' || tabName === 'cronograma') {
                 if (mainCol) {
                     mainCol.classList.remove('lg:col-span-9');
                     mainCol.classList.add('lg:col-span-12', 'w-full');
@@ -3431,7 +3441,7 @@
             }
 
             // Updated list of tabs
-            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic-tab', 'archivos', 'processes', 'script-studio', 'meta-ads'];
+            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic-tab', 'archivos', 'processes', 'script-studio', 'meta-ads', 'cronograma'];
 
             // 1. Force HIDE all contents first
             tabs.forEach(t => {
@@ -3458,9 +3468,10 @@
                     selectedContent.classList.add('block');
                 }
                 
-                // Lazy-load Meta Ads Iframe
-                if (tabName === 'meta-ads') {
-                    const iframe = document.getElementById('iframe-meta-ads');
+                // Lazy-load Meta Ads Iframe and Cronograma
+                if (tabName === 'meta-ads' || tabName === 'cronograma') {
+                    const iframeId = tabName === 'meta-ads' ? 'iframe-meta-ads' : 'iframe-cronograma';
+                    const iframe = document.getElementById(iframeId);
                     if (iframe) {
                         if (!iframe.src) {
                             iframe.src = iframe.getAttribute('data-src');
@@ -3473,7 +3484,7 @@
                 }
 
                 // Stop loading for other non-iframe tabs
-                if (tabName !== 'meta-ads' && window.stopGlobalLoading) {
+                if (tabName !== 'meta-ads' && tabName !== 'cronograma' && window.stopGlobalLoading) {
                     window.stopGlobalLoading();
                 }
 
