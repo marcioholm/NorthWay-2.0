@@ -315,6 +315,11 @@
                             <i data-lucide="file-text" class="w-4 h-4 flex-shrink-0"></i>
                             <span class="text-sm">Contratos</span>
                         </a>
+                        <a href="{{ url_for('commercial.budget_generator') }}"
+                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'commercial.budget_generator' %}bg-white/15 text-white font-semibold{% endif %}">
+                            <i data-lucide="calculator" class="w-4 h-4 flex-shrink-0"></i>
+                            <span class="text-sm">Orçamentos</span>
+                        </a>
                         {% endif %}
                     </div>
                 </div>
