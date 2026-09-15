@@ -246,3 +246,46 @@ def test_webhooks_persist_retry_and_keep_request_id(auth_client):
         assert process_deliveries()['processed'] == 1
         assert job.status == 'delivered' and job.attempts == 2
         assert post.call_args.kwargs['headers']['X-NorthWay-Request-Id'] == first_id
+
+
+def test_postgres_conversion_serializes_concurrent_requests(auth_client, app):
+    if db.engine.dialect.name != 'postgresql':
+        pytest.skip('Row locking requires PostgreSQL')
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+    _, user, company = auth_client
+    lead = Lead(name='Concurrent conversion', company_id=company.id, assigned_to_id=user.id)
+    db.session.add(lead)
+    db.session.commit()
+    lead_id, user_id = lead.id, user.id
+    barrier = Barrier(2)
+    def convert():
+        with app.test_client() as browser:
+            with browser.session_transaction() as session:
+                session['_user_id'] = str(user_id)
+                session['_fresh'] = True
+            barrier.wait(timeout=10)
+            response = browser.post(f'/leads/{lead_id}/convert', data={'monthly_value': '100,00'})
+            return response.status_code, response.location
+    with patch('routes.leads.IntegrationsService.dispatch_webhooks'), ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(convert) for _ in range(2)]
+        results = [future.result(timeout=30) for future in futures]
+    assert results[0] == results[1]
+    assert results[0][0] == 302
+    assert Client.query.filter_by(lead_id=lead_id).count() == 1
+
+
+def test_postgres_migration_is_repeatable(app):
+    if db.engine.dialect.name != 'postgresql':
+        pytest.skip('Migration targets PostgreSQL')
+    from pathlib import Path
+    script = (Path(__file__).resolve().parents[2] / 'migrations/20260915_stabilization.sql').read_text()
+    db.session.remove()
+    connection = db.engine.raw_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(script)
+            cursor.execute(script)
+        connection.commit()
+    finally:
+        connection.close()
