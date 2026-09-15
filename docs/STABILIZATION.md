@@ -41,7 +41,7 @@ node northway_crm/tests/test_inbox_frontend.cjs
 
 O primeiro comando usa SQLite em memória por padrão. Para PostgreSQL, defina TEST_DATABASE_URL para um banco **exclusivo e descartável de teste**, incluindo sslmode apropriado. O workflow CRM regression tests executa ambos os bancos. As dependências de produção não foram atualizadas; a validação local usa Python 3.12.
 
-Os testes cobrem autenticação, isolamento, conversão repetida, períodos dos gráficos, listagem sem gravações, paginação do funil/conversas/histórico, alteração de etapa e retentativas de webhook. O teste JavaScript usa os handlers reais com DOM/HTTP simulados; não substitui homologação visual em navegador.
+Os testes cobrem autenticação, isolamento, conversão repetida e simultânea no PostgreSQL, reaplicação da migração, períodos dos gráficos, listagem sem gravações, paginação do funil/conversas/histórico, alteração de etapa e retentativas de webhook. O teste JavaScript usa os handlers reais com DOM/HTTP simulados; não substitui homologação visual em navegador.
 
 ## Operação da fila
 
@@ -57,7 +57,7 @@ Ative PERFORMANCE_LOGGING=1 para registrar endpoint, status, duração e tamanho
 
 Antes de retirar o beta de WhatsApp/prospecção: testar envio, reconexão, falha do provedor, interrupção de cadência, eventos repetidos/fora de ordem e aprovação humana. As integrações reais não foram acionadas pelos testes locais.
 
-Ainda pendem do plano amplo: provisionamento de Drive totalmente assíncrono, validação do ciclo de estorno/NFS-e, revisão completa dos módulos secundários, retentativas de todos os provedores, testes concorrentes reais de conversão, auditoria de todas as rotas e homologação com carga de produção. O CRM não está certificado como 100% funcional por este PR.
+Ainda pendem do plano amplo: provisionamento de Drive totalmente assíncrono, validação do ciclo de estorno/NFS-e, revisão completa dos módulos secundários, retentativas de todos os provedores, auditoria de todas as rotas e homologação com carga de produção. O CRM não está certificado como 100% funcional por este PR.
 
 ## Reversão
 
