@@ -66,6 +66,12 @@
 <body
     class="bg-gray-50 text-gray-900 font-sans h-screen flex flex-col overflow-hidden selection:bg-northway-red selection:text-white {% if minimal %}minimal-view{% endif %}">
 
+    {% if beta_module and current_user.is_authenticated %}
+    <div role="status" class="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2 text-xs shrink-0">
+        <strong>{{ beta_module }} · Beta</strong> — Confira os resultados antes de aprovar ações automáticas.
+    </div>
+    {% endif %}
+
     <!-- Impersonation Banner -->
     {% if session.get('super_admin_id') %}
     <div
@@ -1060,7 +1066,7 @@
 
         // Poll every 60s
         if (notificationBtn) {
-            setInterval(fetchNotifications, 60000);
+            setInterval(() => { if (!document.hidden) fetchNotifications(); }, 60000);
             // Initial fetch
             fetchNotifications();
         }
@@ -1124,7 +1130,7 @@
 
         if ({{ 'true' if current_user.is_authenticated else 'false' }}) {
             updateWhatsAppUnreadCount();
-            setInterval(updateWhatsAppUnreadCount, 30000); // Every 30s
+            setInterval(() => { if (!document.hidden) updateWhatsAppUnreadCount(); }, 30000); // Every 30s
         }
     </script>
     <div class="fixed bottom-2 right-2 text-[8px] text-gray-400 opacity-20 pointer-events-none z-50">

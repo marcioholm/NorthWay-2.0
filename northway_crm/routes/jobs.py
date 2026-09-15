@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, current_app
+from flask import Blueprint, jsonify, current_app, request
 from models import db, TenantIntegration, Client, DriveFileEvent, Lead, Task, Notification, ProspectingBatch, ProspectingMessage, ProspectingSetting, ProspectingCampaign
 from services.google_drive_service import GoogleDriveService
 from datetime import datetime, timedelta
@@ -7,6 +7,22 @@ from constants import ProspectingStatus, MessageStatus, LeadChannel
 from utils.webhooks import send_outbound_webhook
 
 jobs_bp = Blueprint('jobs_bp', __name__)
+
+@jobs_bp.before_request
+def require_cron_token():
+    import os
+    import hmac
+    expected = current_app.config.get('CRON_SECRET') or os.environ.get('CRON_SECRET')
+    supplied = request.headers.get('Authorization', '')
+    if not expected or not hmac.compare_digest(supplied, f'Bearer {expected}'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+
+@jobs_bp.route('/api/cron/webhook-deliveries', methods=['GET', 'POST'])
+def webhook_deliveries_job():
+    from services.webhook_delivery_service import process_deliveries
+    return jsonify(process_deliveries(limit=1))
+
 
 @jobs_bp.route('/api/cron/drive-sync', methods=['GET', 'POST'])
 def drive_sync_job():

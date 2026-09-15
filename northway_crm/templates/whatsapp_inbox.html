@@ -29,7 +29,7 @@
         <div class="p-3 border-b border-gray-100 space-y-3">
             <div class="bg-gray-100 rounded-lg flex items-center px-3 py-2">
                 <i data-lucide="search" class="w-4 h-4 text-gray-400 mr-2"></i>
-                <input type="text" placeholder="Pesquisar..."
+                <input id="conversation-search" oninput="scheduleConversationSearch()" type="text" placeholder="Pesquisar..."
                     class="bg-transparent border-none text-sm w-full focus:outline-none text-gray-700">
             </div>
 
@@ -584,10 +584,19 @@
         }
     }
 
-    async function loadConversations() {
+    let nextConversationPage = null;
+    let conversationRequest = 0;
+    let conversationSearchTimer;
+    function scheduleConversationSearch() {
+        clearTimeout(conversationSearchTimer);
+        conversationSearchTimer = setTimeout(() => loadConversations(), 300);
+    }
+    async function loadConversations(append = false) {
+        const requestNumber = ++conversationRequest;
         const list = document.getElementById('conversation-list');
         try {
-            const res = await fetch('/api/whatsapp/conversations');
+            const params = new URLSearchParams({page: String(append ? nextConversationPage || 1 : 1), type: currentTab, q: document.getElementById('conversation-search').value});
+            const res = await fetch(`/api/whatsapp/conversations?${params}`);
             if (res.status === 401 || res.status === 403 || res.redirected) {
                 // Session expired
                 window.location.href = '/login';
@@ -597,27 +606,30 @@
 
             const data = await res.json();
 
-            if (data.debug_error) {
-                console.error("Conversations API error:", data.debug_error);
-                list.innerHTML = `<div class="p-4 text-center text-red-400 text-sm">Erro ao carregar conversas:<br><code class="text-xs">${data.debug_error}</code><br><a href="${data.repair_url || '#'}" class="text-blue-400 underline text-xs mt-2 block">Tentar reparar</a></div>`;
-                return;
-            }
+            if (requestNumber !== conversationRequest) return;
 
             if (!data.conversations || data.conversations.length === 0) {
+                if (append) { nextConversationPage = null; renderList(allConversations); return; }
+                allConversations = [];
+                nextConversationPage = null;
                 list.innerHTML = `<div class="p-4 text-center text-gray-400 text-sm">Nenhuma conversa encontrada.</div>`;
                 return;
             }
 
-            allConversations = data.conversations;
-            filterConversations(currentTab); // Render based on current tab
+            if (requestNumber !== conversationRequest) return;
+            nextConversationPage = data.next_page;
+            const combined = append ? [...allConversations, ...data.conversations] : data.conversations;
+            allConversations = Array.from(new Map(combined.map(c => [c.phone, c])).values());
+            filterConversations(currentTab, false); // Render based on current tab
 
         } catch (e) {
+            if (requestNumber !== conversationRequest) return;
             console.error(e);
-            list.innerHTML = `<div class="p-4 text-center text-red-400 text-sm">Erro: ${e.message}</div>`;
+            list.innerHTML = `<div class="p-4 text-center text-red-400 text-sm">Não foi possível carregar as conversas. Tente novamente.</div>`;
         }
     }
 
-    function filterConversations(tab) {
+    function filterConversations(tab, reload = true) {
         currentTab = tab;
         const list = document.getElementById('conversation-list');
 
@@ -633,6 +645,8 @@
                 btn.classList.add('text-gray-500', 'font-medium');
             }
         });
+
+        if (reload) { loadConversations(); return; }
 
         // Filter Data
         const filtered = allConversations.filter(c => {
@@ -650,7 +664,8 @@
 
     function renderList(conversations) {
         const list = document.getElementById('conversation-list');
-        list.innerHTML = conversations.map(c => {
+        list.innerHTML = conversations.map((raw, index) => {
+            const c = {...raw, name: escapeMessage(raw.name), last_message_content: escapeMessage(raw.last_message_content), profile_pic_url: safeMediaUrl(raw.profile_pic_url)};
             // Safeguard Date
             let dateDisplay = '';
             try {
@@ -664,15 +679,11 @@
                 }
             } catch (e) { dateDisplay = '?'; }
 
-            // Safe quote escaping for onclick
-            const safeName = (c.name || '').replace(/'/g, "\\'");
-            const safePhone = (c.phone || '').replace(/'/g, "\\'");
-
             // Active State Check
             const isActive = activeChat && activeChat.id == c.id && activeChat.type === c.type;
 
             return `
-                <div onclick="openChat('${c.type}', '${c.id}', '${safeName}', '${safePhone}', '${c.profile_pic_url || ''}')" 
+                <div data-chat-index="${index}"
                      class="flex items-center gap-3 p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${isActive ? 'bg-gray-100' : ''}">
                     <!-- Avatar -->
                     <div class="relative">
@@ -705,12 +716,18 @@
                 </div>
             `}).join('');
 
+        if (nextConversationPage) list.insertAdjacentHTML('beforeend', '<button type="button" onclick="loadConversations(true)" class="block mx-auto p-3 text-sm text-red-600">Carregar mais conversas</button>');
+        list.querySelectorAll('[data-chat-index]').forEach(element => element.addEventListener('click', () => {
+            const c = conversations[Number(element.dataset.chatIndex)];
+            openChat(c.type, c.id, c.name, c.phone, c.profile_pic_url);
+        }));
         if (window.lucide) lucide.createIcons();
     }
 
     async function openChat(type, id, name, phone, avatarUrl) {
         console.log("openChat called:", { type, id, name, phone, avatarUrl });
         try {
+            avatarUrl = safeMediaUrl(avatarUrl);
             activeChat = { type, id };
 
             // 1. Update UI Visibility
@@ -756,7 +773,7 @@
                 } else {
                     avatarEl.innerHTML = `
                         <div class="w-full h-full flex items-center justify-center relative group">
-                            ${(name || '?').charAt(0).toUpperCase()}
+                            ${escapeMessage((name || '?').charAt(0).toUpperCase())}
                             <button onclick="event.stopPropagation(); syncProfile()" title="Sincronizar Foto"
                                 class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center rounded-full text-white transition-all z-10">
                                 <i data-lucide="refresh-cw" class="w-4 h-4 text-xs"></i>
@@ -786,25 +803,59 @@
         }
     }
 
-    async function loadMessages(type, id, silent = false) {
-        console.log("loadMessages called:", { type, id, silent });
+    let messageState = {key: '', messages: new Map(), latest: 0, oldest: null, hasOlder: false, loading: false};
+    function escapeMessage(value) {
+        return String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function safeMediaUrl(value) {
+        try { const u = new URL(value); return u.protocol === 'https:' ? escapeMessage(u.href) : ''; } catch { return ''; }
+    }
+    async function loadOlderMessages() {
+        if (activeChat) await loadMessages(activeChat.type, activeChat.id, true, true);
+    }
+
+    async function loadMessages(type, id, silent = false, older = false) {
+        if (silent && document.hidden) return;
+        const key = `${type}:${id}`;
+        if (messageState.key !== key) messageState = {key, messages: new Map(), latest: 0, oldest: null, hasOlder: false, loading: false};
+        const state = messageState;
+        if (state.loading) return;
+        state.loading = true;
         const container = document.getElementById('chat-messages');
-        if (!container) return;
+        if (!container) { state.loading = false; return; }
+        const oldHeight = container.scrollHeight;
+        const oldTop = container.scrollTop;
 
         if (!silent) container.innerHTML = `<div class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-northway-red"></div></div>`;
 
         try {
-            const res = await fetch(`/api/whatsapp/${type}/${encodeURIComponent(id)}/messages`);
+            const params = new URLSearchParams({limit: '50'});
+            if (older && state.oldest) params.set('before_id', state.oldest);
+            else if (state.latest) params.set('after_id', state.latest);
+            const res = await fetch(`/api/whatsapp/${type}/${encodeURIComponent(id)}/messages?${params}`);
             if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
 
             const data = await res.json();
-            console.log("Messages Data:", data);
+            if (state !== messageState || !activeChat || `${activeChat.type}:${activeChat.id}` !== key) return;
+            const initial = state.latest === 0;
+            const changed = (data.messages || []).length > 0 || (data.status_updates || []).some(update => state.messages.get(update.id)?.status !== update.status && state.messages.has(update.id));
+            if (silent && !older && !changed) return;
+            for (const msg of data.messages || []) state.messages.set(msg.id, msg);
+            for (const update of data.status_updates || []) {
+                const msg = state.messages.get(update.id);
+                if (msg) msg.status = update.status;
+            }
+            if (data.latest_id) state.latest = Math.max(state.latest, data.latest_id);
+            if (data.oldest_id) state.oldest = Math.min(state.oldest || data.oldest_id, data.oldest_id);
+            if (initial || older) state.hasOlder = data.has_more;
+            data.messages = Array.from(state.messages.values()).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp) || a.id - b.id);
 
             if (!data.messages || data.messages.length === 0) {
                 container.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Nenhuma mensagem encontrada nesta conversa.</div>`;
             } else {
                 let lastDate = null;
-                const html = data.messages.map(msg => {
+                const html = data.messages.map(raw => {
+                    const msg = {...raw, content: escapeMessage(raw.content), attachment_url: safeMediaUrl(raw.attachment_url)};
                     const msgDate = new Date(msg.timestamp);
                     const dateStr = msgDate.toLocaleDateString('pt-BR');
                     let dateHeader = '';
@@ -823,7 +874,7 @@
 
                     if (msg.type === 'image' && msg.attachment_url) {
                         messageContent = `
-                        <div class="mb-2 cursor-pointer" onclick="window.open('${msg.attachment_url}', '_blank')">
+                        <div class="mb-2 cursor-pointer" onclick="window.open(this.querySelector('img').src, '_blank', 'noopener')">
                             <img src="${msg.attachment_url}" class="rounded-lg max-w-full h-auto shadow-sm hover:opacity-90 transition-opacity" loading="lazy">
                         </div>
                         ${msg.content && msg.content !== '[FOTO]' ? `<div class="whitespace-pre-wrap break-words text-[13px] opacity-90">${msg.content}</div>` : ''}
@@ -858,13 +909,17 @@
                     </div>
                 </div>`;
                 }).join('');
-                container.innerHTML = html;
-                if (!silent) container.scrollTop = container.scrollHeight;
+                container.innerHTML = (state.hasOlder ? '<button type="button" onclick="loadOlderMessages()" class="block mx-auto my-3 text-sm text-red-600">Carregar mensagens anteriores</button>' : '') + html;
+                if (older) container.scrollTop = oldTop + container.scrollHeight - oldHeight;
+                else if (!silent || oldHeight - oldTop - container.clientHeight < 100) container.scrollTop = container.scrollHeight;
                 if (window.lucide) lucide.createIcons();
             }
         } catch (e) {
+            if (state !== messageState) return;
             console.error("Error loading messages:", e);
-            if (!silent) container.innerHTML = `<div class="text-center py-10 text-red-400">Erro ao carregar histórico: ${e.message}</div>`;
+            if (!silent) container.innerHTML = `<div class="text-center py-10 text-red-400">Erro ao carregar histórico. Tente novamente.</div>`;
+        } finally {
+            state.loading = false;
         }
     }
 
@@ -1152,13 +1207,12 @@
         if (!pipelineId || !stageId) return;
 
         try {
-            // Save visual feedback could be added here
-            await fetch(`/api/whatsapp/leads/${activeChat.id}/stage`, {
+            const response = await fetch(`/api/whatsapp/leads/${activeChat.id}/stage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pipeline_id: pipelineId, stage_id: stageId })
             });
-            // maybe toast?
+            if (!response.ok) throw new Error('Falha ao salvar etapa');
         } catch (e) {
             alert("Erro ao salvar etapa.");
         }

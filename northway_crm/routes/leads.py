@@ -107,7 +107,7 @@ def leads():
     from flask import current_app
     
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
+    per_page = max(1, min(request.args.get('per_page', 50, type=int), 100))
     # Strict filter
     query = Lead.query.filter(Lead.company_id == current_user.company_id)
     
@@ -187,7 +187,7 @@ def leads():
 @login_required
 def lead_details(id):
     lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id and lead.source != 'Raio-X Digital':
+    if lead.company_id != current_user.company_id:
         abort(403)
     
     users = User.query.filter_by(company_id=current_user.company_id).all()
@@ -301,20 +301,56 @@ def pipeline(pipeline_id=None):
     if filter_responsible:
         base_query = base_query.filter(Lead.assigned_to_id == filter_responsible)
 
-    leads_list = base_query.options(
-        db.joinedload(Lead.assigned_user),
-        db.joinedload(Lead.interactions)
-    ).all()
+    search = request.args.get('q', '').strip()[:200]
+    if search:
+        pattern = f'%{search}%'
+        base_query = base_query.filter(db.or_(Lead.name.ilike(pattern), Lead.phone.ilike(pattern), Lead.email.ilike(pattern)))
 
-    # Pre-group leads by stage for O(1) template lookup and calculate totals
-    leads_by_stage = {stage.id: [] for stage in stages}
+    # Count all matching leads, but render at most 50 cards per stage.
+    per_stage = 50
+    counts = base_query.with_entities(Lead.pipeline_stage_id, db.func.count(Lead.id), db.func.sum(Lead.estimated_value)).group_by(Lead.pipeline_stage_id).all()
+    stage_counts = {stage.id: 0 for stage in stages}
     stage_totals = {stage.id: 0.0 for stage in stages}
-
+    for stage_id, count, total in counts:
+        stage_counts[stage_id] = count
+        stage_totals[stage_id] = float(total or 0)
+    stage_pages = {stage.id: max(1, min(request.args.get(f'page_{stage.id}', 1, type=int), max(1, (stage_counts[stage.id] + per_stage - 1) // per_stage))) for stage in stages}
+    ranked = base_query.with_entities(Lead.id.label('id'), Lead.pipeline_stage_id.label('stage_id'),
+        db.func.row_number().over(partition_by=Lead.pipeline_stage_id, order_by=(Lead.created_at.desc(), Lead.id.desc())).label('position')).subquery()
+    ranges = [db.and_(ranked.c.stage_id == stage.id,
+        ranked.c.position > (stage_pages[stage.id] - 1) * per_stage,
+        ranked.c.position <= stage_pages[stage.id] * per_stage) for stage in stages]
+    selected = db.session.query(ranked.c.id).filter(db.or_(*ranges)) if ranges else db.session.query(ranked.c.id).filter(db.false())
+    leads_list = Lead.query.filter(Lead.id.in_(selected), Lead.company_id == current_user.company_id).options(db.joinedload(Lead.assigned_user)).order_by(Lead.created_at.desc(), Lead.id.desc()).all()
+    latest = dict(db.session.query(Interaction.lead_id, db.func.max(Interaction.created_at)).filter(
+        Interaction.company_id == current_user.company_id,
+        Interaction.lead_id.in_([lead.id for lead in leads_list])
+    ).group_by(Interaction.lead_id).all()) if leads_list else {}
+    from sqlalchemy import case
+    from models import get_now_br
+    progress = {}
+    for lead_id, total, completed, overdue in db.session.query(
+        Task.lead_id, db.func.count(Task.id),
+        db.func.sum(case((Task.status.in_(['concluida', 'completa', 'feito']), 1), else_=0)),
+        db.func.sum(case((db.and_(Task.status == 'pendente', Task.due_date < get_now_br()), 1), else_=0))
+    ).filter(Task.company_id == current_user.company_id, Task.lead_id.in_([l.id for l in leads_list]),
+             db.or_(Task.is_recurring.is_(False), Task.is_recurring.is_(None))).group_by(Task.lead_id).all():
+        progress[lead_id] = {'total': total, 'completed': completed, 'percent': int(completed / total * 100), 'overdue': overdue}
+    leads_by_stage = {stage.id: [] for stage in stages}
     for lead in leads_list:
-        if lead.pipeline_stage_id in leads_by_stage:
-            leads_by_stage[lead.pipeline_stage_id].append(lead)
-            stage_totals[lead.pipeline_stage_id] += float(lead.estimated_value or 0)
-        
+        lead._task_progress = progress.get(lead.id, {'total': 0, 'completed': 0, 'percent': 0, 'overdue': 0})
+        lead._last_activity_at = max(lead.created_at, latest.get(lead.id) or lead.created_at)
+        leads_by_stage[lead.pipeline_stage_id].append(lead)
+    stage_navigation = {}
+    for stage in stages:
+        params = request.args.to_dict()
+        page = stage_pages[stage.id]
+        params[f'page_{stage.id}'] = page - 1
+        previous = url_for('leads.pipeline', pipeline_id=pipeline_id, **params) if page > 1 else None
+        params[f'page_{stage.id}'] = page + 1
+        following = url_for('leads.pipeline', pipeline_id=pipeline_id, **params) if page * per_stage < stage_counts[stage.id] else None
+        stage_navigation[stage.id] = {'page': page, 'previous': previous, 'next': following}
+
     # Diagnostic Form Instance for Link Generation (Access Control)
     from models import LibraryTemplate, LibraryTemplateGrant, FormInstance
     diag_template = LibraryTemplate.query.filter_by(key="diagnostico_northway_v1").first()
@@ -338,6 +374,7 @@ def pipeline(pipeline_id=None):
                           stages=stages, 
                           leads_by_stage=leads_by_stage,
                           stage_totals=stage_totals,
+                          stage_counts=stage_counts, stage_navigation=stage_navigation,
                           diag_instance=diag_instance)
 
 @leads_bp.route('/leads/<int:id>/move/<direction>', methods=['POST'])
@@ -459,10 +496,16 @@ def bulk_move_pipeline():
 @leads_bp.route('/leads/<int:id>/convert', methods=['POST'])
 @login_required
 def convert_lead(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
-        
+    # Serialize conversions of the same lead on PostgreSQL before checking state.
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).with_for_update().first_or_404()
+    existing = Client.query.filter_by(lead_id=lead.id, company_id=current_user.company_id).first()
+    if existing:
+        return redirect(url_for('clients.client_details', id=existing.id))
+    if lead.client_id:
+        existing = Client.query.filter_by(id=lead.client_id, company_id=current_user.company_id).first()
+        if existing:
+            return redirect(url_for('clients.client_details', id=existing.id))
+
     service = request.form.get('service')
     contract_type = request.form.get('contract_type')
     start_date_str = request.form.get('start_date')

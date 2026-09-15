@@ -1,6 +1,11 @@
 import pytest
 import os
 import sys
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "sqlite:///:memory:")
+os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+os.environ["SECRET_KEY"] = "test-secret"
+os.environ["SUPABASE_URL"] = ""
+os.environ["SUPABASE_KEY"] = ""
 
 # Add the app directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -10,16 +15,17 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 @pytest.fixture(name="app")
 def app_fixture():
     # Force testing config
-    os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
+    os.environ['DATABASE_URL'] = TEST_DATABASE_URL
     os.environ['SECRET_KEY'] = 'test-secret'
     os.environ['ASAAS_WEBHOOK_TOKEN'] = 'test-asaas-token'
     
     from app import create_app
     # Set it in config directly instead of just env
-    app = create_app()
-    app.config.update({
+    app = create_app({
         "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+        "RATELIMIT_ENABLED": False,
+        "CRON_SECRET": "test-cron-secret",
+        "SQLALCHEMY_DATABASE_URI": TEST_DATABASE_URL,
         "WTF_CSRF_ENABLED": False,
         "ASAAS_WEBHOOK_TOKEN": "test-asaas-token"
     })
@@ -47,7 +53,7 @@ def auth_client(client, app):
     from models import db, User, Company, ROLE_ADMIN
     with app.app_context():
         # Create a test company
-        company = Company(name="Test Company", plan_type="monthly")
+        company = Company(name="Test Company", plan_type="monthly", payment_status="active", subscription_status="active", features={"prospecting": True, "whatsapp": True})
         db.session.add(company)
         db.session.commit()
         

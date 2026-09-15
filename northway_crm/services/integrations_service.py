@@ -3,7 +3,6 @@ import hashlib
 import json
 import uuid
 import requests
-import threading
 from datetime import datetime
 from flask import current_app, request, g
 from models import db, IntegrationApiKey, IntegrationWebhook, IntegrationLog, get_now_br
@@ -91,54 +90,28 @@ class IntegrationsService:
 
     @staticmethod
     def dispatch_webhooks(company_id, event_name, payload):
-        """
-        Finds all active webhooks for a company and event,
-        and dispatches them in the background.
-        """
-        # Run in a separate thread to avoid blocking the main request
-        thread = threading.Thread(
-            target=IntegrationsService._dispatch_webhooks_sync,
-            args=(company_id, event_name, payload)
-        )
-        thread.start()
+        """Persist deliveries; the authenticated worker sends them outside requests."""
+        from models import WebhookDelivery
+        webhooks = IntegrationWebhook.query.filter_by(company_id=company_id, status='active').all()
+        for webhook in webhooks:
+            if event_name in (webhook.events or []) or '*' in (webhook.events or []):
+                db.session.add(WebhookDelivery(company_id=company_id, webhook_id=webhook.id,
+                    event_name=event_name, payload=payload))
+        db.session.commit()
 
     @staticmethod
-    def _dispatch_webhooks_sync(company_id, event_name, payload):
-        """Synchronous part of webhook dispatch (run in thread)."""
-        # Need app context for DB access in thread
-        # Note: This requires the caller to pass the app or we use a global app reference
-        # For simplicity in Flask, we can use current_app._get_current_object() if called correctly
-        # But since we are in a thread, we'll need to create a new app context.
-        from northway_crm.app import create_app
-        app = create_app()
-        
-        with app.app_context():
-            webhooks = IntegrationWebhook.query.filter_by(
-                company_id=company_id, 
-                status='active'
-            ).all()
-
-            for webhook in webhooks:
-                # Check if event is subscribed
-                subscribed_events = webhook.events or []
-                if event_name not in subscribed_events and '*' not in subscribed_events:
-                    continue
-
-                IntegrationsService._send_single_webhook(webhook, event_name, payload)
-
-    @staticmethod
-    def _send_single_webhook(webhook, event_name, payload):
+    def _send_single_webhook(webhook, event_name, payload, request_id=None, event_timestamp=None):
         import hmac
         import hashlib
         import time
 
-        request_id = str(uuid.uuid4())
+        request_id = request_id or str(uuid.uuid4())
         start_time = time.time()
         
         # Prepare Payload
         body = {
             "event": event_name,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": event_timestamp or datetime.utcnow().isoformat(),
             "company_id": webhook.company_id,
             "request_id": request_id,
             "data": payload
@@ -189,3 +162,5 @@ class IntegrationsService:
             execution_time=execution_time,
             request_id=request_id
         )
+
+        return success

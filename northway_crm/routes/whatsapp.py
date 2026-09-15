@@ -660,14 +660,36 @@ def get_conversations():
         try:
             # Query conversations, but handle potential missing columns gracefully
             # We use a safer query first to check if the table exists
-            conversations = WhatsappConversation.query.filter_by(instance_id=instance.id).order_by(WhatsappConversation.updated_at.desc()).all()
+            page = max(1, request.args.get('page', 1, type=int))
+            query = WhatsappConversation.query.filter_by(instance_id=instance.id, company_id=current_user.company_id)
+            kind = request.args.get('type', 'all')
+            if kind == 'lead':
+                query = query.filter(WhatsappConversation.lead_id.isnot(None))
+            elif kind == 'client':
+                query = query.filter(WhatsappConversation.lead_id.is_(None), WhatsappConversation.client_id.isnot(None))
+            elif kind == 'atendimento':
+                query = query.filter(WhatsappConversation.lead_id.is_(None), WhatsappConversation.client_id.is_(None))
+            search = request.args.get('q', '').strip()[:200]
+            if search:
+                pattern = f'%{search}%'
+                lead_ids = db.session.query(Lead.id).filter(Lead.company_id == current_user.company_id, Lead.name.ilike(pattern))
+                client_ids = db.session.query(Client.id).filter(Client.company_id == current_user.company_id, Client.name.ilike(pattern))
+                query = query.filter(db.or_(WhatsappConversation.name.ilike(pattern), WhatsappConversation.remote_jid.ilike(pattern),
+                    WhatsappConversation.lead_id.in_(lead_ids), WhatsappConversation.client_id.in_(client_ids)))
+            rows = query.order_by(WhatsappConversation.updated_at.desc(), WhatsappConversation.id.desc()).offset((page - 1) * 50).limit(51).all()
+            has_more = len(rows) > 50
+            conversations = rows[:50]
+            lead_names = dict(db.session.query(Lead.id, Lead.name).filter(Lead.company_id == current_user.company_id,
+                Lead.id.in_([c.lead_id for c in conversations if c.lead_id])).all())
+            client_names = dict(db.session.query(Client.id, Client.name).filter(Client.company_id == current_user.company_id,
+                Client.id.in_([c.client_id for c in conversations if c.client_id])).all())
         except Exception as query_e:
             current_app.logger.error(f"Inbox Query Failure: {query_e}")
             return jsonify({
                 'conversations': [],
                  'debug_error': f"Query Error: {str(query_e)}",
-                 'repair_url': f'/sys-admin/sync-db?secret=northway_sync_2026'
-            }), 200 
+                 'error': 'Não foi possível carregar as conversas.'
+            }), 503
             
         data = []
         for c in conversations:
@@ -696,20 +718,10 @@ def get_conversations():
                 
                 # Prioriza nome do CRM (lead/cliente) sobre o nome salvo na conversa
                 display_name = getattr(c, 'name', '') or ''
-                if contact_type == 'lead' and getattr(c, 'lead_id', None):
-                    try:
-                        lead_obj = Lead.query.get(c.lead_id)
-                        if lead_obj and lead_obj.name:
-                            display_name = lead_obj.name
-                    except Exception:
-                        pass
-                elif contact_type == 'client' and getattr(c, 'client_id', None):
-                    try:
-                        client_obj = Client.query.get(c.client_id)
-                        if client_obj and client_obj.name:
-                            display_name = client_obj.name
-                    except Exception:
-                        pass
+                if contact_type == 'lead':
+                    display_name = lead_names.get(c.lead_id) or display_name
+                elif contact_type == 'client':
+                    display_name = client_names.get(c.client_id) or display_name
                 if not display_name:
                     display_name = remote_jid.split('@')[0] if '@' in str(remote_jid) else 'Desconhecido'
 
@@ -730,20 +742,12 @@ def get_conversations():
                 current_app.logger.warning(f"Error processing conversation item: {item_e}")
                 continue
             
-        return jsonify({'conversations': data})
+        return jsonify({'conversations': data, 'next_page': page + 1 if has_more else None})
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
         current_app.logger.error(f"Inbox Fatal Error: {e}\n{error_details}")
-        # Return 200 with error info so the UI can show the ACTUAL cause
-        return jsonify({
-            'error': f"BACKEND_ERROR: {str(e)}", 
-            'conversations': [], 
-            'fatal': True,
-            'stack': error_details,
-            'repair_message': 'Por favor, execute o link de sincronização para garantir que o banco de dados está atualizado.',
-            'repair_url': '/sys-admin/sync-db?secret=northway_sync_2026'
-        }), 200
+        return jsonify({'error': 'Não foi possível carregar as conversas.'}), 503
 
 @whatsapp_bp.route('/api/whatsapp/<string:type>/<string:contact_id>/messages', methods=['GET'])
 @whatsapp_bp.route('/api/whatsapp/lead/<int:id>/messages', methods=['GET'], endpoint='get_lead_messages_legacy')
@@ -788,9 +792,32 @@ def get_history(type='lead', contact_id=None, id=None):
     if not conv:
         return jsonify({'messages': []})
         
-    msgs = WhatsappMessage.query.filter_by(conversation_id=conv.id).order_by(WhatsappMessage.timestamp.asc()).all()
+    limit = max(1, min(request.args.get('limit', 50, type=int), 100))
+    before = request.args.get('before_id', type=int)
+    after = request.args.get('after_id', type=int)
+    query = WhatsappMessage.query.filter_by(conversation_id=conv.id, company_id=current_user.company_id)
+    if before:
+        query = query.filter(WhatsappMessage.id < before)
+    if after:
+        query = query.filter(WhatsappMessage.id > after)
+    rows = query.order_by(WhatsappMessage.id.asc() if after else WhatsappMessage.id.desc()).limit(limit + 1).all()
+    has_more = len(rows) > limit
+    msgs = rows[:limit]
+    if not after:
+        msgs.reverse()
+    updates = []
+    if after:
+        updates = WhatsappMessage.query.with_entities(WhatsappMessage.id, WhatsappMessage.status).filter(
+            WhatsappMessage.conversation_id == conv.id, WhatsappMessage.company_id == current_user.company_id,
+            WhatsappMessage.id <= after
+        ).order_by(WhatsappMessage.id.desc()).limit(100).all()
+
     
     return jsonify({
+        'has_more': has_more,
+        'oldest_id': min((m.id for m in msgs), default=None),
+        'latest_id': max((m.id for m in msgs), default=after),
+        'status_updates': [{'id': row.id, 'status': row.status} for row in updates],
         'messages': [{
             'id': m.id,
             'message_id': m.message_id,
@@ -1168,4 +1195,25 @@ def update_notes(type, id):
     
     obj.notes = content
     db.session.commit()
+    return jsonify({'success': True})
+
+
+@whatsapp_bp.route('/api/whatsapp/leads/<int:lead_id>/stage', methods=['POST'])
+@login_required
+def update_lead_stage(lead_id):
+    from models import PipelineStage
+    from tasks_utils import generate_tasks_for_stage, process_funnel_automations
+    payload = request.get_json(silent=True) or {}
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+    stage = PipelineStage.query.filter_by(id=payload.get('stage_id'), pipeline_id=payload.get('pipeline_id'),
+                                         company_id=current_user.company_id).first()
+    if not stage:
+        return jsonify({'error': 'Etapa inválida'}), 400
+    if lead.pipeline_stage_id == stage.id:
+        return jsonify({'success': True})
+    lead.pipeline_id = stage.pipeline_id
+    lead.pipeline_stage_id = stage.id
+    db.session.commit()
+    generate_tasks_for_stage(lead.id, stage.id)
+    process_funnel_automations(lead.id, stage.id)
     return jsonify({'success': True})

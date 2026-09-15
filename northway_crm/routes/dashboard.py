@@ -45,13 +45,13 @@ def home():
         
         today_stats = {
             'leads_new': Lead.query.filter(Lead.company_id == company_id, Lead.created_at >= start_of_day).count(),
-            'tasks_done': Task.query.filter(Task.company_id == company_id, Task.assigned_to_id == user_id, Task.status == 'completa', Task.completed_at >= start_of_day).count()
+            'tasks_done': Task.query.filter(Task.company_id == company_id, Task.assigned_to_id == user_id, Task.status.in_(['completa', 'concluida']), Task.completed_at >= start_of_day).count()
         }
         
         # 4. Onboarding (Defensive Coding)
         try:
-            step_leads = Lead.query.filter_by(company_id=company_id).count() > 0
-            step_clients = Client.query.filter_by(company_id=company_id).count() > 0
+            step_leads = lead_count > 0
+            step_clients = client_count > 0
             step_integrations = Integration.query.filter(Integration.company_id == company_id, Integration.is_active.is_(True)).count() > 0
             
             steps = [
@@ -207,16 +207,9 @@ def get_funnel_data(pipeline_id):
     if start_date:
         base_query = base_query.filter(Lead.created_at >= start_date)
         
-    leads = base_query.all()
-    
-    # Map leads to stage IDs
-    for stage in stages:
-        raw_counts[stage.id] = 0
-        
-    for lead in leads:
-        if lead.pipeline_stage_id in raw_counts:
-            raw_counts[lead.pipeline_stage_id] += 1
-            
+    counts = base_query.with_entities(Lead.pipeline_stage_id, db.func.count(Lead.id)).group_by(Lead.pipeline_stage_id).all()
+    raw_counts = dict(counts)
+
     # 3. Calculate Cumulative (Waterfall) Counts
     # If a lead is in Stage 3, they count for Stage 3, Stage 2, and Stage 1.
     funnel_data = {'labels': [], 'data': []}
@@ -241,7 +234,7 @@ def get_today_tasks(company_id, user_id):
         Task.company_id == company_id, 
         Task.assigned_to_id == user_id, 
         Task.status == 'pendente',
-        Task.due_date <= now
+        Task.due_date < now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     ).all()
 
 
@@ -259,193 +252,38 @@ def get_today_stats(company_id, user_id):
     return {
         'new_leads_today': 0,
         'conversions_today': 0,
-        'completed_tasks_today': Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, status='completa')\
+        'completed_tasks_today': Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, ).filter(Task.status.in_(['completa', 'concluida']))\
                                       .filter(Task.due_date >= date.today()).count()
     }
 
 
 def get_bucket_key(date_obj, period):
-    if not date_obj: return None, ''
-    
-    if period == 'today':
-        return date_obj.strftime('%Y-%m-%d-%H'), date_obj.strftime('%H:00')
-    elif period in ['daily', 'last_7_days']:
-        return date_obj.strftime('%Y-%m-%d'), date_obj.strftime('%d/%m')
-    elif period == 'weekly':
-        # Start of week
-        start = date_obj - timedelta(days=date_obj.weekday())
-        return start.strftime('%Y-%W'), start.strftime('%d/%m')
-    elif period == 'monthly':
-        return date_obj.strftime('%Y-%m'), date_obj.strftime('%b/%Y')
-    else: # bimonthly, quarterly, etc - treat as monthly for now or custom
-        return date_obj.strftime('%Y-%m'), date_obj.strftime('%m/%Y')
+    from services.chart_service import bucket_key
+    return bucket_key(date_obj, period)
+
 
 @dashboard_bp.route('/api/dashboard/chart-data')
 @login_required
 def get_chart_data():
     if not current_user.company_id:
         abort(403)
-
+    from services.chart_service import chart_data
     period = request.args.get('period', 'monthly')
-    now = datetime.now()
-    company_id = current_user.company_id
-    
-    start_date = now - timedelta(days=365) # Default
-    
-    if period == 'today':
-        start_date = datetime(now.year, now.month, now.day)
-    elif period == 'last_7_days':
-        start_date = now - timedelta(days=7)
-    elif period == 'daily':
-        start_date = now - timedelta(days=30)
-    elif period == 'weekly':
-        start_date = now - timedelta(weeks=12)
-    elif period == 'monthly':
-        start_date = now - timedelta(days=365)
-    elif period == 'bimonthly':
-        start_date = now - timedelta(days=730)
-    elif period == 'quarterly':
-        start_date = now - timedelta(days=730)
-    elif period == 'semiannual':
-         start_date = now - timedelta(days=1095)
-    elif period == 'annual':
-        start_date = now - timedelta(days=1825)
-    elif period == 'all_time':
-        # Find the oldest lead/client to establish a start_date for buckets
-        oldest_lead = Lead.query.filter_by(company_id=company_id).order_by(Lead.created_at.asc()).first()
-        if oldest_lead:
-            start_date = oldest_lead.created_at
-        else:
-            start_date = now - timedelta(days=365)
-    # Fallback to monthly remains same
-
-    # Calculate Buckets
-    all_buckets = []
-    data_buckets = {} # Initialize!
-    
-    current = start_date
-    while current <= now:
-        sort_key, label = get_bucket_key(current, period)
-        if not all_buckets or all_buckets[-1][0] != sort_key:
-            all_buckets.append((sort_key, label))
-        
-        # Increment
-        if period == 'today': current += timedelta(hours=1)
-        elif period in ['daily', 'last_7_days']: current += timedelta(days=1)
-        elif period == 'weekly': current += timedelta(weeks=1)
-        elif period == 'monthly': 
-            next_month = current.month + 1 if current.month < 12 else 1
-            next_year = current.year + 1 if current.month == 12 else current.year
-            current = current.replace(year=next_year, month=next_month, day=1)
-        else:
-             current += timedelta(days=30)
-             
-    from models import db, Lead, Client # Local import
-    from sqlalchemy import func
-
-    # Initialize dictionary
-    for sort_key, label in all_buckets:
-        if sort_key not in data_buckets:
-            data_buckets[sort_key] = {'label': label, 'leads': 0, 'sales': 0}
-
-    # Aggregate Leads in Database
-    # Group by the date format required for the bucket key
-    if period == 'monthly':
-        # Group by Year and Month (YYYY-MM)
-        date_trunc_func = func.to_char(Lead.created_at, 'YYYY-MM')
-    elif period in ['daily', 'last_7_days']:
-        # Group by Year, Month, Day (YYYY-MM-DD)
-        date_trunc_func = func.to_char(Lead.created_at, 'YYYY-MM-DD')
-    elif period == 'today':
-        # Group by Year, Month, Day, Hour (YYYY-MM-DD-HH24)
-        date_trunc_func = func.to_char(Lead.created_at, 'YYYY-MM-DD-HH24')
-    else:
-        # Fallback to monthly grouping for complex periods
-        date_trunc_func = func.to_char(Lead.created_at, 'YYYY-MM')
-
-    # Lead Query
-    lead_counts = db.session.query(
-        date_trunc_func.label('period_key'),
-        func.count(Lead.id).label('total')
-    ).filter(
-        Lead.company_id == company_id,
-        Lead.created_at >= start_date
-    ).group_by(
-        'period_key'
-    ).all()
-
-    # Client Query (using start_date)
-    if period == 'monthly':
-        client_date_trunc_func = func.to_char(Client.start_date, 'YYYY-MM')
-    elif period in ['daily', 'last_7_days']:
-        client_date_trunc_func = func.to_char(Client.start_date, 'YYYY-MM-DD')
-    elif period == 'today':
-        # Client start_date is usually Date, but cast just in case
-        client_date_trunc_func = func.to_char(Client.start_date, 'YYYY-MM-DD-00')
-    else:
-        client_date_trunc_func = func.to_char(Client.start_date, 'YYYY-MM')
-
-    client_counts = db.session.query(
-        client_date_trunc_func.label('period_key'),
-        func.count(Client.id).label('total')
-    ).filter(
-        Client.company_id == company_id,
-        Client.start_date >= start_date.date()
-    ).group_by(
-        'period_key'
-    ).all()
-
-    # Map grouped results to our initialized buckets
-    for r in lead_counts:
-        # Match PostgreSQL to_char output with Python bucket keys
-        key = str(r.period_key)
-        # Handle week/quarter edge cases by falling back to python iteration if key doesn't exactly match
-        if key in data_buckets:
-            data_buckets[key]['leads'] = r.total
-        else:
-            # Fallback for complex periods: if DB key doesn't perfectly align with Python bucket string, 
-            # we iterate (this usually only happens for 'weekly' which is complex)
-            pass
-
-    for r in client_counts:
-        key = str(r.period_key)
-        if key in data_buckets:
-            data_buckets[key]['sales'] = r.total
-
-    # Due to SQLite not supporting `to_char` and weekly/bimonthly complexities,
-    # as a fallback for non-postgres environments or complex buckets, we do a hybrid approach:
-    # If the DB returns nothing (due to dialect errors), we gracefully fall back to the old method.
-    if db.engine.name == 'sqlite' or period in ['weekly', 'bimonthly', 'quarterly', 'semiannual', 'annual']:
-        # Clear buckets (in case of partial fail)
-        for k in data_buckets:
-            data_buckets[k]['leads'] = 0
-            data_buckets[k]['sales'] = 0
-            
-        leads = Lead.query.filter(Lead.company_id == company_id, Lead.created_at >= start_date).all()
-        clients = Client.query.filter(Client.company_id == company_id, Client.start_date >= start_date.date()).all()
-        for l in leads:
-            sort_key, label = get_bucket_key(l.created_at, period)
-            if sort_key in data_buckets: data_buckets[sort_key]['leads'] += 1
-        for c in clients:
-            sort_key, label = get_bucket_key(c.start_date, period)
-            if sort_key in data_buckets: data_buckets[sort_key]['sales'] += 1
-
-    sorted_keys = sorted(data_buckets.keys())
-    return api_response(data={
-        'labels': [data_buckets[k]['label'] for k in sorted_keys],
-        'leads': [data_buckets[k]['leads'] for k in sorted_keys],
-        'sales': [data_buckets[k]['sales'] for k in sorted_keys]
-    })
+    try:
+        data = chart_data(current_user.company_id, period)
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    return api_response(data=data)
 
 @dashboard_bp.route('/api/trigger-automation', methods=['POST'])
 @login_required
 def trigger_automation():
-    if getattr(current_user, 'role', '') not in ['admin', 'manager']:
+    if getattr(current_user, 'role', '') not in ['admin', 'gestor']:
         return jsonify({"success": False, "error": "Unauthorized"}), 403
         
     from services.automation_service import AutomationService
     try:
-        AutomationService.check_leads_followup()
+        AutomationService.check_leads_followup(current_user.company_id)
         return jsonify({"success": True, "message": "Automation cadence checks triggered successfully"}), 200
     except Exception as e:
         current_app.logger.error(f"❌ Error triggering cadence check via API: {e}")

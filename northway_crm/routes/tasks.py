@@ -53,7 +53,7 @@ def team_execution():
     # Check permissions (manager/admin)
     # MVP: Allow everyone for now or check role
     if not current_user.role in ['admin', 'gestor']:
-         pass # Maybe restrict access later
+         return jsonify({'error': 'Unauthorized'}), 403
          
     users = User.query.filter_by(company_id=current_user.company_id).all()
     return render_template('tasks/team_execution.html', users=users)
@@ -73,6 +73,9 @@ def get_kanban_data():
     if user_id != current_user.id:
          if current_user.role not in ['admin', 'gestor']:
              return jsonify({'error': 'Unauthorized'}), 403
+
+    if not User.query.filter_by(id=user_id, company_id=current_user.company_id).first():
+        return jsonify({'error': 'Usuário não encontrado'}), 404
 
     # Apply strategic auto-urgency rules (Debounced - 5 mins)
     from flask import session
@@ -115,7 +118,7 @@ def get_kanban_data():
             except ValueError:
                 filters[d_key] = None
 
-    kanban_data = TaskService.get_kanban_tasks(user_id, filters=filters)
+    kanban_data = TaskService.get_kanban_tasks(user_id, current_user.company_id, filters=filters)
     
     # Serialize tasks
     # We could do this in Service, but doing here for flexibility

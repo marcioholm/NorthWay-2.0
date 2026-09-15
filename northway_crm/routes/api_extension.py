@@ -544,7 +544,7 @@ def get_whatsapp_queue(current_user):
     """Returns pending automated messages for the company."""
     from services.automation_service import AutomationService
     try:
-        AutomationService.check_leads_followup()
+        AutomationService.check_leads_followup(current_user.company_id)
     except Exception as e:
         print(f"Error triggering cadence check in queue: {e}")
 

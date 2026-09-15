@@ -4,7 +4,7 @@ from services.task_service import TaskService
 
 class AutomationService:
     @staticmethod
-    def check_leads_followup():
+    def check_leads_followup(company_id):
         """
         Main logic for the BDR cadence.
         Refactored to pull steps from AutomationRule in the database.
@@ -15,6 +15,7 @@ class AutomationService:
         
         # 1. Fetch all leads that are not won/lost
         leads = Lead.query.filter(
+            Lead.company_id == company_id,
             Lead.status != 'won', 
             Lead.status != 'lost'
         ).all()

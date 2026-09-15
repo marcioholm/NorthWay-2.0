@@ -6,7 +6,7 @@ except ImportError:
     pass # In production (Vercel), env vars are usually injected directly, so this is fine.
 
 from datetime import datetime, date, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Blueprint
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, Blueprint, g
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, text
@@ -22,7 +22,7 @@ from flask_cors import CORS
 from extensions import limiter
 import logging
 
-def create_app():
+def create_app(test_config=None):
     # CRITICAL: Set instance path BEFORE Flask initialization
     # This prevents OSError on Vercel's read-only filesystem
     os.environ.setdefault('FLASK_INSTANCE_PATH', '/tmp')
@@ -43,6 +43,11 @@ def create_app():
         except:
              print("⚠️ CORS/Flask-Cors not available. Skipping.")
 
+        @app.before_request
+        def start_request_timer():
+            import time
+            g.request_started_at = time.perf_counter()
+
         @app.after_request
         def add_security_headers(response):
             response.headers['X-Frame-Options'] = 'SAMEORIGIN'
@@ -51,10 +56,10 @@ def create_app():
             response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
             
             # Cache optimization for static assets and API
-            if request.endpoint and (request.endpoint.startswith('static') or request.path.startswith('/api')):
+            if request.endpoint and request.endpoint.startswith('static'):
                 response.headers['Cache-Control'] = 'public, max-age=3600'
-            elif request.endpoint and request.endpoint not in ['auth.login', 'auth.register']:
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            elif request.path.startswith(('/api/', '/internal/', '/tasks/api/')) or current_user.is_authenticated:
+                response.headers['Cache-Control'] = 'private, no-store'
                 response.headers['Pragma'] = 'no-cache'
                 response.headers['Expires'] = '0'
             
@@ -83,21 +88,35 @@ def create_app():
                 }
                 app.logger.warning(f"AUDIT_LOG: {json.dumps(log_data)}")
             
+            if os.environ.get('PERFORMANCE_LOGGING') == '1':
+                import time
+                elapsed = (time.perf_counter() - g.request_started_at) * 1000
+                app.logger.info('REQUEST_METRIC %s', json.dumps({
+                    'endpoint': request.endpoint, 'method': request.method,
+                    'status': response.status_code, 'duration_ms': round(elapsed, 2),
+                    'response_bytes': response.content_length
+                }))
             return response
 
         # Rate Limiting Configuration
-        limiter.init_app(app)
-        app.limiter = limiter
 
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
         
         print("🚀 APP STARTUP: VERSION VERCEL-FIX-V6 (Auto-Migrate Contract)")
         
         # --- CONFIGURATION ---
-        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'northway-crm-secure-key')
+        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+        if test_config:
+            app.config.update(test_config)
+        if not app.config['SECRET_KEY']:
+            raise RuntimeError('SECRET_KEY must be configured')
+        limiter.init_app(app)
+        app.limiter = limiter
         
         # Database Setup with Resilience
-        database_url = os.environ.get('DATABASE_URL')
+        database_url = (test_config or {}).get('SQLALCHEMY_DATABASE_URI') or os.environ.get('DATABASE_URL')
+        if os.environ.get('VERCEL') and not database_url:
+            raise RuntimeError('DATABASE_URL must be configured in production')
         
         @app.route('/api/debug/health')
         @login_required
@@ -292,7 +311,7 @@ def create_app():
         def unauthorized():
             if request.path.startswith('/api/') or request.path.startswith('/internal/') or \
                request.path.startswith('/prospecting/') or request.path.startswith('/leads/') or \
-               request.is_xhr or request.accept_mimetypes.best == 'application/json':
+               request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.best == 'application/json':
                 return jsonify({'success': False, 'error': 'Autenticação necessária'}), 401
             return redirect(url_for('auth.login'))
 
@@ -312,7 +331,11 @@ def create_app():
         @app.context_processor
         def inject_globals():
             now_br = datetime.utcnow() - timedelta(hours=3)
-            return dict(pending_tasks_count=0, now=now_br, dict=dict)
+            beta_modules = {'whatsapp': 'WhatsApp', 'prospecting': 'Prospecção com IA',
+                            'ai_settings': 'Configurações de IA'}
+            module = (request.endpoint or '').split('.')[0]
+            return dict(pending_tasks_count=0, now=now_br, dict=dict,
+                        beta_module=beta_modules.get(module))
 
         # --- UNIFIED RESILIENT MIDDLEWARE ---
         @app.before_request
@@ -392,7 +415,7 @@ def create_app():
         @app.errorhandler(404)
         def not_found_error(error):
             api_paths = ('/api/', '/internal/', '/prospecting/', '/leads/')
-            if request.path.startswith(api_paths) or request.is_xhr or \
+            if request.path.startswith(api_paths) or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
                request.accept_mimetypes.best == 'application/json':
                 return jsonify({'success': False, 'error': 'Recurso não encontrado'}), 404
             try:
@@ -433,34 +456,6 @@ def create_app():
             except Exception as e:
                 import traceback
                 return jsonify({'error': str(e), 'traceback': traceback.format_exc(), 'partial_info': debug_info}), 500
-
-        @app.route('/debug_test_template')
-        def debug_test_template():
-            from models import Client, User, Transaction, ProcessTemplate, DriveFolderTemplate
-            from datetime import date
-            from flask_login import login_user
-            
-            # Find a user to "login" for this debug session
-            user = User.query.first()
-            if user:
-                login_user(user)
-            
-            client = Client.query.first()
-            if not client: return "No client found", 404
-            users = User.query.limit(5).all()
-            return render_template('client_details.html',
-                                  client=client,
-                                  mrr=1000.0,
-                                  today=date.today(),
-                                  client_txs=[],
-                                  total_paid=0.0,
-                                  total_pending=0.0,
-                                  total_overdue=0.0,
-                                  process_templates=[],
-                                  users=users,
-                                  diag_instance=None,
-                                  drive_templates=[],
-                                  is_drive_connected=False)
 
         @app.route('/verify-deploy-2026')
         def verify_deploy():
@@ -574,56 +569,11 @@ Sitemap: {base_url}/sitemap.xml
             return response
 
 
-        @app.route('/master/migrate-integrations')
-        def migrate_integrations():
-            secret = request.args.get('secret')
-            if secret != os.environ.get('MIGRATION_SECRET', 'northway_sync_2026'):
-                return "Unauthorized", 403
-            try:
-                from sqlalchemy import text
-                db.session.execute(text("ALTER TABLE prospecting_integrations ADD COLUMN IF NOT EXISTS display_name VARCHAR(100)"))
-                db.session.commit()
-                return "Migration completed: display_name added to prospecting_integrations"
-            except Exception as e:
-                return str(e), 500
-
-        @app.route('/master/migrate-campaign-stats')
-        def migrate_campaign_stats():
-            secret = request.args.get('secret')
-            if secret != os.environ.get('MIGRATION_SECRET', 'northway_sync_2026'):
-                return "Unauthorized", 403
-            try:
-                from sqlalchemy import text
-                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_leads INTEGER DEFAULT 0"))
-                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_queued INTEGER DEFAULT 0"))
-                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_sent INTEGER DEFAULT 0"))
-                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_delivered INTEGER DEFAULT 0"))
-                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS total_failed INTEGER DEFAULT 0"))
-                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMP"))
-                db.session.execute(text("ALTER TABLE prospecting_campaigns ADD COLUMN IF NOT EXISTS n8n_workflow_id VARCHAR(100)"))
-                db.session.commit()
-                return "Migration completed: campaign stats columns added"
-            except Exception as e:
-                return str(e), 500
-
-        @app.route('/sys-admin/sync-db')
-        def admin_sync_db():
-            secret = request.args.get('secret')
-            is_secret_valid = secret == os.environ.get('MIGRATION_SECRET', 'northway_sync_2026')
-            
-            if not is_secret_valid:
-                if not current_user.is_authenticated:
-                    return redirect(url_for('login'))
-                if not getattr(current_user, 'is_super_admin', False):
-                    return jsonify({"error": "Unauthorized"}), 403
-            
-            try:
-                from database_sync import sync_database
-                results = sync_database()
-                return jsonify({"status": "success", "message": "Database Sync Successful", "results": results})
-            except Exception as e:
-                import traceback
-                return f"<h1>❌ Sync Failed</h1><pre>{traceback.format_exc()}</pre>", 500
+        @app.cli.command('db-sync')
+        def db_sync_command():
+            """Apply maintenance schema changes outside the public HTTP surface."""
+            import click
+            click.echo(sync_database())
 
         # --- REGISTER BLUEPRINTS ---
         # Defensive loading: one failing blueprint won't crash the whole app
@@ -683,9 +633,10 @@ Sitemap: {base_url}/sitemap.xml
                 # Fallback log for Vercel
                 with open('/tmp/blueprint_error.log', 'a') as f:
                     f.write(error_msg + "\n")
+                raise
                 
         # --- REGISTRO EXPLÍCITO: internal_api_bp com prefixo /internal ---
-        from northway_crm.routes.internal_api import internal_api_bp
+        from routes.internal_api import internal_api_bp
         app.register_blueprint(internal_api_bp, url_prefix='/internal')
 
         # --- GLOBAL ERROR HANDLER ---
@@ -696,18 +647,18 @@ Sitemap: {base_url}/sitemap.xml
             error_msg = str(e)
             app.logger.error(f"500 ERROR: {error_msg}\n{tb}")
             api_paths = ('/api/', '/internal/', '/prospecting/', '/leads/')
-            if request.path.startswith(api_paths) or request.is_xhr or \
+            if request.path.startswith(api_paths) or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
                request.accept_mimetypes.best == 'application/json':
                 return jsonify({
                     'success': False,
                     'error': 'Erro Interno do Servidor (500)',
-                    'message': error_msg
+                    'message': 'Tente novamente. Se o problema persistir, contate o suporte.'
                 }), 500
             return f"""
             <div style="font-family: sans-serif; padding: 40px; border: 2px solid red; margin: 20px;">
                 <h1 style="color: red;">❌ Internal Server Error (500)</h1>
                 <p>The server encountered an error and could not complete your request.</p>
-                <pre style="background: #f4f4f4; padding: 15px; overflow: auto;">{tb}</pre>
+                <pre style="background: #f4f4f4; padding: 15px; overflow: auto;">Erro registrado. Contate o suporte.</pre>
             </div>
             """, 500
 
@@ -777,30 +728,7 @@ Sitemap: {base_url}/sitemap.xml
         # Capture error for closure
         error_msg = str(factory_e)
         
-        # EMERGENCY APP
-        fallback = Flask(__name__)
-        @fallback.route('/', defaults={'path': ''})
-        @fallback.route('/<path:path>')
-        def emergency_catch_all(path, **kwargs):
-            return f"""
-            <html>
-            <head><title>Emergency Mode</title></head>
-            <body style="font-family: monospace; padding: 20px; background: #fff5f5;">
-                <h1 style="color: #c53030;">EMERGENCY MODE</h1>
-                <p>The application factory failed to start.</p>
-                <div style="background: #eee; padding: 15px; border-radius: 5px; margin: 10px 0;">
-                    <strong>Error:</strong> {error_msg}
-                </div>
-                <h3>Stack Trace:</h3>
-                <pre style="background: #2d3748; color: #fff; padding: 15px; border-radius: 5px; overflow: auto;">{tb_str}</pre>
-            </body>
-            </html>
-            """, 503
-            
-        @fallback.route('/ping')
-        def ping(): return "pong_emergency"
-        
-        return fallback
+        raise
 
 app = create_app()
 

@@ -388,6 +388,8 @@ class Lead(db.Model):
 
     @property
     def task_progress(self):
+        if hasattr(self, '_task_progress'):
+            return self._task_progress
         tasks = [t for t in self.tasks if not t.is_recurring] # Only count one-off tasks for progress usually
         total = len(tasks)
         if total == 0: return {'total': 0, 'completed': 0, 'percent': 0, 'overdue': 0}
@@ -406,6 +408,8 @@ class Lead(db.Model):
     @property
     def days_inactive(self):
         """Calculates days since last interaction or creation"""
+        if hasattr(self, '_last_activity_at'):
+            return (get_now_br() - self._last_activity_at).days
         last_activity = self.created_at
         if self.interactions:
             # Sort to find the latest
@@ -436,7 +440,7 @@ class Client(db.Model):
     
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
     account_manager_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
-    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True) # Origin lead
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True, unique=True) # Origin lead
     
     status = db.Column(db.String(20), default='onboarding', index=True) # onboarding, ativo, pausado, cancelado
     health_status = db.Column(db.String(20), default='verde') # verde, amarelo, vermelho
@@ -1752,3 +1756,17 @@ class ProspectingBatch(db.Model):
     messages = db.relationship('ProspectingMessage', backref='batch', lazy=True)
 
 
+
+
+class WebhookDelivery(db.Model):
+    __tablename__ = 'webhook_delivery'
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    webhook_id = db.Column(db.Integer, db.ForeignKey('integration_webhooks.id'), nullable=False)
+    event_name = db.Column(db.String(100), nullable=False)
+    payload = db.Column(db.JSON, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    available_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    __table_args__ = (db.Index('ix_webhook_delivery_due', 'status', 'available_at'),)

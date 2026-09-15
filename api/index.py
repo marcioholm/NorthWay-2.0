@@ -73,8 +73,8 @@ except ImportError as e:
 # 3. Create App Instance
 def get_app():
     try:
-        from app import create_app
-        return create_app()
+        from app import app as crm_app
+        return crm_app
     except Exception as e:
         import traceback
         traceback.print_exc() # Print to Vercel logs (stdout/stderr)
@@ -99,7 +99,7 @@ def get_app():
                 <h1 style="color: #e53e3e;">🔥 Boot Error</h1>
                 <p>The application failed to start correctly. This usually happens due to missing environment variables or database connection issues.</p>
                 <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; overflow-x: auto;">
-                    <pre style="font-size: 14px; margin: 0;">{error_details}</pre>
+                    <pre style="font-size: 14px; margin: 0;">Serviço temporariamente indisponível. Contate o suporte.</pre>
                 </div>
             </div>
             """, 500

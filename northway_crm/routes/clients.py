@@ -13,7 +13,7 @@ clients_bp = Blueprint('clients', __name__)
 @login_required
 def clients():
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
+    per_page = max(1, min(request.args.get('per_page', 50, type=int), 100))
     query = Client.query.filter_by(company_id=current_user.company_id)
     
     # Filters
@@ -58,21 +58,27 @@ def clients():
         
     # Eager load for performance
     pagination = query.options(
-        db.joinedload(Client.account_manager),
-        db.joinedload(Client.interactions)
+        db.joinedload(Client.account_manager)
     ).order_by(Client.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
     
     clients_list = pagination.items
     
-    # Auto-update health
-    for client in clients_list:
-        update_client_health(client)
-    
-    db.session.commit()
-    
+    # Calculate display health in one query; opening a list must not mutate clients.
+    from models import get_now_br
+    client_ids = [c.id for c in clients_list]
+    last_interactions = dict(db.session.query(Interaction.client_id, db.func.max(Interaction.created_at)).filter(
+        Interaction.company_id == current_user.company_id,
+        Interaction.client_id.in_(client_ids)
+    ).group_by(Interaction.client_id).all()) if client_ids else {}
+    health_by_client = {}
+    for item in clients_list:
+        last = last_interactions.get(item.id)
+        days = (get_now_br() - last).days if last else None
+        health_by_client[item.id] = 'verde' if days is not None and days <= 3 else 'amarelo' if days is not None and days <= 7 else 'vermelho'
+
     users = User.query.filter_by(company_id=current_user.company_id).all()
     
-    return render_template('clients.html', clients=clients_list, pagination=pagination, users=users, today=date.today())
+    return render_template('clients.html', clients=clients_list, pagination=pagination, users=users, today=date.today(), health_by_client=health_by_client)
 
 @clients_bp.route('/api/clients/search', methods=['GET'])
 @login_required

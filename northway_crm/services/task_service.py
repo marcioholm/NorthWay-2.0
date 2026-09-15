@@ -3,7 +3,7 @@ from datetime import datetime
 
 class TaskService:
     @staticmethod
-    def get_kanban_tasks(user_id, filters=None):
+    def get_kanban_tasks(user_id, company_id, filters=None):
         """
         Returns tasks for a user organized by status for Kanban view.
         Supported filters: client_id, lead_id, pipeline_stage_id, date_start, date_end
@@ -13,7 +13,7 @@ class TaskService:
             joinedload(Task.client),
             joinedload(Task.lead),
             joinedload(Task.responsible)
-        ).filter((Task.assigned_to_id == user_id) | (Task.created_by_user_id == user_id))
+        ).filter(Task.company_id == company_id).filter((Task.assigned_to_id == user_id) | (Task.created_by_user_id == user_id))
         
         if filters:
             if filters.get('client_id'):
@@ -41,6 +41,7 @@ class TaskService:
         
         legacy_map = {
             'pendente': 'a_fazer',
+            'completa': 'concluida',
             'concluida': 'concluida'
         }
         
@@ -148,7 +149,8 @@ class TaskService:
         # Bulk update for performance
         Task.query.filter(
             Task.assigned_to_id == user_id,
-            Task.status != 'concluida',
+            Task.company_id == company_id,
+            Task.status.notin_(['concluida', 'completa']),
             Task.due_date < datetime.utcnow()
         ).update({Task.is_urgent: True, Task.is_important: True}, synchronize_session=False)
 
@@ -180,15 +182,17 @@ class TaskService:
         if neglected_lead_ids:
             Task.query.filter(
                 Task.lead_id.in_(neglected_lead_ids),
-                Task.status != 'concluida'
+                Task.company_id == company_id,
+                Task.status.notin_(['concluida', 'completa'])
             ).update({Task.is_urgent: True}, synchronize_session=False)
 
         # 3. Contract related tasks due soon -> Urgent
         # Bulk update
         Task.query.filter(
             Task.assigned_to_id == user_id,
+            Task.company_id == company_id,
             Task.contract_id != None,
-            Task.status != 'concluida',
+            Task.status.notin_(['concluida', 'completa']),
             Task.due_date <= datetime.utcnow() + timedelta(days=3)
         ).update({Task.is_urgent: True}, synchronize_session=False)
 

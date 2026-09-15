@@ -1,0 +1,40 @@
+name: CRM regression tests
+on:
+  pull_request:
+  push:
+    branches: [dev]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database: [sqlite, postgres]
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: crm_test
+          POSTGRES_PASSWORD: crm_test
+          POSTGRES_DB: crm_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U crm_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r requirements.txt pytest
+      - name: Python regression tests
+        env:
+          PYTHONPATH: .:northway_crm
+          TEST_DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgresql://crm_test:crm_test@localhost:5432/crm_test?sslmode=disable' || 'sqlite:///:memory:' }}
+        run: python -m pytest northway_crm/tests -q
+      - name: Inbox JavaScript regressions
+        run: node northway_crm/tests/test_inbox_frontend.cjs

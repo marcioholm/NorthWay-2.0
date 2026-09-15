@@ -221,13 +221,13 @@
                                             </span>
                                             {% endif %}
 
-                                            {% if client.health_status == 'verde' %}
+                                            {% if health_by_client[client.id] == 'verde' %}
                                             <div class="w-2 h-2 rounded-full bg-green-500 ring-4 ring-green-50"
                                                 title="Saúde: Bom"></div>
-                                            {% elif client.health_status == 'amarelo' %}
+                                            {% elif health_by_client[client.id] == 'amarelo' %}
                                             <div class="w-2 h-2 rounded-full bg-yellow-400 ring-4 ring-yellow-50"
                                                 title="Saúde: Atenção"></div>
-                                            {% elif client.health_status == 'vermelho' %}
+                                            {% elif health_by_client[client.id] == 'vermelho' %}
                                             <div class="w-2 h-2 rounded-full bg-red-500 ring-4 ring-red-50"
                                                 title="Saúde: Crítico"></div>
                                             {% endif %}
