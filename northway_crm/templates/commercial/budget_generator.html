@@ -3,385 +3,214 @@
 {% block head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<style>
-:root {
-  --nw-red: #E60012;
-  --nw-red-soft: #FFF0F0;
-  --nw-green: #1A8754;
-  --nw-green-soft: #EEFBF3;
-  --nw-black: #1A1A1E;
-  --surface: #FAFAF8;
-  --paper: #FFFFFF;
-  --border: #E8E6E3;
-  --border-focus: #E60012;
-  --muted: #71706E;
-  --muted-bg: #F5F4F2;
-  --text: #1A1A1E;
-  --text-inv: #FFFFFF;
-  --shadow: rgba(26,26,30,0.06);
-  --font-display: 'DM Sans', system-ui, sans-serif;
-  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --surface: #141416; --paper: #1C1C20; --border: #2E2E34;
-    --border-focus: #FF2A2A; --nw-red: #FF2A2A; --nw-red-soft: #2A1014;
-    --nw-green: #2ECC71; --nw-green-soft: #0F2A1A;
-    --muted: #9A9A9E; --muted-bg: #222226; --text: #EAEAE8;
-    --text-inv: #1A1A1E; --shadow: rgba(0,0,0,0.2);
-  }
-}
-:root[data-theme="dark"] {
-  --surface: #141416; --paper: #1C1C20; --border: #2E2E34;
-  --border-focus: #FF2A2A; --nw-red: #FF2A2A; --nw-red-soft: #2A1014;
-  --nw-green: #2ECC71; --nw-green-soft: #0F2A1A;
-  --muted: #9A9A9E; --muted-bg: #222226; --text: #EAEAE8;
-  --text-inv: #1A1A1E; --shadow: rgba(0,0,0,0.2);
-}
 
-#budget-container {
-  background: var(--surface);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 16px;
-  padding-block: 0;
-  min-height: 100vh;
-}
-
-.toolbar {
-  position: sticky; top: 0; z-index: 100;
-  background: var(--paper);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 24px; margin: 0 -16px;
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-}
-.toolbar-title {
-  font-family: var(--font-display);
-  font-weight: 600; font-size: 15px;
-  margin-right: auto; color: var(--text);
-}
-.toolbar-title span { color: var(--nw-red); }
-.btn {
-  font-family: var(--font-body); font-size: 13px; font-weight: 500;
-  border: 1px solid var(--border); background: var(--paper);
-  color: var(--text); padding: 7px 16px; border-radius: 6px;
-  cursor: pointer; transition: border-color 0.15s, background 0.15s;
-  display: inline-flex; align-items: center; gap: 6px;
-  text-decoration: none;
-}
-.btn:hover { border-color: var(--nw-red); }
-.btn:disabled { opacity: 0.5; cursor: default; }
-.btn-primary {
-  background: var(--nw-red); color: var(--text-inv); border-color: var(--nw-red);
-}
-.btn-primary:hover { opacity: 0.9; }
-
-.doc {
-  max-width: 800px; margin: 28px auto 60px;
-  background: var(--paper); border: 1px solid var(--border);
-  border-radius: 4px; box-shadow: 0 2px 12px var(--shadow);
-  padding: 48px 52px;
-}
-
-.doc-header {
-  display: flex; justify-content: space-between;
-  align-items: flex-start; gap: 24px;
-  padding-bottom: 24px; border-bottom: 2px solid var(--nw-red);
-}
-.logo-area { flex-shrink: 0; }
-.logo-area img { height: 72px; width: auto; }
-.company-info {
-  text-align: right; font-size: 11.5px;
-  line-height: 1.6; color: var(--muted);
-}
-.company-info strong { color: var(--text); font-weight: 600; }
-
-.quote-title-row {
-  display: flex; justify-content: space-between;
-  align-items: baseline; margin-top: 28px;
-  flex-wrap: wrap; gap: 12px;
-}
-.quote-label {
-  font-family: var(--font-display); font-size: 22px;
-  font-weight: 700; letter-spacing: 0.04em; color: var(--text);
-}
-.quote-meta {
-  display: flex; gap: 20px; font-size: 13px;
-  color: var(--muted); align-items: baseline;
-}
-.quote-meta label { font-weight: 500; }
-
-.editable {
-  font-family: inherit; font-size: inherit; color: var(--text);
-  background: transparent; border: none;
-  border-bottom: 1px dashed var(--border);
-  padding: 2px 4px; outline: none; transition: border-color 0.15s;
-}
-.editable:hover { border-bottom-color: var(--muted); }
-.editable:focus { border-bottom-color: var(--border-focus); }
-input.editable { min-width: 0; }
-textarea.editable {
-  resize: vertical; width: 100%; min-height: 60px;
-  border: 1px dashed var(--border); border-radius: 4px; padding: 8px;
-}
-textarea.editable:focus { border-color: var(--border-focus); }
-
-.section-label {
-  font-family: var(--font-display); font-size: 11px;
-  font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.08em; color: var(--nw-red);
-  margin-top: 28px; margin-bottom: 8px;
-}
-.client-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px;
-}
-.field-row {
-  display: flex; align-items: baseline; gap: 6px; font-size: 13px;
-}
-.field-label {
-  font-weight: 500; color: var(--muted); white-space: nowrap; min-width: 70px;
-}
-.field-row .editable { flex: 1; font-size: 13px; }
-
-.items-table-wrap { margin-top: 24px; overflow-x: auto; }
-table.items { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-table.items thead th {
-  font-family: var(--font-display); font-size: 11px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted);
-  text-align: left; padding: 8px 8px 8px 0; border-bottom: 1px solid var(--border);
-}
-table.items thead th:nth-child(n+3) { text-align: right; }
-table.items tbody td {
-  padding: 10px 8px 10px 0; border-bottom: 1px solid var(--border);
-  vertical-align: top; font-size: 13px;
-}
-table.items tbody td:nth-child(n+3) { text-align: right; }
-table.items tbody td .editable { width: 100%; text-align: inherit; }
-table.items tbody td textarea.editable.item-desc {
-  min-height: 32px; height: 32px; resize: none;
-  border: none; border-bottom: 1px dashed var(--border);
-  border-radius: 0; padding: 4px 4px; font-size: 13px;
-  line-height: 1.4; overflow: hidden;
-}
-table.items tbody td:first-child { min-width: 140px; max-width: 300px; word-wrap: break-word; overflow-wrap: break-word; }
-table.items tfoot td {
-  padding: 12px 8px 8px 0; font-size: 14px; font-weight: 600; text-align: right;
-}
-.total-value {
-  font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text);
-}
-.row-remove {
-  background: none; border: none; color: var(--muted); cursor: pointer;
-  font-size: 16px; padding: 2px 6px; border-radius: 4px; line-height: 1;
-  transition: color 0.15s, background 0.15s;
-}
-.row-remove:hover { color: var(--nw-red); background: var(--nw-red-soft); }
-.add-row-btn {
-  font-family: var(--font-body); font-size: 12px; font-weight: 500;
-  color: var(--nw-red); background: var(--nw-red-soft);
-  border: 1px dashed var(--nw-red); padding: 6px 14px; border-radius: 4px;
-  cursor: pointer; margin-top: 8px; transition: opacity 0.15s;
-}
-.add-row-btn:hover { opacity: 0.8; }
-
-.payment-section {
-  margin-top: 20px; padding: 16px; background: var(--muted-bg);
-  border-radius: 6px; display: flex; flex-wrap: wrap; gap: 12px 28px;
-  align-items: flex-end;
-}
-.payment-section .pg { display: flex; flex-direction: column; gap: 3px; }
-.payment-section .pg label {
-  font-size: 11px; font-weight: 600; color: var(--muted);
-  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.05em;
-}
-.payment-section .pg input, .payment-section .pg select {
-  font-family: var(--font-body); font-size: 13px; color: var(--text);
-  background: var(--paper); border: 1px solid var(--border);
-  padding: 6px 10px; border-radius: 4px; outline: none;
-}
-.payment-section .pg input:focus, .payment-section .pg select:focus { border-color: var(--border-focus); }
-.payment-summary {
-  margin-top: 12px; text-align: right; font-size: 13px; color: var(--muted);
-  line-height: 1.8;
-}
-.payment-summary .line-old { color: var(--nw-red); font-size: 13px; }
-.payment-summary .line-old s { text-decoration: line-through; }
-.payment-summary .line-new { color: var(--nw-green); font-weight: 700; font-size: 15px; }
-.payment-summary .line-saving { color: var(--nw-green); font-size: 12px; }
-.payment-summary .line-installment { font-size: 15px; font-weight: 600; color: var(--text); }
-.obs-section { margin-top: 28px; }
-.footer-row {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border);
-  gap: 24px; flex-wrap: wrap;
-}
-.validity { font-size: 12px; color: var(--muted); }
-.signature-area { text-align: center; min-width: 200px; }
-.signature-line { border-top: 1px solid #1A1A1E; margin-bottom: 4px; width: 220px; }
-.signature-name { font-size: 12px; font-weight: 600; color: var(--text); }
-.signature-role { font-size: 11px; color: var(--muted); }
-.powered { text-align: center; font-size: 10px; color: var(--muted); margin-top: 20px; opacity: 0.6; }
-.toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: var(--nw-black); color: #fff; padding: 10px 20px;
-  border-radius: 8px; font-size: 13px; z-index: 200;
-  opacity: 0; transition: opacity 0.3s; pointer-events: none;
-}
-.toast.show { opacity: 1; }
-
-@media (max-width: 600px) {
-  .doc { padding: 24px 20px; }
-  .doc-header { flex-direction: column; gap: 12px; }
-  .company-info { text-align: left; }
-  .client-grid { grid-template-columns: 1fr; }
-  .quote-title-row { flex-direction: column; }
-  .footer-row { flex-direction: column; align-items: center; }
-  .toolbar { padding: 8px 12px; }
-}
-</style>
 {% endblock %}
 
 {% block content %}
-<div id="budget-container">
 
-<div class="toolbar">
-  <div class="toolbar-title">Gerador de <span>Orçamento</span></div>
-  <a href="/dashboard" class="btn">Voltar ao CRM</a>
-  <button class="btn" onclick="resetForm()">Limpar</button>
-  <button class="btn btn-primary" id="exportBtn" onclick="exportPDF()">Baixar PDF</button>
-  <button class="btn" id="exportHtmlBtn" onclick="exportHTML()">Baixar HTML</button>
+<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+  <div class="sm:flex sm:justify-between sm:items-center mb-8">
+    <div class="mb-4 sm:mb-0">
+      <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-slate-100 font-bold">Novo Orçamento 📄</h1>
+    </div>
+    <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
+      <a href="/commercial/budgets" class="btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">Voltar</a>
+      <button class="btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300" onclick="resetForm()">Limpar</button>
+      <button class="btn bg-indigo-500 hover:bg-indigo-600 text-white" id="saveBtn" onclick="saveBudget()">Salvar Orçamento</button>
+      <button class="btn bg-emerald-500 hover:bg-emerald-600 text-white" id="exportBtn" onclick="exportPDF()">Baixar PDF</button>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-slate-800 shadow-lg rounded-sm border border-slate-200 dark:border-slate-700 mb-8">
+    <div class="p-6">
+      
+      <!-- Cabeçalho (Oculto na tela, apenas para lógica/PDF ou se quiser mostrar a empresa localmente) -->
+      <div class="hidden" id="companyInfoBlock">
+          <strong>{{ current_user.company.name }}</strong><br>
+          {% if current_user.company.cpf_cnpj or current_user.company.document %}CNPJ/CPF: {{ current_user.company.cpf_cnpj or current_user.company.document }}<br>{% endif %}
+          {% if current_user.company.address_street %}
+          {{ current_user.company.address_street }}, {{ current_user.company.address_number or 'S/N' }} — {{ current_user.company.address_neighborhood or '' }}<br>
+          {{ current_user.company.address_city or '' }}/{{ current_user.company.address_state or '' }} — CEP {{ current_user.company.address_zip or '' }}<br>
+          {% endif %}
+          {{ current_user.phone or '' }} · {{ current_user.email or '' }}
+      </div>
+      <div class="hidden">
+          {% if current_user.company.logo_base64 %}
+          <img src="{{ current_user.company.logo_base64 }}" alt="{{ current_user.company.name }}" id="logoImg">
+          {% elif current_user.company.logo_filename %}
+          <img src="{{ url_for('static', filename='uploads/logos/' ~ current_user.company.logo_filename) }}" alt="{{ current_user.company.name }}" id="logoImg">
+          {% else %}
+          <img src="" id="logoImg">
+          {% endif %}
+      </div>
+
+      <!-- Detalhes do Orçamento -->
+      <div class="grid gap-5 md:grid-cols-2 mb-6 border-b border-slate-200 dark:border-slate-700 pb-6">
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="quoteNum">Nº do Orçamento</label>
+          <input id="quoteNum" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" value="001/2026" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="quoteDate">Data</label>
+          <input id="quoteDate" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="date" />
+        </div>
+      </div>
+
+      <!-- Dados do Cliente -->
+      <h2 class="text-xl text-slate-800 dark:text-slate-100 font-bold mb-4">Dados do Cliente</h2>
+      <div class="grid gap-5 md:grid-cols-2 mb-6 border-b border-slate-200 dark:border-slate-700 pb-6">
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliName">Empresa</label>
+          <input id="cliName" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="Nome da empresa" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliDoc">CNPJ/CPF</label>
+          <input id="cliDoc" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="00.000.000/0000-00" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliContact">Contato</label>
+          <input id="cliContact" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="Nome do contato" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliPhone">Telefone</label>
+          <input id="cliPhone" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="(00) 00000-0000" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliAddr">Endereço</label>
+          <input id="cliAddr" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="Endereço completo" />
+        </div>
+      </div>
+
+      <!-- Itens do Orçamento -->
+      <h2 class="text-xl text-slate-800 dark:text-slate-100 font-bold mb-4">Itens do Orçamento</h2>
+      <div class="overflow-x-auto mb-4">
+        <table class="table-auto w-full dark:text-slate-300" id="itemsTable">
+          <thead class="text-xs uppercase text-slate-500 bg-slate-50 dark:bg-slate-700/50 dark:text-slate-400 border-t border-b border-slate-200 dark:border-slate-700">
+            <tr>
+              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-left">Descrição</div></th>
+              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-right">Qtd</div></th>
+              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-right">Valor Unit.</div></th>
+              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-right">Subtotal</div></th>
+              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-center">Ações</div></th>
+            </tr>
+          </thead>
+          <tbody class="text-sm divide-y divide-slate-200 dark:divide-slate-700" id="itemsBody">
+          </tbody>
+          <tfoot>
+            <tr class="font-bold border-t border-slate-200 dark:border-slate-700">
+              <td colspan="3" class="px-2 first:pl-5 last:pr-5 py-3 text-right">TOTAL</td>
+              <td class="px-2 first:pl-5 last:pr-5 py-3 text-right text-lg text-emerald-600 dark:text-emerald-400" id="totalValue">R$ 0,00</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <button class="btn-sm bg-indigo-50 dark:bg-indigo-500/30 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/40 mb-6" onclick="addRow()">+ Adicionar item</button>
+
+      <!-- Recorrência e Condições -->
+      <h2 class="text-xl text-slate-800 dark:text-slate-100 font-bold mb-4 mt-6">Recorrência e Condições</h2>
+      <div class="grid gap-5 md:grid-cols-4 mb-6 border-b border-slate-200 dark:border-slate-700 pb-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-sm">
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="billingCycle">Recorrência</label>
+          <select id="billingCycle" class="form-select w-full bg-white dark:bg-slate-800" onchange="recalc()">
+            <option value="unico">Único</option>
+            <option value="mensal" selected>Mensal</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="semestral">Semestral</option>
+            <option value="anual">Anual</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="discountPct">Desconto (%)</label>
+          <input id="discountPct" class="form-input w-full bg-white dark:bg-slate-800" type="text" placeholder="0" oninput="syncDiscount('pct')" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="discountVal">Desconto (R$)</label>
+          <input id="discountVal" class="form-input w-full bg-white dark:bg-slate-800" type="text" placeholder="0,00" oninput="syncDiscount('val')" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="installments">Parcelas</label>
+          <select id="installments" class="form-select w-full bg-white dark:bg-slate-800" onchange="recalc()">
+            <option value="0">Sem parcelamento</option>
+            <option value="1">1x (à vista)</option>
+            <option value="2">2x</option>
+            <option value="3">3x</option>
+            <option value="4">4x</option>
+            <option value="5">5x</option>
+            <option value="6">6x</option>
+            <option value="7">7x</option>
+            <option value="8">8x</option>
+            <option value="9">9x</option>
+            <option value="10">10x</option>
+            <option value="11">11x</option>
+            <option value="12">12x</option>
+          </select>
+        </div>
+        <div class="md:col-span-4 text-right text-sm" id="paymentSummary" hidden></div>
+      </div>
+
+      <!-- Observações -->
+      <h2 class="text-xl text-slate-800 dark:text-slate-100 font-bold mb-4 mt-6">Observações</h2>
+      <div class="mb-6">
+        <textarea id="obsText" class="form-textarea w-full bg-slate-50 dark:bg-slate-700" rows="3" placeholder="Condições de pagamento, prazos, informações adicionais..."></textarea>
+      </div>
+
+      <!-- Validade -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="validity">Validade</label>
+        <div class="flex items-center">
+            <input id="validity" class="form-input w-24 bg-slate-50 dark:bg-slate-700" type="text" value="15 dias" />
+            <span class="ml-2 text-sm text-slate-500">a partir da data de emissão.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
-
-<div class="doc" id="doc">
-  <div class="doc-header">
-    <div class="logo-area">
-      {% if current_user.company.logo_base64 %}
-      <img src="{{ current_user.company.logo_base64 }}" alt="{{ current_user.company.name }}" id="logoImg">
-      {% elif current_user.company.logo_filename %}
-      <img src="{{ url_for('static', filename='uploads/logos/' ~ current_user.company.logo_filename) }}" alt="{{ current_user.company.name }}" id="logoImg">
-      {% else %}
-      <h2 style="color: var(--nw-red); font-family: var(--font-display); font-weight: 700;" id="logoText">{{ current_user.company.name }}</h2>
-      <img src="" id="logoImg" style="display:none;">
-      {% endif %}
-    </div>
-    <div class="company-info" id="companyInfoBlock">
-      <strong>{{ current_user.company.name }}</strong><br>
-      {% if current_user.company.cpf_cnpj or current_user.company.document %}
-      CNPJ/CPF: {{ current_user.company.cpf_cnpj or current_user.company.document }}<br>
-      {% endif %}
-      {% if current_user.company.address_street %}
-      {{ current_user.company.address_street }}, {{ current_user.company.address_number or 'S/N' }} — {{ current_user.company.address_neighborhood or '' }}<br>
-      {{ current_user.company.address_city or '' }}/{{ current_user.company.address_state or '' }} — CEP {{ current_user.company.address_zip or '' }}<br>
-      {% endif %}
-      {{ current_user.phone or '' }} · {{ current_user.email or '' }}
-    </div>
-  </div>
-
-  <div class="quote-title-row">
-    <div class="quote-label">ORÇAMENTO</div>
-    <div class="quote-meta">
-      <span><label>Nº</label> <input class="editable" id="quoteNum" value="001/2026" style="width:80px"></span>
-      <span><label>Data:</label> <input class="editable" type="date" id="quoteDate" style="width:140px"></span>
-    </div>
-  </div>
-
-  <div class="section-label">Dados do Cliente</div>
-  <div class="client-grid">
-    <div class="field-row"><span class="field-label">Empresa:</span><input class="editable" id="cliName" placeholder="Nome da empresa"></div>
-    <div class="field-row"><span class="field-label">CNPJ/CPF:</span><input class="editable" id="cliDoc" placeholder="00.000.000/0000-00"></div>
-    <div class="field-row"><span class="field-label">Contato:</span><input class="editable" id="cliContact" placeholder="Nome do contato"></div>
-    <div class="field-row"><span class="field-label">Telefone:</span><input class="editable" id="cliPhone" placeholder="(00) 00000-0000"></div>
-    <div class="field-row" style="grid-column:1/-1"><span class="field-label">Endereço:</span><input class="editable" id="cliAddr" placeholder="Endereço completo"></div>
-  </div>
-
-  <div class="section-label" style="margin-top:28px">Itens do Orçamento</div>
-  <div class="items-table-wrap">
-    <table class="items" id="itemsTable">
-      <thead>
-        <tr>
-          <th style="width:40%">Descrição</th>
-          <th style="width:15%">Qtd</th>
-          <th style="width:18%">Valor Unit.</th>
-          <th style="width:18%">Subtotal</th>
-          <th style="width:9%"></th>
-        </tr>
-      </thead>
-      <tbody id="itemsBody"></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3" style="text-align:right;padding-right:12px">TOTAL</td>
-          <td><span class="total-value" id="totalValue">R$ 0,00</span></td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-  <button class="add-row-btn" onclick="addRow()">+ Adicionar item</button>
-
-  <div class="section-label" style="margin-top:28px">Recorrência e Condições</div>
-  <div class="payment-section">
-    <div class="pg">
-      <label>Recorrência</label>
-      <select id="billingCycle" onchange="recalc()">
-        <option value="unico">Único</option>
-        <option value="mensal" selected>Mensal</option>
-        <option value="trimestral">Trimestral</option>
-        <option value="semestral">Semestral</option>
-        <option value="anual">Anual</option>
-      </select>
-    </div>
-    <div class="pg">
-      <label>Desconto (%)</label>
-      <input type="text" id="discountPct" placeholder="0" style="width:70px" oninput="syncDiscount('pct')">
-    </div>
-    <div class="pg">
-      <label>Desconto (R$)</label>
-      <input type="text" id="discountVal" placeholder="0,00" style="width:100px" oninput="syncDiscount('val')">
-    </div>
-    <div class="pg">
-      <label>Parcelas</label>
-      <select id="installments" onchange="recalc()">
-        <option value="0">Sem parcelamento</option>
-        <option value="1">1x (à vista)</option>
-        <option value="2">2x</option>
-        <option value="3">3x</option>
-        <option value="4">4x</option>
-        <option value="5">5x</option>
-        <option value="6">6x</option>
-        <option value="7">7x</option>
-        <option value="8">8x</option>
-        <option value="9">9x</option>
-        <option value="10">10x</option>
-        <option value="11">11x</option>
-        <option value="12">12x</option>
-      </select>
-    </div>
-  </div>
-  <div class="payment-summary" id="paymentSummary" hidden></div>
-
-  <div class="obs-section">
-    <div class="section-label">Observações</div>
-    <textarea class="editable" id="obsText" placeholder="Condições de pagamento, prazos, informações adicionais..."></textarea>
-  </div>
-
-  <div class="footer-row">
-    <div class="validity">
-      Validade: <input class="editable" id="validity" value="15 dias" style="width:80px"> a partir da data de emissão.
-    </div>
-    <div class="signature-area">
-      <div class="signature-line"></div>
-      <div class="signature-name" id="sigName">{{ current_user.name }}</div>
-      <div class="signature-role" id="sigRole">{{ current_user.company.name }}</div>
-    </div>
-  </div>
-</div>
-
-<div class="powered">{{ current_user.company.name }} · Gerado via CRM</div>
-<div class="toast" id="toast"></div>
-
 <script>
+
+async function saveBudget() {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="animate-spin mr-2">...</span> Salvando';
+  try {
+    const data = {
+      quoteNum: document.getElementById('quoteNum').value,
+      quoteDate: document.getElementById('quoteDate').value,
+      cliName: document.getElementById('cliName').value,
+      cliDoc: document.getElementById('cliDoc').value,
+      cliContact: document.getElementById('cliContact').value,
+      cliPhone: document.getElementById('cliPhone').value,
+      cliAddr: document.getElementById('cliAddr').value,
+      items: gatherItems(),
+      billingCycle: document.getElementById('billingCycle').value,
+      discountPct: document.getElementById('discountPct').value,
+      discountVal: document.getElementById('discountVal').value,
+      installments: document.getElementById('installments').value,
+      obsText: document.getElementById('obsText').value,
+      validity: document.getElementById('validity').value,
+      totalValue: parseNum(document.getElementById('totalValue').textContent)
+    };
+    
+    const res = await fetch('/commercial/api/budgets', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    
+    if (res.ok) {
+      alert('Orçamento salvo com sucesso!');
+      window.location.href = '/commercial/budgets';
+    } else {
+      const err = await res.json();
+      alert('Erro: ' + (err.error || 'Falha ao salvar'));
+    }
+  } catch(e) {
+    alert('Erro de conexão ao salvar.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Salvar Orçamento';
+  }
+}
+
 const tbody = document.getElementById('itemsBody');
 // Standalone CRM version - no artifact dependencies
 
@@ -499,15 +328,17 @@ function fmtNum(v) {
   return v.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
 }
 
+
 function addRow(desc,qty,price) {
   const tr = document.createElement('tr');
   tr.innerHTML =
-    '<td><textarea class="editable item-desc" placeholder="Descrição do serviço" rows="1">'+(desc?esc(desc):'')+'</textarea></td>'+
-    '<td style="text-align:right"><input class="editable item-qty" style="text-align:right;width:60px" value="'+(qty||'1')+'"></td>'+
-    '<td style="text-align:right"><input class="editable item-price" style="text-align:right;width:100px" placeholder="0,00" value="'+(price||'')+'"></td>'+
-    '<td style="text-align:right"><span class="item-sub">R$ 0,00</span></td>'+
-    '<td style="text-align:center"><button class="row-remove" title="Remover" onclick="this.closest(\'tr\').remove();recalc()">×</button></td>';
+    '<td class="px-2 first:pl-5 last:pr-5 py-3"><textarea class="form-textarea w-full px-2 py-1 text-sm bg-white dark:bg-slate-800 item-desc" placeholder="Descrição" rows="1">'+(desc?esc(desc):'')+'</textarea></td>'+
+    '<td class="px-2 first:pl-5 last:pr-5 py-3 text-right"><input class="form-input w-16 text-right px-2 py-1 text-sm bg-white dark:bg-slate-800 item-qty" value="'+(qty||'1')+'"></td>'+
+    '<td class="px-2 first:pl-5 last:pr-5 py-3 text-right"><input class="form-input w-24 text-right px-2 py-1 text-sm bg-white dark:bg-slate-800 item-price" placeholder="0,00" value="'+(price||'')+'"></td>'+
+    '<td class="px-2 first:pl-5 last:pr-5 py-3 text-right font-medium"><span class="item-sub">R$ 0,00</span></td>'+
+    '<td class="px-2 first:pl-5 last:pr-5 py-3 text-center"><button class="text-rose-500 hover:text-rose-600 rounded-full" onclick="this.closest(\'tr\').remove();recalc()"><svg class="w-8 h-8 fill-current" viewBox="0 0 32 32"><path d="M13 15h6v2h-6z"></path><path d="M20 9c0-.6-.4-1-1-1h-6c-.6 0-1 .4-1 1v2H8v2h1v10c0 .6.4 1 1 1h12c.6 0 1-.4 1-1V13h1v-2h-4V9zm-6 1h4v1h-4v-1zm7 12H11V13h10v9z"></path></svg></button></td>';
   tr.querySelectorAll('input').forEach(i => i.addEventListener('input', recalc));
+
   const ta = tr.querySelector('textarea.item-desc');
   if (ta) {
     const autoResize = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
@@ -631,21 +462,7 @@ function buildPrintHTML() {
 
   return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Orçamento NorthWay '+esc(num)+'</title>'+
   '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">'+
-  '<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14px;line-height:1.5;color:#1A1A1E;padding:40px 48px;max-width:800px;margin:0 auto}'+
-  '.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;padding-bottom:24px;border-bottom:2px solid #E60012}'+
-  '.hdr img{height:72px;width:auto}.ci{text-align:right;font-size:11.5px;line-height:1.6;color:#71706E}.ci strong{color:#1A1A1E;font-weight:600}'+
-  '.tr{display:flex;justify-content:space-between;align-items:baseline;margin-top:28px;flex-wrap:wrap;gap:12px}'+
-  '.ql{font-family:"DM Sans",sans-serif;font-size:22px;font-weight:700;letter-spacing:0.04em}.qm{font-size:13px;color:#71706E}'+
-  '.sl{font-family:"DM Sans",sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#E60012;margin-top:28px;margin-bottom:8px}'+
-  '.cg{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px}.fr{display:flex;gap:6px;font-size:13px}.fl{font-weight:500;color:#71706E;min-width:70px}'+
-  'table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;margin-top:12px}'+
-  'th{font-family:"DM Sans",sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#71706E;text-align:left;padding:8px 8px 8px 0;border-bottom:1px solid #E8E6E3}'+
-  'th:nth-child(n+2){text-align:right}'+
-  '.tv{font-family:"DM Sans",sans-serif;font-size:18px;font-weight:700;color:#1A1A1E}'+
-  '.ft{display:flex;justify-content:space-between;align-items:flex-start;margin-top:32px;padding-top:20px;border-top:1px solid #E8E6E3;gap:24px;flex-wrap:wrap}'+
-  '.sa{text-align:center;min-width:200px}.sl2{border-top:1px solid #1A1A1E;margin-bottom:4px;width:220px}'+
-  '.obs{margin-top:20px;font-size:13px;white-space:pre-wrap;color:#1A1A1E;line-height:1.6}'+
-  '@media print{body{padding:32px 40px}}</style></head><body>'+
+  '</head><body>'+
   '<div class="hdr"><div>' + (logoSrc ? '<img src="'+logoSrc+'" alt="{{ current_user.company.name | replace("\'", "\\\'") }}">' : '<h2 style="color:#E60012;margin:0;">{{ current_user.company.name | replace("\'", "\\\'") }}</h2>') + '</div>'+
   '<div class="ci">' + document.getElementById('companyInfoBlock').innerHTML + '</div></div>'+
   '<div class="tr"><div class="ql">ORÇAMENTO</div><div class="qm">Nº '+esc(num)+' · '+esc(dateBR)+(cycle!=='unico'?' · '+(cycleLabels[cycle]||''):'')+'</div></div>'+

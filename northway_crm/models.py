@@ -1770,3 +1770,24 @@ class WebhookDelivery(db.Model):
     available_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     __table_args__ = (db.Index('ix_webhook_delivery_due', 'status', 'available_at'),)
+
+class Budget(db.Model):
+    __tablename__ = 'budget'
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    quote_num = db.Column(db.String(50), nullable=True)
+    client_name = db.Column(db.String(150), nullable=True)
+    total_value = db.Column(db.Float, default=0.0)
+    
+    # JSON to store all the form fields for re-editing
+    data = db.Column(db.JSON, nullable=True) 
+    
+    status = db.Column(db.String(50), default='draft')
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    company = db.relationship('Company', backref='budgets')
+    user = db.relationship('User', backref='budgets')

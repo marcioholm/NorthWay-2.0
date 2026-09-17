@@ -162,3 +162,53 @@ def performance():
                                'percent': (total_revenue_base / target_amount * 100) if target_amount > 0 else 0
                            },
                            chart_data=chart_data)
+
+@commercial_bp.route('/commercial/budgets')
+@login_required
+def budget_history():
+    if not current_user.company_id:
+        return "Unauthorized", 403
+    from models import Budget
+    budgets = Budget.query.filter_by(company_id=current_user.company_id).order_by(Budget.created_at.desc()).all()
+    return render_template('commercial/budget_history.html', budgets=budgets)
+
+@commercial_bp.route('/commercial/api/budgets', methods=['POST'])
+@login_required
+def save_budget():
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        from models import Budget
+        data = request.json
+        budget = Budget(
+            company_id=current_user.company_id,
+            user_id=current_user.id,
+            quote_num=data.get('quoteNum'),
+            client_name=data.get('cliName'),
+            total_value=data.get('totalValue', 0.0),
+            data=data
+        )
+        db.session.add(budget)
+        db.session.commit()
+        return jsonify({'success': True, 'budget_id': budget.id})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving budget: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@commercial_bp.route('/commercial/api/budgets/<int:budget_id>', methods=['DELETE'])
+@login_required
+def delete_budget(budget_id):
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    try:
+        from models import Budget
+        budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first()
+        if not budget:
+            return jsonify({'error': 'Not found'}), 404
+        db.session.delete(budget)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
