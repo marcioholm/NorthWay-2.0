@@ -8,112 +8,119 @@
 
 {% block content %}
 
-<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+
+<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-7xl mx-auto">
+  <!-- Cabeçalho -->
   <div class="sm:flex sm:justify-between sm:items-center mb-8">
     <div class="mb-4 sm:mb-0">
-      <h1 class="text-2xl md:text-3xl text-slate-800 dark:text-slate-100 font-bold">Novo Orçamento 📄</h1>
+      <h1 class="text-2xl text-slate-800 dark:text-slate-100 font-bold tracking-tight">Criar Orçamento</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Preencha os dados abaixo para gerar um novo orçamento.</p>
     </div>
-    <div class="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-      <a href="/commercial/budgets" class="btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300">Voltar</a>
-      <button class="btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 text-slate-500 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300" onclick="resetForm()">Limpar</button>
-      <button class="btn bg-indigo-500 hover:bg-indigo-600 text-white" id="saveBtn" onclick="saveBudget()">Salvar Orçamento</button>
-      <button class="btn bg-emerald-500 hover:bg-emerald-600 text-white" id="exportBtn" onclick="exportPDF()">Baixar PDF</button>
+    <div class="flex items-center gap-3">
+      <a href="/commercial/budgets" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancelar</a>
+      <button onclick="resetForm()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Limpar Formulário</button>
+      <button id="saveBtn" onclick="saveBudget()" class="px-4 py-2 bg-slate-800 dark:bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-700 dark:hover:bg-slate-800 transition-colors flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+        Salvar Orçamento
+      </button>
+      <button id="exportBtn" onclick="exportPDF()" class="px-4 py-2 bg-rose-500 text-white rounded-md text-sm font-bold hover:bg-rose-600 transition-colors flex items-center gap-2 shadow-sm shadow-rose-500/20">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        Baixar PDF
+      </button>
     </div>
   </div>
 
-  <div class="bg-white dark:bg-slate-800 shadow-lg rounded-sm border border-slate-200 dark:border-slate-700 mb-8">
-    <div class="p-6">
-      
-      <!-- Cabeçalho (Oculto na tela, apenas para lógica/PDF ou se quiser mostrar a empresa localmente) -->
-      <div class="hidden" id="companyInfoBlock">
-          <strong>{{ current_user.company.name }}</strong><br>
-          {% if current_user.company.cpf_cnpj or current_user.company.document %}CNPJ/CPF: {{ current_user.company.cpf_cnpj or current_user.company.document }}<br>{% endif %}
-          {% if current_user.company.address_street %}
-          {{ current_user.company.address_street }}, {{ current_user.company.address_number or 'S/N' }} — {{ current_user.company.address_neighborhood or '' }}<br>
-          {{ current_user.company.address_city or '' }}/{{ current_user.company.address_state or '' }} — CEP {{ current_user.company.address_zip or '' }}<br>
-          {% endif %}
-          {{ current_user.phone or '' }} · {{ current_user.email or '' }}
+  <div class="space-y-6">
+    
+    <!-- Seção: Informações Básicas -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20">
+        <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Informações da Cotação</h2>
       </div>
-      <div class="hidden">
-          {% if current_user.company.logo_base64 %}
-          <img src="{{ current_user.company.logo_base64 }}" alt="{{ current_user.company.name }}" id="logoImg">
-          {% elif current_user.company.logo_filename %}
-          <img src="{{ url_for('static', filename='uploads/logos/' ~ current_user.company.logo_filename) }}" alt="{{ current_user.company.name }}" id="logoImg">
-          {% else %}
-          <img src="" id="logoImg">
-          {% endif %}
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="quoteNum">Nº do Orçamento</label>
+          <input id="quoteNum" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" value="001/2026" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="quoteDate">Data</label>
+          <input id="quoteDate" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="date" />
+        </div>
       </div>
+    </div>
 
-      <!-- Detalhes do Orçamento -->
-      <div class="grid gap-5 md:grid-cols-2 mb-6 border-b border-slate-200 dark:border-slate-700 pb-6">
-        <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="quoteNum">Nº do Orçamento</label>
-          <input id="quoteNum" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" value="001/2026" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="quoteDate">Data</label>
-          <input id="quoteDate" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="date" />
-        </div>
+    <!-- Seção: Dados do Cliente -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20">
+        <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Dados do Cliente</h2>
       </div>
-
-      <!-- Dados do Cliente -->
-      <h2 class="text-xl text-slate-800 dark:text-slate-100 font-bold mb-4">Dados do Cliente</h2>
-      <div class="grid gap-5 md:grid-cols-2 mb-6 border-b border-slate-200 dark:border-slate-700 pb-6">
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliName">Empresa</label>
-          <input id="cliName" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="Nome da empresa" />
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliName">Empresa / Nome</label>
+          <input id="cliName" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="Nome do cliente" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliDoc">CNPJ/CPF</label>
-          <input id="cliDoc" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="00.000.000/0000-00" />
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliDoc">CNPJ/CPF</label>
+          <input id="cliDoc" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="00.000.000/0000-00" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliContact">Contato</label>
-          <input id="cliContact" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="Nome do contato" />
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliContact">Contato (Pessoa)</label>
+          <input id="cliContact" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="Nome do responsável" />
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliPhone">Telefone</label>
-          <input id="cliPhone" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="(00) 00000-0000" />
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliPhone">Telefone / WhatsApp</label>
+          <input id="cliPhone" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="(00) 00000-0000" />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="cliAddr">Endereço</label>
-          <input id="cliAddr" class="form-input w-full bg-slate-50 dark:bg-slate-700" type="text" placeholder="Endereço completo" />
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliAddr">Endereço Completo</label>
+          <input id="cliAddr" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="Rua, Número, Bairro, Cidade - Estado" />
         </div>
       </div>
+    </div>
 
-      <!-- Itens do Orçamento -->
-      <h2 class="text-xl text-slate-800 dark:text-slate-100 font-bold mb-4">Itens do Orçamento</h2>
-      <div class="overflow-x-auto mb-4">
-        <table class="table-auto w-full dark:text-slate-300" id="itemsTable">
-          <thead class="text-xs uppercase text-slate-500 bg-slate-50 dark:bg-slate-700/50 dark:text-slate-400 border-t border-b border-slate-200 dark:border-slate-700">
-            <tr>
-              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-left">Descrição</div></th>
-              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-right">Qtd</div></th>
-              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-right">Valor Unit.</div></th>
-              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-right">Subtotal</div></th>
-              <th class="px-2 first:pl-5 last:pr-5 py-3 whitespace-nowrap"><div class="font-semibold text-center">Ações</div></th>
+    <!-- Seção: Itens do Orçamento -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20 flex justify-between items-center">
+        <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Itens e Serviços</h2>
+        <button onclick="addRow()" class="text-sm font-medium text-rose-500 hover:text-rose-600 flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+          Adicionar Item
+        </button>
+      </div>
+      <div class="p-0 overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="itemsTable">
+          <thead>
+            <tr class="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <th class="px-6 py-3 font-medium">Descrição</th>
+              <th class="px-6 py-3 font-medium text-center w-24">Qtd</th>
+              <th class="px-6 py-3 font-medium text-right w-32">Valor Unit.</th>
+              <th class="px-6 py-3 font-medium text-right w-32">Subtotal</th>
+              <th class="px-6 py-3 font-medium text-center w-16"></th>
             </tr>
           </thead>
-          <tbody class="text-sm divide-y divide-slate-200 dark:divide-slate-700" id="itemsBody">
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50" id="itemsBody">
           </tbody>
-          <tfoot>
-            <tr class="font-bold border-t border-slate-200 dark:border-slate-700">
-              <td colspan="3" class="px-2 first:pl-5 last:pr-5 py-3 text-right">TOTAL</td>
-              <td class="px-2 first:pl-5 last:pr-5 py-3 text-right text-lg text-emerald-600 dark:text-emerald-400" id="totalValue">R$ 0,00</td>
+          <tfoot class="bg-slate-50 dark:bg-slate-700/50">
+            <tr>
+              <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Total Geral</td>
+              <td class="px-6 py-4 text-right text-lg font-bold text-emerald-600 dark:text-emerald-400" id="totalValue">R$ 0,00</td>
               <td></td>
             </tr>
           </tfoot>
         </table>
       </div>
-      <button class="btn-sm bg-indigo-50 dark:bg-indigo-500/30 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/40 mb-6" onclick="addRow()">+ Adicionar item</button>
+    </div>
 
-      <!-- Recorrência e Condições -->
-      <h2 class="text-xl text-slate-800 dark:text-slate-100 font-bold mb-4 mt-6">Recorrência e Condições</h2>
-      <div class="grid gap-5 md:grid-cols-4 mb-6 border-b border-slate-200 dark:border-slate-700 pb-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-sm">
+    <!-- Seção: Condições de Pagamento -->
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20">
+        <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Condições Comerciais e Pagamento</h2>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
         <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="billingCycle">Recorrência</label>
-          <select id="billingCycle" class="form-select w-full bg-white dark:bg-slate-800" onchange="recalc()">
-            <option value="unico">Único</option>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="billingCycle">Recorrência</label>
+          <select id="billingCycle" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" onchange="recalc()">
+            <option value="unico">Pagamento Único</option>
             <option value="mensal" selected>Mensal</option>
             <option value="trimestral">Trimestral</option>
             <option value="semestral">Semestral</option>
@@ -121,50 +128,64 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="discountPct">Desconto (%)</label>
-          <input id="discountPct" class="form-input w-full bg-white dark:bg-slate-800" type="text" placeholder="0" oninput="syncDiscount('pct')" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="discountVal">Desconto (R$)</label>
-          <input id="discountVal" class="form-input w-full bg-white dark:bg-slate-800" type="text" placeholder="0,00" oninput="syncDiscount('val')" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="installments">Parcelas</label>
-          <select id="installments" class="form-select w-full bg-white dark:bg-slate-800" onchange="recalc()">
-            <option value="0">Sem parcelamento</option>
-            <option value="1">1x (à vista)</option>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="installments">Parcelamento</label>
+          <select id="installments" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" onchange="recalc()">
+            <option value="0">À vista / Sem parcelamento</option>
             <option value="2">2x</option>
             <option value="3">3x</option>
             <option value="4">4x</option>
             <option value="5">5x</option>
             <option value="6">6x</option>
-            <option value="7">7x</option>
-            <option value="8">8x</option>
-            <option value="9">9x</option>
-            <option value="10">10x</option>
-            <option value="11">11x</option>
             <option value="12">12x</option>
           </select>
         </div>
-        <div class="md:col-span-4 text-right text-sm" id="paymentSummary" hidden></div>
-      </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="discountPct">Desconto (%)</label>
+          <input id="discountPct" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="0" oninput="syncDiscount('pct')" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="discountVal">Desconto (R$)</label>
+          <input id="discountVal" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="0,00" oninput="syncDiscount('val')" />
+        </div>
+        
+        <div class="md:col-span-4 mt-2" id="paymentSummary" hidden>
+          <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-lg text-right text-sm">
+            <!-- Summary populated by JS -->
+          </div>
+        </div>
 
-      <!-- Observações -->
-      <h2 class="text-xl text-slate-800 dark:text-slate-100 font-bold mb-4 mt-6">Observações</h2>
-      <div class="mb-6">
-        <textarea id="obsText" class="form-textarea w-full bg-slate-50 dark:bg-slate-700" rows="3" placeholder="Condições de pagamento, prazos, informações adicionais..."></textarea>
-      </div>
+        <div class="md:col-span-4 mt-2">
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="obsText">Observações e Informações Adicionais</label>
+          <textarea id="obsText" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" rows="3" placeholder="Insira condições específicas, validade, dados bancários..."></textarea>
+        </div>
 
-      <!-- Validade -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium mb-1 text-slate-600 dark:text-slate-300" for="validity">Validade</label>
-        <div class="flex items-center">
-            <input id="validity" class="form-input w-24 bg-slate-50 dark:bg-slate-700" type="text" value="15 dias" />
-            <span class="ml-2 text-sm text-slate-500">a partir da data de emissão.</span>
+        <div class="md:col-span-4 flex items-center gap-3">
+          <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="validity">Validade do Orçamento:</label>
+          <input id="validity" class="w-32 px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors text-center dark:text-slate-200" type="text" value="15 dias" />
         </div>
       </div>
-
     </div>
+    
+  </div>
+  
+  <!-- Hidden Data for PDF -->
+  <div class="hidden" id="companyInfoBlock">
+      <strong>{{ current_user.company.name }}</strong><br>
+      {% if current_user.company.cpf_cnpj or current_user.company.document %}CNPJ/CPF: {{ current_user.company.cpf_cnpj or current_user.company.document }}<br>{% endif %}
+      {% if current_user.company.address_street %}
+      {{ current_user.company.address_street }}, {{ current_user.company.address_number or "S/N" }} — {{ current_user.company.address_neighborhood or "" }}<br>
+      {{ current_user.company.address_city or "" }}/{{ current_user.company.address_state or "" }} — CEP {{ current_user.company.address_zip or "" }}<br>
+      {% endif %}
+      {{ current_user.phone or "" }} · {{ current_user.email or "" }}
+  </div>
+  <div class="hidden">
+      {% if current_user.company.logo_base64 %}
+      <img src="{{ current_user.company.logo_base64 }}" alt="{{ current_user.company.name }}" id="logoImg">
+      {% elif current_user.company.logo_filename %}
+      <img src="{{ url_for('static', filename='uploads/logos/' ~ current_user.company.logo_filename) }}" alt="{{ current_user.company.name }}" id="logoImg">
+      {% else %}
+      <img src="" id="logoImg">
+      {% endif %}
   </div>
 </div>
 <script>
@@ -332,11 +353,11 @@ function fmtNum(v) {
 function addRow(desc,qty,price) {
   const tr = document.createElement('tr');
   tr.innerHTML =
-    '<td class="px-2 first:pl-5 last:pr-5 py-3"><textarea class="form-textarea w-full px-2 py-1 text-sm bg-white dark:bg-slate-800 item-desc" placeholder="Descrição" rows="1">'+(desc?esc(desc):'')+'</textarea></td>'+
-    '<td class="px-2 first:pl-5 last:pr-5 py-3 text-right"><input class="form-input w-16 text-right px-2 py-1 text-sm bg-white dark:bg-slate-800 item-qty" value="'+(qty||'1')+'"></td>'+
-    '<td class="px-2 first:pl-5 last:pr-5 py-3 text-right"><input class="form-input w-24 text-right px-2 py-1 text-sm bg-white dark:bg-slate-800 item-price" placeholder="0,00" value="'+(price||'')+'"></td>'+
-    '<td class="px-2 first:pl-5 last:pr-5 py-3 text-right font-medium"><span class="item-sub">R$ 0,00</span></td>'+
-    '<td class="px-2 first:pl-5 last:pr-5 py-3 text-center"><button class="text-rose-500 hover:text-rose-600 rounded-full" onclick="this.closest(\'tr\').remove();recalc()"><svg class="w-8 h-8 fill-current" viewBox="0 0 32 32"><path d="M13 15h6v2h-6z"></path><path d="M20 9c0-.6-.4-1-1-1h-6c-.6 0-1 .4-1 1v2H8v2h1v10c0 .6.4 1 1 1h12c.6 0 1-.4 1-1V13h1v-2h-4V9zm-6 1h4v1h-4v-1zm7 12H11V13h10v9z"></path></svg></button></td>';
+    '<td class="px-6 py-3"><textarea class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none resize-none item-desc dark:text-slate-200" placeholder="Descrição detalhada do item ou serviço" rows="1">'+(desc?esc(desc):'')+'</textarea></td>'+
+    '<td class="px-6 py-3 text-center"><input class="w-16 px-2 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm text-center focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none item-qty dark:text-slate-200" value="'+(qty||'1')+'"></td>'+
+    '<td class="px-6 py-3 text-right"><input class="w-32 px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm text-right focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none item-price dark:text-slate-200" placeholder="0,00" value="'+(price||'')+'"></td>'+
+    '<td class="px-6 py-3 text-right font-medium text-slate-800 dark:text-slate-100"><span class="item-sub">R$ 0,00</span></td>'+
+    '<td class="px-6 py-3 text-center"><button class="text-slate-400 hover:text-rose-500 transition-colors" title="Remover item" onclick="this.closest(\'tr\').remove();recalc()"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></td>';
   tr.querySelectorAll('input').forEach(i => i.addEventListener('input', recalc));
 
   const ta = tr.querySelector('textarea.item-desc');
