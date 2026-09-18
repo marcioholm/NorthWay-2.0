@@ -233,14 +233,15 @@
 
 <script>
     let funnelChartInstance = null;
-    // Register the plugin globally or locally
-    Chart.register(ChartDataLabels);
+    let chartInstance = null;
 
     document.addEventListener('DOMContentLoaded', function () {
-        // ... (rest of code) ...
+        // Register the plugin globally or locally
+        if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+        }
 
         const ctx = document.getElementById('activityChart').getContext('2d');
-        let chartInstance = null;
 
         // Gradient for Leads
         const gradientLeads = ctx.createLinearGradient(0, 0, 0, 400);

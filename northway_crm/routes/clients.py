@@ -299,11 +299,20 @@ def delete_client(id):
     except Exception as e:
         current_app.logger.error(f"CRITICAL: Asaas Sync Error during client deletion: {e}")
 
-    # Unlink Leads that reference this client
-    from models import Lead
+    # Unlink Leads, WhatsappConversations, and AccountsPayable that reference this client
+    from models import Lead, WhatsappConversation, AccountsPayable
+    
     leads = Lead.query.filter_by(client_id=client.id).all()
     for lead in leads:
         lead.client_id = None
+        
+    conversations = WhatsappConversation.query.filter_by(client_id=client.id).all()
+    for conv in conversations:
+        conv.client_id = None
+        
+    payables = AccountsPayable.query.filter_by(cliente_id=client.id).all()
+    for payable in payables:
+        payable.cliente_id = None
         
     db.session.delete(client)
     db.session.commit()
