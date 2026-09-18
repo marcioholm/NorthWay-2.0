@@ -274,14 +274,19 @@ Google Maps: ${state.scrapedData.url}
         els.btnCRM.disabled = false;
     }
 
-    // Tab Logic
-    document.querySelectorAll('.nw-tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            // Remove active
-            document.querySelectorAll('.nw-tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    // Cached DOM selectors - avoid repeated querySelectorAll
+    const tabBtns = document.querySelectorAll('.nw-tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
 
-            // Add active
+    // Tab Logic - use cached selectors
+    tabBtns.forEach(btn => {
+        btn.onclick = () => {
+            // Remove active from cache
+            tabBtns.forEach(b => b.classList.remove('active'));
+            // Hide all content from cache
+            tabContents.forEach(c => c.classList.add('hidden'));
+
+            // Add active to clicked button
             btn.classList.add('active');
             document.getElementById(btn.dataset.tab).classList.remove('hidden');
         };
