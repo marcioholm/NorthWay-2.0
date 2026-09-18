@@ -564,7 +564,7 @@ class Contract(db.Model):
     code = db.Column(db.String(50), nullable=True) # Unique Identification Code (e.g. CTR-2024-001)
     
     generated_content = db.Column(db.Text, nullable=True) # Nullable for drafts
-        data_emissao = db.Column(db.Date, nullable=True)
+    data_emissao = db.Column(db.Date, nullable=True)
     form_data = db.Column(db.Text, nullable=True) # JSON store for draft inputs
     status = db.Column(db.String(20), default='draft') # draft, issued, signed
     contact_uuid = db.Column(db.String(36), db.ForeignKey('contact.uuid'), nullable=True)
