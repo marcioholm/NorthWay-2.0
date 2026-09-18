@@ -273,6 +273,9 @@ def pipeline(pipeline_id=None):
     # Optimized query: Eager load interactions (for days_inactive) and assigned user
     # Fixed visibility: Removed status restriction to show leads in 'Fechado' (Won/Lost)
     # Filter by company and pipeline
+    # If this is a Sales pipeline, we could theoretically fetch Opportunities.
+    # But for seamless UI integration right now, we will fetch Leads, 
+    # and we ensure that Opportunities also have a corresponding Lead in the pipeline.
     base_query = Lead.query.filter(
         Lead.pipeline_id == pipeline_id, 
         Lead.company_id == current_user.company_id
@@ -431,6 +434,67 @@ def update_lead_stage_api(id):
         })
     except Exception as e:
         print(f"Webhook dispatch failed: {e}")
+    
+    # --- NOVO: Lógica de Passagem de Bastão (Pré-venda -> Vendas) ---
+    if stage.name == 'Reunião agendada' and stage.pipeline.name == 'Funil de Pré-venda':
+        # Localiza o funil de vendas da empresa
+        sales_pipeline = Pipeline.query.filter_by(company_id=current_user.company_id, name='Funil de Vendas').first()
+        if sales_pipeline:
+            # Pega o primeiro estágio (ex: Reunião agendada no Funil de Vendas)
+            first_sales_stage = PipelineStage.query.filter_by(pipeline_id=sales_pipeline.id).order_by(PipelineStage.order).first()
+            if first_sales_stage:
+                from models import Opportunity
+                
+                # Check se já existe uma oportunidade gerada para evitar duplicidade no drag and drop
+                existing_opp = Opportunity.query.filter_by(lead_id=lead.id).first()
+                if not existing_opp:
+                    # Cria a Oportunidade vinculada ao Lead original
+                    new_opp = Opportunity(
+                        company_id=current_user.company_id,
+                        lead_id=lead.id,
+                        stage_id=first_sales_stage.id,
+                        assigned_to_id=lead.assigned_to_id,
+                        status='open',
+                        value_proposed=lead.estimated_value
+                    )
+                    db.session.add(new_opp)
+                    
+                    # Cria também um "Clone" visual (Lead) para aparecer no Funil de Vendas
+                    # O clone tem o pipeline e stage do funil de vendas, e o mesmo contact_uuid
+                    new_sales_lead = Lead(
+                        name=lead.name,
+                        phone=lead.phone,
+                        email=lead.email,
+                        whatsapp=lead.whatsapp,
+                        company_id=lead.company_id,
+                        pipeline_id=sales_pipeline.id,
+                        pipeline_stage_id=first_sales_stage.id,
+                        assigned_to_id=lead.assigned_to_id,
+                        contact_uuid=lead.contact_uuid,
+                        source="Pré-venda (Conversão)",
+                        estimated_value=lead.estimated_value
+                    )
+                    db.session.add(new_sales_lead)
+                    
+                    # Atualiza métricas de conversão no Lead original
+                    from models import get_now_br
+                    lead.converted_at = get_now_br()
+                    lead.converter_id = current_user.id
+                    lead.converted_from_stage_id = stage.id
+                    
+                    # Histórico
+                    from models import LeadStageHistory
+                    history_opp = LeadStageHistory(
+                        lead_id=lead.id,
+                        to_stage_id=stage.id,
+                        moved_by_id=current_user.id,
+                        source='auto_passage',
+                        notes='Bastão passado para Vendas'
+                    )
+                    db.session.add(history_opp)
+                    
+                    db.session.commit()
+    # ----------------------------------------------------------------
     
     # Generate Automated Tasks
     generate_tasks_for_stage(lead.id, lead.pipeline_stage_id)

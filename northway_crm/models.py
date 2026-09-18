@@ -800,6 +800,65 @@ class Task(db.Model):
     responsible = db.relationship('User', foreign_keys=[assigned_to_id], backref='assigned_tasks')
     created_by = db.relationship('User', foreign_keys=[created_by_user_id], backref='created_tasks')
 
+class Opportunity(db.Model):
+    __tablename__ = 'opportunities'
+    id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('company.id'), nullable=False, index=True)
+    lead_id = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=False, index=True)
+    stage_id = db.Column(db.Integer, db.ForeignKey('pipeline_stage.id'), nullable=True)
+    status = db.Column(db.String(20), default='open')
+    value_proposed = db.Column(db.Numeric(12, 2), nullable=True)
+    closed_at = db.Column(db.DateTime, nullable=True)
+    assigned_to_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=get_now_br)
+    updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
+
+    lead = db.relationship('Lead', backref=db.backref('opportunities', cascade='all, delete-orphan'))
+    assigned_to = db.relationship('User', foreign_keys=[assigned_to_id])
+
+    # Proxy properties for seamless Kanban UI rendering
+    @property
+    def name(self): return self.lead.name if self.lead else "Sem Nome"
+    @property
+    def phone(self): return self.lead.phone if self.lead else ""
+    @property
+    def whatsapp(self): return self.lead.whatsapp if self.lead else ""
+    @property
+    def email(self): return self.lead.email if self.lead else ""
+    @property
+    def interest(self): return self.lead.interest if self.lead else ""
+    @property
+    def source(self): return self.lead.source if self.lead else ""
+    @property
+    def website(self): return self.lead.website if self.lead else ""
+    @property
+    def diagnostic_score(self): return self.lead.diagnostic_score if self.lead else None
+    @property
+    def diagnostic_stars(self): return self.lead.diagnostic_stars if self.lead else None
+    @property
+    def diagnostic_classification(self): return self.lead.diagnostic_classification if self.lead else None
+    @property
+    def diagnostic_status(self): return self.lead.diagnostic_status if self.lead else None
+    @property
+    def estimated_value(self): return self.value_proposed or (self.lead.estimated_value if self.lead else 0)
+    @property
+    def address(self): return self.lead.address if self.lead else ""
+    @property
+    def lost_at(self): return self.closed_at if self.status == 'lost' else None
+    @property
+    def assigned_user(self): return self.assigned_to
+    @property
+    def task_progress(self):
+        if hasattr(self, '_task_progress'):
+            return self._task_progress
+        return self.lead.task_progress if self.lead else {'total': 0, 'completed': 0, 'percent': 0, 'overdue': 0}
+    @property
+    def days_inactive(self):
+        if hasattr(self, '_last_activity_at'):
+            from datetime import datetime
+            return (datetime.utcnow() - self._last_activity_at).days
+        return self.lead.days_inactive if self.lead else 0
+
 class TaskEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
