@@ -3,7 +3,7 @@
 {% block content %}
 <div class="flex flex-col bg-gray-50 min-h-screen">
 
-  {# ── TOPBAR ── #}
+  {#  TOPBAR  #}
   <div class="px-8 py-5 bg-white border-b border-gray-100 flex justify-between items-center gap-4 flex-wrap sticky top-0 z-10">
     <div>
       <h1 class="text-2xl font-display font-extrabold text-gray-900 tracking-tight">
@@ -31,7 +31,7 @@
 
   <div class="flex-1 px-8 py-6 max-w-4xl mx-auto w-full">
 
-    {# ── MONITOR DE DISPARO EM SEGUNDO PLANO ── #}
+    {#  MONITOR DE DISPARO EM SEGUNDO PLANO  #}
     <div id="batch-monitor-container" class="hidden mb-6 bg-slate-900 text-white rounded-2xl p-5 shadow-lg border border-slate-800 transition-all duration-300 relative overflow-hidden">
       <!-- Background pulse effect -->
       <div class="absolute inset-0 bg-gradient-to-r from-indigo-950/20 via-slate-900 to-indigo-950/20 pointer-events-none"></div>
@@ -91,7 +91,7 @@
       </div>
     </div>
 
-    {# ── FILTROS ── #}
+    {#  FILTROS  #}
     <div class="flex items-center gap-2 mb-4 flex-wrap">
       <button onclick="setFilter('all', this)"
               class="filter-btn active px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 bg-white text-gray-700 transition-all">
@@ -111,7 +111,7 @@
       </button>
     </div>
 
-    {# ── FILTROS DE NICHO ── #}
+    {#  FILTROS DE NICHO  #}
     {% if niches_with_pending %}
     <div class="flex items-center gap-1.5 mb-4 flex-wrap bg-white p-3 rounded-xl border border-gray-100">
       <span class="text-xs font-bold text-gray-400 mr-2 flex items-center gap-1">
@@ -137,7 +137,7 @@
     {% endif %}
 
 
-    {# ── SELECT ALL BAR ── #}
+    {#  SELECT ALL BAR  #}
     <div class="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 mb-4 text-xs text-gray-500">
       <label class="flex items-center gap-2 cursor-pointer select-none">
         <div id="select-all-box"
@@ -148,7 +148,7 @@
       </label>
     </div>
 
-    {# ── LISTA DE MENSAGENS ── #}
+    {#  LISTA DE MENSAGENS  #}
     {% if messages %}
     <div class="space-y-3" id="msg-list">
       {% for msg in messages %}
@@ -421,7 +421,7 @@ function markCard(msgId, status) {
         pill.textContent = 'Rejeitada';
       }
     }
-    footer.innerHTML = `<span class="text-xs text-gray-400">${status === 'approved' ? '✓ Mensagem aprovada e enviada.' : '✕ Mensagem rejeitada.'}</span>`;
+    footer.innerHTML = `<span class="text-xs text-gray-400">${status === 'approved' ? ' Mensagem aprovada e enviada.' : ' Mensagem rejeitada.'}</span>`;
   }
   selected.delete(msgId);
   applyFilters();

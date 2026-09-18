@@ -1481,7 +1481,7 @@
 
             if (data.success) {
                 const s = data.stats;
-                const msg = `✅ ${s.chats_saved} conversas e ${s.messages_saved} mensagens sincronizadas!`;
+                const msg = ` ${s.chats_saved} conversas e ${s.messages_saved} mensagens sincronizadas!`;
                 showToast(msg, 'success');
                 loadConversations();
             } else {

@@ -67,7 +67,7 @@
                     Nível {{ lead.diagnostic_classification }}
                 </span>
                 <span class="text-xs text-gray-500">
-                    ⭐ {{ '%.1f'|format(lead.diagnostic_stars or 0) }}
+                     {{ '%.1f'|format(lead.diagnostic_stars or 0) }}
                 </span>
                 <span class="text-xs text-gray-400 ml-auto">
                     {{ lead.diagnostic_date.strftime('%d/%m/%Y') if lead.diagnostic_date else '' }}

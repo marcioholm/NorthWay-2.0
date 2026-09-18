@@ -188,7 +188,7 @@ td.date-col,td.time-col{font-variant-numeric:tabular-nums;}
     <div class="toolbar-actions">
       <button class="btn-primary" id="btnNovo">Novo Post</button>
       <div class="export-group">
-        <button id="btnExportToggle">Exportar ▾</button>
+        <button id="btnExportToggle">Exportar </button>
         <div class="export-menu" id="exportMenu">
           <button data-export="list-html">Lista (HTML)</button>
           <button data-export="list-pdf">Lista (PDF)</button>
@@ -206,7 +206,7 @@ td.date-col,td.time-col{font-variant-numeric:tabular-nums;}
   <div class="settings">
     <div class="settings-head" id="settingsToggle">
       <b>Configurações do cliente</b>
-      <span id="settingsCaret" style="font-size:.85rem;color:var(--muted);">Ocultar ▾</span>
+      <span id="settingsCaret" style="font-size:.85rem;color:var(--muted);">Ocultar </span>
     </div>
     <div class="settings-body" id="settingsBody">
       <div style="display:flex;flex-direction:column;gap:14px;">
@@ -272,7 +272,7 @@ td.date-col,td.time-col{font-variant-numeric:tabular-nums;}
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
       <h3 id="modalTitle">Novo Post</h3>
-      <button class="btn-ghost" id="modalClose" aria-label="Fechar">✕</button>
+      <button class="btn-ghost" id="modalClose" aria-label="Fechar"></button>
     </div>
     <div class="modal-body">
       <div class="modal-grid">
@@ -946,7 +946,7 @@ function doExportWeekHtml(weekStart, weekEnd){
             '<span class="post-plat" style="background:'+bg+'">'+plat.label+'</span>'+
             '<span class="post-tipo">'+(p.tipo||'')+'</span>'+
             '<span class="post-time">'+(p.time||'--')+'</span>'+
-            '<span class="post-status" style="color:'+stColor+'">● '+p.status+'</span>'+
+            '<span class="post-status" style="color:'+stColor+'"> '+p.status+'</span>'+
           '</div>'+
           '<div class="post-tema">'+escapeHtml(p.tema||'(sem tema definido)')+'</div>'+
           (p.editoria ? '<div class="post-meta"><b>Editoria:</b> '+escapeHtml(p.editoria)+'</div>' : '')+
@@ -1549,7 +1549,7 @@ function initSettings(){
       var body = document.getElementById('settingsBody');
       var caret = document.getElementById('settingsCaret');
       if(body) body.classList.toggle('collapsed');
-      if(caret) caret.textContent = body && body.classList.contains('collapsed') ? 'Mostrar ▾' : 'Ocultar ▾';
+      if(caret) caret.textContent = body && body.classList.contains('collapsed') ? 'Mostrar ' : 'Ocultar ';
     });
   }
 }

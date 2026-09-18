@@ -793,7 +793,7 @@ class Task(db.Model):
 
     # Relationships are backref'd from Lead/Client usually, or here:
     # lead = db.relationship('Lead', backref='tasks') -- already in Lead
-    client = db.relationship('Client', backref='tasks')
+    client = db.relationship('Client', backref=db.backref('tasks', cascade='all, delete-orphan'))
     contract = db.relationship('Contract', backref='tasks')
     service_order = db.relationship('ServiceOrder', backref='tasks')
     
@@ -1108,7 +1108,7 @@ class FormSubmission(db.Model):
     # Relations
     instance = db.relationship('FormInstance', backref='submissions')
     lead = db.relationship('Lead', backref='submissions')
-    client = db.relationship('Client', backref='submissions')
+    client = db.relationship('Client', backref=db.backref('submissions', cascade='all, delete-orphan'))
     
 class FixedCost(db.Model):
     __tablename__ = 'custos_fixos_globais'
@@ -1237,7 +1237,7 @@ class AccountsPayable(db.Model):
 
     company = db.relationship('Company', backref='accounts_payable')
     contract_obj = db.relationship('Contract', backref='commissions_payable')
-    client_obj = db.relationship('Client', backref='commissions_payable')
+    client_obj = db.relationship('Client', backref=db.backref('commissions_payable', cascade='all, delete-orphan'))
     beneficiario = db.relationship('User', foreign_keys=[beneficiario_id])
     referencia = db.relationship('AccountsPayable', remote_side=[id], backref='ajustes')
 

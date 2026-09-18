@@ -33,7 +33,7 @@
         box-sizing: border-box;
     }
 
-    /* ── HEADER ACTIONS ── */
+    /*  HEADER ACTIONS  */
     .swot-header-actions {
         display: flex;
         gap: 8px;
@@ -101,7 +101,7 @@
         color: var(--ink);
     }
 
-    /* ── ANALISES LIST ── */
+    /*  ANALISES LIST  */
     .swot-list-item {
         background: white;
         border: 1px solid var(--border);
@@ -169,7 +169,7 @@
         color: var(--t-color);
     }
 
-    /* ── PROJECT BAR ── */
+    /*  PROJECT BAR  */
     .swot-project-bar {
         background: white;
         border: 1px solid var(--border);
@@ -222,7 +222,7 @@
         background: var(--border);
     }
 
-    /* ── SWOT GRID ── */
+    /*  SWOT GRID  */
     .swot-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -501,7 +501,7 @@
         transform: scale(1.05);
     }
 
-    /* ── SUMMARY (cliente) ── */
+    /*  SUMMARY (cliente)  */
     .summary-section {
         background: white;
         border: 1px solid var(--border);
@@ -666,12 +666,12 @@
         <div class="swot-header-actions hide-on-print">
             <div class="swot-mode-wrap" id="swot-mode-selector">
                 <button type="button" class="swot-mode-btn active" id="btn-mode-consultor"
-                    onclick="setSwotMode('consultor')">🔒 Consultor</button>
-                <button type="button" class="swot-mode-btn" id="btn-mode-cliente" onclick="setSwotMode('cliente')">👁
+                    onclick="setSwotMode('consultor')"> Consultor</button>
+                <button type="button" class="swot-mode-btn" id="btn-mode-cliente" onclick="setSwotMode('cliente')">
                     Cliente</button>
             </div>
-            <button class="swot-btn swot-btn-outline" onclick="copiarSwot()" id="btn-copy-main">📋 Copiar</button>
-            <button class="swot-btn swot-btn-dark" onclick="exportarSwot()">⬇ Exportar PDF</button>
+            <button class="swot-btn swot-btn-outline" onclick="copiarSwot()" id="btn-copy-main"> Copiar</button>
+            <button class="swot-btn swot-btn-dark" onclick="exportarSwot()"> Exportar PDF</button>
             <button class="swot-btn border border-red-200 ml-2" style="background:#fef2f2; color:#dc2626;"
                 onclick="excluirSwot()" id="btn-delete-swot" title="Excluir"><i data-lucide="trash-2"
                     class="w-4 h-4"></i></button>
@@ -693,22 +693,22 @@
             <div class="summary-title text-gray-900">Visão Geral</div>
             <div class="summary-grid">
                 <div class="summary-card s">
-                    <div class="sc-label">💪 Forças</div>
+                    <div class="sc-label"> Forças</div>
                     <div class="sc-count" id="count-s-summary">0</div>
                     <div class="sc-sub">pontos positivos internos</div>
                 </div>
                 <div class="summary-card w">
-                    <div class="sc-label">⚠️ Fraquezas</div>
+                    <div class="sc-label"> Fraquezas</div>
                     <div class="sc-count" id="count-w-summary">0</div>
                     <div class="sc-sub">pontos negativos internos</div>
                 </div>
                 <div class="summary-card o">
-                    <div class="sc-label">🚀 Oportunidades</div>
+                    <div class="sc-label"> Oportunidades</div>
                     <div class="sc-count" id="count-o-summary">0</div>
                     <div class="sc-sub">fatores externos favoráveis</div>
                 </div>
                 <div class="summary-card t">
-                    <div class="sc-label">⚡ Ameaças</div>
+                    <div class="sc-label"> Ameaças</div>
                     <div class="sc-count" id="count-t-summary">0</div>
                     <div class="sc-sub">fatores externos adversos</div>
                 </div>
@@ -719,7 +719,7 @@
             <!-- FORÇAS -->
             <div class="quadrant s text-left">
                 <div class="quad-head">
-                    <div class="quad-icon">💪</div>
+                    <div class="quad-icon"></div>
                     <div>
                         <div class="quad-title">Forças</div>
                         <div class="quad-subtitle">Vantagens internas do negócio</div>
@@ -739,7 +739,7 @@
             <!-- FRAQUEZAS -->
             <div class="quadrant w text-left">
                 <div class="quad-head">
-                    <div class="quad-icon">⚠️</div>
+                    <div class="quad-icon"></div>
                     <div>
                         <div class="quad-title">Fraquezas</div>
                         <div class="quad-subtitle">Limitações internas a superar</div>
@@ -759,7 +759,7 @@
             <!-- OPORTUNIDADES -->
             <div class="quadrant o text-left">
                 <div class="quad-head">
-                    <div class="quad-icon">🚀</div>
+                    <div class="quad-icon"></div>
                     <div>
                         <div class="quad-title">Oportunidades</div>
                         <div class="quad-subtitle">Fatores externos favoráveis</div>
@@ -779,7 +779,7 @@
             <!-- AMEAÇAS -->
             <div class="quadrant t text-left">
                 <div class="quad-head">
-                    <div class="quad-icon">⚡</div>
+                    <div class="quad-icon"></div>
                     <div>
                         <div class="quad-title">Ameaças</div>
                         <div class="quad-subtitle">Fatores externos adversos</div>
@@ -798,7 +798,7 @@
         </div>
 
         <div class="copy-row hide-on-print">
-            <button type="button" class="swot-btn swot-btn-outline" onclick="copiarSwot()" id="btn-copy-footer">📋
+            <button type="button" class="swot-btn swot-btn-outline" onclick="copiarSwot()" id="btn-copy-footer">
                 Copiar resumo completo</button>
         </div>
 
@@ -1052,7 +1052,7 @@
                         ? `<textarea class="item-text" rows="1" readonly>${item.texto}</textarea>`
                         : `<textarea class="item-text" rows="1" onblur="updateItemSwot('${q}', '${item.id}', this)" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${item.texto}</textarea>`
                     }
-                <button type="button" class="item-del ${SwotApp.userMode === 'cliente' ? 'hide' : ''}" onclick="deleteItemSwot('${q}', '${item.id}')" title="Remover">✕</button>
+                <button type="button" class="item-del ${SwotApp.userMode === 'cliente' ? 'hide' : ''}" onclick="deleteItemSwot('${q}', '${item.id}')" title="Remover"></button>
             `;
                 list.appendChild(el);
 
@@ -1143,9 +1143,9 @@
         navigator.clipboard.writeText(txt).then(() => {
             const btnM = document.getElementById('btn-copy-main');
             const btnF = document.getElementById('btn-copy-footer');
-            const orig = "📋 Copiar";
-            if (btnM) btnM.textContent = '✅ Copiado!';
-            if (btnF) btnF.textContent = '✅ Copiado!';
+            const orig = " Copiar";
+            if (btnM) btnM.textContent = ' Copiado!';
+            if (btnF) btnF.textContent = ' Copiado!';
             setTimeout(() => {
                 if (btnM) btnM.textContent = orig;
                 if (btnF) btnF.textContent = orig + ' resumo completo';
@@ -1205,10 +1205,10 @@
         `;
 
         const quadrants = [
-            { id: 'S', title: 'Forças', color: '#16a34a', bg: '#f0fdf4', icon: '💪', desc: 'Pontos positivos internos' },
-            { id: 'W', title: 'Fraquezas', color: '#dc2626', bg: '#fef2f2', icon: '⚠️', desc: 'Pontos negativos internos' },
-            { id: 'O', title: 'Oportunidades', color: '#d97706', bg: '#fffbeb', icon: '🚀', desc: 'Fatores externos favoráveis' },
-            { id: 'T', title: 'Ameaças', color: '#7c3aed', bg: '#faf5ff', icon: '⚡', desc: 'Fatores externos adversos' }
+            { id: 'S', title: 'Forças', color: '#16a34a', bg: '#f0fdf4', icon: '', desc: 'Pontos positivos internos' },
+            { id: 'W', title: 'Fraquezas', color: '#dc2626', bg: '#fef2f2', icon: '', desc: 'Pontos negativos internos' },
+            { id: 'O', title: 'Oportunidades', color: '#d97706', bg: '#fffbeb', icon: '', desc: 'Fatores externos favoráveis' },
+            { id: 'T', title: 'Ameaças', color: '#7c3aed', bg: '#faf5ff', icon: '', desc: 'Fatores externos adversos' }
         ];
 
         quadrants.forEach(q => {

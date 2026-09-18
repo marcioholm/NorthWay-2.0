@@ -449,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
 });
 
-// ─── Adicionar da Base ─────────────────────────────────────────────────────
+//  Adicionar da Base 
 let _baseLeadsCampaignId = null;
 let _baseLeadsPage = 1;
 let _baseLeadsSearchTimer = null;
@@ -598,7 +598,7 @@ async function confirmBaseLeads() {
     }
 }
 
-// ─── Modal Campanha ─────────────────────────────────────────────────────────
+//  Modal Campanha 
 function openCampaignModal() {
     document.getElementById('modalTitle').textContent = 'Nova Campanha';
     document.getElementById('campaignId').value = '';
@@ -1105,7 +1105,7 @@ async function rejectMessage(leadId, messageId) {
     }
 }
 
-// ─── Edição de Mensagens ────────────────────────────────────────────────
+//  Edição de Mensagens 
 async function editMessage(messageId, btn) {
     const contentEl = document.getElementById(`msgContent_${messageId}`);
     const currentContent = contentEl.textContent === 'Sem conteúdo' ? '' : contentEl.textContent;
@@ -1142,7 +1142,7 @@ async function editMessage(messageId, btn) {
     }
 }
 
-// ─── Geração de Mensagens ────────────────────────────────────────────────
+//  Geração de Mensagens 
 async function generateLeadMessage(leadId, btn) {
     const originalHtml = btn.innerHTML;
     btn.disabled = true;

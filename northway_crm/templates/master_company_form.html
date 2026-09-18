@@ -66,11 +66,11 @@
                                         class="w-full bg-gray-900/50 border border-gray-600 focus:border-blue-500 rounded-lg px-4 py-3 text-white appearance-none outline-none transition-all">
                                         <!-- Simplified Options per user user request -->
                                         <option value="pro" {% if not company or company.plan=='pro' %}selected{% endif
-                                            %}>💎 Plano Pro (Padrão)</option>
+                                            %}> Plano Pro (Padrão)</option>
                                         <option value="enterprise" {% if company and company.plan=='enterprise'
-                                            %}selected{% endif %}>🏢 Enterprise (Personalizado)</option>
+                                            %}selected{% endif %}> Enterprise (Personalizado)</option>
                                         <option value="starter" {% if company and company.plan=='starter' %}selected{%
-                                            endif %}>🌱 Starter (Legado)</option>
+                                            endif %}> Starter (Legado)</option>
                                     </select>
                                     <i data-lucide="chevron-down"
                                         class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
@@ -86,11 +86,11 @@
                                     <select name="status"
                                         class="w-full bg-gray-900/50 border border-gray-600 focus:border-blue-500 rounded-lg px-4 py-3 text-white appearance-none outline-none transition-all">
                                         <option value="active" {% if company and company.status=='active' %}selected{%
-                                            endif %}>✅ Ativa</option>
+                                            endif %}> Ativa</option>
                                         <option value="suspended" {% if company and company.status=='suspended'
-                                            %}selected{% endif %}>⏸️ Suspensa</option>
+                                            %}selected{% endif %}>⏸ Suspensa</option>
                                         <option value="cancelled" {% if company and company.status=='cancelled'
-                                            %}selected{% endif %}>🚫 Cancelada</option>
+                                            %}selected{% endif %}> Cancelada</option>
                                     </select>
                                     <i data-lucide="chevron-down"
                                         class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>

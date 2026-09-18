@@ -46,7 +46,7 @@
                     alt="Google Drive CRM" loading="lazy">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                 <div class="absolute bottom-4 left-6 text-white">
-                    <h3 class="text-lg font-black mb-0.5">Arquivos Inteligentes 📁</h3>
+                    <h3 class="text-lg font-black mb-0.5">Arquivos Inteligentes </h3>
                     <p class="text-[10px] text-gray-200 font-medium opacity-90">Sincronização automática para cada novo
                         lead.</p>
                 </div>
@@ -96,7 +96,7 @@
                                 class="bg-yellow-500/20 text-yellow-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-yellow-500/20">Google
                                 Maps Platform</span>
                         </div>
-                        <h3 class="text-xl font-black mb-2 leading-tight">Ative sua Chave de Prospecção 🗺️</h3>
+                        <h3 class="text-xl font-black mb-2 leading-tight">Ative sua Chave de Prospecção </h3>
                         <p class="text-sm text-slate-300 mb-0 leading-relaxed">
                             Para localizar leads no mapa, você precisa de uma chave própria.
                             O Google disponibiliza um <strong>crédito recorrente de $200/mês</strong>, o que torna o uso
@@ -378,7 +378,7 @@
                 alt="ZapWay CRM" loading="lazy">
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
             <div class="absolute bottom-6 left-6 text-white">
-                <h3 class="text-2xl font-black mb-1">CRM no WhatsApp 🚀</h3>
+                <h3 class="text-2xl font-black mb-1">CRM no WhatsApp </h3>
                 <p class="text-sm text-gray-200 font-medium opacity-90">Agende, venda e organize sem sair do chat.
                 </p>
             </div>
@@ -443,7 +443,7 @@
                 alt="NorthWay Compass" loading="lazy">
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
             <div class="absolute bottom-6 left-6 text-white">
-                <h3 class="text-2xl font-black mb-1">Domine seu Território 🗺️</h3>
+                <h3 class="text-2xl font-black mb-1">Domine seu Território </h3>
                 <p class="text-sm text-gray-200 font-medium opacity-90">Análise de concorrentes e extração de leads
                     automática.</p>
             </div>
@@ -516,7 +516,7 @@
                             class="bg-purple-400 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">Enriquecimento
                             Automático</span>
                     </div>
-                    <h3 class="text-xl font-black mb-2 leading-tight">Dados Precisos em Segundos 🏢</h3>
+                    <h3 class="text-xl font-black mb-2 leading-tight">Dados Precisos em Segundos </h3>
                     <p class="text-sm text-purple-50 mb-0 leading-relaxed">
                         Economize horas de preenchimento manual. Capture Razão Social, Sócios, Capital Social e
                         contatos direto da Receita Federal.
@@ -617,7 +617,7 @@
                         class="bg-green-400 text-green-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">+
                         R$ 50,00</span>
                 </div>
-                <h3 class="text-xl font-black mb-2 leading-tight">Automatize suas cobranças com o Asaas 🚀</h3>
+                <h3 class="text-xl font-black mb-2 leading-tight">Automatize suas cobranças com o Asaas </h3>
                 <p class="text-sm text-blue-100 mb-6 max-w-lg leading-relaxed">
                     Crie sua conta pelo nosso link e configure boletos, Pix e cartão em segundos.
                     <strong>Ganhe R$ 50,00</strong> de desconto nas suas primeiras taxas ao ativar sua conta pelo
@@ -863,12 +863,12 @@
             const data = await res.json();
 
             if (data.success) {
-                alert('✅ Preferências de notificação salvas com sucesso! As novas cobranças seguirão estas regras.');
+                alert(' Preferências de notificação salvas com sucesso! As novas cobranças seguirão estas regras.');
             } else {
-                alert('❌ Erro ao salvar preferências: ' + (data.error || 'Erro desconhecido'));
+                alert(' Erro ao salvar preferências: ' + (data.error || 'Erro desconhecido'));
             }
         } catch (e) {
-            alert('❌ Erro de conexão: ' + e);
+            alert(' Erro de conexão: ' + e);
         }
     }
 
@@ -953,7 +953,7 @@
             const res = await fetch('/api/integrations/asaas/setup-webhook', { method: 'POST' });
             const data = await res.json();
             if (data.success) {
-                alert("Webhook configurado com sucesso! ✅");
+                alert("Webhook configurado com sucesso! ");
             } else {
                 alert("Erro ao configurar webhook: " + data.error);
             }
@@ -969,7 +969,7 @@
             const res = await fetch('/api/whatsapp/setup-webhook', { method: 'POST' });
             const data = await res.json();
             if (data.success) {
-                alert("Webhooks da Z-API configurados com sucesso! ✅");
+                alert("Webhooks da Z-API configurados com sucesso! ");
             } else {
                 alert("Erro ao configurar: " + data.error);
             }
@@ -1003,7 +1003,7 @@
                     statusEl.className = 'text-green-600 font-bold ml-2';
                     statusEl.innerText = data.message;
                     if (data.phone) {
-                        phoneEl.innerText = `📱 ${data.phone}`;
+                        phoneEl.innerText = ` ${data.phone}`;
                         phoneEl.classList.remove('hidden');
                     }
                 } else {

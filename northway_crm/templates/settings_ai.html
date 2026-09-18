@@ -54,11 +54,11 @@
                                         <p class="text-xs text-gray-400">Chave salva: ****{{ cred.api_key_last4 }}</p>
                                         <p class="text-[11px] flex items-center gap-1.5">
                                             {% if cred.status == 'connected' %}
-                                            <span class="text-green-600 font-bold">● Conectado</span>
+                                            <span class="text-green-600 font-bold"> Conectado</span>
                                             {% elif cred.status == 'error' %}
-                                            <span class="text-red-500 font-bold">● Falha na última conexão</span>
+                                            <span class="text-red-500 font-bold"> Falha na última conexão</span>
                                             {% else %}
-                                            <span class="text-amber-500 font-bold">● Configurado</span>
+                                            <span class="text-amber-500 font-bold"> Configurado</span>
                                             {% endif %}
                                             {% if cred.last_test_at_formatted %}
                                             <span class="text-gray-400">• Testado em {{ cred.last_test_at_formatted }}</span>
@@ -108,9 +108,9 @@
                                         {% if integration.provider == int.id %}
                                     <p class="text-xs text-gray-400">
                                         {% if integration.status == 'active' %}
-                                        <span class="text-green-600">● Ativo</span>
+                                        <span class="text-green-600"> Ativo</span>
                                         {% else %}
-                                        <span class="text-gray-400">● Inativo</span>
+                                        <span class="text-gray-400"> Inativo</span>
                                         {% endif %}
                                         {% if integration.display_name %} • {{ integration.display_name }}{% elif integration.instance_name %} • {{ integration.instance_name }}{% endif %}
                                     </p>
@@ -377,13 +377,13 @@ function openProviderModal(provider, name) {
         statusContainer.classList.remove('hidden');
         if (existing.status === 'connected') {
             statusContainer.className = 'p-3.5 rounded-xl text-xs font-semibold bg-green-50 text-green-700 border border-green-100 mb-2';
-            statusText.innerHTML = `● Status: Conectado (Testado em ${existing.last_test_at_formatted || existing.last_test_at})`;
+            statusText.innerHTML = ` Status: Conectado (Testado em ${existing.last_test_at_formatted || existing.last_test_at})`;
         } else if (existing.status === 'error') {
             statusContainer.className = 'p-3.5 rounded-xl text-xs font-semibold bg-red-50 text-red-700 border border-red-100 mb-2';
-            statusText.innerHTML = `● Status: Falha na última conexão`;
+            statusText.innerHTML = ` Status: Falha na última conexão`;
         } else {
             statusContainer.className = 'p-3.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100 mb-2';
-            statusText.innerHTML = `● Status: Configurado (Não testado)`;
+            statusText.innerHTML = ` Status: Configurado (Não testado)`;
         }
 
         if (existing.model) {

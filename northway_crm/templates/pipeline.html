@@ -42,43 +42,47 @@
         <!-- Unified Filters -->
         <div class="flex items-center gap-4 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
             <form method="GET" action="{{ url_for('leads.pipeline', pipeline_id=active_pipeline.id) }}" class="flex items-center gap-3 w-full min-w-max">
-                <div class="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-gray-100 w-full min-w-max">
-                    <div class="relative flex items-center">
-                        <span class="text-[10px] font-bold text-gray-400 absolute -top-5 left-1 uppercase tracking-wider">Mês</span>
+                <div class="flex items-end gap-3 bg-white p-3 rounded-xl shadow-sm border border-gray-100 w-full min-w-max">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-1">Mês</span>
                         <input type="month" name="month" value="{{ request.args.get('month') or '' }}"
                             class="py-1.5 px-3 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 outline-none w-36 text-gray-600 h-9 cursor-pointer">
                     </div>
-                    <div class="relative flex items-center">
-                        <span class="text-[10px] font-bold text-gray-400 absolute -top-5 left-1 uppercase tracking-wider">Data</span>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-1">Data</span>
                         <input type="date" name="date" value="{{ request.args.get('date') or '' }}"
                             class="py-1.5 px-3 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 outline-none w-36 text-gray-600 h-9 cursor-pointer">
                     </div>
 
-                    <div class="h-6 w-px bg-gray-200 mx-1"></div>
+                    <div class="h-9 w-px bg-gray-200 mx-1"></div>
 
-                    <div class="relative group/filter-by">
-                        <span class="text-[10px] font-bold text-gray-400 absolute -top-5 left-1 uppercase tracking-wider">Filtrar por</span>
-                        <select name="filter_by"
-                            class="pl-3 pr-8 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 appearance-none cursor-pointer h-9 w-32 font-medium">
-                            <option value="created" {% if request.args.get('filter_by') != 'lost' %}selected{% endif %}>📅 Criação</option>
-                            <option value="lost" {% if request.args.get('filter_by') == 'lost' %}selected{% endif %}>🗑️ Descarte</option>
-                        </select>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 absolute right-2 top-2.5 pointer-events-none"></i>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-1">Filtrar por</span>
+                        <div class="relative group/filter-by">
+                            <select name="filter_by"
+                                class="pl-3 pr-8 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 appearance-none cursor-pointer h-9 w-32 font-medium">
+                                <option value="created" {% if request.args.get('filter_by') != 'lost' %}selected{% endif %}>Criação</option>
+                                <option value="lost" {% if request.args.get('filter_by') == 'lost' %}selected{% endif %}>Descarte</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 absolute right-2 top-2.5 pointer-events-none"></i>
+                        </div>
                     </div>
 
-                    <div class="h-6 w-px bg-gray-200 mx-1"></div>
+                    <div class="h-9 w-px bg-gray-200 mx-1"></div>
 
-                    <div class="relative group/responsible">
-                        <span class="text-[10px] font-bold text-gray-400 absolute -top-5 left-1 uppercase tracking-wider">Responsável</span>
-                        <select name="responsible_id" id="responsibleFilter"
-                            class="pl-9 pr-8 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 appearance-none cursor-pointer h-9 w-40 md:w-48">
-                            <option value="">Todos</option>
-                            {% for user in active_pipeline.company.users %}
-                            <option value="{{ user.id }}" {% if request.args.get('responsible_id')|string == user.id|string %}selected{% endif %}>{{ user.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <i data-lucide="user" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5"></i>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 absolute right-2 top-2.5 pointer-events-none"></i>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider pl-1">Responsável</span>
+                        <div class="relative group/responsible">
+                            <select name="responsible_id" id="responsibleFilter"
+                                class="pl-9 pr-8 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-northway-red/20 appearance-none cursor-pointer h-9 w-40 md:w-48">
+                                <option value="">Todos</option>
+                                {% for user in active_pipeline.company.users %}
+                                <option value="{{ user.id }}" {% if request.args.get('responsible_id')|string == user.id|string %}selected{% endif %}>{{ user.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <i data-lucide="user" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 absolute right-2 top-2.5 pointer-events-none"></i>
+                        </div>
                     </div>
 
                     <button type="submit" class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all font-bold text-sm shadow-sm flex items-center gap-2 h-9 ml-1">
@@ -286,7 +290,7 @@
                             <div class="flex items-center gap-2">
                                 <span class="text-xs text-gray-400 font-medium group-hover:text-gray-600 transition-colors">
                                     {% if request.args.get('filter_by') == 'lost' and lead.lost_at %}
-                                        <span class="text-red-500 font-bold" title="Data do Descarte">🚫 {{ lead.lost_at.strftime('%d/%m') }}</span>
+                                        <span class="text-red-500 font-bold" title="Data do Descarte"> {{ lead.lost_at.strftime('%d/%m') }}</span>
                                     {% else %}
                                         {{ lead.created_at.strftime('%d/%m') }}
                                     {% endif %}
