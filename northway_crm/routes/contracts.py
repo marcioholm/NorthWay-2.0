@@ -770,35 +770,7 @@ def add_penalty(id):
         
     return redirect(url_for('contracts.view_contract', id=contract.id))
 
-@contracts_bp.route('/contracts/<int:id>/duplicate', methods=['POST'])
 @login_required
-def duplicate_contract(id):
-    if not current_user.company_id:
-        abort(403)
-
-    original = Contract.query.get_or_404(id)
-    if original.company_id != current_user.company_id:
-        abort(403)
-
-    new_contract = Contract(
-        client_id=original.client_id,
-        company_id=original.company_id,
-        template_id=original.template_id,
-        generated_content=original.generated_content,
-        form_data=original.form_data,
-        amount=original.amount,
-        billing_type=original.billing_type,
-        total_installments=original.total_installments,
-        status='draft',
-        code=f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}-VAR"
-    )
-    
-    db.session.add(new_contract)
-    db.session.commit()
-    
-    flash('Variação de contrato criada como rascunho!', 'success')
-    return redirect(url_for('contracts.load_draft', contract_id=new_contract.id))
-
 @contracts_bp.route('/contracts/<int:id>/sign', methods=['POST'])
 @login_required
 def sign_contract(id):
