@@ -1,6 +1,22 @@
+# Vercel Cold Start - Clean deployment packages
 northway_extension/
-
 .git/
 .ds_store
 **/*.pyc
 **/__pycache__
+node_modules/
+*.tgz
+*.zip
+*.tar.gz
+*.rar
+venv/
+.env.local
+.env.production*
+*.key
+*.pem
+*.crt
+*.conf
+*.log
+*.db
+*.sqlite
+*.sqlite3

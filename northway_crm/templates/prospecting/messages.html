@@ -125,15 +125,29 @@ document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
 });
 
-function applyFilters() {
-    const status = document.getElementById('filterStatus').value;
-    const channel = document.getElementById('filterChannel').value;
+// Restore filter state from cache
+    const cachedFilters = localStorage.getItem('prospecting_messages_filters');
+    if (cachedFilters) {
+        const filters = JSON.parse(cachedFilters);
+        if (filters.status) document.getElementById('filterStatus').value = filters.status;
+        if (filters.channel) document.getElementById('filterChannel').value = filters.channel;
+    }
 
-    const params = new URLSearchParams();
-    if (status) params.set('status', status);
-    if (channel) params.set('channel', channel);
+    function applyFilters() {
+        const status = document.getElementById('filterStatus').value;
+        const channel = document.getElementById('filterChannel').value;
 
-    window.location.href = '{{ url_for("prospecting.messages") }}?' + params.toString();
-}
+        const params = new URLSearchParams();
+        if (status) params.set('status', status);
+        if (channel) params.set('channel', channel);
+
+        // Save filter state to cache
+        localStorage.setItem('prospecting_messages_filters', JSON.stringify({
+            status,
+            channel
+        }));
+
+        window.location.href = '{{ url_for("prospecting.messages") }}?' + params.toString();
+    }
 </script>
 {% endblock %}

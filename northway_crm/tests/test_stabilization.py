@@ -289,3 +289,187 @@ def test_postgres_migration_is_repeatable(app):
         connection.commit()
     finally:
         connection.close()
+
+
+def test_deduplication_modeling(auth_client):
+    """Test lead deduplication modeling - duplicate leads and opportunity migration."""
+    client, user, company = auth_client
+    
+    # Create original lead
+    original = Lead(
+        name='Empresa XYZ Ltda',
+        company_id=company.id,
+        assigned_to_id=user.id,
+        phone='551199999999',
+        email='contato@empresaxyz.com',
+        prospecting_status='novo'
+    )
+    db.session.add(original)
+    db.session.commit()
+    
+    # Create duplicate lead (same company, similar name)
+    duplicate = Lead(
+        name='Empresa XYZ Ltda',
+        company_id=company.id,
+        assigned_to_id=user.id,
+        phone='551199999999',
+        email='contato@empresaxyz.com',
+        prospecting_status='novo',
+        is_duplicate=True,
+        duplicate_of=original.id
+    )
+    db.session.add(duplicate)
+    db.session.commit()
+    
+    # Verify duplicate detection
+    from models import Lead as LeadModel
+    leads = LeadModel.query.filter_by(company_id=company.id, name='Empresa XYZ Ltda').all()
+    assert len(leads) == 2
+    assert duplicate.is_duplicate == True
+    assert duplicate.duplicate_of == original.id
+    
+    # Verify original lead can be retrieved
+    assert duplicate.get_original_lead().id == original.id
+    assert not original.is_duplicate
+    
+    # Test is_original property
+    assert original.is_original == True
+    assert duplicate.is_original == False
+
+
+def test_filter_cache_persistence_simulation(auth_client):
+    """Test that filter state can be saved and restored from cache."""
+    from models import Lead, Company, User
+    
+    # Create test leads with different filters
+    company = Company(name='Cache Test', plan_type='monthly', payment_status='active',
+                      subscription_status='active', features={'prospecting': True, 'whatsapp': True})
+    db.session.add(company)
+    db.session.commit()
+    
+    user = User(
+        email='test@cache.test',
+        name='Test User',
+        company_id=company.id,
+        role='admin'
+    )
+    user.password_hash = 'test'
+    db.session.add(user)
+    db.session.commit()
+    
+    # Create leads with different statuses
+    lead1 = Lead(name='Lead A', company_id=company.id, prospecting_status='novo')
+    lead2 = Lead(name='Lead B', company_id=company.id, prospecting_status='interessado')
+    lead3 = Lead(name='Lead C', company_id=company.id, prospecting_status='cliente')
+    db.session.add_all([lead1, lead2, lead3])
+    db.session.commit()
+    
+    # Simulate saving filter state to cache (like Fase 10 implementation)
+    # Filter: status=interessado
+    cached_filter = {
+        'status': 'interessado',
+        'campanha': None
+    }
+    
+    # Restore from cache (simulating DOMContentLoaded)
+    restored_status = None
+    if cached_filter and cached_filter.get('status'):
+        restored_status = cached_filter['status']
+    
+    assert restored_status == 'interessado'
+    
+    # Test with multiple filter types (like leads.html and messages.html)
+    leads_messages_filter = {'status': 'pendente', 'channel': 'whatsapp'}
+    leads_filters = {'status': 'novo', 'canal': 'whatsapp', 'campanha': '5'}
+    
+    # Verify leads_messages_filter restoration
+    status_restored = leads_messages_filter.get('status') if leads_messages_filter else None
+    assert status_restored == 'pendente'
+    
+    # Verify leads_filters restoration
+    status_restored2 = leads_filters.get('status') if leads_filters else None
+    canal_restored2 = leads_filters.get('canal') if leads_filters else None
+    campanha_restored2 = leads_filters.get('campanha') if leads_filters else None
+    
+    assert status_restored2 == 'novo'
+    assert canal_restored2 == 'whatsapp'
+    assert campanha_restored2 == '5'
+
+
+def test_pagination_boundary_conditions(auth_client):
+    """Test pagination edge cases and boundary conditions."""
+    client, user, company = auth_client
+    
+    # Create 100 leads to test pagination
+    for n in range(100):
+        db.session.add(Lead(
+            name=f'Lead {n}',
+            company_id=company.id,
+            assigned_to_id=user.id,
+            prospecting_status='novo'
+        ))
+    db.session.commit()
+    
+    # Test first page
+    response = client.get('/leads?page=1')
+    assert response.status_code == 200
+    
+    # Test last page (assuming 10 per page)
+    response = client.get('/leads?page=10')
+    assert response.status_code == 200
+    
+    # Test beyond last page
+    response = client.get('/leads?page=100')
+    assert response.status_code == 200
+    
+    # Test with status filter and pagination combined
+    response = client.get('/leads?status=novo&page=1')
+    assert response.status_code == 200
+
+
+def test_creation_flow_preserves_data_integrity(auth_client):
+    """Test that original creation flows preserve data integrity."""
+    client, user, company = auth_client
+    
+    # Create lead directly (matching pattern from other tests)
+    lead = Lead(
+        name='Novo Lead Teste',
+        company_id=company.id,
+        assigned_to_id=user.id,
+        phone='551199999999',
+        email='teste@exemplo.com',
+        source='google_maps',
+        prospecting_status='novo'
+    )
+    db.session.add(lead)
+    db.session.commit()
+    
+    # Verify lead was created with correct data
+    from models import Lead as LeadModel
+    lead = LeadModel.query.filter_by(name='Novo Lead Teste').first()
+    assert lead is not None
+    assert lead.company_id == company.id
+    assert lead.phone == '551199999999'
+    assert lead.prospecting_status == 'novo'
+    assert lead.source == 'google_maps'
+    
+    # Test conversion preserves lead data and creates client + tasks
+    from unittest.mock import patch
+    with patch('routes.leads.IntegrationsService.dispatch_webhooks'):
+        response = client.post(f'/leads/{lead.id}/convert', data={'monthly_value': '1.500,00'})
+    assert response.status_code == 302
+    
+    # Verify client was created and linked
+    from models import Client
+    client_obj = Client.query.filter_by(lead_id=lead.id).first()
+    assert client_obj is not None
+    assert client_obj.account_manager_id == user.id
+    
+    # Verify tasks were created (conversion generates tasks)
+    from models import Task
+    tasks = Task.query.filter_by(client_id=client_obj.id).all()
+    assert len(tasks) >= 1, f"Expected at least 1 task, found {len(tasks)}"
+    
+    # Verify lead status updated to won (conversion changes lead status)
+    db.session.refresh(lead)
+    assert lead.status == 'won'

@@ -385,6 +385,8 @@ class Lead(db.Model):
     prospecting_campaign_id = db.Column(db.Integer, db.ForeignKey('prospecting_campaigns.id'), nullable=True)
     lead_score = db.Column(db.Integer, nullable=True)
     intent_status = db.Column(db.String(50), nullable=True, index=True)
+    is_duplicate = db.Column(db.Boolean, default=False, index=True) # True if this is a duplicate lead
+    duplicate_of = db.Column(db.Integer, db.ForeignKey('lead.id'), nullable=True) # Reference to original lead
 
     @property
     def task_progress(self):
@@ -419,6 +421,23 @@ class Lead(db.Model):
         
         delta = datetime.utcnow() - last_activity
         return delta.days
+
+    def mark_as_duplicate(self, original_lead_id):
+        """Mark this lead as duplicate of another lead and migrate opportunities."""
+        self.is_duplicate = True
+        self.duplicate_of = original_lead_id
+        # Opportunities will be migrated by the caller or via cascade
+
+    def get_original_lead(self):
+        """Get the original lead if this is a duplicate, else self."""
+        if self.is_duplicate and self.duplicate_of:
+            return Lead.query.get(self.duplicate_of)
+        return self
+
+    @property
+    def is_original(self):
+        """Check if this lead is the original (not a duplicate)."""
+        return not self.is_duplicate
 
 
 class DriveFolderTemplate(db.Model):
