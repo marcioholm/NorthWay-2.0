@@ -11,29 +11,51 @@ class ContractPDF(FPDF):
         self.company_subtext = company_subtext
         self.set_auto_page_break(auto=True, margin=20)
 
-    def header(self):
+    def _get_logo_path(self):
+        """Get logo path: company custom logo first, then fallback paths."""
+        from models import Company
+        # Get company from contract
+        company = None
+        if self.contract and self.contract.company:
+            company = self.contract.company
+        
+        # 1. Try company custom logo (from database)
+        if company and company.logo_filename:
+            logo_path = os.path.join(current_app.root_path, 'static', 'images', company.logo_filename)
+            if os.path.exists(logo_path):
+                return logo_path
+        
+        # 2. Fallback to default paths
+        possible_paths = [
+            os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
+            os.path.join(current_app.root_path, 'static', 'images', 'logo.png'),
+            os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
+        ]
+        
+        for logo_path in possible_paths:
+            if os.path.exists(logo_path):
+                return logo_path
+        
+        return None
+
+
+def header(self):
         # Premium Header (Logo + Dynamic Text Fallback)
         
         logo_loaded = False
-        try:
-            # Try multiple common paths for the logo
-            possible_paths = [
-                os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
-                os.path.join(current_app.root_path, 'static', 'images', 'logo.png'),
-                os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
-            ]
-            
-            for logo_path in possible_paths:
-                if os.path.exists(logo_path):
-                    # Fixed width 33mm, auto height
-                    self.image(logo_path, 10, 8, w=33)
-                    logo_loaded = True
-                    break
-                    
-        except Exception as e:
-            current_app.logger.warning(f"Logo load failed (Pillow missing?): {e}")
-            logo_loaded = False
-
+        logo_path = self._get_logo_path()
+        
+        if logo_path:
+            try:
+                # Fixed width 33mm, auto height
+                self.image(logo_path, 10, 8, w=33)
+                logo_loaded = True
+            except Exception as e:
+                current_app.logger.warning(f"Logo load failed: {e}")
+                logo_loaded = False
+        else:
+            current_app.logger.info("No logo file found, using text brand")
+        
         # If logo failed, use the Text Brand (Fallback)
         if not logo_loaded: 
             # 1. Main Brand (Company Name)
