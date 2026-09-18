@@ -4,6 +4,7 @@ from models import db, User, Company, ROLE_ADMIN, ContractTemplate, template_com
 from utils import get_now_br
 from datetime import datetime, date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import joinedload
 
 master = Blueprint('master', __name__)
 
@@ -139,8 +140,13 @@ def system_reset():
 @master.route('/master/dashboard')
 @login_required
 def dashboard():
-    # Fetch all companies ordered by newest first
-    companies = Company.query.order_by(Company.created_at.desc()).all()
+    # Fetch all companies ordered by newest first WITH joinedload to avoid N+1 queries
+    companies = (
+        Company.query
+        .options(joinedload(Company.users))
+        .order_by(Company.created_at.desc())
+        .all()
+    )
     
     # Global Metrics Aggregation
     total_companies = len(companies)
@@ -158,7 +164,7 @@ def dashboard():
         total_contracts = Contract.query.count() or 0
     except Exception:
         total_contracts = 0
-    
+        
     # Mock MRR Calculation (Plan based) - Exclude Master Company
     mrr = 0
     # master_company_name = "NorthWay Master" # or just check if it's the current user's company if we assume only one master
@@ -183,13 +189,16 @@ def dashboard():
         if is_paying:
             mrr += plan_prices.get(plan_name, 0)
         
-        # Find an admin to login as
-        admin_user = User.query.filter_by(company_id=comp.id, role=ROLE_ADMIN).first()
-        # Fallback to any user if no admin (rare)
+        # Find an admin from pre-loaded users relationship (NO extra query)
+        admin_user = next(
+            (u for u in comp.users if u.role == ROLE_ADMIN), 
+            comp.users[0] if comp.users else None
+        )
+        # Fallback to any user if no admin (rare) - still no extra query since users are in memory
         if not admin_user:
-            admin_user = User.query.filter_by(company_id=comp.id).first()
+            admin_user = comp.users[0] if comp.users else None
             
-        user_count = User.query.filter_by(company_id=comp.id).count()
+        user_count = len(comp.users)  # Already in memory from joinedload
         comp.user_count = user_count # Attach for direct usage if needed
         comp.admin = admin_user
         
