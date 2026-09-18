@@ -168,7 +168,13 @@ def performance():
 def budget_history():
     if not current_user.company_id:
         return "Unauthorized", 403
-    from models import Budget
+    from models import Budget, db
+    # Ensure the table exists on production (workaround for broken migrations)
+    try:
+        Budget.__table__.create(db.engine, checkfirst=True)
+    except Exception:
+        pass
+
     budgets = Budget.query.filter_by(company_id=current_user.company_id).order_by(Budget.created_at.desc()).all()
     return render_template('commercial/budget_history.html', budgets=budgets)
 
@@ -178,7 +184,13 @@ def save_budget():
     if not current_user.company_id:
         return jsonify({'error': 'Unauthorized'}), 403
     try:
-        from models import Budget
+        from models import Budget, db
+        # Ensure the table exists on production
+        try:
+            Budget.__table__.create(db.engine, checkfirst=True)
+        except Exception:
+            pass
+
         data = request.json
         budget = Budget(
             company_id=current_user.company_id,
