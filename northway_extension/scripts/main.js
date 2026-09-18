@@ -6,6 +6,57 @@ let chatObserver = null;
 let intervalLayout = null;
 let isDetecting = false;
 
+// Event listeners manager - prevents ghost listeners accumulation
+const EventListeners = {
+    storageListener: null,
+    messageListener: null,
+    keydownListener: null,
+
+    init() {
+        // Storage listener
+        this.storageListener = (changes, namespace) => {
+            if (namespace === 'local' && changes.authToken) {
+                if (changes.authToken.newValue) {
+                    if (!document.getElementById('northway-sidebar-host')) init();
+                } else {
+                    unmount();
+                }
+            }
+        };
+        chrome.storage.onChanged.addListener(this.storageListener);
+
+        // Message listener
+        this.messageListener = (e) => {
+            if (e.source !== window) return;
+            if (e.data && e.data.source === 'NW_PAGE' && e.data.type === 'NW_TOAST') {
+                toast(e.data.message, e.data.toastType);
+            }
+        };
+        window.addEventListener('message', this.messageListener);
+
+        // Keydown listener
+        this.keydownListener = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyZ') {
+                const root = document.getElementById('northway-sidebar-host');
+                if (root) root.style.transform = root.style.transform.includes('100%') ? 'translateX(0)' : 'translateX(100%)';
+            }
+        };
+        document.addEventListener('keydown', this.keydownListener);
+    },
+
+    cleanup() {
+        if (this.storageListener) {
+            chrome.storage.onChanged.removeListener(this.storageListener);
+        }
+        if (this.messageListener) {
+            window.removeEventListener('message', this.messageListener);
+        }
+        if (this.keydownListener) {
+            document.removeEventListener('keydown', this.keydownListener);
+        }
+    }
+};
+
 async function bootstrap() {
     nwLog("[ZapWay][Main] Bootstrap iniciado — verificando autenticação.");
     try {
@@ -21,15 +72,7 @@ async function bootstrap() {
         nwLog("Auth check failed", e);
     }
 
-    chrome.storage.onChanged.addListener((changes, namespace) => {
-        if (namespace === 'local' && changes.authToken) {
-            if (changes.authToken.newValue) {
-                if (!document.getElementById('northway-sidebar-host')) init();
-            } else {
-                unmount();
-            }
-        }
-    });
+    EventListeners.init();
 
     chrome.runtime.onMessage.addListener((request) => {
         if (request.action === "SESSION_EXPIRED") {
@@ -158,6 +201,7 @@ function unmount() {
 
     if (chatObserver) chatObserver.disconnect();
     if (intervalLayout) clearInterval(intervalLayout);
+    EventListeners.cleanup();
     NWState.reset();
     NWState.shadowRoot = null;
 
@@ -217,11 +261,7 @@ function bindEvents() {
     };
 
     // Message bridge from MAIN world
-    window.addEventListener('message', (e) => {
-        if (e.data.source === 'NW_PAGE' && e.data.type === 'NW_TOAST') {
-            toast(e.data.message, e.data.toastType);
-        }
-    });
+// Already handled by EventListeners.init() in bootstrap
 
     const btnDirectSend = getEl('nw-btn-direct-send');
     if (btnDirectSend) {
@@ -233,14 +273,6 @@ function bindEvents() {
 
     nwLog("[ZapWay][Main] Eventos vinculados.");
 }
-
-// Global Keyboard Shortcut
-document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyZ') {
-        const root = document.getElementById('northway-sidebar-host');
-        if (root) root.style.transform = root.style.transform.includes('100%') ? 'translateX(0)' : 'translateX(100%)';
-    }
-});
 
 // Start
 setTimeout(bootstrap, 2000);
