@@ -99,7 +99,7 @@ def load_draft(contract_id):
         abort(403)
         
     client = contract.client
-    
+
     # Load available templates for the select
     from models import template_company_association
     templates = ContractTemplate.query.outerjoin(template_company_association)\
@@ -112,6 +112,45 @@ def load_draft(contract_id):
             ContractTemplate.active == True,
             ContractTemplate.type == 'contract'
         ).all()
+
+@contracts_bp.route('/contracts/<int:contract_id>/duplicate')
+@login_required
+def duplicate_contract(contract_id):
+    if not current_user.company_id:
+        abort(403)
+
+    original = Contract.query.get_or_404(contract_id)
+    if original.company_id != current_user.company_id:
+        abort(403)
+
+    # Generate new code based on pattern CTR-AAAA-NNNN
+    import re
+    match = re.search(r'CTR-(\d{4})-(\d{4})', original.code or '')
+    if match:
+        year = match.group(1)
+        last_num = int(match.group(2))
+        new_num = last_num + 1
+        new_code = f'CTR-{year}-{new_num:04d}'
+    else:
+        # Fallback: use current year + increment
+        from datetime import datetime
+        year = datetime.now().strftime('%Y')
+        new_code = f'CTR-{year}-0001'
+
+    # Create new contract with same template, client, company
+    new_contract = Contract(
+        code=new_code,
+        client_id=original.client_id,
+        company_id=original.company_id,
+        template_id=original.template_id,
+        status='draft',
+        generated_content=original.generated_content,
+        form_data=original.form_data
+    )
+    db.session.add(new_contract)
+    db.session.commit()
+
+    return redirect(url_for('contracts.edit_contract', id=new_contract.id))
     
     attachments = ContractTemplate.query.outerjoin(template_company_association)\
         .filter(
