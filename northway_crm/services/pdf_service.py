@@ -12,25 +12,25 @@ class ContractPDF(FPDF):
         self.set_auto_page_break(auto=True, margin=20)
 
     def _get_logo_path(self):
-        """Get logo path: system default logo first, then company custom logo."""
+        """Get logo path: company custom logo first, then system default logo."""
         from models import Company
         # Get company from contract
         company = None
         if self.contract and self.contract.company:
             company = self.contract.company
         
-        # 1. Try system default logos first (always available)
+        # 1. Try company custom logo (from database) first
+        if company and company.logo_filename:
+            logo_path = os.path.join(current_app.root_path, 'static', 'images', company.logo_filename)
+            if os.path.exists(logo_path):
+                return logo_path
+        
+        # 2. Fallback to system default logos if company logo not found
         possible_paths = [
             os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
             os.path.join(current_app.root_path, 'static', 'images', 'logo.png')
         ]
         for logo_path in possible_paths:
-            if os.path.exists(logo_path):
-                return logo_path
-        
-        # 2. Fallback to company custom logo (from database) if system logos not found
-        if company and company.logo_filename:
-            logo_path = os.path.join(current_app.root_path, 'static', 'images', company.logo_filename)
             if os.path.exists(logo_path):
                 return logo_path
         
