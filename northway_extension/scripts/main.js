@@ -3,57 +3,46 @@
  */
 
 let chatObserver = null;
-let intervalLayout = null;
 let isDetecting = false;
 
-// Event listeners manager - prevents ghost listeners accumulation
-const EventListeners = {
-    storageListener: null,
-    messageListener: null,
-    keydownListener: null,
-
-    init() {
-        // Storage listener
-        this.storageListener = (changes, namespace) => {
-            if (namespace === 'local' && changes.authToken) {
-                if (changes.authToken.newValue) {
-                    if (!document.getElementById('northway-sidebar-host')) init();
-                } else {
-                    unmount();
-                }
-            }
-        };
-        chrome.storage.onChanged.addListener(this.storageListener);
-
-        // Message listener
-        this.messageListener = (e) => {
-            if (e.source !== window) return;
-            if (e.data && e.data.source === 'NW_PAGE' && e.data.type === 'NW_TOAST') {
-                toast(e.data.message, e.data.toastType);
-            }
-        };
-        window.addEventListener('message', this.messageListener);
-
-        // Keydown listener
-        this.keydownListener = (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyZ') {
-                const root = document.getElementById('northway-sidebar-host');
-                if (root) root.style.transform = root.style.transform.includes('100%') ? 'translateX(0)' : 'translateX(100%)';
-            }
-        };
-        document.addEventListener('keydown', this.keydownListener);
+// Sidebar Manager - tracks intervals and listeners for proper cleanup
+const SidebarManager = {
+    intervals: [],
+    listeners: {},
+    
+    addInterval(callback, delay) {
+        const id = setInterval(callback, delay);
+        this.intervals.push(id);
+        return id;
     },
-
+    
+    addListener(target, event, handler) {
+        if (!this.listeners[event]) {
+            this.listeners[event] = [];
+        }
+        this.listeners[event].push({ target, handler });
+        target.addEventListener(event, handler);
+    },
+    
+    init() {
+        // Use managed interval instead of raw setInterval
+        this.addInterval(() => this.adjustLayout(), 2000);
+        this.addListener(window, 'resize', () => this.adjustLayout());
+    },
+    
     cleanup() {
-        if (this.storageListener) {
-            chrome.storage.onChanged.removeListener(this.storageListener);
-        }
-        if (this.messageListener) {
-            window.removeEventListener('message', this.messageListener);
-        }
-        if (this.keydownListener) {
-            document.removeEventListener('keydown', this.keydownListener);
-        }
+        // Limpar TUDO ao sair
+        this.intervals.forEach(id => clearInterval(id));
+        this.intervals = [];
+        
+        Object.entries(this.listeners).forEach(([event, listeners]) => {
+            listeners.forEach(({ target, handler }) => {
+                target.removeEventListener(event, handler);
+            });
+        });
+        this.listeners = {};
+        
+        console.log('[Sidebar] Cleanup completo - memória liberada');
     }
 };
 
@@ -96,27 +85,26 @@ async function init() {
     
     if (!sidebarContainer.parentElement) document.body.appendChild(sidebarContainer);
     if (!NWState.shadowRoot) NWState.shadowRoot = sidebarContainer.attachShadow({ mode: 'open' });
-
+    
     const ts = Date.now();
     const [html, css] = await Promise.all([
         fetch(chrome.runtime.getURL(`scripts/sidebar.html?t=${ts}`)).then(r => r.text()),
-        fetch(chrome.runtime.getURL(`scripts/sidebar.css?t=${ts}`)).then(r => r.text())
+        fetch(chrome.runtime.getURL(`scripts/sidebar.css?t=${ts}`)).then(r.text())
     ]);
-
+ 
     NWState.shadowRoot.innerHTML = `<style>${css}</style>${html.replace(/__MSG_@@extension_id__/g, chrome.runtime.id)}`;
     sidebarContainer.style.pointerEvents = 'auto';
-
-    bindEvents();
+    
+    SidebarManager.init();
     startObserver();
     adjustLayout();
     
     BroadcastEngine.init();
     AutomationEngine.startPolling();
     loadTemplates();
-
+ 
     createToggleButton();
-    intervalLayout = setInterval(adjustLayout, 2000);
-
+    
     // Initial check
     setTimeout(checkActiveChat, 1000);
 }
@@ -200,8 +188,7 @@ function unmount() {
     if (btn) btn.remove();
 
     if (chatObserver) chatObserver.disconnect();
-    if (intervalLayout) clearInterval(intervalLayout);
-    EventListeners.cleanup();
+    SidebarManager.cleanup();
     NWState.reset();
     NWState.shadowRoot = null;
 
