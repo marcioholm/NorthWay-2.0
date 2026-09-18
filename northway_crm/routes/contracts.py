@@ -362,13 +362,32 @@ def create_contract(id):
              logo_img_tag = f'<img src="{logo_src}" alt="Logo" style="max-height: 80px; width: auto;">'
         elif current_user.company.logo_filename:
              if current_user.company.logo_filename.startswith('http'):
-                 logo_url = current_user.company.logo_filename
+                  logo_url = current_user.company.logo_filename
              else:
-                 logo_url = url_for('static', filename='uploads/company/' + current_user.company.logo_filename, _external=True)
+                  logo_url = url_for('static', filename='uploads/company/' + current_user.company.logo_filename, _external=True)
              logo_img_tag = f'<img src="{logo_url}" alt="Logo" style="max-height: 80px; width: auto;">'
 
         primary_col = current_user.company.primary_color or '#fa0102'
         second_col = current_user.company.secondary_color or '#111827'
+
+        # Get emission date from form data, fallback to today
+        data_emissao_str = form_data.get('data_emissao')
+        from datetime import datetime
+        if data_emissao_str:
+            try:
+                data_emissao = datetime.strptime(data_emissao_str, '%d/%m/%Y').date()
+            except:
+                data_emissao = datetime.utcnow().date()
+        else:
+            data_emissao = datetime.utcnow().date()
+        
+        # Format date in Brazilian format
+        months = {
+            1: 'Janeiro', 2: 'Fevereiro', 3: 'Março', 4: 'Abril',
+            5: 'Maio', 6: 'Junho', 7: 'Julho', 8: 'Agosto',
+            9: 'Setembro', 10: 'Outubro', 11: 'Novembro', 12: 'Dezembro'
+        }
+        data_emissao_formatada = f"{data_emissao.day} de {months[data_emissao.month]} de {data_emissao.year}"
 
         header_html = f"""
             <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; width: 100%; border-bottom: 4px solid {primary_col}; margin-bottom: 40px; padding-bottom: 20px;">
@@ -380,7 +399,7 @@ def create_contract(id):
                         <td align="right" valign="middle">
                             <h2 style="margin: 0; font-size: 24px; color: {second_col}; text-transform: uppercase; letter-spacing: 1px;">{current_user.company.name}</h2>
                             <p style="margin: 5px 0 0; color: #666; font-size: 14px;">CNPJ: {current_user.company.document}</p>
-                            <div style="margin-top: 8px; font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 1px;">{get_date_extenso_br()}</div>
+                            <div style="margin-top: 8px; font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 1px;">{data_emissao_formatada}</div>
                         </td>
                     </tr>
                 </table>
