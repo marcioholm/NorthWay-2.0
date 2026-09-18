@@ -48,6 +48,31 @@ class WhatsAppQueuePoller {
         }
     }
     
+    renderQueue() {
+        const fragment = document.createDocumentFragment();
+        
+        // Construir tudo no fragment (sem reflow)
+        const items = this.cache?.items || [];
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'automation-card';
+            card.innerHTML = `
+                <h3>${item.name || 'Item'}</h3>
+                <p>${item.content || ''}</p>
+                <span class="status">${item.status || ''}</span>
+            `;
+            fragment.appendChild(card);  // Sem reflow ainda
+        });
+        
+        // Atualizar DOM uma vez (REFLOW acontece aqui)
+        const list = document.querySelector('.nw-automation-list');
+        if (list) {
+            list.innerHTML = '';
+            list.appendChild(fragment);  // Reflow único
+        }
+        return items;
+    }
+    
     startPolling() {
         if (this.pollingActive) return;
         this.pollingActive = true;
