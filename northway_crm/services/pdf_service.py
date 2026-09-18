@@ -39,7 +39,7 @@ class ContractPDF(FPDF):
         return None
 
 
-def header(self):
+    def header(self):
         # Premium Header (Logo + Dynamic Text Fallback)
         
         logo_loaded = False
