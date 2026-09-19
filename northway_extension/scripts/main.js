@@ -3,6 +3,7 @@
  */
 
 import listenerRegistry from './listener_registry.js';
+import apiClient from './api_client.js';
 
 let chatObserver = null;
 let isDetecting = false;
@@ -19,10 +20,13 @@ let runtimeMessageHandler = null;
 // DOM keydown listener - registered via registry for proper cleanup
 let domKeydownHandler = null;
 
+// API client - centralized to break circular dependencies
+const api = apiClient;
+
 async function bootstrap() {
     nwLog("[ZapWay][Main] Bootstrap iniciado — verificando autenticação.");
     try {
-        const response = await sendMsg({ action: "CHECK_AUTH" });
+        const response = await api.checkAuth();
         if (response && response.token) {
             nwLog("[ZapWay][Main] Autenticado. Inicializando sidebar.");
             init();

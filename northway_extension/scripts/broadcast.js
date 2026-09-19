@@ -1,7 +1,9 @@
 /**
  * ZapWay Broadcast Engine
  * Handles messaging in bulk and single direct messages.
+ * Uses apiClient to break circular dependencies (main ↔ sidebar_ui ↔ broadcast).
  */
+import apiClient from './api_client.js';
 
 const BroadcastEngine = {
     queue: [],

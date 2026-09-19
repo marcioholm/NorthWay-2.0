@@ -4,6 +4,7 @@
  * Uses ListenerRegistry for proper event listener cleanup to prevent memory leaks.
  */
 import listenerRegistry from './listener_registry.js';
+import apiClient from './api_client.js';
 
 const getEl = (id) => NWState.shadowRoot ? NWState.shadowRoot.getElementById(id) : null;
 
@@ -91,7 +92,7 @@ function showState(state) {
 
     if (state === 'automation') AutomationEngine.render();
     if (state === 'idle') {
-        sendMsg({ action: "GET_TODAY_STATS" }).then(stats => {
+        apiClient.getSystemStatus().then(stats => {
             if (stats) {
                 const elSent = getEl('nw-idle-stat-sent');
                 const elCrm = getEl('nw-idle-stat-crm');
@@ -135,7 +136,7 @@ async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
 
     try {
         nwLog('[ZapWay][CRM] sync start →', { phone, name: searchName });
-        const response = await sendMsg({ action: "GET_CONTACT", phone, name: searchName });
+        const response = await apiClient.getContact(phone, name);
         nwLog('[ZapWay][CRM] sync result →', response);
 
         if (!response || response.error) {
@@ -229,7 +230,7 @@ function renderContact(data, freshAvatarUrl = null) {
 }
 
 async function loadPipelines(currentStageId, targetId = 'nw-input-stage') {
-    const response = await sendMsg({ action: "GET_PIPELINES" });
+    const response = await apiClient.getPipelines();
     const select = getEl(targetId);
     if (!select || !response) return;
     
@@ -262,7 +263,7 @@ async function loadTemplates() {
  */
 async function renderTemplatesWithRegistry() {
     try {
-        const response = await sendMsg({ action: "GET_TEMPLATES" });
+        const response = await apiClient.getTemplates();
         const section = NWState.shadowRoot.querySelector('.nw-templates-section');
         if (!section || !response) return;
 
