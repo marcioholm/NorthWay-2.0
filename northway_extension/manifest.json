@@ -31,6 +31,7 @@
         "scripts/constants.js",
         "scripts/selectors.js",
         "scripts/state.js",
+        "scripts/dompurify.min.js",
         "scripts/detection.js",
         "scripts/broadcast.js",
         "scripts/automation.js",

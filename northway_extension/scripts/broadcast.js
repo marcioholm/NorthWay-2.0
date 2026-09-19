@@ -202,7 +202,7 @@ const BroadcastEngine = {
         if (!list) return;
 
         const counterEl = getEl('nw-bc-queue-counter');
-        if (counterEl) counterEl.innerHTML = `<span class="nw-chip">${this.queue.length} contatos</span>`;
+        if (counterEl) counterEl.textContent = `${this.queue.length} contatos`;
 
         let filteredQueue = this.queue;
         if (searchTerm && searchTerm.trim() !== '') {
@@ -220,15 +220,30 @@ const BroadcastEngine = {
 
             const div = document.createElement('div');
             div.className = `nw-q-item ${isActive}`;
-            div.innerHTML = `
-                <div style="display: flex; flex-direction: column;">
-                    <span>${item.name}</span>
-                    <span style="font-size: 10px; color: var(--nw-text-secondary);">${item.phone}</span>
-                </div>
-                <div style="display: flex; gap: 6px; align-items: center;">
-                    <span class="nw-q-status ${item.status}">${item.status}</span>
-                </div>
-            `;
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = item.name;
+            const phoneSpan = document.createElement('span');
+            phoneSpan.style.fontSize = '10px';
+            phoneSpan.style.color = 'var(--nw-text-secondary)';
+            phoneSpan.textContent = item.phone;
+            const statusSpan = document.createElement('span');
+            statusSpan.className = `nw-q-status ${item.status}`;
+            statusSpan.textContent = item.status;
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.style.display = 'flex';
+            detailsDiv.style.flexDirection = 'column';
+            detailsDiv.appendChild(nameSpan);
+            detailsDiv.appendChild(phoneSpan);
+            
+            const statusDiv = document.createElement('div');
+            statusDiv.style.display = 'flex';
+            statusDiv.style.gap = '6px';
+            statusDiv.style.alignItems = 'center';
+            statusDiv.appendChild(statusSpan);
+            
+            div.appendChild(detailsDiv);
+            div.appendChild(statusDiv);
             list.appendChild(div);
         });
     },
