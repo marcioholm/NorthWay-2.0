@@ -4,14 +4,18 @@
  * All modules use this singleton instead of direct sendMsg calls.
  * This eliminates circular imports: main ↔ sidebar_ui ↔ broadcast.
  * 
+ * Uses RequestCache for caching and request deduplication.
+ * 
  * Example:
  *   // Antes: const response = await sendMsg({ action: "GET_CONTACT", phone, name });
  *   // Depois: const response = await apiClient.getContact(phone, name);
  */
+import requestCache from './request_cache.js';
+
 class ApiClient {
     constructor() {
-        this.cache = new Map();
-        this.pendingRequests = new Map();
+        // Use the shared request cache for caching and dedup
+        this.cache = requestCache;
     }
 
     /**
