@@ -2,14 +2,31 @@
  * ZapWay Main Entry Point
  */
 
+import listenerRegistry from './listener_registry.js';
+import apiClient from './api_client.js';
+
 let chatObserver = null;
-let intervalLayout = null;
 let isDetecting = false;
+
+// Initialize listener registry for proper cleanup
+const eventRegistry = listenerRegistry;
+
+// Chrome storage listener - registered via registry for proper cleanup
+let storageListenerHandler = null;
+
+// Chrome runtime message listener - registered via registry for proper cleanup
+let runtimeMessageHandler = null;
+
+// DOM keydown listener - registered via registry for proper cleanup
+let domKeydownHandler = null;
+
+// API client - centralized to break circular dependencies
+const api = apiClient;
 
 async function bootstrap() {
     nwLog("[ZapWay][Main] Bootstrap iniciado — verificando autenticação.");
     try {
-        const response = await sendMsg({ action: "CHECK_AUTH" });
+        const response = await api.checkAuth();
         if (response && response.token) {
             nwLog("[ZapWay][Main] Autenticado. Inicializando sidebar.");
             init();
@@ -21,7 +38,8 @@ async function bootstrap() {
         nwLog("Auth check failed", e);
     }
 
-    chrome.storage.onChanged.addListener((changes, namespace) => {
+    // Initialize chrome.storage.onChanged listener via registry
+    storageListenerHandler = listenerRegistry.addChromeStorageListener((changes, namespace) => {
         if (namespace === 'local' && changes.authToken) {
             if (changes.authToken.newValue) {
                 if (!document.getElementById('northway-sidebar-host')) init();
@@ -31,7 +49,8 @@ async function bootstrap() {
         }
     });
 
-    chrome.runtime.onMessage.addListener((request) => {
+    // Initialize chrome.runtime.onMessage listener via registry
+    runtimeMessageHandler = listenerRegistry.addChromeRuntimeMessageListener((request) => {
         if (request.action === "SESSION_EXPIRED") {
             nwLog("Session expired — prompting re-login.");
             unmount();
@@ -53,16 +72,28 @@ async function init() {
     
     if (!sidebarContainer.parentElement) document.body.appendChild(sidebarContainer);
     if (!NWState.shadowRoot) NWState.shadowRoot = sidebarContainer.attachShadow({ mode: 'open' });
-
+    
     const ts = Date.now();
     const [html, css] = await Promise.all([
         fetch(chrome.runtime.getURL(`scripts/sidebar.html?t=${ts}`)).then(r => r.text()),
-        fetch(chrome.runtime.getURL(`scripts/sidebar.css?t=${ts}`)).then(r => r.text())
+        fetch(chrome.runtime.getURL(`scripts/sidebar.css?t=${ts}`)).then(r.text())
     ]);
-
+ 
     NWState.shadowRoot.innerHTML = `<style>${css}</style>${html.replace(/__MSG_@@extension_id__/g, chrome.runtime.id)}`;
     sidebarContainer.style.pointerEvents = 'auto';
-
+    
+    // Initialize DOM keydown listener via registry
+    domKeydownHandler = listenerRegistry.addDOMListener(
+        document, 
+        'keydown', 
+        (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyZ') {
+                const root = document.getElementById('northway-sidebar-host');
+                if (root) root.style.transform = root.style.transform.includes('100%') ? 'translateX(0)' : 'translateX(100%)';
+            }
+        }
+    );
+    
     bindEvents();
     startObserver();
     adjustLayout();
@@ -70,10 +101,9 @@ async function init() {
     BroadcastEngine.init();
     AutomationEngine.startPolling();
     loadTemplates();
-
+ 
     createToggleButton();
-    intervalLayout = setInterval(adjustLayout, 2000);
-
+    
     // Initial check
     setTimeout(checkActiveChat, 1000);
 }
@@ -157,7 +187,7 @@ function unmount() {
     if (btn) btn.remove();
 
     if (chatObserver) chatObserver.disconnect();
-    if (intervalLayout) clearInterval(intervalLayout);
+    listenerRegistry.removeAll();
     NWState.reset();
     NWState.shadowRoot = null;
 
@@ -216,12 +246,7 @@ function bindEvents() {
         if (res?.success) toast("Criado!", "success");
     };
 
-    // Message bridge from MAIN world
-    window.addEventListener('message', (e) => {
-        if (e.data.source === 'NW_PAGE' && e.data.type === 'NW_TOAST') {
-            toast(e.data.message, e.data.toastType);
-        }
-    });
+    // Message bridge from MAIN world - already handled by registry listeners
 
     const btnDirectSend = getEl('nw-btn-direct-send');
     if (btnDirectSend) {
@@ -233,14 +258,6 @@ function bindEvents() {
 
     nwLog("[ZapWay][Main] Eventos vinculados.");
 }
-
-// Global Keyboard Shortcut
-document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyZ') {
-        const root = document.getElementById('northway-sidebar-host');
-        if (root) root.style.transform = root.style.transform.includes('100%') ? 'translateX(0)' : 'translateX(100%)';
-    }
-});
 
 // Start
 setTimeout(bootstrap, 2000);

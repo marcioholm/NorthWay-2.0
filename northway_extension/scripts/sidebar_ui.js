@@ -1,6 +1,10 @@
 /**
  * ZapWay Sidebar UI & State
+ * 
+ * Uses ListenerRegistry for proper event listener cleanup to prevent memory leaks.
  */
+import listenerRegistry from './listener_registry.js';
+import apiClient from './api_client.js';
 
 const getEl = (id) => NWState.shadowRoot ? NWState.shadowRoot.getElementById(id) : null;
 
@@ -60,7 +64,13 @@ function toast(message, type = 'info', duration = 4000) {
         box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         animation: nw-slide-in 0.3s cubic-bezier(0.4,0,0.2,1) forwards;
     `;
-    el.innerHTML = `<span style="flex-shrink:0;font-weight:800">${c.icon}</span><span>${message}</span>`;
+    const iconSpan = document.createElement('span');
+    iconSpan.style.flexShrink = '0';
+    iconSpan.fontWeight = '800';
+    iconSpan.textContent = c.icon;
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+    el.append(iconSpan, messageSpan);
     el.onclick = () => el.remove();
     dynamicContainer.appendChild(el);
     
@@ -82,7 +92,7 @@ function showState(state) {
 
     if (state === 'automation') AutomationEngine.render();
     if (state === 'idle') {
-        sendMsg({ action: "GET_TODAY_STATS" }).then(stats => {
+        apiClient.getSystemStatus().then(stats => {
             if (stats) {
                 const elSent = getEl('nw-idle-stat-sent');
                 const elCrm = getEl('nw-idle-stat-crm');
@@ -126,7 +136,7 @@ async function updateSidebar(name, phone, searchName = null, avatarUrl = null) {
 
     try {
         nwLog('[ZapWay][CRM] sync start →', { phone, name: searchName });
-        const response = await sendMsg({ action: "GET_CONTACT", phone, name: searchName });
+        const response = await apiClient.getContact(phone, name);
         nwLog('[ZapWay][CRM] sync result →', response);
 
         if (!response || response.error) {
@@ -220,7 +230,7 @@ function renderContact(data, freshAvatarUrl = null) {
 }
 
 async function loadPipelines(currentStageId, targetId = 'nw-input-stage') {
-    const response = await sendMsg({ action: "GET_PIPELINES" });
+    const response = await apiClient.getPipelines();
     const select = getEl(targetId);
     if (!select || !response) return;
     
@@ -241,7 +251,19 @@ async function loadPipelines(currentStageId, targetId = 'nw-input-stage') {
 
 async function loadTemplates() {
     try {
-        const response = await sendMsg({ action: "GET_TEMPLATES" });
+        // Use registry-based rendering for proper listener cleanup
+        await renderTemplatesWithRegistry();
+    } catch (e) {
+        nwLog("Template load error", e);
+    }
+}
+
+/**
+ * Render templates using ListenerRegistry for memory leak prevention
+ */
+async function renderTemplatesWithRegistry() {
+    try {
+        const response = await apiClient.getTemplates();
         const section = NWState.shadowRoot.querySelector('.nw-templates-section');
         if (!section || !response) return;
 
@@ -249,21 +271,9 @@ async function loadTemplates() {
             const card = document.createElement('div');
             card.className = 'nw-template-card';
             card.style.position = 'relative';
-            card.innerHTML = `
-                <div class="nw-template-icon" style="background: rgba(99,102,241,0.1); color: #818cf8;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                </div>
-                <div class="nw-template-info">
-                    <strong>${tpl.title}</strong>
-                    <p>${tpl.content.substring(0, 60)}${tpl.content.length > 60 ? '...' : ''}</p>
-                </div>
-                <button class="nw-btn-direct-send-tpl" title="Disparo Direto" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 6px; border: none; background: rgba(0, 230, 153, 0.1); color: var(--nw-accent); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                </button>
-            `;
             
-            // Fill textarea
-            card.onclick = (e) => {
+            // Use ListenerRegistry for click handler cleanup
+            const handleCardClick = (e) => {
                 if (e.target.closest('.nw-btn-direct-send-tpl')) return;
                 const ta = getEl('nw-broadcast-template') || getEl('nw-input-notes') || getEl('nw-new-notes');
                 if (ta) {
@@ -271,13 +281,77 @@ async function loadTemplates() {
                     ta.dispatchEvent(new Event('input', { bubbles: true }));
                 }
             };
+            
+            listenerRegistry.addDOMListener(card, 'click', handleCardClick);
 
-            // Direct Send
-            const btn = card.querySelector('.nw-btn-direct-send-tpl');
-            btn.onclick = (e) => {
+            // Safe DOM construction - no innerHTML with user data
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'nw-template-icon';
+            iconDiv.style.cssText = 'background: rgba(99,102,241,0.1); color: #818cf8;';
+            const iconSvg = document.createElement('svg');
+            iconSvg.width = 14;
+            iconSvg.height = 14;
+            iconSvg.viewBox = '0 0 24 24';
+            iconSvg.fill = 'none';
+            iconSvg.stroke = 'currentColor';
+            iconSvg.strokeWidth = 2.5;
+            iconSvg.strokeLinecap = 'round';
+            iconSvg.strokeLinejoin = 'round';
+            const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path1.setAttribute('d', 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z');
+            const polyline1 = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline1.setAttribute('points', '14 2 14 8 20 8');
+            iconSvg.appendChild(path1);
+            iconSvg.appendChild(polyline1);
+            iconDiv.appendChild(iconSvg);
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'nw-template-info';
+            const strong = document.createElement('strong');
+            strong.textContent = tpl.title;
+            const p = document.createElement('p');
+            // Safe truncation - only slice the string, no HTML
+            const displayContent = tpl.content.length > 60 
+                ? tpl.content.substring(0, 60) + '...' 
+                : tpl.content;
+            p.textContent = displayContent;
+            infoDiv.appendChild(strong);
+            infoDiv.appendChild(p);
+            
+            const btn = document.createElement('button');
+            btn.className = 'nw-btn-direct-send-tpl';
+            btn.title = 'Disparo Direto';
+            btn.style.cssText = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 6px; border: none; background: rgba(0, 230, 153, 0.1); color: var(--nw-accent); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;';
+            const btnSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            btnSvg.width = 14;
+            btnSvg.height = 14;
+            btnSvg.viewBox = '0 0 24 24';
+            btnSvg.fill = 'none';
+            btnSvg.stroke = 'currentColor';
+            btnSvg.strokeWidth = 2;
+            btnSvg.strokeLinecap = 'round';
+            btnSvg.strokeLinejoin = 'round';
+            const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line1.setAttribute('x1', '22');
+            line1.setAttribute('y1', '2');
+            line1.setAttribute('x2', '11');
+            line1.setAttribute('y2', '13');
+            const polygon1 = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            polygon1.setAttribute('points', '22 2 15 22 11 13 2 9 22 2');
+            btnSvg.appendChild(line1);
+            btnSvg.appendChild(polygon1);
+            btn.appendChild(btnSvg);
+            
+            // Add elements to card
+            card.appendChild(iconDiv);
+            card.appendChild(infoDiv);
+            card.appendChild(btn);
+            
+            // Direct Send button - also use registry
+            listenerRegistry.addDOMListener(btn, 'click', (e) => {
                 e.stopPropagation();
                 sendSingleMessage(NWState.currentPhone, tpl.content);
-            };
+            });
 
             section.appendChild(card);
         });
