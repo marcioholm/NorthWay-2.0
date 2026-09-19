@@ -2,15 +2,29 @@
  * WhatsApp Attachment Engine
  * Handles file injection into WhatsApp Web DOM.
  * No prototype monkey-patching — uses MutationObserver + direct injection.
+ * ListenerRegistry integration for memory leak prevention.
  */
+import listenerRegistry from './listener_registry.js';
 
 const NW_PAGE_DEBUG = false;
 
 class WhatsAppAttachmentManager {
     constructor() {
         this.moduleName = "NW_ATTACH";
-        this.setupListener();
+        this.messageListener = null;
+        WhatsAppAttachmentManager.instances.set('default', this);
     }
+
+    static getInstance(name = 'default') {
+        return WhatsAppAttachmentManager.instances.get(name);
+    }
+
+    static initInstances() {
+        WhatsAppAttachmentManager.instances = new Map();
+    }
+}
+
+WhatsAppAttachmentManager.initInstances();
 
     log(msg, data = null) {
         if (!NW_PAGE_DEBUG) return;
@@ -28,7 +42,8 @@ class WhatsAppAttachmentManager {
     }
 
     setupListener() {
-        window.addEventListener('message', async (event) => {
+        // Use ListenerRegistry for proper cleanup on unmount
+        this.messageListener = listenerRegistry.addWindowMessageListener(async (event) => {
             if (event.data.source !== 'NW_EXTENSION') return;
             if (event.data.type === 'NW_PING') return;
             if (event.data.type !== 'NW_ATTACH_FILE') return;
@@ -44,7 +59,7 @@ class WhatsAppAttachmentManager {
             } catch (err) {
                 this.log('Attachment Workflow Failed', err);
             }
-        });
+        }, false);
     }
 
     async performAttachment(file, kind) {
@@ -210,6 +225,23 @@ class WhatsAppAttachmentManager {
         el.dispatchEvent(new MouseEvent('mouseup', opts));
         el.dispatchEvent(new MouseEvent('click', opts));
     }
+
+    /**
+     * Cleanup - remove event listeners to prevent memory leaks
+     */
+    cleanup() {
+        if (this.messageListener) {
+            window.removeEventListener('message', this.messageListener.handler);
+        }
+    }
 }
+
+/* Export cleanup function for global use */
+globalThis.cleanupPageInjected = () => {
+    const manager = WhatsAppAttachmentManager.getInstance('default');
+    if (manager && manager.cleanup) {
+        manager.cleanup();
+    }
+};
 
 new WhatsAppAttachmentManager();

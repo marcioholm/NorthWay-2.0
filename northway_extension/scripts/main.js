@@ -2,49 +2,22 @@
  * ZapWay Main Entry Point
  */
 
+import listenerRegistry from './listener_registry.js';
+
 let chatObserver = null;
 let isDetecting = false;
 
-// Sidebar Manager - tracks intervals and listeners for proper cleanup
-const SidebarManager = {
-    intervals: [],
-    listeners: {},
-    
-    addInterval(callback, delay) {
-        const id = setInterval(callback, delay);
-        this.intervals.push(id);
-        return id;
-    },
-    
-    addListener(target, event, handler) {
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
-        }
-        this.listeners[event].push({ target, handler });
-        target.addEventListener(event, handler);
-    },
-    
-    init() {
-        // Use managed interval instead of raw setInterval
-        this.addInterval(() => this.adjustLayout(), 2000);
-        this.addListener(window, 'resize', () => this.adjustLayout());
-    },
-    
-    cleanup() {
-        // Limpar TUDO ao sair
-        this.intervals.forEach(id => clearInterval(id));
-        this.intervals = [];
-        
-        Object.entries(this.listeners).forEach(([event, listeners]) => {
-            listeners.forEach(({ target, handler }) => {
-                target.removeEventListener(event, handler);
-            });
-        });
-        this.listeners = {};
-        
-        console.log('[Sidebar] Cleanup completo - memória liberada');
-    }
-};
+// Initialize listener registry for proper cleanup
+const eventRegistry = listenerRegistry;
+
+// Chrome storage listener - registered via registry for proper cleanup
+let storageListenerHandler = null;
+
+// Chrome runtime message listener - registered via registry for proper cleanup
+let runtimeMessageHandler = null;
+
+// DOM keydown listener - registered via registry for proper cleanup
+let domKeydownHandler = null;
 
 async function bootstrap() {
     nwLog("[ZapWay][Main] Bootstrap iniciado — verificando autenticação.");
@@ -61,9 +34,19 @@ async function bootstrap() {
         nwLog("Auth check failed", e);
     }
 
-    EventListeners.init();
+    // Initialize chrome.storage.onChanged listener via registry
+    storageListenerHandler = listenerRegistry.addChromeStorageListener((changes, namespace) => {
+        if (namespace === 'local' && changes.authToken) {
+            if (changes.authToken.newValue) {
+                if (!document.getElementById('northway-sidebar-host')) init();
+            } else {
+                unmount();
+            }
+        }
+    });
 
-    chrome.runtime.onMessage.addListener((request) => {
+    // Initialize chrome.runtime.onMessage listener via registry
+    runtimeMessageHandler = listenerRegistry.addChromeRuntimeMessageListener((request) => {
         if (request.action === "SESSION_EXPIRED") {
             nwLog("Session expired — prompting re-login.");
             unmount();
@@ -95,7 +78,19 @@ async function init() {
     NWState.shadowRoot.innerHTML = `<style>${css}</style>${html.replace(/__MSG_@@extension_id__/g, chrome.runtime.id)}`;
     sidebarContainer.style.pointerEvents = 'auto';
     
-    SidebarManager.init();
+    // Initialize DOM keydown listener via registry
+    domKeydownHandler = listenerRegistry.addDOMListener(
+        document, 
+        'keydown', 
+        (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyZ') {
+                const root = document.getElementById('northway-sidebar-host');
+                if (root) root.style.transform = root.style.transform.includes('100%') ? 'translateX(0)' : 'translateX(100%)';
+            }
+        }
+    );
+    
+    bindEvents();
     startObserver();
     adjustLayout();
     
@@ -188,7 +183,7 @@ function unmount() {
     if (btn) btn.remove();
 
     if (chatObserver) chatObserver.disconnect();
-    SidebarManager.cleanup();
+    listenerRegistry.removeAll();
     NWState.reset();
     NWState.shadowRoot = null;
 
@@ -247,8 +242,7 @@ function bindEvents() {
         if (res?.success) toast("Criado!", "success");
     };
 
-    // Message bridge from MAIN world
-// Already handled by EventListeners.init() in bootstrap
+    // Message bridge from MAIN world - already handled by registry listeners
 
     const btnDirectSend = getEl('nw-btn-direct-send');
     if (btnDirectSend) {

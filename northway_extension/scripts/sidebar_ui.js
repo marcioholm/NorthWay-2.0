@@ -1,6 +1,9 @@
 /**
  * ZapWay Sidebar UI & State
+ * 
+ * Uses ListenerRegistry for proper event listener cleanup to prevent memory leaks.
  */
+import listenerRegistry from './listener_registry.js';
 
 const getEl = (id) => NWState.shadowRoot ? NWState.shadowRoot.getElementById(id) : null;
 
@@ -241,6 +244,18 @@ async function loadPipelines(currentStageId, targetId = 'nw-input-stage') {
 
 async function loadTemplates() {
     try {
+        // Use registry-based rendering for proper listener cleanup
+        await renderTemplatesWithRegistry();
+    } catch (e) {
+        nwLog("Template load error", e);
+    }
+}
+
+/**
+ * Render templates using ListenerRegistry for memory leak prevention
+ */
+async function renderTemplatesWithRegistry() {
+    try {
         const response = await sendMsg({ action: "GET_TEMPLATES" });
         const section = NWState.shadowRoot.querySelector('.nw-templates-section');
         if (!section || !response) return;
@@ -249,6 +264,19 @@ async function loadTemplates() {
             const card = document.createElement('div');
             card.className = 'nw-template-card';
             card.style.position = 'relative';
+            
+            // Use ListenerRegistry for click handler cleanup
+            const handleCardClick = (e) => {
+                if (e.target.closest('.nw-btn-direct-send-tpl')) return;
+                const ta = getEl('nw-broadcast-template') || getEl('nw-input-notes') || getEl('nw-new-notes');
+                if (ta) {
+                    ta.value = tpl.content;
+                    ta.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            };
+            
+            listenerRegistry.addDOMListener(card, 'click', handleCardClick);
+
             card.innerHTML = `
                 <div class="nw-template-icon" style="background: rgba(99,102,241,0.1); color: #818cf8;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
@@ -258,26 +286,16 @@ async function loadTemplates() {
                     <p>${tpl.content.substring(0, 60)}${tpl.content.length > 60 ? '...' : ''}</p>
                 </div>
                 <button class="nw-btn-direct-send-tpl" title="Disparo Direto" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 6px; border: none; background: rgba(0, 230, 153, 0.1); color: var(--nw-accent); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 </button>
             `;
             
-            // Fill textarea
-            card.onclick = (e) => {
-                if (e.target.closest('.nw-btn-direct-send-tpl')) return;
-                const ta = getEl('nw-broadcast-template') || getEl('nw-input-notes') || getEl('nw-new-notes');
-                if (ta) {
-                    ta.value = tpl.content;
-                    ta.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            };
-
-            // Direct Send
+            // Direct Send button - also use registry
             const btn = card.querySelector('.nw-btn-direct-send-tpl');
-            btn.onclick = (e) => {
+            listenerRegistry.addDOMListener(btn, 'click', (e) => {
                 e.stopPropagation();
                 sendSingleMessage(NWState.currentPhone, tpl.content);
-            };
+            });
 
             section.appendChild(card);
         });
