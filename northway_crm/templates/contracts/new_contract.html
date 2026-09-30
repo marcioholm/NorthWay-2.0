@@ -72,6 +72,7 @@
                                     class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Valor
                                     Total (Contrato)</label>
                                 <input type="text" id="valor_total" name="valor_total" placeholder="0,00" required
+                                    value="{{ (client.monthly_value * 12) if client.monthly_value else '' }}"
                                     class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono font-medium">
                             </div>
                         </div>
@@ -208,7 +209,7 @@
                             <label for="data_emissao"
                                 class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Data
                                 Emissão</label>
-                            <input type="text" id="data_emissao" name="data_emissao" placeholder="DD/MM/AAAA" value="$(date +%d/%m/%Y)"
+                            <input type="text" id="data_emissao" name="data_emissao" placeholder="DD/MM/AAAA" value="{{ current_date or '' }}"
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all mask-date">
                         </div>
                         <div class="relative group">
@@ -539,7 +540,8 @@
         currencyInputs.forEach(input => {
             input.addEventListener('input', (e) => {
                 formatCurrency(e.target);
-                calculateFinancials(); // Recalculate on value change
+                const source = e.target.name === 'valor_parcela' ? 'parcela' : 'total';
+                calculateFinancials(source); // Recalculate on value change
                 triggerAutoSave();
             });
             if (input.value) formatCurrency(input);
@@ -623,6 +625,8 @@
         });
 
         // Initial Trigger
+        calculateFinancials();
+        calculateEndDate();
         updatePreview();
     });
 
@@ -758,20 +762,30 @@
         }
     }
 
-    function calculateFinancials() {
+    function calculateFinancials(source = 'total') {
         const totalInput = document.querySelector('input[name="valor_total"]');
         const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
         const parcelaInput = document.querySelector('input[name="valor_parcela"]');
 
-        if (totalInput && qtdInput && parcelaInput) {
-            const total = parseCurrency(totalInput.value);
-            const qtd = parseInt(qtdInput.value) || 0;
+        if (!totalInput || !qtdInput || !parcelaInput) return;
 
-            if (total > 0 && qtd > 0) {
-                const parcela = total / qtd;
-                parcelaInput.value = formatCurrencyValue(parcela);
-                // Also trigger masking/formatting on the output to ensure consistency
-                // But formatCurrencyValue does standard formatting.
+        const qtd = parseInt(qtdInput.value) || 0;
+        if (qtd <= 0) return;
+
+        if (source === 'parcela') {
+            const parcela = parseCurrency(parcelaInput.value);
+            if (parcela > 0) {
+                totalInput.value = formatCurrencyValue(parcela * qtd);
+            }
+        } else {
+            const total = parseCurrency(totalInput.value);
+            if (total > 0) {
+                parcelaInput.value = formatCurrencyValue(total / qtd);
+            } else {
+                const parcela = parseCurrency(parcelaInput.value);
+                if (parcela > 0) {
+                    totalInput.value = formatCurrencyValue(parcela * qtd);
+                }
             }
         }
         updatePreview();
@@ -801,16 +815,43 @@
 
     function submitForm(action) {
         document.getElementById('formAction').value = action;
-        const btn = document.getElementById('emitBtn');
+        const form = document.getElementById('contractForm');
 
         if (action === 'issue') {
-            showLoadingState(document.getElementById('contractForm'), '#emitBtn');
+            const templateId = document.getElementById('templateSelect').value;
+            if (!templateId) {
+                alert("Por favor, selecione um modelo de contrato antes de emitir.");
+                const templateSelect = document.getElementById('templateSelect');
+                templateSelect.focus();
+                return;
+            }
+
+            // Cancel pending autosave to prevent race conditions
+            clearTimeout(autoSaveTimeout);
+
+            // Validate form fields
+            if (!form.checkValidity()) {
+                // If invalid field is inside a closed details/accordion, open it
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) {
+                    const parentDetails = firstInvalid.closest('details');
+                    if (parentDetails) {
+                        parentDetails.open = true;
+                    }
+                    firstInvalid.focus();
+                }
+                form.reportValidity();
+                return;
+            }
+
+            const btn = document.getElementById('emitBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Emitindo...`;
+            }
         }
 
         if (action === 'draft') {
-            // Allow submitting draft even if incomplete? 
-            // We set 'novalidate' temporarily or just submit.
-            // But let's check mandatory template_id.
             const templateId = document.getElementById('templateSelect').value;
             if (!templateId) {
                 alert("Selecione pelo menos um modelo para salvar o rascunho.");
@@ -818,7 +859,7 @@
             }
         }
 
-        document.getElementById('contractForm').submit();
+        form.submit();
     }
 
     async function updatePreview() {
