@@ -176,9 +176,12 @@ def create_app(test_config=None):
                 return False
 
         try:
-            # 1. Normalize Postgres URL
-            if database_url and database_url.startswith("postgres://"):
-                database_url = database_url.replace("postgres://", "postgresql://", 1)
+            # 1. Normalize Postgres URL to explicitly use psycopg2
+            if database_url:
+                if database_url.startswith("postgres://"):
+                    database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
+                elif database_url.startswith("postgresql://") and not database_url.startswith("postgresql+"):
+                    database_url = database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
             
             # 1.1 Force SSL for Supabase if missing
             if database_url and 'postgresql' in database_url and 'sslmode' not in database_url:
