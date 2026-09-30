@@ -97,9 +97,9 @@ def get_app():
             return f"""
             <div style="font-family: sans-serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: 0 auto;">
                 <h1 style="color: #e53e3e;">🔥 Boot Error</h1>
-                <p>The application failed to start correctly. This usually happens due to missing environment variables or database connection issues.</p>
+                <p>The application failed to start correctly. Error details:</p>
                 <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; overflow-x: auto;">
-                    <pre style="font-size: 14px; margin: 0;">Serviço temporariamente indisponível. Contate o suporte.</pre>
+                    <pre style="font-size: 13px; margin: 0; color: #b91c1c; white-space: pre-wrap;">{error_details}</pre>
                 </div>
             </div>
             """, 500
