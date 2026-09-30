@@ -44,7 +44,8 @@ def new_contract(id):
             ContractTemplate.type == 'attachment'
         ).all()
     
-    return render_template('contracts/new_contract.html', client=client, templates=templates, attachments=attachments)
+    current_date = datetime.now().strftime('%d/%m/%Y')
+    return render_template('contracts/new_contract.html', client=client, templates=templates, attachments=attachments, current_date=current_date)
 
 @contracts_bp.route('/contracts/autosave', methods=['POST'])
 @login_required
@@ -77,10 +78,11 @@ def autosave_contract():
             )
             db.session.add(contract)
         else:
-            # Update existing draft
-            contract.template_id = template_id
-            contract.form_data = json.dumps(form_data) if form_data else contract.form_data
-            contract.generated_content = content
+            # Update existing draft only if not already issued or signed
+            if contract.status == 'draft':
+                contract.template_id = template_id
+                contract.form_data = json.dumps(form_data) if form_data else contract.form_data
+                contract.generated_content = content
             
         db.session.commit()
         return jsonify({'success': True, 'contract_id': contract.id})
@@ -126,12 +128,14 @@ def load_draft(contract_id):
 
     draft_data = json.loads(contract.form_data) if contract.form_data else {}
     
+    current_date = datetime.now().strftime('%d/%m/%Y')
     return render_template('contracts/new_contract.html', 
                            client=client, 
                            templates=templates, 
                            attachments=attachments,
                            draft_data=draft_data,
-                           contract_id=contract.id)
+                           contract_id=contract.id,
+                           current_date=current_date)
 
 @contracts_bp.route('/api/contracts/preview', methods=['POST'])
 @login_required
@@ -500,6 +504,21 @@ def create_contract(id):
 
         status = 'issued' if action == 'issue' else 'draft'
         
+        # Populate financial fields on contract model
+        total_val_str = form_data.get('valor_total')
+        if total_val_str:
+            try:
+                contract_amount = float(total_val_str.replace('R$', '').replace('.', '').replace(',', '.').strip())
+            except Exception:
+                contract_amount = 0.0
+        else:
+            contract_amount = 0.0
+
+        try:
+            installments_count = int(form_data.get('qtd_parcelas') or 12)
+        except Exception:
+            installments_count = 12
+
         if contract_id:
             contract = Contract.query.get(contract_id)
             if contract and contract.company_id == current_user.company_id:
@@ -507,35 +526,54 @@ def create_contract(id):
                 contract.generated_content = generated_content
                 contract.form_data = json.dumps(form_data)
                 contract.status = status
+                contract.amount = contract_amount
+                contract.billing_type = 'recorrente' if installments_count > 1 else 'unico'
+                contract.total_installments = installments_count
                 if not contract.code:
                     contract.code = f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}"
             else:
                  contract = Contract(
                     client_id=client.id, company_id=client.company.id, template_id=template.id,
                     generated_content=generated_content, form_data=json.dumps(form_data),
-                    status=status, code=f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}"
+                    status=status, amount=contract_amount,
+                    billing_type='recorrente' if installments_count > 1 else 'unico',
+                    total_installments=installments_count,
+                    code=f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}"
                 )
                  db.session.add(contract)
         else: 
             contract = Contract(
                 client_id=client.id, company_id=client.company.id, template_id=template.id,
                 generated_content=generated_content, form_data=json.dumps(form_data),
-                status=status, code=f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}"
+                status=status, amount=contract_amount,
+                billing_type='recorrente' if installments_count > 1 else 'unico',
+                total_installments=installments_count,
+                code=f"CTR-{datetime.now().year}-{uuid.uuid4().hex[:8].upper()}"
             )
             db.session.add(contract)
         
         db.session.commit()
     
         if status == 'issued':
-            create_notification(current_user.id, client.company_id, 'client_status_changed', f"Contrato emitido para {client.name}", f"Contrato #{contract.id} gerado.")
-            task = Task(
-                title="Enviar contrato para assinatura",
-                description=f"Contrato #{contract.id} emitido. Enviar para assinatura do cliente.",
-                due_date=datetime.now(), priority='urgente', status='pendente',
-                company_id=current_user.company_id, client_id=client.id, assigned_to_id=current_user.id
-            )
-            db.session.add(task)
-            db.session.commit()
+            try:
+                create_notification(current_user.id, client.company_id, 'client_status_changed', f"Contrato emitido para {client.name}", f"Contrato #{contract.id} gerado.")
+            except Exception as notif_err:
+                current_app.logger.warning(f"Erro ao criar notificação de emissão: {notif_err}")
+
+            try:
+                task = Task(
+                    title="Enviar contrato para assinatura",
+                    description=f"Contrato #{contract.id} emitido. Enviar para assinatura do cliente.",
+                    due_date=datetime.now(), priority='urgente', status='pendente',
+                    company_id=current_user.company_id, client_id=client.id, assigned_to_id=current_user.id,
+                    contract_id=contract.id
+                )
+                db.session.add(task)
+                db.session.commit()
+            except Exception as task_err:
+                current_app.logger.warning(f"Erro ao criar tarefa de assinatura: {task_err}")
+                db.session.rollback()
+
             flash('Contrato emitido e tarefa de assinatura criada!', 'success')
         else:
             flash('Rascunho salvo!', 'info')

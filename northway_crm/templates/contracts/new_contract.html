@@ -208,7 +208,7 @@
                             <label for="data_emissao"
                                 class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Data
                                 Emissão</label>
-                            <input type="text" id="data_emissao" name="data_emissao" placeholder="DD/MM/AAAA" value="$(date +%d/%m/%Y)"
+                            <input type="text" id="data_emissao" name="data_emissao" placeholder="DD/MM/AAAA" value="{{ current_date or '' }}"
                                 class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all mask-date">
                         </div>
                         <div class="relative group">
@@ -801,16 +801,26 @@
 
     function submitForm(action) {
         document.getElementById('formAction').value = action;
-        const btn = document.getElementById('emitBtn');
+        const form = document.getElementById('contractForm');
 
         if (action === 'issue') {
-            showLoadingState(document.getElementById('contractForm'), '#emitBtn');
+            // Cancel pending autosave to prevent race conditions
+            clearTimeout(autoSaveTimeout);
+
+            // Validate form fields
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const btn = document.getElementById('emitBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Emitindo...`;
+            }
         }
 
         if (action === 'draft') {
-            // Allow submitting draft even if incomplete? 
-            // We set 'novalidate' temporarily or just submit.
-            // But let's check mandatory template_id.
             const templateId = document.getElementById('templateSelect').value;
             if (!templateId) {
                 alert("Selecione pelo menos um modelo para salvar o rascunho.");
@@ -818,7 +828,7 @@
             }
         }
 
-        document.getElementById('contractForm').submit();
+        form.submit();
     }
 
     async function updatePreview() {
