@@ -72,6 +72,7 @@
                                     class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-bold text-northway-red group-focus-within:text-northway-red transition-colors uppercase">Valor
                                     Total (Contrato)</label>
                                 <input type="text" id="valor_total" name="valor_total" placeholder="0,00" required
+                                    value="{{ (client.monthly_value * 12) if client.monthly_value else '' }}"
                                     class="js-update-preview w-full text-sm px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-northway-red/10 focus:border-northway-red transition-all font-mono font-medium">
                             </div>
                         </div>
@@ -539,7 +540,8 @@
         currencyInputs.forEach(input => {
             input.addEventListener('input', (e) => {
                 formatCurrency(e.target);
-                calculateFinancials(); // Recalculate on value change
+                const source = e.target.name === 'valor_parcela' ? 'parcela' : 'total';
+                calculateFinancials(source); // Recalculate on value change
                 triggerAutoSave();
             });
             if (input.value) formatCurrency(input);
@@ -623,6 +625,8 @@
         });
 
         // Initial Trigger
+        calculateFinancials();
+        calculateEndDate();
         updatePreview();
     });
 
@@ -758,20 +762,30 @@
         }
     }
 
-    function calculateFinancials() {
+    function calculateFinancials(source = 'total') {
         const totalInput = document.querySelector('input[name="valor_total"]');
         const qtdInput = document.querySelector('input[name="qtd_parcelas"]');
         const parcelaInput = document.querySelector('input[name="valor_parcela"]');
 
-        if (totalInput && qtdInput && parcelaInput) {
-            const total = parseCurrency(totalInput.value);
-            const qtd = parseInt(qtdInput.value) || 0;
+        if (!totalInput || !qtdInput || !parcelaInput) return;
 
-            if (total > 0 && qtd > 0) {
-                const parcela = total / qtd;
-                parcelaInput.value = formatCurrencyValue(parcela);
-                // Also trigger masking/formatting on the output to ensure consistency
-                // But formatCurrencyValue does standard formatting.
+        const qtd = parseInt(qtdInput.value) || 0;
+        if (qtd <= 0) return;
+
+        if (source === 'parcela') {
+            const parcela = parseCurrency(parcelaInput.value);
+            if (parcela > 0) {
+                totalInput.value = formatCurrencyValue(parcela * qtd);
+            }
+        } else {
+            const total = parseCurrency(totalInput.value);
+            if (total > 0) {
+                parcelaInput.value = formatCurrencyValue(total / qtd);
+            } else {
+                const parcela = parseCurrency(parcelaInput.value);
+                if (parcela > 0) {
+                    totalInput.value = formatCurrencyValue(parcela * qtd);
+                }
             }
         }
         updatePreview();
@@ -804,11 +818,28 @@
         const form = document.getElementById('contractForm');
 
         if (action === 'issue') {
+            const templateId = document.getElementById('templateSelect').value;
+            if (!templateId) {
+                alert("Por favor, selecione um modelo de contrato antes de emitir.");
+                const templateSelect = document.getElementById('templateSelect');
+                templateSelect.focus();
+                return;
+            }
+
             // Cancel pending autosave to prevent race conditions
             clearTimeout(autoSaveTimeout);
 
             // Validate form fields
             if (!form.checkValidity()) {
+                // If invalid field is inside a closed details/accordion, open it
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) {
+                    const parentDetails = firstInvalid.closest('details');
+                    if (parentDetails) {
+                        parentDetails.open = true;
+                    }
+                    firstInvalid.focus();
+                }
                 form.reportValidity();
                 return;
             }
