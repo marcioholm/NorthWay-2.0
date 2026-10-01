@@ -595,12 +595,7 @@
             });
         }
 
-        // Initialize Draft Data
-        if (draftData) {
-            populateForm(draftData);
-        }
-
-        // Input Masking Logic (Moved from bottom)
+        // Input Masking Logic
         // Date Mask (DD/MM/YYYY)
         document.querySelectorAll('.mask-date').forEach(input => {
             input.addEventListener('input', (e) => {
@@ -624,10 +619,14 @@
             });
         });
 
-        // Initial Trigger
-        calculateFinancials();
-        calculateEndDate();
-        updatePreview();
+        // Initialize Draft Data or Default Calculations
+        if (draftData && Object.keys(draftData).length > 0) {
+            populateForm(draftData);
+        } else {
+            calculateFinancials();
+            calculateEndDate();
+            updatePreview();
+        }
     });
 
     function triggerAutoSave() {
@@ -800,17 +799,59 @@
     }
 
     function populateForm(data) {
+        if (!data) return;
+
+        // Populate contract_id if present
+        if (data.contract_id) {
+            const cid = document.getElementById('contractId');
+            if (cid) cid.value = data.contract_id;
+        }
+
         for (const key in data) {
             if (data.hasOwnProperty(key)) {
-                const input = document.querySelector(`[name="${key}"]`);
-                if (input) {
-                    input.value = data[key];
-                    // Trigger events manually if needed (like for selects/masks)
+                const element = document.querySelector(`[name="${key}"]`);
+                if (!element) continue;
+
+                if (element.type === 'checkbox') {
+                    element.checked = (data[key] === 'on' || data[key] === true || data[key] === 'true');
+                } else if (element.tagName === 'SELECT') {
+                    element.value = data[key];
+                    // Also trigger change handler if any
+                    if (key === 'forma_implantacao') {
+                        toggleImplantationOptions();
+                    }
+                } else {
+                    element.value = data[key];
                 }
             }
         }
-        // Force preview update after population
-        if (data.template_id) updatePreview();
+
+        // Specifically ensure template and attachment selects are set
+        if (data.template_id) {
+            const tSelect = document.getElementById('templateSelect');
+            if (tSelect) tSelect.value = String(data.template_id);
+        }
+        if (data.attachment_id) {
+            const aSelect = document.getElementById('attachmentSelect');
+            if (aSelect) aSelect.value = String(data.attachment_id);
+        }
+
+        // Apply masks to formatted values
+        const currencyInputs = document.querySelectorAll('input[name^="valor_"], input[name="monthly_value"]');
+        currencyInputs.forEach(input => {
+            if (input.value) formatCurrency(input);
+        });
+
+        // Toggle implantation extra fields visibility
+        toggleImplantationOptions();
+
+        // Calculate end date based on start date and vigência
+        calculateEndDate();
+
+        // Force preview update with populated data
+        if (data.template_id || (document.getElementById('templateSelect') && document.getElementById('templateSelect').value)) {
+            updatePreview();
+        }
     }
 
     function submitForm(action) {
