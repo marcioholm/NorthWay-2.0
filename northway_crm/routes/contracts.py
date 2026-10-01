@@ -127,6 +127,9 @@ def load_draft(contract_id):
         ).all()
 
     draft_data = json.loads(contract.form_data) if contract.form_data else {}
+    if contract.template_id and not draft_data.get('template_id'):
+        draft_data['template_id'] = str(contract.template_id)
+    draft_data['contract_id'] = str(contract.id)
     
     current_date = datetime.now().strftime('%d/%m/%Y')
     return render_template('contracts/new_contract.html', 
@@ -355,9 +358,31 @@ def create_contract(id):
             client.start_date = datetime.strptime(form_data.get('data_inicio'), '%d/%m/%Y').date() if form_data.get('data_inicio') else client.start_date
         
         # Generate Content
-        generated_content = template.content
+        content_body = template.content
         for key, value in replacements.items():
-            generated_content = generated_content.replace(key, str(value))
+            content_body = content_body.replace(key, str(value))
+        
+        try:
+            content_body = markdown.markdown(content_body)
+        except Exception as e:
+            current_app.logger.warning(f"Markdown Error: {e}")
+
+        # Attachment
+        attachment_id = form_data.get('attachment_id')
+        if attachment_id:
+            try:
+                attachment = ContractTemplate.query.get(attachment_id)
+                if attachment and (attachment.company_id == client.company_id or attachment.is_global):
+                    att_content = attachment.content
+                    for key, value in replacements.items():
+                        att_content = att_content.replace(key, str(value))
+                    try:
+                        att_content = markdown.markdown(att_content)
+                        content_body += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
+                    except Exception:
+                        pass
+            except Exception:
+                pass
         
         # --- PREMIUM HEADER & FOOTER LOGIC (CREATE) ---
         logo_img_tag = ""
@@ -417,7 +442,7 @@ def create_contract(id):
             </div>
         """
         
-        generated_content = header_html + generated_content + footer_html
+        generated_content = header_html + content_body + footer_html
 
         # --- ANEXO I: QUADRO RESUMO (Mandatory - Duplicated for Safety) ---
         def generate_summary_sheet_create(client, replacements, primary_col):
@@ -798,12 +823,41 @@ def duplicate_contract(id):
     if original.company_id != current_user.company_id:
         abort(403)
 
+    # Prepare duplicated form_data with updated emission/start dates
+    now_br = datetime.now()
+    today_str = now_br.strftime('%d/%m/%Y')
+    
+    dup_form_data = {}
+    if original.form_data:
+        try:
+            dup_form_data = json.loads(original.form_data)
+        except Exception:
+            dup_form_data = {}
+
+    # Ensure template_id and updated dates in duplicated form_data
+    if original.template_id and not dup_form_data.get('template_id'):
+        dup_form_data['template_id'] = str(original.template_id)
+    
+    dup_form_data['data_emissao'] = today_str
+    dup_form_data['data_assinatura'] = today_str
+    dup_form_data['data_inicio'] = today_str
+
+    # Recalculate end date if vigencia_meses exists
+    try:
+        vig_meses = int(dup_form_data.get('vigencia_meses') or original.total_installments or 12)
+        end_month = (now_br.month - 1 + vig_meses) % 12 + 1
+        end_year = now_br.year + (now_br.month - 1 + vig_meses) // 12
+        end_day = min(now_br.day, 28)
+        dup_form_data['data_fim'] = f"{end_day:02d}/{end_month:02d}/{end_year}"
+    except Exception:
+        pass
+
     new_contract = Contract(
         client_id=original.client_id,
         company_id=original.company_id,
         template_id=original.template_id,
-        generated_content=original.generated_content,
-        form_data=original.form_data,
+        generated_content=None,  # Reset so it's freshly generated on emission with the new dates
+        form_data=json.dumps(dup_form_data),
         amount=original.amount,
         billing_type=original.billing_type,
         total_installments=original.total_installments,
@@ -814,7 +868,7 @@ def duplicate_contract(id):
     db.session.add(new_contract)
     db.session.commit()
     
-    flash('Variação de contrato criada como rascunho!', 'success')
+    flash('Variação de contrato criada como rascunho com datas atualizadas!', 'success')
     return redirect(url_for('contracts.load_draft', contract_id=new_contract.id))
 
 @contracts_bp.route('/contracts/<int:id>/sign', methods=['POST'])
@@ -853,7 +907,18 @@ def sign_contract(id):
         val_p = float(data.get('valor_parcela', '0').replace('.', '').replace(',', '.'))
         qtd_p = int(data.get('qtd_parcelas', '12'))
         venc = int(data.get('dia_vencimento', '5'))
-        start_d = datetime.strptime(data.get('data_inicio'), '%d/%m/%Y').date()
+        
+        start_d_raw = data.get('data_inicio')
+        if start_d_raw:
+            try:
+                start_d = datetime.strptime(start_d_raw, '%d/%m/%Y').date()
+            except ValueError:
+                try:
+                    start_d = datetime.strptime(start_d_raw, '%Y-%m-%d').date()
+                except ValueError:
+                    start_d = date.today()
+        else:
+            start_d = date.today()
         
         # Financial / NFS-e Settings from Contract (if added to form) or defaults
         contract.total_installments = qtd_p
