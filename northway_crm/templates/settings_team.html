@@ -1,64 +1,67 @@
 {% extends "_settings_layout.html" %}
 
 {% block settings_content %}
-<div class="max-w-6xl mx-auto">
-    <header class="mb-8 flex justify-between items-center">
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Gerenciar Equipe</h1>
-            <p class="text-gray-500 mt-1">Administração de usuários e acesso</p>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="nw-badge nw-badge-accent">Equipe & Acessos</span>
+                <span class="text-xs text-[var(--nw-text-3)] font-mono">Gestão de Usuários</span>
+            </div>
+            <h1 class="text-2xl lg:text-3xl font-black tracking-tight text-[var(--nw-text-1)]">Gerenciar Equipe</h1>
+            <p class="text-xs text-[var(--nw-text-2)] mt-0.5">Administre os usuários, cargos e permissões da sua empresa.</p>
         </div>
-        <!-- Use existing route for now, or update if refactoring that too -->
         <a href="{{ url_for('admin.new_user') }}"
-            class="bg-northway-red hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
-            <i data-lucide="plus" class="w-5 h-5"></i>
-            Novo Usuário
+            class="nw-btn nw-btn-accent text-xs py-2 px-4 shadow-sm flex items-center justify-center gap-2 self-start sm:self-auto font-bold">
+            <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Novo Usuário
         </a>
-    </header>
+    </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full text-left text-sm text-gray-600">
-            <thead class="bg-gray-50 text-gray-900 border-b border-gray-200 font-medium">
-                <tr>
-                    <th class="px-6 py-4">Nome</th>
-                    <th class="px-6 py-4">Email</th>
-                    <th class="px-6 py-4">Função</th>
-                    <th class="px-6 py-4">Funis Permitidos</th>
-                    <th class="px-6 py-4 text-right">Ações</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                {% for user in users %}
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4 font-medium text-gray-900">{{ user.name }}</td>
-                    <td class="px-6 py-4">{{ user.email }}</td>
-                    <td class="px-6 py-4">
-                        <span
-                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                            {{ 'bg-purple-100 text-purple-800' if user.role == 'admin' else 'bg-blue-100 text-blue-800' }}">
-                            {{ user.role|upper }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex flex-wrap gap-1">
-                            {% for p in user.allowed_pipelines %}
-                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs border border-gray-200">
-                                {{ p.name }}
+    <div class="nw-panel overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-[var(--nw-border)] bg-[var(--nw-shell)]/60 text-[10px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider">
+                        <th class="px-5 py-3.5">Nome</th>
+                        <th class="px-5 py-3.5">Email</th>
+                        <th class="px-5 py-3.5">Função</th>
+                        <th class="px-5 py-3.5">Funis Permitidos</th>
+                        <th class="px-5 py-3.5 text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[var(--nw-border)] text-xs">
+                    {% for user in users %}
+                    <tr class="hover:bg-[var(--nw-shell)]/50 transition-colors group">
+                        <td class="px-5 py-4 font-bold text-[var(--nw-text-1)]">{{ user.name }}</td>
+                        <td class="px-5 py-4 text-[var(--nw-text-2)]">{{ user.email }}</td>
+                        <td class="px-5 py-4">
+                            <span class="nw-badge {% if user.role == 'admin' %}nw-badge-accent{% else %}nw-badge-neutral{% endif %}">
+                                {{ user.role|upper }}
                             </span>
-                            {% else %}
-                            <span class="text-red-500 text-xs">Sem acesso</span>
-                            {% endfor %}
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        <a href="{{ url_for('admin.edit_user', id=user.id) }}"
-                            class="text-indigo-600 hover:text-indigo-900 hover:underline">
-                            Editar
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td class="px-5 py-4">
+                            <div class="flex flex-wrap gap-1">
+                                {% for p in user.allowed_pipelines %}
+                                <span class="nw-badge nw-badge-neutral text-[10px]">
+                                    {{ p.name }}
+                                </span>
+                                {% else %}
+                                <span class="text-rose-500 text-xs">Sem acesso</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="px-5 py-4 text-right">
+                            <a href="{{ url_for('admin.edit_user', id=user.id) }}"
+                                class="nw-btn nw-btn-subtle text-[11px] py-1 px-2.5 inline-flex items-center gap-1 font-medium">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                <span>Editar</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}
