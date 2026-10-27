@@ -1,224 +1,241 @@
 {% extends "base.html" %}
 
+{% from "macros.html" import page_header, stat_tile, status_chip %}
+
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
-    <header class="mb-8 flex justify-between items-end">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p class="text-gray-500 mt-1">Visão geral e métricas de desempenho.</p>
+<div class="w-full space-y-8">
+
+    {# 1. Header com saudação contextual e toggle de período #}
+    {% set greeting = 'Boa noite' if now.hour >= 18 else ('Boa tarde' if now.hour >= 12 else 'Bom dia') %}
+    {% call page_header(greeting ~ ", " ~ (current_user.name or 'Usuário'), "Visão geral e métricas de desempenho") %}
+        <div class="flex items-center gap-3 flex-wrap">
+            <!-- Period Quick Pills -->
+            <div class="inline-flex p-1 bg-[var(--nw-shell)] rounded-full border border-[var(--nw-border)]">
+                <button type="button" onclick="setDashboardPeriod('last_7_days', this)"
+                    class="period-pill px-3 py-1 rounded-full text-xs font-semibold text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] transition-colors">
+                    7d
+                </button>
+                <button type="button" onclick="setDashboardPeriod('daily', this)"
+                    class="period-pill px-3 py-1 rounded-full text-xs font-semibold text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] transition-colors">
+                    30d
+                </button>
+                <button type="button" onclick="setDashboardPeriod('weekly', this)"
+                    class="period-pill px-3 py-1 rounded-full text-xs font-semibold text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] transition-colors">
+                    90d
+                </button>
+                <button type="button" onclick="setDashboardPeriod('annual', this)"
+                    class="period-pill px-3 py-1 rounded-full text-xs font-semibold text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] transition-colors">
+                    Ano
+                </button>
+                <button type="button" onclick="setDashboardPeriod('all_time', this)"
+                    class="period-pill px-3 py-1 rounded-full text-xs font-semibold bg-[var(--nw-ink)] text-white shadow-sm transition-colors active-pill">
+                    Tudo
+                </button>
+            </div>
+
+            <!-- Date Display -->
+            <div class="nw-chip nw-chip-neutral hidden sm:inline-flex">
+                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                <span>{{ now.strftime('%d de %B, %Y') }}</span>
+            </div>
         </div>
-        <div class="text-sm text-gray-400 font-medium">
-            {{ now.strftime('%d de %B, %Y') }}
-        </div>
-    </header>
+    {% endcall %}
 
+    {# 2. 4 Stat Tiles Lado a Lado #}
+    {% set conv = (won_deals / total_leads * 100) if total_leads > 0 else 0 %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- 1. Total Leads (Ink) -->
+        {{ stat_tile('Leads Totais', total_leads, 'Potenciais clientes', 'ink') }}
 
+        <!-- 2. Conversão (Accent) -->
+        {{ stat_tile('Taxa de Conversão', "%.1f%%"|format(conv)|replace('.0%', '%'), 'Vendas ganhas: ' ~ won_deals, 'accent') }}
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <!-- Total Leads -->
-        <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+        <!-- 3. Clientes Ativos (White) -->
+        {{ stat_tile('Clientes Ativos', active_clients, 'Carteira atual', 'white') }}
+
+        <!-- 4. Receita Estimada / MRR (Outline) -->
+        {{ stat_tile('MRR Recorrente', 'R$ ' ~ ("%.2f"|format(mrr)|replace('.', ',')), 'Em risco: R$ ' ~ ("%.2f"|format(mrr_at_risk)|replace('.', ',')), 'outline') }}
+    </div>
+
+    {# 3. Seções Secundárias: Prioridades do Dia e Saúde Financeira #}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Prioridades do Dia -->
+        <div class="nw-panel flex flex-col justify-between">
             <div>
-                <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
-                    Leads Totais</p>
-                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_leads }}</p>
-                <p class="text-xs text-gray-400 mt-1">Potenciais clientes</p>
+                <div class="flex items-center justify-between pb-3 border-b border-[var(--nw-border)] mb-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-[var(--nw-brand)]"></i>
+                        <h3 class="font-bold text-sm text-[var(--nw-ink)]">Prioridades do Dia</h3>
+                    </div>
+                    <span class="nw-chip {{ 'nw-chip-warning' if pending_tasks > 0 else 'nw-chip-success' }}">
+                        {{ pending_tasks }} pendentes
+                    </span>
+                </div>
+
+                <div class="space-y-3">
+                    <a href="{{ url_for('tasks.tasks') }}" class="flex items-center justify-between p-3 rounded-2xl bg-[var(--nw-shell)]/60 hover:bg-[var(--nw-shell)] transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="w-2 h-2 rounded-full {{ 'bg-red-500' if overdue_tasks > 0 else 'bg-green-500' }}"></span>
+                            <div>
+                                <div class="text-xs font-semibold text-[var(--nw-ink)]">Tarefas Atrasadas</div>
+                                <div class="text-[11px] text-[var(--nw-text-3)]">Ações vencidas sem conclusão</div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold {{ 'text-[var(--nw-accent)]' if overdue_tasks > 0 else 'text-[var(--nw-text-2)]' }}">
+                            {{ overdue_tasks }}
+                        </span>
+                    </a>
+
+                    <a href="{{ url_for('clients.clients') }}" class="flex items-center justify-between p-3 rounded-2xl bg-[var(--nw-shell)]/60 hover:bg-[var(--nw-shell)] transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="w-2 h-2 rounded-full {{ 'bg-orange-500' if risky_clients > 0 else 'bg-green-500' }}"></span>
+                            <div>
+                                <div class="text-xs font-semibold text-[var(--nw-ink)]">Clientes em Risco</div>
+                                <div class="text-[11px] text-[var(--nw-text-3)]">Inadimplentes ou inativos</div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold {{ 'text-orange-600' if risky_clients > 0 else 'text-[var(--nw-text-2)]' }}">
+                            {{ risky_clients }}
+                        </span>
+                    </a>
+                </div>
             </div>
-            <div
-                class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 group-hover:bg-blue-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <i data-lucide="users" class="w-6 h-6"></i>
+
+            <div class="pt-4 mt-4 border-t border-[var(--nw-border)]">
+                <a href="{{ url_for('tasks.tasks') }}" class="nw-btn nw-btn-secondary w-full justify-center text-xs">
+                    <span>Ver Todas as Tarefas</span>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1"></i>
+                </a>
             </div>
         </div>
 
-        <!-- Active Clients -->
-        <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+        <!-- Saúde Financeira -->
+        <div class="nw-panel flex flex-col justify-between">
             <div>
-                <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-green-600 transition-colors">
-                    Clientes Ativos</p>
-                <p class="text-3xl font-bold text-gray-900 mt-2">{{ active_clients }}</p>
-                <p class="text-xs text-gray-400 mt-1">Carteira atual</p>
+                <div class="flex items-center justify-between pb-3 border-b border-[var(--nw-border)] mb-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="wallet" class="w-4 h-4 text-[var(--nw-accent)]"></i>
+                        <h3 class="font-bold text-sm text-[var(--nw-ink)]">Saúde Financeira</h3>
+                    </div>
+                    <a href="{{ url_for('financial.dashboard') }}" class="nw-meta text-[var(--nw-brand)] hover:underline">
+                        Ver Detalhes
+                    </a>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="p-3.5 rounded-2xl border border-[var(--nw-border)] bg-white flex items-center justify-between">
+                        <div>
+                            <span class="nw-meta text-[var(--nw-text-3)] block mb-1">MRR Saudável</span>
+                            <span class="text-lg font-bold text-green-700">R$ {{ "%.2f"|format(mrr)|replace('.', ',') }}</span>
+                        </div>
+                        <div class="w-9 h-9 rounded-full bg-green-50 text-green-700 flex items-center justify-center">
+                            <i data-lucide="trending-up" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl border border-[var(--nw-border)] bg-white flex items-center justify-between">
+                        <div>
+                            <span class="nw-meta text-[var(--nw-text-3)] block mb-1">MRR em Risco</span>
+                            <span class="text-lg font-bold text-orange-600">R$ {{ "%.2f"|format(mrr_at_risk)|replace('.', ',') }}</span>
+                        </div>
+                        <div class="w-9 h-9 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
+                            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div
-                class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600 group-hover:bg-green-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <i data-lucide="briefcase" class="w-6 h-6"></i>
+
+            <div class="pt-4 mt-4 border-t border-[var(--nw-border)]">
+                <a href="{{ url_for('payable.list_payable') }}" class="nw-btn nw-btn-secondary w-full justify-center text-xs">
+                    <span>Contas a Pagar</span>
+                    <i data-lucide="calculator" class="w-3.5 h-3.5 ml-1"></i>
+                </a>
             </div>
         </div>
 
-        <!-- Pending Tasks -->
-        <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 ease-in-out cursor-default">
+        <!-- Atalhos Rápidos & Canais -->
+        <div class="nw-panel flex flex-col justify-between">
             <div>
-                <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
-                    Tarefas Pendentes</p>
-                <p class="text-3xl font-bold {{ 'text-northway-red' if pending_tasks > 0 else 'text-gray-900' }} mt-2">
-                    {{ pending_tasks }}</p>
-                <p class="text-xs text-gray-400 mt-1">Ações necessárias</p>
+                <div class="flex items-center justify-between pb-3 border-b border-[var(--nw-border)] mb-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                        <h3 class="font-bold text-sm text-[var(--nw-ink)]">Acesso Rápido</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <a href="{{ url_for('leads.pipeline') }}" class="p-3 rounded-2xl bg-[var(--nw-shell)]/60 hover:bg-[var(--nw-shell)] flex flex-col items-center justify-center text-center transition-colors">
+                        <i data-lucide="trello" class="w-5 h-5 text-[var(--nw-text-2)] mb-1"></i>
+                        <span class="text-xs font-semibold text-[var(--nw-ink)]">Pipeline</span>
+                    </a>
+                    <a href="{{ url_for('leads.leads') }}" class="p-3 rounded-2xl bg-[var(--nw-shell)]/60 hover:bg-[var(--nw-shell)] flex flex-col items-center justify-center text-center transition-colors">
+                        <i data-lucide="user-plus" class="w-5 h-5 text-[var(--nw-text-2)] mb-1"></i>
+                        <span class="text-xs font-semibold text-[var(--nw-ink)]">Novo Lead</span>
+                    </a>
+                    <a href="{{ url_for('whatsapp.inbox') }}" class="p-3 rounded-2xl bg-[var(--nw-shell)]/60 hover:bg-[var(--nw-shell)] flex flex-col items-center justify-center text-center transition-colors">
+                        <i data-lucide="message-circle" class="w-5 h-5 text-[var(--nw-text-2)] mb-1"></i>
+                        <span class="text-xs font-semibold text-[var(--nw-ink)]">WhatsApp</span>
+                    </a>
+                    <a href="{{ url_for('contracts.index') }}" class="p-3 rounded-2xl bg-[var(--nw-shell)]/60 hover:bg-[var(--nw-shell)] flex flex-col items-center justify-center text-center transition-colors">
+                        <i data-lucide="file-text" class="w-5 h-5 text-[var(--nw-text-2)] mb-1"></i>
+                        <span class="text-xs font-semibold text-[var(--nw-ink)]">Contratos</span>
+                    </a>
+                </div>
             </div>
-            <div
-                class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-northway-red group-hover:bg-red-100 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <i data-lucide="check-square" class="w-6 h-6"></i>
+
+            <div class="pt-4 mt-4 border-t border-[var(--nw-border)] flex items-center justify-between text-xs text-[var(--nw-text-3)]">
+                <span>Versão do Ecossistema</span>
+                <span class="font-bold text-[var(--nw-ink)]">v2.0 Redesign</span>
             </div>
         </div>
     </div>
 
-    <!-- Financial Section -->
-    <h2 class="text-lg font-bold text-gray-900 mb-4 px-1 flex items-center gap-2">
-        <i data-lucide="wallet" class="w-5 h-5 text-gray-400"></i> Saúde Financeira
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <!-- MRR -->
-        <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-default">
-            <div>
-                <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-green-600 transition-colors">
-                    MRR (Realidade)</p>
-                <p class="text-3xl font-black text-gray-900 mt-2">R$ {{ "%.2f"|format(mrr)|replace('.', ',') }}</p>
-                <p class="text-xs text-gray-400 mt-1">Exclui inadimplentes (>30d)</p>
-            </div>
-            <div class="p-3 bg-green-50 rounded-xl text-green-600 group-hover:bg-green-100 transition-colors">
-                <i data-lucide="trending-up" class="w-8 h-8"></i>
-            </div>
-        </div>
-
-        <!-- MRR at Risk -->
-        <div
-            class="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-default">
-            <div>
-                <p
-                    class="text-sm font-medium text-gray-500 uppercase tracking-wider group-hover:text-northway-red transition-colors">
-                    MRR em Risco</p>
-                <p class="text-3xl font-black text-orange-600 mt-2">R$ {{ "%.2f"|format(mrr_at_risk)|replace('.', ',')
-                    }}</p>
-                <p class="text-xs text-gray-400 mt-1">Clientes inadimplentes</p>
-            </div>
-            <div class="p-3 bg-orange-50 rounded-xl text-orange-500 group-hover:bg-orange-100 transition-colors">
-                <i data-lucide="shield-alert" class="w-8 h-8"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Secondary Stats -->
-    <h2 class="text-lg font-bold text-gray-900 mb-4 px-1">Performance e Saúde</h2>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-4">
-        <!-- Won Deals -->
-        <div
-            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
-            <div>
-                <p
-                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-green-600 transition-colors">
-                    Vendas Ganhas</p>
-                <p class="text-xl font-bold text-gray-900">{{ won_deals }}</p>
-            </div>
-            <div class="p-2 bg-green-50 rounded-full text-green-600 group-hover:scale-110 transition-transform">
-                <i data-lucide="trophy" class="w-5 h-5"></i>
-            </div>
-        </div>
-
-        <!-- Conversion Rate -->
-        <div
-            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
-            <div>
-                <p
-                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-purple-600 transition-colors">
-                    Conversão</p>
-                <p class="text-xl font-bold text-gray-900">
-                    {% if total_leads > 0 %}
-                    {% set conv = (won_deals / total_leads * 100) %}
-                    {{ "%.1f"|format(conv)|replace('.0', '') }}%
-                    {% else %}
-                    0%
-                    {% endif %}
-                </p>
-            </div>
-            <div class="p-2 bg-purple-50 rounded-full text-purple-600 group-hover:scale-110 transition-transform">
-                <i data-lucide="trending-up" class="w-5 h-5"></i>
-            </div>
-        </div>
-
-        <!-- Health Risk -->
-        <div
-            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
-            <div>
-                <p
-                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-northway-red transition-colors">
-                    Em Risco</p>
-                <p class="text-xl font-bold {{ 'text-northway-red' if risky_clients > 0 else 'text-gray-900' }}">{{
-                    risky_clients }}</p>
-            </div>
-            <div class="p-2 bg-red-50 rounded-full text-northway-red group-hover:scale-110 transition-transform">
-                <i data-lucide="activity" class="w-5 h-5"></i>
-            </div>
-        </div>
-
-        <!-- Overdue Tasks -->
-        <div
-            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between group hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-default">
-            <div>
-                <p
-                    class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 group-hover:text-northway-red transition-colors">
-                    Atrasadas</p>
-                <p class="text-xl font-bold {{ 'text-northway-red' if overdue_tasks > 0 else 'text-gray-900' }}">{{
-                    overdue_tasks }}</p>
-            </div>
-            <div class="p-2 bg-red-50 rounded-full text-northway-red group-hover:scale-110 transition-transform">
-                <i data-lucide="alert-octagon" class="w-5 h-5"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Activity Chart -->
-    <!-- Performance Charts Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    {# 4. Gráficos de Performance e Funil #}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Activity Chart (Collapsible) -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100" id="performanceChartCard">
+        <div class="nw-panel" id="performanceChartCard">
             <div class="flex items-center justify-between mb-6 cursor-pointer" onclick="togglePerformanceChart()">
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        Visão Geral de Performance
-                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-400 transform transition-transform"
-                            id="perfChevron"></i>
+                    <h3 class="font-bold text-base text-[var(--nw-ink)] flex items-center gap-2">
+                        <span>Visão Geral de Performance</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-[var(--nw-text-3)] transform transition-transform" id="perfChevron"></i>
                     </h3>
-                    <p class="text-xs text-gray-500">Novos Leads vs Vendas Ganhas</p>
+                    <p class="nw-meta text-[var(--nw-text-3)] mt-0.5">Novos Leads vs Vendas Ganhas</p>
                 </div>
-                <select id="chartPeriod" onclick="event.stopPropagation()"
-                    class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red">
-                    <option value="today">Hoje (Por Hora)</option>
-                    <option value="last_7_days">Últimos 7 Dias</option>
-                    <option value="daily">Últimos 30 Dias</option>
-                    <option value="weekly">Semanal (12 sem)</option>
-                    <option value="semiannual">Semestral (3 anos)</option>
-                    <option value="annual">Anual (5 anos)</option>
-                    <option value="all_time" selected>Todo o Período</option>
-                </select>
+                <div class="nw-select" onclick="event.stopPropagation()">
+                    <select id="chartPeriod" class="!h-8 !py-1 text-xs">
+                        <option value="today">Hoje (Por Hora)</option>
+                        <option value="last_7_days">Últimos 7 Dias</option>
+                        <option value="daily">Últimos 30 Dias</option>
+                        <option value="weekly">Semanal (12 sem)</option>
+                        <option value="semiannual">Semestral (3 anos)</option>
+                        <option value="annual">Anual (5 anos)</option>
+                        <option value="all_time" selected>Todo o Período</option>
+                    </select>
+                </div>
             </div>
-            <div class="relative h-80 w-full transition-all duration-300 overflow-hidden"
-                id="performanceChartContainer">
+            <div class="relative h-80 w-full transition-all duration-300 overflow-hidden" id="performanceChartContainer">
                 <canvas id="activityChart"></canvas>
             </div>
         </div>
 
-        <!-- Sales Funnel Chart (New) -->
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <!-- Sales Funnel Chart -->
+        <div class="nw-panel">
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900">Funil de Vendas</h3>
-                    <p class="text-xs text-gray-500">Conversão por etapa do pipeline</p>
+                    <h3 class="font-bold text-base text-[var(--nw-ink)]">Funil de Vendas</h3>
+                    <p class="nw-meta text-[var(--nw-text-3)] mt-0.5">Conversão por etapa do pipeline</p>
                 </div>
                 {% if pipelines %}
-                <select id="pipelineSelect"
-                    class="text-xs border-gray-200 rounded-lg text-gray-500 focus:ring-northway-red focus:border-northway-red max-w-[150px]">
-                    {% for pipeline in pipelines %}
-                    <option value="{{ pipeline.id }}" {% if pipeline.id==current_pipeline_id %}selected{% endif %}>
-                        {{ pipeline.name }}
-                    </option>
-                    {% endfor %}
-                </select>
+                <div class="nw-select">
+                    <select id="pipelineSelect" class="!h-8 !py-1 text-xs max-w-[160px]">
+                        {% for pipeline in pipelines %}
+                        <option value="{{ pipeline.id }}" {% if pipeline.id==current_pipeline_id %}selected{% endif %}>
+                            {{ pipeline.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
                 {% endif %}
             </div>
             <div class="relative h-80 w-full">
@@ -232,6 +249,22 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
 <script>
+    function setDashboardPeriod(period, btn) {
+        const sel = document.getElementById('chartPeriod');
+        if (sel) {
+            sel.value = period;
+            sel.dispatchEvent(new Event('change'));
+        }
+        document.querySelectorAll('.period-pill').forEach(p => {
+            p.classList.remove('bg-[var(--nw-ink)]', 'text-white', 'shadow-sm', 'active-pill');
+            p.classList.add('text-[var(--nw-text-2)]');
+        });
+        if (btn) {
+            btn.classList.remove('text-[var(--nw-text-2)]');
+            btn.classList.add('bg-[var(--nw-ink)]', 'text-white', 'shadow-sm', 'active-pill');
+        }
+    }
+
     let funnelChartInstance = null;
     let chartInstance = null;
 

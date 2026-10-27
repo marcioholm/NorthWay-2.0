@@ -20,7 +20,13 @@
 
 {% macro stat_tile(label, value, foot=None, variant='white') %}
 {# Variants: 'ink', 'accent', 'white', 'outline' #}
-<div class="nw-stat nw-stat-{{ variant }}">
+{% set variant_map = {
+    'ink': 'nw-stat-ink',
+    'accent': 'nw-stat-accent',
+    'white': 'nw-stat-white',
+    'outline': 'nw-stat-outline'
+} %}
+<div class="nw-stat {{ variant_map.get(variant, 'nw-stat-white') }}">
     <span class="nw-stat-label">{{ label }}</span>
     <span class="nw-stat-value">{{ value }}</span>
     {% if foot %}
@@ -31,7 +37,14 @@
 
 {% macro status_chip(label, tone='neutral') %}
 {# Tones: 'success', 'info', 'warning', 'neutral', 'accent' #}
-<span class="nw-chip nw-chip-{{ tone }}">
+{% set tone_map = {
+    'success': 'nw-chip-success',
+    'info': 'nw-chip-info',
+    'warning': 'nw-chip-warning',
+    'neutral': 'nw-chip-neutral',
+    'accent': 'nw-chip-accent'
+} %}
+<span class="nw-chip {{ tone_map.get(tone, 'nw-chip-neutral') }}">
     <span class="nw-chip-dot"></span>
     <span>{{ label }}</span>
 </span>

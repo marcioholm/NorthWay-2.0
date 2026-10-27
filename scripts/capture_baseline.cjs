@@ -11,7 +11,8 @@ if (!fs.existsSync(OUT_DIR)) {
 }
 
 const PAGES = [
-  { name: 'dashboard', path: '/' },
+  { name: 'home', path: '/home' },
+  { name: 'dashboard', path: '/dashboard' },
   { name: 'pipeline', path: '/pipeline' },
   { name: 'leads', path: '/leads' },
   { name: 'lead_detail', path: '/leads/1' },
@@ -65,12 +66,20 @@ async function captureAll() {
     ]);
     console.log('  ✅ Logged in successfully');
 
+    await page.evaluateOnNewDocument(() => {
+      try { sessionStorage.setItem('northway_welcome_shown', 'true'); } catch (e) {}
+    });
+
     // --- 3. DESKTOP CAPTURES ---
     console.log('📸 Capturing Desktop views (1440px)...');
     await page.setViewport({ width: 1440, height: 900 });
     for (const p of PAGES) {
       try {
         await page.goto(`${BASE_URL}${p.path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.evaluate(() => {
+          const splash = document.getElementById('splash-screen');
+          if (splash) splash.style.display = 'none';
+        });
         await new Promise(r => setTimeout(r, 1000));
         await page.screenshot({ path: path.join(OUT_DIR, `desktop_${p.name}.png`), fullPage: false });
         console.log(`  ✅ desktop_${p.name}.png`);
@@ -85,6 +94,10 @@ async function captureAll() {
     for (const p of PAGES) {
       try {
         await page.goto(`${BASE_URL}${p.path}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.evaluate(() => {
+          const splash = document.getElementById('splash-screen');
+          if (splash) splash.style.display = 'none';
+        });
         await new Promise(r => setTimeout(r, 1000));
         await page.screenshot({ path: path.join(OUT_DIR, `mobile_${p.name}.png`), fullPage: false });
         console.log(`  ✅ mobile_${p.name}.png`);
