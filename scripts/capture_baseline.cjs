@@ -27,6 +27,8 @@ let PAGES = [
   { name: 'financial_payable', path: '/financial/payable' },
   { name: 'tasks', path: '/tasks/' },
   { name: 'contracts', path: '/contracts' },
+  { name: 'budget_history', path: '/commercial/budgets' },
+  { name: 'budget_generator', path: '/commercial/budget_generator' },
   { name: 'settings', path: '/settings/company' },
   { name: 'master_companies', path: '/master/dashboard' },
 ];

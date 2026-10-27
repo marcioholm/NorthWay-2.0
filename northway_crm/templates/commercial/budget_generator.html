@@ -9,23 +9,23 @@
 {% block content %}
 
 
-<div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-7xl mx-auto">
-  <!-- Cabeçalho -->
-  <div class="sm:flex sm:justify-between sm:items-center mb-8">
-    <div class="mb-4 sm:mb-0">
-      <h1 class="text-2xl text-slate-800 dark:text-slate-100 font-bold tracking-tight">Criar Orçamento</h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Preencha os dados abaixo para gerar um novo orçamento.</p>
+<div class="space-y-7">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight text-[var(--nw-text-1)]">Criar Orçamento</h1>
+      <p class="text-sm text-[var(--nw-text-2)] mt-1">Preencha os dados abaixo para gerar um novo orçamento.</p>
     </div>
-    <div class="flex items-center gap-3">
-      <a href="/commercial/budgets" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancelar</a>
-      <button onclick="resetForm()" class="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Limpar Formulário</button>
-      <button id="saveBtn" onclick="saveBudget()" class="px-4 py-2 bg-slate-800 dark:bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-700 dark:hover:bg-slate-800 transition-colors flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-        Salvar Orçamento
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <a href="/commercial/budgets" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">Cancelar</a>
+      <button onclick="resetForm()" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">Limpar Formulário</button>
+      <button id="saveBtn" onclick="saveBudget()" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5 flex items-center gap-2">
+        <i data-lucide="save" class="w-4 h-4"></i>
+        <span>Salvar Orçamento</span>
       </button>
-      <button id="exportBtn" onclick="exportPDF()" class="px-4 py-2 bg-rose-500 text-white rounded-md text-sm font-bold hover:bg-rose-600 transition-colors flex items-center gap-2 shadow-sm shadow-rose-500/20">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-        Baixar PDF
+      <button id="exportBtn" onclick="exportPDF()" class="nw-btn nw-btn-accent text-xs py-2 px-3.5 flex items-center gap-2">
+        <i data-lucide="file-down" class="w-4 h-4"></i>
+        <span>Baixar PDF</span>
       </button>
     </div>
   </div>
@@ -33,77 +33,77 @@
   <div class="space-y-6">
     
     <!-- Seção: Informações Básicas -->
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20">
-        <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Informações da Cotação</h2>
+    <div class="nw-panel space-y-4">
+      <div class="pb-3 border-b border-[var(--nw-border)]">
+        <h2 class="text-base font-bold text-[var(--nw-text-1)]">Informações da Cotação</h2>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="quoteNum">Nº do Orçamento</label>
-          <input id="quoteNum" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" value="001/2026" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="quoteNum">Nº do Orçamento</label>
+          <input id="quoteNum" class="nw-input w-full" type="text" value="001/2026" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="quoteDate">Data</label>
-          <input id="quoteDate" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="date" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="quoteDate">Data</label>
+          <input id="quoteDate" class="nw-input w-full" type="date" />
         </div>
       </div>
     </div>
 
     <!-- Seção: Dados do Cliente -->
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20">
-        <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Dados do Cliente</h2>
+    <div class="nw-panel space-y-4">
+      <div class="pb-3 border-b border-[var(--nw-border)]">
+        <h2 class="text-base font-bold text-[var(--nw-text-1)]">Dados do Cliente</h2>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliName">Empresa / Nome</label>
-          <input id="cliName" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="Nome do cliente" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="cliName">Empresa / Nome</label>
+          <input id="cliName" class="nw-input w-full" type="text" placeholder="Nome do cliente" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliDoc">CNPJ/CPF</label>
-          <input id="cliDoc" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="00.000.000/0000-00" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="cliDoc">CNPJ/CPF</label>
+          <input id="cliDoc" class="nw-input w-full" type="text" placeholder="00.000.000/0000-00" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliContact">Contato (Pessoa)</label>
-          <input id="cliContact" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="Nome do responsável" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="cliContact">Contato (Pessoa)</label>
+          <input id="cliContact" class="nw-input w-full" type="text" placeholder="Nome do responsável" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliPhone">Telefone / WhatsApp</label>
-          <input id="cliPhone" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="(00) 00000-0000" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="cliPhone">Telefone / WhatsApp</label>
+          <input id="cliPhone" class="nw-input w-full" type="text" placeholder="(00) 00000-0000" />
         </div>
         <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="cliAddr">Endereço Completo</label>
-          <input id="cliAddr" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="Rua, Número, Bairro, Cidade - Estado" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="cliAddr">Endereço Completo</label>
+          <input id="cliAddr" class="nw-input w-full" type="text" placeholder="Rua, Número, Bairro, Cidade - Estado" />
         </div>
       </div>
     </div>
 
     <!-- Seção: Itens do Orçamento -->
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20 flex justify-between items-center">
-        <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Itens e Serviços</h2>
-        <button onclick="addRow()" class="text-sm font-medium text-rose-500 hover:text-rose-600 flex items-center gap-1">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-          Adicionar Item
+    <div class="nw-panel space-y-4">
+      <div class="pb-3 border-b border-[var(--nw-border)] flex justify-between items-center">
+        <h2 class="text-base font-bold text-[var(--nw-text-1)]">Itens e Serviços</h2>
+        <button onclick="addRow()" class="nw-btn nw-btn-subtle text-xs py-1.5 px-3 flex items-center gap-1.5">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>Adicionar Item</span>
         </button>
       </div>
-      <div class="p-0 overflow-x-auto">
-        <table class="w-full text-left border-collapse" id="itemsTable">
+      <div class="overflow-x-auto">
+        <table class="nw-table w-full text-left" id="itemsTable">
           <thead>
-            <tr class="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <th class="px-6 py-3 font-medium">Descrição</th>
-              <th class="px-6 py-3 font-medium text-center w-24">Qtd</th>
-              <th class="px-6 py-3 font-medium text-right w-32">Valor Unit.</th>
-              <th class="px-6 py-3 font-medium text-right w-32">Subtotal</th>
-              <th class="px-6 py-3 font-medium text-center w-16"></th>
+            <tr>
+              <th>Descrição</th>
+              <th class="text-center w-24">Qtd</th>
+              <th class="text-right w-36">Valor Unit.</th>
+              <th class="text-right w-36">Subtotal</th>
+              <th class="text-center w-16"></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50" id="itemsBody">
+          <tbody id="itemsBody">
           </tbody>
-          <tfoot class="bg-slate-50 dark:bg-slate-700/50">
-            <tr>
-              <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Total Geral</td>
-              <td class="px-6 py-4 text-right text-lg font-bold text-emerald-600 dark:text-emerald-400" id="totalValue">R$ 0,00</td>
+          <tfoot>
+            <tr class="font-bold border-t border-[var(--nw-border)] bg-[var(--nw-shell)]">
+              <td colspan="3" class="px-5 py-4 text-right text-xs uppercase tracking-wider text-[var(--nw-text-2)]">Total Geral</td>
+              <td class="px-5 py-4 text-right text-xl font-extrabold text-emerald-600" id="totalValue">R$ 0,00</td>
               <td></td>
             </tr>
           </tfoot>
@@ -112,14 +112,14 @@
     </div>
 
     <!-- Seção: Condições de Pagamento -->
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/20">
-        <h2 class="text-base font-semibold text-slate-800 dark:text-slate-100">Condições Comerciais e Pagamento</h2>
+    <div class="nw-panel space-y-4">
+      <div class="pb-3 border-b border-[var(--nw-border)]">
+        <h2 class="text-base font-bold text-[var(--nw-text-1)]">Condições Comerciais e Pagamento</h2>
       </div>
-      <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="billingCycle">Recorrência</label>
-          <select id="billingCycle" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" onchange="recalc()">
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="billingCycle">Recorrência</label>
+          <select id="billingCycle" class="nw-select w-full" onchange="recalc()">
             <option value="unico">Pagamento Único</option>
             <option value="mensal" selected>Mensal</option>
             <option value="trimestral">Trimestral</option>
@@ -128,8 +128,8 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="installments">Parcelamento</label>
-          <select id="installments" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" onchange="recalc()">
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="installments">Parcelamento</label>
+          <select id="installments" class="nw-select w-full" onchange="recalc()">
             <option value="0">À vista / Sem parcelamento</option>
             <option value="2">2x</option>
             <option value="3">3x</option>
@@ -140,28 +140,28 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="discountPct">Desconto (%)</label>
-          <input id="discountPct" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="0" oninput="syncDiscount('pct')" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="discountPct">Desconto (%)</label>
+          <input id="discountPct" class="nw-input w-full" type="text" placeholder="0" oninput="syncDiscount('pct')" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="discountVal">Desconto (R$)</label>
-          <input id="discountVal" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" type="text" placeholder="0,00" oninput="syncDiscount('val')" />
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="discountVal">Desconto (R$)</label>
+          <input id="discountVal" class="nw-input w-full" type="text" placeholder="0,00" oninput="syncDiscount('val')" />
         </div>
         
-        <div class="md:col-span-4 mt-2" id="paymentSummary" hidden>
-          <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-lg text-right text-sm">
+        <div class="md:col-span-4 mt-1" id="paymentSummary" hidden>
+          <div class="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-right text-sm">
             <!-- Summary populated by JS -->
           </div>
         </div>
 
-        <div class="md:col-span-4 mt-2">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" for="obsText">Observações e Informações Adicionais</label>
-          <textarea id="obsText" class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors dark:text-slate-200" rows="3" placeholder="Insira condições específicas, validade, dados bancários..."></textarea>
+        <div class="md:col-span-4">
+          <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5" for="obsText">Observações e Informações Adicionais</label>
+          <textarea id="obsText" class="nw-input w-full" rows="3" placeholder="Insira condições específicas, validade, dados bancários..."></textarea>
         </div>
 
         <div class="md:col-span-4 flex items-center gap-3">
-          <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="validity">Validade do Orçamento:</label>
-          <input id="validity" class="w-32 px-3 py-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-md text-sm focus:border-rose-500 focus:ring-1 focus:ring-rose-500/20 outline-none transition-colors text-center dark:text-slate-200" type="text" value="15 dias" />
+          <label class="text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider" for="validity">Validade do Orçamento:</label>
+          <input id="validity" class="nw-input w-36 text-center" type="text" value="15 dias" />
         </div>
       </div>
     </div>
