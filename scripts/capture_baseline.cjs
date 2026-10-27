@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const CHROME_PATH = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const BASE_URL = 'http://127.0.0.1:5055';
-const OUT_DIR = path.resolve(__dirname, '../docs/ui-baseline');
+const OUT_DIR = process.env.OUT_DIR ? path.resolve(process.env.OUT_DIR) : path.resolve(__dirname, '../docs/ui-baseline');
 
 if (!fs.existsSync(OUT_DIR)) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -55,6 +55,8 @@ async function captureAll() {
     // --- 2. AUTHENTICATE ---
     console.log('🔑 Performing Login...');
     await page.setViewport({ width: 1440, height: 900 });
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForSelector('input[name="email"]', { timeout: 10000 });
     await page.type('input[name="email"]', 'Admin@northway.com.br');
     await page.type('input[name="password"]', 'admin123');
     await Promise.all([
