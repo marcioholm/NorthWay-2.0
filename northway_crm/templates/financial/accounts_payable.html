@@ -1,117 +1,117 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="p-6 space-y-6">
+<div class="space-y-7">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold font-display text-gray-900">Contas a Pagar</h1>
-            <p class="text-gray-600">Gestão de comissões e pagamentos comerciais.</p>
+            <h1 class="text-3xl font-extrabold tracking-tight text-[var(--nw-text-1)]">Contas a Pagar</h1>
+            <p class="text-sm text-[var(--nw-text-2)] mt-1">Gestão de comissões e pagamentos comerciais.</p>
         </div>
 
         <div class="flex items-center gap-3">
             <button onclick="document.getElementById('filter-modal').classList.remove('hidden')"
-                class="btn-secondary flex items-center gap-2">
+                class="nw-btn nw-btn-subtle">
                 <i data-lucide="filter" class="w-4 h-4"></i>
-                Filtros
+                <span>Filtros</span>
             </button>
         </div>
     </div>
 
     <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="card-premium p-6">
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Pendente (Mês)</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">R$ {{
-                payables|sum(attribute='valor_comissao_calculado')|float|round(2) }}</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="nw-stat nw-stat-ink">
+            <span class="nw-stat-label">Total Pendente (Mês)</span>
+            <span class="nw-stat-val text-2xl lg:text-3xl">R$ {{
+                payables|sum(attribute='valor_comissao_calculado')|float|round(2) }}</span>
+            <span class="nw-stat-sub text-[11px] text-gray-300">Comissões a liquidar</span>
         </div>
-        <div class="card-premium p-6">
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Lançamentos</p>
-            <p class="text-2xl font-bold text-blue-400 mt-1">{{ payables|length }}</p>
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Lançamentos</span>
+            <span class="nw-stat-val text-2xl lg:text-3xl">{{ payables|length }}</span>
+            <span class="nw-stat-sub text-[11px]">Registros no período</span>
         </div>
-        <div class="card-premium p-6">
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Ajustes Gerados</p>
-            <p class="text-2xl font-bold text-orange-400 mt-1">{{ payables|selectattr('eh_ajuste', 'equalto',
-                true)|list|length }}</p>
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Ajustes Gerados</span>
+            <span class="nw-stat-val text-2xl lg:text-3xl text-amber-600">{{ payables|selectattr('eh_ajuste', 'equalto',
+                true)|list|length }}</span>
+            <span class="nw-stat-sub text-[11px]">Recálculos manuais</span>
         </div>
-        <div class="card-premium p-6">
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Status Atual</p>
-            <p class="text-sm font-medium text-green-400 mt-1 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Status Atual</span>
+            <span class="nw-stat-val text-lg font-bold text-emerald-600 flex items-center gap-2 mt-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 Sincronizado
-            </p>
+            </span>
+            <span class="nw-stat-sub text-[11px]">Conectado ao Asaas</span>
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="card-premium overflow-hidden">
+    <!-- Table Panel -->
+    <div class="nw-panel overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left">
+            <table class="nw-table w-full text-left">
                 <thead>
-                    <tr class="border-b border-white/5 bg-white/5">
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Beneficiário</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Tipo</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Competência</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Valor Base</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Comissão</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">Status</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-right">Ação</th>
+                    <tr>
+                        <th>Beneficiário</th>
+                        <th>Tipo</th>
+                        <th>Competência</th>
+                        <th class="text-right">Valor Base</th>
+                        <th class="text-right">Comissão</th>
+                        <th>Status</th>
+                        <th class="text-right">Ação</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/5">
+                <tbody>
                     {% for p in payables %}
-                    <tr class="hover:bg-white/5 transition-colors">
-                        <td class="px-6 py-4">
+                    <tr>
+                        <td>
                             <div class="flex items-center gap-3">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white">
+                                <div class="w-8 h-8 rounded-full bg-[var(--nw-ink)] text-white text-xs font-bold flex items-center justify-center shrink-0">
                                     {{ p.beneficiario.name[:1] if p.beneficiario else '?' }}
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold text-gray-900">{{ p.beneficiario.name if
-                                        p.beneficiario
-                                        else 'N/A' }}</p>
-                                    <p class="text-xs text-gray-500">{{ p.beneficiario.funcao_comercial or 'Comercial'
-                                        }}</p>
+                                    <p class="text-sm font-semibold text-[var(--nw-text-1)]">{{ p.beneficiario.name if
+                                        p.beneficiario else 'N/A' }}</p>
+                                    <p class="text-xs text-[var(--nw-text-2)]">{{ p.beneficiario.funcao_comercial or 'Comercial' }}</p>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
+                        <td>
                             {% if p.eh_ajuste %}
-                            <span class="badge-warning text-[10px]">AJUSTE</span>
+                            <span class="nw-chip nw-chip-draft text-[10px]">AJUSTE</span>
                             {% else %}
-                            <span class="badge-info text-[10px]">COMISSÃO</span>
+                            <span class="nw-chip nw-chip-open text-[10px]">COMISSÃO</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-300">{{ p.competencia }}</td>
-                        <td class="px-6 py-4 text-sm text-right text-gray-400">R$ {{
+                        <td class="text-sm text-[var(--nw-text-2)]">{{ p.competencia }}</td>
+                        <td class="text-sm text-right text-[var(--nw-text-2)]">R$ {{
                             "%.2f"|format(p.valor_base_contratual|float) }}</td>
-                        <td class="px-6 py-4 text-sm font-bold text-right text-gray-900">R$ {{
+                        <td class="text-sm font-bold text-right text-[var(--nw-text-1)]">R$ {{
                             "%.2f"|format(p.valor_comissao_calculado|float) }}</td>
-                        <td class="px-6 py-4">
+                        <td>
                             {% if p.status == 'PAGO' %}
-                            <span class="flex items-center gap-1.5 text-green-400 text-xs font-bold">
-                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> PAGO
+                            <span class="nw-chip nw-chip-won text-[10px]">
+                                <i data-lucide="check-circle" class="w-3 h-3"></i> PAGO
                             </span>
                             {% elif p.status == 'A_PAGAR' %}
-                            <span class="flex items-center gap-1.5 text-blue-400 text-xs font-bold animate-pulse">
-                                <i data-lucide="clock" class="w-3.5 h-3.5"></i> A PAGAR
+                            <span class="nw-chip nw-chip-open text-[10px]">
+                                <i data-lucide="clock" class="w-3 h-3"></i> A PAGAR
                             </span>
                             {% else %}
-                            <span class="flex items-center gap-1.5 text-gray-500 text-xs font-bold">{{ p.status
-                                }}</span>
+                            <span class="nw-chip text-[10px]">{{ p.status }}</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-right">
+                        <td class="text-right">
                             {% if p.status == 'A_PAGAR' %}
                             <button onclick="openPayModal('{{ p.id }}', '{{ p.valor_comissao_calculado }}')"
-                                class="btn-xs-primary">Pagar</button>
+                                class="nw-btn nw-btn-accent text-xs py-1.5 px-3">Pagar</button>
                             {% endif %}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="7" class="py-12 text-center text-sm text-[var(--nw-text-3)]">
                             Nenhum lançamento encontrado para os filtros selecionados.
                         </td>
                     </tr>
@@ -124,25 +124,23 @@
 
 <!-- Pay Modal -->
 <div id="pay-modal"
-    class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="card-premium p-6 w-full max-w-md">
-        <h3 class="text-lg font-bold text-gray-900 mb-4">Confirmar Pagamento</h3>
-        <form id="pay-form" method="POST" action="">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Valor a ser pago (R$)</label>
-                    <input type="text" name="valor_final_pago_colaborador" id="modal-amount"
-                        class="input-premium w-full text-lg font-bold" value="">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Juros/Extras (Opcional)</label>
-                    <input type="text" name="juros_pago_colaborador" class="input-premium w-full" placeholder="0,00">
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="document.getElementById('pay-modal').classList.add('hidden')"
-                        class="btn-secondary flex-1">Cancelar</button>
-                    <button type="submit" class="btn-primary flex-1">Confirmar</button>
-                </div>
+    class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+    <div class="nw-modal-card p-6 w-full max-w-md space-y-4">
+        <h3 class="text-xl font-bold text-[var(--nw-text-1)] tracking-tight">Confirmar Pagamento</h3>
+        <form id="pay-form" method="POST" action="" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Valor a ser pago (R$)</label>
+                <input type="text" name="valor_final_pago_colaborador" id="modal-amount"
+                    class="nw-input w-full text-lg font-bold" value="">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Juros/Extras (Opcional)</label>
+                <input type="text" name="juros_pago_colaborador" class="nw-input w-full" placeholder="0,00">
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="document.getElementById('pay-modal').classList.add('hidden')"
+                    class="nw-btn nw-btn-subtle flex-1">Cancelar</button>
+                <button type="submit" class="nw-btn nw-btn-accent flex-1">Confirmar</button>
             </div>
         </form>
     </div>
@@ -155,34 +153,4 @@
         document.getElementById('pay-modal').classList.remove('hidden');
     }
 </script>
-
-<style>
-    .card-premium {
-        @apply bg-card-dark border border-white/5 rounded-2xl shadow-xl;
-    }
-
-    .input-premium {
-        @apply bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-northway-red focus:ring-1 focus:ring-northway-red transition-all outline-none;
-    }
-
-    .btn-primary {
-        @apply bg-northway-red text-white px-6 py-2.5 rounded-xl font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-500/20 active:scale-95;
-    }
-
-    .btn-secondary {
-        @apply bg-white/5 text-gray-300 border border-white/10 px-6 py-2.5 rounded-xl font-bold hover:bg-white/10 transition-all;
-    }
-
-    .btn-xs-primary {
-        @apply bg-northway-red/10 text-northway-red border border-northway-red/20 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-northway-red hover:text-white transition-all;
-    }
-
-    .badge-info {
-        @apply bg-blue-500/20 text-blue-400 px-2.5 py-1 rounded-full font-bold uppercase;
-    }
-
-    .badge-warning {
-        @apply bg-orange-500/20 text-orange-400 px-2.5 py-1 rounded-full font-bold uppercase;
-    }
-</style>
 {% endblock %}

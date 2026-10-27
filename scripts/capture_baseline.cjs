@@ -23,6 +23,8 @@ let PAGES = [
   { name: 'prospecting_campaigns', path: '/prospecting/campaigns' },
   { name: 'prospecting_messages', path: '/prospecting/messages' },
   { name: 'financial', path: '/financial' },
+  { name: 'financial_strategic', path: '/financial/strategic' },
+  { name: 'financial_payable', path: '/financial/payable' },
   { name: 'tasks', path: '/tasks/' },
   { name: 'contracts', path: '/contracts' },
   { name: 'settings', path: '/settings/company' },
