@@ -3,40 +3,23 @@ from flask import url_for
 from werkzeug.routing import BuildError
 
 ALLOWED_PUBLIC_ENDPOINTS = {
-    'static',
+    'auth.blocked_account',
+    'auth.callback',
+    'auth.forgot_password',
+    'auth.google_login',
     'auth.login',
     'auth.register',
-    'auth.forgot_password',
     'auth.reset_password',
-    'auth.google_login',
-    'auth.google_callback',
-    'auth.callback',
-    'auth.blocked_account',
-    'main.landing',
-    'main.health',
-    'main.ping',
-    'dashboard.index',
-    'sitemap',
-    'robots_txt',
     'billing.asaas_webhook',
-    'integrations_bp.asaas_webhook_company',
-    'evolution_webhook.evolution_webhook',
-    'whatsapp.ping_whatsapp',
-    'forms.public_form',
-    'forms.submit_public_form',
-    'forms.public_diagnostic_page',
-    'forms.submit_public_diagnostic',
-    'forms.public_raiox_page',
-    'forms.submit_public_raiox',
-    'forms.raiox_resultado',
-    'forms.raiox_funnel',
+    'dashboard.index',
     'diagnostic_raiox.index',
-    'contracts.sign_contract_public',
-    'contracts.sign_contract_post',
-    'contracts.download_signed_pdf',
-    'contracts.verify_signature',
     'docs.ebook_institutional',
     'docs.playbook_dia_das_maes_marka_moveis',
+    'evolution_webhook.evolution_webhook',
+    'robots_txt',
+    'sitemap',
+    'static',
+    'whatsapp.ping_whatsapp',
 }
 
 def test_emergency_recreate_is_gone_or_blocked(client):
@@ -143,15 +126,51 @@ def test_system_reset_web_route_removed(client, auth_client):
     resp_auth = auth_c.get('/master/system-reset')
     assert resp_auth.status_code == 404, f"Expected 404, got {resp_auth.status_code}"
 
-def test_system_reset_cli_command(runner, app):
-    """system-reset CLI command must require confirmation and run successfully."""
-    # Test rejection without confirmation
-    res_cancel = runner.invoke(args=['system-reset'], input='n\n')
-    assert "Operacao cancelada" in res_cancel.output
+def test_allowlist_only_real_endpoints(app):
+    """Garante que todos os endpoints declarados em ALLOWED_PUBLIC_ENDPOINTS existem em app.view_functions."""
+    missing = [ep for ep in ALLOWED_PUBLIC_ENDPOINTS if ep not in app.view_functions]
+    assert not missing, f"Endpoints na allowlist que não existem em app.view_functions: {missing}"
 
-    # Test run with confirm flag
-    res_confirm = runner.invoke(args=['system-reset', '--confirm', 'RESET_PRODUCTION'])
-    assert "Nenhum usuario Super Admin encontrado" in res_confirm.output or "Sistema resetado" in res_confirm.output
+def test_system_reset_cli_command(runner, app, monkeypatch):
+    """
+    system-reset CLI command:
+    - Sem ALLOW_SYSTEM_RESET=1, aborta mesmo com --confirm e não apaga nada
+    - Com ALLOW_SYSTEM_RESET=1 e input='n', cancela
+    - Com ALLOW_SYSTEM_RESET=1 e --confirm, exibe host do banco e total de empresas
+    """
+    from models import db, Company, User, ROLE_ADMIN
+    with app.app_context():
+        # Setup sample companies
+        master_comp = Company(name="Master HQ", plan_type="enterprise", payment_status="active", subscription_status="active")
+        db.session.add(master_comp)
+        db.session.commit()
+        super_u = User(name="Super", email="super@northway.com", company_id=master_comp.id, role=ROLE_ADMIN, is_super_admin=True)
+        super_u.password_hash = "mock"
+        db.session.add(super_u)
+
+        sample_comp = Company(name="Empresa Teste CLI", plan_type="pro", payment_status="active", subscription_status="active")
+        db.session.add(sample_comp)
+        db.session.commit()
+
+        # 1. Sem ALLOW_SYSTEM_RESET=1: deve abortar mesmo passando --confirm
+        monkeypatch.delenv('ALLOW_SYSTEM_RESET', raising=False)
+        res_no_env = runner.invoke(args=['system-reset', '--confirm', 'RESET_PRODUCTION'])
+        assert "ALLOW_SYSTEM_RESET=1 e obrigatoria" in res_no_env.output
+        # Garante que a empresa teste NÃO foi apagada
+        assert Company.query.filter_by(name="Empresa Teste CLI").first() is not None
+
+        # 2. Com ALLOW_SYSTEM_RESET=1 mas confirmando 'n': deve cancelar
+        monkeypatch.setenv('ALLOW_SYSTEM_RESET', '1')
+        res_cancel = runner.invoke(args=['system-reset'], input='n\n')
+        assert "Operacao cancelada" in res_cancel.output
+        assert Company.query.filter_by(name="Empresa Teste CLI").first() is not None
+
+        # 3. Com ALLOW_SYSTEM_RESET=1 e --confirm: deve mostrar host e executar
+        res_run = runner.invoke(args=['system-reset', '--confirm', 'RESET_PRODUCTION'])
+        assert "Host do banco de dados:" in res_run.output
+        assert "Total de empresas que serao afetadas:" in res_run.output
+        assert "Sistema resetado com sucesso via CLI" in res_run.output
+        assert Company.query.filter_by(name="Empresa Teste CLI").first() is None
 
 def test_super_admin_core_workflow(client, app):
     """

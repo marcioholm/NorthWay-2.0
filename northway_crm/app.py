@@ -582,88 +582,141 @@ Sitemap: {base_url}/sitemap.xml
         @click.option('--confirm', default=None, help='Passar RESET_PRODUCTION para pular prompt')
         def system_reset_command(company_id, confirm):
             """DESTRUCTIVE: Limpa dados de teste preservando Super Admin e assets via CLI."""
+            import os
             import click
             from models import db, User, Company
-            from sqlalchemy import text
+            from sqlalchemy import text, inspect
+            from sqlalchemy.engine import make_url
 
-            if confirm != 'RESET_PRODUCTION':
-                target_desc = f"da empresa ID {company_id}" if company_id else "globais (todas empresas exceto Master)"
-                if not click.confirm(f"ATENCAO: Esta acao e destrutiva e ira apagar dados {target_desc}. Deseja prosseguir?"):
-                    click.echo("Operacao cancelada.")
-                    return
+            # 1. Exigir ALLOW_SYSTEM_RESET=1
+            if os.environ.get('ALLOW_SYSTEM_RESET') != '1':
+                click.echo("Erro: comando abortado. A variavel de ambiente ALLOW_SYSTEM_RESET=1 e obrigatoria para executar o reset do sistema.")
+                return
 
             master_user = User.query.filter_by(is_super_admin=True).first()
             if not master_user:
                 click.echo("Nenhum usuario Super Admin encontrado.")
                 return
 
+            # 2. Informar host do banco e total de empresas afetadas
+            db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
             try:
+                parsed_url = make_url(db_uri)
+                db_host = f"{parsed_url.host}:{parsed_url.port}" if parsed_url.port else (parsed_url.host or parsed_url.database or 'local')
+            except Exception:
+                db_host = "desconhecido"
+
+            if company_id:
+                target_companies = Company.query.filter(Company.id == company_id).all()
+            else:
+                target_companies = Company.query.filter(Company.id != master_user.company_id).all()
+
+            click.echo(f"Host do banco de dados: {db_host}")
+            click.echo(f"Total de empresas que serao afetadas: {len(target_companies)}")
+
+            # 3. Confirmação
+            if confirm != 'RESET_PRODUCTION':
+                target_desc = f"da empresa ID {company_id}" if company_id else "globais (todas empresas exceto Master)"
+                if not click.confirm(f"ATENCAO: Esta acao e destrutiva e ira apagar dados {target_desc}. Deseja prosseguir?"):
+                    click.echo("Operacao cancelada.")
+                    return
+
+            try:
+                # 4. Cancelamento de assinaturas no Asaas
+                try:
+                    from services.asaas_service import delete_subscription
+                    for comp in target_companies:
+                        sub_id = getattr(comp, 'subscription_id', None)
+                        if sub_id:
+                            try:
+                                delete_subscription(sub_id)
+                                click.echo(f"✅ Assinatura {sub_id} cancelada no Asaas para empresa '{comp.name}' (ID: {comp.id})")
+                            except Exception as asaas_err:
+                                click.echo(f"⚠️ Falha ao cancelar assinatura Asaas {sub_id} para empresa '{comp.name}': {asaas_err}")
+                except Exception as imp_err:
+                    click.echo(f"Aviso ao inicializar servico Asaas: {imp_err}")
+
+                existing_tables = set(inspect(db.engine).get_table_names())
+                def safe_delete(tbl, where_clause="", params=None):
+                    if tbl in existing_tables:
+                        sql = f'DELETE FROM "{tbl}"' if tbl in ('user', 'transaction') else f'DELETE FROM {tbl}'
+                        if where_clause:
+                            sql += f' WHERE {where_clause}'
+                        db.session.execute(text(sql), params or {})
+
                 if company_id:
-                    db.session.execute(text("DELETE FROM whatsapp_messages WHERE conversation_id IN (SELECT id FROM whatsapp_conversations WHERE company_id = :cid)"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM whatsapp_conversations WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM whatsapp_group_members WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM whatsapp_instances WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM task WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM interaction WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM transaction WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM contract WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM notification WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM lead WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM client WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM expense WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM financial_category WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM client_checklist WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM process_template WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM goal WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM integration WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM quick_message WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM template_company_association WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM library_book_company_association WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM billing_event WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM financial_event WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM pipeline_stage WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text("DELETE FROM pipeline WHERE company_id = :cid"), {'cid': company_id})
-                    db.session.execute(text('DELETE FROM "user" WHERE company_id = :cid AND id != :uid'), {'cid': company_id, 'uid': master_user.id})
-                    db.session.execute(text("DELETE FROM role WHERE company_id = :cid"), {'cid': company_id})
+                    safe_delete("whatsapp_messages", "conversation_id IN (SELECT id FROM whatsapp_conversations WHERE company_id = :cid)", {'cid': company_id})
+                    safe_delete("whatsapp_conversations", "company_id = :cid", {'cid': company_id})
+                    safe_delete("whatsapp_group_members", "company_id = :cid", {'cid': company_id})
+                    safe_delete("whatsapp_instances", "company_id = :cid", {'cid': company_id})
+                    safe_delete("task", "company_id = :cid", {'cid': company_id})
+                    safe_delete("interaction", "company_id = :cid", {'cid': company_id})
+                    safe_delete("transaction", "company_id = :cid", {'cid': company_id})
+                    safe_delete("contract", "company_id = :cid", {'cid': company_id})
+                    safe_delete("notification", "company_id = :cid", {'cid': company_id})
+                    safe_delete("lead", "company_id = :cid", {'cid': company_id})
+                    safe_delete("client", "company_id = :cid", {'cid': company_id})
+                    safe_delete("expense", "company_id = :cid", {'cid': company_id})
+                    safe_delete("financial_category", "company_id = :cid", {'cid': company_id})
+                    safe_delete("client_checklist_items", "checklist_id IN (SELECT id FROM client_checklists WHERE company_id = :cid)", {'cid': company_id})
+                    safe_delete("client_checklists", "company_id = :cid", {'cid': company_id})
+                    safe_delete("client_checklist", "company_id = :cid", {'cid': company_id})
+                    safe_delete("process_template", "company_id = :cid", {'cid': company_id})
+                    safe_delete("goal", "company_id = :cid", {'cid': company_id})
+                    safe_delete("integration", "company_id = :cid", {'cid': company_id})
+                    safe_delete("quick_message", "company_id = :cid", {'cid': company_id})
+                    safe_delete("template_company_association", "company_id = :cid", {'cid': company_id})
+                    safe_delete("library_book_company_association", "company_id = :cid", {'cid': company_id})
+                    safe_delete("billing_event", "company_id = :cid", {'cid': company_id})
+                    safe_delete("financial_event", "company_id = :cid", {'cid': company_id})
+                    safe_delete("pipeline_stage", "company_id = :cid", {'cid': company_id})
+                    safe_delete("pipeline", "company_id = :cid", {'cid': company_id})
+                    safe_delete("user", "company_id = :cid AND id != :uid", {'cid': company_id, 'uid': master_user.id})
+                    safe_delete("role", "company_id = :cid", {'cid': company_id})
                     if company_id != master_user.company_id:
-                        db.session.execute(text("DELETE FROM company WHERE id = :cid"), {'cid': company_id})
+                        safe_delete("company", "id = :cid", {'cid': company_id})
                     db.session.commit()
                     click.echo(f"Empresa {company_id} resetada com sucesso via CLI.")
                 else:
-                    db.session.execute(text("UPDATE lead SET contact_uuid = NULL"))
-                    db.session.execute(text("UPDATE client SET contact_uuid = NULL"))
-                    db.session.execute(text("DELETE FROM whatsapp_messages"))
-                    db.session.execute(text("DELETE FROM whatsapp_conversations"))
-                    db.session.execute(text("DELETE FROM whatsapp_group_members"))
-                    db.session.execute(text("DELETE FROM whatsapp_instances"))
-                    db.session.execute(text("DELETE FROM task"))
-                    db.session.execute(text("DELETE FROM interaction"))
-                    db.session.execute(text("DELETE FROM transaction"))
-                    db.session.execute(text("DELETE FROM contract"))
-                    db.session.execute(text("DELETE FROM notification"))
-                    db.session.execute(text("DELETE FROM lead"))
-                    db.session.execute(text("DELETE FROM client"))
-                    db.session.execute(text("DELETE FROM contact"))
-                    db.session.execute(text("DELETE FROM expense"))
-                    db.session.execute(text("DELETE FROM financial_category"))
-                    db.session.execute(text("DELETE FROM client_checklist"))
-                    db.session.execute(text("DELETE FROM process_template"))
-                    db.session.execute(text("DELETE FROM goal"))
-                    db.session.execute(text("DELETE FROM integration"))
-                    db.session.execute(text("DELETE FROM quick_message"))
-                    db.session.execute(text("DELETE FROM template_company_association"))
-                    db.session.execute(text("DELETE FROM library_book_company_association"))
-                    db.session.execute(text("DELETE FROM contract_template"))
-                    db.session.execute(text("DELETE FROM billing_event"))
-                    db.session.execute(text("DELETE FROM financial_event"))
-                    db.session.execute(text("DELETE FROM password_reset_token"))
-                    db.session.execute(text("DELETE FROM email_log"))
-                    db.session.execute(text("DELETE FROM user_pipeline_association WHERE pipeline_id IN (SELECT id FROM pipeline WHERE company_id != :company_id)"), {'company_id': master_user.company_id})
-                    db.session.execute(text("DELETE FROM pipeline_stage WHERE company_id != :company_id"), {'company_id': master_user.company_id})
-                    db.session.execute(text("DELETE FROM pipeline WHERE company_id != :company_id"), {'company_id': master_user.company_id})
-                    db.session.execute(text('DELETE FROM "user" WHERE id != :user_id'), {'user_id': master_user.id})
-                    db.session.execute(text("DELETE FROM role WHERE company_id != :company_id"), {'company_id': master_user.company_id})
-                    db.session.execute(text("DELETE FROM company WHERE id != :company_id"), {'company_id': master_user.company_id})
+                    if "lead" in existing_tables:
+                        db.session.execute(text("UPDATE lead SET contact_uuid = NULL"))
+                    if "client" in existing_tables:
+                        db.session.execute(text("UPDATE client SET contact_uuid = NULL"))
+                    safe_delete("whatsapp_messages")
+                    safe_delete("whatsapp_conversations")
+                    safe_delete("whatsapp_group_members")
+                    safe_delete("whatsapp_instances")
+                    safe_delete("task")
+                    safe_delete("interaction")
+                    safe_delete("transaction")
+                    safe_delete("contract")
+                    safe_delete("notification")
+                    safe_delete("lead")
+                    safe_delete("client")
+                    safe_delete("contact")
+                    safe_delete("expense")
+                    safe_delete("financial_category")
+                    safe_delete("client_checklist_items")
+                    safe_delete("client_checklists")
+                    safe_delete("client_checklist")
+                    safe_delete("process_template")
+                    safe_delete("goal")
+                    safe_delete("integration")
+                    safe_delete("quick_message")
+                    safe_delete("template_company_association")
+                    safe_delete("library_book_company_association")
+                    safe_delete("contract_template")
+                    safe_delete("contract_templates")
+                    safe_delete("billing_event")
+                    safe_delete("financial_event")
+                    safe_delete("password_reset_token")
+                    safe_delete("email_log")
+                    safe_delete("user_pipeline_association", "pipeline_id IN (SELECT id FROM pipeline WHERE company_id != :company_id)", {'company_id': master_user.company_id})
+                    safe_delete("pipeline_stage", "company_id != :company_id", {'company_id': master_user.company_id})
+                    safe_delete("pipeline", "company_id != :company_id", {'company_id': master_user.company_id})
+                    safe_delete("user", "id != :user_id", {'user_id': master_user.id})
+                    safe_delete("role", "company_id != :company_id", {'company_id': master_user.company_id})
+                    safe_delete("company", "id != :company_id", {'company_id': master_user.company_id})
                     db.session.commit()
                     click.echo("Sistema resetado com sucesso via CLI.")
             except Exception as e:
