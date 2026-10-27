@@ -29,6 +29,9 @@ let PAGES = [
   { name: 'contracts', path: '/contracts' },
   { name: 'budget_history', path: '/commercial/budgets' },
   { name: 'budget_generator', path: '/commercial/budget_generator' },
+  { name: 'goals', path: '/goals' },
+  { name: 'commercial_performance', path: '/commercial/performance' },
+  { name: 'settings_templates', path: '/settings/templates' },
   { name: 'settings', path: '/settings/company' },
   { name: 'master_companies', path: '/master/dashboard' },
 ];

@@ -235,15 +235,6 @@
                         </a>
                         {% endif %}
 
-                        {# 6. WhatsApp #}
-                        {% if current_user.company.has_feature('whatsapp') %}
-                        <a href="{{ url_for('whatsapp.inbox') }}"
-                           class="nw-nav-item relative {{ 'active' if request.endpoint and 'whatsapp' in request.endpoint else '' }}">
-                            <i data-lucide="message-circle" class="w-4 h-4"></i>
-                            <span>WhatsApp</span>
-                            <span id="whatsapp-unread-badge" class="hidden text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--nw-brand)] text-white">0</span>
-                        </a>
-                        {% endif %}
 
                         {# 7. Tarefas #}
                         {% if current_user.has_permission('tasks_view') %}
@@ -449,24 +440,7 @@
 
             <!-- Subpages Secondary Pills Bar for Modules with Subpages (Tarefas, Financeiro, Prospecção) -->
             {% if request.endpoint %}
-                {% if request.endpoint.startswith('tasks.') %}
-                <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
-                    <nav class="nw-nav" aria-label="Subpáginas de tarefas">
-                        <a href="{{ url_for('tasks.tasks') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'tasks.tasks' else '' }}">
-                            <i data-lucide="list" class="w-4 h-4"></i>
-                            <span>Lista de Tarefas</span>
-                        </a>
-                        <a href="{{ url_for('tasks.execution_kanban') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'tasks.execution_kanban' else '' }}">
-                            <i data-lucide="kanban-square" class="w-4 h-4"></i>
-                            <span>Minha Execução</span>
-                        </a>
-                        <a href="{{ url_for('tasks.team_execution') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'tasks.team_execution' else '' }}">
-                            <i data-lucide="users" class="w-4 h-4"></i>
-                            <span>Execução da Equipe</span>
-                        </a>
-                    </nav>
-                </div>
-                {% elif request.endpoint.startswith('financial') or request.endpoint.startswith('payable.') or request.endpoint == 'commercial.performance' %}
+                {% if request.endpoint.startswith('financial') or request.endpoint.startswith('payable.') or request.endpoint == 'commercial.performance' %}
                 <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
                     <nav class="nw-nav" aria-label="Subpáginas financeiras">
                         <a href="{{ url_for('financial.dashboard') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'financial.dashboard' else '' }}">
@@ -635,12 +609,6 @@
                         </a>
                         {% endif %}
 
-                        {% if current_user.company.has_feature('whatsapp') %}
-                        <a href="{{ url_for('whatsapp.inbox') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint and 'whatsapp' in request.endpoint else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
-                            <i data-lucide="message-circle" class="w-4 h-4"></i>
-                            <span>WhatsApp</span>
-                        </a>
-                        {% endif %}
 
                         {% if current_user.has_permission('tasks_view') %}
                         <a href="{{ url_for('tasks.tasks') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint and 'tasks' in request.endpoint else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
