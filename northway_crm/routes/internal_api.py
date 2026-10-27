@@ -1228,6 +1228,7 @@ def recover_stuck_leads():
 
 
 @internal_api_bp.route('/health', methods=['GET'])
+@require_internal_auth
 def health_check():
     return jsonify({'status': 'ok', 'service': 'internal-api'})
 

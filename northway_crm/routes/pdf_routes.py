@@ -39,7 +39,10 @@ def download_contract_pdf(id):
         return f"Erro ao gerar PDF: {str(e)}", 500
 
 @pdf_bp.route('/debug-pillow')
+@login_required
 def debug_pillow():
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
     try:
         import PIL
         from PIL import Image

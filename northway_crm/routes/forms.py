@@ -124,7 +124,7 @@ def my_diagnostic():
     
     if not grant:
         # Check if user is Super Admin -> Auto Grant
-        if getattr(current_user, 'is_super_admin', False) or current_user.email == 'master@northway.com':
+        if getattr(current_user, 'is_super_admin', False):
              grant = LibraryTemplateGrant(
                  tenant_id=current_user.company_id,
                  template_id=template.id,

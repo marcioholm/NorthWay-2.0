@@ -1,9 +1,17 @@
-from flask import Blueprint, jsonify, request, render_template, current_app
+from flask import Blueprint, jsonify, request, render_template, current_app, abort
+from flask_login import current_user
 from services.email_service import EmailService
 from models import EMAIL_TEMPLATES, Company, User
 from datetime import datetime
 
 api_debug_bp = Blueprint('api_debug', __name__)
+
+@api_debug_bp.before_request
+def restrict_api_debug():
+    if not current_user.is_authenticated:
+        abort(401)
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
 
 @api_debug_bp.route('/debug/emails', methods=['GET'])
 def list_email_templates():

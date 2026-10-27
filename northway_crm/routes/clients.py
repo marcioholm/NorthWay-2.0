@@ -134,9 +134,7 @@ def client_details(id):
             template_id=diag_template.id, 
             status="active"
         ).first()
-        is_master = getattr(current_user, "is_super_admin", False) == 1 or \
-                    getattr(current_user, "is_super_admin", False) is True or \
-                    current_user.email == "master@northway.com"
+        is_master = bool(getattr(current_user, "is_super_admin", False))
         
         if has_grant or is_master:
             # For master, we want to ensure we have a form instance to show the link

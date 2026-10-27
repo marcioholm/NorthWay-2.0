@@ -216,7 +216,7 @@ def lead_details(id):
             template_id=diag_template.id, 
             status="active"
         ).first()
-        is_master = getattr(current_user, "is_super_admin", False) or current_user.email == "master@northway.com"
+        is_master = bool(getattr(current_user, "is_super_admin", False))
         if has_grant or is_master:
             diag_instance = FormInstance.query.filter_by(
                 template_id=diag_template.id,
@@ -364,7 +364,7 @@ def pipeline(pipeline_id=None):
             template_id=diag_template.id, 
             status="active"
         ).first()
-        is_master = getattr(current_user, "is_super_admin", False) or current_user.email == "master@northway.com"
+        is_master = bool(getattr(current_user, "is_super_admin", False))
         if has_grant or is_master:
             diag_instance = FormInstance.query.filter_by(
                 template_id=diag_template.id,

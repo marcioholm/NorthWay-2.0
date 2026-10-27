@@ -634,7 +634,10 @@ def sync_profile():
 
 
 @whatsapp_bp.route('/api/whatsapp/inspect-webhook')
+@login_required
 def inspect_webhook():
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
     try:
         from northway_crm.utils.webhook_logger import get_last_events
         events = get_last_events()
