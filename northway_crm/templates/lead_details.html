@@ -1,54 +1,55 @@
 {% extends "base.html" %}
+{% from "macros.html" import status_chip, user_avatar %}
 
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
-    <div class="max-w-4xl mx-auto">
+<div class="space-y-7">
+    <div class="max-w-6xl mx-auto space-y-7">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[var(--nw-border)]">
             <div class="flex items-center gap-4">
                 <a href="{{ url_for('leads.leads') }}"
-                    class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-500 hover:text-northway-red hover:bg-red-50 transition-colors shadow-sm">
-                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    class="nw-icon-btn">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 </a>
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ lead.name }}</h1>
-                    <p class="text-gray-500 mt-1">{{ lead.email }} &bull; {{ lead.phone }}</p>
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl lg:text-3xl font-bold text-[var(--nw-ink)] tracking-tight">{{ lead.name }}</h1>
+                        <span class="nw-chip nw-chip-info">
+                            {{ lead.status }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-[var(--nw-text-2)] mt-1">{{ lead.email }} &bull; {{ lead.phone }}</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <span class="px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-medium text-sm">
-                    {{ lead.status }}
-                </span>
-
+            <div class="flex items-center gap-2.5 flex-wrap">
                 <!-- Delete Lead Button (Icon) -->
                 <form action="{{ url_for('leads.delete_lead', id=lead.id) }}" method="POST"
                     onsubmit="return confirm('ATENÇÃO: Tem certeza que deseja excluir este lead e todo seu histórico (tarefas/notas)?\nEssa ação não pode ser desfeita.');">
                     <button type="submit"
-                        class="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all shadow-sm"
+                        class="nw-icon-btn text-red-600 hover:bg-red-50 hover:border-red-200"
                         title="Excluir Lead Permanentemente">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </form>
 
                 {% if not lead.client_id %}
                 {% if lead.status != 'lost' %}
                 <button type="button" onclick="openLoseModal()"
-                    class="bg-white border text-red-600 border-red-200 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                    class="nw-btn nw-btn-subtle text-[var(--nw-accent)]">
                     <i data-lucide="thumbs-down" class="w-4 h-4"></i>
-                    Marcar como Perdido
+                    <span>Marcar como Perdido</span>
                 </button>
                 {% endif %}
                 <button type="button" onclick="toggleModal('convertModal')"
-                    class="bg-[#fa0102] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                    class="nw-btn nw-btn-accent">
                     <i data-lucide="check-circle" class="w-4 h-4"></i>
-                    Converter em Cliente
+                    <span>Converter em Cliente</span>
                 </button>
                 {% else %}
-                <a href="#"
-                    class="text-green-600 font-bold text-sm flex items-center gap-1 bg-green-50 px-3 py-1 rounded-lg border border-green-200">
-                    <i data-lucide="check" class="w-4 h-4"></i>
-                    Cliente Ativo
-                </a>
+                <span class="nw-chip nw-chip-success">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    <span>Cliente Ativo</span>
+                </span>
                 {% endif %}
             </div>
         </div>
@@ -97,88 +98,88 @@
                 <!-- Tab: Details (Existing Feed) -->
                 <div id="content-page-details" class="space-y-6 pt-6">
                     <!-- Lead Info Form -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                <i data-lucide="user" class="w-4 h-4"></i>
+                    <div class="nw-panel">
+                        <div class="flex items-center justify-between pb-3 border-b border-[var(--nw-border)] mb-4">
+                            <h3 class="text-xs font-bold text-[var(--nw-ink)] uppercase tracking-wider flex items-center gap-2">
+                                <i data-lucide="user" class="w-4 h-4 text-[var(--nw-brand)]"></i>
                                 Informações do Lead
                             </h3>
                             <button type="submit" form="lead-info-form"
-                                class="bg-northway-red text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors text-xs font-bold flex items-center gap-1.5">
+                                class="nw-btn nw-btn-accent text-xs">
                                 <i data-lucide="save" class="w-3.5 h-3.5"></i>
-                                Salvar
+                                <span>Salvar</span>
                             </button>
                         </div>
                         <form id="lead-info-form" action="{{ url_for('leads.update_lead_info', id=lead.id) }}" method="POST">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="text-xs text-gray-500 block mb-1">Nome / Empresa</label>
+                                    <label class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider block mb-1.5">Nome / Empresa</label>
                                     {% if is_first_stage %}
                                     <input type="text" name="name" value="{{ lead.name }}" required
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none font-bold text-gray-800">
+                                        class="nw-input w-full font-bold">
                                     {% else %}
                                     <div class="flex items-center gap-2">
                                         <input type="text" value="{{ lead.name }}" disabled
-                                            class="w-full px-2 py-1.5 border border-gray-100 rounded text-sm bg-gray-50 text-gray-500 cursor-not-allowed">
-                                        <span class="text-xs text-gray-400" title="Edição permitida apenas na primeira etapa"><i data-lucide="lock" class="w-3 h-3"></i></span>
+                                            class="nw-input w-full bg-[var(--nw-canvas)] cursor-not-allowed">
+                                        <span class="text-xs text-[var(--nw-text-3)]" title="Edição permitida apenas na primeira etapa"><i data-lucide="lock" class="w-3.5 h-3.5"></i></span>
                                     </div>
                                     {% endif %}
                                 </div>
                                 <div>
-                                    <label class="text-xs text-gray-500 block mb-1">E-mail</label>
+                                    <label class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider block mb-1.5">E-mail</label>
                                     <input type="email" name="email" value="{{ lead.email or '' }}"
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                        class="nw-input w-full">
                                 </div>
                                 <div>
-                                    <label class="text-xs text-gray-500 block mb-1">Telefone</label>
+                                    <label class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider block mb-1.5">Telefone</label>
                                     <input type="text" name="phone_number" id="tabPhoneNumber" placeholder="(00) 00000-0000"
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                        class="nw-input w-full">
                                 </div>
                                 <div>
-                                    <label class="text-xs text-gray-500 block mb-1">Website</label>
+                                    <label class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider block mb-1.5">Website</label>
                                     <input type="text" name="website" value="{{ lead.website or '' }}"
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                        class="nw-input w-full">
                                 </div>
                                 <div>
-                                    <label class="text-xs text-gray-500 block mb-1">Interesse</label>
+                                    <label class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider block mb-1.5">Interesse</label>
                                     <input type="text" name="interest" value="{{ lead.interest or '' }}"
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none">
+                                        class="nw-input w-full">
                                 </div>
                                 <div>
-                                    <label class="text-xs text-gray-500 block mb-1">Origem</label>
-                                    <select name="source"
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none bg-white">
-                                        {% set sources = ['Google', 'Facebook', 'Instagram', 'WhatsApp', 'Indicação', 'Linkedin', 'Email', 'Site', 'Feira/Evento', 'Outros'] %}
-                                        <option value="">Selecione...</option>
-                                        {% for s in sources %}
-                                        <option value="{{ s }}" {{ 'selected' if lead.source==s else '' }}>{{ s }}</option>
-                                        {% endfor %}
-                                    </select>
+                                    <label class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider block mb-1.5">Origem</label>
+                                    <div class="nw-select w-full">
+                                        <select name="source">
+                                            {% set sources = ['Google', 'Facebook', 'Instagram', 'WhatsApp', 'Indicação', 'Linkedin', 'Email', 'Site', 'Feira/Evento', 'Outros'] %}
+                                            <option value="">Selecione...</option>
+                                            {% for s in sources %}
+                                            <option value="{{ s }}" {{ 'selected' if lead.source==s else '' }}>{{ s }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label class="text-xs text-gray-500 block mb-1">Observações</label>
+                                    <label class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider block mb-1.5">Observações</label>
                                     <textarea name="notes" rows="2"
-                                        class="w-full px-2 py-1.5 border border-gray-200 rounded text-sm focus:border-northway-red focus:ring-1 focus:ring-northway-red/20 outline-none resize-none">{{ lead.notes or '' }}</textarea>
+                                        class="nw-input w-full resize-none">{{ lead.notes or '' }}</textarea>
                                 </div>
                             </div>
                         </form>
                     </div>
 
                     <!-- Add Note -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                        <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                            <i data-lucide="message-square" class="w-4 h-4"></i>
-                            Nova Nota
-                        </h3>
+                    <div class="nw-panel">
+                        <div class="flex items-center gap-2 pb-3 border-b border-[var(--nw-border)] mb-3">
+                            <i data-lucide="message-square" class="w-4 h-4 text-[var(--nw-brand)]"></i>
+                            <h3 class="text-xs font-bold text-[var(--nw-ink)] uppercase tracking-wider">Nova Nota</h3>
+                        </div>
                         <form action="{{ url_for('leads.add_lead_interaction', id=lead.id) }}" method="POST">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <textarea name="content" rows="3"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none text-sm"
+                                class="nw-input w-full resize-none text-xs"
                                 placeholder="Escreva uma observação sobre este lead..."></textarea>
                             <div class="mt-3 flex justify-end">
-                                <button type="submit"
-                                    class="bg-northway-dark text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium">
+                                <button type="submit" class="nw-btn nw-btn-ink">
                                     Adicionar Nota
                                 </button>
                             </div>

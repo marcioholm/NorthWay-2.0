@@ -10,7 +10,7 @@ if (!fs.existsSync(OUT_DIR)) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
 }
 
-const PAGES = [
+let PAGES = [
   { name: 'home', path: '/home' },
   { name: 'dashboard', path: '/dashboard' },
   { name: 'pipeline', path: '/pipeline' },
@@ -28,6 +28,11 @@ const PAGES = [
   { name: 'settings', path: '/settings/company' },
   { name: 'master_companies', path: '/master/dashboard' },
 ];
+
+if (process.env.FILTER_PAGES) {
+  const allowed = process.env.FILTER_PAGES.split(',').map(s => s.trim());
+  PAGES = PAGES.filter(p => allowed.includes(p.name));
+}
 
 async function captureAll() {
   console.log('🚀 Starting screenshot capture...');
