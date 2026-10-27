@@ -1,96 +1,155 @@
+{# ================================================================= #}
+{# UI Redesign Macros - NorthWay CRM                                 #}
+{# ================================================================= #}
+
+{% macro page_header(title, subtitle=None) %}
+<div class="mb-7 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+        <h1 class="nw-h1">{{ title }}</h1>
+        {% if subtitle %}
+        <p class="nw-body mt-1 text-[var(--nw-text-2)]">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+    {% if caller is defined %}
+    <div class="flex items-center gap-3">
+        {{ caller() }}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro stat_tile(label, value, foot=None, variant='white') %}
+{# Variants: 'ink', 'accent', 'white', 'outline' #}
+<div class="nw-stat nw-stat-{{ variant }}">
+    <span class="nw-stat-label">{{ label }}</span>
+    <span class="nw-stat-value">{{ value }}</span>
+    {% if foot %}
+    <span class="nw-stat-foot">{{ foot }}</span>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro status_chip(label, tone='neutral') %}
+{# Tones: 'success', 'info', 'warning', 'neutral', 'accent' #}
+<span class="nw-chip nw-chip-{{ tone }}">
+    <span class="nw-chip-dot"></span>
+    <span>{{ label }}</span>
+</span>
+{% endmacro %}
+
+{% macro seg_bar(segments) %}
+{# segments: list of dicts with 'label' and 'value', e.g. [{'label': 'Novos', 'value': 28}, ...] #}
+{# Styles 1 to 4: solid ink -> accent -> hatch -> outline #}
+{% set styles = ['nw-seg-style-1', 'nw-seg-style-2', 'nw-seg-style-3', 'nw-seg-style-4'] %}
+<div class="nw-seg-container">
+    {% for seg in segments %}
+    {% set style_cls = styles[loop.index0 % 4] %}
+    {% set seg_val = seg.value if seg.value is not none else (seg.count if seg.count is not none else 0) %}
+    <div class="nw-seg-col" style="flex: {{ seg_val if seg_val > 0 else 1 }};">
+        <span class="nw-seg-label" title="{{ seg.label }}">{{ seg.label }}</span>
+        <div class="nw-seg-pill {{ style_cls }}">
+            {{ seg_val }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro avatar(initials, idx=0) %}
+{% set palette = ['#2B2D33', '#5B4636', '#3D4F5C', '#4A5A3A', '#6A3F4B', '#2E4A6B'] %}
+{% set bg_color = palette[idx % 6] %}
+<span class="nw-avatar w-10 h-10 text-sm" style="background-color: {{ bg_color }};" title="{{ initials }}">
+    {{ initials[:2].upper() }}
+</span>
+{% endmacro %}
+
 {% macro user_avatar(user, size='sm', show_name=True) %}
-<div class="flex items-center gap-2 group"
+{% set palette = ['#2B2D33', '#5B4636', '#3D4F5C', '#4A5A3A', '#6A3F4B', '#2E4A6B'] %}
+{% set user_id_int = user.id if user and user.id else 0 %}
+{% set bg_color = palette[user_id_int % 6] %}
+<div class="flex items-center gap-2.5 group"
     title="{{ user.status_message or user.role|capitalize if user else 'Não atribuído' }}">
-    <div class="relative">
+    <div class="relative flex-shrink-0">
         <div
-            class="{{ 'w-8 h-8' if size == 'sm' else 'w-10 h-10' }} rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 overflow-hidden ring-2 ring-white shadow-sm border border-gray-100">
+            class="{{ 'w-8 h-8 text-xs' if size == 'sm' else 'w-10 h-10 text-sm' }} rounded-full flex items-center justify-center font-semibold text-white overflow-hidden shadow-sm border border-[var(--nw-border)]"
+            style="background-color: {{ bg_color }};">
             {% if user and user.profile_image %}
             <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_image) }}" alt="{{ user.name }}"
                 class="w-full h-full object-cover">
-            {% elif user %}
+            {% elif user and user.name %}
             {{ user.name[:2].upper() }}
             {% else %}
-            <span class="text-gray-300">?</span>
+            <span class="opacity-60">?</span>
             {% endif %}
         </div>
         {% if user and user.status_message %}
-        <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"
+        <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[var(--nw-status-success)] border-2 border-white rounded-full"
             title="Status definido"></span>
         {% endif %}
     </div>
     {% if show_name %}
-    <div class="flex flex-col">
-        <span class="text-sm font-medium {{ 'text-gray-900' if user else 'text-gray-400 italic' }} leading-tight">
+    <div class="flex flex-col min-w-0">
+        <span class="text-sm font-medium {{ 'text-[var(--nw-ink)]' if user else 'text-[var(--nw-text-2)] italic' }} leading-tight truncate">
             {{ user.name if user else 'Não atribuído' }}
         </span>
         {% if user and user.status_message %}
-        <span class="text-[10px] text-gray-400 max-w-[120px] truncate hidden group-hover:block transition-all">{{
+        <span class="text-[11px] text-[var(--nw-text-3)] max-w-[130px] truncate hidden group-hover:block transition-all">{{
             user.status_message }}</span>
         {% endif %}
     </div>
     {% endif %}
 </div>
 {% endmacro %}
+
 {% macro render_pagination(pagination, endpoint) %}
 {% if pagination.pages > 1 %}
-<div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 mt-4 rounded-b-xl">
-    <div class="flex justify-between flex-1 sm:hidden">
-        {% if pagination.has_prev %}
-        <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.prev_num)) }}"
-            class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            Anterior </a>
-        {% endif %}
-        {% if pagination.has_next %}
-        <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.next_num)) }}"
-            class="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            Próximo </a>
-        {% endif %}
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-4 bg-white border-t border-[var(--nw-border)] rounded-b-[22px] mt-4">
+    <div>
+        <p class="text-[13px] text-[var(--nw-text-2)]">
+            Mostrando <span class="font-semibold text-[var(--nw-ink)]">{{ (pagination.page - 1) * pagination.per_page + 1 }}</span> a 
+            <span class="font-semibold text-[var(--nw-ink)]">{{ (pagination.page - 1) * pagination.per_page + pagination.items|length }}</span> de 
+            <span class="font-semibold text-[var(--nw-ink)]">{{ pagination.total }}</span> resultados
+        </p>
     </div>
-    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-        <div>
-            <p class="text-sm text-gray-700">
-                Mostrando <span class="font-medium">{{ (pagination.page - 1) * pagination.per_page + 1 }}</span> a <span
-                    class="font-medium">{{ (pagination.page - 1) * pagination.per_page + pagination.items|length
-                    }}</span> de <span class="font-medium">{{ pagination.total }}</span> resultados
-            </p>
-        </div>
-        <div>
-            <nav class="relative z-0 inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                {% if pagination.has_prev %}
-                <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.prev_num)) }}"
-                    class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50">
-                    <span class="sr-only">Anterior</span>
-                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                </a>
-                {% endif %}
+    <div>
+        <nav class="inline-flex items-center gap-1.5" aria-label="Pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.prev_num)) }}"
+                class="w-10 h-10 rounded-full inline-flex items-center justify-center text-[var(--nw-ink)] bg-white border border-[var(--nw-border)] hover:border-[var(--nw-text-3)] transition-all shadow-sm"
+                aria-label="Página anterior">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </a>
+            {% endif %}
 
-                {% for page in pagination.iter_pages() %}
-                {% if page %}
-                {% if page != pagination.page %}
-                <a href="{{ url_for(endpoint, **dict(request.args, page=page)) }}"
-                    class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">
-                    {{ page }} </a>
-                {% else %}
-                <span
-                    class="relative inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-northway-red border border-northway-red cursor-default">
-                    {{ page }} </span>
-                {% endif %}
-                {% else %}
-                <span
-                    class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 cursor-default">
-                    ... </span>
-                {% endif %}
-                {% endfor %}
+            {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page %}
+            {% if page != pagination.page %}
+            <a href="{{ url_for(endpoint, **dict(request.args, page=page)) }}"
+                class="w-10 h-10 rounded-full inline-flex items-center justify-center text-[13px] font-medium text-[var(--nw-ink)] bg-white border border-[var(--nw-border)] hover:border-[var(--nw-text-3)] transition-all shadow-sm">
+                {{ page }}
+            </a>
+            {% else %}
+            <span
+                class="w-10 h-10 rounded-full inline-flex items-center justify-center text-[13px] font-semibold text-white bg-[var(--nw-ink)] border border-[var(--nw-ink)] shadow-sm cursor-default"
+                aria-current="page">
+                {{ page }}
+            </span>
+            {% endif %}
+            {% else %}
+            <span class="w-8 text-center text-xs text-[var(--nw-text-3)] cursor-default">
+                &hellip;
+            </span>
+            {% endif %}
+            {% endfor %}
 
-                {% if pagination.has_next %}
-                <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.next_num)) }}"
-                    class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50">
-                    <span class="sr-only">Próximo</span>
-                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                </a>
-                {% endif %}
-            </nav>
-        </div>
+            {% if pagination.has_next %}
+            <a href="{{ url_for(endpoint, **dict(request.args, page=pagination.next_num)) }}"
+                class="w-10 h-10 rounded-full inline-flex items-center justify-center text-[var(--nw-ink)] bg-white border border-[var(--nw-border)] hover:border-[var(--nw-text-3)] transition-all shadow-sm"
+                aria-label="Próxima página">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </a>
+            {% endif %}
+        </nav>
     </div>
 </div>
 {% endif %}

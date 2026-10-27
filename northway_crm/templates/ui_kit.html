@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% from "macros.html" import page_header, stat_tile, status_chip, seg_bar, avatar, user_avatar, render_pagination %}
+
+{% block title %}UI Kit — NorthWay CRM Design System{% endblock %}
+
+{% block content %}
+<div class="space-y-10">
+
+    {# 1. Page Header #}
+    {{ page_header(
+        "Design System & UI Kit",
+        "Referência visual dos componentes padronizados NorthWay CRM (fonte Plus Jakarta Sans, tokens nw-* e raios refinados)."
+    ) }}
+
+    {# 2. Cores & Tokens #}
+    <div class="nw-card space-y-4">
+        <h2 class="nw-h2">Paleta de Cores & Tokens Principais</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+            <div class="p-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-canvas)] text-xs font-semibold">
+                Canvas<br><span class="opacity-70">#E7E9ED</span>
+            </div>
+            <div class="p-3 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-shell)] text-xs font-semibold">
+                Shell<br><span class="opacity-70">#FBFAF7</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-[var(--nw-ink)] text-white text-xs font-semibold">
+                Ink<br><span class="opacity-70">#16171A</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-[var(--nw-accent)] text-white text-xs font-semibold">
+                Accent<br><span class="opacity-70">#E31E24</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-[var(--nw-brand)] text-white text-xs font-semibold">
+                Brand<br><span class="opacity-70">#D11A20</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-[var(--nw-status-success)] text-white text-xs font-semibold">
+                Sucesso<br><span class="opacity-70">#1F8A4C</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-[var(--nw-status-info)] text-white text-xs font-semibold">
+                Info<br><span class="opacity-70">#2F6FDB</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-[var(--nw-status-warning)] text-white text-xs font-semibold">
+                Atenção<br><span class="opacity-70">#B7791F</span>
+            </div>
+        </div>
+    </div>
+
+    {# 3. KPI Stat Tiles (4 Variantes) #}
+    <div>
+        <h2 class="nw-h2 mb-4">Stat Tiles (4 Variantes de KPI)</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {{ stat_tile("Receita Recorrente (MRR)", "R$ 48.500", "+12.4% vs mês anterior", "ink") }}
+            {{ stat_tile("Leads Ativos no Mês", "342", "Meta: 300 leads", "accent") }}
+            {{ stat_tile("Taxa de Conversão", "24.8%", "Benchmark do setor: 18%", "white") }}
+            {{ stat_tile("Ticket Médio Mensal", "R$ 1.850", "Contratos vigentes: 26", "outline") }}
+        </div>
+    </div>
+
+    {# 4. Segmented Bar do Funil (nw-seg) #}
+    <div class="nw-card space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="nw-h2">Barra Segmentada de Funil (nw-seg)</h2>
+            <span class="nw-meta">Proporcional aos valores das etapas</span>
+        </div>
+        {% set funnel_data = [
+            {'label': '1. Novos', 'value': 84},
+            {'label': '2. Qualificação', 'value': 52},
+            {'label': '3. Apresentação', 'value': 31},
+            {'label': '4. Fechados', 'value': 18}
+        ] %}
+        {{ seg_bar(funnel_data) }}
+    </div>
+
+    {# 5. Botões & Ações #}
+    <div class="nw-card space-y-6">
+        <h2 class="nw-h2">Botões & Ações Interativas</h2>
+        <div class="flex flex-wrap items-center gap-3">
+            <button type="button" class="nw-btn-accent">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Novo Lead (Accent)</span>
+            </button>
+            <button type="button" class="nw-btn-primary">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span>Salvar Alterações (Primary)</span>
+            </button>
+            <button type="button" class="nw-btn">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Exportar CSV (Neutro)</span>
+            </button>
+            <button type="button" class="nw-icon-btn" aria-label="Notificações">
+                <i data-lucide="bell" class="w-4 h-4"></i>
+            </button>
+            <button type="button" class="nw-icon-btn" aria-label="Configurações">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-[var(--nw-border)]">
+            <div class="nw-search w-72">
+                <i data-lucide="search" class="w-4 h-4 text-[var(--nw-text-2)]"></i>
+                <input type="text" placeholder="Buscar lead por nome ou email...">
+            </div>
+            <button type="button" class="nw-filter">
+                <span>Filtro de Status</span>
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+            </button>
+            <button type="button" class="nw-filter">
+                <span>Responsável</span>
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    {# 6. Chips de Status & Avatares #}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="nw-card space-y-4">
+            <h2 class="nw-h2">Chips de Status (nw-chip)</h2>
+            <div class="flex flex-wrap items-center gap-2">
+                {{ status_chip("Ativo / Concluído", "success") }}
+                {{ status_chip("Em Andamento", "info") }}
+                {{ status_chip("Aguardando Aprovação", "warning") }}
+                {{ status_chip("Pendente / Neutro", "neutral") }}
+                {{ status_chip("Atenção Crítica", "accent") }}
+            </div>
+        </div>
+
+        <div class="nw-card space-y-4">
+            <h2 class="nw-h2">Avatares Padronizados</h2>
+            <div class="flex items-center gap-3">
+                {{ avatar("Marci Holm", 0) }}
+                {{ avatar("Carlos Eduardo", 1) }}
+                {{ avatar("Fernanda Lima", 2) }}
+                {{ avatar("Lucas Gabriel", 3) }}
+                {{ avatar("Amanda Souza", 4) }}
+                {{ avatar("Pedro Bial", 5) }}
+                {{ user_avatar(current_user, size='md') }}
+            </div>
+        </div>
+    </div>
+
+    {# 7. Formulários & Inputs #}
+    <div class="nw-card space-y-4">
+        <h2 class="nw-h2">Inputs, Selects e Textarea</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-[13px] font-medium text-[var(--nw-text-3)] mb-1.5">Nome do Lead</label>
+                <input type="text" class="nw-input" placeholder="Ex: Roberto Silva" value="Roberto Silva">
+            </div>
+            <div>
+                <label class="block text-[13px] font-medium text-[var(--nw-text-3)] mb-1.5">Origem da Campanha</label>
+                <select class="nw-select">
+                    <option>WhatsApp Outbound</option>
+                    <option>Google Ads</option>
+                    <option>Indicação de Parceiro</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[13px] font-medium text-[var(--nw-text-3)] mb-1.5">Valor Estimado</label>
+                <input type="text" class="nw-input" placeholder="R$ 0,00" value="R$ 15.000,00">
+            </div>
+            <div class="md:col-span-3">
+                <label class="block text-[13px] font-medium text-[var(--nw-text-3)] mb-1.5">Observações Estratégicas</label>
+                <textarea class="nw-input" rows="3" placeholder="Insira o resumo da conversa e pontos-chave levantados no diagnóstico..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    {# 8. Painel + Tabela (nw-panel + nw-table) #}
+    <div class="nw-panel space-y-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <h2 class="nw-h2">Leads Recentes (Tabela Demonstração)</h2>
+                <span class="nw-chip nw-chip-neutral"><span class="nw-chip-dot"></span><span>5 registros</span></span>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <div class="nw-search w-full sm:w-64">
+                    <i data-lucide="search" class="w-4 h-4 text-[var(--nw-text-2)]"></i>
+                    <input type="text" placeholder="Filtrar tabela...">
+                </div>
+                <button type="button" class="nw-btn">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                    <span>Filtros</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="nw-table">
+                <thead>
+                    <tr>
+                        <th class="w-12"><input type="checkbox" aria-label="Selecionar todos"></th>
+                        <th>Lead / Contato</th>
+                        <th>Empresa</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                        <th class="text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="checkbox" aria-label="Selecionar Ricardo Santos"></td>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                {{ avatar("Ricardo Santos", 1) }}
+                                <div>
+                                    <div class="font-medium text-[var(--nw-ink)]">Ricardo Santos</div>
+                                    <div class="nw-meta">ricardo@oticaexemplo.com.br</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Ótica Visão Nobre</td>
+                        <td>{{ status_chip("Qualificado", "success") }}</td>
+                        <td class="font-semibold">R$ 12.500</td>
+                        <td class="text-right">
+                            <button class="nw-icon-btn !w-8 !h-8" aria-label="Ver detalhes">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" aria-label="Selecionar Mariana Oliveira"></td>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                {{ avatar("Mariana Oliveira", 2) }}
+                                <div>
+                                    <div class="font-medium text-[var(--nw-ink)]">Mariana Oliveira</div>
+                                    <div class="nw-meta">mariana@solarprime.com.br</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Solar Prime Sul</td>
+                        <td>{{ status_chip("Apresentação", "info") }}</td>
+                        <td class="font-semibold">R$ 28.000</td>
+                        <td class="text-right">
+                            <button class="nw-icon-btn !w-8 !h-8" aria-label="Ver detalhes">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><input type="checkbox" aria-label="Selecionar Lucas Ferreira"></td>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                {{ avatar("Lucas Ferreira", 3) }}
+                                <div>
+                                    <div class="font-medium text-[var(--nw-ink)]">Lucas Ferreira</div>
+                                    <div class="nw-meta">lucas@moveisdecor.com.br</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Móveis & Decor</td>
+                        <td>{{ status_chip("Negociação", "warning") }}</td>
+                        <td class="font-semibold">R$ 45.000</td>
+                        <td class="text-right">
+                            <button class="nw-icon-btn !w-8 !h-8" aria-label="Ver detalhes">
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# 9. Amostra de Coluna Kanban #}
+    <div class="nw-card space-y-4">
+        <h2 class="nw-h2">Estrutura de Coluna e Cards Kanban</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="nw-kanban-col">
+                <div class="nw-kanban-header">
+                    <span>Novo Lead</span>
+                    <span class="nw-kanban-counter">2</span>
+                </div>
+                <div class="nw-kanban-bar">
+                    <div class="nw-kanban-bar-fill" style="width: 45%;"></div>
+                </div>
+
+                <div class="nw-kanban-card">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="nw-chip nw-chip-info !py-0.5 !px-2.5 !text-[11px]"><span class="nw-chip-dot"></span>Inbound</span>
+                        <span class="nw-meta">Hoje 10:30</span>
+                    </div>
+                    <div class="font-semibold text-sm text-[var(--nw-ink)]">Clínica Dr. Henrique</div>
+                    <div class="nw-meta mt-1">Contato: Henrique Paiva</div>
+                    <div class="mt-3 pt-2.5 border-t border-[var(--nw-border)] flex items-center justify-between">
+                        <span class="font-bold text-xs text-[var(--nw-ink)]">R$ 18.000</span>
+                        {{ avatar("HP", 4) }}
+                    </div>
+                </div>
+
+                <div class="nw-kanban-card active">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="nw-chip nw-chip-accent !py-0.5 !px-2.5 !text-[11px]"><span class="nw-chip-dot"></span>Prioridade Alta</span>
+                        <span class="nw-meta">Ontem</span>
+                    </div>
+                    <div class="font-semibold text-sm text-[var(--nw-ink)]">Rede Farmácias Mais</div>
+                    <div class="nw-meta mt-1">Contato: Gabriela Santos</div>
+                    <div class="mt-3 pt-2.5 border-t border-[var(--nw-border)] flex items-center justify-between">
+                        <span class="font-bold text-xs text-[var(--nw-accent)]">R$ 35.000</span>
+                        {{ avatar("GS", 5) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
