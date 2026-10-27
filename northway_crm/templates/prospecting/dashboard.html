@@ -1,299 +1,239 @@
 {% extends "base.html" %}
-
-{% block head %}
-<style>
-    .stat-card {
-        transition: all 0.3s ease;
-    }
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
-    }
-</style>
-{% endblock %}
+{% from "macros.html" import page_header, stat_tile, status_chip %}
 
 {% block content %}
-<div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
-    <div class="px-8 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center shrink-0">
-        <div>
-            <h1 class="text-3xl font-display font-extrabold text-gray-900 tracking-tight">
-                Prospecção <span class="text-northway-red">Outbound</span>
-            </h1>
-            <p class="text-gray-400 text-xs mt-1 font-medium italic">
-                Painel operacional de campanhas e mensagens automáticas.
-            </p>
-        </div>
-        <div class="flex items-center gap-3">
-            <button onclick="resetStuckLeads()"
-                class="px-4 py-2.5 bg-amber-50 text-amber-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-amber-100 transition-all"
+<div class="space-y-7">
+    <!-- Header -->
+    {% call page_header('Prospecção Outbound', 'Painel operacional de inteligência, descoberta de leads e campanhas.') %}
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <button type="button" onclick="resetStuckLeads()"
+                class="nw-btn nw-btn-subtle text-amber-700"
                 title="Reseta leads travados em execução há mais de 15 minutos">
-                <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-1"></i>
-                Liberar travados
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                <span>Liberar travados</span>
             </button>
-            <a href="{{ url_for('prospecting.discover') }}"
-                class="px-5 py-2.5 bg-northway-red text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all">
-                <i data-lucide="search" class="w-4 h-4 inline mr-2"></i>
-                Descobrir Leads
-            </a>
-            <a href="{{ url_for('prospecting.leads') }}"
-                class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
-                <i data-lucide="users" class="w-4 h-4 inline mr-2"></i>
-                Leads
-            </a>
-            <a href="{{ url_for('prospecting.campaigns') }}"
-                class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
-                <i data-lucide="megaphone" class="w-4 h-4 inline mr-2"></i>
-                Campanhas
-            </a>
-            <a href="{{ url_for('prospecting.failure_report') }}"
-                class="px-5 py-2.5 bg-red-50 text-red-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-100 transition-all">
-                <i data-lucide="alert-triangle" class="w-4 h-4 inline mr-2"></i>
-                Falhas
-            </a>
-            <a href="{{ url_for('prospecting.settings') }}"
-                class="px-5 py-2.5 bg-northway-dark text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-800 transition-all">
-                <i data-lucide="settings" class="w-4 h-4 inline mr-2"></i>
-                Configurações
+            <a href="{{ url_for('prospecting.discover') }}" class="nw-btn nw-btn-accent">
+                <i data-lucide="search" class="w-4 h-4"></i>
+                <span>Descobrir Leads</span>
             </a>
         </div>
+    {% endcall %}
+
+    <!-- Sub-navigation Pills -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1">
+        <a href="{{ url_for('prospecting.leads') }}" class="nw-nav-item">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Leads</span>
+        </a>
+        <a href="{{ url_for('prospecting.campaigns') }}" class="nw-nav-item">
+            <i data-lucide="megaphone" class="w-4 h-4"></i>
+            <span>Campanhas</span>
+        </a>
+        <a href="{{ url_for('prospecting.approvals') }}" class="nw-nav-item">
+            <i data-lucide="check-circle" class="w-4 h-4"></i>
+            <span>Aprovações</span>
+            {% if aguardando_aprovacao > 0 %}
+            <span class="w-2 h-2 rounded-full bg-[var(--nw-accent)]"></span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('prospecting.failure_report') }}" class="nw-nav-item">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
+            <span>Falhas</span>
+        </a>
+        <a href="{{ url_for('prospecting.settings') }}" class="nw-nav-item">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            <span>Configurações</span>
+        </a>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-8">
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="users" class="w-5 h-5 text-blue-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ total_leads }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Total Leads</p>
-            </div>
-
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="clock" class="w-5 h-5 text-gray-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ aguardando }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Aguardando</p>
-            </div>
-
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="sparkles" class="w-5 h-5 text-purple-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ em_execucao }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Em Execução</p>
-            </div>
-
-            <a href="{{ url_for('prospecting.approvals') }}" class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm block hover:ring-2 hover:ring-yellow-300 transition-all">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-yellow-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="check-circle" class="w-5 h-5 text-yellow-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ aguardando_aprovacao }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Aguardando Aprovação</p>
-            </a>
-
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="send" class="w-5 h-5 text-green-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ contatados }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Contatados</p>
-            </div>
-
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-teal-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="message-circle" class="w-5 h-5 text-teal-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ responderam }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Responderam</p>
-            </div>
-
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="heart" class="w-5 h-5 text-indigo-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ interessados }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Interessados</p>
-            </div>
-
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="calendar" class="w-5 h-5 text-rose-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ reunioes }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Reuniões</p>
-            </div>
-
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="award" class="w-5 h-5 text-blue-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ clientes }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Clientes</p>
-            </div>
-
-            <div class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="x-circle" class="w-5 h-5 text-orange-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ sem_resposta }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Sem Resposta</p>
-            </div>
-
-            <a href="{{ url_for('prospecting.failure_report') }}" class="stat-card bg-white rounded-2xl p-5 border border-gray-100 shadow-sm block hover:ring-2 hover:ring-red-300 transition-all">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
-                        <i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-gray-900">{{ erro_envio }}</p>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Erro Envio</p>
-            </a>
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <!-- Total Leads -->
+        <div class="nw-stat nw-stat-ink">
+            <span class="nw-stat-label">Total Leads</span>
+            <span class="nw-stat-value">{{ total_leads }}</span>
+            <span class="nw-stat-foot">Base cadastrada</span>
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-bold text-gray-900">Campanhas Ativas</h2>
-                <button onclick="openCampaignModal()"
-                    class="px-4 py-2 bg-northway-red text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all">
-                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                    Nova Campanha
-                </button>
-            </div>
+        <!-- Aguardando -->
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Aguardando</span>
+            <span class="nw-stat-value">{{ aguardando }}</span>
+            <span class="nw-stat-foot">Na fila de envio</span>
+        </div>
 
-            {% if campaigns %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% for campaign in campaigns %}
-                <div class="border border-gray-100 rounded-xl p-4 hover:border-northway-red/30 transition-colors">
-                    <div class="flex items-start justify-between mb-3">
-                        <div>
-                            <h3 class="font-bold text-gray-900">{{ campaign.name }}</h3>
-                            <p class="text-xs text-gray-400 mt-1">{{ campaign.target_segment or 'Segmento não definido' }}</p>
-                        </div>
-                        <span class="px-2 py-1 bg-green-50 text-green-700 text-[10px] font-bold uppercase rounded-full">
+        <!-- Em Execução -->
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Em Execução</span>
+            <span class="nw-stat-value">{{ em_execucao }}</span>
+            <span class="nw-stat-foot">Disparos ativos</span>
+        </div>
+
+        <!-- Aguardando Aprovação -->
+        <a href="{{ url_for('prospecting.approvals') }}" class="nw-stat nw-stat-accent block">
+            <span class="nw-stat-label">Aprovação</span>
+            <span class="nw-stat-value">{{ aguardando_aprovacao }}</span>
+            <span class="nw-stat-foot">Mensagens pendentes</span>
+        </a>
+
+        <!-- Contatados -->
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Contatados</span>
+            <span class="nw-stat-value">{{ contatados }}</span>
+            <span class="nw-stat-foot">Abordagem enviada</span>
+        </div>
+
+        <!-- Responderam -->
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Responderam</span>
+            <span class="nw-stat-value">{{ responderam }}</span>
+            <span class="nw-stat-foot">Interação inicial</span>
+        </div>
+
+        <!-- Interessados -->
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Interessados</span>
+            <span class="nw-stat-value">{{ interessados }}</span>
+            <span class="nw-stat-foot">Lead quente</span>
+        </div>
+
+        <!-- Reuniões -->
+        <div class="nw-stat nw-stat-white">
+            <span class="nw-stat-label">Reuniões</span>
+            <span class="nw-stat-value">{{ reunioes }}</span>
+            <span class="nw-stat-foot">Agendamentos</span>
+        </div>
+
+        <!-- Clientes -->
+        <div class="nw-stat nw-stat-outline">
+            <span class="nw-stat-label">Clientes</span>
+            <span class="nw-stat-value">{{ clientes }}</span>
+            <span class="nw-stat-foot">Convertidos</span>
+        </div>
+
+        <!-- Erro Envio -->
+        <a href="{{ url_for('prospecting.failure_report') }}" class="nw-stat nw-stat-white block border-red-200">
+            <span class="nw-stat-label text-[var(--nw-accent)]">Erros</span>
+            <span class="nw-stat-value text-[var(--nw-accent)]">{{ erro_envio }}</span>
+            <span class="nw-stat-foot">Ver relatório</span>
+        </a>
+    </div>
+
+    <!-- Active Campaigns Panel -->
+    <div class="nw-panel space-y-6">
+        <div class="flex justify-between items-center pb-3 border-b border-[var(--nw-border)]">
+            <div>
+                <h2 class="text-sm font-bold text-[var(--nw-ink)] uppercase tracking-wider">Campanhas Ativas</h2>
+                <p class="text-xs text-[var(--nw-text-2)] mt-0.5">Fluxos automáticos e cadência de disparos</p>
+            </div>
+            <button onclick="openCampaignModal()" class="nw-btn nw-btn-accent">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Nova Campanha</span>
+            </button>
+        </div>
+
+        {% if campaigns %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for campaign in campaigns %}
+            <div class="p-4 rounded-2xl border border-[var(--nw-border)] bg-[var(--nw-canvas)] hover:border-[var(--nw-ink)] transition-all flex flex-col justify-between">
+                <div>
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <h3 class="font-bold text-sm text-[var(--nw-ink)] truncate">{{ campaign.name }}</h3>
+                        <span class="nw-chip nw-chip-success flex-shrink-0">
                             {{ campaign.status }}
                         </span>
                     </div>
-                    <div class="flex gap-4 text-xs text-gray-500">
-                        <span><i data-lucide="repeat" class="w-3 h-3 inline"></i> {{ campaign.max_attempts }} tentativas</span>
-                        <span><i data-lucide="clock" class="w-3 h-3 inline"></i> {{ campaign.followup_interval_days }} dias</span>
-                    </div>
+                    <p class="text-xs text-[var(--nw-text-2)] truncate mb-4">{{ campaign.target_segment or 'Segmento não definido' }}</p>
                 </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="text-center py-12">
-                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i data-lucide="megaphone" class="w-8 h-8 text-gray-400"></i>
+                <div class="flex items-center gap-4 text-[11px] font-mono text-[var(--nw-text-3)] pt-3 border-t border-[var(--nw-border)]">
+                    <span class="flex items-center gap-1.5"><i data-lucide="repeat" class="w-3.5 h-3.5"></i> {{ campaign.max_attempts }} tentativas</span>
+                    <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i> {{ campaign.followup_interval_days }}d intervalo</span>
                 </div>
-                <p class="text-gray-500 font-medium">Nenhuma campanha ativa</p>
-                <p class="text-gray-400 text-sm mt-1">Crie sua primeira campanha para começar a prospectar</p>
             </div>
-            {% endif %}
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-14 h-14 bg-[var(--nw-muted)] rounded-full flex items-center justify-center mx-auto mb-3 text-[var(--nw-text-3)]">
+                <i data-lucide="megaphone" class="w-7 h-7"></i>
+            </div>
+            <p class="text-sm font-bold text-[var(--nw-ink)]">Nenhuma campanha ativa</p>
+            <p class="text-xs text-[var(--nw-text-2)] mt-1">Crie sua primeira campanha para começar a prospectar com inteligência.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<div id="campaignModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
-    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
-        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-gray-900">Nova Campanha</h3>
-            <button onclick="closeCampaignModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-6 h-6"></i>
+<!-- Modal Nova Campanha -->
+<div id="campaignModal" class="nw-modal-overlay fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="nw-modal-card w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 lg:p-8">
+        <div class="pb-4 border-b border-[var(--nw-border)] flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-[var(--nw-ink)]">Nova Campanha</h3>
+            <button onclick="closeCampaignModal()" class="w-8 h-8 rounded-full border border-[var(--nw-border)] flex items-center justify-center text-[var(--nw-text-2)] hover:border-[var(--nw-ink)] hover:text-[var(--nw-ink)]">
+                <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
-        <form id="campaignForm" class="p-6 space-y-4">
+        <form id="campaignForm" class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Nome da Campanha</label>
-                <input type="text" name="name" required
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Nome da Campanha</label>
+                <input type="text" name="name" required class="nw-input w-full">
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Descrição</label>
-                <textarea name="description" rows="2"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"></textarea>
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Descrição</label>
+                <textarea name="description" rows="2" class="nw-input w-full resize-none"></textarea>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Segmento Alvo</label>
-                    <input type="text" name="target_segment"
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                    <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Segmento Alvo</label>
+                    <input type="text" name="target_segment" class="nw-input w-full">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Tom de Voz</label>
-                    <select name="tone_of_voice"
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
-                        <option value="profissional">Profissional</option>
-                        <option value="amigavel">Amigável</option>
-                        <option value="formal">Formal</option>
-                        <option value="casual">Casual</option>
-                    </select>
+                    <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Tom de Voz</label>
+                    <div class="nw-select w-full">
+                        <select name="tone_of_voice">
+                            <option value="profissional">Profissional</option>
+                            <option value="amigavel">Amigável</option>
+                            <option value="formal">Formal</option>
+                            <option value="casual">Casual</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Objetivo</label>
-                <textarea name="objective" rows="2"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"></textarea>
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Objetivo</label>
+                <textarea name="objective" rows="2" class="nw-input w-full resize-none"></textarea>
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Oferta</label>
-                <textarea name="offer" rows="2"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"></textarea>
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Oferta</label>
+                <textarea name="offer" rows="2" class="nw-input w-full resize-none"></textarea>
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Ângulo Principal</label>
-                <input type="text" name="main_angle"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Ângulo Principal</label>
+                <input type="text" name="main_angle" class="nw-input w-full">
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">CTA Padrão</label>
-                <input type="text" name="default_cta" placeholder="Ex: Vamos agendar uma conversa?"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">CTA Padrão</label>
+                <input type="text" name="default_cta" placeholder="Ex: Vamos agendar uma conversa?" class="nw-input w-full">
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Máx. Tentativas</label>
-                    <input type="number" name="max_attempts" value="3" min="1" max="10"
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                    <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Máx. Tentativas</label>
+                    <input type="number" name="max_attempts" value="3" min="1" max="10" class="nw-input w-full">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Intervalo (dias)</label>
-                    <input type="number" name="followup_interval_days" value="3" min="1" max="30"
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm">
+                    <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Intervalo (dias)</label>
+                    <input type="number" name="followup_interval_days" value="3" min="1" max="30" class="nw-input w-full">
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Restrições</label>
-                <textarea name="restrictions" rows="2" placeholder="O que não deve ser mencionado?"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-northway-red/30 focus:ring-4 focus:ring-northway-red/5 transition-all text-sm"></textarea>
+                <label class="block text-xs font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Restrições</label>
+                <textarea name="restrictions" rows="2" placeholder="O que não deve ser mencionado?" class="nw-input w-full resize-none"></textarea>
             </div>
-            <div class="flex justify-end gap-3 pt-4">
-                <button type="button" onclick="closeCampaignModal()"
-                    class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-gray-200 transition-all">
+            <div class="flex justify-end gap-3 pt-4 border-t border-[var(--nw-border)]">
+                <button type="button" onclick="closeCampaignModal()" class="nw-btn nw-btn-subtle">
                     Cancelar
                 </button>
-                <button type="submit"
-                    class="px-5 py-2.5 bg-northway-red text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all">
+                <button type="submit" class="nw-btn nw-btn-accent">
                     Criar Campanha
                 </button>
             </div>
@@ -303,7 +243,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 });
 
 function openCampaignModal() {

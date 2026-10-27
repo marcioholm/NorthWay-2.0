@@ -1,37 +1,36 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
-    <div class="px-8 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center shrink-0">
+<div class="space-y-7">
+    <div class="flex items-center justify-between pb-6 border-b border-[var(--nw-border)]">
         <div class="flex items-center gap-4">
             <a href="{{ url_for('prospecting.dashboard') }}"
-                class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <i data-lucide="arrow-left" class="w-5 h-5 text-gray-600"></i>
+                class="nw-icon-btn">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-display font-extrabold text-gray-900 tracking-tight">
-                    Campanhas <span class="text-northway-red">Prospecção</span>
+                <h1 class="text-2xl lg:text-3xl font-bold text-[var(--nw-ink)] tracking-tight">
+                    Campanhas de Prospecção
                 </h1>
-                <p class="text-gray-400 text-xs mt-1">
-                    Gerencie suas campanhas de outbound.
+                <p class="text-xs text-[var(--nw-text-2)] mt-1">
+                    Gerencie suas campanhas de outbound e fluxos de contato.
                 </p>
             </div>
         </div>
+        <button onclick="openCampaignModal()"
+            class="nw-btn nw-btn-accent">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Nova Campanha</span>
+        </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-8">
-        <div class="bg-white rounded-2xl border border-gray-100">
-            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h2 class="text-lg font-bold text-gray-900">Todas as Campanhas</h2>
-                <button onclick="openCampaignModal()"
-                    class="px-4 py-2.5 bg-northway-red text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-red-700 transition-all">
-                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
-                    Nova Campanha
-                </button>
-            </div>
+    <div class="nw-panel space-y-4">
+        <div class="flex justify-between items-center pb-3 border-b border-[var(--nw-border)]">
+            <h2 class="text-sm font-bold text-[var(--nw-ink)] uppercase tracking-wider">Todas as Campanhas</h2>
+        </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full">
+        <div class="nw-table-container">
+            <table class="nw-table">
                     <thead class="bg-gray-50 border-b border-gray-100">
                         <tr>
                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nome</th>
@@ -120,7 +119,6 @@
             </div>
         </div>
     </div>
-</div>
 
 <div id="campaignModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">

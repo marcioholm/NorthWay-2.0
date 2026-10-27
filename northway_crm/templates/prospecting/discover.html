@@ -1,30 +1,31 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+<div class="space-y-7">
     <!-- Header -->
-    <div
-        class="px-8 py-6 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-between items-center shrink-0 z-30">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[var(--nw-border)]">
         <div>
-            <h1 class="text-3xl font-display font-extrabold text-gray-900 tracking-tight">Prospecção <span
-                    class="text-northway-red">Ativa</span></h1>
-            <p class="text-gray-400 text-xs mt-1 font-medium italic">Encontre novos horizontes comerciais com Google e Receita Federal.</p>
+            <h1 class="text-2xl lg:text-3xl font-bold text-[var(--nw-ink)] tracking-tight">
+                Prospecção Ativa
+            </h1>
+            <p class="text-xs text-[var(--nw-text-2)] mt-1 font-medium">
+                Encontre novos horizontes comerciais com Google e Receita Federal.
+            </p>
         </div>
-        <div class="flex items-center gap-4">
-            <div class="flex bg-gray-100 p-1 rounded-xl shadow-inner">
+        <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex bg-[var(--nw-canvas)] p-1 rounded-full border border-[var(--nw-border)]">
                 <button onclick="setSearchMode('google')" id="modeGoogleBtn" 
-                        class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all glass-sm bg-white shadow-sm text-northway-red">
+                        class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all bg-[var(--nw-ink)] text-white shadow-sm">
                     Google Maps
                 </button>
                 <button onclick="setSearchMode('receita')" id="modeReceitaBtn" 
-                        class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-gray-400 hover:text-gray-600">
+                        class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all text-[var(--nw-text-2)] hover:text-[var(--nw-ink)]">
                     Receita Federal (CNAE)
                 </button>
             </div>
-            <div
-                class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 shadow-sm transition-all hover:shadow-md cursor-default">
+            <div class="flex items-center gap-2 nw-chip nw-chip-success">
                 <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-[10px] font-bold text-green-700 uppercase tracking-wider">APIs Active</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider">APIs Active</span>
             </div>
         </div>
     </div>
