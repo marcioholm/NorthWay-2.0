@@ -136,14 +136,30 @@
                 return meta ? meta.getAttribute('content') : '';
             }
 
+            function isSameOrigin(input) {
+                try {
+                    var urlString = input instanceof Request ? input.url : input;
+                    var parsed = new URL(urlString, window.location.href);
+                    return parsed.origin === window.location.origin;
+                } catch (e) {
+                    return false;
+                }
+            }
+
             var originalFetch = window.fetch;
             if (originalFetch) {
                 window.fetch = function(input, init) {
                     init = init || {};
-                    var method = (init.method || 'GET').toUpperCase();
-                    if (['POST', 'PUT', 'DELETE', 'PATCH'].indexOf(method) !== -1) {
+                    var method = (init.method || (input instanceof Request ? input.method : 'GET') || 'GET').toUpperCase();
+                    if (['POST', 'PUT', 'DELETE', 'PATCH'].indexOf(method) !== -1 && isSameOrigin(input)) {
                         var token = getCsrfToken();
                         if (token) {
+                            if (input instanceof Request) {
+                                try {
+                                    input.headers.set('X-CSRFToken', token);
+                                    input.headers.set('X-CSRF-Token', token);
+                                } catch (e) {}
+                            }
                             if (init.headers instanceof Headers) {
                                 if (!init.headers.has('X-CSRFToken')) init.headers.set('X-CSRFToken', token);
                                 if (!init.headers.has('X-CSRF-Token')) init.headers.set('X-CSRF-Token', token);
@@ -159,6 +175,38 @@
                     }
                     return originalFetch.call(this, input, init);
                 };
+            }
+
+            if (window.axios) {
+                window.axios.interceptors.request.use(function(config) {
+                    try {
+                        if (config && config.url && isSameOrigin(config.url)) {
+                            var token = getCsrfToken();
+                            if (token) {
+                                config.headers = config.headers || {};
+                                config.headers['X-CSRFToken'] = token;
+                                config.headers['X-CSRF-Token'] = token;
+                            }
+                        }
+                    } catch (e) {}
+                    return config;
+                });
+            }
+
+            if (window.jQuery) {
+                window.jQuery.ajaxSetup({
+                    beforeSend: function(xhr, settings) {
+                        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                            if (isSameOrigin(settings.url)) {
+                                var token = getCsrfToken();
+                                if (token) {
+                                    xhr.setRequestHeader("X-CSRFToken", token);
+                                    xhr.setRequestHeader("X-CSRF-Token", token);
+                                }
+                            }
+                        }
+                    }
+                });
             }
 
             // Intercept programmatic form.submit() (e.g. dynamically generated forms)
@@ -180,14 +228,6 @@
                 }
                 return originalSubmit.call(this);
             };
-
-            if (window.axios) {
-                var token = getCsrfToken();
-                if (token) {
-                    window.axios.defaults.headers.common['X-CSRFToken'] = token;
-                    window.axios.defaults.headers.common['X-CSRF-Token'] = token;
-                }
-            }
 
             document.addEventListener('submit', function(e) {
                 var form = e.target;

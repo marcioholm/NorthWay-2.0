@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="container-fluid py-4">
@@ -46,6 +46,7 @@
                                     </button>
                                     <form action="{{ url_for('master.delete_global_template', id=t.id) }}" method="POST"
                                         onsubmit="return confirm('Excluir este template global?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-sm btn-danger ml-1">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -66,6 +67,7 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <form action="{{ url_for('master.global_templates') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="template_id" id="modal_template_id">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalTitle">Novo Template Global</h5>

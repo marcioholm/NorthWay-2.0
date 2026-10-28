@@ -1,29 +1,23 @@
+import os
+
 try:
     from flask_limiter import Limiter
     from flask_limiter.util import get_remote_address
-except ImportError:
-    # Fallback if Limiter is not installed
-    class Limiter:
-        def __init__(self, *args, **kwargs): pass
-        def init_app(self, app): pass
-        def limit(self, *args, **kwargs):
-            def decorator(f): return f
-            return decorator
-    def get_remote_address(): return "127.0.0.1"
+except ImportError as e:
+    raise ImportError("Flask-Limiter is required for rate limiting but is not installed. Please install 'flask-limiter'.") from e
+
+try:
+    from flask_wtf.csrf import CSRFProtect
+except ImportError as e:
+    raise ImportError("Flask-WTF is required for CSRF protection but is not installed. Please install 'Flask-WTF'.") from e
+
+storage_uri = os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')
 
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["5000 per day", "1000 per hour"],
-    storage_uri="memory://",
+    storage_uri=storage_uri,
     strategy="fixed-window"
 )
 
-try:
-    from flask_wtf.csrf import CSRFProtect
-    csrf = CSRFProtect()
-except ImportError:
-    class DummyCSRF:
-        def init_app(self, app): pass
-        def exempt(self, view): return view
-        def error_handler(self, fn): return fn
-    csrf = DummyCSRF()
+csrf = CSRFProtect()

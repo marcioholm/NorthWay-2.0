@@ -318,3 +318,34 @@ def test_rate_limiting_api_extension_login(csrf_client, csrf_app):
 
     assert hit_429, "Rate limiter não disparou 429 após exceder 10 requisições por minuto em /api/ext/login"
 
+
+# --- 8. CHECKOUT STANDALONE ---
+def test_csrf_checkout_standalone_flow(csrf_client, csrf_app):
+    """Testa se o checkout standalone renderiza token CSRF e se o POST é validado sem 400."""
+    auth_user(csrf_client, csrf_app)
+
+    # 1. GET /checkout -> 200, extrai token CSRF do HTML de checkout_standalone.html
+    resp_get = csrf_client.get('/checkout')
+    assert resp_get.status_code == 200
+    token = extract_token_from_response(resp_get)
+    assert token is not None
+
+    # 2. POST sem CSRF -> 400
+    resp_no_csrf = csrf_client.post('/billing/checkout/process', data={
+        'plan_type': 'monthly',
+        'cpf_cnpj': '12.345.678/0001-99',
+        'name': 'Empresa Checkout Teste'
+    })
+    assert resp_no_csrf.status_code == 400
+
+    # 3. POST com CSRF válido extraído do checkout -> responde sem 400 (302 redirect)
+    resp_csrf = csrf_client.post('/billing/checkout/process', data={
+        'plan_type': 'monthly',
+        'cpf_cnpj': '12.345.678/0001-99',
+        'name': 'Empresa Checkout Teste',
+        'csrf_token': token
+    }, follow_redirects=False)
+    assert resp_csrf.status_code != 400
+    assert resp_csrf.status_code in (200, 302)
+
+

@@ -111,24 +111,29 @@ def create_app(test_config=None):
             app.config.update(test_config)
         if not app.config['SECRET_KEY']:
             raise RuntimeError('SECRET_KEY must be configured')
+        if os.environ.get('VERCEL') and not os.environ.get('RATELIMIT_STORAGE_URI'):
+            app.logger.warning(
+                "⚠️ RATELIMIT WARNING: VERCEL is active but RATELIMIT_STORAGE_URI is not set. "
+                "Rate limiting is defaulting to 'memory://', which is not shared across serverless execution instances. "
+                "Configure an external Redis URI (e.g. Upstash 'rediss://...') via RATELIMIT_STORAGE_URI for shared rate limiting."
+            )
+
         limiter.init_app(app)
         app.limiter = limiter
         csrf.init_app(app)
         app.csrf = csrf
 
-        try:
-            from flask_wtf.csrf import CSRFError
-            @app.errorhandler(CSRFError)
-            def handle_csrf_error(e):
-                reason = getattr(e, 'description', str(e))
-                app.logger.warning(f"CSRF_REJECTED: {reason} on {request.method} {request.path}")
-                if request.path.startswith(('/api/', '/internal/', '/prospecting/')) or \
-                   request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
-                   request.accept_mimetypes.best == 'application/json':
-                    return jsonify({'error': 'CSRF validation failed', 'reason': reason}), 400
-                return render_template('error.html', message=f"Requisição inválida ou sessão expirada (CSRF: {reason})."), 400
-        except ImportError:
-            pass
+        from flask_wtf.csrf import CSRFError
+        @app.errorhandler(CSRFError)
+        def handle_csrf_error(e):
+            reason = getattr(e, 'description', str(e))
+            app.logger.warning(f"CSRF_REJECTED: {reason} on {request.method} {request.path}")
+            if request.path.startswith(('/api/', '/internal/', '/prospecting/')) or \
+               request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+               request.accept_mimetypes.best == 'application/json':
+                return jsonify({'error': 'CSRF validation failed', 'reason': reason}), 400
+            return render_template('error.html', message=f"Requisição inválida ou sessão expirada (CSRF: {reason})."), 400
+
         
         # Database Setup with Resilience
         database_url = (test_config or {}).get('SQLALCHEMY_DATABASE_URI') or os.environ.get('DATABASE_URL')

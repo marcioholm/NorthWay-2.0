@@ -91,11 +91,13 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 {% if grants_map.get(user.id) %}
                                 <form action="{{ url_for('forms.revoke_access') }}" method="POST" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     <input type="hidden" name="user_id" value="{{ user.id }}">
                                     <button type="submit" class="text-red-600 hover:text-red-900">Revogar</button>
                                 </form>
                                 {% else %}
                                 <form action="{{ url_for('forms.grant_access') }}" method="POST" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     <input type="hidden" name="user_id" value="{{ user.id }}">
                                     <button type="submit" class="text-green-600 hover:text-green-900">Liberar</button>
                                 </form>
