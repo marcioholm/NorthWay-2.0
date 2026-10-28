@@ -20,7 +20,7 @@ import click
 # Blueprint imports moved to create_app to prevent global import crashes
 from services.supabase_service import init_supabase
 from flask_cors import CORS
-from extensions import limiter
+from extensions import limiter, csrf
 import logging
 
 def create_app(test_config=None):
@@ -113,6 +113,22 @@ def create_app(test_config=None):
             raise RuntimeError('SECRET_KEY must be configured')
         limiter.init_app(app)
         app.limiter = limiter
+        csrf.init_app(app)
+        app.csrf = csrf
+
+        try:
+            from flask_wtf.csrf import CSRFError
+            @app.errorhandler(CSRFError)
+            def handle_csrf_error(e):
+                reason = getattr(e, 'description', str(e))
+                app.logger.warning(f"CSRF_REJECTED: {reason} on {request.method} {request.path}")
+                if request.path.startswith(('/api/', '/internal/', '/prospecting/')) or \
+                   request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                   request.accept_mimetypes.best == 'application/json':
+                    return jsonify({'error': 'CSRF validation failed', 'reason': reason}), 400
+                return render_template('error.html', message=f"Requisição inválida ou sessão expirada (CSRF: {reason})."), 400
+        except ImportError:
+            pass
         
         # Database Setup with Resilience
         database_url = (test_config or {}).get('SQLALCHEMY_DATABASE_URI') or os.environ.get('DATABASE_URL')
@@ -816,6 +832,60 @@ Sitemap: {base_url}/sitemap.xml
         # --- REGISTRO EXPLÍCITO: internal_api_bp com prefixo /internal ---
         from routes.internal_api import internal_api_bp
         app.register_blueprint(internal_api_bp, url_prefix='/internal')
+
+        # --- CSRF EXEMPTIONS (M2M Webhooks, Cron, JWT Extension, REST API) ---
+        try:
+            from routes.webhook_whatsapp import evolution_webhook_bp
+            csrf.exempt(evolution_webhook_bp)
+        except Exception:
+            pass
+
+        try:
+            csrf.exempt(internal_api_bp)
+        except Exception:
+            pass
+
+        try:
+            from routes.jobs import jobs_bp
+            csrf.exempt(jobs_bp)
+        except Exception:
+            pass
+
+        try:
+            from routes.api_extension import api_ext
+            csrf.exempt(api_ext)
+        except Exception:
+            pass
+
+        try:
+            from routes.api_v1 import api_v1_bp
+            csrf.exempt(api_v1_bp)
+        except Exception:
+            pass
+
+        try:
+            from routes.integrations import asaas_webhook
+            csrf.exempt(asaas_webhook)
+        except Exception:
+            pass
+
+        try:
+            from routes.billing import asaas_webhook as billing_asaas_webhook
+            csrf.exempt(billing_asaas_webhook)
+        except Exception:
+            pass
+
+        try:
+            from routes.forms import submit_form
+            csrf.exempt(submit_form)
+        except Exception:
+            pass
+
+        try:
+            from routes.diagnostic_raiox import submit as diagnostic_raiox_submit
+            csrf.exempt(diagnostic_raiox_submit)
+        except Exception:
+            pass
 
         # --- GLOBAL ERROR HANDLER ---
         @app.errorhandler(500)

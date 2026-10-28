@@ -431,6 +431,7 @@
                         </button>
                     </div>
                     <form action="{{ url_for('tasks.tasks') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <input type="hidden" name="client_id" value="${clientId}"> <!-- Need to ensure backend accepts client_id -->
                         <!-- Actually backend expects lead_id or generic. Let's check app.py -->
                         
@@ -478,6 +479,7 @@
                     </div>
                     
                     <form action="{{ url_for('clients.create_client') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div class="col-span-2">
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Cliente *</label>
@@ -585,6 +587,7 @@
                         </a>
                     </div>
                     <form action="{{ url_for('clients.import_clients') }}" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-4">
                             <label class="block text-sm font-bold text-gray-700 mb-2">Selecione o arquivo CSV</label>
                             <div class="relative">

@@ -228,6 +228,7 @@ def move_task_api(task_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@tasks_bp.route('', methods=['GET', 'POST'])
 @tasks_bp.route('/', methods=['GET', 'POST'])
 @login_required
 def tasks():

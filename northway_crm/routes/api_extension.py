@@ -34,6 +34,7 @@ def token_required(f):
     return decorated
 
 @api_ext.route('/api/ext/login', methods=['POST'])
+@limiter.limit("10 per minute")
 def login():
     data = request.get_json()
     if not data or not data.get('email') or not data.get('password'):

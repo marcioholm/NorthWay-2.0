@@ -56,6 +56,7 @@ def forgot_password():
     return render_template('auth/forgot_password.html')
 
 @auth.route('/reset_password/<token>', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def reset_password(token):
     # Hash token to compare
     token_hash = hashlib.sha256(token.encode()).hexdigest()
@@ -242,6 +243,7 @@ def login():
     return render_template('login.html', minimal=True)
 
 @auth.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.home'))

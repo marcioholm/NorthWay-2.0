@@ -11,10 +11,19 @@ except ImportError:
             return decorator
     def get_remote_address(): return "127.0.0.1"
 
-# Initialize Limiter without app (Factory Pattern)
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["5000 per day", "1000 per hour"],
     storage_uri="memory://",
     strategy="fixed-window"
 )
+
+try:
+    from flask_wtf.csrf import CSRFProtect
+    csrf = CSRFProtect()
+except ImportError:
+    class DummyCSRF:
+        def init_app(self, app): pass
+        def exempt(self, view): return view
+        def error_handler(self, fn): return fn
+    csrf = DummyCSRF()
