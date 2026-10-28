@@ -61,27 +61,32 @@ def create_notification(user_id, company_id=None, type='info', title='Notificaç
         except:
             pass
 
+def calculate_client_health(last_interaction_date):
+    """
+    Pure calculation of client health based on interaction recency (no DB mutation).
+    Green: <= 3 days
+    Yellow: 4-7 days
+    Red: > 7 days or No interaction
+    """
+    if not last_interaction_date:
+        return 'vermelho'
+    days_diff = (get_now_br() - last_interaction_date).days
+    if days_diff <= 3:
+        return 'verde'
+    elif days_diff <= 7:
+        return 'amarelo'
+    return 'vermelho'
+
 def update_client_health(client):
     """
-    Updates client health based on interaction recency.
+    Updates client health based on interaction recency (for cron/write actions only).
     Green: <= 3 days
     Yellow: 4-7 days
     Red: > 7 days or No interaction
     """
     from models import Interaction
     last_interaction_date = db.session.query(db.func.max(Interaction.created_at)).filter(Interaction.client_id == client.id).scalar()
-    
-    status = 'vermelho' # Default critical
-    
-    if last_interaction_date:
-        days_diff = (get_now_br() - last_interaction_date).days
-        
-        if days_diff <= 3:
-            status = 'verde'
-        elif days_diff <= 7:
-            status = 'amarelo'
-        else:
-            status = 'vermelho'
+    status = calculate_client_health(last_interaction_date)
     
     if status != client.health_status:
         client.health_status = status

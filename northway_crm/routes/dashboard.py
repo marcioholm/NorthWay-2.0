@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from models import db, Lead, Client, Task, Interaction, User, Integration, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
 from datetime import datetime, date, timedelta
-from utils import update_client_health, api_response
+from utils import api_response
 
 dashboard_bp = Blueprint('dashboard', __name__)
 

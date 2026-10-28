@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required, current_user
 from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate, LibraryTemplate, FormInstance, TenantIntegration, DriveFolderTemplate
-from utils import update_client_health, create_notification
+from utils import calculate_client_health, create_notification
 from datetime import datetime, date
 import csv
 import io
@@ -118,10 +118,8 @@ def client_details(id):
     ).filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     # Calculate display health without mutation (GET without side effect)
-    from models import get_now_br
     last_interaction = max([i.created_at for i in client.interactions], default=None)
-    days_diff = (get_now_br() - last_interaction).days if last_interaction else None
-    client.health_status = 'verde' if days_diff is not None and days_diff <= 3 else ('amarelo' if days_diff is not None and days_diff <= 7 else 'vermelho')
+    client.health_status = calculate_client_health(last_interaction)
 
     # Get MRR
     mrr = client.monthly_value if client.monthly_value else 0.0
