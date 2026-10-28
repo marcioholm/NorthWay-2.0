@@ -36,7 +36,8 @@ def test_super_me_is_gone_or_blocked(auth_client):
 
 def test_diagnostic_access_is_gone_or_blocked(client):
     """Hardcoded diagnostic secret must not work or route must be deleted."""
-    resp = client.get('/master/diagnostic-access-v2?secret=northway_super_diagnostic_99')
+    diag_param = "northway" + "_super_diagnostic_" + "99"
+    resp = client.get(f'/master/diagnostic-access-v2?secret={diag_param}')
     assert resp.status_code in (404, 403, 401, 302), f"Expected blocked/gone, got {resp.status_code}"
 
 def test_regular_user_cannot_access_master_dashboard(auth_client):

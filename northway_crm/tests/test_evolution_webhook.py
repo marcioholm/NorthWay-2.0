@@ -128,3 +128,103 @@ def test_evolution_webhook_does_not_call_query_all(client, app, monkeypatch):
         inst_updated = db.session.get(WhatsappInstance, inst.id)
         assert inst_updated.status == 'open'
 
+def test_evolution_webhook_sql_normalized_instance_matching(client, app, monkeypatch):
+    """Instância 'North-Way Teste' deve ser localizada via SQL quando evento chega com 'northway_teste'."""
+    token = 'evolution-token-xyz'
+    monkeypatch.setenv('EVOLUTION_WEBHOOK_TOKEN', token)
+    app.config['EVOLUTION_WEBHOOK_TOKEN'] = token
+
+    with app.app_context():
+        comp = Company(name="Co Normalized Test", plan_type="pro", payment_status="active", subscription_status="active")
+        db.session.add(comp)
+        db.session.commit()
+
+        inst = WhatsappInstance(company_id=comp.id, instance_name="North-Way Teste", status="disconnected")
+        db.session.add(inst)
+        db.session.commit()
+        inst_id = inst.id
+
+        resp = client.post(
+            '/api/webhooks/evolution',
+            json={'event': 'CONNECTION_UPDATE', 'instance': 'northway_teste', 'data': {'state': 'open'}},
+            headers={'apikey': token}
+        )
+        assert resp.status_code == 200
+
+        inst_updated = db.session.get(WhatsappInstance, inst_id)
+        assert inst_updated.status == 'open'
+
+def test_sync_webhook_passes_url_with_token(auth_client, app, monkeypatch):
+    """Ao chamar sync-webhook, EvolutionService.configure_webhook deve receber URL HTTPS contendo token=."""
+    client, user, company = auth_client
+    token = 'secret-webhook-tok-456'
+    monkeypatch.setenv('EVOLUTION_WEBHOOK_TOKEN', token)
+    app.config['EVOLUTION_WEBHOOK_TOKEN'] = token
+
+    from routes.whatsapp import build_evolution_webhook_url
+
+    configured_calls = []
+    def mock_configure(instance_name, webhook_url):
+        configured_calls.append((instance_name, webhook_url))
+        return {'status': 'configured'}
+
+    monkeypatch.setattr('services.evolution_service.EvolutionService.configure_webhook', mock_configure)
+
+    with app.app_context():
+        inst = WhatsappInstance(company_id=company.id, instance_name="instance-for-sync", status="connected")
+        db.session.add(inst)
+        db.session.commit()
+
+        resp = client.get('/api/whatsapp/sync-webhook')
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data.get('status') == 'success'
+        # A resposta JSON nunca deve vazar o token
+        assert token not in data.get('new_url', '')
+
+        # Porém o mock que envia para a Evolution API deve ter recebido a URL com token
+        assert len(configured_calls) == 1
+        name, url = configured_calls[0]
+        assert name == "instance-for-sync"
+        assert url.startswith('https://')
+        assert f'token={token}' in url
+
+    # Teste de erro quando EVOLUTION_WEBHOOK_TOKEN não existe
+    monkeypatch.delenv('EVOLUTION_WEBHOOK_TOKEN', raising=False)
+    app.config['EVOLUTION_WEBHOOK_TOKEN'] = None
+    with app.app_context():
+        with pytest.raises(ValueError, match="EVOLUTION_WEBHOOK_TOKEN"):
+            build_evolution_webhook_url()
+
+def test_evolution_resync_webhooks_cli_command(runner, app, monkeypatch):
+    """O comando 'flask evolution-resync-webhooks' deve reconfigurar todas as instâncias passando URL com token."""
+    token = 'cli-token-xyz-789'
+    monkeypatch.setenv('EVOLUTION_WEBHOOK_TOKEN', token)
+    app.config['EVOLUTION_WEBHOOK_TOKEN'] = token
+
+    configured_calls = []
+    def mock_configure(instance_name, webhook_url):
+        configured_calls.append((instance_name, webhook_url))
+        return {'status': 'ok'}
+
+    monkeypatch.setattr('services.evolution_service.EvolutionService.configure_webhook', mock_configure)
+
+    with app.app_context():
+        comp = Company(name="CLI Test Co", plan_type="pro", payment_status="active", subscription_status="active")
+        db.session.add(comp)
+        db.session.commit()
+
+        inst1 = WhatsappInstance(company_id=comp.id, instance_name="inst-cli-1", status="open")
+        inst2 = WhatsappInstance(company_id=comp.id, instance_name="inst-cli-2", status="open")
+        db.session.add_all([inst1, inst2])
+        db.session.commit()
+
+    result = runner.invoke(args=['evolution-resync-webhooks'])
+    assert result.exit_code == 0
+    assert "Concluido: 2 sucesso(s), 0 falha(s)" in result.output
+    assert len(configured_calls) == 2
+    for name, url in configured_calls:
+        assert url.startswith('https://')
+        assert f'token={token}' in url
+
+

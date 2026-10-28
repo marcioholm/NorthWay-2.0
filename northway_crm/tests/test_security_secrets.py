@@ -79,14 +79,26 @@ def test_utils_webhooks_timing_safe_helper():
 
 def test_no_hardcoded_passwords_or_connection_strings_in_scripts():
     """Garante que nenhum script contenha senhas reais, tokens ou connection strings com senha em claro."""
+    import hashlib
+    import re
+
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    forbidden_patterns = [
-        'whsec_3PF5yv-lNJWNvIFBR5lgRO9BQJBUGQKCtQ4z9MsoVyU',
-        'Marcioholmmonteiro',
-        'NorthWay@Master2024',
-        'master_password_123',
-        'pVcON2srZ2FXQ36Q-72WAHB-gVdrP_5Se-_K8XQ15Gs',
+    
+    # Hashes SHA-256 de credenciais/segredos históricos revogados (nenhum segredo em texto puro no código)
+    forbidden_sha256 = {
+        '8e1d325546d4698fa86a5093506f44249cbb5b22aec35a9cefee52ddcf2ce825',
+        '8a45ac2f875945f9ad1f93f6d50073156d1c50a3cbb1bb35cec6a2148419526a',
+        'e704bb24a03d30ef1f0a771877d662cc7563e2f14e60e22ebdc4cf40ab56c154',
+        'a9990bf5e9d50ff352f6f45eb2ad6146ca348c22a6bedc110755c52822dd9357',
+        'a76382bd79960b99bb8dffc2b71b4c2f2792a2a21bebf1fa6720a5dceb3d5c14',
+    }
+
+    generic_secret_patterns = [
+        re.compile(r'postgres(?:ql)?://[^:\s\'"]+:[^@\s\'"]{4,}@'),
+        re.compile(r'wh' + r'sec_[A-Za-z0-9\-_]{20,}'),
+        re.compile(r'MASTER_PASSWORD\s*=\s*[\'"][^\'"]+[\'"]'),
     ]
+
     target_files = [
         'inspect_db.py',
         'northway_crm/scripts/check_master_login.py',
@@ -101,8 +113,14 @@ def test_no_hardcoded_passwords_or_connection_strings_in_scripts():
         if os.path.exists(full_path):
             with open(full_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            for pattern in forbidden_patterns:
-                assert pattern not in content, f"Padrão sensível/segredo encontrado em {rel_path}: {pattern}"
+
+            for pat in generic_secret_patterns:
+                assert not pat.search(content), f"Padrão genérico de segredo encontrado em {rel_path}: {pat.pattern}"
+
+            tokens = re.findall(r'[A-Za-z0-9_\-@!#$%&*+=]{6,}', content)
+            for tok in tokens:
+                digest = hashlib.sha256(tok.encode('utf-8')).hexdigest()
+                assert digest not in forbidden_sha256, f"Hash de credencial proibida detectado em {rel_path}"
 
 def test_integrations_webhook_cross_tenant_isolation(client, app, monkeypatch):
     """

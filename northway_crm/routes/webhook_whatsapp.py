@@ -42,16 +42,30 @@ def evolution_webhook():
     clean_name = str(instance_name).strip()
     current_app.logger.info(f"Evolution Webhook Event: {event} for instance {clean_name}")
 
-    # 2. Busca direta da instância sem WhatsappInstance.query.all()
+    # 2. Busca da instância: busca exata primeiro
     instance = WhatsappInstance.query.filter_by(instance_name=clean_name).first()
     if not instance:
-        # Fallback insensível a maiúsculas/minúsculas
-        instance = WhatsappInstance.query.filter(
-            db.func.lower(WhatsappInstance.instance_name) == clean_name.lower()
-        ).first()
+        # Fallback com normalização antiga (ignorar maiúsculas, espaço, hífen e underscore) no SQL
+        def normalize_name(s):
+            if not s:
+                return ""
+            return s.lower().replace(' ', '').replace('-', '').replace('_', '')
+
+        normalized_name = normalize_name(instance_name)
+        sql_normalized = db.func.replace(
+            db.func.replace(
+                db.func.replace(
+                    db.func.lower(WhatsappInstance.instance_name),
+                    ' ', ''
+                ),
+                '-', ''
+            ),
+            '_', ''
+        )
+        instance = WhatsappInstance.query.filter(sql_normalized == normalized_name).first()
 
     if not instance:
-        current_app.logger.warning(f"Webhook from unknown instance: {clean_name}")
+        current_app.logger.warning(f"Webhook from unknown instance: {instance_name}")
         return jsonify({'success': True}), 200 # Accept but ignore
         
     company_id = instance.company_id

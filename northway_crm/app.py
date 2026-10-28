@@ -723,6 +723,36 @@ Sitemap: {base_url}/sitemap.xml
                 db.session.rollback()
                 click.echo(f"Erro durante o reset: {e}")
 
+        @app.cli.command('evolution-resync-webhooks')
+        def evolution_resync_webhooks_command():
+            """Percorre todas as WhatsappInstance e chama configure_webhook com a nova URL e token."""
+            import click
+            from models import WhatsappInstance
+            from services.evolution_service import EvolutionService
+            from routes.whatsapp import build_evolution_webhook_url
+
+            try:
+                webhook_url = build_evolution_webhook_url()
+            except Exception as e:
+                click.echo(f"Erro ao construir URL do webhook: {e}")
+                return
+
+            instances = WhatsappInstance.query.all()
+            click.echo(f"Ressincronizando webhooks para {len(instances)} instancia(s)...")
+
+            success_count = 0
+            fail_count = 0
+            for inst in instances:
+                try:
+                    EvolutionService.configure_webhook(inst.instance_name, webhook_url)
+                    click.echo(f"[OK] Instancia '{inst.instance_name}' (ID: {inst.id}, Empresa: {inst.company_id}): sucesso")
+                    success_count += 1
+                except Exception as e:
+                    click.echo(f"[FALHA] Instancia '{inst.instance_name}' (ID: {inst.id}, Empresa: {inst.company_id}): {e}")
+                    fail_count += 1
+
+            click.echo(f"Concluido: {success_count} sucesso(s), {fail_count} falha(s).")
+
         # --- REGISTER BLUEPRINTS ---
         # Defensive loading: one failing blueprint won't crash the whole app
         blueprints = [
