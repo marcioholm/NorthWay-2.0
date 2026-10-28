@@ -484,6 +484,10 @@
                             <i data-lucide="message-square" class="w-4 h-4"></i>
                             <span>Mensagens</span>
                         </a>
+                        <a href="{{ url_for('prospecting.niches_page') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'prospecting.niches_page' else '' }}">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            <span>Nichos</span>
+                        </a>
                         <a href="{{ url_for('prospecting.settings') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'prospecting.settings' else '' }}">
                             <i data-lucide="settings" class="w-4 h-4"></i>
                             <span>Configurações</span>
@@ -661,12 +665,8 @@
                     </div>
                 </div>
 
-            </div>
         </div>
     </div> <!-- /nw-shell-container -->
-    {% else %}
-        </main>
-    </div>
     {% endif %}
 
     <script>

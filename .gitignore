@@ -31,3 +31,5 @@ scratch/
 northway_crm/scratch/
 northway_crm/check_*.py
 
+# UI Redesign Screenshots
+docs/ui-*/
