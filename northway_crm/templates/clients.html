@@ -52,7 +52,7 @@
             <div class="flex-1 min-w-[220px]">
                 <label class="block text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider mb-1.5">Buscar</label>
                 <div class="nw-search">
-                    <i data-lucide="search" class="nw-search-icon"></i>
+                    <i data-lucide="search" class="w-4 h-4 text-nw-text-2"></i>
                     <input type="text" name="q" value="{{ request.args.get('q') or '' }}"
                         placeholder="Nome, Email, Telefone..."
                         class="w-full">
@@ -129,7 +129,7 @@
     </div>
 
     <!-- Clients Table -->
-    <div class="nw-table-container">
+    <div class="overflow-x-auto">
         <table class="nw-table">
             <thead>
                 <tr>

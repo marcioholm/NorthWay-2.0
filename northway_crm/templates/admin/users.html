@@ -43,7 +43,7 @@
                 </div>
             </div>
         </div>
-        <div class="absolute -right-20 -bottom-20 w-72 h-72 bg-[var(--nw-brand)]/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -right-20 -bottom-20 w-72 h-72 bg-nw-brand/10 rounded-full blur-3xl pointer-events-none"></div>
     </div>
 
     <!-- Users List Table -->
@@ -51,7 +51,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="border-b border-[var(--nw-border)] bg-[var(--nw-shell)]/60 text-[10px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider">
+                    <tr class="border-b border-[var(--nw-border)] bg-nw-shell/60 text-[10px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider">
                         <th class="px-5 py-3.5">ID</th>
                         <th class="px-5 py-3.5">Nome</th>
                         <th class="px-5 py-3.5">Email</th>
@@ -61,7 +61,7 @@
                 </thead>
                 <tbody class="divide-y divide-[var(--nw-border)] text-xs">
                     {% for user in users %}
-                    <tr class="hover:bg-[var(--nw-shell)]/50 transition-colors group">
+                    <tr class="hover:bg-nw-shell/50 transition-colors group">
                         <td class="px-5 py-4 font-mono text-[11px] text-[var(--nw-text-3)]">#{{ user.id }}</td>
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-3">

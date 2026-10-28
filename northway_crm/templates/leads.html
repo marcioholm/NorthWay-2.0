@@ -142,7 +142,7 @@
     </div>
 
     {# 4. Tabela de Leads (nw-table) #}
-    <div class="nw-table-wrap flex flex-col">
+    <div class="overflow-x-auto flex flex-col">
         <div class="overflow-x-auto">
             <table class="nw-table w-full">
                 <thead>
@@ -162,7 +162,7 @@
                 </thead>
                 <tbody>
                     {% for lead in leads %}
-                    <tr class="group clickable-row hover:bg-[var(--nw-shell)]/60 transition-colors cursor-pointer"
+                    <tr class="group clickable-row hover:bg-nw-shell/60 transition-colors cursor-pointer"
                         data-href="{{ url_for('leads.lead_details', id=lead.id) }}">
                         <!-- Selection Checkbox -->
                         <td class="w-12 text-center stop-propagation">
