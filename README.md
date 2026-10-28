@@ -71,9 +71,15 @@ npx tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.min.css --min
   - `templates/` — Templates Jinja2
   - `static/` — CSS, JS, imagens
 
-## Variáveis de Ambiente
+## Variáveis de Ambiente & Banco de Dados
 
 Veja `.env.example` para a lista completa.
+
+### Banco de Dados em Produção (Supabase Pooler)
+Em ambientes serverless (Vercel), a variável `DATABASE_URL` deve obrigatoriamente apontar para o **Supabase Connection Pooler em modo transaction (porta 6543)**, e **não** para a conexão direta (porta 5432).
+- Exemplo: `postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`
+- O `psycopg2` não utiliza prepared statements no servidor por padrão, garantindo total compatibilidade com o transaction pooling do PgBouncer.
+- O pool da aplicação está configurado com `pool_size=1, max_overflow=2, pool_recycle=300, pool_pre_ping=True, pool_timeout=10` e keepalives ativos.
 
 ## Deploy
 

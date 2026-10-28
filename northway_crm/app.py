@@ -10,7 +10,6 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, text
-from sqlalchemy.pool import NullPool
 from flask_login import LoginManager, current_user, login_required
 from flask_migrate import Migrate
 from models import db, User, Task, Role, AudienceMatrix, CREPIDiagnostico, CREPIPremissa, SwotAnalise, SwotItem
@@ -269,9 +268,12 @@ def create_app(test_config=None):
             'pool_pre_ping': True
         }
         if database_url and 'postgresql' in database_url:
-            # Use NullPool for Serverless (Vercel) to prevent connection drops across frozen instances
-            from sqlalchemy.pool import NullPool
-            engine_options['poolclass'] = NullPool
+            # Small pool reused between requests on the same serverless warm instance
+            engine_options['pool_size'] = 1
+            engine_options['max_overflow'] = 2
+            engine_options['pool_recycle'] = 300
+            engine_options['pool_pre_ping'] = True
+            engine_options['pool_timeout'] = 10
             engine_options['connect_args'] = {
                 'connect_timeout': 10,
                 'keepalives': 1,
