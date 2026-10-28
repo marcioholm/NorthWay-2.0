@@ -14,11 +14,7 @@ def download_contract_pdf(id):
     # Lazy import to avoid circular dependencies or startup errors
     from services.pdf_service import PdfService
     # 1. Fetch Contract & verify permission
-    contract = Contract.query.get_or_404(id)
-    
-    # Check company access
-    if contract.company_id != current_user.company_id:
-        abort(403)
+    contract = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
 
     try:
         # 2. Generate PDF using FPDF2 (Zero-dependency)

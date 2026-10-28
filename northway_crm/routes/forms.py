@@ -271,14 +271,12 @@ def get_report(submission_id):
     """
     Internal Endpoint: View Detailed Diagnostic Report
     """
-    submission = FormSubmission.query.get(submission_id)
+    if not current_user.is_super_admin:
+        submission = FormSubmission.query.filter_by(id=submission_id, tenant_id=current_user.company_id).first()
+    else:
+        submission = FormSubmission.query.get(submission_id)
     if not submission:
         return render_template('error.html', message="Relatório não encontrado."), 404
-        
-    # Check permission (must own the form or be admin)
-    if not current_user.is_super_admin:
-        if submission.tenant_id != current_user.company_id:
-             return render_template('error.html', message="Acesso negado."), 403
 
     # Get Company details and logo
     from models import Company

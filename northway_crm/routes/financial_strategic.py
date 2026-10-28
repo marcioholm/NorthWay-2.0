@@ -214,9 +214,7 @@ def api_update_fixed_cost(id):
     if not current_user.has_permission('admin_view'):
         return jsonify({"error": "Forbidden"}), 403
         
-    cost = FixedCost.query.get_or_404(id)
-    if cost.tenant_id != current_user.company_id:
-        return jsonify({"error": "Forbidden"}), 403
+    cost = FixedCost.query.filter_by(id=id, tenant_id=current_user.company_id).first_or_404()
         
     data = request.json
     if 'is_variable' in data:
@@ -321,9 +319,7 @@ def edit_fixed_cost(id):
     if not current_user.has_permission('admin_view'):
         abort(403)
         
-    cost = FixedCost.query.get_or_404(id)
-    if cost.tenant_id != current_user.company_id:
-        abort(403)
+    cost = FixedCost.query.filter_by(id=id, tenant_id=current_user.company_id).first_or_404()
         
     old_data = {
         'nome': cost.nome_custo,
@@ -375,9 +371,7 @@ def delete_fixed_cost(id):
     if not current_user.has_permission('admin_view'):
         abort(403)
         
-    cost = FixedCost.query.get_or_404(id)
-    if cost.tenant_id != current_user.company_id:
-        abort(403)
+    cost = FixedCost.query.filter_by(id=id, tenant_id=current_user.company_id).first_or_404()
         
     # Audit Log before deletion
     log = StrategicAuditLog(

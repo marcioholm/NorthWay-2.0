@@ -158,11 +158,7 @@ def view_document(id):
     from flask_login import current_user
     from flask import abort
     
-    doc = ContractTemplate.query.get_or_404(id)
-    
-    # Security Check: Ensure document belongs to user's company
-    if doc.company_id != current_user.company_id:
-        abort(403)
+    doc = ContractTemplate.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     return render_template('docs/view_document.html', doc=doc)
 

@@ -199,8 +199,8 @@ def move_task_api(task_id):
 
         if any(x is not None for x in [is_urgent, is_important, assigned_to_id, title, description, due_date_str]):
              from models import Task, db
-             task = Task.query.get(task_id)
-             if task and task.company_id == current_user.company_id:
+             task = Task.query.filter_by(id=task_id, company_id=current_user.company_id).first()
+             if task:
                  if is_urgent is not None: task.is_urgent = is_urgent
                  if is_important is not None: task.is_important = is_important
                  if assigned_to_id is not None:
@@ -348,9 +348,7 @@ def tasks():
 @login_required
 def toggle_task(id):
     try:
-        task = Task.query.get_or_404(id)
-        if task.company_id != current_user.company_id:
-            return jsonify({'error': 'Unauthorized'}), 403
+        task = Task.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
             
         # Toggle logic: if concluded -> pending (or a_fazer), else -> concluded
         new_status = 'a_fazer' if task.status == 'concluida' else 'concluida'
@@ -367,9 +365,7 @@ def toggle_task(id):
 @login_required
 def delete_task(id):
     from models import db
-    task = Task.query.get_or_404(id)
-    if task.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    task = Task.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     db.session.delete(task)
     db.session.commit()
@@ -379,9 +375,7 @@ def delete_task(id):
 @login_required
 def delete_task_api(id):
     from models import db
-    task = Task.query.get_or_404(id)
-    if task.company_id != current_user.company_id:
-        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
+    task = Task.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     try:
         db.session.delete(task)
@@ -395,9 +389,7 @@ def delete_task_api(id):
 @login_required
 def update(id):
     from models import db
-    task = Task.query.get_or_404(id)
-    if task.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    task = Task.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     task.title = request.form.get('title')
     task.description = request.form.get('description') # Update description

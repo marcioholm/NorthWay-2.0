@@ -633,13 +633,15 @@ def sync_profile():
     # Resolve remote_jid
     remote_jid = contact_id
     if chat_type == 'lead':
-        obj = Lead.query.get(contact_id)
-        if obj:
-            remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
+        obj = Lead.query.filter_by(id=contact_id, company_id=current_user.company_id).first()
+        if not obj:
+            return jsonify({'success': False, 'message': 'Lead não encontrado'}), 404
+        remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
     elif chat_type == 'client':
-        obj = Client.query.get(contact_id)
-        if obj:
-            remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
+        obj = Client.query.filter_by(id=contact_id, company_id=current_user.company_id).first()
+        if not obj:
+            return jsonify({'success': False, 'message': 'Cliente não encontrado'}), 404
+        remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
     elif '@' not in remote_jid:
         remote_jid = f"{remote_jid}@s.whatsapp.net"
 
@@ -800,11 +802,13 @@ def get_history(type='lead', contact_id=None, id=None):
     
     if type == 'lead':
         obj = Lead.query.get_or_404(contact_id)
-        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        if obj.company_id != current_user.company_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and "@" not in obj.phone else obj.phone
     elif type == 'client':
         obj = Client.query.get_or_404(contact_id)
-        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        if obj.company_id != current_user.company_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and "@" not in obj.phone else obj.phone
     elif type == 'atendimento':
         remote_jid = contact_id
@@ -877,10 +881,14 @@ def send_msg():
     remote_jid = data.get('remote_jid')
     if not remote_jid:
         if data.get('lead_id'):
-            obj = Lead.query.get(data['lead_id'])
+            obj = Lead.query.filter_by(id=data['lead_id'], company_id=current_user.company_id).first()
+            if not obj:
+                return jsonify({'error': 'Lead não encontrado'}), 404
             remote_jid = obj.phone
         elif data.get('client_id'):
-            obj = Client.query.get(data['client_id'])
+            obj = Client.query.filter_by(id=data['client_id'], company_id=current_user.company_id).first()
+            if not obj:
+                return jsonify({'error': 'Cliente não encontrado'}), 404
             remote_jid = obj.phone
         else:
             return jsonify({'error': 'Target missing'}), 400
@@ -947,10 +955,14 @@ def send_media():
     
     remote_jid = None
     if lead_id:
-        obj = Lead.query.get(lead_id)
+        obj = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first()
+        if not obj:
+            return jsonify({'error': 'Lead não encontrado'}), 404
         remote_jid = obj.phone
     else:
-        obj = Client.query.get(client_id)
+        obj = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first()
+        if not obj:
+            return jsonify({'error': 'Cliente não encontrado'}), 404
         remote_jid = obj.phone
         
     if remote_jid and "@" not in remote_jid:
@@ -1071,8 +1083,7 @@ def create_quick_message():
 @whatsapp_bp.route('/api/whatsapp/quick-messages/<int:id>', methods=['DELETE'])
 @login_required
 def delete_quick_message(id):
-    qm = QuickMessage.query.get_or_404(id)
-    if qm.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+    qm = QuickMessage.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     db.session.delete(qm)
     db.session.commit()
     return jsonify({'success': True})
@@ -1110,8 +1121,7 @@ def get_unread_counts():
 def get_details(type, id):
     obj = None
     if type == 'lead':
-        obj = Lead.query.get_or_404(id)
-        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        obj = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
         tags = []
         if obj.status: tags.append({'text': obj.status, 'color': 'red' if obj.status == 'new' else 'gray'})
@@ -1124,8 +1134,7 @@ def get_details(type, id):
         stage_id = obj.pipeline_stage_id
         
     elif type == 'client':
-        obj = Client.query.get_or_404(id)
-        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        obj = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
         tags = []
         if obj.status: tags.append({'text': obj.status, 'color': 'green' if obj.status == 'ativo' else 'red'})
@@ -1218,13 +1227,11 @@ def update_notes(type, id):
     if content is None: return jsonify({'error': 'Missing content'}), 400
     
     if type == 'lead':
-        obj = Lead.query.get_or_404(id)
+        obj = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     elif type == 'client':
-        obj = Client.query.get_or_404(id)
+        obj = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     else:
         return jsonify({'error': 'Invalid type'}), 400
-        
-    if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
     
     obj.notes = content
     db.session.commit()

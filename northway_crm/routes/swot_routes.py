@@ -10,9 +10,7 @@ swot_bp = Blueprint('swot', __name__)
 @swot_bp.route('/api/clients/<int:client_id>/swot', methods=['GET'])
 @login_required
 def list_swot(client_id):
-    client = Client.query.get_or_404(client_id)
-    if client.company_id != current_user.company_id:
-        abort(403)
+    client = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first_or_404()
         
     analises = SwotAnalise.query.filter_by(client_id=client_id).order_by(SwotAnalise.data_analise.desc(), SwotAnalise.created_at.desc()).all()
     
@@ -92,9 +90,7 @@ def get_swot(analise_id):
 @login_required
 def create_swot(client_id):
     try:
-        client = Client.query.get_or_404(client_id)
-        if client.company_id != current_user.company_id:
-            abort(403)
+        client = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first_or_404()
             
         data = request.get_json() or {}
         

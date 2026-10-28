@@ -93,9 +93,7 @@ def create_role():
 @roles_bp.route('/settings/roles/<int:id>/update', methods=['POST'])
 @login_required
 def update_role(id):
-    role = Role.query.get_or_404(id)
-    if role.company_id != current_user.company_id:
-        abort(403)
+    role = Role.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     if current_user.role != ROLE_ADMIN and (not current_user.user_role or 'manage_team' not in (current_user.user_role.permissions or [])):
         abort(403)
@@ -112,9 +110,7 @@ def update_role(id):
 @roles_bp.route('/settings/roles/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_role(id):
-    role = Role.query.get_or_404(id)
-    if role.company_id != current_user.company_id:
-        abort(403)
+    role = Role.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     if role.is_default:
         flash('Cargos padrão não podem ser excluídos.', 'error')

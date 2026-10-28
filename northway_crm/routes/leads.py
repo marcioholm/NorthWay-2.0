@@ -264,9 +264,7 @@ def pipeline(pipeline_id=None):
     if not pipeline_id:
         pipeline_id = pipelines[0].id
         
-    current_pipeline = Pipeline.query.get_or_404(pipeline_id)
-    if current_pipeline.company_id != current_user.company_id:
-        abort(403)
+    current_pipeline = Pipeline.query.filter_by(id=pipeline_id, company_id=current_user.company_id).first_or_404()
         
     stages = PipelineStage.query.filter_by(pipeline_id=pipeline_id).order_by(PipelineStage.order).all()
     
@@ -383,9 +381,7 @@ def pipeline(pipeline_id=None):
 @leads_bp.route('/leads/<int:id>/move/<direction>', methods=['POST'])
 @login_required
 def move_lead(id, direction):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     stages = PipelineStage.query.filter_by(pipeline_id=lead.pipeline_id).order_by(PipelineStage.order).all()
     current_idx = next((i for i, s in enumerate(stages) if s.id == lead.pipeline_stage_id), 0)
@@ -407,9 +403,7 @@ def move_lead(id, direction):
 @leads_bp.route('/api/leads/<int:id>/update_stage', methods=['POST'])
 @login_required
 def update_lead_stage_api(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     data = request.get_json()
     stage_id = data.get('stage_id')
@@ -417,8 +411,8 @@ def update_lead_stage_api(id):
     if not stage_id:
         return jsonify({'error': 'Stage ID required'}), 400
         
-    stage = PipelineStage.query.get(stage_id)
-    if not stage or stage.pipeline_id != lead.pipeline_id:
+    stage = PipelineStage.query.filter_by(id=stage_id, company_id=current_user.company_id).first_or_404()
+    if stage.pipeline_id != lead.pipeline_id:
          return jsonify({'error': 'Invalid Stage'}), 400
          
     lead.pipeline_stage_id = stage.id
@@ -512,8 +506,8 @@ def bulk_move_stage():
     if not lead_ids or not target_stage_id:
         return jsonify({'error': 'Lead IDs and Target Stage ID are required'}), 400
         
-    stage = PipelineStage.query.get(target_stage_id)
-    if not stage or stage.company_id != current_user.company_id:
+    stage = PipelineStage.query.filter_by(id=target_stage_id, company_id=current_user.company_id).first()
+    if not stage:
         return jsonify({'error': 'Invalid Stage'}), 400
         
     leads = Lead.query.filter(Lead.id.in_(lead_ids), Lead.company_id == current_user.company_id).all()
@@ -537,8 +531,8 @@ def bulk_move_pipeline():
     if not lead_ids or not target_pipeline_id:
         return jsonify({'error': 'Lead IDs and Target Pipeline ID are required'}), 400
         
-    pipeline = Pipeline.query.get(target_pipeline_id)
-    if not pipeline or pipeline.company_id != current_user.company_id:
+    pipeline = Pipeline.query.filter_by(id=target_pipeline_id, company_id=current_user.company_id).first()
+    if not pipeline:
         return jsonify({'error': 'Invalid Pipeline'}), 400
         
     # Get first stage of target pipeline
@@ -761,9 +755,7 @@ def convert_lead(id):
 @leads_bp.route('/leads/<int:id>/bant', methods=['POST'])
 @login_required
 def update_bant(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     lead.bant_budget = request.form.get('bant_budget')
     lead.bant_authority = request.form.get('bant_authority')
@@ -777,9 +769,8 @@ def update_bant(id):
 @leads_bp.route('/leads/<int:id>/update_info', methods=['POST'])
 @login_required
 def update_lead_info(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
+    
     
     # Check if allowed to edit identity (First Stage Only)
     is_first_stage = False
@@ -849,8 +840,8 @@ def update_lead_info(id):
     new_pipeline_id = request.form.get('pipeline_id')
     if new_pipeline_id and str(new_pipeline_id) != str(lead.pipeline_id):
         # User wants to move to a different pipeline
-        target_pipeline = Pipeline.query.get(int(new_pipeline_id))
-        if target_pipeline and target_pipeline.company_id == current_user.company_id:
+        target_pipeline = Pipeline.query.filter_by(id=int(new_pipeline_id), company_id=current_user.company_id).first()
+        if target_pipeline:
             lead.pipeline_id = target_pipeline.id
             first_new_stage = PipelineStage.query.filter_by(pipeline_id=target_pipeline.id).order_by(PipelineStage.order).first()
             if first_new_stage:
@@ -864,8 +855,8 @@ def update_lead_info(id):
             lead.assigned_to_id = None
         else:
             # Validate Cross-Company Assignment
-            user_to_assign = User.query.get(int(assigned_id))
-            if user_to_assign and user_to_assign.company_id == current_user.company_id:
+            user_to_assign = User.query.filter_by(id=int(assigned_id), company_id=current_user.company_id).first()
+            if user_to_assign:
                 lead.assigned_to_id = int(assigned_id)
             else:
                 flash("Erro: Tentativa de atribuir usuário inválido ou de outra organização.", "error")
@@ -877,9 +868,7 @@ def update_lead_info(id):
 @leads_bp.route('/leads/<int:id>/interactions', methods=['POST'])
 @login_required
 def add_lead_interaction(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     
     content = request.form.get('content')
     if not content:
@@ -902,9 +891,7 @@ def add_lead_interaction(id):
 @leads_bp.route('/leads/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_lead(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     # Validation: Allow deletion for everyone since we have cascade rules now
     # is_admin warning removed as requested
@@ -917,9 +904,7 @@ def delete_lead(id):
 @leads_bp.route('/leads/<int:id>/lose', methods=['POST'])
 @login_required
 def lose_lead(id):
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        abort(403)
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     reason = request.form.get('reason')
     schedule_date_str = request.form.get('schedule_date')
@@ -1004,9 +989,7 @@ def lose_lead(id):
 @login_required
 def create_stage():
     pipeline_id = request.form.get('pipeline_id')
-    pipeline = Pipeline.query.get_or_404(pipeline_id)
-    if pipeline.company_id != current_user.company_id:
-        abort(403)
+    pipeline = Pipeline.query.filter_by(id=pipeline_id, company_id=current_user.company_id).first_or_404()
         
     name = request.form.get('name')
     if not name:
@@ -1031,9 +1014,7 @@ def create_stage():
 @leads_bp.route('/pipeline/stages/\u003cint:id\u003e/update', methods=['POST'])
 @login_required
 def update_stage(id):
-    stage = PipelineStage.query.get_or_404(id)
-    if stage.company_id != current_user.company_id:
-        abort(403)
+    stage = PipelineStage.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     name = request.form.get('name')
     if name:
@@ -1046,9 +1027,7 @@ def update_stage(id):
 @leads_bp.route('/pipeline/stages/\u003cint:id\u003e/delete', methods=['POST'])
 @login_required
 def delete_stage(id):
-    stage = PipelineStage.query.get_or_404(id)
-    if stage.company_id != current_user.company_id:
-        abort(403)
+    stage = PipelineStage.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     p_id = stage.pipeline_id
     db.session.delete(stage)
@@ -1119,10 +1098,9 @@ def export_leads():
     filename_suffix = ""
     
     if stage_id:
-        query = query.filter(Lead.pipeline_stage_id == stage_id)
-        stage = PipelineStage.query.get(stage_id)
-        if stage:
-            filename_suffix += f"_{stage.name.lower().replace(' ', '_')}"
+        stage = PipelineStage.query.filter_by(id=stage_id, company_id=current_user.company_id).first_or_404()
+        query = query.filter(Lead.pipeline_stage_id == stage.id)
+        filename_suffix += f"_{stage.name.lower().replace(' ', '_')}"
             
     if status:
         query = query.filter(Lead.status == status)
@@ -1316,8 +1294,8 @@ def mass_update_stage():
     if not lead_ids or not stage_id:
         return jsonify({'success': False, 'error': 'Missing data'}), 400
 
-    stage = PipelineStage.query.get(stage_id)
-    if not stage or stage.company_id != current_user.company_id:
+    stage = PipelineStage.query.filter_by(id=stage_id, company_id=current_user.company_id).first()
+    if not stage:
         return jsonify({'success': False, 'error': 'Invalid stage'}), 400
 
     leads = Lead.query.filter(Lead.id.in_(lead_ids), Lead.company_id == current_user.company_id).all()
@@ -1342,8 +1320,8 @@ def mass_update_pipeline():
     if not lead_ids or not pipeline_id:
         return jsonify({'success': False, 'error': 'Missing data'}), 400
 
-    pipeline = Pipeline.query.get(pipeline_id)
-    if not pipeline or pipeline.company_id != current_user.company_id:
+    pipeline = Pipeline.query.filter_by(id=pipeline_id, company_id=current_user.company_id).first()
+    if not pipeline:
         return jsonify({'success': False, 'error': 'Invalid pipeline'}), 400
         
     # Find the very first stage in the target pipeline
@@ -1453,9 +1431,7 @@ def quick_add_lead():
 @login_required
 def get_lead_tasks(id):
     from datetime import datetime
-    lead = Lead.query.get_or_404(id)
-    if lead.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     
     tasks = Task.query.filter_by(lead_id=id).order_by(Task.due_date.asc()).all()
     
