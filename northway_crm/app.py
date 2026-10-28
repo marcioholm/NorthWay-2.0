@@ -96,6 +96,29 @@ def create_app(test_config=None):
                     'status': response.status_code, 'duration_ms': round(elapsed, 2),
                     'response_bytes': response.content_length
                 }))
+            # Gzip compression for HTML and JSON responses
+            accept_encoding = request.headers.get('Accept-Encoding', '')
+            if (
+                'gzip' in accept_encoding
+                and 200 <= response.status_code < 300
+                and not getattr(response, 'is_streamed', False)
+                and 'Content-Encoding' not in response.headers
+            ):
+                content_type = response.headers.get('Content-Type', '')
+                if 'text/html' in content_type or 'application/json' in content_type:
+                    data = response.get_data()
+                    if len(data) >= 500:
+                        import gzip
+                        compressed = gzip.compress(data, compresslevel=6)
+                        response.set_data(compressed)
+                        response.headers['Content-Encoding'] = 'gzip'
+                        response.headers['Content-Length'] = len(compressed)
+                        vary = response.headers.get('Vary')
+                        if not vary:
+                            response.headers['Vary'] = 'Accept-Encoding'
+                        elif 'Accept-Encoding' not in vary:
+                            response.headers['Vary'] = f"{vary}, Accept-Encoding"
+
             return response
 
         # Rate Limiting Configuration

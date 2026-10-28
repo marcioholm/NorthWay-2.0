@@ -409,6 +409,31 @@ def move_lead(id, direction):
     
     return redirect(url_for('leads.pipeline', pipeline_id=lead.pipeline_id))
 
+@leads_bp.route('/api/leads/<int:id>/summary')
+@login_required
+def lead_summary_api(id):
+    lead = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
+    return jsonify({
+        'id': lead.id,
+        'name': lead.name,
+        'phone': lead.phone or '',
+        'email': lead.email or '',
+        'website': lead.website or '',
+        'address': lead.address or '',
+        'interest': lead.interest or '',
+        'source': lead.source or '',
+        'estimated_value': float(lead.estimated_value or 0),
+        'pipeline_id': lead.pipeline_id,
+        'bant_budget': lead.bant_budget or '',
+        'bant_authority': lead.bant_authority or '',
+        'bant_timeline': lead.bant_timeline or '',
+        'bant_need': lead.bant_need or '',
+        'diagnostic_status': lead.diagnostic_status or 'pending',
+        'diagnostic_stars': lead.diagnostic_stars or 0,
+        'diagnostic_score': lead.diagnostic_score or 0,
+        'diagnostic_classification': lead.diagnostic_classification or ''
+    })
+
 @leads_bp.route('/api/leads/<int:id>/update_stage', methods=['POST'])
 @login_required
 def update_lead_stage_api(id):

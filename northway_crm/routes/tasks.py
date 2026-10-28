@@ -281,44 +281,42 @@ def tasks():
             
         return redirect(url_for('tasks.tasks'))
 
-    # GET: List Tasks
-    from models import Lead  # Safe import
+    # GET: List Tasks (Paginated by 50, preserving tab and filters)
+    from models import Lead, db  # Safe import
     user_id = current_user.id
     company_id = current_user.company_id
     
-    # Queries
-    # 1. Lead Tasks (Pending/Active)
-    lead_tasks = Task.query.filter(
+    tab = request.args.get('tab', 'leads')
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+
+    base_query = Task.query.options(
+        db.joinedload(Task.lead),
+        db.joinedload(Task.client),
+        db.joinedload(Task.responsible)
+    ).filter(
         Task.company_id == company_id,
-        Task.assigned_to_id == user_id,
-        Task.lead_id != None,
-        Task.status != 'concluida'
-    ).order_by(Task.due_date.asc()).all()
-    
-    # 2. Client Tasks (Pending)
-    client_tasks = Task.query.filter(
-        Task.company_id == company_id,
-        Task.assigned_to_id == user_id,
-        Task.client_id != None,
-        Task.status != 'concluida'
-    ).order_by(Task.due_date.asc()).all()
-    
-    # 3. General Tasks
-    general_tasks = Task.query.filter(
-        Task.company_id == company_id,
-        Task.assigned_to_id == user_id,
-        Task.lead_id == None,
-        Task.client_id == None,
-        Task.status != 'concluida'
-    ).order_by(Task.due_date.asc()).all()
-    
-    # 4. Completed Tasks
-    completed_tasks_list = Task.query.filter(
-        Task.company_id == company_id,
-        Task.assigned_to_id == user_id,
-        Task.status == 'concluida'
-    ).order_by(Task.completed_at.desc()).limit(50).all()
-    
+        Task.assigned_to_id == user_id
+    )
+
+    if tab == 'clients':
+        active_query = base_query.filter(Task.client_id.isnot(None), Task.status != 'concluida').order_by(Task.due_date.asc())
+    elif tab == 'general':
+        active_query = base_query.filter(Task.lead_id.is_(None), Task.client_id.is_(None), Task.status != 'concluida').order_by(Task.due_date.asc())
+    elif tab == 'completed':
+        active_query = base_query.filter(Task.status == 'concluida').order_by(Task.completed_at.desc())
+    else:
+        tab = 'leads'
+        active_query = base_query.filter(Task.lead_id.isnot(None), Task.status != 'concluida').order_by(Task.due_date.asc())
+
+    pagination = active_query.paginate(page=page, per_page=per_page, error_out=False)
+    tasks_page = pagination.items
+
+    lead_tasks = tasks_page if tab == 'leads' else []
+    client_tasks = tasks_page if tab == 'clients' else []
+    general_tasks = tasks_page if tab == 'general' else []
+    completed_tasks_list = tasks_page if tab == 'completed' else []
+
     total_tasks = Task.query.filter_by(company_id=company_id, assigned_to_id=user_id).count()
     completed_count = Task.query.filter_by(company_id=company_id, assigned_to_id=user_id, status='concluida').count()
     
@@ -326,10 +324,10 @@ def tasks():
     if total_tasks > 0:
         progress_percent = int((completed_count / total_tasks) * 100)
         
-    # Context data for modals
+    # Context data for modals (limited to recent 50 to avoid bloating payload)
     from models import Client
-    leads = Lead.query.filter_by(company_id=company_id).all()
-    clients_list = Client.query.filter_by(company_id=company_id).all()
+    leads = Lead.query.filter_by(company_id=company_id).order_by(Lead.created_at.desc()).limit(50).all()
+    clients_list = Client.query.filter_by(company_id=company_id).order_by(Client.created_at.desc()).limit(50).all()
     users = User.query.filter_by(company_id=company_id).all()
     
     now = datetime.now()
@@ -345,7 +343,9 @@ def tasks():
                            progress_percent=progress_percent,
                            leads=leads,
                            users=users,
-                           now=now)
+                           now=now,
+                           pagination=pagination,
+                           active_tab=tab)
 
 @tasks_bp.route('/<int:id>/toggle', methods=['POST'])
 @login_required

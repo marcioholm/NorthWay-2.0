@@ -240,18 +240,20 @@ def get_today_tasks(company_id, user_id):
         Task.assigned_to_id == user_id, 
         Task.status == 'pendente',
         Task.due_date < now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    ).all()
+    ).order_by(Task.due_date.asc()).limit(20).all()
 
 
 def get_attention_leads(company_id, user_id):
-    # Leads with no interaction in over 3 days
+    # Leads with no interaction in over 3 days (top 20 for dashboard widget)
     three_days_ago = datetime.now() - timedelta(days=3)
     query = Lead.query.options(
         db.joinedload(Lead.pipeline_stage)
     ).filter(Lead.company_id == company_id, Lead.assigned_to_id == user_id, Lead.status != 'won')\
                .outerjoin(Interaction, (Interaction.lead_id == Lead.id) & (Interaction.company_id == company_id))\
                .group_by(Lead.id)\
-               .having(db.or_(db.func.max(Interaction.created_at) < three_days_ago, db.func.max(Interaction.created_at) == None))
+               .having(db.or_(db.func.max(Interaction.created_at) < three_days_ago, db.func.max(Interaction.created_at) == None))\
+               .order_by(Lead.created_at.desc())\
+               .limit(20)
     return query.all()
 
 def get_today_stats(company_id, user_id):

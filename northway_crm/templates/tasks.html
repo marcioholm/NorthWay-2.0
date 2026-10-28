@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import user_avatar %}
+{% from "macros.html" import user_avatar, render_pagination %}
 
 {% block content %}
 <div class="space-y-7">
@@ -68,29 +68,28 @@
 
     <!-- Tabs Navigation -->
     <div class="flex flex-wrap items-center gap-1.5 p-1 bg-[var(--nw-shell)] rounded-full border border-[var(--nw-border)] w-fit">
-        <button data-tab-target="leads" id="tab-leads"
-            class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-white shadow text-gray-900">
+        <a href="{{ url_for('tasks.tasks', tab='leads') }}" id="tab-leads"
+            class="px-4 py-1.5 rounded-full text-xs font-bold transition-all {% if active_tab == 'leads' %}bg-white shadow text-gray-900{% else %}text-gray-500 hover:text-gray-900{% endif %}">
             Funil de Vendas
-        </button>
-        <button data-tab-target="clients" id="tab-clients"
-            class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors">
+        </a>
+        <a href="{{ url_for('tasks.tasks', tab='clients') }}" id="tab-clients"
+            class="px-4 py-1.5 rounded-full text-xs font-bold transition-all {% if active_tab == 'clients' %}bg-white shadow text-gray-900{% else %}text-gray-500 hover:text-gray-900{% endif %}">
             Carteira de Clientes
-        </button>
-        {% if general_tasks %}
-        <button data-tab-target="general" id="tab-general"
-            class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors">
+        </a>
+        <a href="{{ url_for('tasks.tasks', tab='general') }}" id="tab-general"
+            class="px-4 py-1.5 rounded-full text-xs font-bold transition-all {% if active_tab == 'general' %}bg-white shadow text-gray-900{% else %}text-gray-500 hover:text-gray-900{% endif %}">
             Geral
-        </button>
-        {% endif %}
-        <button data-tab-target="completed" id="tab-completed"
-            class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5">
+        </a>
+        <a href="{{ url_for('tasks.tasks', tab='completed') }}" id="tab-completed"
+            class="px-4 py-1.5 rounded-full text-xs font-bold transition-all {% if active_tab == 'completed' %}bg-white shadow text-gray-900{% else %}text-gray-500 hover:text-gray-900{% endif %} flex items-center gap-1.5">
             <i data-lucide="check-circle-2" class="w-3.5 h-3.5" aria-hidden="true"></i>
             Concluídas
-        </button>
+        </a>
     </div>
 
+    {% if active_tab == 'leads' %}
     <!-- Lead Tasks List -->
-    <div id="content-leads" class="space-y-3 tab-content">
+    <div id="content-leads" class="space-y-3">
         {% if not lead_tasks %}
         <div class="nw-panel p-10 text-center flex flex-col items-center justify-center border-dashed">
             <div class="w-12 h-12 bg-[var(--nw-shell)] rounded-2xl flex items-center justify-center mb-3 text-[var(--nw-text-3)]">
@@ -138,7 +137,7 @@
                         {% endif %}
 
                         <div class="flex items-center gap-1.5 ml-1 pl-2 border-l border-[var(--nw-border)]">
-                            {{ user_avatar(task.responsible, size='sm', show_name=False) }}
+                            {{ user_avatar(task.responsible.name if task.responsible else '', 'w-6 h-6 text-[10px]') }}
                             <span class="text-[11px] text-[var(--nw-text-2)]">{{ task.responsible.name if task.responsible else '' }}</span>
                         </div>
                     </div>
@@ -172,10 +171,11 @@
             <p class="text-xs text-[var(--nw-text-3)] mt-0.5">Nenhuma tarefa pendente para seus leads.</p>
         </div>
         {% endfor %}
+        {{ render_pagination(pagination, 'tasks.tasks') }}
     </div>
-
-    <!-- Client Tasks List (Hidden by default) -->
-    <div id="content-clients" class="space-y-3 hidden tab-content">
+    {% elif active_tab == 'clients' %}
+    <!-- Client Tasks List -->
+    <div id="content-clients" class="space-y-3">
         {% for task in client_tasks %}
         <div class="nw-panel p-4 flex items-center justify-between group hover:border-[var(--nw-border-strong)] transition-all">
             <div class="flex items-center gap-3.5">
@@ -243,11 +243,11 @@
             <p class="text-xs text-[var(--nw-text-3)] mt-0.5">Nenhuma tarefa pendente para seus clientes.</p>
         </div>
         {% endfor %}
+        {{ render_pagination(pagination, 'tasks.tasks') }}
     </div>
-
-    <!-- General Tasks List (Hidden by default) -->
-    {% if general_tasks %}
-    <div id="content-general" class="space-y-3 hidden tab-content">
+    {% elif active_tab == 'general' %}
+    <!-- General Tasks List -->
+    <div id="content-general" class="space-y-3">
         {% for task in general_tasks %}
         <div class="nw-panel p-4 flex items-center justify-between group hover:border-[var(--nw-border-strong)] transition-all">
             <div class="flex items-center gap-3.5">
@@ -293,12 +293,20 @@
                 </form>
             </div>
         </div>
+        {% else %}
+        <div class="text-center py-12 nw-panel">
+            <div class="w-14 h-14 bg-[var(--nw-shell)] rounded-2xl flex items-center justify-center mx-auto mb-3 text-[var(--nw-text-3)]">
+                <i data-lucide="check-square" class="w-7 h-7" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-sm font-bold text-[var(--nw-text-1)]">Tudo limpo!</h3>
+            <p class="text-xs text-[var(--nw-text-3)] mt-0.5">Nenhuma tarefa geral pendente.</p>
+        </div>
         {% endfor %}
+        {{ render_pagination(pagination, 'tasks.tasks') }}
     </div>
-    {% endif %}
-
-    <!-- Completed Tasks List (Hidden by default) -->
-    <div id="content-completed" class="space-y-3 hidden tab-content">
+    {% elif active_tab == 'completed' %}
+    <!-- Completed Tasks List -->
+    <div id="content-completed" class="space-y-3">
         {% for task in completed_tasks_list %}
         <div class="nw-panel p-4 flex items-center justify-between opacity-75 hover:opacity-100 transition-opacity">
             <div class="flex items-center gap-3.5">
@@ -347,7 +355,9 @@
             <p class="text-xs text-[var(--nw-text-3)] mt-0.5">As tarefas finalizadas aparecerão aqui.</p>
         </div>
         {% endfor %}
+        {{ render_pagination(pagination, 'tasks.tasks') }}
     </div>
+    {% endif %}
 </div>
 
 <!-- Create Task Modal -->
@@ -506,46 +516,6 @@
             setTimeout(() => {
                 progressBar.style.width = progressBar.dataset.width + '%';
             }, 100);
-        }
-
-        // --- Tabs Logic ---
-        const tabs = document.querySelectorAll('[data-tab-target]');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        function activateTab(tabName) {
-            // Hide all contents
-            tabContents.forEach(content => content.classList.add('hidden'));
-
-            // Reset all buttons
-            tabs.forEach(btn => {
-                btn.classList.remove('bg-white', 'shadow', 'text-gray-900');
-                btn.classList.add('text-gray-500');
-            });
-
-            // Show target content
-            const targetContent = document.getElementById('content-' + tabName);
-            if (targetContent) targetContent.classList.remove('hidden');
-
-            // Activate target button
-            const targetBtn = document.querySelector(`[data-tab-target="${tabName}"]`);
-            if (targetBtn) {
-                targetBtn.classList.add('bg-white', 'shadow', 'text-gray-900');
-                targetBtn.classList.remove('text-gray-500');
-            }
-
-            localStorage.setItem('activeTaskTab', tabName);
-        }
-
-        tabs.forEach(btn => {
-            btn.addEventListener('click', () => {
-                activateTab(btn.dataset.tabTarget);
-            });
-        });
-
-        // Initialize Tab
-        const savedTab = localStorage.getItem('activeTaskTab');
-        if (savedTab && document.getElementById('content-' + savedTab)) {
-            activateTab(savedTab);
         }
 
         // --- Modal Logic ---
