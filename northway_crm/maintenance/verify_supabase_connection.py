@@ -1,8 +1,18 @@
+import os
+import sys
 from services.supabase_service import init_supabase
+
+supabase_url = os.environ.get('SUPABASE_URL')
+supabase_key = os.environ.get('SUPABASE_KEY')
+
+if not supabase_url or not supabase_key:
+    print("Erro: variaveis de ambiente SUPABASE_URL e SUPABASE_KEY sao obrigatorias.")
+    sys.exit(1)
+
 class MockApp:
     config = {
-        'SUPABASE_URL': 'https://bnumpvhsfujpprovajkt.supabase.co',
-        'SUPABASE_KEY': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJudW1wdmhzZnVqcHByb3Zhamt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgzNjA5OTgsImV4cCI6MjA4MzkzNjk5OH0.pVcON2srZ2FXQ36Q-72WAHB-gVdrP_5Se-_K8XQ15Gs'
+        'SUPABASE_URL': supabase_url,
+        'SUPABASE_KEY': supabase_key
     }
 
 print("Initializing Supabase Client...")

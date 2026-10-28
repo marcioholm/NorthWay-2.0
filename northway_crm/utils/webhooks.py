@@ -1,10 +1,20 @@
 import os
+import hmac
 import requests
 import time
 import logging
 from models import db, CRMWebhookLog
 
 logger = logging.getLogger(__name__)
+
+def verify_webhook_signature(provided_secret, expected_secret):
+    """
+    Verifica a autenticidade de segredo/token de webhook em tempo constante via hmac.compare_digest.
+    Fail-closed: retorna False se qualquer um dos valores for nulo ou vazio.
+    """
+    if not provided_secret or not expected_secret:
+        return False
+    return hmac.compare_digest(str(provided_secret), str(expected_secret))
 
 def send_outbound_webhook(tenant_id, lead_id, action, webhook_url, payload, timeout=60, max_retries=3):
     """
