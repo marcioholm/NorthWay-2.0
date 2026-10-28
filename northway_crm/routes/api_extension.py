@@ -34,6 +34,7 @@ def token_required(f):
     return decorated
 
 @api_ext.route('/api/ext/login', methods=['POST'])
+@limiter.limit("10 per minute")
 def login():
     data = request.get_json()
     if not data or not data.get('email') or not data.get('password'):
@@ -361,9 +362,12 @@ def create_lead(current_user):
     
     # If stage is selected, ensure we use its pipeline
     if stage_id:
-        stage = PipelineStage.query.get(stage_id)
-        if stage and stage.company_id == current_user.company_id:
-            pipeline_id = stage.pipeline_id
+        stage = PipelineStage.query.join(Pipeline, PipelineStage.pipeline_id == Pipeline.id)\
+            .filter(PipelineStage.id == stage_id, Pipeline.company_id == current_user.company_id)\
+            .first()
+        if not stage:
+            return jsonify({'error': 'Invalid stage'}), 404
+        pipeline_id = stage.pipeline_id
     
     # If no pipeline specified (and no valid stage), get default
     if not pipeline_id:

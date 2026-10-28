@@ -76,6 +76,7 @@
             </div>
 
             <form class="space-y-3" action="{{ url_for('auth.register') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
                 <div class="space-y-2">
                     <!-- Name -->

@@ -113,10 +113,7 @@ def new_user():
 def edit_user(user_id):
     from models import db, User, CommercialRole, CommissionRule # Lazy Import
     # CRITICAL: Verify user belongs to SAME company
-    user = User.query.get_or_404(user_id)
-    
-    if user.company_id != current_user.company_id:
-        abort(403) # Prevent accessing other company's users
+    user = User.query.filter_by(id=user_id, company_id=current_user.company_id).first_or_404()
         
     if request.method == 'POST':
         user.name = request.form.get('name')
@@ -149,9 +146,7 @@ def resend_invite(user_id):
     from datetime import timedelta
     from utils import get_now_br
 
-    user = User.query.get_or_404(user_id)
-    if user.company_id != current_user.company_id:
-        abort(403)
+    user = User.query.filter_by(id=user_id, company_id=current_user.company_id).first_or_404()
         
     token_raw = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(token_raw.encode()).hexdigest()
@@ -210,10 +205,7 @@ def new_commercial_role():
 @login_required
 def edit_commercial_role(role_id):
     from models import db, CommercialRole
-    role = CommercialRole.query.get_or_404(role_id)
-    
-    if role.tenant_id != current_user.company_id:
-        abort(403)
+    role = CommercialRole.query.filter_by(id=role_id, tenant_id=current_user.company_id).first_or_404()
         
     if request.method == 'POST':
         role.nome = request.form.get('nome')
@@ -257,10 +249,7 @@ def edit_commission_rule(rule_id):
     from models import db, CommissionRule, CommercialRole
     import json
     
-    rule = CommissionRule.query.get_or_404(rule_id)
-    
-    if rule.tenant_id != current_user.company_id:
-        abort(403)
+    rule = CommissionRule.query.filter_by(id=rule_id, tenant_id=current_user.company_id).first_or_404()
         
     if request.method == 'POST':
         parametros_json = request.form.get('parametros')

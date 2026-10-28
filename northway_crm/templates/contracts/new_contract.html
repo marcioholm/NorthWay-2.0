@@ -19,6 +19,7 @@
         <!-- Form Content -->
         <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
             <form id="contractForm" action="{{ url_for('contracts.create_contract', id=client.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
                 <!-- 1. Configuration Group -->
                 <div class="space-y-4">

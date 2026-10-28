@@ -230,7 +230,7 @@ def report(lead_id):
     ?mode=complete → gráfico + barras + perguntas individuais
     """
     mode = request.args.get('mode', 'simple')
-    lead = Lead.query.get_or_404(lead_id)
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
     if lead.source != 'Raio-X Digital' or lead.diagnostic_status != 'done':
         return redirect(url_for('diagnostic_raiox.leads_list'))
 
@@ -295,7 +295,7 @@ def delete(lead_id):
     """
     Remove os dados de diagnóstico de um lead (Raio-X).
     """
-    lead = Lead.query.get_or_404(lead_id)
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
     if lead.source != 'Raio-X Digital':
         return jsonify({'status': 'error', 'message': 'Lead não é do Raio-X'}), 400
 

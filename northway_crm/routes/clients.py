@@ -98,9 +98,7 @@ def search_clients_api():
 @clients_bp.route('/clients/<int:id>', methods=['GET'])
 @login_required
 def client_details(id):
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return "Unauthorized", 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     try:
         update_client_health(client)
@@ -134,9 +132,7 @@ def client_details(id):
             template_id=diag_template.id, 
             status="active"
         ).first()
-        is_master = getattr(current_user, "is_super_admin", False) == 1 or \
-                    getattr(current_user, "is_super_admin", False) is True or \
-                    current_user.email == "master@northway.com"
+        is_master = bool(getattr(current_user, "is_super_admin", False))
         
         if has_grant or is_master:
             # For master, we want to ensure we have a form instance to show the link
@@ -183,10 +179,8 @@ def client_details(id):
 @login_required
 def update_client(id):
     try:
-        client = Client.query.get_or_404(id)
-        if client.company_id != current_user.company_id:
-             return "Unauthorized", 403
-         
+        client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
+        
         # Basic fields
         if 'service' in request.form: client.service = request.form.get('service')
         if 'contract_type' in request.form: client.contract_type = request.form.get('contract_type')
@@ -215,7 +209,12 @@ def update_client(id):
         
         manager_id = request.form.get('account_manager_id')
         if manager_id:
-            client.account_manager_id = int(manager_id)
+            try:
+                mgr = User.query.filter_by(id=int(manager_id), company_id=current_user.company_id).first()
+                if mgr:
+                    client.account_manager_id = mgr.id
+            except (ValueError, TypeError):
+                pass
         
         if 'monthly_value' in request.form:
             val = request.form.get('monthly_value')
@@ -257,9 +256,7 @@ def update_client(id):
 @clients_bp.route('/clients/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_client(id):
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return "Unauthorized", 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     
     # --- SYNC WITH ASAAS ---
     try:
@@ -322,9 +319,7 @@ def delete_client(id):
 @clients_bp.route('/clients/<int:id>/interactions', methods=['POST'])
 @login_required
 def add_client_interaction(id):
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return "Unauthorized", 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     
     interaction = Interaction(
         client_id=client.id,
@@ -356,14 +351,19 @@ def add_client_interaction(id):
 @clients_bp.route('/clients/<int:id>/tasks', methods=['POST'])
 @login_required
 def add_client_task(id):
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return "Unauthorized", 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     
     due_date_str = request.form.get('due_date')
     due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M') if due_date_str else None
     
-    assigned_to_id = request.form.get('responsible_id') or current_user.id
+    resp_id = request.form.get('responsible_id')
+    assigned_user = None
+    if resp_id:
+        try:
+            assigned_user = User.query.filter_by(id=int(resp_id), company_id=current_user.company_id).first()
+        except (ValueError, TypeError):
+            pass
+    assigned_to_id = assigned_user.id if assigned_user else current_user.id
     
     task = Task(
         title=request.form.get('title'),
@@ -413,12 +413,21 @@ def create_client():
             except:
                 pass
 
+        mgr_id = request.form.get('account_manager_id')
+        mgr = None
+        if mgr_id:
+            try:
+                mgr = User.query.filter_by(id=int(mgr_id), company_id=current_user.company_id).first()
+            except (ValueError, TypeError):
+                pass
+        account_manager_id = mgr.id if mgr else current_user.id
+
         new_client = Client(
             name=name,
             email=email,
             phone=request.form.get('phone'),
             company_id=current_user.company_id,
-            account_manager_id=int(request.form.get('account_manager_id') or current_user.id),
+            account_manager_id=account_manager_id,
             status=request.form.get('status', 'ativo'),
             service=request.form.get('service'),
             monthly_value=monthly_value,
@@ -617,9 +626,7 @@ def import_clients():
 @clients_bp.route('/clients/<int:id>/create_drive_folder', methods=['POST'])
 @login_required
 def create_drive_folder(id):
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        abort(403)
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
 
     drive_template_id = request.form.get('drive_template_id')
     
@@ -688,9 +695,7 @@ def create_drive_folder(id):
 @clients_bp.route('/clients/<int:id>/drive/scan', methods=['POST'])
 @login_required
 def scan_drive_folder(id):
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
 
     if not client.drive_folder_id:
         return jsonify({'error': 'Cliente sem pasta vinculada.'}), 400
@@ -759,10 +764,7 @@ def delete_drive_file(id, file_id):
     from models import db, DriveFileEvent
     from services.google_drive_service import GoogleDriveService
     
-    client = Client.query.get_or_404(id)
-    
-    if client.company_id != current_user.company_id:
-        abort(403)
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     
     # Delete from Google Drive
     try:
@@ -802,10 +804,7 @@ def bulk_delete_drive_files(id):
     import logging
     
     logger = logging.getLogger(__name__)
-    client = Client.query.get_or_404(id)
-    
-    if client.company_id != current_user.company_id:
-        abort(403)
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     
     file_ids = request.form.getlist('file_ids')
     
@@ -847,18 +846,14 @@ def bulk_delete_drive_files(id):
 @clients_bp.route('/clients/<int:id>/process-builder')
 @login_required
 def process_builder_view(id):
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return "Unauthorized", 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     return render_template('clients/process_builder.html', client=client)
 
 @clients_bp.route('/api/clients/<int:id>/processes/<string:tool_type>/<string:mode>', methods=['GET'])
 @login_required
 def get_client_process(id, tool_type, mode):
     from models import ClientProcess
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     process = ClientProcess.query.filter_by(
         client_id=id,
@@ -876,9 +871,7 @@ def get_client_process(id, tool_type, mode):
 @login_required
 def save_client_process(id, tool_type, mode):
     from models import db, ClientProcess
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     data = request.json
     
@@ -921,7 +914,5 @@ def save_client_process(id, tool_type, mode):
 @clients_bp.route('/clients/<int:id>/cronograma', methods=['GET'])
 @login_required
 def client_cronograma(id):
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return "Unauthorized", 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     return render_template('clients/cronograma_postagens.html', client=client)

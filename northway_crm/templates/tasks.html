@@ -379,6 +379,7 @@
         </div>
 
         <form action="{{ url_for('tasks.tasks') }}" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
                 <input type="text" name="title" required
@@ -467,6 +468,7 @@
         </div>
 
         <form id="editTaskForm" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
                 <input type="text" name="title" id="edit_task_title" required

@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify, redirect, url_for, flash
+import hmac
+from flask import Blueprint, request, jsonify, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
 from models import db
 from models import db, Company, BillingEvent, FinancialEvent, User, Transaction, Integration, NFSELog
@@ -8,8 +9,6 @@ import json
 import os
 
 billing_bp = Blueprint('billing', __name__, url_prefix='/billing')
-
-ASAAS_WEBHOOK_TOKEN = os.environ.get('ASAAS_WEBHOOK_TOKEN', 'whsec_3PF5yv-lNJWNvIFBR5lgRO9BQJBUGQKCtQ4z9MsoVyU')
 
 @billing_bp.route('/payment-pending')
 @login_required
@@ -100,8 +99,12 @@ def asaas_webhook():
     Receives events from Asaas.
     """
     # 1. Security Check
+    expected_token = current_app.config.get('ASAAS_WEBHOOK_TOKEN') or os.environ.get('ASAAS_WEBHOOK_TOKEN')
+    if not expected_token:
+        return jsonify({'error': 'Webhook token not configured on server'}), 401
+
     token = request.headers.get('asaas-access-token')
-    if token != ASAAS_WEBHOOK_TOKEN:
+    if not token or not hmac.compare_digest(str(token), str(expected_token)):
         return jsonify({'error': 'Unauthorized'}), 401
     
     data = request.json

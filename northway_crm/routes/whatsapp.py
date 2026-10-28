@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template, current_app, Response
+import os
+from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template, current_app, Response, has_request_context
 from flask_login import login_required, current_user
 from models import db, Integration, Lead, Client, QuickMessage, WhatsappInstance, WhatsappConversation, WhatsappMessage, WhatsappGroupMember
 from services.evolution_service import EvolutionService
@@ -9,6 +10,31 @@ from extensions import limiter
 from datetime import datetime
 
 whatsapp_bp = Blueprint('whatsapp', __name__)
+
+def build_evolution_webhook_url(host=None):
+    """
+    Constrói a URL pública HTTPS do webhook da Evolution API contendo o token de autenticação:
+    https://<host>/api/webhooks/evolution?token=<EVOLUTION_WEBHOOK_TOKEN>
+    Falha com erro claro se a variável de ambiente não existir.
+    """
+    token = current_app.config.get('EVOLUTION_WEBHOOK_TOKEN') or os.environ.get('EVOLUTION_WEBHOOK_TOKEN')
+    if not token:
+        raise ValueError("EVOLUTION_WEBHOOK_TOKEN não configurado no servidor. Defina a variável de ambiente.")
+
+    if not host:
+        if has_request_context():
+            host = request.host
+        else:
+            host = (
+                os.environ.get('APP_URL') or
+                os.environ.get('VERCEL_URL') or
+                current_app.config.get('SERVER_NAME') or
+                'crm.northway.com.br'
+            )
+
+    clean_host = host.replace('http://', '').replace('https://', '').rstrip('/')
+    return f"https://{clean_host}/api/webhooks/evolution?token={token}"
+
 
 @whatsapp_bp.before_request
 def check_feature_access():
@@ -157,11 +183,9 @@ def get_instance_status(instance_name):
         # AUTO-CONFIG WEBHOOK: If connected, ensure the webhook is set to our live endpoint
         if state == 'open':
             try:
-                # Use current_app.config['SERVER_NAME'] or hardcoded for now since it's production
-                # The correct URL is needed. We can use the request.host_url
-                webhook_url = f"{request.host_url.rstrip('/')}/api/webhooks/evolution"
+                webhook_url = build_evolution_webhook_url()
                 EvolutionService.configure_webhook(instance_name, webhook_url)
-                current_app.logger.info(f"Auto-configured webhook for {instance_name} to {webhook_url}")
+                current_app.logger.info(f"Auto-configured webhook for {instance_name}")
             except Exception as e:
                 current_app.logger.error(f"Failed auto-webhook config: {e}")
         
@@ -281,7 +305,11 @@ def test_loopback():
         return jsonify({"error": "No instance found for your company"}), 404
         
     # Standard Evolution v2 payload for message.upsert
-    webhook_url = f"{request.host_url.rstrip('/')}/api/webhooks/evolution"
+    try:
+        webhook_url = build_evolution_webhook_url()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
     payload = {
         "event": "messages.upsert",
         "instance": instance.instance_name,
@@ -304,13 +332,13 @@ def test_loopback():
         resp = requests.post(webhook_url, json=payload, timeout=10)
         return jsonify({
             "test": "loopback",
-            "target_url": webhook_url,
+            "target_url": f"https://{request.host}/api/webhooks/evolution",
             "payload_sent": payload,
             "response_status": resp.status_code,
             "response_body": resp.json() if resp.status_code == 200 else resp.text
         })
     except Exception as e:
-        return jsonify({"error": str(e), "webhook_url": webhook_url}), 500
+        return jsonify({"error": str(e)}), 500
 
 @whatsapp_bp.route('/api/whatsapp/sync-webhook')
 @login_required
@@ -322,15 +350,17 @@ def sync_webhook():
     if not instance:
         return jsonify({"error": "No instance found"}), 404
         
-    # The URL MUST be the public one
-    webhook_url = f"https://{request.host}/api/webhooks/evolution"
+    try:
+        webhook_url = build_evolution_webhook_url()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
     try:
         result = EvolutionService.configure_webhook(instance.instance_name, webhook_url)
         return jsonify({
             "status": "success",
             "instance": instance.instance_name,
-            "new_url": webhook_url,
+            "new_url": f"https://{request.host}/api/webhooks/evolution",
             "evolution_response": result
         })
     except Exception as e:
@@ -603,13 +633,15 @@ def sync_profile():
     # Resolve remote_jid
     remote_jid = contact_id
     if chat_type == 'lead':
-        obj = Lead.query.get(contact_id)
-        if obj:
-            remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
+        obj = Lead.query.filter_by(id=contact_id, company_id=current_user.company_id).first()
+        if not obj:
+            return jsonify({'success': False, 'message': 'Lead não encontrado'}), 404
+        remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
     elif chat_type == 'client':
-        obj = Client.query.get(contact_id)
-        if obj:
-            remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
+        obj = Client.query.filter_by(id=contact_id, company_id=current_user.company_id).first()
+        if not obj:
+            return jsonify({'success': False, 'message': 'Cliente não encontrado'}), 404
+        remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and '@' not in obj.phone else obj.phone
     elif '@' not in remote_jid:
         remote_jid = f"{remote_jid}@s.whatsapp.net"
 
@@ -634,7 +666,10 @@ def sync_profile():
 
 
 @whatsapp_bp.route('/api/whatsapp/inspect-webhook')
+@login_required
 def inspect_webhook():
+    if not getattr(current_user, 'is_super_admin', False):
+        abort(403)
     try:
         from northway_crm.utils.webhook_logger import get_last_events
         events = get_last_events()
@@ -767,11 +802,13 @@ def get_history(type='lead', contact_id=None, id=None):
     
     if type == 'lead':
         obj = Lead.query.get_or_404(contact_id)
-        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        if obj.company_id != current_user.company_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and "@" not in obj.phone else obj.phone
     elif type == 'client':
         obj = Client.query.get_or_404(contact_id)
-        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        if obj.company_id != current_user.company_id:
+            return jsonify({'error': 'Unauthorized'}), 403
         remote_jid = f"{obj.phone}@s.whatsapp.net" if obj.phone and "@" not in obj.phone else obj.phone
     elif type == 'atendimento':
         remote_jid = contact_id
@@ -844,10 +881,14 @@ def send_msg():
     remote_jid = data.get('remote_jid')
     if not remote_jid:
         if data.get('lead_id'):
-            obj = Lead.query.get(data['lead_id'])
+            obj = Lead.query.filter_by(id=data['lead_id'], company_id=current_user.company_id).first()
+            if not obj:
+                return jsonify({'error': 'Lead não encontrado'}), 404
             remote_jid = obj.phone
         elif data.get('client_id'):
-            obj = Client.query.get(data['client_id'])
+            obj = Client.query.filter_by(id=data['client_id'], company_id=current_user.company_id).first()
+            if not obj:
+                return jsonify({'error': 'Cliente não encontrado'}), 404
             remote_jid = obj.phone
         else:
             return jsonify({'error': 'Target missing'}), 400
@@ -914,10 +955,14 @@ def send_media():
     
     remote_jid = None
     if lead_id:
-        obj = Lead.query.get(lead_id)
+        obj = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first()
+        if not obj:
+            return jsonify({'error': 'Lead não encontrado'}), 404
         remote_jid = obj.phone
     else:
-        obj = Client.query.get(client_id)
+        obj = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first()
+        if not obj:
+            return jsonify({'error': 'Cliente não encontrado'}), 404
         remote_jid = obj.phone
         
     if remote_jid and "@" not in remote_jid:
@@ -1038,8 +1083,7 @@ def create_quick_message():
 @whatsapp_bp.route('/api/whatsapp/quick-messages/<int:id>', methods=['DELETE'])
 @login_required
 def delete_quick_message(id):
-    qm = QuickMessage.query.get_or_404(id)
-    if qm.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+    qm = QuickMessage.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     db.session.delete(qm)
     db.session.commit()
     return jsonify({'success': True})
@@ -1077,8 +1121,7 @@ def get_unread_counts():
 def get_details(type, id):
     obj = None
     if type == 'lead':
-        obj = Lead.query.get_or_404(id)
-        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        obj = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
         tags = []
         if obj.status: tags.append({'text': obj.status, 'color': 'red' if obj.status == 'new' else 'gray'})
@@ -1091,8 +1134,7 @@ def get_details(type, id):
         stage_id = obj.pipeline_stage_id
         
     elif type == 'client':
-        obj = Client.query.get_or_404(id)
-        if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
+        obj = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
         tags = []
         if obj.status: tags.append({'text': obj.status, 'color': 'green' if obj.status == 'ativo' else 'red'})
@@ -1185,13 +1227,11 @@ def update_notes(type, id):
     if content is None: return jsonify({'error': 'Missing content'}), 400
     
     if type == 'lead':
-        obj = Lead.query.get_or_404(id)
+        obj = Lead.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     elif type == 'client':
-        obj = Client.query.get_or_404(id)
+        obj = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     else:
         return jsonify({'error': 'Invalid type'}), 400
-        
-    if obj.company_id != current_user.company_id: return jsonify({'error': 'Unauthorized'}), 403
     
     obj.notes = content
     db.session.commit()

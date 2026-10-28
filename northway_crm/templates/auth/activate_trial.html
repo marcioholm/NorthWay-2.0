@@ -125,6 +125,7 @@
 
             <form class="space-y-6" action="{{ url_for('auth.start_trial') }}" method="POST"
                 onsubmit="this.querySelector('button').classList.add('opacity-75', 'cursor-wait')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit"
                     class="group w-full flex justify-center items-center py-5 px-4 rounded-xl shadow-[0_10px_30px_rgba(220,38,38,0.3)] text-lg font-bold text-white bg-gradient-to-r from-red-600 to-red-600 hover:to-red-500 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all transform hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(220,38,38,0.4)] active:scale-95 relative overflow-hidden">
 

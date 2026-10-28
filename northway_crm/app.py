@@ -16,10 +16,11 @@ from flask_migrate import Migrate
 from models import db, User, Task, Role, AudienceMatrix, CREPIDiagnostico, CREPIPremissa, SwotAnalise, SwotItem
 from database_sync import sync_database
 import json
+import click
 # Blueprint imports moved to create_app to prevent global import crashes
 from services.supabase_service import init_supabase
 from flask_cors import CORS
-from extensions import limiter
+from extensions import limiter, csrf
 import logging
 
 def create_app(test_config=None):
@@ -110,8 +111,29 @@ def create_app(test_config=None):
             app.config.update(test_config)
         if not app.config['SECRET_KEY']:
             raise RuntimeError('SECRET_KEY must be configured')
+        if os.environ.get('VERCEL') and not os.environ.get('RATELIMIT_STORAGE_URI'):
+            app.logger.warning(
+                "⚠️ RATELIMIT WARNING: VERCEL is active but RATELIMIT_STORAGE_URI is not set. "
+                "Rate limiting is defaulting to 'memory://', which is not shared across serverless execution instances. "
+                "Configure an external Redis URI (e.g. Upstash 'rediss://...') via RATELIMIT_STORAGE_URI for shared rate limiting."
+            )
+
         limiter.init_app(app)
         app.limiter = limiter
+        csrf.init_app(app)
+        app.csrf = csrf
+
+        from flask_wtf.csrf import CSRFError
+        @app.errorhandler(CSRFError)
+        def handle_csrf_error(e):
+            reason = getattr(e, 'description', str(e))
+            app.logger.warning(f"CSRF_REJECTED: {reason} on {request.method} {request.path}")
+            if request.path.startswith(('/api/', '/internal/', '/prospecting/')) or \
+               request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+               request.accept_mimetypes.best == 'application/json':
+                return jsonify({'error': 'CSRF validation failed', 'reason': reason}), 400
+            return render_template('error.html', message=f"Requisição inválida ou sessão expirada (CSRF: {reason})."), 400
+
         
         # Database Setup with Resilience
         database_url = (test_config or {}).get('SQLALCHEMY_DATABASE_URI') or os.environ.get('DATABASE_URL')
@@ -460,9 +482,7 @@ def create_app(test_config=None):
                 import traceback
                 return jsonify({'error': str(e), 'traceback': traceback.format_exc(), 'partial_info': debug_info}), 500
 
-        @app.route('/verify-deploy-2026')
-        def verify_deploy():
-            return "DEPLOY_V9_LIVE_2026-03-30_09:50"
+
 
         @app.route('/sitemap.xml')
         def sitemap():
@@ -578,6 +598,182 @@ Sitemap: {base_url}/sitemap.xml
             import click
             click.echo(sync_database())
 
+        @app.cli.command('system-reset')
+        @click.option('--company-id', type=int, default=None, help='ID da empresa a resetar (ou todas se omitido)')
+        @click.option('--confirm', default=None, help='Passar RESET_PRODUCTION para pular prompt')
+        def system_reset_command(company_id, confirm):
+            """DESTRUCTIVE: Limpa dados de teste preservando Super Admin e assets via CLI."""
+            import os
+            import click
+            from models import db, User, Company
+            from sqlalchemy import text, inspect
+            from sqlalchemy.engine import make_url
+
+            # 1. Exigir ALLOW_SYSTEM_RESET=1
+            if os.environ.get('ALLOW_SYSTEM_RESET') != '1':
+                click.echo("Erro: comando abortado. A variavel de ambiente ALLOW_SYSTEM_RESET=1 e obrigatoria para executar o reset do sistema.")
+                return
+
+            master_user = User.query.filter_by(is_super_admin=True).first()
+            if not master_user:
+                click.echo("Nenhum usuario Super Admin encontrado.")
+                return
+
+            # 2. Informar host do banco e total de empresas afetadas
+            db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            try:
+                parsed_url = make_url(db_uri)
+                db_host = f"{parsed_url.host}:{parsed_url.port}" if parsed_url.port else (parsed_url.host or parsed_url.database or 'local')
+            except Exception:
+                db_host = "desconhecido"
+
+            if company_id:
+                target_companies = Company.query.filter(Company.id == company_id).all()
+            else:
+                target_companies = Company.query.filter(Company.id != master_user.company_id).all()
+
+            click.echo(f"Host do banco de dados: {db_host}")
+            click.echo(f"Total de empresas que serao afetadas: {len(target_companies)}")
+
+            # 3. Confirmação
+            if confirm != 'RESET_PRODUCTION':
+                target_desc = f"da empresa ID {company_id}" if company_id else "globais (todas empresas exceto Master)"
+                if not click.confirm(f"ATENCAO: Esta acao e destrutiva e ira apagar dados {target_desc}. Deseja prosseguir?"):
+                    click.echo("Operacao cancelada.")
+                    return
+
+            try:
+                # 4. Cancelamento de assinaturas no Asaas
+                try:
+                    from services.asaas_service import delete_subscription
+                    for comp in target_companies:
+                        sub_id = getattr(comp, 'subscription_id', None)
+                        if sub_id:
+                            try:
+                                delete_subscription(sub_id)
+                                click.echo(f"✅ Assinatura {sub_id} cancelada no Asaas para empresa '{comp.name}' (ID: {comp.id})")
+                            except Exception as asaas_err:
+                                click.echo(f"⚠️ Falha ao cancelar assinatura Asaas {sub_id} para empresa '{comp.name}': {asaas_err}")
+                except Exception as imp_err:
+                    click.echo(f"Aviso ao inicializar servico Asaas: {imp_err}")
+
+                existing_tables = set(inspect(db.engine).get_table_names())
+                def safe_delete(tbl, where_clause="", params=None):
+                    if tbl in existing_tables:
+                        sql = f'DELETE FROM "{tbl}"' if tbl in ('user', 'transaction') else f'DELETE FROM {tbl}'
+                        if where_clause:
+                            sql += f' WHERE {where_clause}'
+                        db.session.execute(text(sql), params or {})
+
+                if company_id:
+                    safe_delete("whatsapp_messages", "conversation_id IN (SELECT id FROM whatsapp_conversations WHERE company_id = :cid)", {'cid': company_id})
+                    safe_delete("whatsapp_conversations", "company_id = :cid", {'cid': company_id})
+                    safe_delete("whatsapp_group_members", "company_id = :cid", {'cid': company_id})
+                    safe_delete("whatsapp_instances", "company_id = :cid", {'cid': company_id})
+                    safe_delete("task", "company_id = :cid", {'cid': company_id})
+                    safe_delete("interaction", "company_id = :cid", {'cid': company_id})
+                    safe_delete("transaction", "company_id = :cid", {'cid': company_id})
+                    safe_delete("contract", "company_id = :cid", {'cid': company_id})
+                    safe_delete("notification", "company_id = :cid", {'cid': company_id})
+                    safe_delete("lead", "company_id = :cid", {'cid': company_id})
+                    safe_delete("client", "company_id = :cid", {'cid': company_id})
+                    safe_delete("expense", "company_id = :cid", {'cid': company_id})
+                    safe_delete("financial_category", "company_id = :cid", {'cid': company_id})
+                    safe_delete("client_checklist_items", "checklist_id IN (SELECT id FROM client_checklists WHERE company_id = :cid)", {'cid': company_id})
+                    safe_delete("client_checklists", "company_id = :cid", {'cid': company_id})
+                    safe_delete("client_checklist", "company_id = :cid", {'cid': company_id})
+                    safe_delete("process_template", "company_id = :cid", {'cid': company_id})
+                    safe_delete("goal", "company_id = :cid", {'cid': company_id})
+                    safe_delete("integration", "company_id = :cid", {'cid': company_id})
+                    safe_delete("quick_message", "company_id = :cid", {'cid': company_id})
+                    safe_delete("template_company_association", "company_id = :cid", {'cid': company_id})
+                    safe_delete("library_book_company_association", "company_id = :cid", {'cid': company_id})
+                    safe_delete("billing_event", "company_id = :cid", {'cid': company_id})
+                    safe_delete("financial_event", "company_id = :cid", {'cid': company_id})
+                    safe_delete("pipeline_stage", "company_id = :cid", {'cid': company_id})
+                    safe_delete("pipeline", "company_id = :cid", {'cid': company_id})
+                    safe_delete("user", "company_id = :cid AND id != :uid", {'cid': company_id, 'uid': master_user.id})
+                    safe_delete("role", "company_id = :cid", {'cid': company_id})
+                    if company_id != master_user.company_id:
+                        safe_delete("company", "id = :cid", {'cid': company_id})
+                    db.session.commit()
+                    click.echo(f"Empresa {company_id} resetada com sucesso via CLI.")
+                else:
+                    if "lead" in existing_tables:
+                        db.session.execute(text("UPDATE lead SET contact_uuid = NULL"))
+                    if "client" in existing_tables:
+                        db.session.execute(text("UPDATE client SET contact_uuid = NULL"))
+                    safe_delete("whatsapp_messages")
+                    safe_delete("whatsapp_conversations")
+                    safe_delete("whatsapp_group_members")
+                    safe_delete("whatsapp_instances")
+                    safe_delete("task")
+                    safe_delete("interaction")
+                    safe_delete("transaction")
+                    safe_delete("contract")
+                    safe_delete("notification")
+                    safe_delete("lead")
+                    safe_delete("client")
+                    safe_delete("contact")
+                    safe_delete("expense")
+                    safe_delete("financial_category")
+                    safe_delete("client_checklist_items")
+                    safe_delete("client_checklists")
+                    safe_delete("client_checklist")
+                    safe_delete("process_template")
+                    safe_delete("goal")
+                    safe_delete("integration")
+                    safe_delete("quick_message")
+                    safe_delete("template_company_association")
+                    safe_delete("library_book_company_association")
+                    safe_delete("contract_template")
+                    safe_delete("contract_templates")
+                    safe_delete("billing_event")
+                    safe_delete("financial_event")
+                    safe_delete("password_reset_token")
+                    safe_delete("email_log")
+                    safe_delete("user_pipeline_association", "pipeline_id IN (SELECT id FROM pipeline WHERE company_id != :company_id)", {'company_id': master_user.company_id})
+                    safe_delete("pipeline_stage", "company_id != :company_id", {'company_id': master_user.company_id})
+                    safe_delete("pipeline", "company_id != :company_id", {'company_id': master_user.company_id})
+                    safe_delete("user", "id != :user_id", {'user_id': master_user.id})
+                    safe_delete("role", "company_id != :company_id", {'company_id': master_user.company_id})
+                    safe_delete("company", "id != :company_id", {'company_id': master_user.company_id})
+                    db.session.commit()
+                    click.echo("Sistema resetado com sucesso via CLI.")
+            except Exception as e:
+                db.session.rollback()
+                click.echo(f"Erro durante o reset: {e}")
+
+        @app.cli.command('evolution-resync-webhooks')
+        def evolution_resync_webhooks_command():
+            """Percorre todas as WhatsappInstance e chama configure_webhook com a nova URL e token."""
+            import click
+            from models import WhatsappInstance
+            from services.evolution_service import EvolutionService
+            from routes.whatsapp import build_evolution_webhook_url
+
+            try:
+                webhook_url = build_evolution_webhook_url()
+            except Exception as e:
+                click.echo(f"Erro ao construir URL do webhook: {e}")
+                return
+
+            instances = WhatsappInstance.query.all()
+            click.echo(f"Ressincronizando webhooks para {len(instances)} instancia(s)...")
+
+            success_count = 0
+            fail_count = 0
+            for inst in instances:
+                try:
+                    EvolutionService.configure_webhook(inst.instance_name, webhook_url)
+                    click.echo(f"[OK] Instancia '{inst.instance_name}' (ID: {inst.id}, Empresa: {inst.company_id}): sucesso")
+                    success_count += 1
+                except Exception as e:
+                    click.echo(f"[FALHA] Instancia '{inst.instance_name}' (ID: {inst.id}, Empresa: {inst.company_id}): {e}")
+                    fail_count += 1
+
+            click.echo(f"Concluido: {success_count} sucesso(s), {fail_count} falha(s).")
+
         # --- REGISTER BLUEPRINTS ---
         # Defensive loading: one failing blueprint won't crash the whole app
         blueprints = [
@@ -641,6 +837,60 @@ Sitemap: {base_url}/sitemap.xml
         # --- REGISTRO EXPLÍCITO: internal_api_bp com prefixo /internal ---
         from routes.internal_api import internal_api_bp
         app.register_blueprint(internal_api_bp, url_prefix='/internal')
+
+        # --- CSRF EXEMPTIONS (M2M Webhooks, Cron, JWT Extension, REST API) ---
+        try:
+            from routes.webhook_whatsapp import evolution_webhook_bp
+            csrf.exempt(evolution_webhook_bp)
+        except Exception:
+            pass
+
+        try:
+            csrf.exempt(internal_api_bp)
+        except Exception:
+            pass
+
+        try:
+            from routes.jobs import jobs_bp
+            csrf.exempt(jobs_bp)
+        except Exception:
+            pass
+
+        try:
+            from routes.api_extension import api_ext
+            csrf.exempt(api_ext)
+        except Exception:
+            pass
+
+        try:
+            from routes.api_v1 import api_v1_bp
+            csrf.exempt(api_v1_bp)
+        except Exception:
+            pass
+
+        try:
+            from routes.integrations import asaas_webhook
+            csrf.exempt(asaas_webhook)
+        except Exception:
+            pass
+
+        try:
+            from routes.billing import asaas_webhook as billing_asaas_webhook
+            csrf.exempt(billing_asaas_webhook)
+        except Exception:
+            pass
+
+        try:
+            from routes.forms import submit_form
+            csrf.exempt(submit_form)
+        except Exception:
+            pass
+
+        try:
+            from routes.diagnostic_raiox import submit as diagnostic_raiox_submit
+            csrf.exempt(diagnostic_raiox_submit)
+        except Exception:
+            pass
 
         # --- GLOBAL ERROR HANDLER ---
         @app.errorhandler(500)

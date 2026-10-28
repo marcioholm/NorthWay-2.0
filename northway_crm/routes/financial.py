@@ -594,9 +594,7 @@ def create_manual_charge(id):
     from services.asaas_service import AsaasService
     
     # Check Client
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        abort(403)
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     # Get Data
     description = request.form.get('description')

@@ -19,7 +19,8 @@ def seed_data():
     user_exists = cursor.fetchone()
     
     if not user_exists:
-        pw_hash = generate_password_hash('admin123')
+        seed_pass = os.environ.get('SEED_ADMIN_PASSWORD') or str(uuid.uuid4())
+        pw_hash = generate_password_hash(seed_pass)
         cursor.execute("""
             INSERT INTO user (name, email, password_hash, role, company_id, created_at, is_super_admin)
             VALUES (?, ?, ?, ?, ?, ?, ?)

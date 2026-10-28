@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Escolha seu Plano | NorthWay CRM</title>
 
     <!-- Fonts -->
@@ -122,6 +123,7 @@
             </div>
 
             <form action="{{ url_for('billing.process_checkout') }}" method="POST" class="max-w-6xl mx-auto">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
                 <!-- Billing Data Section -->
                 <div

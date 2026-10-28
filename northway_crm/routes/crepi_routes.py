@@ -8,9 +8,7 @@ crepi_bp = Blueprint('crepi', __name__)
 @crepi_bp.route('/api/clients/<int:client_id>/crepi/create', methods=['POST'])
 @login_required
 def create_crepi(client_id):
-    client = Client.query.get_or_404(client_id)
-    if client.company_id != current_user.company_id:
-        abort(403)
+    client = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first_or_404()
     
     data = request.get_json() or {}
     new_diag = CREPIDiagnostico(
@@ -34,9 +32,7 @@ def create_crepi(client_id):
 @crepi_bp.route('/api/clients/<int:client_id>/crepi/list', methods=['GET'])
 @login_required
 def list_crepi(client_id):
-    client = Client.query.get_or_404(client_id)
-    if client.company_id != current_user.company_id:
-        abort(403)
+    client = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first_or_404()
         
     diagnosticos = CREPIDiagnostico.query.filter_by(client_id=client_id).order_by(CREPIDiagnostico.created_at.desc()).all()
     

@@ -1,6 +1,13 @@
+import os
+import sys
 from app import create_app
 from models import db, User, Company, Role, ROLE_ADMIN
 from werkzeug.security import generate_password_hash
+
+password = os.environ.get('MASTER_PASSWORD')
+if not password:
+    print("Erro: variavel de ambiente MASTER_PASSWORD obrigatoria para criacao de usuario Master.")
+    sys.exit(1)
 
 app = create_app()
 
@@ -14,8 +21,7 @@ with app.app_context():
         db.session.commit()
     
     # 2. Check for Master User
-    email = 'master@northway.com'
-    password = 'master_password_123' # Default, change later
+    email = os.environ.get('MASTER_EMAIL', 'master@northway.com')
     
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
@@ -39,4 +45,4 @@ with app.app_context():
         db.session.commit()
         print("Created.")
         
-    print(f"\nSUCCESS! Credentials:\nEmail: {email}\nPassword: {password}")
+    print(f"\nSUCCESS! Super Admin configurado para email: {email}")

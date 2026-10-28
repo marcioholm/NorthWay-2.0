@@ -1,4 +1,5 @@
 import os
+import hmac
 import time
 import requests
 from flask import Blueprint, request, jsonify
@@ -34,13 +35,13 @@ def require_internal_auth(f):
         expected_key = os.environ.get('CRM_INTERNAL_API_KEY', '')
 
         if not expected_key:
-            return jsonify({'success': False, 'error': 'Internal API not configured'}), 500
+            return jsonify({'success': False, 'error': 'Internal API key not configured'}), 401
 
         if not auth_header.startswith('Bearer '):
             return jsonify({'success': False, 'error': 'Missing or invalid Authorization header'}), 401
 
         token = auth_header[7:]
-        if token != expected_key:
+        if not hmac.compare_digest(str(token), str(expected_key)):
             return jsonify({'success': False, 'error': 'Invalid API key'}), 401
 
         return f(*args, **kwargs)
@@ -1228,6 +1229,7 @@ def recover_stuck_leads():
 
 
 @internal_api_bp.route('/health', methods=['GET'])
+@require_internal_auth
 def health_check():
     return jsonify({'status': 'ok', 'service': 'internal-api'})
 

@@ -87,7 +87,7 @@ class FormService:
         target_client = None
         
         if target_type == 'client' and target_id:
-            target_client = Client.query.get(target_id)
+            target_client = Client.query.filter_by(id=target_id, company_id=form_instance.tenant_id).first()
             if target_client:
                 # Update Client Diagnostic Info
                 target_client.diagnostic_status = 'done'
@@ -98,7 +98,7 @@ class FormService:
                 target_client.diagnostic_pillars = pillars
         
         elif target_type == 'lead' and target_id:
-            target_lead = Lead.query.get(target_id)
+            target_lead = Lead.query.filter_by(id=target_id, company_id=form_instance.tenant_id).first()
             
         # Fallback to phone search if no specific target found
         lead_data = payload.get('contact', {})

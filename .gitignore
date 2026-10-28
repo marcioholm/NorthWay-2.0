@@ -9,6 +9,7 @@ venv/
 
 # Environment & Secrets
 .env*
+!.env.example
 
 # Nested Artifacts
 NorthWay/

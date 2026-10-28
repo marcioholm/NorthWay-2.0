@@ -284,15 +284,18 @@
                     <div class="flex items-center gap-2">
                         <code
                             class="bg-white px-2 py-1 rounded border border-gray-200 text-xs font-mono text-gray-600 w-full truncate"
-                            id="webhookEvolutionUrl">
-                                         {{ request.url_root }}api/webhooks/evolution
-                                     </code>
+                            id="webhookEvolutionUrl">https://{{ request.host }}/api/webhooks/evolution</code>
                         <button
                             onclick="navigator.clipboard.writeText(document.getElementById('webhookEvolutionUrl').innerText.trim())"
-                            class="text-gray-400 hover:text-gray-600">
+                            class="text-gray-400 hover:text-gray-600"
+                            title="Copiar URL">
                             <i data-lucide="copy" class="w-4 h-4"></i>
                         </button>
                     </div>
+                    <p class="text-xs text-emerald-600 mt-2 flex items-center gap-1 font-medium">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                        O token de autenticação é adicionado automaticamente pelo sistema ao sincronizar a instância.
+                    </p>
                 </div>
             </div>
         </div>

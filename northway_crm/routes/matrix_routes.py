@@ -8,9 +8,7 @@ matrix_bp = Blueprint('matrix', __name__)
 @matrix_bp.route('/clients/<int:client_id>/matrix', methods=['POST'])
 @login_required
 def create_matrix(client_id):
-    client = Client.query.get_or_404(client_id)
-    if client.company_id != current_user.company_id:
-        abort(403)
+    client = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first_or_404()
     
     data = request.get_json()
     new_matrix = AudienceMatrix(

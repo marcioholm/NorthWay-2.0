@@ -39,9 +39,7 @@ def get_notifications():
 @notifications_bp.route('/api/notifications/<int:id>/read', methods=['POST'])
 @login_required
 def mark_read(id):
-    notification = Notification.query.get_or_404(id)
-    if notification.user_id != current_user.id:
-        abort(403)
+    notification = Notification.query.filter_by(id=id, user_id=current_user.id).first_or_404()
         
     notification.read = True
     db.session.commit()

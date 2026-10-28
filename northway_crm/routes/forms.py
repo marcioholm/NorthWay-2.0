@@ -1,9 +1,11 @@
 
 from flask import Blueprint, request, jsonify, current_app, render_template, redirect, url_for, flash, make_response
+from urllib.parse import urlparse
 import requests
 from flask_login import login_required, current_user
 from models import db, FormInstance, User, LibraryTemplate, LibraryTemplateGrant, FormSubmission
 from services.form_service import FormService
+from extensions import csrf
 import secrets
 import re
 
@@ -124,7 +126,7 @@ def my_diagnostic():
     
     if not grant:
         # Check if user is Super Admin -> Auto Grant
-        if getattr(current_user, 'is_super_admin', False) or current_user.email == 'master@northway.com':
+        if getattr(current_user, 'is_super_admin', False):
              grant = LibraryTemplateGrant(
                  tenant_id=current_user.company_id,
                  template_id=template.id,
@@ -271,14 +273,12 @@ def get_report(submission_id):
     """
     Internal Endpoint: View Detailed Diagnostic Report
     """
-    submission = FormSubmission.query.get(submission_id)
+    if not current_user.is_super_admin:
+        submission = FormSubmission.query.filter_by(id=submission_id, tenant_id=current_user.company_id).first()
+    else:
+        submission = FormSubmission.query.get(submission_id)
     if not submission:
         return render_template('error.html', message="Relatório não encontrado."), 404
-        
-    # Check permission (must own the form or be admin)
-    if not current_user.is_super_admin:
-        if submission.tenant_id != current_user.company_id:
-             return render_template('error.html', message="Acesso negado."), 403
 
     # Get Company details and logo
     from models import Company
@@ -312,25 +312,69 @@ def get_report(submission_id):
 
 NEXT_APP_URL = "https://northway-crm-next.vercel.app"
 
+def _verify_next_proxy_security():
+    """
+    Proteção alternativa ao CSRF para rotas do proxy Next.js:
+    Para métodos mutáveis (POST, PUT, DELETE, PATCH), exige:
+    1. Header 'X-Requested-With: XMLHttpRequest' (sites terceiros não conseguem enviar esse header via cross-origin simples);
+    2. Origin ou Referer apontando para o próprio domínio do CRM (evita ataques de outros domínios).
+    """
+    if request.method not in ['POST', 'PUT', 'DELETE', 'PATCH']:
+        return None
+
+    # 1. Exige header X-Requested-With: XMLHttpRequest
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        return jsonify({"error": "Forbidden: X-Requested-With header required"}), 403
+
+    # 2. Confere Origin / Referer contra o domínio do CRM
+    expected_hosts = {request.host}
+    forwarded_host = request.headers.get('X-Forwarded-Host')
+    if forwarded_host:
+        expected_hosts.add(forwarded_host)
+
+    origin = request.headers.get('Origin')
+    referer = request.headers.get('Referer')
+
+    if not origin and not referer:
+        return jsonify({"error": "Forbidden: Origin or Referer header required"}), 403
+
+    if origin:
+        parsed_origin = urlparse(origin).netloc
+        if not parsed_origin or parsed_origin not in expected_hosts:
+            return jsonify({"error": "Forbidden: Invalid Origin"}), 403
+
+    if referer:
+        parsed_referer = urlparse(referer).netloc
+        if not parsed_referer or parsed_referer not in expected_hosts:
+            return jsonify({"error": "Forbidden: Invalid Referer"}), 403
+
+    return None
+
 def proxy_request(path):
     url = f"{NEXT_APP_URL}{path}"
     if request.query_string:
         url += f"?{request.query_string.decode('utf-8')}"
     
-    headers = {key: value for (key, value) in request.headers if key.lower() != 'host'}
+    # Repassar apenas cabeçalhos estritamente necessários;
+    # NUNCA repassar Cookie nem a sessão do CRM para o app Next.js
+    allowed_headers = {'content-type', 'accept', 'accept-language', 'user-agent', 'x-requested-with'}
+    headers = {
+        key: value for (key, value) in request.headers
+        if key.lower() in allowed_headers
+    }
     headers['Accept-Encoding'] = 'identity'
     
     try:
         if request.method == 'GET':
-            resp = requests.get(url, headers=headers, allow_redirects=True)
+            resp = requests.get(url, headers=headers, allow_redirects=True, timeout=15)
         else:
             resp = requests.request(
                 method=request.method,
                 url=url,
                 headers=headers,
                 data=request.get_data(),
-                cookies=request.cookies,
-                allow_redirects=True
+                allow_redirects=True,
+                timeout=15
             )
 
         response = make_response(resp.content, resp.status_code)
@@ -340,10 +384,14 @@ def proxy_request(path):
     except Exception as e:
         return f"Proxy Error: {str(e)}", 502
 
-@forms_bp.route('/proxy-dashboard', defaults={'path': ''})
+@forms_bp.route('/proxy-dashboard', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE'])
 @forms_bp.route('/proxy-dashboard/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @login_required
+@csrf.exempt
 def proxy_dashboard(path):
+    security_error = _verify_next_proxy_security()
+    if security_error:
+        return security_error
     return proxy_request(f"/formularios/{path}")
 
 @forms_bp.route('/playbook/<slug>', methods=['GET'])
@@ -353,10 +401,14 @@ def playbook_view(slug):
     """
     return proxy_request(f"/playbooks/{slug}")
 
-@forms_bp.route('/api-proxy', defaults={'path': ''})
+@forms_bp.route('/api-proxy', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE'])
 @forms_bp.route('/api-proxy/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @login_required
+@csrf.exempt
 def proxy_api(path):
+    security_error = _verify_next_proxy_security()
+    if security_error:
+        return security_error
     return proxy_request(f"/api/forms/{path}")
 
 @forms_bp.route('/_next/<path:path>', methods=['GET'])

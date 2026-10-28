@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort, current_app
+from werkzeug.exceptions import HTTPException
 from flask_login import login_required, current_user
 from models import db, Client, Contract, ContractTemplate, Transaction, Task
 from utils import create_notification, get_contract_replacements, get_date_extenso_br
@@ -17,9 +18,7 @@ def new_contract(id):
     if not current_user.company_id:
         abort(403)
 
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        return "Unauthorized", 403
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     from models import template_company_association
     templates = ContractTemplate.query.outerjoin(template_company_association)\
@@ -61,10 +60,15 @@ def autosave_contract():
         if not client_id or not template_id:
             return jsonify({'success': False, 'error': 'Missing data'}), 400
 
+        # Validate Client
+        client = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
         # Find or Create Draft
         contract = None
         if contract_id:
-            contract = Contract.query.get(contract_id)
+            contract = Contract.query.filter_by(id=contract_id, company_id=current_user.company_id).first()
         
         if not contract:
             # Create new draft
@@ -96,9 +100,7 @@ def load_draft(contract_id):
     if not current_user.company_id:
         abort(403)
 
-    contract = Contract.query.get_or_404(contract_id)
-    if contract.company_id != current_user.company_id:
-        abort(403)
+    contract = Contract.query.filter_by(id=contract_id, company_id=current_user.company_id).first_or_404()
         
     client = contract.client
     
@@ -152,11 +154,16 @@ def preview_contract():
     attachment_id = data.get('attachment_id')
     form_data = data.get('form_data', {})
     
-    client = Client.query.get_or_404(client_id)
+    client = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first_or_404()
     template = ContractTemplate.query.get_or_404(template_id)
-    
-    if client.company_id != current_user.company_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    if template.company_id != current_user.company_id and not template.is_global:
+        from models import template_company_association
+        has_assoc = db.session.query(template_company_association).filter(
+            template_company_association.c.template_id == template.id,
+            template_company_association.c.company_id == current_user.company_id
+        ).first()
+        if not has_assoc:
+            abort(404)
 
     replacements = get_contract_replacements(client, form_data)
     
@@ -170,16 +177,20 @@ def preview_contract():
         print(f"Markdown Error: {e}")
     
     if attachment_id:
-        attachment = ContractTemplate.query.get(attachment_id)
-        if attachment and attachment.company_id == client.company_id:
-            att_content = attachment.content
-            for key, value in replacements.items():
-                att_content = att_content.replace(key, str(value))
-            try:
-                att_content = markdown.markdown(att_content)
-                content += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
-            except:
-                pass
+        attachment = ContractTemplate.query.filter(
+            ContractTemplate.id == attachment_id,
+            db.or_(ContractTemplate.company_id == client.company_id, ContractTemplate.is_global == True)
+        ).first()
+        if not attachment:
+            abort(404)
+        att_content = attachment.content
+        for key, value in replacements.items():
+            att_content = att_content.replace(key, str(value))
+        try:
+            att_content = markdown.markdown(att_content)
+            content += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
+        except:
+            pass
 
     # --- PREMIUM HEADER LOGIC ---
     logo_img_tag = ""
@@ -323,15 +334,21 @@ def create_contract(id):
     if not current_user.company_id:
         abort(403)
 
-    client = Client.query.get_or_404(id)
-    if client.company_id != current_user.company_id:
-        abort(403)
-    
+    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
+
+    template_id = request.form.get('template_id')
+    template = ContractTemplate.query.get_or_404(template_id)
+    if template.company_id != current_user.company_id and not template.is_global:
+        from models import template_company_association
+        has_assoc = db.session.query(template_company_association).filter(
+            template_company_association.c.template_id == template.id,
+            template_company_association.c.company_id == current_user.company_id
+        ).first()
+        if not has_assoc:
+            abort(404)
+
     try:
         action = request.form.get('action', 'issue')
-        template_id = request.form.get('template_id')
-        contract_id = request.form.get('contract_id')
-        template = ContractTemplate.query.get_or_404(template_id)
         form_data = request.form.to_dict()
         
         replacements = get_contract_replacements(client, form_data)
@@ -370,17 +387,18 @@ def create_contract(id):
         # Attachment
         attachment_id = form_data.get('attachment_id')
         if attachment_id:
+            attachment = ContractTemplate.query.filter(
+                ContractTemplate.id == attachment_id,
+                db.or_(ContractTemplate.company_id == client.company_id, ContractTemplate.is_global == True)
+            ).first()
+            if not attachment:
+                abort(404)
+            att_content = attachment.content
+            for key, value in replacements.items():
+                att_content = att_content.replace(key, str(value))
             try:
-                attachment = ContractTemplate.query.get(attachment_id)
-                if attachment and (attachment.company_id == client.company_id or attachment.is_global):
-                    att_content = attachment.content
-                    for key, value in replacements.items():
-                        att_content = att_content.replace(key, str(value))
-                    try:
-                        att_content = markdown.markdown(att_content)
-                        content_body += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
-                    except Exception:
-                        pass
+                att_content = markdown.markdown(att_content)
+                content_body += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
             except Exception:
                 pass
         
@@ -545,8 +563,8 @@ def create_contract(id):
             installments_count = 12
 
         if contract_id:
-            contract = Contract.query.get(contract_id)
-            if contract and contract.company_id == current_user.company_id:
+            contract = Contract.query.filter_by(id=contract_id, company_id=current_user.company_id).first()
+            if contract:
                 contract.template_id = template.id
                 contract.generated_content = generated_content
                 contract.form_data = json.dumps(form_data)
@@ -604,6 +622,8 @@ def create_contract(id):
             flash('Rascunho salvo!', 'info')
 
         return redirect(url_for('clients.client_details', id=client.id))
+    except HTTPException:
+        raise
     except Exception as e:
         db.session.rollback()
         flash(f"Erro ao emitir contrato: {str(e)}", 'error')
@@ -615,9 +635,7 @@ def terminate_contract(id):
     if not current_user.company_id:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    contract = Contract.query.get_or_404(id)
-    if contract.company_id != current_user.company_id:
-        abort(403)
+    contract = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     
     try:
         # Handle both JSON (API) and Form (UI) requests
@@ -733,9 +751,7 @@ def add_penalty(id):
     if not current_user.company_id:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    contract = Contract.query.get_or_404(id)
-    if contract.company_id != current_user.company_id:
-        abort(403)
+    contract = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     try:
         penalty_str = request.form.get('fee_amount', '0').replace('R$', '').replace('.', '').replace(',', '.')
@@ -819,9 +835,7 @@ def duplicate_contract(id):
     if not current_user.company_id:
         abort(403)
 
-    original = Contract.query.get_or_404(id)
-    if original.company_id != current_user.company_id:
-        abort(403)
+    original = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
 
     # Prepare duplicated form_data with updated emission/start dates
     now_br = datetime.now()
@@ -885,9 +899,7 @@ def sign_contract(id):
             day = min(sourcedate.day, [31, 29 if year % 4 == 0 and not year % 100 == 0 or year % 400 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month-1])
             return date(year, month, day)
 
-        contract = Contract.query.get_or_404(id)
-        if contract.company_id != current_user.company_id:
-            return jsonify({'error': 'Unauthorized'}), 403
+        contract = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
         # Accept new dates if provided
         request_data = request.get_json() or {}
@@ -1069,9 +1081,7 @@ def view_contract(id):
     if not current_user.company_id:
         abort(403)
 
-    contract = Contract.query.get_or_404(id)
-    if contract.company_id != current_user.company_id:
-        abort(403)
+    contract = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
     return render_template('contracts/view_contract.html', contract=contract)
 
 @contracts_bp.route('/contracts/<int:id>/edit')
@@ -1080,9 +1090,7 @@ def edit_contract(id):
     if not current_user.company_id:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    contract = Contract.query.get_or_404(id)
-    if contract.company_id != current_user.company_id:
-        abort(403)
+    contract = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     return render_template('contracts/edit_contract.html', contract=contract)
 
@@ -1092,9 +1100,7 @@ def save_contract(id):
     if not current_user.company_id:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    contract = Contract.query.get_or_404(id)
-    if contract.company_id != current_user.company_id:
-        abort(403)
+    contract = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     try:
         data = request.json
@@ -1116,9 +1122,7 @@ def regenerate_billing(id):
     if not current_user.company_id:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    contract = Contract.query.get_or_404(id)
-    if contract.company_id != current_user.company_id:
-        abort(403)
+    contract = Contract.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     try:
         # --- TENANT BILLING LOGIC ---

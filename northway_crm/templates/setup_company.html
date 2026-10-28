@@ -90,6 +90,7 @@
             {% endwith %}
 
             <form class="space-y-8" action="{{ url_for('auth.setup_company') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <!-- Person Type Selector -->
                 <div class="p-1.5 bg-gray-100 rounded-xl flex gap-1 shadow-inner">
                     <label class="flex-1 cursor-pointer">

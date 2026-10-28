@@ -1148,15 +1148,16 @@ def update_lead_status(lead_id):
 
     new_campaign_id = data.get('campaign_id')
     if new_campaign_id and new_campaign_id != lead.prospecting_campaign_id:
-        campaign = ProspectingCampaign.query.get(new_campaign_id)
-        if campaign and campaign.company_id == current_user.company_id:
-            lead.prospecting_campaign_id = campaign.id
-            if campaign.pipeline_id:
-                lead.pipeline_id = campaign.pipeline_id
-                from models import PipelineStage
-                first_stage = PipelineStage.query.filter_by(pipeline_id=campaign.pipeline_id).order_by(PipelineStage.order).first()
-                if first_stage:
-                    lead.pipeline_stage_id = first_stage.id
+        campaign = ProspectingCampaign.query.filter_by(id=new_campaign_id, company_id=current_user.company_id).first()
+        if not campaign:
+            return api_response(success=False, error='Campanha não encontrada', status=404)
+        lead.prospecting_campaign_id = campaign.id
+        if campaign.pipeline_id:
+            lead.pipeline_id = campaign.pipeline_id
+            from models import PipelineStage
+            first_stage = PipelineStage.query.filter_by(pipeline_id=campaign.pipeline_id).order_by(PipelineStage.order).first()
+            if first_stage:
+                lead.pipeline_stage_id = first_stage.id
 
     sync_prospecting_stage(lead, lead.prospecting_status)
     db.session.commit()
@@ -1624,10 +1625,13 @@ def import_lead():
     target_pipeline_id = None
 
     if target_stage_id:
-        s = PipelineStage.query.get(target_stage_id)
-        if s: target_pipeline_id = s.pipeline_id
-
-    if not target_stage_id or not target_pipeline_id:
+        s = PipelineStage.query.join(Pipeline, PipelineStage.pipeline_id == Pipeline.id)\
+            .filter(PipelineStage.id == target_stage_id, Pipeline.company_id == current_user.company_id)\
+            .first()
+        if not s:
+            return api_response(success=False, error='Etapa não encontrada', status=404)
+        target_pipeline_id = s.pipeline_id
+    else:
         default_p = Pipeline.query.filter_by(company_id=current_user.company_id).first()
         if default_p:
             target_pipeline_id = default_p.id

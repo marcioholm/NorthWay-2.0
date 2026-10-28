@@ -23,12 +23,9 @@ def create_service_order():
         if not client_id or not title:
             return jsonify({'success': False, 'error': 'Missing required fields'}), 400
             
-        client = Client.query.get(client_id)
+        client = Client.query.filter_by(id=client_id, company_id=current_user.company_id).first()
         if not client:
             return jsonify({'success': False, 'error': 'Client not found'}), 404
-            
-        if client.company_id != current_user.company_id:
-            return jsonify({'success': False, 'error': 'Permission denied'}), 403
 
         new_os = ServiceOrder(
             company_id=current_user.company_id,
@@ -51,10 +48,7 @@ def create_service_order():
 @login_required
 def cancel_service_order(id):
     try:
-        os_order = ServiceOrder.query.get_or_404(id)
-        
-        if os_order.company_id != current_user.company_id:
-            return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        os_order = ServiceOrder.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
 
         # Permission Check (Admin/Financeiro/Manager)
         # Assuming current_user has role or is_admin logic. 
@@ -114,10 +108,7 @@ def cancel_service_order(id):
 @login_required
 def approve_service_order(id):
     try:
-        os_order = ServiceOrder.query.get_or_404(id)
-        
-        if os_order.company_id != current_user.company_id:
-            return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        os_order = ServiceOrder.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
 
         if not current_user.has_permission('financial') and current_user.role not in [ROLE_ADMIN, ROLE_MANAGER]:
             return jsonify({'success': False, 'error': 'O usuário não tem permissão financeira para aprovar.'}), 403
@@ -240,9 +231,6 @@ def approve_service_order(id):
 @service_orders_bp.route('/service-orders/<int:id>/print', methods=['GET'])
 @login_required
 def print_service_order(id):
-    os_order = ServiceOrder.query.get_or_404(id)
-    
-    if os_order.company_id != current_user.company_id:
-        abort(403)
+    os_order = ServiceOrder.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     return render_template('service_orders/print.html', os=os_order, company=current_user.company)

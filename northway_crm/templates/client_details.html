@@ -214,6 +214,7 @@
     {% endif %}
 
     <form action="{{ url_for('clients.update_client', id=client.id) }}" method="POST" id="clientForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- Main Info Column -->
             <div id="main-content-column" class="lg:col-span-9 space-y-6">
@@ -1873,6 +1874,7 @@
         </div>
 
         <form action="{{ url_for('checklists.add_client_process', client_id=client.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="mb-6">
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Selecione o
                     Modelo</label>
@@ -2289,6 +2291,7 @@
         </div>
 
         <form action="{{ url_for('clients.add_client_task', id=client.id) }}" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Título</label>
                 <input type="text" name="title" required

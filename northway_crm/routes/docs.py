@@ -158,11 +158,7 @@ def view_document(id):
     from flask_login import current_user
     from flask import abort
     
-    doc = ContractTemplate.query.get_or_404(id)
-    
-    # Security Check: Ensure document belongs to user's company
-    if doc.company_id != current_user.company_id:
-        abort(403)
+    doc = ContractTemplate.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
     return render_template('docs/view_document.html', doc=doc)
 
@@ -215,7 +211,6 @@ def presentation_optics():
 def presentation_mk_fitness():
     return render_template('docs/presentation_mk_fitness.html')
 @docs_bp.route('/api/docs/sync-library')
-@docs_bp.route('/master/api/docs/sync-library')
 @login_required
 def sync_library():
     import traceback
@@ -227,15 +222,14 @@ def sync_library():
         db.create_all()
         results.append("Schema synced via create_all()")
         
-        # 1. PERMISSION CHECK (Deeper/Safer)
+        # 1. PERMISSION CHECK (Strictly Super Admin)
         is_super = getattr(current_user, 'is_super_admin', False)
-        is_admin = getattr(current_user, 'role', '') == 'admin'
         
-        if not (is_super or is_admin):
+        if not is_super:
             return jsonify({
                 'success': False,
                 'error': 'Unauthorized', 
-                'explanation': 'This route requires Super Admin or Admin role.'
+                'explanation': 'This route requires Super Admin role.'
             }), 403
             
         # --- CLEANUP: Remove old PDF-based books as requested ---

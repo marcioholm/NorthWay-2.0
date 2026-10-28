@@ -1,6 +1,11 @@
+import os
+import sys
 import psycopg2
 
-db_url = "postgresql://postgres.bnumpvhsfujpprovajkt:Marcioholmmonteiro@aws-0-us-west-2.pooler.supabase.com:6543/postgres"
+db_url = os.environ.get("DATABASE_URL")
+if not db_url:
+    print("Erro: variavel de ambiente DATABASE_URL nao configurada.")
+    sys.exit(1)
 
 try:
     conn = psycopg2.connect(db_url)

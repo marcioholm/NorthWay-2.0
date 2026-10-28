@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
-from models import db, Client, ProcessTemplate, ClientChecklist, Task
+from models import db, Client, ProcessTemplate, ClientChecklist, Task, User
 import copy
 
 checklists_bp = Blueprint('checklists', __name__)
@@ -17,6 +17,15 @@ def add_client_process(client_id):
     if template.company_id != current_user.company_id:
         abort(403)
 
+    assigned_user = None
+    assigned_to_id_raw = request.form.get('assigned_to_id')
+    if assigned_to_id_raw:
+        try:
+            assigned_user = User.query.filter_by(id=int(assigned_to_id_raw), company_id=current_user.company_id).first()
+        except (ValueError, TypeError):
+            pass
+    effective_assigned_id = assigned_user.id if assigned_user else (client.account_manager_id or current_user.id)
+
     progress = []
     for step in template.steps:
         new_items = []
@@ -26,7 +35,7 @@ def add_client_process(client_id):
                 description=f"Item do processo: {template.name} - Etapa: {step['title']}",
                 client_id=client.id,
                 # Assign to chosen user or fallback to manager/creator
-                assigned_to_id=int(request.form.get('assigned_to_id')) if request.form.get('assigned_to_id') else (client.account_manager_id or current_user.id),
+                assigned_to_id=effective_assigned_id,
                 company_id=current_user.company_id,
                 status='pendente',
                 priority='media'
@@ -38,15 +47,13 @@ def add_client_process(client_id):
         
         progress.append({"title": step['title'], "items": new_items})
     
-    assigned_to_id = request.form.get('assigned_to_id')
-    
     checklist = ClientChecklist(
         client_id=client.id, 
         template_id=template.id, 
         name=template.name, 
         progress=progress, 
         company_id=current_user.company_id,
-        assigned_to_id=int(assigned_to_id) if assigned_to_id else None
+        assigned_to_id=assigned_user.id if assigned_user else None
     )
     db.session.add(checklist)
     db.session.commit()
@@ -121,6 +128,9 @@ def reassign_checklist(id):
         
     try:
         new_user_id = int(assigned_to_id)
+        new_user = User.query.filter_by(id=new_user_id, company_id=current_user.company_id).first()
+        if not new_user:
+            abort(404)
         # Update Checklist
         checklist.assigned_to_id = new_user_id
         
