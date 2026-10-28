@@ -1069,8 +1069,11 @@ def index():
     if not current_user.company_id:
         abort(403)
 
-    # Fetch all contracts for the current company
-    contracts = Contract.query.filter_by(company_id=current_user.company_id)\
+    # Fetch all contracts for the current company with client and template eager loaded
+    contracts = Contract.query.options(
+        db.joinedload(Contract.client),
+        db.joinedload(Contract.template)
+    ).filter_by(company_id=current_user.company_id)\
         .order_by(Contract.created_at.desc()).all()
     
     return render_template('contracts/index.html', contracts=contracts)

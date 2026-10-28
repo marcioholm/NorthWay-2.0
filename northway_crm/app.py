@@ -343,12 +343,12 @@ def create_app(test_config=None):
         @login_manager.user_loader
         def load_user(user_id):
             try:
-                return User.query.get(int(user_id))
+                return User.query.options(db.joinedload(User.company)).get(int(user_id))
             except Exception as e:
                 print(f"⚠️ load_user failed (likely SSL drop), retrying: {e}")
                 try:
                     db.session.remove()
-                    return User.query.get(int(user_id))
+                    return User.query.options(db.joinedload(User.company)).get(int(user_id))
                 except Exception as e2:
                     print(f"❌ load_user retry also failed: {e2}")
                     return None

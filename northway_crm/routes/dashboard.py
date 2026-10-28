@@ -34,7 +34,9 @@ def home():
         lead_count = Lead.query.filter(Lead.company_id == company_id).count()
         client_count = Client.query.filter(Client.company_id == company_id).count()
         
-        recent_leads = Lead.query.filter(Lead.company_id == company_id).order_by(Lead.created_at.desc()).limit(5).all()
+        recent_leads = Lead.query.options(
+            db.joinedload(Lead.pipeline_stage)
+        ).filter(Lead.company_id == company_id).order_by(Lead.created_at.desc()).limit(5).all()
         
         # 2. Daily items (Tasks and Attention Leads)
         today_tasks = get_today_tasks(company_id, user_id)
@@ -230,7 +232,10 @@ def get_funnel_data(pipeline_id):
 def get_today_tasks(company_id, user_id):
     # Tasks due today or before (overdue), ensuring standard DateTime comparison
     now = datetime.now()
-    return Task.query.filter(
+    return Task.query.options(
+        db.joinedload(Task.lead),
+        db.joinedload(Task.client)
+    ).filter(
         Task.company_id == company_id, 
         Task.assigned_to_id == user_id, 
         Task.status == 'pendente',
@@ -241,7 +246,9 @@ def get_today_tasks(company_id, user_id):
 def get_attention_leads(company_id, user_id):
     # Leads with no interaction in over 3 days
     three_days_ago = datetime.now() - timedelta(days=3)
-    query = Lead.query.filter(Lead.company_id == company_id, Lead.assigned_to_id == user_id, Lead.status != 'won')\
+    query = Lead.query.options(
+        db.joinedload(Lead.pipeline_stage)
+    ).filter(Lead.company_id == company_id, Lead.assigned_to_id == user_id, Lead.status != 'won')\
                .outerjoin(Interaction, (Interaction.lead_id == Lead.id) & (Interaction.company_id == company_id))\
                .group_by(Lead.id)\
                .having(db.or_(db.func.max(Interaction.created_at) < three_days_ago, db.func.max(Interaction.created_at) == None))

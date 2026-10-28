@@ -173,21 +173,29 @@ def leads():
     users = User.query.filter(User.company_id == current_user.company_id).all()
     
     # Fetch pipelines and stages for filter
-    # For MVP, assuming single pipeline or picking the first one for stage filter context
-    # ideally we allow selecting pipeline too, but let's just get all stages for the company's active pipeline
-    pipeline = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+    pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
+    pipeline = pipelines[0] if pipelines else None
     stages = []
     if pipeline:
-         stages = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).all()
-         
-    pipelines = Pipeline.query.filter_by(company_id=current_user.company_id).all()
-    
-    return render_template('leads.html', leads=leads_list, pagination=pagination, users=users, stages=stages, pipelines=pipelines)
+        stages = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).all()
+        
+    stage_counts = dict(
+        db.session.query(Lead.pipeline_stage_id, db.func.count(Lead.id))
+        .filter(Lead.company_id == current_user.company_id, Lead.pipeline_id == pipeline.id)
+        .group_by(Lead.pipeline_stage_id).all()
+    ) if pipeline else {}
+
+    return render_template('leads.html', leads=leads_list, pagination=pagination, users=users, stages=stages, pipelines=pipelines, stage_counts=stage_counts)
 
 @leads_bp.route('/leads/<int:id>')
 @login_required
 def lead_details(id):
-    lead = Lead.query.get_or_404(id)
+    lead = Lead.query.options(
+        db.joinedload(Lead.assigned_user),
+        db.joinedload(Lead.pipeline_stage),
+        db.selectinload(Lead.interactions),
+        db.selectinload(Lead.tasks)
+    ).filter_by(id=id).first_or_404()
     if lead.company_id != current_user.company_id:
         abort(403)
     
