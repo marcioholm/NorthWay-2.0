@@ -3,9 +3,6 @@ import os
 import json
 import logging
 from datetime import datetime, timedelta
-import google.oauth2.credentials
-import google_auth_oauthlib.flow
-from googleapiclient.discovery import build
 from flask import url_for, current_app
 
 from models import db, TenantIntegration
@@ -30,6 +27,7 @@ class GoogleDriveService:
         if not self.client_id or not self.client_secret:
             raise ValueError("Google Client ID/Secret not configured")
 
+        import google_auth_oauthlib.flow
         flow = google_auth_oauthlib.flow.Flow.from_client_config(
             self._get_client_config(),
             scopes=self.SCOPES
@@ -45,6 +43,7 @@ class GoogleDriveService:
 
     def fetch_token(self, code):
         """Exchanges the authorization code for tokens."""
+        import google_auth_oauthlib.flow
         flow = google_auth_oauthlib.flow.Flow.from_client_config(
             self._get_client_config(),
             scopes=self.SCOPES
@@ -68,6 +67,10 @@ class GoogleDriveService:
         """Builds and returns the Drive API service for a given tenant."""
         if not tenant_integration or not tenant_integration.refresh_token_encrypted:
             raise ValueError("Integration not connected or missing refresh token")
+
+        import google.oauth2.credentials
+        import google.auth.transport.requests
+        from googleapiclient.discovery import build
 
         # In a real app, decrypt refresh_token_encrypted here
         # For this MVP, we assume text storage as per models.py comment or simple base64

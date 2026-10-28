@@ -1,5 +1,4 @@
 import os
-from supabase import create_client, Client
 
 def init_supabase(app):
     url = app.config.get('SUPABASE_URL')
@@ -9,4 +8,5 @@ def init_supabase(app):
     if not url or not key:
         return None
         
+    from supabase import create_client
     return create_client(url, key)

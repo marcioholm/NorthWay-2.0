@@ -11,7 +11,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, text
 from flask_login import LoginManager, current_user, login_required
-from flask_migrate import Migrate
 from models import db, User, Task, Role, AudienceMatrix, CREPIDiagnostico, CREPIPremissa, SwotAnalise, SwotItem
 from database_sync import sync_database
 import json
@@ -351,6 +350,7 @@ def create_app(test_config=None):
         app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
         app.config['SESSION_COOKIE_NAME'] = 'northway_session'
         
+        from flask_migrate import Migrate
         migrate = Migrate(app, db)
         
         login_manager = LoginManager()
