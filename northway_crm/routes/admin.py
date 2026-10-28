@@ -699,3 +699,9 @@ def global_templates_edit(company_id):
     current_allowed = company.allowed_global_template_ids or []
     
     return render_template('admin/global_templates_edit.html', company=company, all_templates=all_global_templates, current_allowed=current_allowed)
+
+@admin_bp.route('/admin/ui-kit')
+@login_required
+@super_admin_required
+def ui_kit():
+    return render_template('ui_kit.html')

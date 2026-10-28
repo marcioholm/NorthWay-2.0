@@ -2,89 +2,89 @@
 {% from "macros.html" import user_avatar %}
 
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-gray-100 p-8">
-    <div class="flex items-center justify-between mb-8">
+<div class="space-y-7">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Tarefas</h1>
-            <p class="text-gray-500 mt-1">Sua lista de afazeres</p>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="nw-badge nw-badge-accent">Rotina & Execução</span>
+                <span class="text-xs text-[var(--nw-text-3)] font-mono">Produtividade Diária</span>
+            </div>
+            <h1 class="text-2xl lg:text-3xl font-black tracking-tight text-[var(--nw-text-1)]">Tarefas</h1>
+            <p class="text-xs text-[var(--nw-text-2)] mt-0.5">Sua lista de afazeres operacionais e comerciais.</p>
         </div>
         <button data-modal-target="createTaskModal"
-            class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 shadow-sm font-medium">
+            class="nw-btn nw-btn-accent text-xs py-2 px-4 shadow-sm flex items-center justify-center gap-2 self-start sm:self-auto font-bold">
             <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i>
             Nova Tarefa
         </button>
     </div>
 
     <!-- NorthWay Manifesto Banner: Tasks -->
-    <div
-        class="mb-10 relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-slate-900 to-black p-8 text-white shadow-xl border border-white/5">
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div class="max-w-2xl">
-                <div class="flex items-center gap-2 mb-4">
-                    <span
-                        class="bg-northway-red/20 text-northway-red text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-northway-red/30">Consistência
-                        Diária</span>
-                </div>
-                <h2 class="text-3xl font-black mb-3 leading-tight tracking-tight uppercase">Execução impecável gera
-                    <br><span class="text-northway-red italic">resultados fora da curva</span> 
+    <div class="relative overflow-hidden rounded-3xl bg-[var(--nw-ink)] p-7 lg:p-8 text-white border border-[var(--nw-border-strong)]">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="max-w-2xl space-y-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-rose-300 border border-white/15">
+                    <i data-lucide="zap" class="w-3 h-3 text-[var(--nw-brand)]"></i>
+                    Consistência Diária
+                </span>
+                <h2 class="text-xl lg:text-2xl font-black tracking-tight leading-snug uppercase">
+                    Execução impecável gera <br><span class="text-[var(--nw-brand)] italic">resultados fora da curva</span>
                 </h2>
-                <p class="text-base text-gray-400 leading-relaxed font-light">
+                <p class="text-xs text-white/70 leading-relaxed font-light">
                     Onde o improviso termina, a disciplina começa.
                     Cada tarefa concluída é um tijolo na construção da sua escala. Domine o hoje.
                 </p>
             </div>
             <div class="flex-shrink-0">
-                <div
-                    class="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex flex-col items-center text-center">
-                    <div
-                        class="w-14 h-14 bg-gradient-to-br from-gray-700 to-black rounded-2xl flex items-center justify-center mb-3 shadow-xl">
-                        <i data-lucide="zap" class="w-7 h-7 text-northway-red"></i>
+                <div class="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 flex flex-col items-center text-center">
+                    <div class="w-10 h-10 bg-[var(--nw-brand)] rounded-xl flex items-center justify-center mb-2 shadow-lg shadow-rose-950/40">
+                        <i data-lucide="check-square" class="w-5 h-5 text-white"></i>
                     </div>
-                    <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Alta Performance</span>
+                    <span class="text-[10px] font-black text-white/80 uppercase tracking-widest">Alta Performance</span>
                 </div>
             </div>
         </div>
-        <!-- Abstract Decoration -->
-        <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-red-600/5 rounded-full blur-3xl"></div>
-        <div class="absolute -left-10 top-0 opacity-5">
-            <i data-lucide="check-square" class="w-64 h-64 text-white"></i>
-        </div>
+        <div class="absolute -right-20 -bottom-20 w-72 h-72 bg-nw-brand/10 rounded-full blur-3xl pointer-events-none"></div>
     </div>
 
     <!-- Progress Card -->
-    <div
-        class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8 group hover:border-northway-red/30 transition-colors">
-        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Progresso Geral</h3>
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-2xl font-bold text-gray-900">{{ completed_tasks }} de {{ total_tasks }}</span>
-            <span class="text-sm font-medium text-northway-red">{{ progress_percent }}%</span>
+    <div class="nw-panel p-5 space-y-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <span class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase tracking-wider">Progresso Geral</span>
+                <div class="text-xl lg:text-2xl font-black text-[var(--nw-text-1)] mt-0.5">
+                    {{ completed_tasks }} <span class="text-sm font-semibold text-[var(--nw-text-3)]">de {{ total_tasks }} concluídas</span>
+                </div>
+            </div>
+            <span class="text-sm font-bold font-mono text-[var(--nw-brand)] bg-rose-50 px-3 py-1 rounded-full border border-rose-100">{{ progress_percent }}%</span>
         </div>
-        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+        <div class="w-full bg-[var(--nw-shell)] rounded-full h-2.5 overflow-hidden border border-[var(--nw-border)]">
             <div id="generalProgressBar"
-                class="bg-northway-red h-2.5 rounded-full transition-all duration-1000 ease-out"
+                class="bg-[var(--nw-brand)] h-2.5 rounded-full transition-all duration-1000 ease-out"
                 data-width="{{ progress_percent }}"></div>
         </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6 w-fit">
+    <!-- Tabs Navigation -->
+    <div class="flex flex-wrap items-center gap-1.5 p-1 bg-[var(--nw-shell)] rounded-full border border-[var(--nw-border)] w-fit">
         <button data-tab-target="leads" id="tab-leads"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-white shadow text-gray-900">
+            class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-white shadow text-gray-900">
             Funil de Vendas
         </button>
         <button data-tab-target="clients" id="tab-clients"
-            class="px-4 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+            class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors">
             Carteira de Clientes
         </button>
         {% if general_tasks %}
         <button data-tab-target="general" id="tab-general"
-            class="px-4 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+            class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors">
             Geral
         </button>
         {% endif %}
         <button data-tab-target="completed" id="tab-completed"
-            class="px-4 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5">
-            <i data-lucide="check-circle-2" class="w-4 h-4" aria-hidden="true"></i>
+            class="px-4 py-1.5 rounded-full text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5" aria-hidden="true"></i>
             Concluídas
         </button>
     </div>
@@ -92,41 +92,38 @@
     <!-- Lead Tasks List -->
     <div id="content-leads" class="space-y-3 tab-content">
         {% if not lead_tasks %}
-        <div
-            class="bg-white rounded-lg border border-dashed border-gray-300 p-8 text-center flex flex-col items-center justify-center">
-            <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                <i data-lucide="check-square" class="w-6 h-6 text-gray-400" aria-hidden="true"></i>
+        <div class="nw-panel p-10 text-center flex flex-col items-center justify-center border-dashed">
+            <div class="w-12 h-12 bg-[var(--nw-shell)] rounded-2xl flex items-center justify-center mb-3 text-[var(--nw-text-3)]">
+                <i data-lucide="check-square" class="w-6 h-6" aria-hidden="true"></i>
             </div>
-            <h3 class="text-sm font-bold text-gray-900">Nenhuma tarefa de lead</h3>
-            <p class="text-xs text-gray-500 mb-4">Crie tarefas para organizar suas negociações.</p>
+            <h3 class="text-sm font-bold text-[var(--nw-text-1)]">Nenhuma tarefa de lead</h3>
+            <p class="text-xs text-[var(--nw-text-3)] mb-4 mt-0.5">Crie tarefas para organizar suas negociações em andamento.</p>
             <button data-modal-target="createTaskModal"
-                class="text-xs font-bold text-northway-red hover:text-red-700 flex items-center gap-1">
-                <i data-lucide="plus" class="w-3 h-3" aria-hidden="true"></i>
+                class="nw-btn nw-btn-accent text-xs py-1.5 px-3 flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5" aria-hidden="true"></i>
                 Criar Tarefa
             </button>
         </div>
         {% endif %}
         {% for task in lead_tasks %}
-        <div
-            class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between group hover:shadow-md transition-shadow">
-            <div class="flex items-center gap-4">
+        <div class="nw-panel p-4 flex items-center justify-between group hover:border-[var(--nw-border-strong)] transition-all">
+            <div class="flex items-center gap-3.5">
                 <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST">
                     <button type="submit"
-                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 text-transparent hover:border-green-500 hover:text-green-500 flex items-center justify-center transition-all bg-white">
+                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-[var(--nw-border-strong)] text-transparent hover:border-emerald-500 hover:text-emerald-500 flex items-center justify-center transition-all bg-white shadow-xs"
+                        title="Marcar como concluída">
                         <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i>
                     </button>
                 </form>
 
                 <div>
-                    <div class="font-medium text-gray-900">{{ task.title }}</div>
+                    <div class="font-bold text-xs text-[var(--nw-text-1)]">{{ task.title }}</div>
                     {% if task.description %}
-                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-1" title="{{ task.description }}">{{
-                        task.description }}</p>
+                    <p class="text-xs text-[var(--nw-text-3)] mt-0.5 line-clamp-1" title="{{ task.description }}">{{ task.description }}</p>
                     {% endif %}
-                    <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                    <div class="flex items-center gap-3 mt-1.5 text-xs text-[var(--nw-text-3)]">
                         {% if task.due_date %}
-                        <div
-                            class="flex items-center gap-1 {{ 'text-red-600 font-medium' if task.due_date < now else '' }}">
+                        <div class="flex items-center gap-1 font-mono text-[11px] {{ 'text-rose-600 font-bold' if task.due_date < now else 'text-[var(--nw-text-3)]' }}">
                             <i data-lucide="clock" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             {{ task.due_date.strftime('%d/%m %H:%M') }}
                         </div>
@@ -134,34 +131,32 @@
 
                         {% if task.lead %}
                         <a href="{{ url_for('leads.lead_details', id=task.lead.id) }}"
-                            class="flex items-center gap-1 hover:text-northway-red transition-colors">
+                            class="flex items-center gap-1 text-[var(--nw-text-2)] hover:text-[var(--nw-brand)] font-semibold transition-colors">
                             <i data-lucide="user" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             {{ task.lead.name }}
                         </a>
                         {% endif %}
 
-                        <div class="flex items-center gap-1 ml-2 pl-2 border-l border-gray-200">
+                        <div class="flex items-center gap-1.5 ml-1 pl-2 border-l border-[var(--nw-border)]">
                             {{ user_avatar(task.responsible, size='sm', show_name=False) }}
-                            <span class="text-xs text-gray-500">{{ task.responsible.name if task.responsible else ''
-                                }}</span>
+                            <span class="text-[11px] text-[var(--nw-text-2)]">{{ task.responsible.name if task.responsible else '' }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
                     data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
                     data-assigned-to="{{ task.assigned_to_id or '' }}" data-description="{{ task.description or '' }}"
                     onclick="openEditTaskModal(this)"
-                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    class="p-2 text-[var(--nw-text-3)] hover:text-blue-600 hover:bg-[var(--nw-shell)] rounded-lg transition-colors"
                     title="Editar">
                     <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
                 </button>
-                <!-- Delete Button inside Form -->
-                <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
+                <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form inline">
                     <button type="submit"
-                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        class="p-2 text-[var(--nw-text-3)] hover:text-rose-600 hover:bg-[var(--nw-shell)] rounded-lg transition-colors"
                         title="Excluir">
                         <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
                     </button>
@@ -169,12 +164,12 @@
             </div>
         </div>
         {% else %}
-        <div class="text-center py-12">
-            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="check-square" class="w-8 h-8 text-gray-300" aria-hidden="true"></i>
+        <div class="text-center py-12 nw-panel">
+            <div class="w-14 h-14 bg-[var(--nw-shell)] rounded-2xl flex items-center justify-center mx-auto mb-3 text-[var(--nw-text-3)]">
+                <i data-lucide="check-square" class="w-7 h-7" aria-hidden="true"></i>
             </div>
-            <h3 class="text-lg font-medium text-gray-900">Tudo limpo no Funil!</h3>
-            <p class="text-gray-500">Nenhuma tarefa pendente para seus leads.</p>
+            <h3 class="text-sm font-bold text-[var(--nw-text-1)]">Tudo limpo no Funil!</h3>
+            <p class="text-xs text-[var(--nw-text-3)] mt-0.5">Nenhuma tarefa pendente para seus leads.</p>
         </div>
         {% endfor %}
     </div>
@@ -182,32 +177,29 @@
     <!-- Client Tasks List (Hidden by default) -->
     <div id="content-clients" class="space-y-3 hidden tab-content">
         {% for task in client_tasks %}
-        <div
-            class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between group hover:shadow-md transition-shadow">
-            <div class="flex items-center gap-4">
+        <div class="nw-panel p-4 flex items-center justify-between group hover:border-[var(--nw-border-strong)] transition-all">
+            <div class="flex items-center gap-3.5">
                 <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST">
                     <button type="submit"
-                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 text-transparent hover:border-green-500 hover:text-green-500 flex items-center justify-center transition-all bg-white">
+                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-[var(--nw-border-strong)] text-transparent hover:border-emerald-500 hover:text-emerald-500 flex items-center justify-center transition-all bg-white shadow-xs"
+                        title="Marcar como concluída">
                         <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i>
                     </button>
                 </form>
 
                 <div>
-                    <div class="font-medium text-gray-900 flex items-center gap-2">
+                    <div class="font-bold text-xs text-[var(--nw-text-1)] flex items-center gap-1.5">
                         {{ task.title }}
                         {% if task.is_recurring %}
-                        <i data-lucide="repeat" class="w-3.5 h-3.5 text-blue-500" title="Recorrente Mensal"
-                            aria-hidden="true"></i>
+                        <i data-lucide="repeat" class="w-3.5 h-3.5 text-blue-500" title="Recorrente Mensal" aria-hidden="true"></i>
                         {% endif %}
                     </div>
                     {% if task.description %}
-                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-1" title="{{ task.description }}">{{
-                        task.description }}</p>
+                    <p class="text-xs text-[var(--nw-text-3)] mt-0.5 line-clamp-1" title="{{ task.description }}">{{ task.description }}</p>
                     {% endif %}
-                    <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                    <div class="flex items-center gap-3 mt-1.5 text-xs text-[var(--nw-text-3)]">
                         {% if task.due_date %}
-                        <div
-                            class="flex items-center gap-1 {{ 'text-red-600 font-medium' if task.due_date < now else '' }}">
+                        <div class="flex items-center gap-1 font-mono text-[11px] {{ 'text-rose-600 font-bold' if task.due_date < now else 'text-[var(--nw-text-3)]' }}">
                             <i data-lucide="clock" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             {{ task.due_date.strftime('%d/%m %H:%M') }}
                         </div>
@@ -215,7 +207,7 @@
 
                         {% if task.client %}
                         <a href="{{ url_for('clients.client_details', id=task.client.id) }}"
-                            class="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors">
+                            class="flex items-center gap-1 text-[var(--nw-text-2)] hover:text-blue-600 font-semibold transition-colors">
                             <i data-lucide="briefcase" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             {{ task.client.name }}
                         </a>
@@ -224,19 +216,18 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
                     data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
                     data-assigned-to="{{ task.assigned_to_id or '' }}" data-description="{{ task.description or '' }}"
                     onclick="openEditTaskModal(this)"
-                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    class="p-2 text-[var(--nw-text-3)] hover:text-blue-600 hover:bg-[var(--nw-shell)] rounded-lg transition-colors"
                     title="Editar">
                     <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
                 </button>
-                <!-- Delete Button inside Form -->
-                <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
+                <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form inline">
                     <button type="submit"
-                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        class="p-2 text-[var(--nw-text-3)] hover:text-rose-600 hover:bg-[var(--nw-shell)] rounded-lg transition-colors"
                         title="Excluir">
                         <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
                     </button>
@@ -244,12 +235,12 @@
             </div>
         </div>
         {% else %}
-        <div class="text-center py-12">
-            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="briefcase" class="w-8 h-8 text-gray-300" aria-hidden="true"></i>
+        <div class="text-center py-12 nw-panel">
+            <div class="w-14 h-14 bg-[var(--nw-shell)] rounded-2xl flex items-center justify-center mx-auto mb-3 text-[var(--nw-text-3)]">
+                <i data-lucide="briefcase" class="w-7 h-7" aria-hidden="true"></i>
             </div>
-            <h3 class="text-lg font-medium text-gray-900">Clientes em dia!</h3>
-            <p class="text-gray-500">Nenhuma tarefa pendente para seus clientes.</p>
+            <h3 class="text-sm font-bold text-[var(--nw-text-1)]">Clientes em dia!</h3>
+            <p class="text-xs text-[var(--nw-text-3)] mt-0.5">Nenhuma tarefa pendente para seus clientes.</p>
         </div>
         {% endfor %}
     </div>
@@ -258,25 +249,24 @@
     {% if general_tasks %}
     <div id="content-general" class="space-y-3 hidden tab-content">
         {% for task in general_tasks %}
-        <div
-            class="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between group hover:shadow-md transition-shadow">
-            <div class="flex items-center gap-4">
+        <div class="nw-panel p-4 flex items-center justify-between group hover:border-[var(--nw-border-strong)] transition-all">
+            <div class="flex items-center gap-3.5">
                 <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST">
                     <button type="submit"
-                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-300 text-transparent hover:border-green-500 hover:text-green-500 flex items-center justify-center transition-all bg-white">
+                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-[var(--nw-border-strong)] text-transparent hover:border-emerald-500 hover:text-emerald-500 flex items-center justify-center transition-all bg-white shadow-xs"
+                        title="Marcar como concluída">
                         <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i>
                     </button>
                 </form>
+
                 <div>
-                    <div class="font-medium text-gray-900">{{ task.title }}</div>
+                    <div class="font-bold text-xs text-[var(--nw-text-1)]">{{ task.title }}</div>
                     {% if task.description %}
-                    <p class="text-xs text-gray-500 mt-0.5 line-clamp-1" title="{{ task.description }}">{{
-                        task.description }}</p>
+                    <p class="text-xs text-[var(--nw-text-3)] mt-0.5 line-clamp-1" title="{{ task.description }}">{{ task.description }}</p>
                     {% endif %}
-                    <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                    <div class="flex items-center gap-3 mt-1.5 text-xs text-[var(--nw-text-3)]">
                         {% if task.due_date %}
-                        <div
-                            class="flex items-center gap-1 {{ 'text-red-600 font-medium' if task.due_date < now else '' }}">
+                        <div class="flex items-center gap-1 font-mono text-[11px] {{ 'text-rose-600 font-bold' if task.due_date < now else 'text-[var(--nw-text-3)]' }}">
                             <i data-lucide="clock" class="w-3.5 h-3.5" aria-hidden="true"></i>
                             {{ task.due_date.strftime('%d/%m %H:%M') }}
                         </div>
@@ -284,19 +274,19 @@
                     </div>
                 </div>
             </div>
-            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button type="button" data-id="{{ task.id }}" data-title="{{ task.title }}"
                     data-due-date="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '' }}"
                     data-assigned-to="{{ task.assigned_to_id or '' }}" data-description="{{ task.description or '' }}"
                     onclick="openEditTaskModal(this)"
-                    class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    class="p-2 text-[var(--nw-text-3)] hover:text-blue-600 hover:bg-[var(--nw-shell)] rounded-lg transition-colors"
                     title="Editar">
                     <i data-lucide="pencil" class="w-4 h-4" aria-hidden="true"></i>
                 </button>
-                <!-- Delete Button inside Form -->
-                <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form">
+                <form action="{{ url_for('tasks.delete_task', id=task.id) }}" method="POST" class="delete-task-form inline">
                     <button type="submit"
-                        class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        class="p-2 text-[var(--nw-text-3)] hover:text-rose-600 hover:bg-[var(--nw-shell)] rounded-lg transition-colors"
                         title="Excluir">
                         <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
                     </button>
@@ -307,46 +297,30 @@
     </div>
     {% endif %}
 
-    <!-- COMPLETED TASKS List (New) -->
+    <!-- Completed Tasks List (Hidden by default) -->
     <div id="content-completed" class="space-y-3 hidden tab-content">
-        {% if not completed_tasks_list %}
-        <div class="text-center py-12">
-            <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="check-circle-2" class="w-8 h-8 text-gray-300" aria-hidden="true"></i>
-            </div>
-            <h3 class="text-lg font-medium text-gray-900">Histórico Limpo</h3>
-            <p class="text-gray-500">Nenhuma tarefa concluída encontrada.</p>
-        </div>
-        {% endif %}
-
         {% for task in completed_tasks_list %}
-        <div
-            class="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between opacity-75 hover:opacity-100 transition-opacity">
-            <div class="flex items-center gap-4">
+        <div class="nw-panel p-4 flex items-center justify-between opacity-75 hover:opacity-100 transition-opacity">
+            <div class="flex items-center gap-3.5">
                 <form action="{{ url_for('tasks.toggle_task', id=task.id) }}" method="POST">
-                    <button type="submit" title="Reabrir Tarefa"
-                        class="flex-shrink-0 w-6 h-6 rounded-full border-2 bg-green-500 border-green-500 text-white flex items-center justify-center transition-all hover:bg-white hover:text-green-500">
+                    <button type="submit"
+                        class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 border-2 border-emerald-500 text-white flex items-center justify-center transition-all shadow-xs"
+                        title="Reabrir tarefa">
                         <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i>
                     </button>
                 </form>
 
-                <div class="line-through text-gray-500">
-                    <div class="font-medium">{{ task.title }}</div>
-                    <div class="flex items-center gap-3 mt-1 text-xs">
-                        {% if task.completed_at %}
-                        <div
-                            class="flex items-center gap-1 text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-full">
-                            <i data-lucide="check-circle" class="w-3 h-3" aria-hidden="true"></i>
-                            Concluída em {{ task.completed_at.strftime('%d/%m às %H:%M') }}
-                        </div>
-                        {% elif task.due_date %}
-                        <!-- Fallback for old tasks without completed_at -->
-                        <div class="flex items-center gap-1">
-                            <i data-lucide="clock" class="w-3 h-3" aria-hidden="true"></i>
-                            {{ task.due_date.strftime('%d/%m %H:%M') }}
-                        </div>
+                <div>
+                    <div class="font-bold text-xs text-[var(--nw-text-2)] line-through">{{ task.title }}</div>
+                    <div class="flex items-center gap-3 mt-1.5 text-xs text-[var(--nw-text-3)]">
+                        <span class="flex items-center gap-1 font-mono text-[11px] text-emerald-600">
+                            <i data-lucide="check-circle" class="w-3 h-3" aria-hidden="true"></i> Concluída
+                        </span>
+                        {% if task.due_date %}
+                        <span class="flex items-center gap-1 font-mono text-[11px]">
+                            <i data-lucide="clock" class="w-3 h-3" aria-hidden="true"></i> {{ task.due_date.strftime('%d/%m %H:%M') }}
+                        </span>
                         {% endif %}
-
                         {% if task.lead %}
                         <span class="flex items-center gap-1">
                             <i data-lucide="user" class="w-3 h-3" aria-hidden="true"></i> {{ task.lead.name }}
@@ -360,96 +334,106 @@
                 </div>
             </div>
 
-            <div class="text-xs text-gray-400">
+            <span class="nw-chip text-[10px] font-bold text-emerald-700 bg-emerald-50 border-emerald-200 uppercase tracking-wider">
                 Concluída
+            </span>
+        </div>
+        {% else %}
+        <div class="text-center py-12 nw-panel">
+            <div class="w-14 h-14 bg-[var(--nw-shell)] rounded-2xl flex items-center justify-center mx-auto mb-3 text-[var(--nw-text-3)]">
+                <i data-lucide="check-circle-2" class="w-7 h-7" aria-hidden="true"></i>
             </div>
+            <h3 class="text-sm font-bold text-[var(--nw-text-1)]">Nenhuma tarefa concluída recentemente</h3>
+            <p class="text-xs text-[var(--nw-text-3)] mt-0.5">As tarefas finalizadas aparecerão aqui.</p>
         </div>
         {% endfor %}
     </div>
 </div>
 
 <!-- Create Task Modal -->
-<div id="createTaskModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div class="flex justify-between items-center p-6 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Nova Tarefa</h3>
-            <button data-close-modal="createTaskModal" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+<div id="createTaskModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-xs items-center justify-center z-50 p-4">
+    <div class="nw-panel p-0 overflow-hidden rounded-3xl w-full max-w-md mx-auto shadow-2xl border border-[var(--nw-border)]">
+        <div class="flex justify-between items-center p-5 border-b border-[var(--nw-border)] bg-[var(--nw-shell)]">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-nw-brand/10 text-[var(--nw-brand)] flex items-center justify-center">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                </div>
+                <h3 class="text-sm font-bold text-[var(--nw-text-1)]">Nova Tarefa</h3>
+            </div>
+            <button data-close-modal="createTaskModal" class="p-1.5 rounded-lg text-[var(--nw-text-3)] hover:text-[var(--nw-text-1)] hover:bg-[var(--nw-border)] transition-colors">
+                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
             </button>
         </div>
 
-        <form action="{{ url_for('tasks.tasks') }}" method="POST" class="p-6 space-y-4">
+        <form action="{{ url_for('tasks.tasks') }}" method="POST" class="p-5 space-y-4">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
-                <input type="text" name="title" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Título *</label>
+                <input type="text" name="title" required placeholder="Ex: Ligar para confirmar proposta"
+                    class="nw-input w-full text-xs font-medium">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição / Instruções</label>
-                <textarea name="description" rows="3"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none"></textarea>
+                <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Descrição / Instruções</label>
+                <textarea name="description" rows="3" placeholder="Detalhes adicionais da tarefa..."
+                    class="nw-input w-full text-xs resize-none"></textarea>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Vincular a Lead (Opcional)</label>
-                <select name="lead_id"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
-                    <option value="">Sem vínculo</option>
-                    {% for lead in leads %}
-                    <option value="{{ lead.id }}">{{ lead.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Vincular a Cliente (Opcional)</label>
-                <select name="client_id"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
-                    <option value="">Sem vínculo</option>
-                    {% for client in clients_list %}
-                    <option value="{{ client.id }}">{{ client.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
-                <select name="assigned_to_id"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
-                    {% for user in users %}
-                    <option value="{{ user.id }}" {{ 'selected' if user.id==current_user.id else '' }}>{{ user.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Data e Hora</label>
-                    <input type="datetime-local" name="due_date"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Lead (Opcional)</label>
+                    <select name="lead_id" class="nw-select w-full text-xs">
+                        <option value="">Sem vínculo</option>
+                        {% for lead in leads %}
+                        <option value="{{ lead.id }}">{{ lead.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="flex items-center pt-6">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" name="is_recurring" id="is_recurring_task" value="1"
-                            class="w-4 h-4 text-northway-red border-gray-300 rounded focus:ring-northway-red">
-                        <label for="is_recurring_task" class="text-sm text-gray-700 flex items-center gap-1">
-                            <i data-lucide="repeat" class="w-4 h-4 text-gray-500" aria-hidden="true"></i>
-                            Repetir mensalmente
-                        </label>
-                    </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Cliente (Opcional)</label>
+                    <select name="client_id" class="nw-select w-full text-xs">
+                        <option value="">Sem vínculo</option>
+                        {% for client in clients_list %}
+                        <option value="{{ client.id }}">{{ client.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
 
-            <div class="pt-4 flex gap-3">
+            <div>
+                <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Responsável</label>
+                <select name="assigned_to_id" class="nw-select w-full text-xs">
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {{ 'selected' if user.id==current_user.id else '' }}>{{ user.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Data e Hora</label>
+                    <input type="datetime-local" name="due_date" class="nw-input w-full text-xs">
+                </div>
+                <div class="flex items-center pb-2">
+                    <label for="is_recurring_task" class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" name="is_recurring" id="is_recurring_task" value="1"
+                            class="w-4 h-4 text-[var(--nw-brand)] rounded border-gray-300 focus:ring-rose-500">
+                        <span class="text-xs font-semibold text-[var(--nw-text-2)] flex items-center gap-1">
+                            <i data-lucide="repeat" class="w-3.5 h-3.5 text-blue-500" aria-hidden="true"></i>
+                            Repetir mensal
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-[var(--nw-border)] flex gap-2.5">
                 <button type="button" data-close-modal="createTaskModal"
-                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    class="nw-btn nw-btn-subtle text-xs py-2 px-4 flex-1">
                     Cancelar
                 </button>
                 <button type="submit"
-                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    class="nw-btn nw-btn-accent text-xs py-2 px-4 flex-1 font-bold shadow-sm">
                     Salvar Tarefa
                 </button>
             </div>
@@ -458,33 +442,37 @@
 </div>
 
 <!-- Edit Task Modal -->
-<div id="editTaskModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div class="flex justify-between items-center p-6 border-b border-gray-100">
-            <h3 class="text-lg font-bold text-gray-900">Editar Tarefa</h3>
-            <button data-close-modal="editTaskModal" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+<div id="editTaskModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-xs items-center justify-center z-50 p-4">
+    <div class="nw-panel p-0 overflow-hidden rounded-3xl w-full max-w-md mx-auto shadow-2xl border border-[var(--nw-border)]">
+        <div class="flex justify-between items-center p-5 border-b border-[var(--nw-border)] bg-[var(--nw-shell)]">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                </div>
+                <h3 class="text-sm font-bold text-[var(--nw-text-1)]">Editar Tarefa</h3>
+            </div>
+            <button data-close-modal="editTaskModal" class="p-1.5 rounded-lg text-[var(--nw-text-3)] hover:text-[var(--nw-text-1)] hover:bg-[var(--nw-border)] transition-colors">
+                <i data-lucide="x" class="w-4 h-4" aria-hidden="true"></i>
             </button>
         </div>
 
-        <form id="editTaskForm" method="POST" class="p-6 space-y-4">
+        <form id="editTaskForm" method="POST" class="p-5 space-y-4">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+                <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Título *</label>
                 <input type="text" name="title" id="edit_task_title" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                    class="nw-input w-full text-xs font-medium">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Descrição / Instruções</label>
+                <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Descrição / Instruções</label>
                 <textarea name="description" id="edit_task_description" rows="3"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red resize-none"></textarea>
+                    class="nw-input w-full text-xs resize-none"></textarea>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
-                <select name="assigned_to_id" id="edit_task_assigned_to"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red bg-white">
+                <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Responsável</label>
+                <select name="assigned_to_id" id="edit_task_assigned_to" class="nw-select w-full text-xs">
                     {% for user in users %}
                     <option value="{{ user.id }}">{{ user.name }}</option>
                     {% endfor %}
@@ -492,18 +480,17 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Data e Hora</label>
-                <input type="datetime-local" name="due_date" id="edit_task_due_date"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-northway-red/20 focus:border-northway-red">
+                <label class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-1.5">Data e Hora</label>
+                <input type="datetime-local" name="due_date" id="edit_task_due_date" class="nw-input w-full text-xs">
             </div>
 
-            <div class="pt-4 flex gap-3">
+            <div class="pt-3 border-t border-[var(--nw-border)] flex gap-2.5">
                 <button type="button" data-close-modal="editTaskModal"
-                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    class="nw-btn nw-btn-subtle text-xs py-2 px-4 flex-1">
                     Cancelar
                 </button>
                 <button type="submit"
-                    class="flex-1 px-4 py-2 bg-northway-red text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    class="nw-btn nw-btn-accent text-xs py-2 px-4 flex-1 font-bold shadow-sm">
                     Salvar Alterações
                 </button>
             </div>

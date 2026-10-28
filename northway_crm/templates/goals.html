@@ -1,29 +1,29 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-gray-50/50 relative font-inter">
-    <div class="p-8 max-w-[1400px] mx-auto space-y-8">
+<div class="space-y-7">
 
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Metas e Performance</h1>
-                <p class="text-sm text-gray-500 mt-1">Acompanhe o desempenho comercial em tempo real.</p>
-            </div>
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-[var(--nw-text-1)]">Metas e Performance</h1>
+            <p class="text-sm text-[var(--nw-text-2)] mt-1">Acompanhe o desempenho comercial em tempo real.</p>
+        </div>
 
-            <div class="flex items-center gap-3 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
-                <!-- Date Filter -->
-                <div class="flex items-center gap-2 px-3 py-1.5">
-                    <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <!-- Date Filter Pills -->
+            <div class="flex items-center gap-2 bg-[var(--nw-shell)] p-1 rounded-full border border-[var(--nw-border)]">
+                <div class="flex items-center gap-1.5 pl-3 pr-1 py-1 text-xs">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[var(--nw-text-3)]"></i>
                     <select id="goalYear"
-                        class="text-sm font-semibold border-none focus:ring-0 text-gray-700 p-0 pr-6 bg-transparent cursor-pointer">
+                        class="text-xs font-bold border-none focus:ring-0 text-[var(--nw-text-1)] bg-transparent cursor-pointer pr-4">
                         {% for y in range(now.year - 1, now.year + 2) %}
                         <option value="{{ y }}" {% if y==now.year %}selected{% endif %}>{{ y }}</option>
                         {% endfor %}
                     </select>
-                    <div class="w-px h-4 bg-gray-200"></div>
+                    <div class="w-px h-3.5 bg-[var(--nw-border)]"></div>
                     <select id="goalMonth"
-                        class="text-sm font-semibold border-none focus:ring-0 text-gray-700 p-0 pr-6 bg-transparent cursor-pointer">
+                        class="text-xs font-bold border-none focus:ring-0 text-[var(--nw-text-1)] bg-transparent cursor-pointer pr-4">
                         {% set months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto',
                         'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
                         {% for m in months %}
@@ -32,284 +32,247 @@
                         {% endfor %}
                     </select>
                 </div>
-
-                {% if current_user.role in ['admin', 'manager'] %}
-                <div class="w-px h-6 bg-gray-200"></div>
-                <button onclick="openGoalModal()"
-                    class="px-4 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-all shadow-md hover:shadow-lg flex items-center gap-2">
-                    <i data-lucide="target" class="w-4 h-4"></i> Definir Metas
-                </button>
-                {% endif %}
             </div>
+
+            {% if current_user.role in ['admin', 'manager'] %}
+            <button onclick="openGoalModal()"
+                class="nw-btn nw-btn-accent text-xs py-2 px-3.5 flex items-center gap-2">
+                <i data-lucide="target" class="w-4 h-4"></i>
+                <span>Definir Metas</span>
+            </button>
+            {% endif %}
         </div>
-
-        <!-- NorthWay Manifesto Banner: Goals -->
-        <div
-            class="mb-10 relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-black p-8 text-white shadow-xl border border-indigo-500/10">
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                <div class="max-w-2xl">
-                    <div class="flex items-center gap-2 mb-4">
-                        <span
-                            class="bg-indigo-500/20 text-indigo-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-500/30">Visão
-                            & Direção</span>
-                    </div>
-                    <h2 class="text-3xl font-black mb-3 leading-tight tracking-tight uppercase">Metas sem processos
-                        <br><span class="text-indigo-400 italic font-light">são apenas desejos</span> </h2>
-                    <p class="text-base text-slate-400 leading-relaxed font-light">
-                        A clareza do destino é o que separa o esforço do resultado.
-                        Use este dashboard para transformar sua visão em números e seus números em realidade
-                        extraordinária.
-                    </p>
-                </div>
-                <div class="flex-shrink-0">
-                    <div
-                        class="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex flex-col items-center text-center">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-br from-indigo-600 to-indigo-900 rounded-2xl flex items-center justify-center mb-3 shadow-xl">
-                            <i data-lucide="compass" class="w-7 h-7 text-white"></i>
-                        </div>
-                        <span class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Norte
-                            Estratégico</span>
-                    </div>
-                </div>
-            </div>
-            <!-- Abstract Decoration -->
-            <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl"></div>
-            <div class="absolute -left-10 top-0 opacity-5">
-                <i data-lucide="target" class="w-64 h-64 text-white"></i>
-            </div>
-        </div>
-
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Card Meta -->
-            <div
-                class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5 relative overflow-hidden group">
-                <div
-                    class="absolute right-0 top-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-blue-100">
-                </div>
-                <div class="p-4 bg-blue-50 text-blue-600 rounded-xl">
-                    <i data-lucide="flag" class="w-8 h-8"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider" id="label-target">Meta Mensal
-                    </p>
-                    <h3 class="text-2xl font-black text-gray-900 mt-1" id="card-target">R$ 0,00</h3>
-                </div>
-            </div>
-
-            <!-- Card Realizado -->
-            <div
-                class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5 relative overflow-hidden group">
-                <div
-                    class="absolute right-0 top-0 w-32 h-32 bg-green-50 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-green-100">
-                </div>
-                <div class="p-4 bg-green-50 text-green-600 rounded-xl">
-                    <i data-lucide="trending-up" class="w-8 h-8"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Realizado</p>
-                    <h3 class="text-2xl font-black text-gray-900 mt-1" id="card-actual">R$ 0,00</h3>
-                </div>
-            </div>
-
-            <!-- Card Gap -->
-            <div
-                class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-5 relative overflow-hidden group">
-                <div
-                    class="absolute right-0 top-0 w-32 h-32 bg-red-50 rounded-full blur-3xl -mr-10 -mt-10 transition-all group-hover:bg-red-100">
-                </div>
-                <div class="p-4 bg-red-50 text-red-600 rounded-xl">
-                    <i data-lucide="target" class="w-8 h-8"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Falta para Meta</p>
-                    <h3 class="text-2xl font-black text-gray-900 mt-1" id="card-gap">R$ 0,00</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- Toggle View -->
-        <div class="flex justify-center">
-            <div class="bg-gray-100 p-1 rounded-lg inline-flex relative shadow-inner">
-                <div class="absolute transition-all duration-300 bg-white rounded-md shadow-sm h-[calc(100%-8px)] top-1 w-[calc(50%-4px)]"
-                    id="toggle-bg" style="left: 4px;"></div>
-                <button onclick="switchView('monthly')" id="btn-monthly"
-                    class="relative z-10 px-6 py-1.5 text-xs font-bold text-gray-900 transition-colors">
-                    Mensal
-                </button>
-                <button onclick="switchView('annual')" id="btn-annual"
-                    class="relative z-10 px-6 py-1.5 text-xs font-bold text-gray-500 transition-colors">
-                    Anual
-                </button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Main Gauge -->
-            <div
-                class="lg:col-span-1 bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center relative">
-                <h3 class="text-sm font-bold text-gray-900 text-center mb-6">Atingimento da Meta</h3>
-
-                <div class="relative w-full max-w-[280px] aspect-[2/1] mb-6">
-                    <!-- Canvas for Gauge -->
-                    <canvas id="gaugeChart"></canvas>
-                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center transform translate-y-1/4">
-                        <div class="flex flex-col items-center">
-                            <span id="company-percent-text"
-                                class="text-4xl font-black text-gray-900 tracking-tighter">0%</span>
-                            <span class="text-xs font-semibold text-gray-400 uppercase mt-1">Concluído</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center mt-8 space-y-4">
-                    <div id="status-badge"
-                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-500">
-                        Aguardando Dados
-                    </div>
-
-                    <!-- Secondary Goal: New Sales Condition -->
-                    <div
-                        class="bg-gray-50 rounded-lg p-3 border border-gray-100 flex items-center justify-between text-xs">
-                        <div class="flex items-center gap-2 text-gray-500">
-                            <i data-lucide="plus-circle" class="w-4 h-4 text-blue-500"></i>
-                            <span class="font-medium">Novas Vendas</span>
-                        </div>
-                        <div class="text-right">
-                            <span class="font-bold text-gray-900" id="lbl-new-sales-actual">R$ 0,00</span>
-                            <span class="text-gray-400">/</span>
-                            <span class="text-gray-400" id="lbl-new-sales-target">R$ 0,00</span>
-                        </div>
-                    </div>
-
-                    <p class="text-xs text-gray-400 max-w-[200px] mx-auto leading-relaxed">
-                        Mantenha o ritmo! <span id="motivation-text">Defina uma meta para começar.</span>
-                    </p>
-                </div>
-            </div>
-
-            <!-- Ranking Table -->
-            <div
-                class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-                <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-                    <div>
-                        <h3 class="font-bold text-gray-900">Ranking Individual</h3>
-                        <p class="text-xs text-gray-500 mt-1">Performance baseada em novos contratos assinados.</p>
-                    </div>
-                    <div class="flex -space-x-2 overflow-hidden">
-                        <!-- Top 3 avatars preview -->
-                        <div id="top-avatars" class="flex -space-x-2"></div>
-                    </div>
-                </div>
-
-                <div class="flex-1 overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="text-xs text-gray-400 font-semibold bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th class="px-6 py-4">Vendedor</th>
-                                <th class="px-6 py-4 text-right">Meta (Alvo)</th>
-                                <th class="px-6 py-4 text-right">Realizado</th>
-                                <th class="px-6 py-4 w-1/3 text-center">Progresso</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ranking-body" class="divide-y divide-gray-50 text-sm">
-                            <tr>
-                                <td colspan="4" class="p-8 text-center text-gray-400">Carregando dados...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
     </div>
+
+    <!-- NorthWay Manifesto Banner: Goals -->
+    <div
+        class="relative overflow-hidden rounded-3xl bg-[var(--nw-ink)] p-8 text-white shadow-xl border border-white/5">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="max-w-2xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <span
+                        class="bg-white/10 text-rose-300 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-white/10">Visão
+                        & Direção</span>
+                </div>
+                <h2 class="text-2xl lg:text-3xl font-extrabold mb-2 leading-tight tracking-tight uppercase">Metas sem processos
+                    <br><span class="text-rose-400 italic font-normal">são apenas desejos</span> </h2>
+                <p class="text-xs lg:text-sm text-gray-300 leading-relaxed font-normal">
+                    A clareza do destino é o que separa o esforço do resultado.
+                    Use este dashboard para transformar sua visão em números e seus números em realidade
+                    extraordinária.
+                </p>
+            </div>
+            <div class="flex-shrink-0">
+                <div
+                    class="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 flex flex-col items-center text-center">
+                    <div
+                        class="w-12 h-12 bg-gradient-to-br from-rose-600 to-rose-900 rounded-2xl flex items-center justify-center mb-2 shadow-lg">
+                        <i data-lucide="compass" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Norte Estratégico</span>
+                </div>
+            </div>
+        </div>
+        <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Card Meta -->
+        <div class="nw-stat nw-stat-ink relative group">
+            <span class="nw-stat-label" id="label-target">Meta Mensal</span>
+            <span class="nw-stat-val text-2xl lg:text-3xl" id="card-target">R$ 0,00</span>
+            <span class="nw-stat-sub text-[11px] text-gray-300">Alvo planejado</span>
+        </div>
+
+        <!-- Card Realizado -->
+        <div class="nw-stat nw-stat-white relative group">
+            <span class="nw-stat-label">Realizado</span>
+            <span class="nw-stat-val text-2xl lg:text-3xl text-emerald-600" id="card-actual">R$ 0,00</span>
+            <span class="nw-stat-sub text-[11px]">Faturamento consolidado</span>
+        </div>
+
+        <!-- Card Gap -->
+        <div class="nw-stat nw-stat-accent relative group">
+            <span class="nw-stat-label">Falta para Meta</span>
+            <span class="nw-stat-val text-2xl lg:text-3xl" id="card-gap">R$ 0,00</span>
+            <span class="nw-stat-sub text-[11px] text-white/80">Distância até o alvo</span>
+        </div>
+    </div>
+
+    <!-- Toggle View -->
+    <div class="flex justify-center">
+        <div class="bg-[var(--nw-shell)] p-1 rounded-full border border-[var(--nw-border)] inline-flex relative shadow-inner">
+            <div class="absolute transition-all duration-300 bg-white rounded-full shadow-sm h-[calc(100%-8px)] top-1 w-[calc(50%-4px)]"
+                id="toggle-bg" style="left: 4px;"></div>
+            <button onclick="switchView('monthly')" id="btn-monthly"
+                class="relative z-10 px-6 py-1.5 text-xs font-bold text-gray-900 transition-colors">
+                Mensal
+            </button>
+            <button onclick="switchView('annual')" id="btn-annual"
+                class="relative z-10 px-6 py-1.5 text-xs font-bold text-gray-500 transition-colors">
+                Anual
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Gauge -->
+        <div
+            class="lg:col-span-1 nw-panel flex flex-col items-center justify-center relative p-7">
+            <h3 class="text-sm font-bold text-[var(--nw-text-1)] text-center mb-6">Atingimento da Meta</h3>
+
+            <div class="relative w-full max-w-[280px] aspect-[2/1] mb-6">
+                <!-- Canvas for Gauge -->
+                <canvas id="gaugeChart"></canvas>
+                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center transform translate-y-1/4">
+                    <div class="flex flex-col items-center">
+                        <span id="company-percent-text"
+                            class="text-4xl font-extrabold text-[var(--nw-text-1)] tracking-tight">0%</span>
+                        <span class="text-[11px] font-bold text-[var(--nw-text-3)] uppercase mt-1">Concluído</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-8 space-y-4 w-full">
+                <div id="status-badge"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[var(--nw-shell)] border border-[var(--nw-border)] text-[var(--nw-text-2)]">
+                    Aguardando Dados
+                </div>
+
+                <!-- Secondary Goal: New Sales Condition -->
+                <div
+                    class="bg-[var(--nw-shell)] rounded-2xl p-3.5 border border-[var(--nw-border)] flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2 text-[var(--nw-text-2)]">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-blue-500"></i>
+                        <span class="font-semibold">Novas Vendas</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-[var(--nw-text-1)]" id="lbl-new-sales-actual">R$ 0,00</span>
+                        <span class="text-[var(--nw-text-3)]">/</span>
+                        <span class="text-[var(--nw-text-3)]" id="lbl-new-sales-target">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <p class="text-xs text-[var(--nw-text-3)] max-w-[220px] mx-auto leading-relaxed">
+                    Mantenha o ritmo! <span id="motivation-text" class="text-[var(--nw-text-2)] font-medium">Defina uma meta para começar.</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Ranking Table -->
+        <div
+            class="lg:col-span-2 nw-panel flex flex-col overflow-hidden space-y-4">
+            <div class="pb-3 border-b border-[var(--nw-border)] flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-base text-[var(--nw-text-1)]">Ranking Individual</h3>
+                    <p class="text-xs text-[var(--nw-text-2)] mt-0.5">Performance baseada em novos contratos assinados.</p>
+                </div>
+                <div class="flex -space-x-2 overflow-hidden">
+                    <div id="top-avatars" class="flex -space-x-2"></div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-x-auto">
+                <table class="nw-table w-full text-left">
+                    <thead>
+                        <tr>
+                            <th>Vendedor</th>
+                            <th class="text-right">Meta (Alvo)</th>
+                            <th class="text-right">Realizado</th>
+                            <th class="w-1/3 text-center">Progresso</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-body">
+                        <tr>
+                            <td colspan="4" class="p-8 text-center text-[var(--nw-text-3)]">Carregando dados...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- Modal Define Goals -->
 <div id="goalModal"
-    class="fixed inset-0 bg-gray-900/40 z-[100] hidden items-center justify-center backdrop-blur-sm transition-all">
+    class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center backdrop-blur-sm transition-all p-4">
     <div
-        class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all scale-100 flex flex-col max-h-[90vh]">
-        <div class="px-6 pt-6 bg-gray-50/50 rounded-t-2xl border-b border-gray-100 flex items-center justify-between">
+        class="nw-modal-card w-full max-w-2xl mx-4 transform transition-all flex flex-col max-h-[90vh]">
+        <div class="px-6 py-5 border-b border-[var(--nw-border)] flex items-center justify-between">
             <div>
-                <h3 class="font-bold text-gray-900 text-lg">Definir Metas</h3>
-                <p class="text-xs text-gray-500">Configure os alvos para o período.</p>
+                <h3 class="font-bold text-[var(--nw-text-1)] text-lg">Definir Metas</h3>
+                <p class="text-xs text-[var(--nw-text-2)]">Configure os alvos para o período.</p>
             </div>
 
             <!-- Mode Toggle Tabs -->
-            <div class="flex bg-gray-200 p-1 rounded-lg">
+            <div class="flex bg-[var(--nw-shell)] p-1 rounded-full border border-[var(--nw-border)]">
                 <button onclick="setGoalMode('monthly')" id="tab-mode-monthly"
-                    class="px-4 py-1.5 rounded-md text-xs font-bold transition-all bg-white text-gray-900 shadow-sm">
+                    class="px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-white text-gray-900 shadow-sm">
                     Mensal
                 </button>
                 <button onclick="setGoalMode('annual')" id="tab-mode-annual"
-                    class="px-4 py-1.5 rounded-md text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
+                    class="px-4 py-1.5 rounded-full text-xs font-bold transition-all text-gray-500 hover:text-gray-700">
                     Anual
                 </button>
             </div>
 
             <button type="button" onclick="toggleModal('goalModal')"
-                class="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5"></i>
+                class="nw-icon-btn">
+                <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         </div>
 
-        <div class="p-8 overflow-y-auto flex-1 space-y-6">
+        <div class="p-6 overflow-y-auto flex-1 space-y-5">
             <!-- Company Goal Section -->
-            <div class="relative group">
-                <div
-                    class="absolute -inset-1 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-200">
+            <div class="bg-[var(--nw-shell)] p-5 rounded-2xl border border-[var(--nw-border)] space-y-4">
+                <!-- Main Revenue Goal -->
+                <div>
+                    <label class="block text-xs font-bold text-[var(--nw-text-1)] uppercase tracking-wider mb-2"
+                        id="lbl-company-goal-type">Meta Mensal da Empresa</label>
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-white border border-[var(--nw-border)] text-blue-600 rounded-xl shadow-sm">
+                            <i data-lucide="trending-up" class="w-5 h-5"></i>
+                        </div>
+                        <div class="relative flex-1">
+                            <span
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-base">R$</span>
+                            <input type="text" id="input-company-target" placeholder="0,00"
+                                class="nw-input pl-11 w-full text-lg font-bold">
+                        </div>
+                    </div>
+                    <p class="text-xs text-[var(--nw-text-3)] mt-2 pl-14" id="hint-company-goal">Este valor é para o mês
+                        selecionado.</p>
                 </div>
-                <div class="relative bg-white p-6 rounded-xl border border-blue-100 shadow-sm space-y-4">
-                    <!-- Main Revenue Goal -->
-                    <div>
-                        <label class="block text-xs font-bold text-blue-900 uppercase tracking-wider mb-2"
-                            id="lbl-company-goal-type">Meta Mensal da Empresa</label>
-                        <div class="flex items-center gap-3">
-                            <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                                <i data-lucide="trending-up" class="w-6 h-6"></i>
-                            </div>
-                            <div class="relative flex-1">
-                                <span
-                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-lg">R$</span>
-                                <input type="text" id="input-company-target" placeholder="0,00"
-                                    class="pl-12 w-full py-3 rounded-xl border-gray-200 text-xl font-bold text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-gray-300">
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2 pl-14" id="hint-company-goal">Este valor é para o mês
-                            selecionado.</p>
-                    </div>
 
-                    <!-- Min New Sales Condition -->
-                    <div class="pt-4 border-t border-gray-100">
-                        <label
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                            <i data-lucide="plus-circle" class="w-3 h-3"></i> Mínimo de Vendas Novas (Opcional)
-                        </label>
-                        <div class="flex items-center gap-3">
-                            <div class="relative flex-1">
-                                <span
-                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">R$</span>
-                                <input type="text" id="input-min-new-sales" placeholder="0,00"
-                                    class="pl-10 w-full py-2 rounded-lg border-gray-200 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-gray-300">
-                            </div>
+                <!-- Min New Sales Condition -->
+                <div class="pt-4 border-t border-[var(--nw-border)]">
+                    <label
+                        class="block text-xs font-bold text-[var(--nw-text-2)] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-blue-500"></i> Mínimo de Vendas Novas (Opcional)
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <div class="relative flex-1">
+                            <span
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">R$</span>
+                            <input type="text" id="input-min-new-sales" placeholder="0,00"
+                                class="nw-input pl-10 w-full text-sm font-bold">
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Garante que a meta não seja batida apenas com
-                            recorrência.</p>
                     </div>
+                    <p class="text-[11px] text-[var(--nw-text-3)] mt-1">Garante que a meta não seja batida apenas com
+                        recorrência.</p>
                 </div>
             </div>
 
             <!-- Individual Goals Section -->
             <div>
-                <div class="flex items-center gap-2 mb-4">
-                    <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
-                    <h4 class="font-bold text-sm text-gray-900 uppercase tracking-wider" id="lbl-user-goal-type">Metas
-                        Individuais (Mensal)</h4>
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="users" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                    <h4 class="font-bold text-xs text-[var(--nw-text-2)] uppercase tracking-wider" id="lbl-user-goal-type">Metas Individuais (Mensal)</h4>
                 </div>
-                <div class="bg-gray-50 rounded-xl p-1 border border-gray-200">
-                    <div id="user-goals-inputs" class="space-y-1 max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
+                <div class="bg-[var(--nw-shell)] rounded-2xl p-2 border border-[var(--nw-border)]">
+                    <div id="user-goals-inputs" class="space-y-1 max-h-[260px] overflow-y-auto p-1 custom-scrollbar">
                         <!-- Injected via JS -->
                     </div>
                 </div>
@@ -317,30 +280,28 @@
         </div>
 
         <div
-            class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+            class="p-5 border-t border-[var(--nw-border)] bg-[var(--nw-shell)] rounded-b-3xl flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-2" id="container-replicate">
                 <input type="checkbox" id="replicate-goals"
-                    class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
-                <label for="replicate-goals" class="text-xs text-gray-600 font-medium cursor-pointer select-none">
+                    class="w-4 h-4 text-[var(--nw-brand)] rounded border-gray-300 focus:ring-rose-500">
+                <label for="replicate-goals" class="text-xs text-[var(--nw-text-2)] font-medium cursor-pointer select-none">
                     Aplicar para todo o ano de <span id="lbl-year-modal">2026</span>
                 </label>
             </div>
             <!-- Spacer if hidden -->
             <div id="spacer-replicate" class="hidden"></div>
 
-            <div class="flex gap-3 w-full md:w-auto">
+            <div class="flex gap-2.5 w-full md:w-auto">
                 <button type="button" onclick="toggleModal('goalModal')"
-                    class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors flex-1 md:flex-none">Cancelar</button>
+                    class="nw-btn nw-btn-subtle text-xs py-2 px-4 flex-1 md:flex-none">Cancelar</button>
                 <button type="button" onclick="saveGoals()"
-                    class="px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-black shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 flex-1 md:flex-none">
+                    class="nw-btn nw-btn-accent text-xs py-2 px-4 flex items-center justify-center gap-2 flex-1 md:flex-none">
                     <i data-lucide="save" class="w-4 h-4"></i> Salvar
                 </button>
             </div>
         </div>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     let gaugeChart = null;
     let currentData = null;

@@ -1,333 +1,223 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="flex-1 h-screen overflow-y-auto bg-gray-50/50 relative">
-    <div class="p-6 max-w-[1600px] mx-auto space-y-6">
+<div class="space-y-7">
 
-        <!-- Header (Compact) -->
-        <div class="flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-white border border-gray-200 rounded-lg shadow-sm">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5 text-northway-red"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold text-gray-900 tracking-tight">Financeiro</h1>
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-[var(--nw-text-1)]">Financeiro</h1>
+            <p class="text-sm text-[var(--nw-text-2)] mt-1">Visão geral de MRR, projeções de fluxo de caixa e gestão de recebíveis.</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            <button class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">
+                <i data-lucide="calendar" class="w-4 h-4"></i>
+                <span>Este Mês</span>
+            </button>
+            <a href="{{ url_for('financial.dre_page') }}" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span>DRE</span>
+            </a>
+            <a href="{{ url_for('financial_strategic.dashboard') }}" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">
+                <i data-lucide="trending-up" class="w-4 h-4"></i>
+                <span>DRE Estratégico</span>
+            </a>
+            <button class="nw-btn nw-btn-accent text-xs py-2 px-3.5">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Exportar</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Financial Alerts -->
+    <div id="financial-alerts" class="space-y-3 hidden">
+        <!-- Injected via JS -->
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+        <!-- MRR -->
+        <div class="nw-stat nw-stat-ink relative group">
+            <span class="nw-stat-label">MRR</span>
+            <span class="nw-stat-val text-xl lg:text-2xl" id="kpi-mrr">R$ 0,00</span>
+            <span class="text-[11px] font-bold text-emerald-400 mt-0.5 flex items-center gap-1">
+                <i data-lucide="trending-up" class="w-3 h-3"></i> +12%
+            </span>
+        </div>
+
+        <!-- Previsão -->
+        <div class="nw-stat nw-stat-white relative group">
+            <span class="nw-stat-label">Previsão (30d)</span>
+            <span class="nw-stat-val text-xl lg:text-2xl" id="kpi-forecast30">R$ 0,00</span>
+            <span class="nw-stat-sub text-[11px]">Confirmado: <strong id="kpi-confirmed" class="text-[var(--nw-ink)]">R$ 0</strong></span>
+        </div>
+
+        <!-- MRR em Risco -->
+        <div class="nw-stat nw-stat-white relative group">
+            <span class="nw-stat-label">MRR em Risco</span>
+            <span class="nw-stat-val text-xl lg:text-2xl text-amber-600" id="kpi-mrr-risk">R$ 0,00</span>
+            <span class="nw-stat-sub text-[11px]"><strong id="kpi-delinquent-count">0</strong> inadimplentes</span>
+        </div>
+
+        <!-- Em Atraso -->
+        <div class="nw-stat nw-stat-accent relative group">
+            <span class="nw-stat-label">Em Atraso</span>
+            <span class="nw-stat-val text-xl lg:text-2xl" id="kpi-risk">R$ 0,00</span>
+            <span class="nw-stat-sub text-[11px] text-white/80">Ação necessária</span>
+        </div>
+
+        <!-- Ticket Médio -->
+        <div class="nw-stat nw-stat-white relative group">
+            <span class="nw-stat-label">Ticket Médio</span>
+            <span class="nw-stat-val text-xl lg:text-2xl" id="kpi-ticket">R$ 0,00</span>
+            <span class="nw-stat-sub text-[11px]"><strong id="kpi-clients">0</strong> ativos</span>
+        </div>
+
+        <!-- Churn Rate -->
+        <div class="nw-stat nw-stat-white relative group">
+            <span class="nw-stat-label">Churn Rate</span>
+            <span class="nw-stat-val text-xl lg:text-2xl"><span id="kpi-churn">0</span>%</span>
+            <span class="nw-stat-sub text-[11px]">Este mês</span>
+        </div>
+    </div>
+
+    <!-- Middle Section: Chart and Insight -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Left Column: Chart (2/3) -->
+        <div class="lg:col-span-2 nw-panel flex flex-col h-[340px]">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-sm text-[var(--nw-text-1)]">Projeção de Receita (Semestral)</h3>
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[var(--nw-accent)]"></span>
+                    <span class="text-xs text-[var(--nw-text-2)] font-medium">Previsto</span>
                 </div>
             </div>
-            <div class="flex gap-2">
-                <button
-                    class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm flex items-center gap-2">
-                    <i data-lucide="calendar" class="w-3 h-3"></i> Este Mês
-                </button>
-                <button onclick="window.location.href='{{ url_for('financial.dre_page') }}'"
-                    class="px-3 py-1.5 bg-white border border-gray-200 rounded-md text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-3 h-3"></i> DRE
-                </button>
-                <button onclick="window.location.href='{{ url_for('financial_strategic.dashboard') }}'"
-                    class="px-3 py-1.5 bg-northway-red/10 text-northway-red border border-northway-red/20 rounded-md text-xs font-bold hover:bg-northway-red/20 shadow-sm flex items-center gap-2">
-                    <i data-lucide="trending-up" class="w-3 h-3"></i> DRE Estratégico
-                </button>
-                <button
-                    class="px-3 py-1.5 bg-northway-red text-white rounded-md text-xs font-bold hover:bg-red-700 shadow-sm flex items-center gap-2">
-                    <i data-lucide="download" class="w-3 h-3"></i> Exportar
-                </button>
+            <div class="flex-1 relative w-full min-h-0">
+                <canvas id="forecastChart"></canvas>
             </div>
         </div>
 
-        <!-- Financial Alerts -->
-        <div id="financial-alerts" class="space-y-3 hidden mb-6">
-            <!-- Injected via JS -->
-        </div>
-
-        <!-- KPI Strip (Ultra Compact) -->
-        <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
-            <!-- MRR -->
-            <div
-                class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between group/tooltip relative">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">MRR</span>
-                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
-                    </div>
-                    <i data-lucide="wallet" class="w-4 h-4 text-gray-400"></i>
-                </div>
-                <!-- Tooltip -->
-                <div
-                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
-                    Receita Recorrente Mensal. Soma do valor de todos os contratos ativos (exclui inadimplentes).
-                    <div
-                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-2xl font-bold text-gray-900 tracking-tight" id="kpi-mrr">R$ 0,00</h3>
-                    <div class="flex items-center gap-1 mt-1 text-green-600">
-                        <i data-lucide="trending-up" class="w-3 h-3"></i>
-                        <span class="text-[10px] font-bold">+12%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Previsão -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 group/tooltip relative">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">Previsão (30d)</span>
-                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
-                    </div>
-                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-500"></i>
-                </div>
-                <!-- Tooltip -->
-                <div
-                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
-                    Estimativa de recebimentos para os próximos 30 dias com base nos contratos.
-                    <div
-                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
-                    </div>
-                </div>
-
-                <h3 class="text-2xl font-bold text-gray-900 tracking-tight" id="kpi-forecast30">R$ 0,00</h3>
-                <p class="text-[10px] text-gray-400 mt-1">Confirmado: <strong id="kpi-confirmed"
-                        class="text-gray-700">R$ 0</strong></p>
-            </div>
-
-            <!-- MRR em Risco -->
-            <div
-                class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-between group/tooltip relative">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">MRR em Risco</span>
-                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
-                    </div>
-                    <i data-lucide="shield-alert" class="w-4 h-4 text-orange-400"></i>
-                </div>
-                <!-- Tooltip -->
-                <div
-                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
-                    Receita recorrente de clientes inadimplentes (atraso > 30 dias).
-                    <div
-                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-2xl font-bold text-orange-600 tracking-tight" id="kpi-mrr-risk">R$ 0,00</h3>
-                    <p class="text-[10px] text-gray-400 mt-1"><strong id="kpi-delinquent-count">0</strong> clientes
-                        inadimplentes</p>
-                </div>
-            </div>
-
-            <!-- Risco -->
-            <div
-                class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-red-500 group/tooltip relative">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">Em Atraso</span>
-                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
-                    </div>
-                    <i data-lucide="alert-circle" class="w-4 h-4 text-red-500"></i>
-                </div>
-                <!-- Tooltip -->
-                <div
-                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
-                    Total de parcelas vencidas e ainda não pagas. Requer atenção.
-                    <div
-                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
-                    </div>
-                </div>
-
-                <h3 class="text-2xl font-bold text-red-600 tracking-tight" id="kpi-risk">R$ 0,00</h3>
-                <p class="text-[10px] text-gray-400 mt-1">Ação necessária</p>
-            </div>
-
-            <!-- Ticket -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 group/tooltip relative">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">Ticket Médio</span>
-                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
-                    </div>
-                    <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
-                </div>
-                <!-- Tooltip -->
-                <div
-                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
-                    Valor médio pago por cada cliente (MRR dividido pelo total de clientes ativos).
-                    <div
-                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
-                    </div>
-                </div>
-
-                <h3 class="text-2xl font-bold text-gray-900 tracking-tight" id="kpi-ticket">R$ 0,00</h3>
-                <p class="text-[10px] text-gray-400 mt-1"><span id="kpi-clients">0</span> ativos</p>
-            </div>
-
-            <!-- Churn -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 group/tooltip relative">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">Churn Rate</span>
-                        <i data-lucide="info" class="w-3 h-3 text-gray-300 cursor-help"></i>
-                    </div>
-                    <i data-lucide="activity" class="w-4 h-4 text-gray-400"></i>
-                </div>
-                <!-- Tooltip -->
-                <div
-                    class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-[10px] p-2 rounded shadow-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-20 text-center">
-                    Taxa de cancelamento. Percentual de clientes que cancelaram o contrato neste mês.
-                    <div
-                        class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
-                    </div>
-                </div>
-
-                <h3 class="text-2xl font-bold text-gray-900 tracking-tight"><span id="kpi-churn">0</span>%</h3>
-                <p class="text-[10px] text-gray-400 mt-1">Este mês</p>
-            </div>
-        </div>
-
-        <!-- Middle Section: Chart and Insight -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Column: Chart (2/3) -->
-            <div class="lg:col-span-2 bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col h-[320px]">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-sm text-gray-800">Projeção de Receita (Semestral)</h3>
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-northway-red"></span>
-                        <span class="text-xs text-gray-500">Previsto</span>
-                    </div>
-                </div>
-                <div class="flex-1 relative w-full">
-                    <canvas id="forecastChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Right Column: Insight & Stats (1/3) -->
-            <div class="flex flex-col gap-4 h-[320px]">
-                <!-- Health Stats -->
-                <div
-                    class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col justify-center">
-                    <h3 class="font-bold text-gray-900 mb-4 text-sm">Saúde Financeira</h3>
-                    <div class="space-y-6">
-                        <div>
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-600">Taxa de Adimplência</span>
-                                <span class="font-bold text-green-600">98%</span>
-                            </div>
-                            <div class="w-full bg-gray-100 rounded-full h-1.5">
-                                <div class="bg-green-500 h-1.5 rounded-full" style="width: 98%"></div>
-                            </div>
+        <!-- Right Column: Insight & Stats (1/3) -->
+        <div class="flex flex-col gap-4 h-[340px]">
+            <!-- Health Stats -->
+            <div class="nw-panel flex-1 flex flex-col justify-center">
+                <h3 class="font-bold text-[var(--nw-text-1)] mb-4 text-sm">Saúde Financeira</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5 font-medium">
+                            <span class="text-[var(--nw-text-2)]">Taxa de Adimplência</span>
+                            <span class="font-bold text-emerald-600">98%</span>
                         </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1">
-                                <span class="text-gray-600">Meta MRR</span>
-                                <span class="font-bold text-gray-900">75%</span>
-                            </div>
-                            <div class="w-full bg-gray-100 rounded-full h-1.5">
-                                <div class="bg-northway-red h-1.5 rounded-full" style="width: 75%"></div>
-                            </div>
+                        <div class="w-full bg-[var(--nw-shell)] rounded-full h-2 overflow-hidden">
+                            <div class="bg-emerald-500 h-2 rounded-full" style="width: 98%"></div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Compact Insight -->
-                <div
-                    class="bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-5 flex flex-col justify-center text-white shadow-sm relative overflow-hidden h-32">
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i>
-                            <h4 class="font-bold text-sm">NorthWay AI</h4>
-                        </div>
-                        <p class="text-xs text-gray-300 leading-relaxed line-clamp-2">
-                            A receita subiu <strong>12%</strong>. Foco em retenção para o próximo tri.
-                        </p>
-                    </div>
-                    <i data-lucide="sparkles" class="absolute -right-2 -bottom-2 w-16 h-16 text-white/5"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Market Analysis Section (Niches) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 mt-6">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col h-[320px]">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-sm text-gray-800">Top Nichos (Rentabilidade Mensal)</h3>
-                    <i data-lucide="trending-up" class="w-4 h-4 text-gray-400"></i>
-                </div>
-                <div class="flex-1 relative w-full">
-                    <canvas id="nicheChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Placeholder for future analytics or just a summary -->
-            <div
-                class="bg-gradient-to-br from-[#11061e] to-[#2d1b4e] p-6 rounded-xl shadow-sm text-white flex flex-col justify-center">
-                <h3 class="font-bold text-lg mb-2">Insight de Nicho</h3>
-                <p class="text-sm text-gray-300 leading-relaxed">
-                    Identifique quais segmentos trazem maior retorno financeiro para sua operação.
-                    Foque seus esforços de marketing nos nichos listados ao lado para maximizar o LTV.
-                </p>
-                <div class="mt-6 flex items-center gap-3">
-                    <div class="bg-white/10 p-3 rounded-lg backdrop-blur-sm">
-                        <i data-lucide="target" class="w-6 h-6 text-northway-red"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-400 uppercase font-bold">Dica da IA</p>
-                        <p class="text-sm font-medium">Expanda sua atuação no nicho #1</p>
+                        <div class="flex justify-between text-xs mb-1.5 font-medium">
+                            <span class="text-[var(--nw-text-2)]">Meta MRR</span>
+                            <span class="font-bold text-[var(--nw-text-1)]">75%</span>
+                        </div>
+                        <div class="w-full bg-[var(--nw-shell)] rounded-full h-2 overflow-hidden">
+                            <div class="bg-[var(--nw-accent)] h-2 rounded-full" style="width: 75%"></div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Compact Insight -->
+            <div class="p-5 rounded-2xl bg-[var(--nw-ink)] text-white relative overflow-hidden flex flex-col justify-center shadow-md">
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i>
+                        <h4 class="font-bold text-sm">NorthWay AI</h4>
+                    </div>
+                    <p class="text-xs text-gray-300 leading-relaxed line-clamp-2">
+                        A receita subiu <strong>12%</strong>. Foco em retenção para o próximo tri.
+                    </p>
+                </div>
+                <i data-lucide="sparkles" class="absolute -right-2 -bottom-2 w-16 h-16 text-white/5 pointer-events-none"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Analysis Section (Niches) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="nw-panel flex flex-col h-[340px]">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-sm text-[var(--nw-text-1)]">Top Nichos (Rentabilidade Mensal)</h3>
+                <i data-lucide="trending-up" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+            </div>
+            <div class="flex-1 relative w-full min-h-0">
+                <canvas id="nicheChart"></canvas>
             </div>
         </div>
 
-        <!-- Transactions List (Bottom, Full Width) -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-sm text-gray-800">Transações Recentes</h3>
-                <div class="flex bg-gray-200/50 p-0.5 rounded-lg">
-                    <button onclick="filterTransactions('all')" id="tab-all"
-                        class="px-3 py-1 text-xs font-medium rounded text-gray-700 bg-white shadow-sm filter-tab">Todas</button>
-                    <button onclick="filterTransactions('pending')" id="tab-pending"
-                        class="px-3 py-1 text-xs font-medium rounded text-gray-500 hover:text-gray-900 filter-tab">Pendentes</button>
-                    <button onclick="filterTransactions('paid')" id="tab-paid"
-                        class="px-3 py-1 text-xs font-medium rounded text-gray-500 hover:text-gray-900 filter-tab">Pagas</button>
+        <div class="p-6 rounded-2xl bg-[var(--nw-ink)] text-white flex flex-col justify-center relative overflow-hidden shadow-md">
+            <h3 class="font-bold text-lg mb-2">Insight de Nicho</h3>
+            <p class="text-sm text-gray-300 leading-relaxed">
+                Identifique quais segmentos trazem maior retorno financeiro para sua operação.
+                Foque seus esforços de marketing nos nichos listados ao lado para maximizar o LTV.
+            </p>
+            <div class="mt-5 flex items-center gap-3">
+                <div class="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                    <i data-lucide="target" class="w-5 h-5 text-[var(--nw-accent)]"></i>
                 </div>
-            </div>
-
-            <div class="overflow-x-auto" id="tx-container">
-                <table class="w-full text-xs text-left">
-                    <thead class="text-[10px] text-gray-400 uppercase bg-gray-50/50 border-b border-gray-100">
-                        <tr>
-                            <th class="px-4 py-3 font-medium">Descrição</th>
-                            <th class="px-4 py-3 font-medium">Cliente</th>
-                            <th class="px-4 py-3 font-medium">Vencimento</th>
-                            <th class="px-4 py-3 font-medium text-green-600">Pago Em</th>
-                            <th class="px-4 py-3 font-medium">Gerada Em</th>
-                            <th class="px-4 py-3 font-medium">Valor</th>
-                            <th class="px-4 py-3 font-medium">Status</th>
-                            <th class="px-4 py-3 font-medium text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tx-table-body" class="divide-y divide-gray-100">
-                        <!-- Compact Rows injected via JS -->
-                        <tr>
-                            <td class="p-4 text-center text-gray-400" colspan="8">Carregando...</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Empty State -->
-                <div id="empty-state" class="hidden flex flex-col items-center justify-center py-8 text-center">
-                    <div class="bg-gray-50 p-3 rounded-full mb-2">
-                        <i data-lucide="inbox" class="w-6 h-6 text-gray-400"></i>
-                    </div>
-                    <p class="text-gray-400 text-xs">Nenhuma transação encontrada.</p>
+                <div>
+                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Dica da IA</p>
+                    <p class="text-sm font-semibold">Expanda sua atuação no nicho #1</p>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Transactions List (Bottom, Full Width) -->
+    <div class="nw-panel space-y-4">
+        <div class="flex justify-between items-center flex-wrap gap-3 pb-3 border-b border-[var(--nw-border)]">
+            <div>
+                <h3 class="font-bold text-base text-[var(--nw-text-1)]">Transações Recentes</h3>
+                <p class="text-xs text-[var(--nw-text-2)]">Lançamentos de faturamento e status de pagamento</p>
+            </div>
+            <div class="flex bg-[var(--nw-shell)] p-1 rounded-full border border-[var(--nw-border)]">
+                <button onclick="filterTransactions('all')" id="tab-all"
+                    class="px-3.5 py-1 text-xs font-semibold rounded-full text-gray-700 bg-white shadow-sm filter-tab transition-all">Todas</button>
+                <button onclick="filterTransactions('pending')" id="tab-pending"
+                    class="px-3.5 py-1 text-xs font-semibold rounded-full text-gray-500 hover:text-gray-900 filter-tab transition-all">Pendentes</button>
+                <button onclick="filterTransactions('paid')" id="tab-paid"
+                    class="px-3.5 py-1 text-xs font-semibold rounded-full text-gray-500 hover:text-gray-900 filter-tab transition-all">Pagas</button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto" id="tx-container">
+            <table class="nw-table w-full text-left">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Cliente</th>
+                        <th>Vencimento</th>
+                        <th class="text-emerald-600">Pago Em</th>
+                        <th>Gerada Em</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th class="text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tx-table-body">
+                    <tr>
+                        <td class="p-6 text-center text-[var(--nw-text-3)]" colspan="8">Carregando...</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center py-12 text-center">
+                <div class="w-12 h-12 rounded-full bg-[var(--nw-shell)] flex items-center justify-center mb-3">
+                    <i data-lucide="inbox" class="w-6 h-6 text-[var(--nw-text-3)]"></i>
+                </div>
+                <p class="text-sm font-semibold text-[var(--nw-text-2)]">Nenhuma transação encontrada</p>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     let allTransactions = [];
     let currentFilter = 'all';

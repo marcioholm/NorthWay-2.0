@@ -1,115 +1,131 @@
 {% extends "_settings_layout.html" %}
 
 {% block settings_content %}
-<div class="max-w-7xl mx-auto">
-    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Configurações</h1>
-
-    <!-- Inspirational Contracts Banner -->
-    <div
-        class="mb-10 relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 to-black p-8 text-white shadow-xl border border-gray-800">
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div class="max-w-2xl">
-                <div class="flex items-center gap-2 mb-4">
-                    <span
-                        class="bg-northway-red/20 text-northway-red text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-northway-red/30">Agilidade
-                        & Escala</span>
-                </div>
-                <h2 class="text-3xl font-black mb-3 leading-tight tracking-tight">Sua preocupação é somente com o <span
-                        class="text-northway-red italic">primeiro contrato</span> </h2>
-                <p class="text-base text-gray-400 leading-relaxed">
-                    Configure seus modelos uma única vez e deixe que nossa IA e automação cuidem do preenchimento
-                    futuro.
-                    Transforme horas de burocracia em segundos de execução.
-                </p>
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="nw-badge nw-badge-accent">Biblioteca & Documentos</span>
+                <span class="text-xs text-[var(--nw-text-3)] font-mono">Configuração</span>
             </div>
-            <div class="flex-shrink-0">
-                <div
-                    class="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 flex flex-col items-center text-center">
-                    <div
-                        class="w-12 h-12 bg-northway-red rounded-xl flex items-center justify-center mb-3 shadow-lg shadow-northway-red/20">
-                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <span class="text-xs font-bold text-gray-300 uppercase tracking-tighter">Pronto para a Escala</span>
-                </div>
-            </div>
+            <h1 class="text-2xl lg:text-3xl font-black tracking-tight text-[var(--nw-text-1)]">Modelos de Contrato</h1>
+            <p class="text-xs text-[var(--nw-text-2)] mt-0.5">Gerencie templates para geração automatizada de contratos e anexos.</p>
         </div>
-        <!-- Abstract BG Decoration -->
-        <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-northway-red/10 rounded-full blur-3xl"></div>
-        <div class="absolute -left-10 top-0 opacity-5">
-            <i data-lucide="file-check" class="w-64 h-64 text-white"></i>
-        </div>
-    </div>
-
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h2 class="text-xl font-bold text-gray-900">Modelos Disponíveis</h2>
         <a href="{{ url_for('templates.new_template') }}"
-            class="w-full md:w-auto bg-[#fa0102] text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm flex items-center justify-center gap-2">
+            class="nw-btn nw-btn-accent text-xs py-2 px-4 flex items-center justify-center gap-2 self-start sm:self-auto shadow-sm">
             <i data-lucide="plus" class="w-4 h-4"></i> Novo Modelo
         </a>
     </div>
 
-    {% if templates %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {% for tmpl in templates %}
-        <div
-            class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-6 hover:shadow-md transition-shadow relative group">
-            <!-- Badges -->
-            <div class="flex justify-between items-start mb-4">
-                <span
-                    class="px-2 py-1 rounded text-xs font-bold uppercase {{ 'bg-blue-100 text-blue-700' if tmpl.type == 'contract' else 'bg-purple-100 text-purple-700' }}">
-                    {{ 'Contrato' if tmpl.type == 'contract' else 'Anexo' }}
+    <!-- Inspirational Manifesto Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-[var(--nw-ink)] p-7 lg:p-8 text-white border border-[var(--nw-border-strong)]">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="max-w-2xl space-y-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-rose-300 border border-white/15">
+                    <i data-lucide="sparkles" class="w-3 h-3 text-[var(--nw-brand)]"></i>
+                    Agilidade & Escala
                 </span>
-                {% if tmpl.is_global %}
-                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold flex items-center gap-1">
-                    <i data-lucide="globe" class="w-3 h-3"></i> Global
-                </span>
-                {% elif tmpl.is_library %}
-                <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded font-bold flex items-center gap-1">
-                    <i data-lucide="book" class="w-3 h-3"></i> Biblioteca
-                </span>
-                {% endif %}
+                <h2 class="text-xl lg:text-2xl font-black tracking-tight leading-snug">
+                    Sua preocupação é somente com o <span class="text-[var(--nw-brand)] italic">primeiro contrato</span>
+                </h2>
+                <p class="text-xs text-white/70 leading-relaxed font-light">
+                    Configure seus modelos uma única vez e deixe que nossa IA e automação cuidem do preenchimento futuro.
+                    Transforme horas de burocracia em segundos de execução.
+                </p>
             </div>
-
-            <h3 class="text-lg font-bold text-gray-900 mb-2 truncate" title="{{ tmpl.name }}">{{ tmpl.name }}</h3>
-            <p class="text-xs text-gray-400 mb-2">Atualizado em {{ tmpl.created_at.strftime('%d/%m/%Y') }}</p>
-            <p class="text-[10px] text-gray-400 line-clamp-2 h-8">{{ tmpl.description or "" }}</p>
-
-            <!-- Actions -->
-            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-2">
-                <a href="{{ url_for('templates.edit_template', id=tmpl.id) }}"
-                    class="text-gray-500 hover:text-northway-red p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                    title="Editar">
-                    <i data-lucide="edit-3" class="w-4 h-4"></i>
-                </a>
-
-                {% if current_user.is_super_admin or (not tmpl.is_global or (tmpl.is_global and tmpl.company_id ==
-                current_user.company_id)) %}
-                <form action="{{ url_for('templates.duplicate_template', id=tmpl.id) }}" method="POST" class="inline">
-                    <button type="submit"
-                        class="text-gray-500 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-colors"
-                        title="Duplicar">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
-                </form>
-
-                <form action="{{ url_for('templates.delete_template', id=tmpl.id) }}" method="POST"
-                    onsubmit="return confirm('Tem certeza que deseja excluir este modelo?');" class="inline">
-                    <button type="submit"
-                        class="text-gray-500 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                        title="Excluir">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                </form>
-                {% endif %}
+            <div class="flex-shrink-0">
+                <div class="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 flex flex-col items-center text-center">
+                    <div class="w-10 h-10 bg-[var(--nw-brand)] rounded-xl flex items-center justify-center mb-2 shadow-lg shadow-rose-950/40">
+                        <i data-lucide="file-check" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-white/80 uppercase tracking-widest">Escala Imediata</span>
+                </div>
             </div>
         </div>
-        {% endfor %}
+        <div class="absolute -right-20 -bottom-20 w-72 h-72 bg-nw-brand/10 rounded-full blur-3xl pointer-events-none"></div>
     </div>
-    {% else %}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center text-gray-400">
-        <i data-lucide="file-text" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
-        <p>Nenhum modelo cadastrado.</p>
+
+    <!-- Template List Grid -->
+    <div>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-bold text-[var(--nw-text-1)] uppercase tracking-wider">Modelos Disponíveis</h2>
+            <span class="text-xs text-[var(--nw-text-3)] font-mono">{{ templates|length if templates else 0 }} modelos</span>
+        </div>
+
+        {% if templates %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for tmpl in templates %}
+            <div class="nw-panel p-5 flex flex-col justify-between hover:border-[var(--nw-border-strong)] transition-all group">
+                <div>
+                    <!-- Badges -->
+                    <div class="flex justify-between items-start mb-3 gap-2">
+                        <span class="nw-chip text-[10px] font-bold uppercase tracking-wider {{ 'bg-blue-50 text-blue-700 border-blue-200' if tmpl.type == 'contract' else 'bg-purple-50 text-purple-700 border-purple-200' }}">
+                            {{ 'Contrato' if tmpl.type == 'contract' else 'Anexo' }}
+                        </span>
+                        {% if tmpl.is_global %}
+                        <span class="nw-chip text-[10px] font-bold flex items-center gap-1 bg-amber-50 text-amber-700 border-amber-200">
+                            <i data-lucide="globe" class="w-3 h-3"></i> Global
+                        </span>
+                        {% elif tmpl.is_library %}
+                        <span class="nw-chip text-[10px] font-bold flex items-center gap-1 bg-indigo-50 text-indigo-700 border-indigo-200">
+                            <i data-lucide="book" class="w-3 h-3"></i> Biblioteca
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="text-sm font-bold text-[var(--nw-text-1)] mb-1 truncate group-hover:text-[var(--nw-brand)] transition-colors" title="{{ tmpl.name }}">
+                        {{ tmpl.name }}
+                    </h3>
+                    <p class="text-[11px] text-[var(--nw-text-3)] mb-2 font-mono">
+                        {% if tmpl.created_at %}
+                        Atualizado em {{ tmpl.created_at.strftime('%d/%m/%Y') }}
+                        {% else %}
+                        Atualizado recentemente
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-[var(--nw-text-2)] line-clamp-2 h-9 leading-relaxed">{{ tmpl.description or "Sem descrição fornecida." }}</p>
+                </div>
+
+                <!-- Actions -->
+                <div class="mt-4 pt-3 border-t border-[var(--nw-border)] flex items-center justify-end gap-1.5">
+                    <a href="{{ url_for('templates.edit_template', id=tmpl.id) }}"
+                        class="p-2 rounded-lg text-[var(--nw-text-2)] hover:text-[var(--nw-brand)] hover:bg-[var(--nw-shell)] transition-colors"
+                        title="Editar modelo">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </a>
+
+                    {% if current_user.is_super_admin or (not tmpl.is_global or (tmpl.is_global and tmpl.company_id == current_user.company_id)) %}
+                    <form action="{{ url_for('templates.duplicate_template', id=tmpl.id) }}" method="POST" class="inline">
+                        <button type="submit"
+                            class="p-2 rounded-lg text-[var(--nw-text-2)] hover:text-blue-600 hover:bg-[var(--nw-shell)] transition-colors"
+                            title="Duplicar modelo">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+
+                    <form action="{{ url_for('templates.delete_template', id=tmpl.id) }}" method="POST"
+                        onsubmit="return confirm('Tem certeza que deseja excluir este modelo?');" class="inline">
+                        <button type="submit"
+                            class="p-2 rounded-lg text-[var(--nw-text-2)] hover:text-rose-600 hover:bg-[var(--nw-shell)] transition-colors"
+                            title="Excluir modelo">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="nw-panel p-12 text-center text-[var(--nw-text-3)]">
+            <div class="w-12 h-12 rounded-2xl bg-[var(--nw-shell)] mx-auto flex items-center justify-center text-[var(--nw-text-3)] mb-3">
+                <i data-lucide="file-text" class="w-6 h-6"></i>
+            </div>
+            <p class="text-sm font-semibold text-[var(--nw-text-2)]">Nenhum modelo cadastrado</p>
+            <p class="text-xs text-[var(--nw-text-3)] mt-1">Crie seu primeiro modelo de contrato clicando no botão acima.</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endblock %}

@@ -51,6 +51,15 @@ flask db downgrade
 python northway_crm/seed_northway_data.py
 ```
 
+### Compilar CSS (Tailwind UI Redesign)
+
+```bash
+cd northway_crm
+npm run build:css
+# ou diretamente via npx:
+npx tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.min.css --minify
+```
+
 ## Estrutura
 
 - `/northway_crm/` — App principal

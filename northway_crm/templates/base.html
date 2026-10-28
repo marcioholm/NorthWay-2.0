@@ -5,19 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>NorthWay CRM</title>
+    <title>{% block title %}NorthWay CRM{% endblock %}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
-    <!-- Google Fonts: Outfit (Display) & Inter (Body) -->
+    
+    <!-- Google Fonts: Plus Jakarta Sans (Primary), Outfit & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 
-    <!-- Material Icons -->
+    <!-- Material Icons (Preserved for compatibility) -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
 
-    <!-- Tailwind CSS (Local Build) -->
+    <!-- Tailwind CSS (Local Build with nw-* design tokens) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}">
     <!-- Alpine JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -28,10 +29,10 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* Smooth Rendering */
         body {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            font-family: 'Plus Jakarta Sans', Inter, sans-serif;
         }
 
         /* Premium Scrollbar */
@@ -39,53 +40,48 @@
             width: 6px;
             height: 6px;
         }
-
         ::-webkit-scrollbar-track {
             background: transparent;
         }
-
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
+            background: #DADBDF;
+            border-radius: 999px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            background: #55575D;
         }
 
         /* Glassmorphism Utilities */
         .glass {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            border: 1px solid var(--nw-border);
         }
     </style>
     {% block head %}{% endblock %}
 </head>
 
-<body
-    class="bg-gray-50 text-gray-900 font-sans h-screen flex flex-col overflow-hidden selection:bg-northway-red selection:text-white {% if minimal %}minimal-view{% endif %}">
+<body class="bg-[var(--nw-canvas)] text-[var(--nw-ink)] font-sans min-h-screen selection:bg-[var(--nw-accent)] selection:text-white {% if minimal %}minimal-view{% endif %}"
+      x-data="{ mobileMenuOpen: false }">
 
     {% if beta_module and current_user.is_authenticated %}
-    <div role="status" class="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2 text-xs shrink-0">
+    <div role="status" class="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2 text-xs text-center shrink-0">
         <strong>{{ beta_module }} · Beta</strong> — Confira os resultados antes de aprovar ações automáticas.
     </div>
     {% endif %}
 
     <!-- Impersonation Banner -->
     {% if session.get('super_admin_id') %}
-    <div
-        class="bg-northway-dark text-white px-4 py-2 flex justify-between items-center z-[100] relative border-b border-red-900 shadow-xl flex-shrink-0">
+    <div class="bg-[var(--nw-ink)] text-white px-6 py-2.5 flex justify-between items-center z-[100] relative border-b border-red-900 shadow-xl flex-shrink-0">
         <div class="flex items-center gap-2 animate-pulse">
-            <i data-lucide="eye" class="w-4 h-4 text-northway-red"></i>
+            <i data-lucide="eye" class="w-4 h-4 text-[var(--nw-brand)]"></i>
             <span class="text-xs font-bold uppercase tracking-wider">Acesso Master Ativo</span>
         </div>
         <div class="flex items-center gap-4">
-            <span class="text-xs text-gray-400 hidden md:inline">Você está visualizando como <strong>{{
-                    current_user.name }}</strong></span>
+            <span class="text-xs text-gray-300 hidden md:inline">Você está visualizando como <strong>{{ current_user.name }}</strong></span>
             <a href="{{ url_for('master.revert_access') }}"
-                class="bg-northway-red hover:bg-red-700 text-white text-xs font-bold px-3 py-1 rounded transition-colors">
+                class="bg-[var(--nw-accent)] hover:brightness-110 text-white text-xs font-bold px-3.5 py-1 rounded-full transition-all">
                 Sair do Acesso
             </a>
         </div>
@@ -94,36 +90,26 @@
 
     <!-- Premium Splash Screen -->
     <div id="splash-screen"
-        class="fixed inset-0 bg-northway-dark z-[150] flex flex-col items-center justify-center transition-all duration-1000 hidden overflow-hidden">
-
-        <!-- Animated Background Elements -->
+        class="fixed inset-0 bg-[#0D0F12] z-[150] flex flex-col items-center justify-center transition-all duration-1000 hidden overflow-hidden">
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
-            <div
-                class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-red-600/10 rounded-full blur-[120px] animate-pulse">
-            </div>
-            <div class="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-red-600/10 rounded-full blur-[120px] animate-pulse"
-                style="animation-delay: 2s;"></div>
+            <div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-red-600/10 rounded-full blur-[120px] animate-pulse"></div>
+            <div class="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-red-600/10 rounded-full blur-[120px] animate-pulse" style="animation-delay: 2s;"></div>
         </div>
 
         <div class="relative flex flex-col items-center gap-10">
-            <!-- Central Logo with Glow -->
             <div class="relative group">
-                <div
-                    class="absolute inset-0 bg-red-600 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-1000 rounded-full">
-                </div>
+                <div class="absolute inset-0 bg-red-600 blur-3xl opacity-20 group-hover:opacity-40 transition-opacity duration-1000 rounded-full"></div>
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay Logo"
                     class="w-56 h-auto relative z-10 brightness-200 drop-shadow-[0_0_25px_rgba(250,1,2,0.5)] transform scale-90 animate-[scaleIn_1s_ease-out_forwards]">
             </div>
 
-            <!-- Modern Loading Indicator -->
             <div class="flex flex-col items-center gap-4 relative z-10">
                 <div class="flex gap-1.5 h-1">
-                    <div class="w-8 h-full bg-red-600 rounded-full animate-[loadingLine_1.5s_infinite]"></div>
+                    <div class="w-8 h-full bg-[var(--nw-brand)] rounded-full animate-[loadingLine_1.5s_infinite]"></div>
                     <div class="w-2 h-full bg-white/10 rounded-full"></div>
                     <div class="w-2 h-full bg-white/10 rounded-full"></div>
                 </div>
-                <p id="splash-text"
-                    class="text-white/40 text-[10px] font-black tracking-[0.3em] uppercase animate-pulse">
+                <p id="splash-text" class="text-white/50 text-[11px] font-semibold tracking-[0.25em] uppercase animate-pulse">
                     Iniciando Experiência
                 </p>
             </div>
@@ -132,732 +118,567 @@
 
     <style>
         @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-                filter: blur(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-                filter: blur(0);
-            }
+            from { opacity: 0; transform: scale(0.85); filter: blur(8px); }
+            to { opacity: 1; transform: scale(1); filter: blur(0); }
         }
-
         @keyframes loadingLine {
-            0% {
-                transform: translateX(-10px);
-                opacity: 0.3;
-            }
-
-            50% {
-                transform: translateX(10px);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateX(-10px);
-                opacity: 0.3;
-            }
+            0% { transform: translateX(-10px); opacity: 0.3; }
+            50% { transform: translateX(10px); opacity: 1; }
+            100% { transform: translateX(-10px); opacity: 0.3; }
         }
     </style>
 
-    <!-- Layout Wrapper (Sidebar + Main) -->
-    <div class="flex-1 flex flex-row overflow-hidden relative w-full h-full">
+    <script>
+        window.stopGlobalLoading = function() {
+            const splash = document.getElementById('splash-screen');
+            if (splash && !splash.classList.contains('hidden')) {
+                splash.style.opacity = '0';
+                splash.style.filter = 'blur(15px)';
+                splash.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    splash.classList.add('hidden');
+                    sessionStorage.setItem('northway_welcome_shown', 'true');
+                }, 500);
+            }
+        };
 
-        <script>
-            // Global Loading Control
-            window.stopGlobalLoading = function() {
+        (function () {
+            const path = window.location.pathname;
+            const isDashboard = path === '/' || path.includes('dashboard') || path.includes('master');
+            if (isDashboard && !sessionStorage.getItem('northway_welcome_shown')) {
                 const splash = document.getElementById('splash-screen');
-                if (splash && !splash.classList.contains('hidden')) {
-                    splash.style.opacity = '0';
-                    splash.style.filter = 'blur(20px)';
-                    splash.style.transform = 'scale(1.1)';
-                    setTimeout(() => {
-                        splash.classList.add('hidden');
-                        sessionStorage.setItem('northway_welcome_shown', 'true');
-                    }, 500);
+                if (splash) {
+                    splash.classList.remove('hidden');
+                    const messages = [
+                        "Sincronizando Ecossistema...",
+                        "Preparando sua Inteligência...",
+                        "Otimizando Negociações...",
+                        "Bem-vindo à NorthWay",
+                        "Conectando ao Sucesso..."
+                    ];
+                    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+                    document.getElementById('splash-text').textContent = randomMsg;
+                    setTimeout(() => { window.stopGlobalLoading(); }, 2200);
                 }
-            };
+            }
+        })();
+    </script>
 
-            // Premium Splash Screen Logic
-            (function () {
-                const path = window.location.pathname;
-                const isDashboard = path === '/' || path.includes('dashboard') || path.includes('master');
+    {% if current_user.is_authenticated and not minimal %}
+    <!-- Shell Container -->
+    <div class="nw-shell-container">
+        <!-- Main Shell Card with Header Navigation -->
+        <div class="nw-shell-card flex flex-col">
+            
+            <!-- Top Navigation Header inside the Shell Card -->
+            <header class="flex items-center justify-between gap-4 pb-6 border-b border-[var(--nw-border)] mb-7 flex-wrap lg:flex-nowrap">
+                
+                <!-- Left: Logo & Main Navigation Pills -->
+                <div class="flex items-center gap-3 xl:gap-5 flex-wrap">
+                    <!-- Logo in Contoured Pill ("North" ink + "Way" in brand 700) -->
+                    <a href="/home" class="inline-flex items-center gap-1.5 px-4 h-11 rounded-full border border-[var(--nw-border)] bg-white hover:border-[var(--nw-text-3)] transition-all shadow-sm" aria-label="NorthWay Home">
+                        <span class="text-[17px] font-medium tracking-tight">
+                            <span class="text-[var(--nw-ink)] font-semibold">North</span><span class="text-[var(--nw-brand)] font-bold">Way</span>
+                        </span>
+                        {% if subscription_days_remaining is defined and subscription_days_remaining is not none %}
+                        <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-full {{ 'bg-green-500/10 text-green-700' if subscription_days_remaining > 5 else 'bg-red-500/10 text-red-700' }}">
+                            {{ subscription_days_remaining }}d
+                        </span>
+                        {% endif %}
+                    </a>
 
-                if (isDashboard && !sessionStorage.getItem('northway_welcome_shown')) {
-                    const splash = document.getElementById('splash-screen');
-                    if (splash) {
-                        splash.classList.remove('hidden');
-
-                        const messages = [
-                            "Sincronizando Ecossistema...",
-                            "Preparando sua Inteligência...",
-                            "Otimizando Negociações...",
-                            "Bem-vindo à NorthWay",
-                            "Conectando ao Sucesso..."
-                        ];
-                        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-                        document.getElementById('splash-text').textContent = randomMsg;
-
-                        setTimeout(() => {
-                            window.stopGlobalLoading();
-                        }, 2500);
-                    }
-                }
-            })();
-        </script>
-
-        {% if current_user.is_authenticated and not minimal %}
-        <!-- Mobile Header -->
-        <div
-            class="md:hidden bg-northway-dark text-white p-4 flex justify-between items-center z-50 fixed w-full top-0 left-0 h-16 shadow-md">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleMobileSidebar()" class="text-white focus:outline-none">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay" class="h-8 w-auto">
-            </div>
-            <!-- Mobile Profile Avatar (Optional shortcut) -->
-            <a href="{{ url_for('admin.profile') }}"
-                class="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-400">
-                {% if current_user.profile_image %}
-                <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}"
-                    class="w-full h-full object-cover">
-                {% else %}
-                <div class="w-full h-full flex items-center justify-center text-gray-800 text-xs font-bold">{{
-                    current_user.name[:2].upper() }}</div>
-                {% endif %}
-            </a>
-        </div>
-
-        <!-- Mobile Sidebar Overlay -->
-        <div id="mobile-sidebar-overlay" onclick="toggleMobileSidebar()"
-            class="fixed inset-0 bg-black/50 z-[60] hidden md:hidden transition-opacity duration-300 opacity-0">
-        </div>
-
-        <!-- Sidebar Wrapper for Desktop (Sticky) and Mobile (Fixed) -->
-        <aside id="sidebar"
-            class="fixed inset-y-0 left-0 z-[70] transform -translate-x-full md:relative md:translate-x-0 
-               w-64 bg-[#1a1625] text-white flex flex-col flex-shrink-0 transition-transform duration-300 ease-in-out group md:h-full">
-
-            <!-- Sidebar Header (Desktop Only Check) -->
-            <div class="hidden md:flex p-6 items-center justify-center border-b border-white/10 min-h-[5rem]">
-                <img id="sidebar-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay"
-                    class="max-h-12 w-auto opacity-90 hover:opacity-100 transition-all duration-300">
-                <!-- Mini Logo -->
-                <div id="sidebar-logo-mini" class="hidden text-2xl font-black text-[#fa0102]">N</div>
-            </div>
-
-            <!-- Mobile Sidebar Header (Close Button) -->
-            <div class="md:hidden p-4 flex justify-between items-center border-b border-white/10">
-                <span class="text-lg font-bold">Menu</span>
-                <button onclick="toggleMobileSidebar()" class="text-gray-400 hover:text-white">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-
-            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto no-scrollbar">
-                <!-- Navigation Links -->
-                <a href="/home"
-                    class="flex items-center justify-between px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'dashboard.home' %}bg-white/10 text-white font-semibold{% endif %}">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="home" class="w-5 h-5 flex-shrink-0"></i>
-                        <span class="sidebar-text transition-opacity duration-300">Início</span>
-                    </div>
-                </a>
-
-                {% if subscription_days_remaining is defined and subscription_days_remaining is not none %}
-                <div class="px-4 py-1">
-                    <span
-                        class="sidebar-text text-[10px] uppercase font-bold px-2 py-0.5 rounded-full {{ 'bg-green-500/20 text-green-400' if subscription_days_remaining > 5 else 'bg-red-500/20 text-red-400' }}">
-                        {{ subscription_days_remaining }}d restantes
-                    </span>
-                </div>
-                {% endif %}
-
-                {% if current_user.has_permission('dashboard_view') %}
-                <a href="{{ url_for('dashboard.dashboard') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors whitespace-nowrap {% if request.endpoint == 'dashboard.dashboard' %}bg-white/10 text-white font-semibold{% endif %}">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="sidebar-text transition-opacity duration-300">Dashboard</span>
-                </a>
-                {% endif %}
-
-                {% set has_crm = current_user.has_permission('leads_view') or current_user.has_permission('pipeline_view') or current_user.has_permission('clients_view') %}
-                {% if has_crm %}
-                <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
-                            <span class="sidebar-text transition-opacity duration-300">CRM</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 sidebar-text transition-transform duration-300" :class="{'rotate-180': open}"></i>
-                    </button>
-                    <div x-show="open" @click.away="open = false" class="mt-1 ml-4 space-y-1">
-                        {% if current_user.has_permission('leads_view') %}
-                        <a href="{{ url_for('leads.leads') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'leads.leads' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="user-plus" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Leads</span>
+                    <!-- Desktop nw-nav (8 Main Items) -->
+                    <nav class="hidden lg:inline-flex nw-nav" aria-label="Navegação principal">
+                        
+                        {# 1. Dashboard #}
+                        {% if current_user.has_permission('dashboard_view') %}
+                        <a href="{{ url_for('dashboard.dashboard') }}"
+                           class="nw-nav-item {{ 'active' if request.endpoint == 'dashboard.dashboard' else '' }}">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>Dashboard</span>
                         </a>
                         {% endif %}
+
+                        {# 2. Pipeline #}
                         {% if current_user.has_permission('pipeline_view') %}
                         <a href="{{ url_for('leads.pipeline') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'leads.pipeline' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="trello" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Funil</span>
+                           class="nw-nav-item {{ 'active' if request.endpoint == 'leads.pipeline' else '' }}">
+                            <i data-lucide="trello" class="w-4 h-4"></i>
+                            <span>Pipeline</span>
                         </a>
                         {% endif %}
+
+                        {# 3. Leads #}
+                        {% if current_user.has_permission('leads_view') %}
+                        <a href="{{ url_for('leads.leads') }}"
+                           class="nw-nav-item {{ 'active' if request.endpoint in ['leads.leads', 'leads.lead_details'] else '' }}">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                            <span>Leads</span>
+                        </a>
+                        {% endif %}
+
+                        {# 4. Clientes #}
                         {% if current_user.has_permission('clients_view') %}
                         <a href="{{ url_for('clients.clients') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'clients.clients' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="building" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Clientes</span>
-                        </a>
-                        <a href="{{ url_for('contracts.index') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'contracts.index' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="file-text" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Contratos</span>
-                        </a>
-                        <a href="{{ url_for('commercial.budget_generator') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'commercial.budget_generator' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="calculator" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Orçamentos</span>
+                           class="nw-nav-item {{ 'active' if request.endpoint in ['clients.clients', 'clients.client_details'] else '' }}">
+                            <i data-lucide="building" class="w-4 h-4"></i>
+                            <span>Clientes</span>
                         </a>
                         {% endif %}
-                    </div>
-                </div>
-                {% endif %}
 
-                {% if current_user.has_permission('tasks_view') %}
-                <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="check-square" class="w-5 h-5 flex-shrink-0"></i>
-                            <span class="sidebar-text transition-opacity duration-300">Tarefas</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            {% if pending_tasks_count and pending_tasks_count > 0 %}
-                            <span class="sidebar-badge bg-northway-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ pending_tasks_count }}</span>
-                            {% endif %}
-                            <i data-lucide="chevron-down" class="w-4 h-4 sidebar-text transition-transform duration-300" :class="{'rotate-180': open}"></i>
-                        </div>
-                    </button>
-                    <div x-show="open" @click.away="open = false" class="mt-1 ml-4 space-y-1">
+                        {# 5. Prospecção #}
+                        {% if current_user.company.has_feature('prospecting') and current_user.has_permission('prospecting_view') %}
+                        <a href="{{ url_for('prospecting.dashboard') }}"
+                           class="nw-nav-item {{ 'active' if request.endpoint and 'prospecting' in request.endpoint else '' }}">
+                            <i data-lucide="globe" class="w-4 h-4"></i>
+                            <span>Prospecção</span>
+                        </a>
+                        {% endif %}
+
+
+                        {# 7. Tarefas #}
+                        {% if current_user.has_permission('tasks_view') %}
                         <a href="{{ url_for('tasks.tasks') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'tasks.tasks' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="list" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Tarefas</span>
-                        </a>
-                        <a href="{{ url_for('tasks.execution_kanban') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'tasks.execution_kanban' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="kanban-square" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Minha Execução</span>
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% set has_mkt = current_user.has_permission('goals_view') or current_user.has_permission('library_view') %}
-                {% if has_mkt %}
-                <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="megaphone" class="w-5 h-5 flex-shrink-0"></i>
-                            <span class="sidebar-text transition-opacity duration-300">Marketing</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 sidebar-text transition-transform duration-300" :class="{'rotate-180': open}"></i>
-                    </button>
-                    <div x-show="open" @click.away="open = false" class="mt-1 ml-4 space-y-1">
-                        <a href="{{ url_for('forms.my_diagnostic') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'forms.my_diagnostic' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="bar-chart-2" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Diagnóstico</span>
-                        </a>
-                        <a href="{{ url_for('diagnostic_raiox.leads_list') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'diagnostic_raiox.leads_list' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="activity" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Raio-X Digital</span>
-                        </a>
-                        <a href="/raiox" target="_blank"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-                            <i data-lucide="external-link" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm flex items-center gap-1">Novo Diagnóstico <i data-lucide="external-link" class="w-3 h-3 text-gray-500"></i></span>
-                        </a>
-                        {% if current_user.has_permission('goals_view') %}
-                        <a href="{{ url_for('goals.dashboard') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'goals.dashboard' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="target" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Metas</span>
+                           class="nw-nav-item {{ 'active' if request.endpoint and 'tasks' in request.endpoint else '' }}">
+                            <i data-lucide="check-square" class="w-4 h-4"></i>
+                            <span>Tarefas</span>
+                            {% if pending_tasks_count and pending_tasks_count > 0 %}
+                            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-[var(--nw-ink)] text-white">{{ pending_tasks_count }}</span>
+                            {% endif %}
                         </a>
                         {% endif %}
-                        {% if current_user.has_permission('library_view') %}
-                        <a href="{{ url_for('marketing.presentation') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'marketing.presentation' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="presentation" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Material Comercial</span>
-                        </a>
-                        <a href="{{ url_for('docs.library') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint and 'docs' in request.endpoint %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="library" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Biblioteca</span>
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
 
-                <!-- Prospecção -->
-                {% if current_user.company.has_feature('prospecting') and current_user.has_permission('prospecting_view') %}
-                <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors {% if request.endpoint and 'prospecting' in request.endpoint %}bg-white/10 text-white font-semibold{% endif %}">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="globe" class="w-5 h-5 flex-shrink-0"></i>
-                            <span class="sidebar-text transition-opacity duration-300 flex-1 text-left">Prospecção</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 sidebar-text transition-transform duration-300" :class="{'rotate-180': open}"></i>
-                    </button>
-                    <div x-show="open" @click.away="open = false" class="mt-1 ml-4 space-y-1">
-                        <!-- <a href="{{ url_for('prospecting.dashboard') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.dashboard' %}text-white font-semibold{% endif %}">
-                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-                            <span class="text-sm">Dashboard</span>
-                        </a> -->
-                        <a href="{{ url_for('prospecting.discover') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.discover' %}text-white font-semibold{% endif %}">
-                            <i data-lucide="search" class="w-4 h-4"></i>
-                            <span class="text-sm">Encontrar Leads</span>
-                        </a>
-                        <!-- <a href="{{ url_for('prospecting.leads') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.leads' or request.endpoint == 'prospecting.lead_detail' %}text-white font-semibold{% endif %}">
-                            <i data-lucide="users" class="w-4 h-4"></i>
-                            <span class="text-sm">Leads</span>
-                        </a>
-                        <a href="{{ url_for('prospecting.campaigns') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.campaigns' %}text-white font-semibold{% endif %}">
-                            <i data-lucide="megaphone" class="w-4 h-4"></i>
-                            <span class="text-sm">Campanhas</span>
-                        </a>
-                        <a href="{{ url_for('prospecting.messages') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.messages' %}text-white font-semibold{% endif %}">
-                            <i data-lucide="message-square" class="w-4 h-4"></i>
-                            <span class="text-sm">Mensagens</span>
-                        </a>
-                        <a href="{{ url_for('prospecting.settings') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.settings' %}text-white font-semibold{% endif %}">
-                            <i data-lucide="settings" class="w-4 h-4"></i>
-                            <span class="text-sm">Configurações</span>
-                        </a>
-                        <a href="{{ url_for('prospecting.niches_page') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'prospecting.niches_page' %}text-white font-semibold{% endif %}">
-                            <i data-lucide="map-pin" class="w-4 h-4"></i>
-                            <span class="text-sm">Nichos</span>
-                        </a> -->
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if current_user.has_permission('financial_view') %}
-                <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="bar-chart-3" class="w-5 h-5 flex-shrink-0"></i>
-                            <span class="sidebar-text transition-opacity duration-300">Financeiro</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 sidebar-text transition-transform duration-300" :class="{'rotate-180': open}"></i>
-                    </button>
-                    <div x-show="open" @click.away="open = false" class="mt-1 ml-4 space-y-1">
+                        {# 8. Financeiro #}
+                        {% if current_user.has_permission('financial_view') %}
                         <a href="{{ url_for('financial.dashboard') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'financial.dashboard' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="layout-dashboard" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Visão Geral</span>
-                        </a>
-                        <a href="{{ url_for('financial_strategic.dashboard') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'financial_strategic.dashboard' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="trending-up" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">DRE Estratégico</span>
-                        </a>
-                        <a href="{{ url_for('payable.list_payable') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'payable.list_payable' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="calculator" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Contas a Pagar</span>
-                        </a>
-                        <a href="{{ url_for('commercial.performance') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'commercial.performance' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="line-chart" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Performance</span>
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if current_user.company.has_feature('whatsapp') %}
-                <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="message-circle" class="w-5 h-5 flex-shrink-0"></i>
-                            <span class="sidebar-text transition-opacity duration-300">WhatsApp</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span id="whatsapp-unread-badge" class="hidden sidebar-badge bg-northway-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 sidebar-text transition-transform duration-300" :class="{'rotate-180': open}"></i>
-                        </div>
-                    </button>
-                    <div x-show="open" @click.away="open = false" class="mt-1 ml-4 space-y-1">
-                        <a href="{{ url_for('whatsapp.inbox') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'whatsapp.inbox' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="inbox" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Inbox</span>
-                        </a>
-                        <a href="{{ url_for('whatsapp.groups') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'whatsapp.groups' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="users-2" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Grupos</span>
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% set has_settings = current_user.has_permission('company_settings_view') or current_user.has_permission('processes_view') %}
-                {% if has_settings %}
-                <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open"
-                        class="w-full flex items-center justify-between px-4 py-3 text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition-colors">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="settings" class="w-5 h-5 flex-shrink-0"></i>
-                            <span class="sidebar-text transition-opacity duration-300">Gestão</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 sidebar-text transition-transform duration-300" :class="{'rotate-180': open}"></i>
-                    </button>
-                    <div x-show="open" @click.away="open = false" class="mt-1 ml-4 space-y-1">
-                        {% if current_user.has_permission('company_settings_view') %}
-                        <a href="{{ url_for('admin.company_settings') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'admin.company_settings' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="sliders" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Configurações</span>
+                           class="nw-nav-item {{ 'active' if request.endpoint and ('financial' in request.endpoint or request.endpoint == 'payable.list_payable' or request.endpoint == 'commercial.performance') else '' }}">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            <span>Financeiro</span>
                         </a>
                         {% endif %}
-                        {% if current_user.has_permission('processes_view') %}
-                        <a href="{{ url_for('templates.settings_processes') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors {% if request.endpoint == 'templates.settings_processes' %}bg-white/15 text-white font-semibold{% endif %}">
-                            <i data-lucide="list-checks" class="w-4 h-4 flex-shrink-0"></i>
-                            <span class="text-sm">Processos</span>
-                        </a>
-                        {% endif %}
-                    </div>
+
+                        {# Dropdown 'Mais' com Comercial, Ferramentas, Administração #}
+                        <div x-data="{ open: false }" class="relative" @click.away="open = false">
+                            <button @click="open = !open" type="button"
+                                    class="nw-nav-item" :class="{'active': open}">
+                                <span>Mais</span>
+                                <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}"></i>
+                            </button>
+
+                            <div x-show="open" x-transition.origin.top.right
+                                 class="absolute left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-[var(--nw-border)] p-3 z-50 space-y-3">
+                                
+                                {# Grupo Comercial #}
+                                {% if current_user.has_permission('clients_view') or current_user.has_permission('financial_view') or current_user.has_permission('goals_view') %}
+                                <div>
+                                    <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--nw-text-3)]">Comercial</div>
+                                    {% if current_user.has_permission('clients_view') %}
+                                    <a href="{{ url_for('contracts.index') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="file-text" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Contratos</span>
+                                    </a>
+                                    <a href="{{ url_for('commercial.budget_generator') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="calculator" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Orçamentos</span>
+                                    </a>
+                                    {% endif %}
+                                    {% if current_user.has_permission('financial_view') %}
+                                    <a href="{{ url_for('commercial.performance') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="line-chart" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Desempenho</span>
+                                    </a>
+                                    {% endif %}
+                                    {% if current_user.has_permission('goals_view') %}
+                                    <a href="{{ url_for('goals.dashboard') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="target" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Metas</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                {# Grupo Ferramentas #}
+                                <div>
+                                    <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--nw-text-3)] border-t border-[var(--nw-border)] pt-2">Ferramentas</div>
+                                    <a href="{{ url_for('forms.my_diagnostic') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Diagnóstico</span>
+                                    </a>
+                                    <a href="{{ url_for('diagnostic_raiox.leads_list') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="activity" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Raio-X Digital</span>
+                                    </a>
+                                    {% if current_user.has_permission('library_view') %}
+                                    <a href="{{ url_for('marketing.presentation') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="presentation" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Material Comercial</span>
+                                    </a>
+                                    <a href="{{ url_for('docs.library') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="library" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Biblioteca</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
+
+                                {# Grupo Administração #}
+                                {% if current_user.has_permission('company_settings_view') or current_user.has_permission('processes_view') or current_user.has_permission('admin_view') or current_user.is_super_admin %}
+                                <div>
+                                    <div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--nw-text-3)] border-t border-[var(--nw-border)] pt-2">Administração</div>
+                                    {% if current_user.has_permission('company_settings_view') %}
+                                    <a href="{{ url_for('admin.company_settings') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="sliders" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Configurações</span>
+                                    </a>
+                                    {% endif %}
+                                    {% if current_user.has_permission('processes_view') %}
+                                    <a href="{{ url_for('templates.settings_processes') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="list-checks" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Processos</span>
+                                    </a>
+                                    {% endif %}
+                                    {% if current_user.has_permission('admin_view') and not current_user.is_super_admin %}
+                                    <a href="{{ url_for('admin.users') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                        <i data-lucide="users" class="w-4 h-4 text-[var(--nw-text-3)]"></i>
+                                        <span>Usuários</span>
+                                    </a>
+                                    {% endif %}
+                                    {% if current_user.is_super_admin %}
+                                    <a href="{{ url_for('admin.master_companies') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-brand)] font-semibold hover:bg-red-50">
+                                        <i data-lucide="shield-alert" class="w-4 h-4 text-[var(--nw-brand)]"></i>
+                                        <span>Master / Empresas</span>
+                                    </a>
+                                    <a href="{{ url_for('admin.ui_kit') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-purple-700 font-semibold hover:bg-purple-50">
+                                        <i data-lucide="palette" class="w-4 h-4 text-purple-600"></i>
+                                        <span>UI Kit & Tokens</span>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                            </div>
+                        </div>
+
+                    </nav>
                 </div>
-                {% endif %}
 
+                <!-- Right: Quick Settings, Notifications, User Menu, Mobile Menu Trigger -->
+                <div class="flex items-center gap-2.5">
+                    
+                    {# Mobile Hamburger Menu Trigger #}
+                    <button type="button" @click="mobileMenuOpen = true"
+                            class="lg:hidden nw-icon-btn" aria-label="Abrir menu de navegação">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
 
-                {% if current_user.has_permission('admin_view') %}
-                <div class="border-t border-white/10 my-2 pt-2">
-                    <!-- Dynamic Link: Master vs Company Admin -->
-                    {% if current_user.is_super_admin %}
-                    <a href="{{ url_for('admin.master_companies') }}"
-                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if (request.endpoint and 'master' in request.endpoint) else 'text-gray-400' }}">
-                        <i data-lucide="shield-alert" class="w-5 h-5 text-northway-red flex-shrink-0"></i>
-                        <span class="sidebar-text transition-opacity duration-300">Master Admin</span>
-                    </a>
-                    {% else %}
-                    <a href="{{ url_for('admin.users') }}"
-                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-colors whitespace-nowrap {{ 'bg-northway-red text-white' if (request.endpoint and 'admin' in request.endpoint) else 'text-gray-400' }}">
-                        <i data-lucide="users" class="w-5 h-5 text-blue-300 flex-shrink-0"></i>
-                        <span class="sidebar-text transition-opacity duration-300">Usuários</span>
+                    {# Quick Settings Button #}
+                    {% if current_user.has_permission('company_settings_view') %}
+                    <a href="{{ url_for('admin.company_settings') }}"
+                       class="nw-icon-btn hidden sm:inline-flex" aria-label="Configurações da empresa" title="Configurações">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
                     </a>
                     {% endif %}
-                </div>
-                {% endif %}
 
-                <!-- Mobile Log Out Shortcut -->
-                <div class="md:hidden mt-8 border-t border-white/10 pt-4">
-                    <a href="{{ url_for('auth.logout') }}"
-                        class="flex items-center gap-3 px-3 py-2.5 text-red-500 hover:text-northway-red">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>
-                        <span>Sair</span>
-                    </a>
-                </div>
-            </nav>
+                    {# Notification Bell #}
+                    <div class="relative">
+                        <button id="notification-btn" class="nw-icon-btn relative" aria-label="Notificações" title="Notificações">
+                            <i data-lucide="bell" class="w-4 h-4"></i>
+                            <span id="notification-badge" class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[var(--nw-brand)] rounded-full hidden border-2 border-white"></span>
+                        </button>
 
-            <!-- Use Desktop Toggle only -->
-            <button id="sidebar-toggle" onclick="toggleSidebar()"
-                class="hidden md:flex absolute -right-3 top-12 bg-northway-red text-white w-6 h-6 rounded-full items-center justify-center shadow-lg hover:bg-red-700 transition-colors z-50">
-                <i data-lucide="chevron-left" class="w-4 h-4 transition-transform duration-300"
-                    id="sidebar-toggle-icon"></i>
-            </button>
-
-            <script>
-                // Sidebar Logic
-                const sidebar = document.getElementById('sidebar');
-                const sidebarOverlay = document.getElementById('mobile-sidebar-overlay');
-                const toggleIcon = document.getElementById('sidebar-toggle-icon');
-                const texts = document.querySelectorAll('.sidebar-text');
-                const logoMain = document.getElementById('sidebar-logo');
-                const logoMini = document.getElementById('sidebar-logo-mini');
-                const dividers = document.querySelectorAll('.sidebar-divider');
-
-                function toggleMobileSidebar() {
-                    const isClosed = sidebar.classList.contains('-translate-x-full');
-                    if (isClosed) {
-                        sidebar.classList.remove('-translate-x-full');
-                        sidebarOverlay.classList.remove('hidden');
-                        // wait a tick to animate opacity
-                        setTimeout(() => sidebarOverlay.classList.remove('opacity-0'), 10);
-                    } else {
-                        sidebar.classList.add('-translate-x-full');
-                        sidebarOverlay.classList.add('opacity-0');
-                        setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
-                    }
-                }
-
-                function toggleSidebar() {
-                    // Desktop Toggle
-                    const isCollapsed = sidebar.classList.contains('w-20');
-                    if (isCollapsed) {
-                        expandSidebar();
-                        localStorage.setItem('sidebarState', 'expanded');
-                    } else {
-                        collapseSidebar();
-                        localStorage.setItem('sidebarState', 'collapsed');
-                    }
-                }
-
-                function collapseSidebar() {
-                    sidebar.classList.remove('w-64');
-                    sidebar.classList.add('w-20');
-                    if (toggleIcon) toggleIcon.classList.add('rotate-180');
-
-                    texts.forEach(el => el.classList.add('opacity-0', 'hidden'));
-                    dividers.forEach(el => el.classList.remove('hidden'));
-                    if (logoMain) logoMain.classList.add('hidden');
-                    if (logoMini) logoMini.classList.remove('hidden');
-                }
-
-                function expandSidebar() {
-                    sidebar.classList.remove('w-20');
-                    sidebar.classList.add('w-64');
-                    if (toggleIcon) toggleIcon.classList.remove('rotate-180');
-
-                    texts.forEach(el => {
-                        el.classList.remove('hidden');
-                        setTimeout(() => el.classList.remove('opacity-0'), 50);
-                    });
-                    dividers.forEach(el => el.classList.add('hidden'));
-                    if (logoMain) logoMain.classList.remove('hidden');
-                    if (logoMini) logoMini.classList.add('hidden');
-                }
-
-                document.addEventListener('DOMContentLoaded', () => {
-                    // Restore Desktop State
-                    if (window.innerWidth >= 768) {
-                        const state = localStorage.getItem('sidebarState');
-                        if (state === 'collapsed') {
-                            sidebar.classList.add('!transition-none');
-                            collapseSidebar();
-                            setTimeout(() => sidebar.classList.remove('!transition-none'), 300);
-                        }
-                    }
-                });
-            </script>
-
-            <!-- Financial Submenu Script -->
-            <script>
-                // Financial Submenu Toggle
-                function toggleFinancialSubmenu() {
-                    const submenu = document.getElementById('financial-submenu');
-                    const chevron = document.getElementById('financial-chevron');
-
-                    if (submenu && chevron) {
-                        if (submenu.classList.contains('hidden')) {
-                            submenu.classList.remove('hidden');
-                            chevron.style.transform = 'rotate(180deg)';
-                            sessionStorage.setItem('financialSubmenuOpen', 'true');
-                        } else {
-                            submenu.classList.add('hidden');
-                            chevron.style.transform = 'rotate(0deg)';
-                            sessionStorage.setItem('financialSubmenuOpen', 'false');
-                        }
-                    }
-                }
-
-                // Restore submenu state on page load
-                document.addEventListener('DOMContentLoaded', function () {
-                    const isOpen = sessionStorage.getItem('financialSubmenuOpen') === 'true';
-
-                    // Check if any financial route is active
-                    const financialRoutes = ['financial.dashboard', 'financial_strategic.dashboard', 'payable.list_payable', 'commercial.performance'];
-                    const currentEndpoint = '{{ request.endpoint }}';
-                    const isFinancialRoute = financialRoutes.includes(currentEndpoint);
-
-                    if (isOpen || isFinancialRoute) {
-                        const submenu = document.getElementById('financial-submenu');
-                        const chevron = document.getElementById('financial-chevron');
-                        if (submenu && chevron) {
-                            submenu.classList.remove('hidden');
-                            chevron.style.transform = 'rotate(180deg)';
-                            sessionStorage.setItem('financialSubmenuOpen', 'true');
-                        }
-                    }
-                });
-            </script>
-        </aside>
-        {% endif %}
-
-        <!-- Main Content -->
-        <main
-            class="flex-1 flex flex-col min-w-0 {{ 'overflow-y-auto no-scrollbar' if minimal else 'overflow-hidden' }} relative">
-            {% if current_user.is_authenticated and not minimal %}
-            <!-- Top Header -->
-            <!-- Hide Header for Master Routes            <!-- Storage Widget (Standard Users Only) -->
-            {% if request.endpoint and not 'master.' in request.endpoint and not 'admin.master' in request.endpoint %}
-            <header
-                class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 flex-shrink-0 z-40">
-                <!-- Breadcrumbs / Title Placeholder (Optional) -->
-                <div class="flex items-center gap-4">
-                    <!-- Can be dynamic based on page later -->
-                </div>
-
-                <!-- Notification Bell -->
-                <div class="relative mr-4">
-                    <button id="notification-btn"
-                        class="text-gray-400 hover:text-gray-600 transition-colors relative p-2 rounded-full hover:bg-gray-100">
-                        <i data-lucide="bell" class="w-5 h-5"></i>
-                        <span id="notification-badge"
-                            class="absolute top-1 right-1 w-2.5 h-2.5 bg-northway-red rounded-full hidden border border-white"></span>
-                    </button>
-
-                    <!-- Notification Dropdown -->
-                    <div id="notification-dropdown"
-                        class="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 hidden z-50 overflow-hidden transform origin-top-right transition-all duration-200 scale-95 opacity-0">
-                        <div class="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                            <h3 class="font-bold text-gray-800 text-sm">Notificações</h3>
-                            <button onclick="markAllRead()"
-                                class="text-xs text-blue-600 hover:text-blue-800 font-medium">Ler todas</button>
-                        </div>
-                        <div id="notification-list" class="max-h-64 overflow-y-auto">
-                            <div class="p-4 text-center text-gray-500 text-xs">Carregando...</div>
+                        <!-- Notification Dropdown -->
+                        <div id="notification-dropdown"
+                            class="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[var(--nw-border)] hidden z-50 overflow-hidden transform origin-top-right transition-all duration-200 scale-95 opacity-0">
+                            <div class="p-3.5 border-b border-[var(--nw-border)] flex justify-between items-center bg-[var(--nw-shell)]">
+                                <h3 class="font-semibold text-[var(--nw-ink)] text-sm">Notificações</h3>
+                                <button onclick="markAllRead()" class="text-xs text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] font-medium">Ler todas</button>
+                            </div>
+                            <div id="notification-list" class="max-h-64 overflow-y-auto">
+                                <div class="p-4 text-center text-gray-500 text-xs">Carregando...</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- User Menu -->
-                <div class="relative">
-                    <button onclick="toggleUserMenu()"
-                        class="flex items-center gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors focus:outline-none">
-                        <div class="text-right hidden md:block">
-                            <p class="text-sm font-medium text-gray-900">{{ current_user.name }}</p>
-                            <p class="text-xs text-gray-500">{{ current_user.role|capitalize }}</p>
+                    {# User Profile Menu (Pill Button) #}
+                    <div x-data="{ userMenuOpen: false }" class="relative" @click.away="userMenuOpen = false">
+                        <button @click="userMenuOpen = !userMenuOpen" type="button"
+                                class="inline-flex items-center gap-2.5 pl-1.5 pr-3 h-11 rounded-full border border-[var(--nw-border)] bg-white hover:border-[var(--nw-text-3)] transition-all shadow-sm"
+                                aria-label="Menu do usuário">
+                            <div class="w-8 h-8 rounded-full bg-[var(--nw-ink)] text-white flex items-center justify-center text-xs font-semibold overflow-hidden">
+                                {% if current_user.profile_image %}
+                                <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}" alt="{{ current_user.name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                {{ current_user.name[:2].upper() }}
+                                {% endif %}
+                            </div>
+                            <div class="text-left hidden md:block leading-tight">
+                                <div class="text-xs font-semibold text-[var(--nw-ink)] truncate max-w-[120px]">{{ current_user.name }}</div>
+                                <div class="text-[11px] text-[var(--nw-text-3)]">{{ current_user.role|capitalize }}</div>
+                            </div>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--nw-text-3)]"></i>
+                        </button>
+
+                        <div x-show="userMenuOpen" x-transition.origin.top.right
+                             class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-[var(--nw-border)] p-2 z-50">
+                            <div class="px-3 py-2 border-b border-[var(--nw-border)] mb-1">
+                                <div class="text-sm font-semibold text-[var(--nw-ink)]">{{ current_user.name }}</div>
+                                <div class="text-xs text-[var(--nw-text-2)] truncate">{{ current_user.email }}</div>
+                            </div>
+                            <a href="{{ url_for('admin.profile') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] hover:bg-[var(--nw-shell)]">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                                <span>Meu Perfil</span>
+                            </a>
+                            <div class="border-t border-[var(--nw-border)] my-1"></div>
+                            <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-2.5 px-3 py-2 text-sm rounded-xl text-[var(--nw-brand)] font-semibold hover:bg-red-50">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                <span>Sair</span>
+                            </a>
                         </div>
-                        <div
-                            class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 overflow-hidden ring-2 ring-transparent hover:ring-gray-200 transition-all">
-                            {% if current_user.profile_image %}
-                            <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_image) }}"
-                                alt="Profile" class="w-full h-full object-cover">
-                            {% else %}
-                            {{ current_user.name[:2].upper() }}
-                            {% endif %}
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-                    </button>
-
-                    <!-- Dropdown -->
-                    <div id="user-menu-dropdown"
-                        class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 transform origin-top-right transition-all">
-                        <!-- Mobile User Info -->
-                        <div class="px-4 py-3 border-b border-gray-50 md:hidden">
-                            <p class="text-sm font-medium text-gray-900">{{ current_user.name }}</p>
-                            <p class="text-xs text-gray-500 truncate">{{ current_user.email }}</p>
-                        </div>
-
-                        <a href="{{ url_for('admin.profile') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-northway-red transition-colors">
-                            <i data-lucide="user" class="w-4 h-4"></i>
-                            Meu Perfil
-                        </a>
-
-                        <div class="border-t border-gray-50 my-1"></div>
-
-                        <a href="{{ url_for('auth.logout') }}"
-                            class="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                            <i data-lucide="log-out" class="w-4 h-4"></i>
-                            Sair
-                        </a>
                     </div>
+
                 </div>
             </header>
-            {% endif %}
+
+            <!-- Subpages Secondary Pills Bar for Modules with Subpages (Tarefas, Financeiro, Prospecção) -->
+            {% if request.endpoint %}
+                {% if request.endpoint.startswith('financial') or request.endpoint.startswith('payable.') or request.endpoint == 'commercial.performance' %}
+                <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+                    <nav class="nw-nav" aria-label="Subpáginas financeiras">
+                        <a href="{{ url_for('financial.dashboard') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'financial.dashboard' else '' }}">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>Visão Geral</span>
+                        </a>
+                        <a href="{{ url_for('financial_strategic.dashboard') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'financial_strategic.dashboard' else '' }}">
+                            <i data-lucide="trending-up" class="w-4 h-4"></i>
+                            <span>DRE Estratégico</span>
+                        </a>
+                        <a href="{{ url_for('payable.list_payable') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'payable.list_payable' else '' }}">
+                            <i data-lucide="calculator" class="w-4 h-4"></i>
+                            <span>Contas a Pagar</span>
+                        </a>
+                        <a href="{{ url_for('commercial.performance') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'commercial.performance' else '' }}">
+                            <i data-lucide="line-chart" class="w-4 h-4"></i>
+                            <span>Performance</span>
+                        </a>
+                    </nav>
+                </div>
+                {% elif request.endpoint.startswith('prospecting.') %}
+                <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+                    <nav class="nw-nav flex-wrap" aria-label="Subpáginas de prospecção">
+                        <a href="{{ url_for('prospecting.dashboard') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'prospecting.dashboard' else '' }}">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.discover') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'prospecting.discover' else '' }}">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                            <span>Encontrar Leads</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.leads') }}" class="nw-nav-item {{ 'active' if request.endpoint in ['prospecting.leads', 'prospecting.lead_detail'] else '' }}">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span>Leads</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.campaigns') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'prospecting.campaigns' else '' }}">
+                            <i data-lucide="megaphone" class="w-4 h-4"></i>
+                            <span>Campanhas</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.messages') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'prospecting.messages' else '' }}">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            <span>Mensagens</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.niches_page') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'prospecting.niches_page' else '' }}">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            <span>Nichos</span>
+                        </a>
+                        <a href="{{ url_for('prospecting.settings') }}" class="nw-nav-item {{ 'active' if request.endpoint == 'prospecting.settings' else '' }}">
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            <span>Configurações</span>
+                        </a>
+                    </nav>
+                </div>
+                {% endif %}
             {% endif %}
 
-            <!-- Toast Notifications (Flash Messages) -->
+            <!-- Toast Flash Messages (Restyled as Pills on top of Shell) -->
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <div id="toast-container" class="fixed bottom-6 right-6 z-[70] flex flex-col gap-3 pointer-events-none">
+            <div id="toast-container" class="mb-6 flex flex-col gap-2.5 z-40">
                 {% for category, message in messages %}
-                <div class="toast-message transform transition-all duration-300 translate-y-8 opacity-0 pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl border-l-4 {{ 'bg-white border-northway-red' if 'success' in category else 'bg-red-50 border-red-800' }} min-w-[300px] max-w-sm"
-                    role="alert">
-                    <div class="{{ 'text-northway-red' if 'success' in category else 'text-red-800' }}">
-                        {% if 'success' in category %}
-                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-                        {% else %}
-                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                        {% endif %}
+                <div class="toast-message flex items-center justify-between gap-3 px-4 py-2.5 rounded-full border shadow-sm {{ 'bg-green-50/90 border-green-200 text-green-900' if 'success' in category else 'bg-red-50/90 border-red-200 text-red-900' }}" role="alert">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-2 h-2 rounded-full {{ 'bg-[var(--nw-status-success)]' if 'success' in category else 'bg-[var(--nw-accent)]' }}"></span>
+                        <span class="text-xs font-semibold">{{ message }}</span>
                     </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-bold text-gray-900">{{ "Sucesso" if 'success' in category else "Atenção"
-                            }}
-                        </p>
-                        <p class="text-xs text-gray-600 font-medium">{{ message }}</p>
-                    </div>
-                    <button onclick="this.parentElement.remove()"
-                        class="text-gray-400 hover:text-gray-600 transition-colors">
-                        <i data-lucide="x" class="w-4 h-4"></i>
+                    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-700" aria-label="Fechar notificação">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>
                 {% endfor %}
             </div>
-            <script>
-                // Toast Animation Logic
-                document.addEventListener('DOMContentLoaded', () => {
-                    const toasts = document.querySelectorAll('.toast-message');
-                    toasts.forEach((toast, index) => {
-                        // Stagger entrance
-                        setTimeout(() => {
-                            toast.classList.remove('translate-y-8', 'opacity-0');
-                        }, index * 100);
-
-                        // Auto dismiss
-                        setTimeout(() => {
-                            toast.classList.add('translate-y-4', 'opacity-0');
-                            setTimeout(() => toast.remove(), 300);
-                        }, 5000 + (index * 1000));
-                    });
-                });
-            </script>
             {% endif %}
             {% endwith %}
 
-            <!-- Scrollable Content Wrapper -->
-            <div class="flex-1 overflow-y-auto focus:outline-none relative scroll-smooth" tabindex="0">
-                {% block content %}{% endblock %}
+            <!-- Main Content Area -->
+            <main class="flex-1 w-full focus:outline-none">
+    {% else %}
+    <!-- Minimal / Auth View Shell -->
+    <div class="w-full min-h-screen flex flex-col">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2">
+            {% for category, message in messages %}
+            <div class="toast-message flex items-center justify-between gap-3 px-4 py-2.5 rounded-full border shadow-sm {{ 'bg-green-50/90 border-green-200 text-green-900' if 'success' in category else 'bg-red-50/90 border-red-200 text-red-900' }}" role="alert">
+                <span class="text-xs font-semibold">{{ message }}</span>
             </div>
-        </main>
-    </div> <!-- Layout Wrapper End -->
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        <main class="w-full flex-1 flex flex-col">
+    {% endif %}
+
+                {% block content %}{% endblock %}
+
+    {% if current_user.is_authenticated and not minimal %}
+            </main>
+
+        </div> <!-- /nw-shell-card -->
+
+        <!-- Mobile Sheet Navigation Menu (Below 1024px) -->
+        <div x-show="mobileMenuOpen"
+             class="fixed inset-0 z-[120] lg:hidden"
+             style="display: none;"
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="mobileMenuOpen = false"></div>
+
+            <!-- Slide-over Drawer -->
+            <div class="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl p-6 flex flex-col justify-between overflow-y-auto"
+                 x-transition:enter="transition ease-in-out duration-300 transform"
+                 x-transition:enter-start="-translate-x-full"
+                 x-transition:enter-end="translate-x-0"
+                 x-transition:leave="transition ease-in-out duration-300 transform"
+                 x-transition:leave-start="translate-x-0"
+                 x-transition:leave-end="-translate-x-full">
+                
+                <div class="space-y-6">
+                    <!-- Drawer Header -->
+                    <div class="flex items-center justify-between pb-4 border-b border-[var(--nw-border)]">
+                        <span class="text-lg font-bold tracking-tight">
+                            <span class="text-[var(--nw-ink)]">North</span><span class="text-[var(--nw-brand)]">Way</span>
+                        </span>
+                        <button type="button" @click="mobileMenuOpen = false" class="nw-icon-btn !w-9 !h-9" aria-label="Fechar menu">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Main Navigation Links List -->
+                    <nav class="space-y-1.5" aria-label="Menu móvel">
+                        {% if current_user.has_permission('dashboard_view') %}
+                        <a href="{{ url_for('dashboard.dashboard') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint == 'dashboard.dashboard' else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.has_permission('pipeline_view') %}
+                        <a href="{{ url_for('leads.pipeline') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint == 'leads.pipeline' else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
+                            <i data-lucide="trello" class="w-4 h-4"></i>
+                            <span>Pipeline</span>
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.has_permission('leads_view') %}
+                        <a href="{{ url_for('leads.leads') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint in ['leads.leads', 'leads.lead_details'] else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                            <span>Leads</span>
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.has_permission('clients_view') %}
+                        <a href="{{ url_for('clients.clients') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint in ['clients.clients', 'clients.client_details'] else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
+                            <i data-lucide="building" class="w-4 h-4"></i>
+                            <span>Clientes</span>
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.company.has_feature('prospecting') and current_user.has_permission('prospecting_view') %}
+                        <a href="{{ url_for('prospecting.dashboard') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint and 'prospecting' in request.endpoint else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
+                            <i data-lucide="globe" class="w-4 h-4"></i>
+                            <span>Prospecção</span>
+                        </a>
+                        {% endif %}
+
+
+                        {% if current_user.has_permission('tasks_view') %}
+                        <a href="{{ url_for('tasks.tasks') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint and 'tasks' in request.endpoint else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
+                            <i data-lucide="check-square" class="w-4 h-4"></i>
+                            <span>Tarefas</span>
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.has_permission('financial_view') %}
+                        <a href="{{ url_for('financial.dashboard') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-sm font-medium {{ 'bg-[var(--nw-ink)] text-white font-semibold' if request.endpoint and ('financial' in request.endpoint or request.endpoint == 'payable.list_payable') else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]' }}">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            <span>Financeiro</span>
+                        </a>
+                        {% endif %}
+
+                        <div class="pt-3 border-t border-[var(--nw-border)] space-y-1">
+                            <span class="px-3 text-[11px] font-bold uppercase tracking-wider text-[var(--nw-text-3)]">Outros</span>
+                            {% if current_user.has_permission('clients_view') %}
+                            <a href="{{ url_for('contracts.index') }}" class="flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                                <span>Contratos</span>
+                            </a>
+                            {% endif %}
+                            {% if current_user.has_permission('company_settings_view') %}
+                            <a href="{{ url_for('admin.company_settings') }}" class="flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)]">
+                                <i data-lucide="settings" class="w-4 h-4"></i>
+                                <span>Configurações</span>
+                            </a>
+                            {% endif %}
+                            {% if current_user.is_super_admin %}
+                            <a href="{{ url_for('admin.master_companies') }}" class="flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm font-semibold text-[var(--nw-brand)] hover:bg-red-50">
+                                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                                <span>Master / Empresas</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Drawer Footer (User Info & Logout) -->
+                <div class="pt-4 border-t border-[var(--nw-border)]">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-semibold text-[var(--nw-ink)]">{{ current_user.name }}</div>
+                            <div class="text-[11px] text-[var(--nw-text-3)]">{{ current_user.email }}</div>
+                        </div>
+                        <a href="{{ url_for('auth.logout') }}" class="nw-icon-btn !w-9 !h-9 text-[var(--nw-brand)]" aria-label="Sair">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+        </div>
+    </div> <!-- /nw-shell-container -->
+    {% endif %}
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         });
-
 
         function toggleModal(modalId) {
             const modal = document.getElementById(modalId);
+            if (!modal) return;
             if (modal.classList.contains('hidden')) {
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
@@ -867,130 +688,15 @@
             }
         }
 
-        // Notifications Logic
-        document.addEventListener('DOMContentLoaded', function () {
-            // Request permission on load
-            if ("Notification" in window) {
-                if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-                    Notification.requestPermission();
-                }
-            }
-
-            // User Menu Toggle
-            window.toggleUserMenu = function () {
-                const menu = document.getElementById('user-menu-dropdown');
-                if (menu) {
-                    menu.classList.toggle('hidden');
-                }
-            }
-
-            // Close User Menu when clicking outside
-            document.addEventListener('click', function (event) {
-                const menu = document.getElementById('user-menu-dropdown');
-                const button = event.target.closest('button[onclick="toggleUserMenu()"]');
-
-                if (!button && menu && !menu.classList.contains('hidden')) {
-                    menu.classList.add('hidden');
-                }
-            });
-
-            // Check for notification triggers
-            const messages = document.querySelectorAll('#flash-messages > div');
-            messages.forEach(msg => {
-                const category = msg.getAttribute('data-category');
-                const text = msg.querySelector('span').innerText;
-
-                if (category && category.includes('success_notification')) {
-                    if (Notification.permission === "granted") {
-                        new Notification("NorthWay CRM", {
-                            body: text,
-                            icon: "https://via.placeholder.com/128?text=N"
-                        });
-                    }
-                }
-
-                // Auto dismiss
-                setTimeout(() => {
-                    msg.style.opacity = '0';
-                    setTimeout(() => msg.remove(), 500);
-                }, 5000);
-            });
-
-            // Notification Permission Request (Only for Dashboard/Authenticated areas)
-            if (Notification.permission === 'default' && !document.body.classList.contains('minimal-view')) {
-                const banner = document.createElement('div');
-                banner.className = "fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl border border-gray-200 z-50 flex flex-col gap-2 max-w-sm";
-                banner.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        <div class="p-2 bg-red-50 rounded-full text-northway-red">
-                            <i data-lucide="bell" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900 text-sm">Ativar Notificações?</h4>
-                            <p class="text-xs text-gray-500 mt-1">Permita que o CRM te avise sobre tarefas importantes.</p>
-                        </div>
-                    </div>
-                    <button id="enable-notifs" class="mt-2 w-full bg-northway-red text-white py-2 rounded text-xs font-bold hover:bg-red-700 transition-colors">
-                        Ativar Notificações
-                    </button>
-                    <button id="dismiss-notifs" class="w-full text-gray-400 py-1 text-[10px] hover:text-gray-600">
-                        Agora não
-                    </button>
-                `;
-                document.body.appendChild(banner);
-                lucide.createIcons();
-
-                document.getElementById('enable-notifs').addEventListener('click', () => {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === 'granted') {
-                            new Notification("NorthWay CRM", { body: "Notificações ativadas com sucesso!" });
-                            banner.remove();
-                        }
-                    });
-                });
-
-                document.getElementById('dismiss-notifs').addEventListener('click', () => banner.remove());
-            }
-
-            // Popup Warning for Auth Pages
-            if (document.body.classList.contains('minimal-view')) {
-                const popupWarning = document.createElement('div');
-                popupWarning.className = "fixed bottom-4 right-4 bg-white/90 backdrop-blur p-3 rounded-lg shadow-lg border border-gray-100 z-50 flex items-center gap-3 max-w-xs animate-bounce";
-                popupWarning.innerHTML = `
-                    <div class="p-1.5 bg-blue-50 rounded-full text-blue-600">
-                        <i data-lucide="info" class="w-4 h-4"></i>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-gray-700 leading-tight">Dica: Permita pop-ups no seu navegador para ações da plataforma.</p>
-                    </div>
-                    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
-                        <i data-lucide="x" class="w-3 h-3"></i>
-                    </button>
-                `;
-                document.body.appendChild(popupWarning);
-                lucide.createIcons();
-
-                // Hide after 8 seconds
-                setTimeout(() => {
-                    if (popupWarning.parentElement) {
-                        popupWarning.style.opacity = '0';
-                        setTimeout(() => popupWarning.remove(), 500);
-                    }
-                }, 8000);
-            }
-        });
-    </script>
-
-    <script>
-        // Notification System
+        // Notification System Logic
         const notificationBtn = document.getElementById('notification-btn');
         const notificationDropdown = document.getElementById('notification-dropdown');
         const notificationBadge = document.getElementById('notification-badge');
         const notificationList = document.getElementById('notification-list');
-
         let isDropdownOpen = false;
 
         function toggleDropdown() {
+            if (!notificationDropdown) return;
             isDropdownOpen = !isDropdownOpen;
             if (isDropdownOpen) {
                 notificationDropdown.classList.remove('hidden');
@@ -998,7 +704,7 @@
                     notificationDropdown.classList.remove('scale-95', 'opacity-0');
                     notificationDropdown.classList.add('scale-100', 'opacity-100');
                 });
-                fetchNotifications(); // Refresh on open
+                fetchNotifications();
             } else {
                 notificationDropdown.classList.remove('scale-100', 'opacity-100');
                 notificationDropdown.classList.add('scale-95', 'opacity-0');
@@ -1013,37 +719,34 @@
             });
         }
 
-        // Close when clicking outside
         document.addEventListener('click', (e) => {
-            if (isDropdownOpen && !notificationDropdown.contains(e.target) && !notificationBtn.contains(e.target)) {
+            if (isDropdownOpen && notificationDropdown && !notificationDropdown.contains(e.target) && !notificationBtn.contains(e.target)) {
                 toggleDropdown();
             }
         });
 
         function fetchNotifications() {
+            if (!notificationList) return;
             fetch('/api/notifications')
                 .then(res => res.json())
                 .then(data => {
-                    // Update Badge
-                    if (data.unread_count > 0) {
-                        notificationBadge.classList.remove('hidden');
-                        notificationBadge.innerText = data.unread_count > 9 ? '9+' : data.unread_count;
-                        notificationBadge.className = "absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center bg-northway-red text-white text-[10px] font-bold rounded-full border border-white px-1";
-                    } else {
-                        notificationBadge.classList.add('hidden');
+                    if (notificationBadge) {
+                        if (data.unread_count > 0) {
+                            notificationBadge.classList.remove('hidden');
+                        } else {
+                            notificationBadge.classList.add('hidden');
+                        }
                     }
-
-                    // Render List
                     if (data.notifications.length === 0) {
                         notificationList.innerHTML = '<div class="p-6 text-center text-gray-400 text-xs">Nenhuma notificação recente.</div>';
                     } else {
                         notificationList.innerHTML = data.notifications.map(n => `
-                            <div class="p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer ${n.read ? 'opacity-60' : 'bg-blue-50/30'}" onclick="markRead(${n.id})">
+                            <div class="p-3 border-b border-[var(--nw-border)] hover:bg-[var(--nw-shell)] transition-colors cursor-pointer ${n.read ? 'opacity-60' : 'bg-red-50/20'}" onclick="markRead(${n.id})">
                                 <div class="flex justify-between items-start mb-1">
-                                    <h4 class="text-xs font-bold text-gray-800 ${n.read ? '' : 'text-blue-700'}">${n.title}</h4>
-                                    <span class="text-[10px] text-gray-400">${n.created_at}</span>
+                                    <h4 class="text-xs font-semibold text-[var(--nw-ink)]">${n.title}</h4>
+                                    <span class="text-[10px] text-[var(--nw-text-3)]">${n.created_at}</span>
                                 </div>
-                                <p class="text-xs text-gray-600 leading-relaxed">${n.message || ''}</p>
+                                <p class="text-xs text-[var(--nw-text-2)] leading-relaxed">${n.message || ''}</p>
                             </div>
                         `).join('');
                     }
@@ -1053,59 +756,19 @@
 
         function markRead(id) {
             fetch(`/api/notifications/${id}/read`, { method: 'POST' })
-                .then(() => {
-                    fetchNotifications();
-                });
+                .then(() => { fetchNotifications(); });
         }
 
         function markAllRead() {
             fetch('/api/notifications/read-all', { method: 'POST' })
-                .then(() => {
-                    fetchNotifications();
-                });
+                .then(() => { fetchNotifications(); });
         }
 
-        // Poll every 60s
         if (notificationBtn) {
             setInterval(() => { if (!document.hidden) fetchNotifications(); }, 60000);
-            // Initial fetch
             fetchNotifications();
         }
-    </script>
-    {% block scripts %}{% endblock %}
-    <script>
-        // Global Loading State Helper
-        window.showLoadingState = function (form, btnSelector = null) {
-            const btn = btnSelector ? form.querySelector(btnSelector) : form.querySelector('button[type="submit"]');
-            if (btn) {
-                // Prevent duplicate clicks immediately
-                if (btn.hasAttribute('loading')) return false;
-                btn.setAttribute('loading', 'true');
 
-                const originalText = btn.innerText;
-                const width = btn.offsetWidth;
-                
-                // Allow the form to actually submit before disabling the button
-                // Some browsers cancel the request if the button is disabled at the exact moment of click
-                setTimeout(() => {
-                    btn.style.width = width + 'px'; // Prevent resizing
-                    btn.disabled = true;
-                    btn.classList.add('opacity-75', 'cursor-not-allowed');
-                    btn.innerHTML = `
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span class="inline-block">Processando...</span>
-                    `;
-                }, 50);
-            }
-            return true;
-        };
-
-        // ... existing scripts ...
-    </script>
-    <script>
         // WhatsApp Unread Polling
         async function updateWhatsAppUnreadCount() {
             try {
@@ -1121,8 +784,6 @@
                         badge.classList.add('hidden');
                     }
                 }
-
-                // Also update inbox tabs if we are on the inbox page
                 if (typeof updateInboxTabs === 'function') {
                     updateInboxTabs(data.by_tab);
                 }
@@ -1131,9 +792,33 @@
 
         if ({{ 'true' if current_user.is_authenticated else 'false' }}) {
             updateWhatsAppUnreadCount();
-            setInterval(() => { if (!document.hidden) updateWhatsAppUnreadCount(); }, 30000); // Every 30s
+            setInterval(() => { if (!document.hidden) updateWhatsAppUnreadCount(); }, 30000);
         }
+
+        // Global Loading State Helper
+        window.showLoadingState = function (form, btnSelector = null) {
+            const btn = btnSelector ? form.querySelector(btnSelector) : form.querySelector('button[type="submit"]');
+            if (btn) {
+                if (btn.hasAttribute('loading')) return false;
+                btn.setAttribute('loading', 'true');
+                const width = btn.offsetWidth;
+                setTimeout(() => {
+                    btn.style.width = width + 'px';
+                    btn.disabled = true;
+                    btn.classList.add('opacity-75', 'cursor-not-allowed');
+                    btn.innerHTML = `
+                        <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="inline-block text-xs">Processando...</span>
+                    `;
+                }, 50);
+            }
+            return true;
+        };
     </script>
+    {% block scripts %}{% endblock %}
     <script>
         // Global CSRF Protection Interceptor for fetch, jQuery, and forms
         (function() {
