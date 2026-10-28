@@ -1,57 +1,57 @@
+import hmac
+import os
+from datetime import datetime
+import requests
 from flask import Blueprint, request, jsonify, current_app
 from models import db, WhatsappInstance, WhatsappConversation, WhatsappMessage
 from services.evolution_service import EvolutionService
-import requests
-import os
-from datetime import datetime
 
 evolution_webhook_bp = Blueprint('evolution_webhook', __name__)
 
-@evolution_webhook_bp.route('/api/webhooks/evolution', methods=['GET', 'POST'])
+@evolution_webhook_bp.route('/api/webhooks/evolution', methods=['POST'])
 def evolution_webhook():
-    if request.method == 'GET':
-        return jsonify({'status': 'webhook endpoint active', 'method': 'GET', 'info': 'Send a POST request with Evolution API payload here.'})
+    # 1. Autenticação fail-closed via token Evolution
+    expected_token = current_app.config.get('EVOLUTION_WEBHOOK_TOKEN') or os.environ.get('EVOLUTION_WEBHOOK_TOKEN')
+    if not expected_token:
+        current_app.logger.warning("Evolution Webhook rejected: EVOLUTION_WEBHOOK_TOKEN not configured on server")
+        return jsonify({'error': 'Unauthorized: Webhook token not configured on server'}), 401
 
-    try:
-        from northway_crm.utils.webhook_logger import log_webhook_event
-    except ImportError:
-        from utils.webhook_logger import log_webhook_event
-        
+    token = (
+        request.headers.get('apikey') or
+        request.headers.get('x-api-key') or
+        request.args.get('token')
+    )
+    if not token:
+        auth_header = request.headers.get('Authorization', '')
+        if auth_header.startswith('Bearer '):
+            token = auth_header[7:].strip()
+
+    if not token or not hmac.compare_digest(str(token), str(expected_token)):
+        current_app.logger.warning("Unauthorized Evolution Webhook attempt: invalid or missing token")
+        return jsonify({'error': 'Unauthorized'}), 401
+
     data = request.json
     if not data:
         return jsonify({'error': 'No data'}), 400
-    
-    # Store for debug inspection
-    log_webhook_event(data)
-        
+
     event = data.get('event')
     instance_name = data.get('instance')
-    
-    # NORMALIZATION: Robust matching for instance names (case-insensitive, ignore hyphens/spaces)
-    def normalize(s):
-        if not s: return ""
-        return s.lower().replace(' ', '').replace('-', '').replace('_', '')
+    if not instance_name:
+        return jsonify({'error': 'Instance name required'}), 400
 
-    normalized_name = normalize(instance_name)
-    
-    current_app.logger.info(f"Evolution Webhook Event: {event} for instance {instance_name} (normalized: {normalized_name})")
-    
-    # 1. Verification of instance
-    instance = None
-    all_instances = WhatsappInstance.query.all()
-    for inst in all_instances:
-        if normalize(inst.instance_name) == normalized_name:
-            instance = inst
-            break
+    clean_name = str(instance_name).strip()
+    current_app.logger.info(f"Evolution Webhook Event: {event} for instance {clean_name}")
+
+    # 2. Busca direta da instância sem WhatsappInstance.query.all()
+    instance = WhatsappInstance.query.filter_by(instance_name=clean_name).first()
+    if not instance:
+        # Fallback insensível a maiúsculas/minúsculas
+        instance = WhatsappInstance.query.filter(
+            db.func.lower(WhatsappInstance.instance_name) == clean_name.lower()
+        ).first()
 
     if not instance:
-        current_app.logger.warning(f"Webhook from unknown instance: {instance_name}. Known instances: {[i.instance_name for i in all_instances]}")
-        # Save raw debug info for the administrator if it's missing
-        try:
-            with open('/tmp/last_whatsapp_webhook_error.json', 'w') as f:
-                import json
-                json.dump(data, f)
-        except: pass
+        current_app.logger.warning(f"Webhook from unknown instance: {clean_name}")
         return jsonify({'success': True}), 200 # Accept but ignore
         
     company_id = instance.company_id
