@@ -349,3 +349,73 @@ def test_csrf_checkout_standalone_flow(csrf_client, csrf_app):
     assert resp_csrf.status_code in (200, 302)
 
 
+# --- 9. PROXY NEXT.JS (CSRF EXEMPTION & SAME-ORIGIN SECURITY CHECK) ---
+from unittest.mock import patch, MagicMock
+
+def test_proxy_nextjs_without_x_requested_with_returns_403(csrf_client, csrf_app):
+    """POST/PUT/DELETE em /proxy-dashboard ou /api-proxy sem X-Requested-With deve retornar 403."""
+    auth_user(csrf_client, csrf_app)
+
+    for endpoint in ['/proxy-dashboard/save', '/api-proxy/submit']:
+        for method in ['post', 'put', 'delete']:
+            client_method = getattr(csrf_client, method)
+            # Sem o header X-Requested-With (mesmo com Origin localhost)
+            resp = client_method(endpoint, headers={'Origin': 'http://localhost'})
+            assert resp.status_code == 403
+            assert b"X-Requested-With header required" in resp.data
+
+def test_proxy_nextjs_with_external_origin_returns_403(csrf_client, csrf_app):
+    """POST em /proxy-dashboard ou /api-proxy com Origin/Referer externo deve retornar 403."""
+    auth_user(csrf_client, csrf_app)
+
+    for endpoint in ['/proxy-dashboard/save', '/api-proxy/submit']:
+        # Com X-Requested-With, mas Origin malicioso
+        resp = csrf_client.post(endpoint, headers={
+            'X-Requested-With': 'XMLHttpRequest',
+            'Origin': 'https://evil.com'
+        })
+        assert resp.status_code == 403
+        assert b"Invalid Origin" in resp.data
+
+        # Com X-Requested-With, mas Referer malicioso
+        resp_ref = csrf_client.post(endpoint, headers={
+            'X-Requested-With': 'XMLHttpRequest',
+            'Referer': 'https://evil.com/malicious-page'
+        })
+        assert resp_ref.status_code == 403
+        assert b"Invalid Referer" in resp_ref.data
+
+def test_proxy_nextjs_with_valid_header_and_same_origin_passes(csrf_client, csrf_app):
+    """POST em /proxy-dashboard e /api-proxy com X-Requested-With e mesma origem passa pela segurança e não envia cookies."""
+    auth_user(csrf_client, csrf_app)
+
+    mock_resp = MagicMock()
+    mock_resp.content = b'{"status": "ok"}'
+    mock_resp.status_code = 200
+    mock_resp.headers = {'Content-Type': 'application/json'}
+
+    with patch('routes.forms.requests.request', return_value=mock_resp) as mock_req:
+        for endpoint in ['/proxy-dashboard/save', '/api-proxy/submit']:
+            mock_req.reset_mock()
+            resp = csrf_client.post(
+                endpoint,
+                json={'data': 'test_payload'},
+                headers={
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Origin': 'http://localhost'
+                }
+            )
+            assert resp.status_code == 200
+            assert resp.json == {'status': 'ok'}
+
+            # Garantir que requests.request foi chamado
+            assert mock_req.called
+
+            # Garantir que o cookie da sessão do CRM e o header Cookie NUNCA foram repassados para o app Next.js
+            call_kwargs = mock_req.call_args[1]
+            assert 'cookies' not in call_kwargs or call_kwargs['cookies'] is None
+            sent_headers = call_kwargs.get('headers', {})
+            assert 'cookie' not in {k.lower() for k in sent_headers.keys()}
+
+
+
