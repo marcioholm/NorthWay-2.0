@@ -146,14 +146,18 @@ def asaas_webhook(company_id):
         return api_response(success=False, error='Invalid payload', status=400)
 
     # Log Event
-    # Check if transaction exists via externalReference or asaas_id
+    # Check if transaction exists via externalReference or asaas_id scoped to this company
     transaction = None
     if payment_data.get('externalReference'):
-        transaction = Transaction.query.get(payment_data['externalReference'])
+        try:
+            ext_ref = int(payment_data['externalReference'])
+            transaction = Transaction.query.filter_by(id=ext_ref, company_id=company_id).first()
+        except (ValueError, TypeError):
+            transaction = None
     
-    # If not found by external ref, try by asaas_id
+    # If not found by external ref, try by asaas_id scoped to this company
     if not transaction and payment_data.get('id'):
-         transaction = Transaction.query.filter_by(asaas_id=payment_data['id']).first()
+        transaction = Transaction.query.filter_by(asaas_id=payment_data['id'], company_id=company_id).first()
 
     try:
         # Create Event Log
@@ -168,10 +172,10 @@ def asaas_webhook(company_id):
         # --- PAYMENT_CREATED HANDLER ---
         # If transaction doesn't exist but it's a new payment, try to link or create
         if event == 'PAYMENT_CREATED' and not transaction:
-             # Find client by Asaas Customer ID
+             # Find client by Asaas Customer ID scoped to this company
              asaas_customer_id = payment_data.get('customer')
              if asaas_customer_id:
-                 client = Client.query.filter_by(asaas_customer_id=asaas_customer_id).first()
+                 client = Client.query.filter_by(asaas_customer_id=asaas_customer_id, company_id=company_id).first()
                  if client:
                      # Auto-create Transaction in CRM for the new recurring installment
                      transaction = Transaction(

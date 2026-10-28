@@ -103,3 +103,56 @@ def test_no_hardcoded_passwords_or_connection_strings_in_scripts():
                 content = f.read()
             for pattern in forbidden_patterns:
                 assert pattern not in content, f"Padrão sensível/segredo encontrado em {rel_path}: {pattern}"
+
+def test_integrations_webhook_cross_tenant_isolation(client, app, monkeypatch):
+    """
+    Um evento enviado para a empresa A com o externalReference de uma transação
+    da empresa B NÃO altera essa transação.
+    """
+    from models import db, Company, Transaction
+    from datetime import date
+
+    token = 'asaas-isolation-token-123'
+    monkeypatch.setenv('ASAAS_WEBHOOK_TOKEN', token)
+    app.config['ASAAS_WEBHOOK_TOKEN'] = token
+
+    with app.app_context():
+        comp_a = Company(name="Empresa A Test Isolation", plan_type="pro", payment_status="active", subscription_status="active")
+        comp_b = Company(name="Empresa B Test Isolation", plan_type="pro", payment_status="active", subscription_status="active")
+        db.session.add_all([comp_a, comp_b])
+        db.session.commit()
+
+        trans_b = Transaction(
+            company_id=comp_b.id,
+            amount=500.0,
+            status='pending',
+            due_date=date(2026, 12, 1),
+            description="Mensalidade Empresa B",
+            asaas_id="pay_from_b"
+        )
+        db.session.add(trans_b)
+        db.session.commit()
+        trans_b_id = trans_b.id
+
+        # Webhook enviado para o endpoint da Empresa A, referenciando transação de B
+        payload = {
+            'event': 'PAYMENT_RECEIVED',
+            'payment': {
+                'id': 'pay_attempt_cross_tenant',
+                'externalReference': str(trans_b_id),
+                'value': 500.0,
+                'status': 'RECEIVED'
+            }
+        }
+
+        resp = client.post(
+            f'/api/webhooks/asaas/{comp_a.id}',
+            json=payload,
+            headers={'asaas-access-token': token}
+        )
+        assert resp.status_code == 200
+
+        # Transação de B DEVE continuar 'pending'
+        trans_b_after = db.session.get(Transaction, trans_b_id) if hasattr(db.session, 'get') else Transaction.query.get(trans_b_id)
+        assert trans_b_after.status == 'pending', f"Transação da Empresa B foi indevidamente alterada para {trans_b_after.status}"
+
