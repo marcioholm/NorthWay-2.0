@@ -32,7 +32,8 @@ def leads():
         try:
             val = str(assigned_to_id).strip()
             if val and val.isdigit():
-                assigned_to_id = int(val)
+                assigned_user = User.query.filter_by(id=int(val), company_id=current_user.company_id).first()
+                assigned_to_id = assigned_user.id if assigned_user else current_user.id
             else:
                 assigned_to_id = current_user.id
         except:

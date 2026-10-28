@@ -198,7 +198,7 @@ def move_task_api(task_id):
         due_date_str = data.get('due_date')
 
         if any(x is not None for x in [is_urgent, is_important, assigned_to_id, title, description, due_date_str]):
-             from models import Task, db
+             from models import Task, db, User
              task = Task.query.filter_by(id=task_id, company_id=current_user.company_id).first()
              if task:
                  if is_urgent is not None: task.is_urgent = is_urgent
@@ -208,7 +208,9 @@ def move_task_api(task_id):
                          if isinstance(assigned_to_id, str) and not assigned_to_id:
                              task.assigned_to_id = None # Handle empty string
                          else:
-                             task.assigned_to_id = int(assigned_to_id)
+                             assignee = User.query.filter_by(id=int(assigned_to_id), company_id=current_user.company_id).first()
+                             if assignee:
+                                 task.assigned_to_id = assignee.id
                      except (ValueError, TypeError):
                          pass # Should we log this?
                  if title is not None: task.title = title

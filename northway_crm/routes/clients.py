@@ -209,7 +209,12 @@ def update_client(id):
         
         manager_id = request.form.get('account_manager_id')
         if manager_id:
-            client.account_manager_id = int(manager_id)
+            try:
+                mgr = User.query.filter_by(id=int(manager_id), company_id=current_user.company_id).first()
+                if mgr:
+                    client.account_manager_id = mgr.id
+            except (ValueError, TypeError):
+                pass
         
         if 'monthly_value' in request.form:
             val = request.form.get('monthly_value')
@@ -351,7 +356,14 @@ def add_client_task(id):
     due_date_str = request.form.get('due_date')
     due_date = datetime.strptime(due_date_str, '%Y-%m-%dT%H:%M') if due_date_str else None
     
-    assigned_to_id = request.form.get('responsible_id') or current_user.id
+    resp_id = request.form.get('responsible_id')
+    assigned_user = None
+    if resp_id:
+        try:
+            assigned_user = User.query.filter_by(id=int(resp_id), company_id=current_user.company_id).first()
+        except (ValueError, TypeError):
+            pass
+    assigned_to_id = assigned_user.id if assigned_user else current_user.id
     
     task = Task(
         title=request.form.get('title'),
@@ -401,12 +413,21 @@ def create_client():
             except:
                 pass
 
+        mgr_id = request.form.get('account_manager_id')
+        mgr = None
+        if mgr_id:
+            try:
+                mgr = User.query.filter_by(id=int(mgr_id), company_id=current_user.company_id).first()
+            except (ValueError, TypeError):
+                pass
+        account_manager_id = mgr.id if mgr else current_user.id
+
         new_client = Client(
             name=name,
             email=email,
             phone=request.form.get('phone'),
             company_id=current_user.company_id,
-            account_manager_id=int(request.form.get('account_manager_id') or current_user.id),
+            account_manager_id=account_manager_id,
             status=request.form.get('status', 'ativo'),
             service=request.form.get('service'),
             monthly_value=monthly_value,

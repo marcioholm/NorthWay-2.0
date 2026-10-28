@@ -108,6 +108,7 @@ def two_tenants(app):
             'comp_a_id': comp_a.id,
             'comp_b_id': comp_b.id,
             'user_a_id': user_a.id,
+            'user_b_id': user_b.id,
             'lead_a_id': lead_a.id,
             'client_a_id': client_a.id,
             'stage_a_id': stage_a.id,
@@ -197,4 +198,58 @@ def test_lead_details_cross_tenant_returns_404(client, two_tenants):
     auth_as_user_a(client, two_tenants)
     resp = client.get(f'/leads/{two_tenants["lead_b_id"]}')
     assert resp.status_code in (403, 404)
+
+def test_prospecting_import_lead_with_foreign_stage_returns_404(client, two_tenants):
+    """Usuário da Empresa A tenta importar lead passando stage_id da Empresa B -> 404, e nenhum lead criado."""
+    from models import Lead
+    auth_as_user_a(client, two_tenants)
+    count_before = Lead.query.count()
+    resp = client.post(
+        '/api/prospecting/import',
+        json={
+            'places': [{
+                'place_id': 'ch_test_123',
+                'name': 'Lead Invasor',
+                'phone': '5511999990000'
+            }],
+            'stage_id': two_tenants['stage_b_id']
+        }
+    )
+    assert resp.status_code == 404
+    assert Lead.query.count() == count_before
+
+def test_checklist_reassign_with_foreign_user_returns_404(client, two_tenants):
+    """Usuário da Empresa A tenta reatribuir checklist para usuário da Empresa B -> 404."""
+    from models import db, ClientChecklist, ProcessTemplate
+    auth_as_user_a(client, two_tenants)
+    # Create template and checklist for Company A
+    template = ProcessTemplate(
+        name="Template A",
+        steps=[{"title": "Step 1", "items": ["Item 1"]}],
+        company_id=two_tenants['comp_a_id']
+    )
+    db.session.add(template)
+    db.session.flush()
+
+    checklist = ClientChecklist(
+        client_id=two_tenants['client_a_id'],
+        template_id=template.id,
+        name="Checklist A",
+        progress=[{"title": "Step 1", "items": [{"text": "Item 1", "done": False}]}],
+        company_id=two_tenants['comp_a_id'],
+        assigned_to_id=two_tenants['user_a_id']
+    )
+    db.session.add(checklist)
+    db.session.commit()
+
+    resp = client.post(
+        f'/checklists/{checklist.id}/reassign',
+        data={'assigned_to_id': str(two_tenants['user_b_id'])},
+        follow_redirects=False
+    )
+    assert resp.status_code == 404
+    # Ensure assignee was not changed to user B
+    db.session.refresh(checklist)
+    assert checklist.assigned_to_id != two_tenants['user_b_id']
+
 

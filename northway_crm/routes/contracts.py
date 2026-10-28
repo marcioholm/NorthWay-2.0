@@ -177,16 +177,20 @@ def preview_contract():
         print(f"Markdown Error: {e}")
     
     if attachment_id:
-        attachment = ContractTemplate.query.get(attachment_id)
-        if attachment and attachment.company_id == client.company_id:
-            att_content = attachment.content
-            for key, value in replacements.items():
-                att_content = att_content.replace(key, str(value))
-            try:
-                att_content = markdown.markdown(att_content)
-                content += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
-            except:
-                pass
+        attachment = ContractTemplate.query.filter(
+            ContractTemplate.id == attachment_id,
+            db.or_(ContractTemplate.company_id == client.company_id, ContractTemplate.is_global == True)
+        ).first()
+        if not attachment:
+            abort(404)
+        att_content = attachment.content
+        for key, value in replacements.items():
+            att_content = att_content.replace(key, str(value))
+        try:
+            att_content = markdown.markdown(att_content)
+            content += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
+        except:
+            pass
 
     # --- PREMIUM HEADER LOGIC ---
     logo_img_tag = ""
@@ -383,17 +387,18 @@ def create_contract(id):
         # Attachment
         attachment_id = form_data.get('attachment_id')
         if attachment_id:
+            attachment = ContractTemplate.query.filter(
+                ContractTemplate.id == attachment_id,
+                db.or_(ContractTemplate.company_id == client.company_id, ContractTemplate.is_global == True)
+            ).first()
+            if not attachment:
+                abort(404)
+            att_content = attachment.content
+            for key, value in replacements.items():
+                att_content = att_content.replace(key, str(value))
             try:
-                attachment = ContractTemplate.query.get(attachment_id)
-                if attachment and (attachment.company_id == client.company_id or attachment.is_global):
-                    att_content = attachment.content
-                    for key, value in replacements.items():
-                        att_content = att_content.replace(key, str(value))
-                    try:
-                        att_content = markdown.markdown(att_content)
-                        content_body += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
-                    except Exception:
-                        pass
+                att_content = markdown.markdown(att_content)
+                content_body += f"<br><hr><br><div class='attachment-section'>{att_content}</div>"
             except Exception:
                 pass
         
