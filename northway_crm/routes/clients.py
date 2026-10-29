@@ -289,10 +289,10 @@ def delete_client(id):
         if tenant_integration and tenant_integration.api_key:
             api_key = tenant_integration.api_key
             
-            # 1. Cancel active subscriptions
-            if client.subscription_id:
+            subscription_id = getattr(client, 'subscription_id', None)
+            if subscription_id:
                 try:
-                    delete_subscription(client.subscription_id, api_key=api_key)
+                    delete_subscription(subscription_id, api_key=api_key)
                     current_app.logger.info(f"✅ Subscription deleted for client {client.id}")
                 except Exception as sub_e:
                     current_app.logger.error(f"⚠️ Failed to delete Asaas Subscription: {sub_e}")

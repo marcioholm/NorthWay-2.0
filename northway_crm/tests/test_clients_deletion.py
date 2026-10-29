@@ -4,10 +4,10 @@ from flask import url_for
 from models import db, Client, Integration, Transaction
 
 
-def test_delete_client_with_asaas_subscription(auth_client, app):
+def test_delete_client_with_asaas_integration(auth_client, app):
     """
-    Excluir um cliente com subscription_id, com delete_subscription e cancel_payment mockados,
-    deve responder com sucesso (redirect 302, sem 500) e executar os cancelamentos no Asaas.
+    Excluir um cliente com integração Asaas ativa, cancelando subscription (via getattr mockado)
+    e pagamentos pendentes, deve responder com sucesso (redirect 302, sem 500/NameError).
     """
     client, user, company = auth_client
 
@@ -21,13 +21,12 @@ def test_delete_client_with_asaas_subscription(auth_client, app):
         )
         db.session.add(integration)
 
-        # Criar cliente com subscription_id e account_manager_id
+        # Criar cliente padrao (sem coluna subscription_id no banco)
         target_client = Client(
             company_id=company.id,
             account_manager_id=user.id,
             name="Cliente Asaas Deletion Test",
-            email="asaas_client@example.com",
-            subscription_id="sub_test_98765"
+            email="asaas_client@example.com"
         )
         db.session.add(target_client)
         db.session.flush()
@@ -47,7 +46,8 @@ def test_delete_client_with_asaas_subscription(auth_client, app):
         client_id = target_client.id
 
     with patch('services.asaas_service.delete_subscription') as mock_del_sub, \
-         patch('services.asaas_service.cancel_payment') as mock_cancel_pay:
+         patch('services.asaas_service.cancel_payment') as mock_cancel_pay, \
+         patch.object(Client, 'subscription_id', 'sub_test_98765', create=True):
         
         mock_del_sub.return_value = True
         mock_cancel_pay.return_value = True
