@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, current_app
 from flask_login import login_required, current_user
 from decorators import super_admin_required
-# Defer model imports to avoid circular dependency with app initialization
-# from models import db, User, Role, ROLE_ADMIN, ROLE_MANAGER, ROLE_SALES
+from models import db
+from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 import os
@@ -563,7 +563,7 @@ def run_initial_migrations():
     try:
         # 1. Infer Dialect
         # Read from config to be safe
-        db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
         is_postgres = 'postgresql' in db_uri.lower()
         is_sqlite = 'sqlite' in db_uri.lower()
         

@@ -10,9 +10,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine, text
-from sqlalchemy.pool import NullPool
 from flask_login import LoginManager, current_user, login_required
-from flask_migrate import Migrate
 from models import db, User, Task, Role, AudienceMatrix, CREPIDiagnostico, CREPIPremissa, SwotAnalise, SwotItem
 from database_sync import sync_database
 import json
@@ -97,7 +95,57 @@ def create_app(test_config=None):
                     'status': response.status_code, 'duration_ms': round(elapsed, 2),
                     'response_bytes': response.content_length
                 }))
+            # Gzip compression for HTML and JSON responses
+            accept_encoding = request.headers.get('Accept-Encoding', '')
+            if (
+                'gzip' in accept_encoding
+                and 200 <= response.status_code < 300
+                and not getattr(response, 'is_streamed', False)
+                and 'Content-Encoding' not in response.headers
+            ):
+                content_type = response.headers.get('Content-Type', '')
+                if 'text/html' in content_type or 'application/json' in content_type:
+                    data = response.get_data()
+                    if len(data) >= 500:
+                        import gzip
+                        compressed = gzip.compress(data, compresslevel=6)
+                        response.set_data(compressed)
+                        response.headers['Content-Encoding'] = 'gzip'
+                        response.headers['Content-Length'] = len(compressed)
+                        vary = response.headers.get('Vary')
+                        if not vary:
+                            response.headers['Vary'] = 'Accept-Encoding'
+                        elif 'Accept-Encoding' not in vary:
+                            response.headers['Vary'] = f"{vary}, Accept-Encoding"
+
             return response
+
+        # Automatic static cache busting (VERCEL_GIT_COMMIT_SHA or dev mtime hash)
+        _static_version_cache = {}
+
+        @app.url_defaults
+        def add_static_cache_buster(endpoint, values):
+            if endpoint == 'static' or endpoint.endswith('.static'):
+                if 'v' not in values:
+                    commit_sha = (os.environ.get('VERCEL_GIT_COMMIT_SHA') or '')[:8]
+                    if commit_sha:
+                        values['v'] = commit_sha
+                    else:
+                        filename = values.get('filename')
+                        if filename:
+                            if filename not in _static_version_cache:
+                                try:
+                                    static_dir = app.static_folder or os.path.join(app.root_path, 'static')
+                                    file_path = os.path.join(static_dir, filename)
+                                    if os.path.exists(file_path):
+                                        _static_version_cache[filename] = hex(int(os.path.getmtime(file_path)))[2:10]
+                                    else:
+                                        _static_version_cache[filename] = hex(int(os.path.getmtime(static_dir)))[2:10]
+                                except Exception:
+                                    _static_version_cache[filename] = 'dev'
+                            values['v'] = _static_version_cache[filename]
+                        else:
+                            values['v'] = 'dev'
 
         # Rate Limiting Configuration
 
@@ -269,9 +317,12 @@ def create_app(test_config=None):
             'pool_pre_ping': True
         }
         if database_url and 'postgresql' in database_url:
-            # Use NullPool for Serverless (Vercel) to prevent connection drops across frozen instances
-            from sqlalchemy.pool import NullPool
-            engine_options['poolclass'] = NullPool
+            # Small pool reused between requests on the same serverless warm instance
+            engine_options['pool_size'] = 1
+            engine_options['max_overflow'] = 2
+            engine_options['pool_recycle'] = 300
+            engine_options['pool_pre_ping'] = True
+            engine_options['pool_timeout'] = 10
             engine_options['connect_args'] = {
                 'connect_timeout': 10,
                 'keepalives': 1,
@@ -326,6 +377,7 @@ def create_app(test_config=None):
         app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
         app.config['SESSION_COOKIE_NAME'] = 'northway_session'
         
+        from flask_migrate import Migrate
         migrate = Migrate(app, db)
         
         login_manager = LoginManager()
@@ -343,12 +395,12 @@ def create_app(test_config=None):
         @login_manager.user_loader
         def load_user(user_id):
             try:
-                return User.query.get(int(user_id))
+                return User.query.options(db.joinedload(User.company)).get(int(user_id))
             except Exception as e:
                 print(f"⚠️ load_user failed (likely SSL drop), retrying: {e}")
                 try:
                     db.session.remove()
-                    return User.query.get(int(user_id))
+                    return User.query.options(db.joinedload(User.company)).get(int(user_id))
                 except Exception as e2:
                     print(f"❌ load_user retry also failed: {e2}")
                     return None

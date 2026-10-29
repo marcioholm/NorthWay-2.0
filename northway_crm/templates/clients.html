@@ -167,7 +167,7 @@
                                     {% endif %}
 
                                     <!-- Pending Tasks Badge -->
-                                    {% set pending_tasks = client.tasks|selectattr('status', 'equalto', 'pendente')|list|length %}
+                                    {% set pending_tasks = pending_tasks_counts.get(client.id, 0) if pending_tasks_counts is defined else (client.tasks|selectattr('status', 'equalto', 'pendente')|list|length) %}
                                     {% if pending_tasks > 0 %}
                                     <span class="w-5 h-5 rounded-full bg-[var(--nw-muted)] border border-[var(--nw-border)] text-[var(--nw-ink)] flex items-center justify-center text-[10px] font-bold"
                                         title="{{ pending_tasks }} Tarefas Pendentes">

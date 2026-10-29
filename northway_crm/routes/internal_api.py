@@ -4,7 +4,7 @@ import time
 import requests
 from flask import Blueprint, request, jsonify
 from functools import wraps
-from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction, CrmConversation, CrmConversationMessage, CrmConversationMemory, CrmAiLog, CrmChannelIntegration
+from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction, CrmConversation, CrmConversationMessage, CrmConversationMemory, CrmAiLog, CrmChannelIntegration, ProspectingBatch
 from datetime import datetime, timedelta
 from utils.phone import phone_variants
 import logging
