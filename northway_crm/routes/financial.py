@@ -591,8 +591,9 @@ def create_manual_charge(id):
         abort(403)
 
     from models import Client
-    from services.asaas_service import AsaasService
-    
+    # AsaasService não existe mais (migração Asaas v2); a importação gerava 500
+    # antes de o usuário ver a mensagem de manutenção abaixo.
+
     # Check Client
     client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
         

@@ -60,226 +60,188 @@
     <div class="max-w-[1700px] mx-auto pb-20">
 
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8 pb-4 border-b border-[var(--nw-border)]">
-            <div class="flex items-center gap-4">
-                <a href="{{ url_for('clients.clients') }}"
-                    class="nw-icon-btn">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                </a>
-                <div>
-                    <div class="flex items-center gap-3 mb-1">
-                        <h1 class="text-2xl lg:text-3xl font-bold text-[var(--nw-ink)] tracking-tight">{{ client.name }}</h1>
-                        <span class="px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider
-                            {% if client.status == 'ativo' %} bg-green-100 text-green-700 border border-green-200
-                            {% elif client.status == 'onboarding' %} bg-blue-100 text-blue-700 border border-blue-200
-                            {% elif client.status == 'cancelado' %} bg-red-100 text-red-700 border border-red-200
-                            {% else %} bg-gray-100 text-gray-700 border border-gray-200
-                            {% endif %}">
-                            {{ client.status }}
-                        </span>
+        {% set _status_map = {
+            'ativo': ('Ativo', 'var(--nw-status-success)'),
+            'onboarding': ('Onboarding', 'var(--nw-status-info)'),
+            'pausado': ('Pausado', 'var(--nw-status-warning)'),
+            'cancelado': ('Cancelado', 'var(--nw-brand)'),
+            'desativado': ('Desativado', 'var(--nw-status-neutral)')
+        } %}
+        {% set _st = _status_map.get(client.status, ((client.status or 'Sem status')|capitalize, 'var(--nw-status-neutral)')) %}
+        {% set _health_map = {
+            'verde': ('boa', 'var(--nw-status-success)'),
+            'amarelo': ('atenção', 'var(--nw-status-warning)'),
+            'vermelho': ('crítica', 'var(--nw-brand)')
+        } %}
+        {% set _hl = _health_map.get(client.health_status) %}
+        <div class="mb-6 flex flex-col gap-4">
+            <a href="{{ url_for('clients.clients') }}"
+                class="inline-flex w-fit items-center gap-1.5 text-[13px] font-medium text-[var(--nw-text-2)] hover:text-[var(--nw-ink)] transition-colors">
+                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Clientes
+            </a>
 
-                        <!-- Health Status -->
-                        <div class="flex items-center gap-1.5 ml-1">
-                            {% if client.health_status == 'verde' %}
-                            <div class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]">
-                            </div>
-                            {% elif client.health_status == 'amarelo' %}
-                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.4)]">
-                            </div>
-                            {% elif client.health_status == 'vermelho' %}
-                            <div class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]">
-                            </div>
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4 min-w-0 flex-[999_1_520px]">
+                    <span class="flex-none w-14 h-14 rounded-full bg-[var(--nw-ink)] text-white inline-flex items-center justify-center text-lg font-semibold" aria-hidden="true">
+                        {{ (client.name or '?')[:2].upper() }}
+                    </span>
+                    <div class="min-w-0">
+                        <h1 class="text-[26px] lg:text-[32px] leading-tight font-semibold tracking-tight text-[var(--nw-ink)] truncate" title="{{ client.name }}">{{ client.name }}</h1>
+                        <div class="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-[var(--nw-text-2)]">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[var(--nw-border)] text-[12px] font-semibold text-[var(--nw-ink)]">
+                                <span class="w-[7px] h-[7px] rounded-full" style="background: {{ _st[1] }}"></span>{{ _st[0] }}
+                            </span>
+                            {% if _hl %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[var(--nw-border)] text-[12px] font-semibold text-[var(--nw-ink)]" title="Saúde do cliente, calculada pela última interação">
+                                <span class="w-[7px] h-[7px] rounded-full" style="background: {{ _hl[1] }}"></span>Saúde: {{ _hl[0] }}
+                            </span>
                             {% endif %}
+                            <span class="truncate">
+                                {{ client.niche or 'Sem nicho' }}{% if client.document %} · {{ client.document }}{% endif %} · Gerente: {{ client.account_manager.name if client.account_manager else 'sem gerente' }}
+                            </span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 text-gray-400 text-xs font-medium">
-                        <a href="{{ url_for('dashboard.dashboard') }}"
-                            class="hover:text-gray-600 transition-colors">CRM</a>
-                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
-                        <a href="{{ url_for('clients.clients') }}"
-                            class="hover:text-gray-600 transition-colors">Clientes</a>
-                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
-                        <span class="text-gray-600">{{ client.name }}</span>
+                </div>
+
+                {% if current_user.role in ['admin', 'manager'] %}
+                <div class="flex flex-wrap items-center gap-2">
+                    {% if client.drive_folder_url %}
+                    <a href="{{ client.drive_folder_url }}" target="_blank" rel="noopener" class="nw-btn whitespace-nowrap" title="Abrir pasta no Drive">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" class="w-4 h-4" alt="" loading="lazy">
+                        <span>Drive</span>
+                    </a>
+                    {% else %}
+                    <button type="button" onclick="switchClientTab('archivos')" class="nw-btn whitespace-nowrap" title="Configurar Drive">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" class="w-4 h-4 grayscale opacity-60" alt="" loading="lazy">
+                        <span>Drive</span>
+                    </button>
+                    {% endif %}
+
+                    <div id="topEditActions">
+                        <button type="button" onclick="startEditMode()" id="topEditBtn" class="nw-btn whitespace-nowrap">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                            <span>Editar</span>
+                        </button>
+                        <div id="saveCancelBtns" class="hidden flex items-center gap-2">
+                            <button type="button" onclick="cancelEditMode()" class="nw-btn whitespace-nowrap">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                                <span>Cancelar</span>
+                            </button>
+                            <button type="button" onclick="saveClientForm()" class="nw-btn-primary whitespace-nowrap">
+                                <i data-lucide="save" class="w-4 h-4"></i>
+                                <span>Salvar alterações</span>
+                            </button>
+                        </div>
                     </div>
+
+                    <a href="{{ url_for('contracts.new_contract', id=client.id) }}" class="nw-btn-accent whitespace-nowrap">
+                        <i data-lucide="file-signature" class="w-4 h-4"></i>
+                        <span>Emitir contrato</span>
+                    </a>
                 </div>
+                {% endif %}
             </div>
 
-            {% if current_user.role in ['admin', 'manager'] %}
-            {% if client.renewal_date %}
+            {% if current_user.role in ['admin', 'manager'] and client.renewal_date %}
             {% set days_left = (client.renewal_date - today).days %}
-            {% if days_left <= 30 %} <div
-                class="mb-4 px-4 py-2 rounded-lg flex items-center justify-between shadow-sm border {{ 'bg-red-50 border-red-100' if days_left < 0 else 'bg-orange-50 border-orange-100' }}">
-                <div class="flex items-center gap-3">
-                    <i data-lucide="alert-triangle"
-                        class="w-5 h-5 {{ 'text-red-500' if days_left < 0 else 'text-orange-500' }}"></i>
-                    <span class="text-sm font-medium {{ 'text-red-800' if days_left < 0 else 'text-orange-800' }}">
-                        {% if days_left < 0 %} Renovação Vencida há {{ days_left|abs }} dias ({{
-                            client.renewal_date.strftime('%d/%m/%Y') }}) {% else %} Renovação em {{ days_left }} dias
-                            ({{ client.renewal_date.strftime('%d/%m/%Y') }}) {% endif %} </span>
-                </div>
-                <button type="button" onclick="toggleModal('taskModal')"
-                    class="text-xs font-bold px-3 py-1 bg-white border rounded shadow-sm hover:bg-gray-50 transition-colors {{ 'text-red-600 border-red-200' if days_left < 0 else 'text-orange-600 border-orange-200' }}">
-                    Agendar
+            {% if days_left <= 30 %}
+            <div role="status"
+                class="flex flex-wrap items-center justify-between gap-3 pl-4 pr-3 py-3 rounded-[18px] bg-white border {{ 'border-red-200' if days_left < 0 else 'border-amber-200' }}">
+                <span class="inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-[var(--nw-ink)]">
+                    <i data-lucide="alert-triangle" class="w-[18px] h-[18px] {{ 'text-red-600' if days_left < 0 else 'text-amber-600' }}"></i>
+                    {% if days_left < 0 %}
+                    <strong class="font-semibold">Renovação vencida há {{ days_left|abs }} dias</strong>
+                    <span class="text-[var(--nw-text-2)]">Venceu em {{ client.renewal_date.strftime('%d/%m/%Y') }}</span>
+                    {% else %}
+                    <strong class="font-semibold">Renovação em {{ days_left }} dias</strong>
+                    <span class="text-[var(--nw-text-2)]">Vence em {{ client.renewal_date.strftime('%d/%m/%Y') }}</span>
+                    {% endif %}
+                </span>
+                <button type="button" onclick="toggleModal('taskModal')" class="nw-btn-primary nw-btn-sm">
+                    Agendar renovação
                 </button>
-        </div>
-        {% endif %}
-        {% endif %}
-
-        <div class="flex items-center gap-3">
-            <!-- Drive Button -->
-            {% if client.drive_folder_url %}
-            <a href="{{ client.drive_folder_url }}" target="_blank"
-                class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2"
-                title="Abrir Pasta no Drive">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
-                    class="w-4 h-4" loading="lazy">
-                <span>Drive</span>
-            </a>
-            {% else %}
-            <button type="button" onclick="switchClientTab('archivos')"
-                class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2"
-                title="Configurar Drive">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
-                    class="w-4 h-4 grayscale opacity-60" loading="lazy">
-                <span>Drive</span>
-            </button>
-            {% endif %}
-
-            <a href="{{ url_for('contracts.new_contract', id=client.id) }}"
-                class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                <i data-lucide="file-signature" class="w-4 h-4"></i>
-                <span>Emitir Contrato</span>
-            </a>
-
-            <div id="topEditActions">
-                <button type="button" onclick="startEditMode()" id="topEditBtn"
-                    class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                    <i data-lucide="pencil" class="w-4 h-4"></i>
-                    <span>Editar Dados</span>
-                </button>
-                <div id="saveCancelBtns" class="hidden flex items-center gap-2">
-                    <button type="button" onclick="cancelEditMode()"
-                        class="bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                        <span>Cancelar</span>
-                    </button>
-                    <button type="button" onclick="saveClientForm()"
-                        class="bg-[#fa0102] text-white border border-[#fa0102] px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i>
-                        <span>Salvar Alterações</span>
-                    </button>
-                </div>
             </div>
+            {% endif %}
+            {% endif %}
         </div>
-        {% endif %}
-    </div>
 
     <!-- Payment Status Alert Banner -->
-    {% if client.payment_status == 'inadimplente' %}
-    <div
-        class="mb-6 px-6 py-4 bg-red-600 rounded-xl shadow-lg border border-red-700 flex items-center justify-between text-white animate-pulse">
-        <div class="flex items-center gap-4">
-            <div class="p-2 bg-white/20 rounded-lg">
-                <i data-lucide="shield-alert" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <h3 class="font-black text-lg leading-tight uppercase">Cliente Inadimplente</h3>
-                <p class="text-xs text-red-100 font-medium">Este cliente possui faturas vencidas há mais de 30 dias.
-                    Ações comerciais devem ser priorizadas para regularização.</p>
-            </div>
-        </div>
-        <button type="button" onclick="switchClientTab('financial')"
-            class="px-4 py-2 bg-white text-red-600 rounded-lg font-bold text-xs hover:bg-gray-100 transition-colors shadow-sm uppercase tracking-wider">
-            Ver Faturas
-        </button>
-    </div>
-    {% elif client.payment_status == 'atrasado' %}
-    <div
-        class="mb-6 px-6 py-4 bg-amber-400 rounded-xl shadow-md border border-amber-500 flex items-center justify-between text-amber-900">
-        <div class="flex items-center gap-4">
-            <div class="p-2 bg-black/10 rounded-lg">
-                <i data-lucide="alert-circle" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <h3 class="font-black text-lg leading-tight uppercase">Pagamento em Atraso</h3>
-                <p class="text-xs text-amber-800 font-medium">Atenção: Existem pendências financeiras recentes (1-30
-                    dias). Favor verificar com o financeiro.</p>
+    {% if client.payment_status in ['inadimplente', 'atrasado'] %}
+    {% set _late = client.payment_status == 'inadimplente' %}
+    <div role="alert"
+        class="mb-6 flex flex-wrap items-center justify-between gap-3 pl-4 pr-3 py-3 rounded-[18px] {{ 'bg-red-50 border border-red-200' if _late else 'bg-amber-50 border border-amber-200' }}">
+        <div class="flex items-center gap-3 min-w-0">
+            <span class="flex-none w-9 h-9 rounded-full inline-flex items-center justify-center {{ 'bg-red-600 text-white' if _late else 'bg-amber-400 text-amber-950' }}">
+                <i data-lucide="{{ 'shield-alert' if _late else 'alert-circle' }}" class="w-[18px] h-[18px]"></i>
+            </span>
+            <div class="min-w-0">
+                <p class="text-[14px] font-semibold text-[var(--nw-ink)]">{{ 'Cliente inadimplente' if _late else 'Pagamento em atraso' }}</p>
+                <p class="text-[13px] text-[var(--nw-text-2)]">
+                    {% if _late %}Faturas vencidas há mais de 30 dias. Priorize a regularização.{% else %}Pendências financeiras recentes (1 a 30 dias). Verifique com o financeiro.{% endif %}
+                </p>
             </div>
         </div>
-        <button type="button" onclick="switchClientTab('financial')"
-            class="px-4 py-2 bg-amber-900 text-amber-50 rounded-lg font-bold text-xs hover:bg-black transition-colors shadow-sm uppercase tracking-wider">
-            Ver Faturas
+        <button type="button" onclick="switchClientTab('financial')" class="nw-btn-primary nw-btn-sm">
+            Ver faturas
         </button>
     </div>
     {% endif %}
 
-    <form action="{{ url_for('clients.update_client', id=client.id) }}" method="POST" id="clientForm">
+    <form action="{{ url_for('clients.update_client', id=client.id) }}" method="POST" id="clientForm" class="hidden">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    </form>
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <!-- Main Info Column -->
             <div id="main-content-column" class="lg:col-span-9 space-y-6">
 
                 <!-- Registration Data Card -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div class="bg-white rounded-[24px] border border-[var(--nw-border)] overflow-hidden mb-6">
                     <!-- Tabs -->
-                    <div class="px-6 pt-6 pb-2 border-b border-gray-100 bg-white">
-                        <div class="flex flex-wrap bg-gray-100/50 p-1.5 rounded-2xl gap-2">
-                            <button type="button" onclick="switchClientTab('details')" id="tab-client-details"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-700 bg-white shadow-sm rounded-xl transition-all flex items-center gap-2 border border-gray-100/50 transform scale-105 shadow-md">
-                                <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Dados Cadastrais
+                    <div class="px-4 pt-4 pb-3 border-b border-[var(--nw-border)] flex flex-col gap-3">
+                        <nav aria-label="Seções do cliente" class="nw-tabbar">
+                            <button type="button" onclick="switchClientTab('details')" id="tab-client-details" class="nw-tab is-active">
+                                Dados
                             </button>
-                            <button type="button" onclick="switchClientTab('contracts')" id="tab-client-contracts"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Contratos
+                            <button type="button" onclick="switchClientTab('contracts')" id="tab-client-contracts" class="nw-tab">
+                                Contratos
                             </button>
-                            <button type="button" onclick="switchClientTab('tasks')" id="tab-client-tasks"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Tarefas
+                            <button type="button" onclick="switchClientTab('financial')" id="tab-client-financial" class="nw-tab">
+                                Financeiro
                             </button>
-                            <button type="button" onclick="switchClientTab('whatsapp')" id="tab-client-whatsapp"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
+                            <button type="button" onclick="switchClientTab('tasks')" id="tab-client-tasks" class="nw-tab">
+                                Tarefas
                             </button>
-                            <button type="button" onclick="switchClientTab('financial')" id="tab-client-financial"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="wallet" class="w-3.5 h-3.5"></i> Financeiro
-                            </button>
-                            <button type="button" onclick="switchClientTab('service-orders')"
-                                id="tab-client-service-orders"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="briefcase" class="w-3.5 h-3.5"></i> Ordens (OS)
-                            </button>
-                            <button type="button" onclick="switchClientTab('diagnostic-tab')"
-                                id="tab-client-diagnostic-tab"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="line-chart" class="w-3.5 h-3.5"></i> Diagnóstico
-                            </button>
-                            <button type="button" onclick="switchClientTab('archivos')" id="tab-client-archivos"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="hard-drive" class="w-3.5 h-3.5"></i> Arquivos
+                            <button type="button" onclick="switchClientTab('archivos')" id="tab-client-archivos" class="nw-tab">
+                                Arquivos
                                 {% if client.drive_unread_files_count > 0 %}
-                                <span class="bg-red-500 text-white text-[10px] px-1.5 rounded-full">{{
-                                    client.drive_unread_files_count }}</span>
+                                <span class="nw-tab-badge">{{ client.drive_unread_files_count }}</span>
                                 {% endif %}
                             </button>
-                            <button type="button" onclick="switchClientTab('script-studio')"
-                                id="tab-client-script-studio"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="scroll-text" class="w-3.5 h-3.5"></i> Script Studio
+                            <button type="button" onclick="switchClientTab('service-orders')" id="tab-client-service-orders" class="nw-tab">
+                                Ordens (OS)
                             </button>
-                            <button type="button" onclick="switchClientTab('meta-ads')"
-                                id="tab-client-meta-ads"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Tráfego Meta
+                            <button type="button" onclick="switchClientTab('diagnostic-tab')" id="tab-client-diagnostic-tab" class="nw-tab">
+                                Diagnóstico
                             </button>
-                            <button type="button" onclick="switchClientTab('cronograma')"
-                                id="tab-client-cronograma"
-                                class="px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Cronograma
+                            <button type="button" onclick="switchClientTab(localStorage.getItem('nw_marketing_tool') || 'script-studio')" id="tab-client-marketing" class="nw-tab">
+                                Marketing
                             </button>
+                        </nav>
+                        <!-- Marketing: Script Studio, Tráfego Meta e Cronograma -->
+                        <div id="marketing-subnav" class="hidden" role="group" aria-label="Ferramenta de marketing">
+                            <div class="nw-subtabbar">
+                                <button type="button" onclick="switchClientTab('script-studio')" id="tab-client-script-studio" class="nw-subtab">
+                                    <i data-lucide="scroll-text" class="w-3.5 h-3.5"></i> Script Studio
+                                </button>
+                                <button type="button" onclick="switchClientTab('meta-ads')" id="tab-client-meta-ads" class="nw-subtab">
+                                    <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Tráfego Meta
+                                </button>
+                                <button type="button" onclick="switchClientTab('cronograma')" id="tab-client-cronograma" class="nw-subtab">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Cronograma
+                                </button>
+                            </div>
                         </div>
                     </div>
-
                     <!-- Details Content -->
                     <div id="content-client-details" class="p-8">
 
@@ -321,62 +283,72 @@
                         </div>
                         {% endif %}
 
-                        <h3 class="hidden text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                            Dados Cadastrais
-                        </h3>
+                        {# reject sem teste remove os valores preenchidos e sobram só os vazios #}
+                        {% set _pending = [client.document, client.email_contact, client.representative, client.representative_cpf, client.niche]|reject|list|length %}
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                            <h3 class="text-lg font-semibold text-[var(--nw-ink)]">Dados cadastrais</h3>
+                            {% if _pending > 0 %}
+                            <span class="inline-flex items-center gap-2 text-[13px] text-[var(--nw-text-2)]">
+                                {{ _pending }} {{ 'campo pendente' if _pending == 1 else 'campos pendentes' }}
+                                {% if current_user.role in ['admin', 'manager'] %}
+                                <button type="button" onclick="startEditMode()" class="font-semibold text-[var(--nw-ink)] underline underline-offset-[3px]">Completar cadastro</button>
+                                {% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
                             <div class="relative">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider mb-2">
                                     <i data-lucide="hash" class="w-3 h-3"></i> CNPJ / CPF
                                 </label>
-                                <input type="text" name="document" value="{{ client.document or '' }}"
-                                    placeholder="Não informado" disabled
-                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-bold disabled:text-lg disabled:p-0 transition-all">
+                                <input form="clientForm" type="text" name="document" value="{{ client.document or '' }}"
+                                    placeholder="—" disabled
+                                    class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:text-[15px] disabled:p-0 transition-all">
                             </div>
                             <div class="relative">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider mb-2">
                                     <i data-lucide="mail" class="w-3 h-3"></i> Email de Contato
                                 </label>
-                                <input type="email" name="email_contact" value="{{ client.email_contact or '' }}"
-                                    placeholder="Não informado" disabled
-                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
+                                <input form="clientForm" type="email" name="email_contact" value="{{ client.email_contact or '' }}"
+                                    placeholder="—" disabled
+                                    class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
                             </div>
                             <div class="relative">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider mb-2">
                                     <i data-lucide="user" class="w-3 h-3"></i> Representante Legal
                                 </label>
-                                <input type="text" name="representative" value="{{ client.representative or '' }}"
-                                    placeholder="Não informado" disabled
-                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
+                                <input form="clientForm" type="text" name="representative" value="{{ client.representative or '' }}"
+                                    placeholder="—" disabled
+                                    class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
                             </div>
                             <div class="relative">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider mb-2">
                                     <i data-lucide="credit-card" class="w-3 h-3"></i> CPF do Rep.
                                 </label>
-                                <input type="text" name="representative_cpf"
-                                    value="{{ client.representative_cpf or '' }}" placeholder="Não informado" disabled
-                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
+                                <input form="clientForm" type="text" name="representative_cpf"
+                                    value="{{ client.representative_cpf or '' }}" placeholder="—" disabled
+                                    class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
                             </div>
                             <div class="relative">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider mb-2">
                                     <i data-lucide="tag" class="w-3 h-3"></i> Nicho / Segmento
                                 </label>
-                                <input type="text" name="niche" value="{{ client.niche or '' }}"
+                                <input form="clientForm" type="text" name="niche" value="{{ client.niche or '' }}"
                                     placeholder="Ex: Ópticas, Clínicas, Varejo" disabled
-                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
+                                    class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all">
                             </div>
                             <div class="relative">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider mb-2">
                                     <i data-lucide="info" class="w-3 h-3"></i> Status do Cliente
                                 </label>
-                                <select name="status" disabled
-                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-bold disabled:p-0 transition-all appearance-none">
+                                <select form="clientForm" name="status" disabled
+                                    class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all appearance-none">
                                     <option value="onboarding" {% if client.status == 'onboarding' %}selected{% endif %}>Onboarding</option>
                                     <option value="ativo" {% if client.status == 'ativo' %}selected{% endif %}>Ativo</option>
                                     <option value="pausado" {% if client.status == 'pausado' %}selected{% endif %}>Pausado</option>
@@ -386,11 +358,11 @@
                             </div>
                             <div class="relative">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider mb-2">
                                     <i data-lucide="user-check" class="w-3 h-3"></i> Gerente de Conta
                                 </label>
-                                <select name="account_manager_id" disabled
-                                    class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-bold disabled:p-0 transition-all appearance-none">
+                                <select form="clientForm" name="account_manager_id" disabled
+                                    class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 transition-all appearance-none">
                                     <option value="">Sem Gerente</option>
                                     {% for u in users %}
                                     <option value="{{ u.id }}" {% if client.account_manager_id == u.id %}selected{% endif %}>{{ u.name }}</option>
@@ -402,7 +374,7 @@
                         <!-- Address Section -->
                         <div class="space-y-4 pt-6 mt-4 border-t border-gray-100">
                             <label
-                                class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider">
                                 <i data-lucide="map-pin" class="w-3 h-3"></i> Endereço
                             </label>
 
@@ -414,14 +386,14 @@
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Logradouro
                                             e Número</label>
                                         <div class="flex gap-2">
-                                            <input type="text" name="address_street"
+                                            <input form="clientForm" type="text" name="address_street"
                                                 value="{{ client.address_street or '' }}"
                                                 placeholder="Rua não informada" disabled
-                                                class="flex-1 border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
+                                                class="flex-1 border-gray-300 rounded-lg focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
                                             <span class="text-gray-400 font-light mt-1">,</span>
-                                            <input type="text" name="address_number"
+                                            <input form="clientForm" type="text" name="address_number"
                                                 value="{{ client.address_number or '' }}" placeholder="S/N" disabled
-                                                class="w-20 border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 text-right block placeholder-transparent">
+                                                class="w-20 border-gray-300 rounded-lg focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 text-right block placeholder-transparent">
                                         </div>
                                     </div>
                                 </div>
@@ -430,9 +402,9 @@
                                         class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
                                         <label
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">CEP</label>
-                                        <input type="text" name="address_zip" value="{{ client.address_zip or '' }}"
+                                        <input form="clientForm" type="text" name="address_zip" value="{{ client.address_zip or '' }}"
                                             placeholder="-" disabled
-                                            class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
+                                            class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
                                     </div>
                                 </div>
                             </div>
@@ -443,9 +415,9 @@
                                         class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
                                         <label
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Bairro</label>
-                                        <input type="text" name="address_neighborhood"
+                                        <input form="clientForm" type="text" name="address_neighborhood"
                                             value="{{ client.address_neighborhood or '' }}" placeholder="-" disabled
-                                            class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
+                                            class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
                                     </div>
                                 </div>
                                 <div class="overflow-hidden">
@@ -453,9 +425,9 @@
                                         class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
                                         <label
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">Cidade</label>
-                                        <input type="text" name="address_city" value="{{ client.address_city or '' }}"
+                                        <input form="clientForm" type="text" name="address_city" value="{{ client.address_city or '' }}"
                                             placeholder="-" disabled
-                                            class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
+                                            class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 placeholder-transparent">
                                     </div>
                                 </div>
                                 <div class="overflow-hidden">
@@ -463,9 +435,9 @@
                                         class="bg-gray-50/50 px-4 py-3 rounded-xl border border-gray-100/80 transition-all focus-within:border-[#fa0102] focus-within:ring-1 focus-within:ring-[#fa0102]">
                                         <label
                                             class="text-[10px] block text-gray-400 font-bold uppercase mb-1">UF</label>
-                                        <input type="text" name="address_state" value="{{ client.address_state or '' }}"
+                                        <input form="clientForm" type="text" name="address_state" value="{{ client.address_state or '' }}"
                                             placeholder="-" disabled
-                                            class="w-full border-gray-300 rounded-lg focus:ring-northway-red focus:border-northway-red disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-bold disabled:p-0 text-center uppercase placeholder-transparent">
+                                            class="w-full border-gray-300 rounded-[14px] focus:ring-[var(--nw-ink)] focus:border-[var(--nw-ink)] disabled:bg-transparent disabled:border-none disabled:shadow-none disabled:text-gray-900 disabled:font-medium disabled:p-0 text-center uppercase placeholder-transparent">
                                     </div>
                                 </div>
                             </div>
@@ -473,7 +445,7 @@
                         <div class="pt-6 mt-4 border-t border-gray-100 flex flex-col gap-2">
                             <div class="flex items-center justify-between mb-2">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider">
                                     <i data-lucide="sticky-note" class="w-3 h-3"></i> Notas Internas
                                 </label>
                                 <button type="button" onclick="saveInternalNotes()" id="btn-save-notes"
@@ -481,7 +453,7 @@
                                     <i data-lucide="save" class="w-3 h-3"></i> Salvar Notas
                                 </button>
                             </div>
-                            <textarea id="internal-notes-area" name="notes" rows="4"
+                            <textarea form="clientForm" id="internal-notes-area" name="notes" rows="4"
                                 placeholder="Digite notas sobre o cliente..."
                                 class="w-full bg-yellow-50/50 border border-gray-200 rounded-xl p-4 text-sm text-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-yellow-400/20 focus:border-yellow-400 resize-none transition-all">{{ client.notes or '' }}</textarea>
                         </div>
@@ -490,7 +462,7 @@
                         <div class="pt-6 mt-6 border-t border-gray-100">
                             <div class="flex items-center justify-between mb-6">
                                 <label
-                                    class="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    class="flex items-center gap-2 text-[12px] font-semibold text-[var(--nw-text-2)] uppercase tracking-wider">
                                     <i data-lucide="history" class="w-3 h-3"></i> Histórico de Interações
                                 </label>
                                 <button type="button" onclick="toggleModal('interactionModal')"
@@ -536,11 +508,11 @@
                     <!-- Contracts Content (New Tab) -->
                     <div id="content-client-contracts" class="hidden p-8">
                         <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <h3 class="text-lg font-semibold text-[var(--nw-ink)] flex items-center gap-2">
                                 Contratos Emitidos
                             </h3>
                             <a href="{{ url_for('contracts.new_contract', id=client.id) }}"
-                                class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                                class="nw-btn-primary nw-btn-sm">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
                                 Novo Contrato
                             </a>
@@ -549,100 +521,74 @@
                         <div class="space-y-3">
                             {% if client.contracts %}
                             {% for contract in client.contracts|sort(attribute='created_at', reverse=True) %}
-                            <div
-                                class="group flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-red-100/30 hover:bg-red-50/10 transition-all bg-white shadow-sm relative">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 {{ 'bg-yellow-50 text-yellow-600' if contract.status == 'draft' else ('bg-green-50 text-green-600' if contract.status in ['signed', 'active'] else ('bg-red-50 text-red-600' if contract.status == 'terminated' else 'bg-blue-50 text-blue-600')) }}">
-                                        <i data-lucide="{{ 'file-edit' if contract.status == 'draft' else ('ban' if contract.status == 'terminated' else 'file-text') }}"
-                                            class="w-6 h-6"></i>
-                                    </div>
+                            {% set _cst = {
+                                'draft': ('Rascunho', 'var(--nw-status-warning)'),
+                                'issued': ('Emitido', 'var(--nw-status-info)'),
+                                'signed': ('Assinado', 'var(--nw-status-success)'),
+                                'active': ('Assinado', 'var(--nw-status-success)'),
+                                'terminated': ('Rescindido', 'var(--nw-status-neutral)')
+                            }.get(contract.status, (contract.status, 'var(--nw-status-neutral)')) %}
+                            {% set contract_display_name = contract.template.name if contract.template else 'Contrato Avulso' %}
+                            <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 rounded-[18px] border border-[var(--nw-border)] bg-white hover:border-[var(--nw-text-3)] transition-colors">
+                                <div class="flex items-center gap-3.5 min-w-0">
+                                    <span class="flex-none w-10 h-10 rounded-[14px] bg-[var(--nw-muted)] inline-flex items-center justify-center text-[var(--nw-ink)]">
+                                        <i data-lucide="{{ 'file-edit' if contract.status == 'draft' else ('ban' if contract.status == 'terminated' else 'file-text') }}" class="w-[18px] h-[18px]"></i>
+                                    </span>
                                     <div class="min-w-0">
-                                        <p class="text-[10px] font-mono text-gray-400 mb-0.5">{{ contract.code or
-                                            '#' ~
-                                            contract.id }}</p>
                                         <a href="{{ url_for('contracts.view_contract', id=contract.id) }}"
-                                            class="text-base font-bold text-gray-900 leading-tight hover:text-northway-red hover:underline transition-colors block">
-                                            {{ contract.template.name if contract.template else 'Contrato Avulso' }}
+                                            class="block text-[14px] font-semibold text-[var(--nw-ink)] truncate hover:underline underline-offset-[3px]">
+                                            <span class="font-mono text-[var(--nw-text-2)] font-medium">{{ contract.code or '#' ~ contract.id }}</span> · {{ contract_display_name }}
                                         </a>
-                                        <p class="text-xs text-gray-500 mt-1">Criado em {{
-                                            contract.created_at.strftime('%d/%m/%Y') if contract.created_at else
-                                            'N/A'
-                                            }}
-                                        </p>
+                                        <p class="text-[12px] text-[var(--nw-text-2)] mt-0.5">Criado em {{ contract.created_at.strftime('%d/%m/%Y') if contract.created_at else '—' }}</p>
                                     </div>
                                 </div>
-                                <div class="flex flex-col items-end gap-2">
-                                    <span
-                                        class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md {{ 'bg-yellow-100 text-yellow-700' if contract.status == 'draft' else ('bg-green-100 text-green-700' if contract.status in ['signed', 'active'] else ('bg-red-100 text-red-700' if contract.status == 'terminated' else 'bg-blue-100 text-blue-700')) }}">
-                                        {{ 'Rascunho' if contract.status == 'draft' else ('Emitido' if
-                                        contract.status
-                                        ==
-                                        'issued' else ('Assinado' if contract.status in ['signed', 'active'] else
-                                        ('Rescindido'
-                                        if
-                                        contract.status == 'terminated' else contract.status))) }}
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[var(--nw-border)] text-[12px] font-semibold text-[var(--nw-ink)]">
+                                        <span class="w-[7px] h-[7px] rounded-full" style="background: {{ _cst[1] }}"></span>{{ _cst[0] }}
                                     </span>
 
-                                    <div class="flex items-center gap-2">
-                                        <form action="{{ url_for('contracts.duplicate_contract', id=contract.id) }}"
-                                            method="POST" class="inline">
-                                            <button type="submit"
-                                                class="text-xs font-bold text-gray-500 hover:text-green-600 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200 hover:border-green-100 transition-colors"
-                                                title="Criar Variação">
-                                                <i data-lucide="copy" class="w-3 h-3"></i> Duplicar
-                                            </button>
-                                        </form>
+                                    {% if contract.status == 'draft' %}
+                                    <a href="{{ url_for('contracts.load_draft', contract_id=contract.id) }}" class="nw-btn-primary nw-btn-xs">
+                                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Continuar
+                                    </a>
+                                    {% elif contract.status == 'issued' %}
+                                    {% set c_data = contract.form_data | from_json if contract.form_data else {} %}
+                                    <button type="button"
+                                        onclick="signContract('{{ contract.id }}', '{{ c_data.get('data_inicio', '') }}', '{{ c_data.get('dia_vencimento', '') }}')"
+                                        class="nw-btn-primary nw-btn-xs">
+                                        <i data-lucide="pen-tool" class="w-3.5 h-3.5"></i> Assinar
+                                    </button>
+                                    {% elif contract.status in ['signed', 'active'] %}
+                                    <a href="{{ url_for('contracts.view_contract', id=contract.id) }}" target="_blank" rel="noopener" class="nw-btn nw-btn-xs">
+                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i> Ver assinado
+                                    </a>
+                                    {% endif %}
 
-                                        {% if contract.status == 'draft' %}
-                                        <a href="{{ url_for('contracts.load_draft', contract_id=contract.id) }}"
-                                            class="text-xs font-bold text-gray-500 hover:text-northway-red flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-lg border border-gray-200 hover:border-red-100">
-                                            <i data-lucide="pencil" class="w-3 h-3"></i> Continuar
-                                        </a>
-                                        {% endif %}
-
-                                        {% if contract.status == 'issued' %}
-                                        {% set c_data = contract.form_data | from_json if contract.form_data else {} %}
-                                        <button type="button" 
-                                            onclick="signContract('{{ contract.id }}', '{{ c_data.get('data_inicio', '') }}', '{{ c_data.get('dia_vencimento', '') }}')"
-                                            class="text-xs font-bold text-white bg-green-600 hover:bg-green-700 flex items-center gap-1 px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer">
-                                            <i data-lucide="pen-tool" class="w-3 h-3"></i> Assinar
-                                        </button>
-                                        <a href="{{ url_for('contracts.view_contract', id=contract.id) }}"
-                                            target="_blank"
-                                            class="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1 bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors">
-                                            <i data-lucide="eye" class="w-3 h-3"></i> Ver
-                                        </a>
-                                        {% endif %}
-
-                                        {% if contract.status in ['signed', 'active'] %}
-                                        <a href="{{ url_for('contracts.view_contract', id=contract.id) }}"
-                                            target="_blank"
-                                            class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
-                                            <i data-lucide="check-circle" class="w-3 h-3"></i> Ver Assinado
-                                        </a>
-
-                                        <button type="button" onclick="openRegenerateBillingModal('{{ contract.id }}')"
-                                            class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors ml-2"
-                                            title="Regerar Boletos (Caso falhe)">
-                                            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-                                        </button>
-
-                                        {% set contract_display_name = contract.template.name if contract.template
-                                        else
-                                        'Contrato Avulso' %}
-                                        <button type="button"
-                                            onclick="openTerminationModal('{{ contract.id }}', '{{ contract_display_name }}')"
-                                            class="text-xs text-red-400 hover:text-red-600 underline ml-2">Rescindir</button>
-                                        {% endif %}
-                                    </div>
+                                    <details class="nw-menu relative">
+                                        <summary class="nw-icon-btn nw-icon-btn-sm list-none cursor-pointer" aria-label="Mais ações do contrato {{ contract.code or contract.id }}">
+                                            <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                                        </summary>
+                                        <div class="nw-menu-list">
+                                            <form action="{{ url_for('contracts.duplicate_contract', id=contract.id) }}" method="POST">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <button type="submit" class="nw-menu-item"><i data-lucide="copy" class="w-4 h-4"></i> Duplicar</button>
+                                            </form>
+                                            {% if contract.status == 'issued' %}
+                                            <a href="{{ url_for('contracts.view_contract', id=contract.id) }}" target="_blank" rel="noopener" class="nw-menu-item"><i data-lucide="eye" class="w-4 h-4"></i> Ver contrato</a>
+                                            {% endif %}
+                                            {% if contract.status in ['signed', 'active'] %}
+                                            <button type="button" onclick="openRegenerateBillingModal('{{ contract.id }}')" class="nw-menu-item"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Regerar boletos</button>
+                                            <button type="button" onclick='openTerminationModal({{ contract.id|string|tojson }}, {{ contract_display_name|tojson }})' class="nw-menu-item text-red-700"><i data-lucide="ban" class="w-4 h-4"></i> Rescindir</button>
+                                            {% endif %}
+                                        </div>
+                                    </details>
                                 </div>
                             </div>
                             {% endfor %}
                             {% else %}
                             <div
-                                class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                class="flex flex-col items-center justify-center py-12 px-4 text-[var(--nw-text-2)] text-center bg-[var(--nw-shell)] rounded-[18px] border-[1.5px] border-dashed border-[var(--nw-divider)]">
+                                <div class="bg-[var(--nw-muted)] p-3 rounded-full mb-3">
                                     <i data-lucide="file-x" class="w-8 h-8 opacity-40"></i>
                                 </div>
                                 <p class="text-sm italic font-medium">Nenhum contrato emitido.</p>
@@ -655,11 +601,11 @@
                     <!-- Tasks Content (New Tab) -->
                     <div id="content-client-tasks" class="hidden p-8">
                         <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <h3 class="text-lg font-semibold text-[var(--nw-ink)] flex items-center gap-2">
                                 Tarefas & Agendamentos
                             </h3>
                             <button type="button" onclick="toggleModal('taskModal')"
-                                class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                                class="nw-btn-primary nw-btn-sm">
                                 <i data-lucide="plus" class="w-4 h-4"></i> Agendar Tarefa
                             </button>
                         </div>
@@ -710,8 +656,8 @@
                             </div>
                             {% else %}
                             <div
-                                class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                class="flex flex-col items-center justify-center py-12 px-4 text-[var(--nw-text-2)] text-center bg-[var(--nw-shell)] rounded-[18px] border-[1.5px] border-dashed border-[var(--nw-divider)]">
+                                <div class="bg-[var(--nw-muted)] p-3 rounded-full mb-3">
                                     <i data-lucide="check-square" class="w-8 h-8 opacity-40"></i>
                                 </div>
                                 <p class="text-sm italic font-medium">Nenhuma tarefa pendente.</p>
@@ -725,74 +671,47 @@
                     <!-- Financial Content -->
                     <div id="content-client-financial" class="hidden p-8">
                         <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <h3 class="text-lg font-semibold text-[var(--nw-ink)] flex items-center gap-2">
                                 Extrato Financeiro
                             </h3>
                             <button type="button" onclick="toggleModal('manualChargeModal')"
-                                class="bg-[#fa0102] text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                                class="nw-btn-primary nw-btn-sm">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
                                 Nova Cobrança
                             </button>
                         </div>
 
                         <!-- Financial Summary Cards -->
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                            <div
-                                class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
-                                <div
-                                    class="absolute top-0 right-0 w-16 h-16 bg-blue-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-blue-200 transition-colors">
-                                </div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">
-                                    Faturamento Mensal (MRR)</p>
-                                <p class="text-xl font-extrabold text-[#fa0102] relative z-10">R$ {{
-                                    "%.2f"|format(mrr)|replace('.', ',') }}</p>
-                                <p class="text-[9px] text-gray-400 relative z-10 mt-1">Soma de contratos assinados
-                                </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
+                            <div class="rounded-[22px] bg-[var(--nw-ink)] text-white p-[18px] flex flex-col gap-2">
+                                <p class="text-[12px] text-[#C9CBD1]">Faturamento mensal</p>
+                                <p class="text-[24px] leading-tight font-semibold">R$ {{ "{:,.2f}".format(mrr or 0).replace(',', 'X').replace('.', ',').replace('X', '.') }}</p>
+                                <p class="text-[12px] text-[#C9CBD1]">Soma dos contratos assinados</p>
                             </div>
-                            <div
-                                class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
-                                <div
-                                    class="absolute top-0 right-0 w-16 h-16 bg-green-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-green-200 transition-colors">
-                                </div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">
-                                    Total
-                                    Pago (LTV)</p>
-                                <p class="text-xl font-extrabold text-green-600 relative z-10">R$ {{
-                                    "%.2f"|format(total_paid)|replace('.', ',') }}</p>
-                                <p class="text-[9px] text-gray-400 relative z-10 mt-1">Histórico acumulado</p>
+                            <div class="rounded-[22px] bg-white border border-[var(--nw-border)] p-[18px] flex flex-col gap-2">
+                                <p class="text-[12px] text-[var(--nw-text-2)]">Total pago</p>
+                                <p class="text-[24px] leading-tight font-semibold text-[var(--nw-ink)]">R$ {{ "{:,.2f}".format(total_paid or 0).replace(',', 'X').replace('.', ',').replace('X', '.') }}</p>
+                                <p class="text-[12px] text-[var(--nw-text-2)]">Histórico acumulado</p>
                             </div>
-                            <div
-                                class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
-                                <div
-                                    class="absolute top-0 right-0 w-16 h-16 bg-gray-200 rounded-bl-full -mr-8 -mt-8 opacity-40">
-                                </div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">
-                                    A
-                                    Receber</p>
-                                <p class="text-xl font-extrabold text-gray-700 relative z-10">R$ {{
-                                    "%.2f"|format(total_pending)|replace('.', ',') }}</p>
-                                <p class="text-[9px] text-gray-400 relative z-10 mt-1">Cobranças pendentes</p>
+                            <div class="rounded-[22px] bg-white border border-[var(--nw-border)] p-[18px] flex flex-col gap-2">
+                                <p class="text-[12px] text-[var(--nw-text-2)]">A receber</p>
+                                <p class="text-[24px] leading-tight font-semibold text-[var(--nw-ink)]">R$ {{ "{:,.2f}".format(total_pending or 0).replace(',', 'X').replace('.', ',').replace('X', '.') }}</p>
+                                <p class="text-[12px] text-[var(--nw-text-2)]">Cobranças pendentes</p>
                             </div>
-                            <div
-                                class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative overflow-hidden group hover:border-[#fa0102]/20 transition-all shadow-sm">
-                                <div
-                                    class="absolute top-0 right-0 w-16 h-16 bg-red-100 rounded-bl-full -mr-8 -mt-8 opacity-40 group-hover:bg-red-200 transition-colors">
-                                </div>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider relative z-10">
-                                    Vencido</p>
-                                <p class="text-xl font-extrabold text-red-600 relative z-10">R$ {{
-                                    "%.2f"|format(total_overdue)|replace('.', ',') }}</p>
-                                <p class="text-[9px] text-gray-400 relative z-10 mt-1">Cobranças atrasadas</p>
+                            <div class="rounded-[22px] p-[18px] flex flex-col gap-2 {{ 'border-[1.5px] border-red-600 bg-white' if total_overdue else 'bg-white border border-[var(--nw-border)]' }}">
+                                <p class="text-[12px] text-[var(--nw-text-2)]">Vencido</p>
+                                <p class="text-[24px] leading-tight font-semibold {{ 'text-red-700' if total_overdue else 'text-[var(--nw-ink)]' }}">R$ {{ "{:,.2f}".format(total_overdue or 0).replace(',', 'X').replace('.', ',').replace('X', '.') }}</p>
+                                <p class="text-[12px] text-[var(--nw-text-2)]">Cobranças atrasadas</p>
                             </div>
                         </div>
 
                         <!-- Transaction List -->
-                        <h4 class="text-sm font-bold text-gray-700 mb-4 uppercase">Histórico de Cobranças</h4>
+                        <h4 class="text-[15px] font-semibold text-[var(--nw-ink)] mb-3">Histórico de cobranças</h4>
                         <div class="space-y-3">
                             {% if client_txs %}
                             {% for tx in client_txs %}
                             <div
-                                class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-all">
+                                class="flex flex-wrap items-center justify-between gap-3 p-3 bg-white border border-[var(--nw-border)] rounded-[16px] hover:border-[var(--nw-text-3)] transition-all">
                                 <div class="flex items-center gap-3">
                                     <div class="bg-gray-50 p-2 rounded text-gray-500">
                                         {% if tx.status == 'paid' %}
@@ -846,8 +765,8 @@
                             {% endfor %}
                             {% else %}
                             <div
-                                class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                class="flex flex-col items-center justify-center py-12 px-4 text-[var(--nw-text-2)] text-center bg-[var(--nw-shell)] rounded-[18px] border-[1.5px] border-dashed border-[var(--nw-divider)]">
+                                <div class="bg-[var(--nw-muted)] p-3 rounded-full mb-3">
                                     <i data-lucide="file-x" class="w-8 h-8 opacity-40"></i>
                                 </div>
                                 <p class="text-sm italic font-medium">Nenhuma cobrança registrada.</p>
@@ -861,11 +780,11 @@
                     <!-- Service Orders Content (New Tab) -->
                     <div id="content-client-service-orders" class="hidden p-8">
                         <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <h3 class="text-lg font-semibold text-[var(--nw-ink)] flex items-center gap-2">
                                 Ordens de Serviço Extras
                             </h3>
                             <button type="button" onclick="toggleModal('serviceOrderModal')"
-                                class="bg-northway-red text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-bold text-sm shadow-sm flex items-center gap-2">
+                                class="nw-btn-primary nw-btn-sm">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
                                 Nova Ordem de Serviço
                             </button>
@@ -966,8 +885,8 @@
                             {% endfor %}
                             {% else %}
                             <div
-                                class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                class="flex flex-col items-center justify-center py-12 px-4 text-[var(--nw-text-2)] text-center bg-[var(--nw-shell)] rounded-[18px] border-[1.5px] border-dashed border-[var(--nw-divider)]">
+                                <div class="bg-[var(--nw-muted)] p-3 rounded-full mb-3">
                                     <i data-lucide="briefcase" class="w-8 h-8 opacity-40"></i>
                                 </div>
                                 <p class="text-sm italic font-medium">Nenhuma ordem de serviço extra.</p>
@@ -980,26 +899,25 @@
                     <!-- Diagnostic Content -->
                     <div id="content-client-diagnostic-tab" class="hidden p-8">
                         <!-- Sub-tabs for Diagnostic Type -->
-                        <div
-                            class="flex flex-wrap bg-gray-50 p-1.5 rounded-2xl gap-2 mb-8 border border-gray-100 max-w-fit">
+                        <div class="nw-subtabbar mb-6" role="group" aria-label="Tipo de diagnóstico">
                             <button type="button" onclick="switchDiagSubTab('general')" id="subtab-diag-general"
-                                class="px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-gray-700 bg-white shadow-sm rounded-xl transition-all flex items-center gap-2 border border-gray-100">
+                                class="nw-subtab is-active">
                                 <i data-lucide="line-chart" class="w-3.5 h-3.5"></i> Geral
                             </button>
                             <button type="button" onclick="switchDiagSubTab('audiences')" id="subtab-diag-audiences"
-                                class="px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                class="nw-subtab">
                                 <i data-lucide="users" class="w-3.5 h-3.5"></i> Públicos
                             </button>
                             <button type="button" onclick="switchDiagSubTab('crepi')" id="subtab-diag-crepi"
-                                class="px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                class="nw-subtab">
                                 <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> Riscos (CREPI)
                             </button>
                             <button type="button" onclick="switchDiagSubTab('swot')" id="subtab-diag-swot"
-                                class="px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                class="nw-subtab">
                                 <i data-lucide="layout-template" class="w-3.5 h-3.5"></i> SWOT
                             </button>
                             <button type="button" onclick="switchDiagSubTab('processes')" id="subtab-diag-processes"
-                                class="px-5 py-2.5 text-[10px] font-black uppercase tracking-wider text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60">
+                                class="nw-subtab">
                                 <i data-lucide="list-checks" class="w-3.5 h-3.5"></i> Processos
                             </button>
                         </div>
@@ -1075,8 +993,8 @@
                             </div>
                             {% else %}
                             <div
-                                class="flex flex-col items-center justify-center py-12 text-gray-400 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
-                                <div class="bg-gray-100 p-3 rounded-full mb-3">
+                                class="flex flex-col items-center justify-center py-12 px-4 text-[var(--nw-text-2)] text-center bg-[var(--nw-shell)] rounded-[18px] border-[1.5px] border-dashed border-[var(--nw-divider)]">
+                                <div class="bg-[var(--nw-muted)] p-3 rounded-full mb-3">
                                     <i data-lucide="clipboard-list" class="w-8 h-8 opacity-40"></i>
                                 </div>
                                 <p class="text-sm italic font-medium">Nenhum diagnóstico realizado ainda.</p>
@@ -1094,7 +1012,7 @@
                         <!-- Sub-tab: Audience Matrix -->
                         <div id="diag-content-audiences" class="diag-sub-content hidden">
                             <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <h3 class="text-lg font-semibold text-[var(--nw-ink)] flex items-center gap-2">
                                     <i data-lucide="users" class="w-5 h-5 text-gray-400"></i>
                                     Matriz de Públicos
                                 </h3>
@@ -1105,7 +1023,7 @@
                                         Link Geral
                                     </button>
                                     <button type="button" onclick="openMatrixWizard()"
-                                        class="bg-northway-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
+                                        class="nw-btn-primary nw-btn-sm">
                                         <i data-lucide="plus" class="w-4 h-4"></i>
                                         Nova Matriz
                                     </button>
@@ -1118,10 +1036,10 @@
                                     <table class="w-full text-sm">
                                         <thead>
                                             <tr class="bg-gray-50 border-b border-gray-100">
-                                                <th class="px-5 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Produto</th>
-                                                <th class="px-5 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                                <th class="px-5 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Responsável</th>
-                                                <th class="px-5 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">Data</th>
+                                                <th class="px-5 py-3 text-left text-[12px] font-medium text-[var(--nw-text-2)]">Produto</th>
+                                                <th class="px-5 py-3 text-left text-[12px] font-medium text-[var(--nw-text-2)]">Status</th>
+                                                <th class="px-5 py-3 text-left text-[12px] font-medium text-[var(--nw-text-2)] hidden md:table-cell">Responsável</th>
+                                                <th class="px-5 py-3 text-left text-[12px] font-medium text-[var(--nw-text-2)] hidden md:table-cell">Data</th>
                                                 <th class="px-5 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Ações</th>
                                             </tr>
                                         </thead>
@@ -1191,12 +1109,12 @@
                         <!-- Sub-tab: CREPI Matrix -->
                         <div id="diag-content-crepi" class="diag-sub-content hidden">
                             <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <h3 class="text-lg font-semibold text-[var(--nw-ink)] flex items-center gap-2">
                                     <i data-lucide="shield-alert" class="w-5 h-5 text-gray-400"></i>
                                     Matriz de Riscos (CREPI)
                                 </h3>
                                 <button type="button" onclick="openCrepiInterface()"
-                                    class="bg-northway-red text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition-colors flex items-center gap-2 shadow-lg shadow-red-500/20">
+                                    class="nw-btn-primary nw-btn-sm">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                     Novo Diagnóstico de Risco
                                 </button>
@@ -1276,12 +1194,12 @@
                             <div class="flex gap-2">
                                 {% if client.drive_folder_url %}
                                 <button type="button" onclick="scanDriveFolder()" id="btn-scan-drive"
-                                    class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
+                                    class="nw-btn nw-btn-sm">
                                     <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                                     Sincronizar
                                 </button>
                                 <a href="{{ client.drive_folder_url }}" target="_blank"
-                                    class="text-gray-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors font-bold text-sm flex items-center gap-2 border border-gray-200 shadow-sm hover:shadow">
+                                    class="nw-btn nw-btn-sm">
                                     <i data-lucide="upload-cloud" class="w-4 h-4"></i>
                                     Upload
                                 </a>
@@ -1491,123 +1409,7 @@
                     </div>
 
                     <!-- WhatsApp Content -->
-                    <div id="content-client-whatsapp" class="hidden bg-white h-[600px] flex flex-col">
-                        <!-- Helper to know this client has a lead attached? Or direct link? -->
-                        <!-- Ideally clients should have a phone. We use client.phone -->
-
-                        <!-- Chat Area -->
-                        <div id="client-chat-messages"
-                            class="flex-1 overflow-y-auto space-y-4 p-4 bg-[#e5ddd5] rounded-t-lg border border-gray-200 border-b-0 bg-opacity-30">
-                            <div class="flex justify-center">
-                                <span class="bg-gray-200 text-gray-500 text-xs px-2 py-1 rounded-full">Carregando
-                                    histórico...</span>
-                            </div>
-                        </div>
-
-                        <!-- Input Area -->
-                        <!-- Input Area (Standardized) -->
-                        <div
-                            class="bg-gray-50 p-3 border border-gray-200 border-t-0 rounded-b-lg flex flex-col gap-2 relative">
-                            <!-- Hidden File Input -->
-                            <input type="file" id="file-input" class="hidden" onchange="handleFileSelect(this)">
-
-                            <!-- Attachment Menu (Absolute) -->
-                            <div id="attach-menu"
-                                class="hidden absolute bottom-20 left-4 bg-white shadow-xl rounded-lg flex flex-col w-40 overflow-hidden z-20 border border-gray-100">
-                                <button type="button" onclick="triggerFile('image/*')"
-                                    class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700 border-b border-gray-50">
-                                    <i data-lucide="image" class="w-4 h-4 text-purple-500"></i> Fotos
-                                </button>
-                                <button type="button" onclick="triggerFile('*/*')"
-                                    class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-sm text-gray-700">
-                                    <i data-lucide="file-text" class="w-4 h-4 text-blue-500"></i> Documento
-                                </button>
-                            </div>
-
-                            <div class="flex items-end gap-2">
-                                <!-- Default Toolbar -->
-                                <div id="toolbar-default" class="flex-1 flex items-center gap-2">
-                                    <button type="button" id="btn-attach" onclick="toggleAttachMenu()"
-                                        class="p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-200">
-                                        <i data-lucide="plus" class="w-6 h-6"></i>
-                                    </button>
-
-                                    <!-- Rich Text Toolbar (Mini) -->
-                                    <div class="hidden md:flex items-center gap-0.5 border-r border-gray-300 pr-2 mr-1">
-                                        <button type="button" onclick="insertFormat('*')"
-                                            class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                            <i data-lucide="bold" class="w-4 h-4"></i>
-                                        </button>
-                                        <button type="button" onclick="insertFormat('_')"
-                                            class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                            <i data-lucide="italic" class="w-4 h-4"></i>
-                                        </button>
-                                        <button type="button" onclick="insertFormat('- ')"
-                                            class="p-1 text-gray-400 hover:text-gray-600 rounded">
-                                            <i data-lucide="list" class="w-4 h-4"></i>
-                                        </button>
-                                    </div>
-
-                                    <div
-                                        class="flex-1 bg-white rounded-lg border border-gray-300 focus-within:border-northway-red focus-within:ring-1 focus-within:ring-northway-red/20 transition-all overflow-hidden flex items-center px-4 py-2">
-                                        <input type="text" id="message-input" placeholder="Mensagem"
-                                            class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-800 placeholder-gray-400"
-                                            autocomplete="off">
-                                    </div>
-
-                                    <!-- Mic / Send Toggle -->
-                                    <button type="button" id="btn-mic" onclick="toggleRecording()"
-                                        class="p-3 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors shadow-sm">
-                                        <i data-lucide="mic" class="w-5 h-5"></i>
-                                    </button>
-                                    <button type="button" id="btn-send" onclick="sendMessage()"
-                                        class="hidden p-3 bg-northway-red text-white rounded-full hover:bg-red-700 transition-colors shadow-sm">
-                                        <i data-lucide="send" class="w-5 h-5"></i>
-                                    </button>
-                                </div>
-
-                                <!-- Recording UI -->
-                                <div id="toolbar-recording"
-                                    class="flex-1 items-center gap-4 hidden px-4 py-2 bg-white rounded-lg border border-red-100">
-                                    <button type="button" onclick="cancelRecording()"
-                                        class="text-gray-500 hover:text-red-500 p-2">
-                                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                                    </button>
-                                    <div class="flex-1 flex items-center gap-3 justify-center">
-                                        <span class="animate-pulse w-3 h-3 bg-red-500 rounded-full"></span>
-                                        <span id="recording-time"
-                                            class="text-gray-700 font-mono text-sm font-bold">0:00</span>
-                                    </div>
-                                    <button type="button" onclick="stopAndSendRecording()"
-                                        class="text-green-500 hover:text-green-600 p-2">
-                                        <i data-lucide="send" class="w-5 h-5"></i>
-                                    </button>
-                                </div>
-
-                                <!-- File Preview UI -->
-                                <div id="toolbar-file"
-                                    class="flex-1 items-center gap-4 hidden bg-white rounded-lg px-4 py-2 border border-green-200">
-                                    <span class="text-gray-500"><i data-lucide="file" class="w-5 h-5 inline"></i></span>
-                                    <span id="file-name"
-                                        class="flex-1 text-sm text-gray-700 truncate font-medium">arquivo.pdf</span>
-                                    <button type="button" onclick="cancelFile()"
-                                        class="text-gray-400 hover:text-red-500 p-2">
-                                        <i data-lucide="x" class="w-5 h-5"></i>
-                                    </button>
-                                    <button type="button" onclick="sendFile()"
-                                        class="text-green-600 hover:text-green-700 font-bold text-sm px-3">
-                                        Enviar
-                                    </button>
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-400 mt-1 flex items-center gap-1 justify-center">
-                                <i data-lucide="lock" class="w-3 h-3"></i> Mensagens protegidas e criptografadas
-                                de
-                                ponta a
-                                ponta.
-                            </p>
-                        </div>
-                    </div>
+                    {# Aba WhatsApp removida da interface (decisão de produto). #}
 
                     <!-- Core Tracking Grid REMOVED - Moved to Tabs -->
 
@@ -1623,96 +1425,97 @@
                     <div id="content-client-cronograma" class="hidden w-full h-full min-h-[1000px]">
                         <iframe id="iframe-cronograma" data-src="{{ url_for('clients.client_cronograma', id=client.id) }}" width="100%" height="2000" frameborder="0" allowfullscreen class="transition-opacity duration-500"></iframe>
                     </div>
-                </div> <!-- Close lg:col-span-9 -->
+                </div> <!-- Close Registration Data Card -->
+            </div> <!-- Close main-content-column (lg:col-span-9) -->
 
                 <!-- Sidebar Info Column -->
-                <div id="side-info-column" class="lg:col-span-3 space-y-6">
-                    <!-- Diagnostic Card (Access Control) -->
-                    {% if diag_instance %}
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Menu Lateral:
-                                Diagnóstico</h3>
-                            <i data-lucide="line-chart"
-                                class="w-4 h-4 {{ 'text-northway-red' if client.diagnostic_status == 'done' else 'text-gray-400' }}"></i>
+                <div id="side-info-column" class="lg:col-span-3 space-y-4">
+                    <!-- Resumo financeiro -->
+                    <section class="rounded-[24px] bg-[var(--nw-ink)] text-white p-5 flex flex-col gap-3" aria-label="Resumo do cliente">
+                        <span class="text-[13px] text-[#C9CBD1]">Valor mensal</span>
+                        <span class="text-[30px] leading-none font-semibold tracking-tight">
+                            {% if client.monthly_value %}R$ {{ "{:,.2f}".format(client.monthly_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}{% else %}—{% endif %}
+                        </span>
+                        <div class="flex justify-between text-[13px] text-[#C9CBD1] pt-1">
+                            <span>Cliente desde</span>
+                            <span class="text-white font-semibold">{{ client.start_date.strftime('%d/%m/%Y') if client.start_date else '—' }}</span>
                         </div>
-                        <div class="p-6">
-                            {% if client.diagnostic_status == 'done' %}
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <div class="text-2xl font-black text-gray-900">{{ client.diagnostic_stars or 0
-                                        }}
-                                        <span class="text-xs text-gray-400 font-normal">/ 5</span>
-                                    </div>
-                                    <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Nota
-                                        Final</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-lg font-bold text-northway-red">{{ client.diagnostic_score or 0
-                                        }}
-                                    </div>
-                                    <div class="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">
-                                        Score
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="button" onclick="switchClientTab('diagnostic-tab')"
-                                class="w-full text-center py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-bold rounded-lg transition-colors border border-gray-100">
-                                Ver Detalhes do Diagnóstico
-                            </button>
-                            {% else %}
-                            <div class="text-center py-2">
-                                <p class="text-xs text-gray-500 mb-4 italic">Ainda não realizado.</p>
-                                <button type="button"
-                                    class="copy-diagnostic-link-btn w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm"
-                                    data-link="{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) }}?client_id={{ client.id }}">
-                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                                    Copiar Link do Formulário
-                                </button>
-                            </div>
-                            {% endif %}
+                        <div class="flex justify-between text-[13px] text-[#C9CBD1]">
+                            <span>Renovação</span>
+                            <span class="text-white font-semibold">{{ client.renewal_date.strftime('%d/%m/%Y') if client.renewal_date else '—' }}</span>
                         </div>
-                    </div>
-                    {% endif %}
+                    </section>
 
-                    <!-- Management Card -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gestão</h3>
-                            <i data-lucide="briefcase" class="w-4 h-4 text-gray-400"></i>
+                    <!-- Gestão -->
+                    <section class="rounded-[24px] bg-white border border-[var(--nw-border)] p-5 flex flex-col gap-3">
+                        <h3 class="text-[15px] font-semibold text-[var(--nw-ink)]">Gestão</h3>
+                        <div class="flex items-center justify-between gap-3 text-[14px]">
+                            <span class="text-[var(--nw-text-2)]">Status</span>
+                            <span class="inline-flex items-center gap-1.5 font-medium text-[var(--nw-ink)]">
+                                <span class="w-[7px] h-[7px] rounded-full" style="background: {{ _st[1] }}"></span>{{ _st[0] }}
+                            </span>
                         </div>
-                        <div class="p-6">
+                        <div class="flex items-center justify-between gap-3 text-[14px]">
+                            <span class="text-[var(--nw-text-2)]">Gerente</span>
                             {% if client.account_manager %}
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-xs font-bold text-northway-red">
-                                    {{ client.account_manager.name[:2].upper() }}
-                                </div>
-                                <span class="text-sm font-bold">{{ client.account_manager.name }}</span>
-                            </div>
+                            <span class="inline-flex items-center gap-2 font-medium text-[var(--nw-ink)] min-w-0">
+                                <span class="flex-none w-7 h-7 rounded-full bg-[var(--nw-muted)] inline-flex items-center justify-center text-[11px] font-semibold">{{ client.account_manager.name[:2].upper() }}</span>
+                                <span class="truncate">{{ client.account_manager.name }}</span>
+                            </span>
                             {% else %}
-                            <p class="text-xs text-gray-400 italic">Sem gerente</p>
+                            <span class="text-[var(--nw-text-2)]">Sem gerente</span>
                             {% endif %}
                         </div>
-                    </div>
+                    </section>
 
-                    <!-- Contact Card -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-4">Contato</h4>
-                        <div class="space-y-3">
-                            <div class="flex items-center gap-2 text-sm">
-                                <i data-lucide="mail" class="w-4 h-4 text-gray-400"></i>
-                                <span>{{ client.email }}</span>
+                    <!-- Contato -->
+                    <section class="rounded-[24px] bg-white border border-[var(--nw-border)] p-5 flex flex-col gap-3">
+                        <h3 class="text-[15px] font-semibold text-[var(--nw-ink)]">Contato</h3>
+                        {% for _icon, _val in [('mail', client.email_contact or client.email), ('phone', client.phone)] %}
+                        <div class="flex items-center gap-2 text-[14px] min-w-0">
+                            <i data-lucide="{{ _icon }}" class="w-4 h-4 flex-none text-[var(--nw-text-2)]"></i>
+                            {% if _val %}
+                            <span class="truncate text-[var(--nw-ink)]">{{ _val }}</span>
+                            {% elif current_user.role in ['admin', 'manager'] %}
+                            <button type="button" onclick="startEditMode()" class="text-[14px] font-medium text-[var(--nw-text-3)] underline underline-offset-[3px]">Adicionar</button>
+                            {% else %}
+                            <span class="text-[var(--nw-text-2)]">—</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </section>
+
+                    <!-- Diagnóstico -->
+                    {% if diag_instance %}
+                    <section class="rounded-[24px] bg-white border border-[var(--nw-border)] p-5 flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-[15px] font-semibold text-[var(--nw-ink)]">Diagnóstico</h3>
+                            {% if client.diagnostic_status != 'done' %}<span class="text-[13px] text-[var(--nw-text-2)]">Ainda não realizado</span>{% endif %}
+                        </div>
+                        {% if client.diagnostic_status == 'done' %}
+                        <div class="flex items-end justify-between">
+                            <div>
+                                <div class="text-[26px] leading-none font-semibold text-[var(--nw-ink)]">{{ client.diagnostic_stars or 0 }} <span class="text-[13px] font-normal text-[var(--nw-text-2)]">/ 5</span></div>
+                                <div class="text-[12px] text-[var(--nw-text-2)] mt-1">Nota final</div>
                             </div>
-                            <div class="flex items-center gap-2 text-sm">
-                                <i data-lucide="phone" class="w-4 h-4 text-gray-400"></i>
-                                <span>{{ client.phone }}</span>
+                            <div class="text-right">
+                                <div class="text-[18px] font-semibold text-[var(--nw-ink)]">{{ client.diagnostic_score or 0 }}</div>
+                                <div class="text-[12px] text-[var(--nw-text-2)]">Score</div>
                             </div>
                         </div>
-                    </div>
+                        <button type="button" onclick="switchClientTab('diagnostic-tab')" class="nw-btn nw-btn-sm w-full">Ver diagnóstico</button>
+                        {% else %}
+                        <button type="button"
+                            class="copy-diagnostic-link-btn nw-btn nw-btn-sm w-full"
+                            data-link="{{ url_for('forms.get_form_schema', slug=diag_instance.public_slug, _external=True) }}?client_id={{ client.id }}">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            Copiar link do formulário
+                        </button>
+                        {% endif %}
+                    </section>
+                    {% endif %}
                 </div> <!-- End Sidebar Info Column -->
             </div> <!-- End Grid -->
-    </form>
 </div> <!-- End Main Content Scroll Area -->
 
 <!-- Script Studio Content (New Tab) -->
@@ -1797,6 +1600,7 @@
             btn.disabled = false;
             btn.innerText = 'Gerar Cobrança';
         }
+    }
 </script>
 
 <!-- Termination Modal -->
@@ -1899,7 +1703,7 @@
 <script>
     function startEditMode() {
         const form = document.getElementById('clientForm');
-        const inputs = form.querySelectorAll('input, select, textarea');
+        const inputs = Array.from(form.elements).filter(el => el.type !== 'hidden' && el.tagName !== 'BUTTON');
 
         // Buttons
         const topEditBtn = document.getElementById('topEditBtn');
@@ -3120,8 +2924,7 @@
             <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden" id="final-matrix-capture">
                 <div class="bg-gray-900 p-6 flex justify-between items-center">
                     <div class="flex items-center gap-3">
-                        <img src="/static/img/logo-white.png" class="h-6" alt="NorthWay"
-                            onerror="this.src='https://crm.northwaycompany.com.br/static/img/logo-white.png'">
+                        <img src="{{ url_for('static', filename='images/logo-white.png') }}" class="h-6" alt="NorthWay">
                         <span class="text-white/30 font-bold text-[10px] uppercase tracking-widest border-l border-white/10 pl-3">Matriz de Públicos</span>
                     </div>
                     <div class="text-right">
@@ -3408,6 +3211,14 @@
     const pageClientId = parseInt("{{ client.id }}");
     const pageClientName = "{{ client.name }}";
 
+    // Menus "…" (details.nw-menu): fecha ao clicar fora ou com Esc
+    document.addEventListener('click', (e) => {
+        document.querySelectorAll('details.nw-menu[open]').forEach(d => { if (!d.contains(e.target)) d.removeAttribute('open'); });
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') document.querySelectorAll('details.nw-menu[open]').forEach(d => d.removeAttribute('open'));
+    });
+
     function switchClientTab(tabName) {
         // console.log("Switching to tab:", tabName);
         try {
@@ -3444,7 +3255,7 @@
             }
 
             // Updated list of tabs
-            const tabs = ['details', 'whatsapp', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic-tab', 'archivos', 'processes', 'script-studio', 'meta-ads', 'cronograma'];
+            const tabs = ['details', 'financial', 'contracts', 'tasks', 'service-orders', 'diagnostic-tab', 'archivos', 'processes', 'script-studio', 'meta-ads', 'cronograma'];
 
             // 1. Force HIDE all contents first
             tabs.forEach(t => {
@@ -3457,7 +3268,7 @@
                 // Reset buttons
                 const btn = document.getElementById(`tab-client-${t}`);
                 if (btn) {
-                    btn.className = "px-5 py-2.5 text-xs font-bold text-gray-500 hover:text-gray-700 rounded-xl transition-all flex items-center gap-2 hover:bg-white/60";
+                    btn.classList.remove('is-active');
                 }
             });
 
@@ -3501,8 +3312,16 @@
 
             // 3. Update Selected Button Style
             const selectedBtn = document.getElementById(`tab-client-${tabName}`);
-            if (selectedBtn) {
-                selectedBtn.className = "px-5 py-2.5 text-xs font-bold text-gray-700 bg-white shadow-sm rounded-xl transition-all flex items-center gap-2 border border-gray-100/50 transform scale-105 shadow-md";
+            if (selectedBtn) selectedBtn.classList.add('is-active');
+
+            // Marketing agrupa Script Studio, Tráfego Meta e Cronograma
+            const isMarketing = ['script-studio', 'meta-ads', 'cronograma'].includes(tabName);
+            const marketingBtn = document.getElementById('tab-client-marketing');
+            const marketingSubnav = document.getElementById('marketing-subnav');
+            if (marketingBtn) marketingBtn.classList.toggle('is-active', isMarketing);
+            if (marketingSubnav) marketingSubnav.classList.toggle('hidden', !isMarketing);
+            if (isMarketing) {
+                try { localStorage.setItem('nw_marketing_tool', tabName); } catch (e) {}
             }
 
             // Load logic
@@ -3515,7 +3334,7 @@
 
         } catch (e) {
             console.error("Error switching tab:", e);
-            alert("ERRO CRITICO AO TROCAR ABA: " + e.message);
+            if (tabName !== 'details') switchClientTab('details');
         }
     }
 
@@ -3528,16 +3347,10 @@
 
     function switchDiagSubTab(tab) {
         // Update Buttons
-        document.querySelectorAll('[id^="subtab-diag-"]').forEach(btn => {
-            btn.classList.remove('bg-white', 'shadow-sm', 'text-gray-700', 'border', 'border-gray-100');
-            btn.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:bg-white/60');
-        });
+        document.querySelectorAll('[id^="subtab-diag-"]').forEach(btn => btn.classList.remove('is-active'));
 
         const activeBtn = document.getElementById(`subtab-diag-${tab}`);
-        if (activeBtn) {
-            activeBtn.classList.add('bg-white', 'shadow-sm', 'text-gray-700', 'border', 'border-gray-100');
-            activeBtn.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:bg-white/60');
-        }
+        if (activeBtn) activeBtn.classList.add('is-active');
 
         // Update Content
         document.querySelectorAll('.diag-sub-content').forEach(content => content.classList.add('hidden'));
