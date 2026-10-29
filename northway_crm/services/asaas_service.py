@@ -283,57 +283,78 @@ def cancel_nfse(nfse_id, api_key=None):
     except Exception as e:
         return None, str(e)
 
+def _webhook_auth_token():
+    """Token que o Asaas envia no header asaas-access-token. Obrigatório."""
+    token = None
+    try:
+        token = current_app.config.get('ASAAS_WEBHOOK_TOKEN')
+    except RuntimeError:
+        token = None
+    token = token or os.environ.get('ASAAS_WEBHOOK_TOKEN')
+    if not token:
+        raise RuntimeError('ASAAS_WEBHOOK_TOKEN não configurado: o webhook seria recusado pelo CRM.')
+    return token
+
+
 def create_webhook(webhook_url, email, api_key=None):
     """
-    Configures the webhook URL in Asaas.
+    Configura (cria ou atualiza) o webhook do CRM na conta Asaas.
+    Envia authToken para que o Asaas mande o header asaas-access-token,
+    exigido pelos endpoints de webhook do CRM.
     """
+    try:
+        auth_token = _webhook_auth_token()
+    except RuntimeError as e:
+        return None, str(e)
+
     payload = {
         "name": "NorthWay CRM Integration",
         "url": webhook_url,
         "email": email,
         "enabled": True,
         "interrupted": False,
+        "authToken": auth_token,
         "apiVersion": 3,
         "sendType": "SEQUENTIALLY",
         "events": [
-            "PAYMENT_CREATED", "PAYMENT_RECEIVED", "PAYMENT_CONFIRMED", 
+            "PAYMENT_CREATED", "PAYMENT_RECEIVED", "PAYMENT_CONFIRMED",
             "PAYMENT_OVERDUE", "PAYMENT_REFUNDED"
         ]
     }
-    
+
     headers = get_headers(api_key)
-    
+
     try:
-        # 1. Try to list existing webhooks
-        get_res = requests.get(f"{ASAAS_API_URL}/webhooks", headers=headers)
+        # 1. Procura um webhook do próprio CRM (mesma URL ou mesmo nome).
+        #    Nunca sobrescreve webhooks de outros sistemas na conta.
+        get_res = requests.get(f"{ASAAS_API_URL}/webhooks", headers=headers, timeout=15)
         existing_id = None
-        
         if get_res.status_code == 200:
-            webhooks = get_res.json().get('data', [])
-            if webhooks:
-                # Assuming single webhook or taking the first one to update
-                existing_id = webhooks[0].get('id')
-        
-        # 2. Update or Create
+            for wh in get_res.json().get('data', []) or []:
+                if wh.get('url') == webhook_url or wh.get('name') == payload['name']:
+                    existing_id = wh.get('id')
+                    break
+
+        # 2. Atualiza ou cria
         if existing_id:
-             # Try PUT for update
-             response = requests.put(f"{ASAAS_API_URL}/webhooks/{existing_id}", json=payload, headers=headers)
+            response = requests.put(f"{ASAAS_API_URL}/webhooks/{existing_id}", json=payload, headers=headers, timeout=15)
         else:
-             response = requests.post(f"{ASAAS_API_URL}/webhooks", json=payload, headers=headers)
-        
+            response = requests.post(f"{ASAAS_API_URL}/webhooks", json=payload, headers=headers, timeout=15)
+
         if response.status_code == 200:
-             return response.json(), None
-        else:
-             try:
-                 error_data = response.json()
-                 # Handle list of errors or single object
-                 errors = error_data.get('errors', [])
-                 if isinstance(errors, list) and errors:
-                     error_msg = errors[0].get('description', response.text)
-                 else:
-                     error_msg = str(error_data)
-             except:
-                 error_msg = f"Status {response.status_code}: {response.text}"
-             return None, error_msg
+            data = response.json()
+            if isinstance(data, dict):
+                data.pop('authToken', None)
+            return data, None
+        try:
+            error_data = response.json()
+            errors = error_data.get('errors', [])
+            if isinstance(errors, list) and errors:
+                error_msg = errors[0].get('description', response.text)
+            else:
+                error_msg = str(error_data)
+        except Exception:
+            error_msg = f"Status {response.status_code}: {response.text}"
+        return None, error_msg
     except Exception as e:
         return None, str(e)
