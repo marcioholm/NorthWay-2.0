@@ -120,6 +120,33 @@ def create_app(test_config=None):
 
             return response
 
+        # Automatic static cache busting (VERCEL_GIT_COMMIT_SHA or dev mtime hash)
+        _static_version_cache = {}
+
+        @app.url_defaults
+        def add_static_cache_buster(endpoint, values):
+            if endpoint == 'static' or endpoint.endswith('.static'):
+                if 'v' not in values:
+                    commit_sha = (os.environ.get('VERCEL_GIT_COMMIT_SHA') or '')[:8]
+                    if commit_sha:
+                        values['v'] = commit_sha
+                    else:
+                        filename = values.get('filename')
+                        if filename:
+                            if filename not in _static_version_cache:
+                                try:
+                                    static_dir = app.static_folder or os.path.join(app.root_path, 'static')
+                                    file_path = os.path.join(static_dir, filename)
+                                    if os.path.exists(file_path):
+                                        _static_version_cache[filename] = hex(int(os.path.getmtime(file_path)))[2:10]
+                                    else:
+                                        _static_version_cache[filename] = hex(int(os.path.getmtime(static_dir)))[2:10]
+                                except Exception:
+                                    _static_version_cache[filename] = 'dev'
+                            values['v'] = _static_version_cache[filename]
+                        else:
+                            values['v'] = 'dev'
+
         # Rate Limiting Configuration
 
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)

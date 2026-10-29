@@ -480,6 +480,7 @@ class Client(db.Model):
     document = db.Column(db.String(20), nullable=True) # CPF/CNPJ
     address_street = db.Column(db.String(150), nullable=True)
     asaas_customer_id = db.Column(db.String(50), nullable=True) # Asaas Customer ID
+    subscription_id = db.Column(db.String(50), nullable=True) # Asaas Subscription ID
     
     # Diagnostic Data (New)
     diagnostic_status = db.Column(db.String(20), default='pending') # pending, done

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file, current_app
 from flask_login import login_required, current_user
 from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate, LibraryTemplate, FormInstance, TenantIntegration, DriveFolderTemplate
 from utils import calculate_client_health, create_notification
@@ -851,6 +851,16 @@ def bulk_delete_drive_files(id):
                 deleted_count += 1
             except Exception as e:
                 logger.error(f"Error deleting file {file_id}: {e}")
+        # Delete events from database
+        DriveFileEvent.query.filter(
+            DriveFileEvent.client_id == client.id,
+            DriveFileEvent.file_id.in_(file_ids)
+        ).delete(synchronize_session=False)
+        
+        db.session.commit()
+        
+        flash(f'{deleted_count} arquivo(s) excluído(s) com sucesso!', 'success')
+        return redirect(url_for('clients.client_details', id=id))
         
     except Exception as e:
         flash(f'Erro ao excluir arquivos do Google Drive: {str(e)}', 'error')
@@ -916,17 +926,7 @@ def save_client_process(id, tool_type, mode):
         
     db.session.commit()
     return jsonify({'success': True})
-    
-    # Delete events from database
-    DriveFileEvent.query.filter(
-        DriveFileEvent.client_id == client.id,
-        DriveFileEvent.file_id.in_(file_ids)
-    ).delete(synchronize_session=False)
-    
-    db.session.commit()
-    
-    flash(f'{deleted_count} arquivo(s) excluído(s) com sucesso!', 'success')
-    return redirect(url_for('clients.client_details', id=id))
+
 
 @clients_bp.route('/clients/<int:id>/cronograma', methods=['GET'])
 @login_required

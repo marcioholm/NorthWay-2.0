@@ -562,6 +562,7 @@ def create_contract(id):
         except Exception:
             installments_count = 12
 
+        contract_id = form_data.get('contract_id')
         if contract_id:
             contract = Contract.query.filter_by(id=contract_id, company_id=current_user.company_id).first()
             if contract:
