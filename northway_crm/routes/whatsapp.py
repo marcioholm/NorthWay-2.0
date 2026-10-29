@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template, current_app, Response, has_request_context
+from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template, current_app, Response, has_request_context, abort
 from flask_login import login_required, current_user
 from models import db, Integration, Lead, Client, QuickMessage, WhatsappInstance, WhatsappConversation, WhatsappMessage, WhatsappGroupMember
 from services.evolution_service import EvolutionService

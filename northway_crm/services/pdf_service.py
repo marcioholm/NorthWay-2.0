@@ -1,113 +1,101 @@
 import io
 import os
-from fpdf import FPDF
 from flask import current_app
 
-class ContractPDF(FPDF):
-    def __init__(self, contract_code, company_name="NORTHWAY", company_subtext=""):
-        super().__init__()
-        self.contract_code = contract_code
-        self.company_name = company_name
-        self.company_subtext = company_subtext
-        self.set_auto_page_break(auto=True, margin=20)
+_ContractPDFClass = None
 
-    def _get_logo_path(self):
-        """Get logo path: company custom logo first, then fallback paths."""
-        from models import Company
-        # Get company from contract
-        company = None
-        if self.contract and self.contract.company:
-            company = self.contract.company
-        
-        # 1. Try company custom logo (from database)
-        if company and company.logo_filename:
-            logo_path = os.path.join(current_app.root_path, 'static', 'images', company.logo_filename)
-            if os.path.exists(logo_path):
-                return logo_path
-        
-        # 2. Fallback to default paths
-        possible_paths = [
-            os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
-            os.path.join(current_app.root_path, 'static', 'images', 'logo.png'),
-            os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
-        ]
-        
-        for logo_path in possible_paths:
-            if os.path.exists(logo_path):
-                return logo_path
-        
-        return None
+def _get_contract_pdf_class():
+    global _ContractPDFClass
+    if _ContractPDFClass is None:
+        from fpdf import FPDF
 
+        class ContractPDF(FPDF):
+            def __init__(self, contract_code, company_name="NORTHWAY", company_subtext=""):
+                super().__init__()
+                self.contract_code = contract_code
+                self.company_name = company_name
+                self.company_subtext = company_subtext
+                self.set_auto_page_break(auto=True, margin=20)
 
-    def header(self):
-        # Premium Header (Logo + Dynamic Text Fallback)
-        
-        logo_loaded = False
-        logo_path = self._get_logo_path()
-        
-        if logo_path:
-            try:
-                # Fixed width 33mm, auto height
-                self.image(logo_path, 10, 8, w=33)
-                logo_loaded = True
-            except Exception as e:
-                current_app.logger.warning(f"Logo load failed: {e}")
+            def _get_logo_path(self):
+                """Get logo path: company custom logo first, then fallback paths."""
+                from models import Company
+                company = None
+                if self.contract and self.contract.company:
+                    company = self.contract.company
+                
+                if company and company.logo_filename:
+                    logo_path = os.path.join(current_app.root_path, 'static', 'images', company.logo_filename)
+                    if os.path.exists(logo_path):
+                        return logo_path
+                
+                possible_paths = [
+                    os.path.join(current_app.root_path, 'static', 'img', 'logo_1.png'),
+                    os.path.join(current_app.root_path, 'static', 'images', 'logo.png'),
+                    os.path.join(current_app.root_path, 'static', 'img', 'logo.png')
+                ]
+                
+                for logo_path in possible_paths:
+                    if os.path.exists(logo_path):
+                        return logo_path
+                
+                return None
+
+            def header(self):
                 logo_loaded = False
-        else:
-            current_app.logger.info("No logo file found, using text brand")
-        
-        # If logo failed, use the Text Brand (Fallback)
-        if not logo_loaded: 
-            # 1. Main Brand (Company Name)
-            self.set_font('Helvetica', 'B', 20)
-            self.set_text_color(0, 0, 0) # Black
-            # Fallback if empty
-            display_name = self.company_name if self.company_name else "NORTHWAY"
-            self.cell(0, 10, display_name, 0, 1, 'L')
-        
-        # 2. Sub-brand / CNPJ (Always show this, or adjust position if logo present?)
-        # Design decision: If logo is present, we still want the CNPJ/Subtext, but maybe positioned differently?
-        # Let's keep the subtext simple.
-        
-        if logo_loaded:
-             # Move cursor to right to avoid overlapping logo? 
-             # Actually, standard design: Logo Left, Title Right.
-             # We just need to ensure we don't write over the logo.
-             self.set_xy(10, 25) # Below logo
-        else:
-             self.set_font('Helvetica', '', 9)
-             self.set_text_color(100, 100, 100) # Gray
-             if self.company_subtext:
-                self.cell(0, 5, self.company_subtext, 0, 1, 'L')
+                logo_path = self._get_logo_path()
+                
+                if logo_path:
+                    try:
+                        self.image(logo_path, 10, 8, w=33)
+                        logo_loaded = True
+                    except Exception as e:
+                        current_app.logger.warning(f"Logo load failed: {e}")
+                        logo_loaded = False
+                else:
+                    current_app.logger.info("No logo file found, using text brand")
+                
+                if not logo_loaded: 
+                    self.set_font('Helvetica', 'B', 20)
+                    self.set_text_color(0, 0, 0)
+                    display_name = self.company_name if self.company_name else "NORTHWAY"
+                    self.cell(0, 10, display_name, 0, 1, 'L')
+                
+                if logo_loaded:
+                    self.set_xy(10, 25)
+                else:
+                    self.set_font('Helvetica', '', 9)
+                    self.set_text_color(100, 100, 100)
+                    if self.company_subtext:
+                        self.cell(0, 5, self.company_subtext, 0, 1, 'L')
 
-        # 3. Document Title (Right Aligned)
-        self.set_y(15) # Top area
-        self.set_font('Helvetica', 'B', 12)
-        self.set_text_color(0)
-        self.cell(0, 10, 'CONTRATO DE SERVIÇOS', 0, 1, 'R')
-        
-        # 4. Separator Line
-        self.set_y(35)
-        self.set_draw_color(200, 200, 200) # Light gray line
-        self.set_line_width(0.5)
-        self.line(10, 32, 200, 32)
-        
-        # 5. Reference Code
-        if self.contract_code:
-            self.set_xy(10, 33)
-            self.set_font('Helvetica', 'I', 8)
-            self.set_text_color(128)
-            self.cell(0, 4, f"Ref: {self.contract_code}", 0, 1, 'R')
-            
-        self.ln(5) # Space after header
+                self.set_y(15)
+                self.set_font('Helvetica', 'B', 12)
+                self.set_text_color(0)
+                self.cell(0, 10, 'CONTRATO DE SERVIÇOS', 0, 1, 'R')
+                
+                self.set_y(35)
+                self.set_draw_color(200, 200, 200)
+                self.set_line_width(0.5)
+                self.line(10, 32, 200, 32)
+                
+                if self.contract_code:
+                    self.set_xy(10, 33)
+                    self.set_font('Helvetica', 'I', 8)
+                    self.set_text_color(128)
+                    self.cell(0, 4, f"Ref: {self.contract_code}", 0, 1, 'R')
+                    
+                self.ln(5)
 
-    def footer(self):
-        # Position at 1.5 cm from bottom
-        self.set_y(-15)
-        self.set_font('Helvetica', 'I', 8)
-        self.set_text_color(128)
-        footer_text = f"{self.company_name} - Documento Confidencial | Página " + str(self.page_no()) + " de {nb}"
-        self.cell(0, 10, footer_text, 0, 0, 'C')
+            def footer(self):
+                self.set_y(-15)
+                self.set_font('Helvetica', 'I', 8)
+                self.set_text_color(128)
+                footer_text = f"{self.company_name} - Documento Confidencial | Página " + str(self.page_no()) + " de {nb}"
+                self.cell(0, 10, footer_text, 0, 0, 'C')
+
+        _ContractPDFClass = ContractPDF
+    return _ContractPDFClass
 
 class PdfService:
     @staticmethod
@@ -158,6 +146,7 @@ class PdfService:
                      company_subtext = contract.company.name
 
             current_app.logger.info("Initializing ContractPDF...")
+            ContractPDF = _get_contract_pdf_class()
             pdf = ContractPDF(
                 contract_code=contract.code or str(contract.id),
                 company_name=company_name,

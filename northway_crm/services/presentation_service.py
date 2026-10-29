@@ -1,50 +1,59 @@
-from fpdf import FPDF
 import os
 from flask import current_app
 from datetime import datetime
 
-class PresentationPDF(FPDF):
-    def __init__(self, company_name="NORTHWAY"):
-        super().__init__()
-        self.company_name = company_name
-        self.primary_color = (250, 1, 2) # NorthWay Red
-        self.bg_color = (18, 18, 23) # Dark background
-        self.text_color = (255, 255, 255)
-        self.secondary_text = (160, 160, 170)
-        
-    def header(self):
-        # We don't want headers on all pages for a presentation style
-        pass
+_PresentationPDFClass = None
 
-    def footer(self):
-        if self.page_no() > 1:
-            self.set_y(-15)
-            self.set_font('Helvetica', 'I', 8)
-            self.set_text_color(self.secondary_text[0], self.secondary_text[1], self.secondary_text[2])
-            self.cell(0, 10, f'NorthWay CRM - Inteligência de Vendas | Página {self.page_no()}', 0, 0, 'C')
+def _get_presentation_pdf_class():
+    global _PresentationPDFClass
+    if _PresentationPDFClass is None:
+        from fpdf import FPDF
 
-    def add_presentation_page(self, title, subtitle=None):
-        self.add_page()
-        # Dark Background
-        self.set_fill_color(self.bg_color[0], self.bg_color[1], self.bg_color[2])
-        self.rect(0, 0, 210, 297, 'F')
-        
-        # Decorative Elements (Glassmorphism inspired)
-        self.set_draw_color(self.primary_color[0], self.primary_color[1], self.primary_color[2])
-        self.set_line_width(0.5)
-        self.line(10, 25, 60, 25)
-        
-        # Title
-        self.set_xy(10, 30)
-        self.set_font('Helvetica', 'B', 24)
-        self.set_text_color(self.text_color[0], self.text_color[1], self.text_color[2])
-        self.cell(0, 15, title.upper(), 0, 1, 'L')
-        
-        if subtitle:
-            self.set_font('Helvetica', '', 12)
-            self.set_text_color(self.secondary_text[0], self.secondary_text[1], self.secondary_text[2])
-            self.cell(0, 10, subtitle, 0, 1, 'L')
-            self.ln(10)
+        class PresentationPDF(FPDF):
+            def __init__(self, company_name="NORTHWAY"):
+                super().__init__()
+                self.company_name = company_name
+                self.primary_color = (250, 1, 2) # NorthWay Red
+                self.bg_color = (18, 18, 23) # Dark background
+                self.text_color = (255, 255, 255)
+                self.secondary_text = (160, 160, 170)
+                
+            def header(self):
+                # We don't want headers on all pages for a presentation style
+                pass
+
+            def footer(self):
+                if self.page_no() > 1:
+                    self.set_y(-15)
+                    self.set_font('Helvetica', 'I', 8)
+                    self.set_text_color(self.secondary_text[0], self.secondary_text[1], self.secondary_text[2])
+                    self.cell(0, 10, f'NorthWay CRM - Inteligência de Vendas | Página {self.page_no()}', 0, 0, 'C')
+
+            def add_presentation_page(self, title, subtitle=None):
+                self.add_page()
+                # Dark Background
+                self.set_fill_color(self.bg_color[0], self.bg_color[1], self.bg_color[2])
+                self.rect(0, 0, 210, 297, 'F')
+                
+                # Decorative Elements (Glassmorphism inspired)
+                self.set_draw_color(self.primary_color[0], self.primary_color[1], self.primary_color[2])
+                self.set_line_width(0.5)
+                self.line(10, 25, 60, 25)
+                
+                # Title
+                self.set_xy(10, 30)
+                self.set_font('Helvetica', 'B', 24)
+                self.set_text_color(self.text_color[0], self.text_color[1], self.text_color[2])
+                self.cell(0, 15, title.upper(), 0, 1, 'L')
+                
+                if subtitle:
+                    self.set_font('Helvetica', '', 12)
+                    self.set_text_color(self.secondary_text[0], self.secondary_text[1], self.secondary_text[2])
+                    self.cell(0, 10, subtitle, 0, 1, 'L')
+                    self.ln(10)
+
+        _PresentationPDFClass = PresentationPDF
+    return _PresentationPDFClass
 
 class PresentationService:
     @staticmethod
@@ -58,6 +67,7 @@ class PresentationService:
         consultant_title = data.get('consultant_title', 'Consultor Comercial')
         obs = data.get('observacao', '')
         
+        PresentationPDF = _get_presentation_pdf_class()
         pdf = PresentationPDF()
         pdf.set_auto_page_break(False)
 

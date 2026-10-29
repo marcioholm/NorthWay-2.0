@@ -203,129 +203,75 @@
 
             <!-- Cards Container -->
             <div class="flex-1 overflow-y-auto p-2.5 space-y-3 cards-container">
-                {% for lead in leads_by_stage[stage.id] %}
-                {% set t_prog = lead.task_progress %}
-                <div draggable="true" onclick="openLeadModal(this)" data-id="{{ lead.id }}" data-name="{{ lead.name }}"
-                    data-phone="{{ lead.phone or '' }}" data-email="{{ lead.email or '' }}"
-                    data-website="{{ lead.website or '' }}" data-address="{{ lead.address or '' }}"
-                    data-interest="{{ lead.interest or '' }}" data-bant-budget="{{ lead.bant_budget or '' }}"
-                    data-bant-authority="{{ lead.bant_authority or '' }}" data-bant-need="{{ lead.bant_need or '' }}"
-                    data-bant-timeline="{{ lead.bant_timeline or '' }}"
-                    data-diag-status="{{ lead.diagnostic_status or 'pending' }}"
-                    data-diag-stars="{{ lead.diagnostic_stars or 0 }}"
-                    data-diag-score="{{ lead.diagnostic_score or 0 }}"
-                    data-diag-class="{{ lead.diagnostic_classification or '' }}"
-                    data-responsible-id="{{ lead.assigned_to_id or '' }}"
-                    data-pipeline-id="{{ lead.pipeline_id or '' }}"
-                    data-estimated-value="{{ lead.estimated_value or 0 }}"
-                    class="nw-kanban-card pipeline-card relative group cursor-grab active:cursor-grabbing transition-all {{ 'opacity-70 bg-gray-50' if lead.status == 'lost' else '' }}">
-
-                    <!-- Action Buttons (Hover) -->
+                {%- for lead in leads_by_stage[stage.id] -%}
+                {%- set t_prog = lead.task_progress -%}
+                <div draggable="true" onclick="openLeadModal(this)" data-id="{{ lead.id }}" data-name="{{ lead.name }}" class="nw-kanban-card pipeline-card relative group cursor-grab active:cursor-grabbing transition-all{% if lead.status == 'lost' %} opacity-70 bg-gray-50{% endif %}">
+                    {%- if lead.status != 'lost' -%}
                     <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                        {% if lead.status != 'lost' %}
-                        <button onclick="event.stopPropagation(); window.openLoseModal('{{ lead.id }}', '{{ lead.name|escape }}');" 
-                                class="bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full border border-[var(--nw-border)] shadow-sm transition-colors"
-                                title="Marcar como Perdido">
-                            <i data-lucide="thumbs-down" class="w-3.5 h-3.5"></i>
-                        </button>
-                        {% endif %}
+                        <button onclick="event.stopPropagation();window.openLoseModal(this);" class="bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full border border-[var(--nw-border)] shadow-xs transition-colors" title="Marcar como Perdido"><i data-lucide="thumbs-down" class="w-3.5 h-3.5"></i></button>
                     </div>
-
-                    <!-- Checkbox for Selection Mode -->
+                    {%- endif -%}
                     <div class="selection-checkbox hidden absolute top-3 left-3 z-30">
-                        <input type="checkbox" data-lead-id="{{ lead.id }}" onchange="updateSelectionBar()"
-                            onclick="event.stopPropagation()"
-                            class="w-4 h-4 rounded border-gray-300 text-[var(--nw-accent)] focus:ring-[var(--nw-accent)] cursor-pointer bg-white shadow-sm">
+                        <input type="checkbox" onchange="updateSelectionBar()" onclick="event.stopPropagation()" class="w-4 h-4 rounded border-gray-300 text-[var(--nw-accent)] cursor-pointer bg-white shadow-xs">
                     </div>
-
-                    {% if t_prog.overdue > 0 %}
-                    <div class="absolute -top-1.5 -left-1.5 bg-red-600 text-white w-5 h-5 flex items-center justify-center rounded-full shadow-md z-20 border-2 border-white text-[9px] font-bold"
-                        title="{{ t_prog.overdue }} tarefas atrasadas!">
-                        {{ t_prog.overdue }}
-                    </div>
-                    {% endif %}
-
-                    {% if lead.days_inactive > 5 %}
-                    <div class="absolute -top-1.5 -right-1.5 bg-red-500 text-white p-1 rounded-full shadow-md z-10"
-                        title="Sem interação há {{ lead.days_inactive }} dias!">
-                        <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i>
-                    </div>
-                    {% endif %}
-
+                    {%- if t_prog.overdue > 0 -%}
+                    <div class="absolute -top-1.5 -left-1.5 bg-red-600 text-white w-5 h-5 flex items-center justify-center rounded-full shadow-md z-20 border-2 border-white text-[9px] font-bold" title="{{ t_prog.overdue }} tarefas atrasadas!">{{ t_prog.overdue }}</div>
+                    {%- endif -%}
+                    {%- if lead.days_inactive > 5 -%}
+                    <div class="absolute -top-1.5 -right-1.5 bg-red-500 text-white p-1 rounded-full shadow-md z-10" title="Sem interação há {{ lead.days_inactive }} dias!"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i></div>
+                    {%- endif -%}
                     <div class="flex items-start justify-between gap-2 mb-1.5">
-                        <h4 class="font-semibold text-sm text-[var(--nw-ink)] group-hover:text-[var(--nw-accent)] transition-colors line-clamp-1">
-                            {{ lead.name }}
-                        </h4>
-                        {% if lead.estimated_value > 0 %}
-                        <span class="text-[11px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200/60 whitespace-nowrap">
-                            R$ {{ "{:,.0f}".format(lead.estimated_value).replace(',', '.') }}
-                        </span>
-                        {% endif %}
+                        <h4 class="font-semibold text-sm text-[var(--nw-ink)] group-hover:text-[var(--nw-accent)] transition-colors truncate">{{ lead.name }}</h4>
+                        {%- if lead.estimated_value > 0 -%}
+                        <span class="text-[11px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200/60 whitespace-nowrap">R$ {{ "{:,.0f}".format(lead.estimated_value).replace(',', '.') }}</span>
+                        {%- endif -%}
                     </div>
-
                     <div class="flex items-center justify-between text-xs text-[var(--nw-text-3)] mb-2">
                         <span class="truncate">{{ lead.phone or 'Sem telefone' }}</span>
-                        {% if lead.diagnostic_status == 'done' %}
-                        <span class="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-50 text-[var(--nw-accent)] font-bold text-[10px] border border-red-100"
-                            title="Diagnóstico Concluído">
-                            <i data-lucide="line-chart" class="w-3 h-3"></i>
-                            {{ lead.diagnostic_stars or 0 }}
-                        </span>
-                        {% endif %}
+                        {%- if lead.diagnostic_status == 'done' -%}
+                        <span class="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-50 text-[var(--nw-accent)] font-bold text-[10px] border border-red-100" title="Diagnóstico Concluído"><i data-lucide="line-chart" class="w-3 h-3"></i>{{ lead.diagnostic_stars or 0 }}</span>
+                        {%- endif -%}
                     </div>
-
-                    {% if lead.website or lead.address or t_prog.total > 0 %}
+                    {%- if lead.website or lead.address or t_prog.total > 0 -%}
                     <div class="mb-2.5 flex items-center gap-2 text-xs text-[var(--nw-text-3)]">
-                        {% if lead.website %}
-                        <i data-lucide="globe" class="w-3 h-3 text-blue-500" title="Possui Site"></i>
-                        {% endif %}
-                        {% if lead.address %}
-                        <i data-lucide="map-pin" class="w-3 h-3 text-red-500" title="Possui Endereço"></i>
-                        {% endif %}
-
-                        {% if t_prog.total > 0 %}
+                        {%- if lead.website -%}<i data-lucide="globe" class="w-3 h-3 text-blue-500" title="Possui Site"></i>{%- endif -%}
+                        {%- if lead.address -%}<i data-lucide="map-pin" class="w-3 h-3 text-red-500" title="Possui Endereço"></i>{%- endif -%}
+                        {%- if t_prog.total > 0 -%}
                         <div class="flex-1 ml-1">
                             <div class="flex items-center justify-between mb-0.5">
                                 <span class="text-[9px] font-bold text-[var(--nw-text-3)]">{{ t_prog.completed }}/{{ t_prog.total }} tarefas</span>
                                 <span class="text-[9px] font-bold {{ 'text-green-600' if t_prog.percent == 100 else 'text-[var(--nw-text-3)]' }}">{{ t_prog.percent }}%</span>
                             </div>
                             <div class="w-full bg-[var(--nw-shell)] h-1 rounded-full overflow-hidden">
-                                <div class="h-full {{ 'bg-green-500' if t_prog.percent == 100 else 'bg-[var(--nw-accent)]' }} transition-all"
-                                    style="width: {{ t_prog.percent }}%"></div>
+                                <div class="h-full {{ 'bg-green-500' if t_prog.percent == 100 else 'bg-[var(--nw-accent)]' }} transition-all" style="width: {{ t_prog.percent }}%"></div>
                             </div>
                         </div>
-                        {% endif %}
+                        {%- endif -%}
                     </div>
-                    {% endif %}
-
+                    {%- endif -%}
                     <div class="pt-2 border-t border-[var(--nw-border)] flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="text-[11px] text-[var(--nw-text-3)]">
-                                {% if request.args.get('filter_by') == 'lost' and lead.lost_at %}
-                                    <span class="text-red-500 font-bold" title="Data do Descarte">{{ lead.lost_at.strftime('%d/%m') }}</span>
-                                {% else %}
-                                    {{ lead.created_at.strftime('%d/%m') if lead.created_at else '' }}
-                                {% endif %}
+                                {%- if request.args.get('filter_by') == 'lost' and lead.lost_at -%}
+                                <span class="text-red-500 font-bold" title="Data do Descarte">{{ lead.lost_at.strftime('%d/%m') }}</span>
+                                {%- else -%}
+                                {{ lead.created_at.strftime('%d/%m') if lead.created_at else '' }}
+                                {%- endif -%}
                             </span>
-                            <span class="nw-chip nw-chip-neutral !px-2 !py-0.5 !text-[10px] uppercase font-bold" title="Responsável">
-                                <i data-lucide="user" class="w-2.5 h-2.5 mr-0.5"></i>
-                                {{ lead.assigned_user.name.split(' ')[0] if lead.assigned_user else '---' }}
-                            </span>
+                            <span class="nw-chip nw-chip-neutral !px-2 !py-0.5 !text-[10px] uppercase font-bold" title="Responsável"><i data-lucide="user" class="w-2.5 h-2.5 mr-0.5"></i>{{ lead.assigned_user.name.split(' ')[0] if lead.assigned_user else '---' }}</span>
                         </div>
-
                         <div class="flex items-center gap-1 text-[11px] {{ 'text-amber-600 font-semibold' if lead.days_inactive > 3 else 'text-[var(--nw-text-3)]' }}">
-                            <i data-lucide="clock" class="w-3 h-3"></i>
-                            <span>{{ lead.days_inactive }}d</span>
+                            <i data-lucide="clock" class="w-3 h-3"></i><span>{{ lead.days_inactive }}d</span>
                         </div>
                     </div>
                 </div>
-                {% else %}
+                {%- else -%}
                 <div class="h-32 flex flex-col items-center justify-center border-2 border-dashed border-[var(--nw-border)] rounded-2xl bg-nw-shell/40 p-4">
                     <i data-lucide="target" class="w-6 h-6 text-[var(--nw-text-3)] mb-1"></i>
                     <p class="text-xs font-semibold text-[var(--nw-text-2)] text-center">Etapa vazia</p>
                     <p class="text-[10px] text-[var(--nw-text-3)] text-center">Arraste leads para cá</p>
                 </div>
-                {% endfor %}
+                {%- endfor -%}
 
                 {% set nav = stage_navigation[stage.id] %}
                 {% if nav.previous or nav.next %}
@@ -1005,7 +951,7 @@
 
     async function bulkMoveStage(stageId, stageName) {
         const selectedIds = Array.from(document.querySelectorAll('.selection-checkbox input:checked'))
-            .map(cb => cb.dataset.leadId);
+            .map(cb => cb.dataset.leadId || cb.closest('.pipeline-card')?.dataset.id);
 
         if (!confirm(`Deseja mover ${selectedIds.length} leads para a etapa "${stageName}"?`)) return;
 
@@ -1028,7 +974,7 @@
 
     async function bulkMovePipeline(pipelineId, pipelineName) {
         const selectedIds = Array.from(document.querySelectorAll('.selection-checkbox input:checked'))
-            .map(cb => cb.dataset.leadId);
+            .map(cb => cb.dataset.leadId || cb.closest('.pipeline-card')?.dataset.id);
 
         if (!confirm(`Deseja mover ${selectedIds.length} leads para o funil "${pipelineName}"?`)) return;
 
@@ -1344,91 +1290,105 @@
     }
 
     function openLeadModal(input) {
-        let lead = input;
-        if (input.dataset) {
-            lead = {
-                id: input.dataset.id,
-                name: input.dataset.name,
-                phone: input.dataset.phone,
-                email: input.dataset.email,
-                website: input.dataset.website,
-                address: input.dataset.address,
-                interest: input.dataset.interest,
-                source: input.dataset.source || 'Importado',
-                bant_budget: input.dataset.bantBudget,
-                bant_authority: input.dataset.bantAuthority,
-                bant_need: input.dataset.bantNeed,
-                bant_timeline: input.dataset.bantTimeline,
-                pipeline_id: input.dataset.pipelineId,
-            };
-        }
-        currentLeadId = lead.id;
-        document.getElementById('modalLeadName').textContent = lead.name;
-        document.getElementById('modalLeadPhone').textContent = lead.phone || 'Sem telefone'; // Fix
-        document.getElementById('modalInputEmail').value = lead.email || '';
+        const leadId = input.dataset ? input.dataset.id : (input.id || input);
+        const leadName = input.dataset ? input.dataset.name : (input.name || '');
+        const leadPhone = input.dataset ? (input.dataset.phone || '') : (input.phone || '');
+        const leadEmail = input.dataset ? (input.dataset.email || '') : (input.email || '');
+        const leadVal = input.dataset ? (input.dataset.val || input.dataset.estimatedValue || 0) : (input.estimated_value || 0);
 
-        const rawPhone = lead.phone || '';
+        currentLeadId = leadId;
+        document.getElementById('modalLeadName').textContent = leadName || 'Carregando...';
+        document.getElementById('modalLeadPhone').textContent = leadPhone || 'Sem telefone';
+        document.getElementById('modalInputEmail').value = leadEmail || '';
+        document.getElementById('modalInputEstimatedValue').value = leadVal || 0;
+
         const ddiSelect = document.getElementById('modalInputPhoneDDI');
         const phoneInput = document.getElementById('modalInputPhoneNumber');
-        if (rawPhone) {
+        if (leadPhone) {
             let matched = false;
             for (let opt of ddiSelect.options) {
-                if (rawPhone.startsWith(opt.value)) {
+                if (leadPhone.startsWith(opt.value)) {
                     ddiSelect.value = opt.value;
-                    phoneInput.value = rawPhone.substring(opt.value.length);
+                    phoneInput.value = leadPhone.substring(opt.value.length);
                     maskPhone(phoneInput);
                     matched = true;
                     break;
                 }
             }
-            if (!matched) { phoneInput.value = rawPhone; maskPhone(phoneInput); }
+            if (!matched) { phoneInput.value = leadPhone; maskPhone(phoneInput); }
         } else {
             ddiSelect.value = '+55';
             phoneInput.value = '';
         }
 
-        document.getElementById('modalInputWebsite').value = lead.website || '';
-        document.getElementById('modalInputAddress').value = lead.address || '';
-        document.getElementById('modalInputSource').value = lead.source || '';
-        document.getElementById('modalInputPipeline').value = lead.pipeline_id || '';
-        document.getElementById('modalInputInterest').value = lead.interest || '';
-        document.getElementById('modalInputEstimatedValue').value = input.dataset.estimatedValue || 0;
-        document.getElementById('bantBudget').value = lead.bant_budget || '';
-        document.getElementById('bantAuthority').value = lead.bant_authority || '';
-        document.getElementById('bantTimeline').value = lead.bant_timeline || '';
-        document.getElementById('bantNeed').value = lead.bant_need || '';
-
-        // Diagnostic Data
-        const diagStatus = input.dataset.diagStatus;
-        const diagStars = input.dataset.diagStars;
-        const diagScore = input.dataset.diagScore;
-        const diagClass = input.dataset.diagClass;
-
-        if (diagStatus === 'done') {
-            document.getElementById('diagnosticResults').classList.remove('hidden');
-            document.getElementById('diagnosticEmpty').classList.add('hidden');
-            document.getElementById('diagModalStars').textContent = diagStars;
-            document.getElementById('diagModalScore').textContent = diagScore;
-            document.getElementById('diagModalClass').textContent = diagClass;
-        } else {
-            document.getElementById('diagnosticResults').classList.add('hidden');
-            document.getElementById('diagnosticEmpty').classList.remove('hidden');
-        }
-
         const btnCopy = document.getElementById('btnCopyDiagLink');
         if (btnCopy) {
-            btnCopy.onclick = () => copyDiagnosticLink(`${DIAG_BASE_URL}?lead_id=${lead.id}`);
+            btnCopy.onclick = () => copyDiagnosticLink(`${DIAG_BASE_URL}?lead_id=${leadId}`);
         }
 
-        document.getElementById('infoForm').action = `/leads/${lead.id}/update_info`;
-        document.getElementById('bantForm').action = `/leads/${lead.id}/bant`;
-        document.getElementById('viewFullDetails').href = `/leads/${lead.id}`;
+        document.getElementById('infoForm').action = `/leads/${leadId}/update_info`;
+        document.getElementById('bantForm').action = `/leads/${leadId}/bant`;
+        document.getElementById('viewFullDetails').href = `/leads/${leadId}`;
+
+        // Reset details while loading
+        document.getElementById('modalInputWebsite').value = '';
+        document.getElementById('modalInputAddress').value = '';
+        document.getElementById('modalInputSource').value = '';
+        document.getElementById('modalInputPipeline').value = '';
+        document.getElementById('modalInputInterest').value = '';
+        document.getElementById('bantBudget').value = '';
+        document.getElementById('bantAuthority').value = '';
+        document.getElementById('bantTimeline').value = '';
+        document.getElementById('bantNeed').value = '';
+        document.getElementById('diagnosticResults').classList.add('hidden');
+        document.getElementById('diagnosticEmpty').classList.remove('hidden');
 
         toggleModal('leadModal');
+
+        // Fetch remaining details asynchronously
+        fetch(`/api/leads/${leadId}/summary`)
+            .then(res => res.json())
+            .then(data => {
+                if (currentLeadId != data.id) return;
+                document.getElementById('modalLeadName').textContent = data.name;
+                document.getElementById('modalLeadPhone').textContent = data.phone || 'Sem telefone';
+                document.getElementById('modalInputEmail').value = data.email || '';
+                document.getElementById('modalInputWebsite').value = data.website || '';
+                document.getElementById('modalInputAddress').value = data.address || '';
+                document.getElementById('modalInputSource').value = data.source || '';
+                document.getElementById('modalInputPipeline').value = data.pipeline_id || '';
+                document.getElementById('modalInputInterest').value = data.interest || '';
+                document.getElementById('modalInputEstimatedValue').value = data.estimated_value || 0;
+                document.getElementById('bantBudget').value = data.bant_budget || '';
+                document.getElementById('bantAuthority').value = data.bant_authority || '';
+                document.getElementById('bantTimeline').value = data.bant_timeline || '';
+                document.getElementById('bantNeed').value = data.bant_need || '';
+
+                if (data.diagnostic_status === 'done') {
+                    document.getElementById('diagnosticResults').classList.remove('hidden');
+                    document.getElementById('diagnosticEmpty').classList.add('hidden');
+                    document.getElementById('diagModalStars').textContent = data.diagnostic_stars || 0;
+                    document.getElementById('diagModalScore').textContent = data.diagnostic_score || 0;
+                    document.getElementById('diagModalClass').textContent = data.diagnostic_classification || 'Indefinido';
+                } else {
+                    document.getElementById('diagnosticResults').classList.add('hidden');
+                    document.getElementById('diagnosticEmpty').classList.remove('hidden');
+                }
+            })
+            .catch(console.error);
     }
 
     // Lead Loss Actions
-    window.openLoseModal = function (leadId, leadName) {
+    window.openLoseModal = function (target, fallbackName) {
+        let leadId = target;
+        let leadName = fallbackName || '';
+        if (target && target.closest) {
+            const card = target.closest('.pipeline-card');
+            if (card) {
+                leadId = card.dataset.id;
+                leadName = card.dataset.name || '';
+            }
+        }
         // Find existing form
         const form = document.getElementById('loseLeadForm');
         form.action = `/leads/${leadId}/lose`;

@@ -45,7 +45,8 @@
     {% set seg_list = [{'label': 'Todos', 'value': pagination.total if pagination else leads|length}] %}
     {% if stages %}
         {% for stg in stages %}
-            {% set _ = seg_list.append({'label': stg.name, 'value': stg.stage_leads|length}) %}
+            {% set count_val = stage_counts.get(stg.id, 0) if stage_counts is defined else stg.stage_leads|length %}
+            {% set _ = seg_list.append({'label': stg.name, 'value': count_val}) %}
         {% endfor %}
     {% endif %}
     <div class="mb-6">

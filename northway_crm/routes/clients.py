@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file, current_app
 from flask_login import login_required, current_user
 from models import db, Client, User, Interaction, Task, Transaction, LEAD_STATUS_WON, ProcessTemplate, LibraryTemplate, FormInstance, TenantIntegration, DriveFolderTemplate
-from utils import update_client_health, create_notification
+from utils import calculate_client_health, create_notification
 from datetime import datetime, date
 import csv
 import io
@@ -76,9 +76,18 @@ def clients():
         days = (get_now_br() - last).days if last else None
         health_by_client[item.id] = 'verde' if days is not None and days <= 3 else 'amarelo' if days is not None and days <= 7 else 'vermelho'
 
+    # Single aggregated query for pending tasks count per client
+    pending_tasks_counts = dict(db.session.query(
+        Task.client_id, db.func.count(Task.id)
+    ).filter(
+        Task.company_id == current_user.company_id,
+        Task.client_id.in_(client_ids),
+        Task.status == 'pendente'
+    ).group_by(Task.client_id).all()) if client_ids else {}
+
     users = User.query.filter_by(company_id=current_user.company_id).all()
     
-    return render_template('clients.html', clients=clients_list, pagination=pagination, users=users, today=date.today(), health_by_client=health_by_client)
+    return render_template('clients.html', clients=clients_list, pagination=pagination, users=users, today=date.today(), health_by_client=health_by_client, pending_tasks_counts=pending_tasks_counts)
 
 @clients_bp.route('/api/clients/search', methods=['GET'])
 @login_required
@@ -98,14 +107,19 @@ def search_clients_api():
 @clients_bp.route('/clients/<int:id>', methods=['GET'])
 @login_required
 def client_details(id):
-    client = Client.query.filter_by(id=id, company_id=current_user.company_id).first_or_404()
+    client = Client.query.options(
+        db.joinedload(Client.account_manager),
+        db.joinedload(Client.contracts),
+        db.joinedload(Client.service_orders),
+        db.joinedload(Client.audience_matrices),
+        db.joinedload(Client.crepi_diagnosticos),
+        db.selectinload(Client.interactions),
+        db.selectinload(Client.tasks).joinedload(Task.responsible)
+    ).filter_by(id=id, company_id=current_user.company_id).first_or_404()
         
-    try:
-        update_client_health(client)
-        db.session.commit()
-    except Exception as e:
-        print(f"Error updating health for client {id}: {e}")
-        db.session.rollback()
+    # Calculate display health without mutation (GET without side effect)
+    last_interaction = max([i.created_at for i in client.interactions], default=None)
+    client.health_status = calculate_client_health(last_interaction)
 
     # Get MRR
     mrr = client.monthly_value if client.monthly_value else 0.0
@@ -141,18 +155,21 @@ def client_details(id):
                 template_id=diag_template.id
             ).first()
 
-    # Fetch Drive Templates and Integration Status
-    tenant_templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
-    
-    # Global Templates
-    allowed_ids = current_user.company.allowed_global_template_ids or []
-    global_templates = DriveFolderTemplate.query.filter(
-        DriveFolderTemplate.scope == 'global',
-        DriveFolderTemplate.enabled == True,
-        DriveFolderTemplate.id.in_(allowed_ids)
-    ).all() if allowed_ids else []
-    
-    drive_templates = tenant_templates + global_templates
+    # Fetch Drive Templates in a single query
+    allowed_ids = (current_user.company.allowed_global_template_ids if current_user.company else []) or []
+    if allowed_ids:
+        drive_templates = DriveFolderTemplate.query.filter(
+            db.or_(
+                DriveFolderTemplate.company_id == current_user.company_id,
+                db.and_(
+                    DriveFolderTemplate.scope == 'global',
+                    DriveFolderTemplate.enabled == True,
+                    DriveFolderTemplate.id.in_(allowed_ids)
+                )
+            )
+        ).all()
+    else:
+        drive_templates = DriveFolderTemplate.query.filter_by(company_id=current_user.company_id).all()
     
     drive_integration = TenantIntegration.query.filter_by(
         company_id=current_user.company_id, 
@@ -272,10 +289,10 @@ def delete_client(id):
         if tenant_integration and tenant_integration.api_key:
             api_key = tenant_integration.api_key
             
-            # 1. Cancel active subscriptions
-            if client.subscription_id:
+            subscription_id = getattr(client, 'subscription_id', None)
+            if subscription_id:
                 try:
-                    delete_subscription(client.subscription_id, api_key=api_key)
+                    delete_subscription(subscription_id, api_key=api_key)
                     current_app.logger.info(f"✅ Subscription deleted for client {client.id}")
                 except Exception as sub_e:
                     current_app.logger.error(f"⚠️ Failed to delete Asaas Subscription: {sub_e}")
@@ -834,6 +851,16 @@ def bulk_delete_drive_files(id):
                 deleted_count += 1
             except Exception as e:
                 logger.error(f"Error deleting file {file_id}: {e}")
+        # Delete events from database
+        DriveFileEvent.query.filter(
+            DriveFileEvent.client_id == client.id,
+            DriveFileEvent.file_id.in_(file_ids)
+        ).delete(synchronize_session=False)
+        
+        db.session.commit()
+        
+        flash(f'{deleted_count} arquivo(s) excluído(s) com sucesso!', 'success')
+        return redirect(url_for('clients.client_details', id=id))
         
     except Exception as e:
         flash(f'Erro ao excluir arquivos do Google Drive: {str(e)}', 'error')
@@ -899,17 +926,7 @@ def save_client_process(id, tool_type, mode):
         
     db.session.commit()
     return jsonify({'success': True})
-    
-    # Delete events from database
-    DriveFileEvent.query.filter(
-        DriveFileEvent.client_id == client.id,
-        DriveFileEvent.file_id.in_(file_ids)
-    ).delete(synchronize_session=False)
-    
-    db.session.commit()
-    
-    flash(f'{deleted_count} arquivo(s) excluído(s) com sucesso!', 'success')
-    return redirect(url_for('clients.client_details', id=id))
+
 
 @clients_bp.route('/clients/<int:id>/cronograma', methods=['GET'])
 @login_required

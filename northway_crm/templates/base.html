@@ -3,36 +3,31 @@
 
 <head>
     <meta charset="UTF-8">
+    {% include 'includes/favicon.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}NorthWay CRM{% endblock %}</title>
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     
-    <!-- Google Fonts: Plus Jakarta Sans (Primary), Outfit & Inter -->
+    <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-
-    <!-- Material Icons (Preserved for compatibility) -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS (Local Build with nw-* design tokens) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}">
     <!-- Alpine JS -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <!-- Lucide Icons -->
     <script defer src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
     <!-- SweetAlert2 -->
-    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11.15.3/dist/sweetalert2.all.min.js"></script>
     <style>
         body {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
 
         /* Premium Scrollbar */
@@ -171,12 +166,13 @@
         <div class="nw-shell-card flex flex-col">
             
             <!-- Top Navigation Header inside the Shell Card -->
-            <header class="flex items-center justify-between gap-4 pb-6 border-b border-[var(--nw-border)] mb-7 flex-wrap lg:flex-nowrap">
+            <header class="relative z-40 flex items-center justify-between gap-4 pb-6 border-b border-[var(--nw-border)] mb-7 flex-wrap lg:flex-nowrap">
                 
                 <!-- Left: Logo & Main Navigation Pills -->
                 <div class="flex items-center gap-3 xl:gap-5 flex-wrap">
                     <!-- Logo in Contoured Pill ("North" ink + "Way" in brand 700) -->
-                    <a href="/home" class="inline-flex items-center gap-1.5 px-4 h-11 rounded-full border border-[var(--nw-border)] bg-white hover:border-[var(--nw-text-3)] transition-all shadow-sm" aria-label="NorthWay Home">
+                    <a href="/home" class="inline-flex items-center gap-2 px-4 h-11 rounded-full border border-[var(--nw-border)] bg-white hover:border-[var(--nw-text-3)] transition-all shadow-sm" aria-label="NorthWay Home">
+                        <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" width="28" height="28" class="w-7 h-7 rounded-lg -ml-2.5">
                         <span class="text-[17px] font-medium tracking-tight">
                             <span class="text-[var(--nw-ink)] font-semibold">North</span><span class="text-[var(--nw-brand)] font-bold">Way</span>
                         </span>
