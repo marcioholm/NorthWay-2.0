@@ -17,6 +17,7 @@ ALLOWED_PUBLIC_ENDPOINTS = {
     'docs.playbook_dia_das_maes_marka_moveis',
     'evolution_webhook.evolution_webhook',
     'robots_txt',
+    'favicon',                                 # Ícone da aba do navegador (/favicon.ico)
     'sitemap',
     'static',
     'whatsapp.ping_whatsapp',
