@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    {% include 'includes/favicon.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Diagnóstico | {{ submission.lead.name if submission.lead else (submission.client.name if
         submission.client else 'Visitante') }}</title>

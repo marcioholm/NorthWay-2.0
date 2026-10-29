@@ -607,6 +607,14 @@ def create_app(test_config=None):
             response.headers['Cache-Control'] = 'public, max-age=86400'
             return response
 
+        @app.route('/favicon.ico')
+        def favicon():
+            from flask import send_from_directory
+            response = send_from_directory(os.path.join(app.static_folder, 'icons'), 'favicon.ico',
+                                           mimetype='image/vnd.microsoft.icon')
+            response.headers['Cache-Control'] = 'public, max-age=604800'
+            return response
+
         @app.route('/robots.txt')
         def robots_txt():
             from flask import make_response
