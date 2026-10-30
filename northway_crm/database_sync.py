@@ -304,6 +304,20 @@ def sync_database():
                 ('filled_by', "VARCHAR(100)")
             ]: add_column_if_missing("audience_matrices", c, d)
 
+            # CREPI v2: nível com regra de impacto catastrófico, plano de tratamento e risco residual
+            for c, d in [
+                ('nivel', "VARCHAR(20) DEFAULT 'nao_avaliado'"),
+                ('contingencia_obrigatoria', "BOOLEAN DEFAULT FALSE"),
+                ('responsavel', "VARCHAR(150)"),
+                ('prazo', "DATE"),
+                ('gatilho', "TEXT"),
+                ('status', "VARCHAR(20) DEFAULT 'aberta'"),
+                ('revisao_em', "DATE"),
+                ('probabilidade_residual', "INTEGER"),
+                ('impacto_residual', "INTEGER"),
+                ('score_residual', "INTEGER"),
+            ]: add_column_if_missing("crepi_premissas", c, d)
+
             # Commission Snapshots repair
             add_column_if_missing("comissao_snapshots", "valor_base_contratual", "NUMERIC(12, 2) DEFAULT 0.00")
 
