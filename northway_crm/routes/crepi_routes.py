@@ -1,7 +1,59 @@
 from flask import Blueprint, request, jsonify, abort
 from flask_login import login_required, current_user
 from models import db, Client, CREPIDiagnostico, CREPIPremissa, get_now_br
+from services.crepi_service import calcular_nivel, normalizar_status
+from datetime import date
 import uuid
+
+
+def _parse_date(value):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except ValueError:
+        return None
+
+
+def _int_or_none(value):
+    if value in (None, ''):
+        return None
+    try:
+        return max(0, min(10, int(value)))
+    except (TypeError, ValueError):
+        return None
+
+
+def _premissa_to_dict(p):
+    # Nível calculado na leitura para que diagnósticos antigos já sigam a regra atual
+    nivel, score, contingencia = calcular_nivel(p.probabilidade, p.impacto)
+    nivel_res = None
+    if p.probabilidade_residual is not None and p.impacto_residual is not None:
+        nivel_res, _, _ = calcular_nivel(p.probabilidade_residual, p.impacto_residual)
+    return {
+        'id': p.id,
+        'ordem': p.ordem,
+        'nome': p.nome,
+        'categoria': p.categoria,
+        'causa': p.causa,
+        'risco': p.risco,
+        'efeito': p.efeito,
+        'probabilidade': p.probabilidade,
+        'impacto': p.impacto,
+        'score': score,
+        'nivel': nivel,
+        'contingencia_obrigatoria': contingencia,
+        'decisao_consultor': p.decisao_consultor,
+        'responsavel': p.responsavel,
+        'prazo': p.prazo.isoformat() if p.prazo else None,
+        'gatilho': p.gatilho,
+        'status': p.status or 'aberta',
+        'revisao_em': p.revisao_em.isoformat() if p.revisao_em else None,
+        'probabilidade_residual': p.probabilidade_residual,
+        'impacto_residual': p.impacto_residual,
+        'score_residual': p.score_residual,
+        'nivel_residual': nivel_res,
+    }
 
 crepi_bp = Blueprint('crepi', __name__)
 
@@ -44,9 +96,9 @@ def list_crepi(client_id):
             'status': diag.status,
             'created_at': diag.created_at.isoformat() if diag.created_at else None,
             'total_premissas': len(diag.premissas),
-            'critical_count': sum(1 for p in diag.premissas if p.score > 40),
-            'medium_count': sum(1 for p in diag.premissas if 15 < p.score <= 40),
-            'low_count': sum(1 for p in diag.premissas if p.score <= 15)
+            'critical_count': sum(1 for p in diag.premissas if calcular_nivel(p.probabilidade, p.impacto)[0] == 'critico'),
+            'medium_count': sum(1 for p in diag.premissas if calcular_nivel(p.probabilidade, p.impacto)[0] == 'medio'),
+            'low_count': sum(1 for p in diag.premissas if calcular_nivel(p.probabilidade, p.impacto)[0] == 'baixo')
         })
         
     return jsonify({
@@ -61,21 +113,7 @@ def get_crepi(crepi_id):
     if diag.client.company_id != current_user.company_id:
         abort(403)
         
-    premissas = []
-    for p in diag.premissas:
-        premissas.append({
-            'id': p.id,
-            'ordem': p.ordem,
-            'nome': p.nome,
-            'categoria': p.categoria,
-            'causa': p.causa,
-            'risco': p.risco,
-            'efeito': p.efeito,
-            'probabilidade': p.probabilidade,
-            'impacto': p.impacto,
-            'score': p.score,
-            'decisao_consultor': p.decisao_consultor
-        })
+    premissas = [_premissa_to_dict(p) for p in diag.premissas]
         
     # Standardize the response format
     return jsonify({
@@ -141,10 +179,22 @@ def save_premises(client_id, crepi_id):
         p.causa = p_data.get('causa', '')
         p.risco = p_data.get('risco', '')
         p.efeito = p_data.get('efeito', '')
-        p.probabilidade = int(p_data.get('probabilidade', 0) or 0)
-        p.impacto = int(p_data.get('impacto', 0) or 0)
-        p.score = p.probabilidade * p.impacto
-        p.decisao_consultor = p_data.get('decisao_consultor', '')
+        p.probabilidade = _int_or_none(p_data.get('probabilidade')) or 0
+        p.impacto = _int_or_none(p_data.get('impacto')) or 0
+        p.nivel, p.score, p.contingencia_obrigatoria = calcular_nivel(p.probabilidade, p.impacto)
+        # 'decisao' era o nome usado pelo front antigo; aceitar os dois evita perder o campo
+        p.decisao_consultor = p_data.get('decisao_consultor', p_data.get('decisao', '')) or ''
+        p.responsavel = (p_data.get('responsavel') or '').strip() or None
+        p.prazo = _parse_date(p_data.get('prazo'))
+        p.gatilho = p_data.get('gatilho') or None
+        p.status = normalizar_status(p_data.get('status'))
+        p.revisao_em = _parse_date(p_data.get('revisao_em'))
+        p.probabilidade_residual = _int_or_none(p_data.get('probabilidade_residual'))
+        p.impacto_residual = _int_or_none(p_data.get('impacto_residual'))
+        if p.probabilidade_residual is not None and p.impacto_residual is not None:
+            p.score_residual = p.probabilidade_residual * p.impacto_residual
+        else:
+            p.score_residual = None
         p.updated_at = get_now_br()
         
     db.session.commit()

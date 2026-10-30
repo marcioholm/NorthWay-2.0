@@ -1387,7 +1387,19 @@ class CREPIPremissa(db.Model):
     probabilidade = db.Column(db.Integer, default=0) # 0-10
     impacto = db.Column(db.Integer, default=0)      # 0-10
     score = db.Column(db.Integer, default=0)        # P * I
+    nivel = db.Column(db.String(20), default='nao_avaliado')  # critico, medio, baixo, nao_avaliado (services/crepi_service.py)
+    contingencia_obrigatoria = db.Column(db.Boolean, default=False)  # impacto >= 9 com probabilidade baixa
     decisao_consultor = db.Column(db.Text, nullable=True)
+    # Plano de tratamento
+    responsavel = db.Column(db.String(150), nullable=True)
+    prazo = db.Column(db.Date, nullable=True)
+    gatilho = db.Column(db.Text, nullable=True)      # sinal de alerta de que o risco está se materializando
+    status = db.Column(db.String(20), default='aberta')  # aberta, em_tratamento, mitigada, confirmada, ocorreu
+    revisao_em = db.Column(db.Date, nullable=True)
+    # Risco residual (após a ação)
+    probabilidade_residual = db.Column(db.Integer, nullable=True)
+    impacto_residual = db.Column(db.Integer, nullable=True)
+    score_residual = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=get_now_br)
     updated_at = db.Column(db.DateTime, default=get_now_br, onupdate=get_now_br)
 
