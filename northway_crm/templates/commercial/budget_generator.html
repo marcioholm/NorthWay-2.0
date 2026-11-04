@@ -471,7 +471,8 @@ function buildPaymentExport(installN, totalStr, cycle) {
 }
 
 function buildPrintHTML() {
-  const logoSrc = document.getElementById('logoImg').src;
+  const logoEl = document.getElementById('logoImg');
+  const logoSrc = (logoEl && logoEl.src && !logoEl.src.endsWith('/') && !logoEl.src.includes('undefined')) ? logoEl.src : '';
   const num = document.getElementById('quoteNum').value;
   const dateVal = document.getElementById('quoteDate').value;
   const dateBR = formatDateBR(dateVal);
@@ -490,34 +491,67 @@ function buildPrintHTML() {
   const cycle = document.getElementById('billingCycle').value;
 
   let itemRows = items.map(it =>
-    '<tr><td style="padding:10px 8px 10px 0;border-bottom:1px solid #E8E6E3;font-size:13px">'+esc(it.desc)+'</td>'+
-    '<td style="padding:10px 8px 10px 0;border-bottom:1px solid #E8E6E3;font-size:13px;text-align:right">'+esc(it.qty)+'</td>'+
-    '<td style="padding:10px 8px 10px 0;border-bottom:1px solid #E8E6E3;font-size:13px;text-align:right">'+esc(it.price)+'</td>'+
-    '<td style="padding:10px 8px 10px 0;border-bottom:1px solid #E8E6E3;font-size:13px;text-align:right">'+esc(it.sub)+'</td></tr>'
+    '<tr><td style="padding:10px 12px 10px 0;border-bottom:1px solid #E2E8F0;font-size:13px;color:#1E293B;">'+esc(it.desc)+'</td>'+
+    '<td style="padding:10px 8px;border-bottom:1px solid #E2E8F0;font-size:13px;text-align:center;color:#475569;">'+esc(it.qty)+'</td>'+
+    '<td style="padding:10px 8px;border-bottom:1px solid #E2E8F0;font-size:13px;text-align:right;color:#475569;">'+esc(it.price)+'</td>'+
+    '<td style="padding:10px 0 10px 8px;border-bottom:1px solid #E2E8F0;font-size:13px;text-align:right;font-weight:600;color:#0F172A;">'+esc(it.sub)+'</td></tr>'
   ).join('');
 
   const cycleLabels = {unico:'Pagamento único',mensal:'Mensal',trimestral:'Trimestral',semestral:'Semestral',anual:'Anual'};
 
-  return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Orçamento NorthWay '+esc(num)+'</title>'+
-  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">'+
-  '</head><body>'+
-  '<div class="hdr"><div>' + (logoSrc ? '<img src="'+logoSrc+'" alt="{{ current_user.company.name | replace("\'", "\\\'") }}">' : '<h2 style="color:#E60012;margin:0;">{{ current_user.company.name | replace("\'", "\\\'") }}</h2>') + '</div>'+
+  return '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width">'+
+  '<title>Proposta Comercial NorthWay - '+esc(num)+'</title>'+
+  '<link rel="preconnect" href="https://fonts.googleapis.com">'+
+  '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'+
+  '<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">'+
+  '<style>'+
+  '*{margin:0;padding:0;box-sizing:border-box}'+
+  'body{font-family:"Plus Jakarta Sans","IBM Plex Sans",-apple-system,sans-serif;font-size:13px;line-height:1.5;color:#0F172A;background:#FFFFFF;padding:48px 56px;max-width:860px;margin:0 auto}'+
+  '.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;padding-bottom:24px;border-bottom:3px solid #E31E24}'+
+  '.hdr img{max-height:56px;width:auto;object-fit:contain}'+
+  '.ci{text-align:right;font-size:11.5px;line-height:1.6;color:#64748B}'+
+  '.ci strong{color:#0F172A;font-weight:700}'+
+  '.tr{display:flex;justify-content:space-between;align-items:baseline;margin-top:28px;padding-bottom:8px;border-bottom:1px solid #E2E8F0}'+
+  '.ql{font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#0F172A}'+
+  '.qm{font-size:12.5px;font-weight:600;color:#64748B}'+
+  '.sl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#E31E24;margin-top:26px;margin-bottom:10px}'+
+  '.cg{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:14px 18px}'+
+  '.fr{display:flex;gap:6px;font-size:12.5px}'+
+  '.fl{font-weight:600;color:#64748B;min-width:76px}'+
+  'table{width:100%;border-collapse:collapse;margin-top:10px}'+
+  'th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748B;text-align:left;padding:10px 12px 10px 0;border-bottom:2px solid #E2E8F0}'+
+  'th:nth-child(2){text-align:center}'+
+  'th:nth-child(3),th:nth-child(4){text-align:right}'+
+  '.tv{font-size:20px;font-weight:800;color:#0F172A;letter-spacing:-0.5px}'+
+  '.pay-card{margin-top:22px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:12px;padding:14px 18px;color:#991B1B}'+
+  '.obs{margin-top:14px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;font-size:12px;white-space:pre-wrap;color:#334155;line-height:1.6}'+
+  '.ft{display:flex;justify-content:space-between;align-items:flex-end;margin-top:36px;padding-top:24px;border-top:1px solid #E2E8F0;gap:24px}'+
+  '.sa{text-align:center;min-width:220px}'+
+  '.sl2{border-top:1px solid #0F172A;margin-bottom:6px;width:220px}'+
+  '@media print{body{padding:24px 32px}@page{margin:12mm}}'+
+  '</style></head><body>'+
+  '<div class="hdr"><div>' + (logoSrc ? '<img src="'+logoSrc+'" alt="{{ current_user.company.name | replace("\'", "\\\'") }}">' : '<h2 style="font-size:22px;font-weight:800;color:#E31E24;margin:0;letter-spacing:-0.5px;">NORTH<span style="color:#0F172A;">WAY</span></h2>') + '</div>'+
   '<div class="ci">' + document.getElementById('companyInfoBlock').innerHTML + '</div></div>'+
-  '<div class="tr"><div class="ql">ORÇAMENTO</div><div class="qm">Nº '+esc(num)+' · '+esc(dateBR)+(cycle!=='unico'?' · '+(cycleLabels[cycle]||''):'')+'</div></div>'+
+  '<div class="tr"><div class="ql">PROPOSTA COMERCIAL</div><div class="qm">Nº '+esc(num)+' · '+esc(dateBR)+(cycle!=='unico'?' · '+(cycleLabels[cycle]||''):'')+'</div></div>'+
   '<div class="sl">Dados do Cliente</div>'+
   '<div class="cg">'+
-  '<div class="fr"><span class="fl">Empresa:</span> '+esc(cli.name)+'</div>'+
+  '<div class="fr"><span class="fl">Empresa:</span> <strong>'+esc(cli.name)+'</strong></div>'+
   '<div class="fr"><span class="fl">CNPJ/CPF:</span> '+esc(cli.doc)+'</div>'+
   '<div class="fr"><span class="fl">Contato:</span> '+esc(cli.contact)+'</div>'+
   '<div class="fr"><span class="fl">Telefone:</span> '+esc(cli.phone)+'</div>'+
   '<div class="fr" style="grid-column:1/-1"><span class="fl">Endereço:</span> '+esc(cli.addr)+'</div></div>'+
-  '<div class="sl">Itens do Orçamento</div>'+
-  '<table><thead><tr><th style="width:40%">Descrição</th><th style="width:15%">Qtd</th><th style="width:20%">Valor Unit.</th><th style="width:20%">Subtotal</th></tr></thead>'+
+  '<div class="sl">Itens & Serviços</div>'+
+  '<table><thead><tr><th style="width:48%">Descrição</th><th style="width:12%">Qtd</th><th style="width:20%">Valor Unit.</th><th style="width:20%">Subtotal</th></tr></thead>'+
   '<tbody>'+itemRows+'</tbody>'+
-  '<tfoot><tr><td colspan="3" style="padding:12px 8px 8px 0;font-size:14px;font-weight:600;text-align:right">TOTAL</td>'+
-  '<td style="padding:12px 8px 8px 0;text-align:right"><span class="tv">'+esc(total)+'</span></td></tr></tfoot></table>'+
-  buildPaymentExport(installN, total, cycle)+
-  (obs ? '<div class="sl">Observações</div><div class="obs">'+esc(obs)+'</div>' : '')+
+  '<tfoot><tr><td colspan="3" style="padding:14px 8px 8px 0;font-size:13px;font-weight:700;text-align:right;color:#64748B">VALOR TOTAL:</td>'+
+  '<td style="padding:14px 0 8px 8px;text-align:right"><span class="tv">'+esc(total)+'</span></td></tr></tfoot></table>'+
+  '<div class="pay-card">'+buildPaymentExport(installN, total, cycle)+'</div>'+
+  (obs ? '<div class="sl">Observações & Condições</div><div class="obs">'+esc(obs)+'</div>' : '')+
+  '<div class="ft"><div style="font-size:11.5px;color:#64748B">Validade da proposta: <strong>'+esc(valid)+'</strong> a partir da data de emissão.</div>'+
+  '<div class="sa"><div class="sl2"></div><div style="font-size:12px;font-weight:700;color:#0F172A;">{{ current_user.name | replace("\'", "\\\'") }}</div>'+
+  '<div style="font-size:11px;color:#64748B">{{ current_user.company.name | replace("\'", "\\\'") }}</div></div></div>'+
+  '</body></html>';
+}
   '<div class="ft"><div style="font-size:12px;color:#71706E">Validade: '+esc(valid)+' a partir da data de emissão.</div>'+
   '<div class="sa"><div class="sl2"></div><div style="font-size:12px;font-weight:600">{{ current_user.name | replace("\'", "\\\'") }}</div>'+
   '<div style="font-size:11px;color:#71706E">{{ current_user.company.name | replace("\'", "\\\'") }}</div></div></div>'+
