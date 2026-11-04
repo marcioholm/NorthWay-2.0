@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NorthWay · Prospecção de Empresas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <style>
+        :root {
+            --nw-red: #E31E24;
+            --nw-red-dark: #C31419;
+            --nw-slate-900: #0F172A;
+            --nw-slate-800: #1E293B;
+            --nw-slate-100: #F1F5F9;
+            --nw-slate-50: #F8FAFC;
+            --nw-border: #E2E8F0;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #F8FAFC;
+            color: #0F172A;
+            -webkit-font-smoothing: antialiased;
+        }
+        #map {
+            width: 100%;
+            height: calc(100vh - 200px);
+            min-height: 560px;
+            border-radius: 12px;
+            z-index: 10;
+        }
+        .leads-scroll-container {
+            height: calc(100vh - 200px);
+            min-height: 560px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #CBD5E1 transparent;
+        }
+        .leads-scroll-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        .leads-scroll-container::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 4px;
+        }
+        .nw-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #E31E24;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 11px;
+            border: 2px solid #FFFFFF;
+            box-shadow: 0 4px 10px rgba(227, 30, 36, 0.4), 0 1px 3px rgba(0,0,0,0.12);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+            cursor: pointer;
+        }
+        .nw-pin:hover, .nw-pin-highlight {
+            transform: scale(1.25);
+            background: #0F172A;
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.35);
+            z-index: 9999 !important;
+        }
+        .nw-pin-center {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0F172A;
+            border: 2px solid #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(227, 30, 36, 0.25);
+            transition: box-shadow 0.2s ease;
+        }
+        @keyframes sonar {
+            0% {
+                box-shadow: 0 0 0 0 rgba(227, 30, 36, 0.8), 0 0 0 4px rgba(227, 30, 36, 0.25);
+            }
+            70% {
+                box-shadow: 0 0 0 32px rgba(227, 30, 36, 0), 0 0 0 6px rgba(227, 30, 36, 0.1);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(227, 30, 36, 0), 0 0 0 4px rgba(227, 30, 36, 0.25);
+            }
+        }
+        .nw-pin-center-mining {
+            animation: sonar 1.6s infinite cubic-bezier(0.4, 0, 0.2, 1);
+            background: #E31E24 !important;
+        }
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        .shimmer-placeholder {
+            position: relative;
+            overflow: hidden;
+            background-color: #F1F5F9;
+        }
+        .shimmer-placeholder::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(241, 245, 249, 0) 0,
+                rgba(255, 255, 255, 0.9) 50%,
+                rgba(241, 245, 249, 0) 100%
+            );
+            animation: shimmer 1.5s infinite;
+            content: '';
+        }
+        @keyframes progress-indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(350%); }
+        }
+        .mining-bar-anim {
+            animation: progress-indeterminate 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        .lead-card {
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+            border: 1px solid #E2E8F0;
+        }
+        .lead-card:hover {
+            border-color: #94A3B8;
+        }
+        .lead-card.active-card {
+            border-color: #E31E24;
+            background-color: #FFFFFF;
+            box-shadow: 0 0 0 1px #E31E24;
+        }
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px !important;
+            padding: 0 !important;
+            overflow: hidden;
+            font-family: inherit !important;
+            box-shadow: 0 16px 30px -10px rgba(15, 23, 42, 0.2) !important;
+            border: 1px solid #E2E8F0;
+        }
+        .leaflet-popup-content {
+            margin: 0 !important;
+            line-height: 1.4 !important;
+        }
+    </style>
+</head>
+<body class="bg-[#F8FAFC]">
+    
+    <!-- Toast Notification (Substitui os alerts toscos) -->
+    <div id="toast" class="fixed bottom-6 right-6 z-[2000] hidden items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold border border-slate-700 transition-all">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+        <span id="toastMessage">Operação concluída.</span>
+    </div>
+
+    <!-- Main Shell -->
+    <div class="max-w-[1720px] mx-auto px-4 py-3 space-y-3">
+
+        <!-- Top Navigation Bar -->
+        <header class="bg-white border border-slate-200 rounded-xl px-5 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-5">
+                <a href="/" class="flex items-center">
+                    <img src="/logo.png" alt="NorthWay" class="h-9 w-auto object-contain">
+                </a>
+                
+                <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
+
+                <div class="hidden sm:flex items-center gap-2.5">
+                    <span class="text-xs font-semibold text-slate-700">Prospecção de Mercado</span>
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Conectado ao Google Maps
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="openExtensionModal()" class="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-semibold text-red-700 flex items-center gap-1.5 transition-colors cursor-pointer" title="Baixar Extensão do Chrome para CNPJ.biz, Meta Ads e Instagram">
+                    <i data-lucide="puzzle" class="w-3.5 h-3.5 text-red-600"></i>
+                    <span>Extensão Chrome</span>
+                </button>
+                <button onclick="toggleHistoryDrawer()" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2 transition-colors">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-500"></i>
+                    <span>Histórico de Buscas</span>
+                    <span id="historyCounterBadge" class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[10px] font-bold">0</span>
+                </button>
+                <a href="http://localhost:5000/prospecting/discover" target="_blank"
+                   class="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span>Abrir CRM</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Search Controls Toolbar -->
+        <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs space-y-2.5">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
+                
+                <!-- Segmento -->
+                <div class="md:col-span-4">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                        Segmento de Atuação
+                    </label>
+                    <div class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus-within:border-slate-400 focus-within:bg-white transition-colors">
+                        <i data-lucide="briefcase" class="w-4 h-4 text-slate-400 mr-2 shrink-0"></i>
+                        <input type="text" id="inputNiche" value=""
+                               placeholder="Ex: Suplementos, Energia Solar, Odontologia..."
+                               class="w-full text-xs font-medium text-slate-900 bg-transparent focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Município / Cidade (Opcional - Com todas as cidades do Brasil) -->
+                <div class="md:col-span-3">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-[11px] font-medium text-slate-600">
+                            Cidade <span class="text-slate-400 font-normal">(Opcional)</span>
+                        </label>
+                        <span id="stateModeIndicator" class="text-[10px] text-slate-400 font-medium">Vazio = Estado todo</span>
+                    </div>
+                    <div class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus-within:border-slate-400 focus-within:bg-white transition-colors relative">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 mr-2 shrink-0"></i>
+                        <input type="text" id="inputCity" value="" list="citiesDataList"
+                               placeholder="Digite para autocompletar ou vazio = Estado"
+                               oninput="onCityInputChanged()"
+                               autocomplete="off"
+                               class="w-full text-xs font-medium text-slate-900 bg-transparent focus:outline-none">
+                        <datalist id="citiesDataList"></datalist>
+                    </div>
+                </div>
+
+                <!-- Estado (UF) -->
+                <div class="md:col-span-2">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                        Estado (UF)
+                    </label>
+                    <div class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 focus-within:border-slate-400 focus-within:bg-white">
+                        <select id="selectState" onchange="onStateChanged()" class="w-full text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer">
+                            <option value="PR" selected>PR - Paraná</option>
+                            <option value="SP">SP - São Paulo</option>
+                            <option value="MG">MG - Minas Gerais</option>
+                            <option value="SC">SC - Santa Catarina</option>
+                            <option value="RS">RS - Rio Grande do Sul</option>
+                            <option value="RJ">RJ - Rio de Janeiro</option>
+                            <option value="BA">BA - Bahia</option>
+                            <option value="GO">GO - Goiás</option>
+                            <option value="DF">DF - Distrito Federal</option>
+                            <option value="ES">ES - Espírito Santo</option>
+                            <option value="MT">MT - Mato Grosso</option>
+                            <option value="MS">MS - Mato Grosso do Sul</option>
+                            <option value="CE">CE - Ceará</option>
+                            <option value="PE">PE - Pernambuco</option>
+                            <option value="PA">PA - Pará</option>
+                            <option value="MA">MA - Maranhão</option>
+                            <option value="PB">PB - Paraíba</option>
+                            <option value="RN">RN - Rio Grande do Norte</option>
+                            <option value="AL">AL - Alagoas</option>
+                            <option value="PI">PI - Piauí</option>
+                            <option value="SE">SE - Sergipe</option>
+                            <option value="TO">TO - Tocantins</option>
+                            <option value="RO">RO - Rondônia</option>
+                            <option value="AC">AC - Acre</option>
+                            <option value="AP">AP - Amapá</option>
+                            <option value="RR">RR - Roraima</option>
+                            <option value="AM">AM - Amazonas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Raio -->
+                <div class="md:col-span-2">
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                        Raio de Cobertura
+                    </label>
+                    <div class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2">
+                        <select id="selectRadius" onchange="onRadiusChange()" class="w-full text-xs font-medium text-slate-800 bg-transparent focus:outline-none cursor-pointer">
+                            <option value="15" selected>15 km (Local)</option>
+                            <option value="35">35 km (Microrregião)</option>
+                            <option value="60">60 km (Regional)</option>
+                            <option value="120">120 km (Macrorregião)</option>
+                            <option value="0">Estado Todo (Sem corte)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Botão de Busca -->
+                <div class="md:col-span-1">
+                    <button type="button" id="btnStartSearch" onclick="handleStartSearch()"
+                            class="w-full py-2 px-3 rounded-lg bg-[#E31E24] hover:bg-[#C31419] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+                        <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                        <span id="btnStartSearchText">Buscar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Escopo e Status da Busca -->
+            <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                <div class="flex items-center gap-1.5 text-slate-500 font-medium text-[11px]" id="searchScopeText">
+                    <i data-lucide="crosshair" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span>Escopo: <strong class="text-slate-800" id="searchScopeTarget">Cidade de Wenceslau Braz, PR (15 km)</strong></span>
+                </div>
+                <div class="text-[10px] text-slate-400">
+                    Dica: Deixe a cidade vazia para prospectar no estado todo
+                </div>
+            </div>
+
+            <!-- Quick Filters & Scope Settings -->
+            <div class="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-100 text-xs">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[11px] text-slate-400 font-medium mr-1">Atalhos:</span>
+                    <button type="button" onclick="quickNiche('Suplementos')" class="px-2.5 py-0.5 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 text-[11px] font-medium bg-white transition-colors">
+                        Suplementos
+                    </button>
+                    <button type="button" onclick="quickNiche('Energia Solar')" class="px-2.5 py-0.5 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 text-[11px] font-medium bg-white transition-colors">
+                        Energia Solar
+                    </button>
+                    <button type="button" onclick="quickNiche('Odontologia')" class="px-2.5 py-0.5 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 text-[11px] font-medium bg-white transition-colors">
+                        Odontologia
+                    </button>
+                    <button type="button" onclick="quickNiche('Imobiliária')" class="px-2.5 py-0.5 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 text-[11px] font-medium bg-white transition-colors">
+                        Imobiliárias
+                    </button>
+                    <button type="button" onclick="quickNiche('Contabilidade')" class="px-2.5 py-0.5 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 text-[11px] font-medium bg-white transition-colors">
+                        Contabilidade
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <label class="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium cursor-pointer select-none">
+                        <input type="checkbox" id="filterStrictRadius" checked onchange="applyFiltersAndRender()" class="rounded border-slate-300 text-[#E31E24] focus:ring-0">
+                        <span>Restringir ao raio selecionado</span>
+                    </label>
+                    <button type="button" onclick="toggleAdvancedOptions()" class="text-[11px] text-slate-500 hover:text-slate-800 font-medium flex items-center gap-1">
+                        <i data-lucide="sliders" class="w-3 h-3"></i>
+                        <span>Avançado</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Parâmetros Técnicos (Recolhido) -->
+            <div id="advancedOptionsPanel" class="hidden pt-2 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-2.5">
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-500 mb-0.5">Profundidade da Pesquisa</label>
+                    <select id="advDepth" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-xs font-medium">
+                        <option value="2">Rápido (~30 registros)</option>
+                        <option value="5" selected>Padrão (~80 registros)</option>
+                        <option value="10">Profundo (~150+ registros)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-medium text-slate-500 mb-0.5">Coordenadas de Referência</label>
+                    <div class="flex gap-1.5">
+                        <input type="text" id="geoLat" value="-23.874884" placeholder="Lat" class="w-1/2 p-1.5 bg-slate-50 border border-slate-200 rounded text-xs font-mono">
+                        <input type="text" id="geoLon" value="-49.803587" placeholder="Lon" class="w-1/2 p-1.5 bg-slate-50 border border-slate-200 rounded text-xs font-mono">
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 pt-4">
+                    <label class="flex items-center gap-1.5 text-xs text-slate-600 font-medium cursor-pointer">
+                        <input type="checkbox" id="advEmail" checked class="rounded border-slate-300 text-[#E31E24]">
+                        <span>Coletar e-mails institucionais</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 text-xs text-slate-600 font-medium cursor-pointer">
+                        <input type="checkbox" id="advFast" class="rounded border-slate-300 text-[#E31E24]">
+                        <span>Modo Rápido</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Workspace: Split View -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
+            
+            <!-- Left Panel: Feed de Empresas (5 cols) -->
+            <div class="lg:col-span-5 space-y-2.5">
+                <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="min-w-0 pr-2">
+                            <div class="flex items-center gap-2">
+                                <h2 id="resultsHeaderTitle" class="text-xs font-bold text-slate-900 truncate max-w-[220px]">
+                                    Selecione uma Prospecção
+                                </h2>
+                                <span id="resultsHeaderCount" class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[11px] font-bold">0</span>
+                                <button id="btnClearSelection" onclick="clearCurrentSelection()" class="hidden text-slate-400 hover:text-slate-700 cursor-pointer p-0.5 rounded hover:bg-slate-100 transition-colors" title="Limpar seleção e voltar à tela inicial">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                            <p id="resultsHeaderSub" class="text-[11px] text-slate-500 font-medium">
+                                Nenhum registro selecionado
+                            </p>
+                        </div>
+
+                        <div id="resultsActions" class="hidden items-center gap-1.5 shrink-0">
+                            <button onclick="importLeadsToCrm(filteredLeads)" id="btnImportCrm"
+                                    class="px-3 py-1.5 rounded-lg bg-[#E31E24] hover:bg-[#C31419] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                    title="Enviar todos para o Funil de Vendas">
+                                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                <span>Importar no CRM</span>
+                            </button>
+                            <a id="btnDownloadCsv" href="#"
+                               class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+                               title="Exportar arquivo CSV">
+                                <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+                                <span>CSV</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Linha de Progresso Dinâmica durante a Mineração -->
+                    <div id="miningProgressBar" class="h-1 w-full bg-slate-100 rounded-full overflow-hidden hidden">
+                        <div class="h-full w-1/3 bg-[#E31E24] rounded-full mining-bar-anim"></div>
+                    </div>
+                </div>
+
+                <!-- Feed Scrollable -->
+                <div id="leadsListContainer" class="leads-scroll-container space-y-2 pr-1">
+                    <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 space-y-1.5">
+                        <i data-lucide="inbox" class="w-6 h-6 mx-auto text-slate-300"></i>
+                        <p class="text-xs font-medium text-slate-600">Nenhum registro exibido.</p>
+                        <p class="text-[11px] text-slate-400">Inicie uma nova busca ou abra uma extração do histórico.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Mapa Interativo (7 cols) -->
+            <div class="lg:col-span-7 relative">
+                <div class="bg-white border border-slate-200 rounded-xl p-1.5 relative">
+                    <div id="map"></div>
+                    
+                    <div class="absolute top-4 right-4 z-[500]">
+                        <button onclick="fitMapBounds()" class="px-2.5 py-1.5 rounded-lg bg-white/95 border border-slate-200 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 flex items-center gap-1.5 transition-colors">
+                            <i data-lucide="maximize-2" class="w-3.5 h-3.5 text-slate-500"></i>
+                            <span>Enquadrar</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Detalhes Cadastrais (Google Meu Negócio) -->
+    <div id="gmbModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[1100] hidden items-center justify-center p-3 md:p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-slate-200">
+            
+            <!-- Header da Ficha -->
+            <div class="p-4 border-b border-slate-100 flex items-start justify-between gap-3 bg-slate-50">
+                <div class="min-w-0 flex-1">
+                    <span id="gmbCategory" class="inline-block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        Empresa
+                    </span>
+                    <h3 id="gmbTitle" class="text-base font-bold text-slate-900 truncate">
+                        Nome da Empresa
+                    </h3>
+                </div>
+                <button onclick="closeGmbModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Corpo dos Dados -->
+            <div class="p-5 overflow-y-auto space-y-4 text-xs">
+                
+                <!-- Foto da Fachada se Houver -->
+                <div id="gmbCoverWrapper" class="h-36 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 hidden">
+                    <img id="gmbCoverImg" src="" alt="Fachada" class="w-full h-full object-cover">
+                </div>
+
+                <!-- Rating -->
+                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="star" class="w-4 h-4 fill-amber-400 text-amber-500"></i>
+                        <span id="gmbRatingVal" class="text-sm font-bold text-slate-900">5.0</span>
+                        <span id="gmbReviewsCount" class="text-slate-500 font-medium text-[11px]">(78 avaliações no Google)</span>
+                    </div>
+                    <span class="text-[10px] font-medium text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        Perfil Verificado
+                    </span>
+                </div>
+
+                <!-- Lista de Informações -->
+                <div class="space-y-2 text-slate-700">
+                    <div class="flex items-start gap-2.5">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                        <span id="gmbAddress" class="font-medium text-slate-800">Endereço</span>
+                    </div>
+
+                    <div class="flex items-center gap-2.5" id="gmbPhoneRow">
+                        <i data-lucide="phone" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                        <span id="gmbPhone" class="font-semibold text-slate-900">Telefone</span>
+                    </div>
+
+                    <div class="flex items-center gap-2.5" id="gmbEmailRow">
+                        <i data-lucide="mail" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                        <span id="gmbEmail" class="font-medium text-slate-700">E-mail</span>
+                    </div>
+
+                    <div class="flex items-center gap-2.5" id="gmbSiteRow">
+                        <i data-lucide="globe" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                        <a id="gmbWebsite" href="#" target="_blank" class="font-medium text-slate-800 underline truncate max-w-sm">Website</a>
+                    </div>
+                </div>
+
+                <!-- Horários de Funcionamento -->
+                <div id="gmbHoursContainer" class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between font-semibold text-slate-800 text-[11px]">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                            Horário de Funcionamento
+                        </span>
+                    </div>
+                    <div id="gmbHoursList" class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
+                    </div>
+                </div>
+
+                <!-- Investigação Societária & Decisores (QSA) -->
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="flex items-center gap-1.5 font-bold text-slate-900 text-xs">
+                            <i data-lucide="user-check" class="w-3.5 h-3.5 text-[#E31E24]"></i>
+                            <span>Tomadores de Decisão & Quadro Societário (QSA)</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-medium">Receita Federal</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500">
+                        Consulte o CNPJ, sócios-administradores e donos desta empresa para abordagem B2B direta:
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                        <a id="gmbCnpjBizLink" href="#" target="_blank"
+                           class="px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-400 text-slate-800 text-[11px] font-semibold flex items-center justify-between transition-colors shadow-2xs group">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="building" class="w-3.5 h-3.5 text-blue-600"></i>
+                                <span>Ver no CNPJ.biz</span>
+                            </div>
+                            <i data-lucide="external-link" class="w-3 h-3 text-slate-400 group-hover:text-slate-700"></i>
+                        </a>
+
+                        <a id="gmbCasaDadosLink" href="#" target="_blank"
+                           class="px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-400 text-slate-800 text-[11px] font-semibold flex items-center justify-between transition-colors shadow-2xs group">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="database" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                <span>Casa dos Dados</span>
+                            </div>
+                            <i data-lucide="external-link" class="w-3 h-3 text-slate-400 group-hover:text-slate-700"></i>
+                        </a>
+
+                        <a id="gmbGoogleQsaLink" href="#" target="_blank"
+                           class="px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-400 text-slate-800 text-[11px] font-semibold flex items-center justify-between transition-colors shadow-2xs group">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="search" class="w-3.5 h-3.5 text-[#E31E24]"></i>
+                                <span>Sócios no Google (QSA)</span>
+                            </div>
+                            <i data-lucide="external-link" class="w-3 h-3 text-slate-400 group-hover:text-slate-700"></i>
+                        </a>
+
+                        <a id="gmbLinkedinLink" href="#" target="_blank"
+                           class="px-3 py-2 rounded-lg bg-white border border-slate-200 hover:border-slate-400 text-slate-800 text-[11px] font-semibold flex items-center justify-between transition-colors shadow-2xs group">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="linkedin" class="w-3.5 h-3.5 text-[#0A66C2]"></i>
+                                <span>Diretores no LinkedIn</span>
+                            </div>
+                            <i data-lucide="external-link" class="w-3 h-3 text-slate-400 group-hover:text-slate-700"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Avaliações dos Clientes -->
+                <div id="gmbReviewsBlock" class="space-y-2 pt-1">
+                    <h4 class="font-semibold text-slate-800 text-xs">Comentários de Clientes</h4>
+                    <div id="gmbReviewsList" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- Footer com Ações -->
+            <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
+                <a id="gmbMapsLink" href="#" target="_blank"
+                   class="px-3.5 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-500"></i>
+                    <span>Abrir no Google Maps</span>
+                </a>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="importSingleLeadToCrm()" id="btnGmbImportCrm"
+                            class="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Adicionar ao CRM</span>
+                    </button>
+                    <a id="gmbWaBtn" href="#" target="_blank"
+                       class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                        <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                        <span>WhatsApp</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Histórico de Buscas -->
+    <div id="historyDrawer" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[1000] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-5 shadow-xl space-y-3 max-h-[80vh] flex flex-col border border-slate-200">
+            <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-sm font-bold text-slate-900">Histórico de Extrações</h3>
+                    <span id="historyModalBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
+                </div>
+                <button onclick="toggleHistoryDrawer()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Barra de Ações em Lote -->
+            <div class="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-xs">
+                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700 select-none">
+                    <input type="checkbox" id="selectAllJobsCheckbox" onchange="toggleSelectAllJobs(this.checked)" class="w-4 h-4 rounded border-slate-300 text-[#E31E24] focus:ring-[#E31E24] cursor-pointer">
+                    <span>Selecionar todas</span>
+                    <span id="selectedJobsCountBadge" class="text-[11px] text-slate-500 font-semibold hidden">(<span id="selectedJobsCount">0</span>)</span>
+                </label>
+                <div class="flex items-center gap-2">
+                    <button id="btnDeleteSelectedJobs" onclick="deleteSelectedJobs()" class="hidden px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold items-center gap-1.5 transition-colors cursor-pointer shadow-xs">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>Excluir Selecionadas (<span id="btnDeleteSelectedCount">0</span>)</span>
+                    </button>
+                    <button onclick="confirmClearAllHistory()" class="px-2 py-1 rounded text-slate-500 hover:text-red-600 hover:bg-red-50 text-[11px] font-medium transition-colors cursor-pointer" title="Apagar todas as pesquisas salvas">
+                        Limpar Tudo
+                    </button>
+                </div>
+            </div>
+
+            <div id="historyDrawerList" class="flex-1 overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-100">
+                <p class="text-center text-xs text-slate-400 py-6">Carregando histórico...</p>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <button onclick="loadJobs(false)" class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer">
+                    <i data-lucide="rotate-cw" class="w-3 h-3"></i>
+                    <span>Atualizar</span>
+                </button>
+                <button onclick="toggleHistoryDrawer()" class="px-4 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-semibold cursor-pointer hover:bg-slate-900">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Download da Extensão Chrome -->
+    <div id="extensionModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[1000] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center text-[#E31E24]">
+                        <i data-lucide="puzzle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">NorthWay Lead Copilot</h3>
+                        <p class="text-[11px] text-slate-500">Extensão para Google Chrome (Manifest V3)</p>
+                    </div>
+                </div>
+                <button onclick="closeExtensionModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-600">
+                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                    <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                        <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                        O que essa extensão faz?
+                    </span>
+                    <p class="text-[11px] text-slate-600 leading-relaxed">
+                        Ao navegar no <strong>CNPJ.biz</strong>, <strong>Casa dos Dados</strong>, <strong>Meta Ads Library</strong> ou <strong>Instagram</strong>, ela lê os dados em 1 clique e permite:
+                    </p>
+                    <ul class="list-disc pl-5 text-[11px] space-y-1 text-slate-700">
+                        <li>Identificar <strong>Sócios e Tomadores de Decisão</strong> (QSA)</li>
+                        <li>Checar se tem <strong>Anúncios Ativos</strong> (Meta Ads)</li>
+                        <li>Capturar <strong>Instagram e Seguidores</strong></li>
+                        <li><strong>Copiar direto para o Google Sheets</strong> ou enviar para o NorthWay CRM</li>
+                    </ul>
+                </div>
+
+                <!-- Botão de Download do ZIP -->
+                <div class="text-center py-2">
+                    <a href="/api/portal/download-extension" download="northway-lead-copilot.zip"
+                       class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#E31E24] hover:bg-[#C31419] text-white text-xs font-bold transition-colors shadow-md">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Baixar Extensão (.ZIP)</span>
+                    </a>
+                </div>
+
+                <!-- 3 Passos Simples de Instalação -->
+                <div class="space-y-2 pt-1 border-t border-slate-100">
+                    <span class="font-semibold text-slate-800 text-[11px] uppercase tracking-wider">Como instalar no Chrome em 3 passos:</span>
+                    <div class="grid grid-cols-1 gap-2 text-[11px]">
+                        <div class="flex items-start gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100">
+                            <span class="w-5 h-5 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center shrink-0 text-[10px]">1</span>
+                            <span>Baixe o arquivo acima e <strong>descompacte o .zip</strong> em qualquer pasta.</span>
+                        </div>
+                        <div class="flex items-start gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100">
+                            <span class="w-5 h-5 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center shrink-0 text-[10px]">2</span>
+                            <span>Abra o Chrome e vá em <code class="px-1 py-0.5 rounded bg-slate-200 text-slate-800 font-mono text-[10px]">chrome://extensions</code> e ative o <strong>Modo do desenvolvedor</strong> (canto superior direito).</span>
+                        </div>
+                        <div class="flex items-start gap-2.5 p-2 rounded-lg bg-slate-50 border border-slate-100">
+                            <span class="w-5 h-5 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center shrink-0 text-[10px]">3</span>
+                            <span>Clique em <strong>Carregar sem compactação</strong> e selecione a pasta descompactada. Pronto!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end">
+                <button onclick="closeExtensionModal()" class="px-4 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold cursor-pointer">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map = null;
+        let centerMarker = null;
+        let radiusCircle = null;
+        let leadsLayer = null;
+        let rawLoadedLeads = [];
+        let filteredLeads = [];
+        let markerMap = {};
+        let currentJobId = null;
+        let currentJobRadiusKm = 15;
+        let currentGmbLead = null;
+        let liveTrackingInterval = null;
+
+        const DEFAULT_LAT = -23.874884;
+        const DEFAULT_LON = -49.803587;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            updateSearchScopeUI();
+            loadCitiesForState('PR');
+            loadJobs(true);
+            setInterval(function() { loadJobs(false); }, 7000);
+
+            const cityInput = document.getElementById('inputCity');
+            if (cityInput) {
+                cityInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleStartSearch();
+                    }
+                });
+            }
+
+            const nicheInput = document.getElementById('inputNiche');
+            if (nicheInput) {
+                nicheInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleStartSearch();
+                    }
+                });
+            }
+
+            if (window.lucide) lucide.createIcons();
+        });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            if (toast && toastMsg) {
+                toastMsg.textContent = msg;
+                toast.classList.remove('hidden');
+                toast.classList.add('flex');
+                setTimeout(function() {
+                    toast.classList.add('hidden');
+                    toast.classList.remove('flex');
+                }, 4000);
+            }
+        }
+
+        function initMap() {
+            map = L.map('map', {
+                center: [DEFAULT_LAT, DEFAULT_LON],
+                zoom: 13
+            });
+
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            leadsLayer = L.layerGroup().addTo(map);
+            setCenterMarker(DEFAULT_LAT, DEFAULT_LON);
+            updateRadiusVisual();
+
+            map.on('click', async function(e) {
+                const lat = e.latlng.lat;
+                const lon = e.latlng.lng;
+                setCenterMarker(lat, lon);
+                document.getElementById('geoLat').value = lat.toFixed(6);
+                document.getElementById('geoLon').value = lon.toFixed(6);
+                updateRadiusVisual();
+                await reverseGeocode(lat, lon);
+            });
+
+            setTimeout(function() {
+                if (map) map.invalidateSize();
+            }, 300);
+        }
+
+        function setCenterMarker(lat, lon) {
+            const miningClass = isMining ? ' nw-pin-center-mining' : '';
+            if (centerMarker) {
+                centerMarker.setLatLng([lat, lon]);
+            } else {
+                const icon = L.divIcon({
+                    className: '',
+                    html: '<div class="nw-pin-center' + miningClass + '" title="Ponto de Referência"></div>',
+                    iconSize: [18, 18],
+                    iconAnchor: [9, 9]
+                });
+                centerMarker = L.marker([lat, lon], { icon: icon }).addTo(map);
+            }
+        }
+
+        function updateRadiusVisual() {
+            if (!map) return;
+            const lat = parseFloat(document.getElementById('geoLat').value) || DEFAULT_LAT;
+            const lon = parseFloat(document.getElementById('geoLon').value) || DEFAULT_LON;
+            const radiusKm = parseFloat(document.getElementById('selectRadius').value) || 15;
+
+            if (radiusCircle) {
+                radiusCircle.setLatLng([lat, lon]);
+                radiusCircle.setRadius(radiusKm * 1000);
+            } else {
+                radiusCircle = L.circle([lat, lon], {
+                    radius: radiusKm * 1000,
+                    color: '#E31E24',
+                    weight: 1.5,
+                    fillColor: '#E31E24',
+                    fillOpacity: 0.04,
+                    dashArray: '4, 4'
+                }).addTo(map);
+            }
+        }
+
+        function onRadiusChange() {
+            updateRadiusVisual();
+            applyFiltersAndRender(false);
+        }
+
+        function quickNiche(niche) {
+            document.getElementById('inputNiche').value = niche;
+            handleStartSearch();
+        }
+
+        function toggleAdvancedOptions() {
+            const p = document.getElementById('advancedOptionsPanel');
+            p.classList.toggle('hidden');
+        }
+
+        function toggleHistoryDrawer() {
+            const d = document.getElementById('historyDrawer');
+            d.classList.toggle('hidden');
+            d.classList.toggle('flex');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function openExtensionModal() {
+            const m = document.getElementById('extensionModal');
+            if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function closeExtensionModal() {
+            const m = document.getElementById('extensionModal');
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        }
+
+        const BRAZIL_STATES = {
+            'PR': { name: 'Paraná', lat: -24.89, lon: -51.55, capitals: ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel'] },
+            'SP': { name: 'São Paulo', lat: -22.19, lon: -48.79, capitals: ['São Paulo', 'Campinas', 'Guarulhos', 'São Bernardo do Campo', 'Ribeirão Preto'] },
+            'MG': { name: 'Minas Gerais', lat: -18.52, lon: -44.15, capitals: ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Montes Claros'] },
+            'SC': { name: 'Santa Catarina', lat: -27.24, lon: -50.21, capitals: ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Chapecó'] },
+            'RS': { name: 'Rio Grande do Sul', lat: -30.01, lon: -53.52, capitals: ['Porto Alegre', 'Caxias do Sul', 'Canoas', 'Pelotas', 'Santa Maria'] },
+            'RJ': { name: 'Rio de Janeiro', lat: -22.25, lon: -42.66, capitals: ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói'] },
+            'BA': { name: 'Bahia', lat: -12.57, lon: -41.70, capitals: ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari'] },
+            'GO': { name: 'Goiás', lat: -15.82, lon: -49.83, capitals: ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde'] },
+            'DF': { name: 'Distrito Federal', lat: -15.79, lon: -47.86, capitals: ['Brasília', 'Taguatinga', 'Ceilândia'] },
+            'ES': { name: 'Espírito Santo', lat: -19.18, lon: -40.30, capitals: ['Vitória', 'Vila Velha', 'Serra', 'Cariacica'] },
+            'MT': { name: 'Mato Grosso', lat: -12.68, lon: -56.92, capitals: ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop'] },
+            'MS': { name: 'Mato Grosso do Sul', lat: -20.77, lon: -54.78, capitals: ['Campo Grande', 'Dourados', 'Três Lagoas'] },
+            'CE': { name: 'Ceará', lat: -5.49, lon: -39.32, capitals: ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Sobral'] },
+            'PE': { name: 'Pernambuco', lat: -8.81, lon: -36.95, capitals: ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina'] },
+            'PA': { name: 'Pará', lat: -1.99, lon: -54.93, capitals: ['Belém', 'Ananindeua', 'Santarém', 'Marabá'] },
+            'MA': { name: 'Maranhão', lat: -4.96, lon: -45.27, capitals: ['São Luís', 'Imperatriz', 'Caxias'] },
+            'PB': { name: 'Paraíba', lat: -7.23, lon: -36.78, capitals: ['João Pessoa', 'Campina Grande', 'Santa Rita'] },
+            'RN': { name: 'Rio Grande do Norte', lat: -5.79, lon: -36.56, capitals: ['Natal', 'Mossoró', 'Parnamirim'] },
+            'AL': { name: 'Alagoas', lat: -9.57, lon: -36.78, capitals: ['Maceió', 'Arapiraca'] },
+            'PI': { name: 'Piauí', lat: -7.71, lon: -42.72, capitals: ['Teresina', 'Parnaíba', 'Picos'] },
+            'SE': { name: 'Sergipe', lat: -10.57, lon: -37.38, capitals: ['Aracaju', 'Nossa Senhora do Socorro'] },
+            'TO': { name: 'Tocantins', lat: -10.17, lon: -48.29, capitals: ['Palmas', 'Araguaína', 'Gurupi'] },
+            'RO': { name: 'Rondônia', lat: -11.50, lon: -63.58, capitals: ['Porto Velho', 'Ji-Paraná', 'Ariquemes'] },
+            'AC': { name: 'Acre', lat: -9.02, lon: -70.81, capitals: ['Rio Branco', 'Cruzeiro do Sul'] },
+            'AP': { name: 'Amapá', lat: 0.90, lon: -52.00, capitals: ['Macapá', 'Santana'] },
+            'RR': { name: 'Roraima', lat: 2.73, lon: -62.07, capitals: ['Boa Vista'] },
+            'AM': { name: 'Amazonas', lat: -3.41, lon: -65.85, capitals: ['Manaus', 'Parintins', 'Itacoatiara'] }
+        };
+
+        function updateSearchScopeUI() {
+            const cityInput = document.getElementById('inputCity');
+            const stateSelect = document.getElementById('selectState');
+            const targetEl = document.getElementById('searchScopeTarget');
+            const radiusSel = document.getElementById('selectRadius');
+            const strictCheck = document.getElementById('filterStrictRadius');
+            const city = (cityInput ? cityInput.value : '').trim();
+            const uf = stateSelect ? stateSelect.value : 'PR';
+            const stateInfo = BRAZIL_STATES[uf] || { name: 'Brasil' };
+
+            if (!city) {
+                if (targetEl) targetEl.textContent = 'Estado de ' + stateInfo.name + ' (todas as cidades e polos)';
+                if (radiusSel) radiusSel.value = '0';
+                if (strictCheck) strictCheck.checked = false;
+            } else {
+                const rVal = radiusSel ? (radiusSel.value === '0' ? '15 km' : radiusSel.value + ' km') : '15 km';
+                if (targetEl) targetEl.textContent = 'Cidade: ' + city + ', ' + uf + ' (' + rVal + ')';
+                if (radiusSel && radiusSel.value === '0') radiusSel.value = '15';
+                if (strictCheck) strictCheck.checked = true;
+            }
+        }
+
+        function onCityInputChanged() {
+            const cityInput = document.getElementById('inputCity');
+            const stateSelect = document.getElementById('selectState');
+            if (!cityInput) return;
+            const val = cityInput.value.trim().toLowerCase();
+
+            // Detecta se o usuário digitou o nome de um estado ou sigla no campo de cidade
+            for (const [uf, info] of Object.entries(BRAZIL_STATES)) {
+                if (val === uf.toLowerCase() || val === info.name.toLowerCase() || val === 'estado de ' + info.name.toLowerCase()) {
+                    if (stateSelect) stateSelect.value = uf;
+                    cityInput.value = '';
+                    showToast('Modo Estado ativado: ' + info.name);
+                    break;
+                }
+            }
+
+            // Se digitou "Cidade, UF" (ex: Curitiba, PR)
+            if (cityInput.value.includes(',')) {
+                const parts = cityInput.value.split(',');
+                const c = parts[0].trim();
+                const u = parts[1].trim().toUpperCase();
+                if (BRAZIL_STATES[u]) {
+                    cityInput.value = c;
+                    if (stateSelect) stateSelect.value = u;
+                }
+            }
+
+            updateSearchScopeUI();
+        }
+
+        async function loadCitiesForState(uf) {
+            try {
+                const datalist = document.getElementById('citiesDataList');
+                if (!datalist) return;
+                const resp = await fetch('/api/portal/cities?uf=' + encodeURIComponent(uf || 'PR'));
+                const data = await resp.json();
+                const cities = data.cities || [];
+                datalist.innerHTML = cities.map(function(c) {
+                    return '<option value="' + c + '">';
+                }).join('');
+            } catch (e) {
+                console.warn('Erro ao carregar cidades da UF:', e);
+            }
+        }
+
+        function onStateChanged() {
+            const stateSelect = document.getElementById('selectState');
+            const cityInput = document.getElementById('inputCity');
+            const uf = stateSelect ? stateSelect.value : 'PR';
+            const stateInfo = BRAZIL_STATES[uf];
+
+            loadCitiesForState(uf);
+
+            if (stateInfo && (!cityInput || !cityInput.value.trim())) {
+                setCenterMarker(stateInfo.lat, stateInfo.lon);
+                document.getElementById('geoLat').value = stateInfo.lat.toFixed(6);
+                document.getElementById('geoLon').value = stateInfo.lon.toFixed(6);
+                updateRadiusVisual();
+                if (map) map.flyTo([stateInfo.lat, stateInfo.lon], 7, { duration: 0.8 });
+            }
+            updateSearchScopeUI();
+        }
+
+        async function geocodeCity(cityName) {
+            try {
+                const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(cityName + ', Brasil') + '&limit=1';
+                const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+                const list = await resp.json();
+                if (list && list.length > 0) {
+                    const lat = parseFloat(list[0].lat);
+                    const lon = parseFloat(list[0].lon);
+                    return { lat: lat, lon: lon, display: list[0].display_name };
+                }
+            } catch (e) {
+                console.warn('Erro ao geocodificar:', e);
+            }
+            return null;
+        }
+
+        async function reverseGeocode(lat, lon) {
+            try {
+                const url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&zoom=12&addressdetails=1';
+                const resp = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+                const data = await resp.json();
+                if (data && data.address) {
+                    const city = data.address.city || data.address.town || data.address.municipality || data.address.village || '';
+                    const stateName = (data.address.state || '').toLowerCase();
+                    if (city) {
+                        document.getElementById('inputCity').value = city;
+                    }
+                    if (stateName) {
+                        for (const [code, info] of Object.entries(BRAZIL_STATES)) {
+                            if (info.name.toLowerCase() === stateName) {
+                                document.getElementById('selectState').value = code;
+                                break;
+                            }
+                        }
+                    }
+                    updateSearchScopeUI();
+                }
+            } catch (e) {}
+        }
+
+        async function handleStartSearch() {
+            const niche = document.getElementById('inputNiche').value.trim();
+            let city = document.getElementById('inputCity').value.trim();
+            const uf = document.getElementById('selectState').value;
+            const stateInfo = BRAZIL_STATES[uf] || { name: 'Brasil', lat: DEFAULT_LAT, lon: DEFAULT_LON, capitals: [] };
+            const radiusVal = parseFloat(document.getElementById('selectRadius').value) || 0;
+
+            if (!niche) {
+                showToast('Informe o segmento que deseja prospectar.');
+                return;
+            }
+
+            const isStateWide = !city || city.toLowerCase() === stateInfo.name.toLowerCase() || city.toUpperCase() === uf;
+            const jobName = isStateWide ? (niche + ' - ' + stateInfo.name) : (niche + ' - ' + city + ', ' + uf);
+
+            const btn = document.getElementById('btnStartSearch');
+            const btnText = document.getElementById('btnStartSearchText');
+            btn.disabled = true;
+            btnText.textContent = 'Localizando...';
+
+            let lat = stateInfo.lat;
+            let lon = stateInfo.lon;
+
+            if (isStateWide) {
+                lat = stateInfo.lat;
+                lon = stateInfo.lon;
+                document.getElementById('geoLat').value = lat.toFixed(6);
+                document.getElementById('geoLon').value = lon.toFixed(6);
+                setCenterMarker(lat, lon);
+                document.getElementById('filterStrictRadius').checked = false;
+                if (map) map.flyTo([lat, lon], 7, { duration: 0.8 });
+            } else {
+                const geoResult = await geocodeCity(city + ', ' + stateInfo.name);
+                if (geoResult) {
+                    lat = geoResult.lat;
+                    lon = geoResult.lon;
+                    document.getElementById('geoLat').value = lat.toFixed(6);
+                    document.getElementById('geoLon').value = lon.toFixed(6);
+                    setCenterMarker(lat, lon);
+                    updateRadiusVisual();
+                    if (map) map.flyTo([lat, lon], 13, { duration: 0.6 });
+                }
+            }
+
+            btnText.textContent = 'Iniciando...';
+
+            let keywords = [];
+            if (isStateWide) {
+                keywords.push(niche + ' em ' + stateInfo.name);
+                keywords.push(niche + ' ' + stateInfo.name);
+                keywords.push(niche + ' no estado de ' + stateInfo.name);
+                (stateInfo.capitals || []).forEach(function(polo) {
+                    keywords.push(niche + ' em ' + polo);
+                });
+            } else {
+                keywords.push(niche + ' em ' + city + ' ' + uf);
+                keywords.push(niche + ' ' + city);
+            }
+
+            if (niche.toLowerCase().includes('suplement')) {
+                const loc = isStateWide ? stateInfo.name : city;
+                keywords.push('loja de suplementos em ' + loc);
+                keywords.push('vitaminas e suplementos em ' + loc);
+            } else if (niche.toLowerCase().includes('solar')) {
+                const loc = isStateWide ? stateInfo.name : city;
+                keywords.push('painel solar em ' + loc);
+                keywords.push('energia solar fotovoltaica em ' + loc);
+                keywords.push('instalador energia solar em ' + loc);
+            } else if (niche.toLowerCase().includes('odonto')) {
+                const loc = isStateWide ? stateInfo.name : city;
+                keywords.push('dentista em ' + loc);
+                keywords.push('clinica odontologica em ' + loc);
+            } else if (niche.toLowerCase().includes('imobil')) {
+                const loc = isStateWide ? stateInfo.name : city;
+                keywords.push('imobiliaria em ' + loc);
+                keywords.push('corretor de imoveis em ' + loc);
+            }
+
+            const effectiveRadius = isStateWide ? 100000 : (radiusVal > 0 ? Math.round(radiusVal * 1000) : 35000);
+
+            const payload = {
+                name: jobName,
+                keywords: keywords,
+                lang: 'pt',
+                zoom: isStateWide ? 8 : 15,
+                lat: lat.toFixed(6),
+                lon: lon.toFixed(6),
+                fast_mode: document.getElementById('advFast').checked,
+                radius: effectiveRadius,
+                depth: parseInt(document.getElementById('advDepth').value) || (isStateWide ? 8 : 5),
+                email: document.getElementById('advEmail').checked,
+                max_time: 1200,
+                proxies: []
+            };
+
+            try {
+                const resp = await fetch('/api/v1/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!resp.ok) {
+                    const txt = await resp.text();
+                    throw new Error(txt || 'Erro ao processar consulta');
+                }
+                const resData = await resp.json();
+                const newJobId = resData.id || resData.ID;
+                if (newJobId) {
+                    startJobLiveTracking(newJobId, jobName);
+                } else {
+                    btn.disabled = false;
+                    btnText.textContent = 'Buscar';
+                }
+            } catch (err) {
+                showToast('Falha ao iniciar pesquisa: ' + err.message);
+                btn.disabled = false;
+                btnText.textContent = 'Buscar';
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        async function loadJobs(autoLoadLatest) {
+            try {
+                const resp = await fetch('/api/portal/jobs');
+                const data = await resp.json();
+                const jobs = data.jobs || [];
+
+                const counterBadge = document.getElementById('historyCounterBadge');
+                if (counterBadge) counterBadge.textContent = jobs.length;
+                const modalBadge = document.getElementById('historyModalBadge');
+                if (modalBadge) modalBadge.textContent = jobs.length;
+
+                const statusMap = {
+                    'ok': { label: 'Concluído', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                    'working': { label: 'Em andamento', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+                    'pending': { label: 'Na fila', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+                    'failed': { label: 'Falhou', cls: 'bg-red-50 text-red-700 border-red-200' },
+                    'canceled': { label: 'Cancelado', cls: 'bg-slate-100 text-slate-600 border-slate-200' }
+                };
+
+                const drawerContainer = document.getElementById('historyDrawerList');
+                if (jobs.length === 0) {
+                    drawerContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Nenhum registro anterior.</p>';
+                    onJobCheckboxChange();
+                    return;
+                }
+
+                drawerContainer.innerHTML = jobs.map(function(j) {
+                    const st = statusMap[j.status] || { label: j.status, cls: 'bg-slate-100 text-slate-600 border-slate-200' };
+                    const safeName = j.name.replace(/'/g, "\\'");
+                    return '<div class="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-colors flex items-center justify-between gap-3">' +
+                        '<div class="flex items-center gap-2.5 min-w-0 flex-1">' +
+                            '<input type="checkbox" class="job-batch-check w-4 h-4 rounded border-slate-300 text-[#E31E24] focus:ring-[#E31E24] cursor-pointer shrink-0" value="' + j.id + '" onchange="onJobCheckboxChange()">' +
+                            '<div class="min-w-0 flex-1">' +
+                                '<div class="flex items-center gap-2">' +
+                                    '<h4 class="font-semibold text-xs text-slate-900 truncate">' + j.name + '</h4>' +
+                                    '<span class="text-[10px] font-medium px-2 py-0.2 rounded-full border ' + st.cls + '">' + st.label + '</span>' +
+                                '</div>' +
+                                '<p class="text-[10px] text-slate-400 font-mono truncate mt-0.5">' + j.id + '</p>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="flex items-center gap-1 shrink-0">' +
+                            '<button onclick="viewJobOnMap(\'' + j.id + '\', \'' + safeName + '\'); toggleHistoryDrawer();" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-medium transition-colors flex items-center gap-1 cursor-pointer">' +
+                                '<span>Abrir</span>' +
+                            '</button>' +
+                            '<a href="/api/v1/jobs/' + encodeURIComponent(j.id) + '/download" class="p-1 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900" title="Exportar CSV">' +
+                                '<i data-lucide="download" class="w-3.5 h-3.5"></i>' +
+                            '</a>' +
+                            '<button onclick="deleteJob(\'' + j.id + '\')" class="p-1 rounded-md text-slate-400 hover:text-red-600 cursor-pointer" title="Excluir">' +
+                                '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+
+                onJobCheckboxChange();
+                if (window.lucide) lucide.createIcons();
+
+                if (autoLoadLatest && !currentJobId && jobs.length > 0) {
+                    // Prioriza a busca concluída mais recente para não travar a tela
+                    let targetJob = jobs.find(function(j) { return j.status === 'ok'; }) || jobs[0];
+                    if (targetJob) {
+                        viewJobOnMap(targetJob.id, targetJob.name, false);
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao carregar lista de tarefas:', e);
+            }
+        }
+
+        function toggleSelectAllJobs(checked) {
+            const checks = document.querySelectorAll('.job-batch-check');
+            checks.forEach(function(c) { c.checked = checked; });
+            onJobCheckboxChange();
+        }
+
+        function onJobCheckboxChange() {
+            const checks = Array.from(document.querySelectorAll('.job-batch-check'));
+            const selected = checks.filter(function(c) { return c.checked; });
+            const count = selected.length;
+
+            const badge = document.getElementById('selectedJobsCountBadge');
+            const countEl = document.getElementById('selectedJobsCount');
+            const btnBatch = document.getElementById('btnDeleteSelectedJobs');
+            const btnBatchCount = document.getElementById('btnDeleteSelectedCount');
+            const selectAll = document.getElementById('selectAllJobsCheckbox');
+
+            if (badge) badge.classList.toggle('hidden', count === 0);
+            if (countEl) countEl.textContent = count;
+            if (btnBatchCount) btnBatchCount.textContent = count;
+
+            if (btnBatch) {
+                if (count > 0) {
+                    btnBatch.classList.remove('hidden');
+                    btnBatch.classList.add('flex');
+                } else {
+                    btnBatch.classList.add('hidden');
+                    btnBatch.classList.remove('flex');
+                }
+            }
+
+            if (selectAll && checks.length > 0) {
+                selectAll.checked = (count === checks.length);
+                selectAll.indeterminate = (count > 0 && count < checks.length);
+            }
+        }
+
+        async function deleteSelectedJobs() {
+            const checks = Array.from(document.querySelectorAll('.job-batch-check:checked'));
+            const ids = checks.map(function(c) { return c.value; });
+            if (ids.length === 0) return;
+
+            const confirmMsg = 'Deseja excluir as ' + ids.length + ' prospecções selecionadas do sistema e remover os arquivos gerados?';
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const resp = await fetch('/api/portal/jobs/batch-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: ids })
+                });
+                const res = await resp.json();
+                if (ids.includes(currentJobId)) {
+                    clearCurrentSelection();
+                }
+                loadJobs(false);
+                showToast(ids.length + ' prospecç' + (ids.length === 1 ? 'ão removida' : 'ões removidas') + ' com sucesso.');
+            } catch (e) {
+                showToast('Erro ao excluir em lote: ' + e.message);
+            }
+        }
+
+        async function confirmClearAllHistory() {
+            if (!confirm('ATENÇÃO: Deseja apagar TODO o histórico de prospecções e arquivos salvos? Esta ação não pode ser desfeita.')) return;
+            try {
+                await fetch('/api/portal/jobs/batch-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ all: true })
+                });
+                clearCurrentSelection();
+                loadJobs(false);
+                showToast('Histórico completamente limpo.');
+            } catch (e) {
+                showToast('Erro ao limpar histórico: ' + e.message);
+            }
+        }
+
+        async function deleteJob(id) {
+            if (!confirm('Deseja excluir esta pesquisa?')) return;
+            await fetch('/api/v1/jobs/' + encodeURIComponent(id), { method: 'DELETE' });
+            if (currentJobId === id) {
+                clearCurrentSelection();
+            }
+            loadJobs(false);
+            showToast('Pesquisa removida.');
+        }
+
+        function clearCurrentSelection() {
+            currentJobId = null;
+            rawLoadedLeads = [];
+            filteredLeads = [];
+            document.getElementById('resultsHeaderTitle').textContent = 'Selecione uma Prospecção';
+            document.getElementById('resultsHeaderCount').textContent = '0';
+            document.getElementById('resultsHeaderSub').textContent = 'Nenhum registro selecionado';
+            
+            const actions = document.getElementById('resultsActions');
+            if (actions) {
+                actions.classList.add('hidden');
+                actions.classList.remove('flex');
+            }
+            const clearBtn = document.getElementById('btnClearSelection');
+            if (clearBtn) clearBtn.classList.add('hidden');
+
+            const container = document.getElementById('leadsListContainer');
+            if (container) {
+                container.innerHTML = '<div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 space-y-1.5">' +
+                    '<i data-lucide="inbox" class="w-6 h-6 mx-auto text-slate-300"></i>' +
+                    '<p class="text-xs font-medium text-slate-600">Nenhum registro exibido.</p>' +
+                    '<p class="text-[11px] text-slate-400">Inicie uma nova busca ou abra uma extração do histórico.</p>' +
+                '</div>';
+            }
+            if (leadsLayer) leadsLayer.clearLayers();
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function stopOrCancelJob(id) {
+            if (!confirm('Deseja interromper e cancelar esta pesquisa?')) return;
+            try {
+                await fetch('/api/portal/jobs/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                showToast('Pesquisa interrompida.');
+                loadJobs(false);
+                clearCurrentSelection();
+            } catch (e) {
+                showToast('Erro ao cancelar: ' + e.message);
+            }
+        }
+
+        function disableRadiusFilterAndRefresh() {
+            const filterCheck = document.getElementById('filterStrictRadius');
+            if (filterCheck) filterCheck.checked = false;
+            applyFiltersAndRender(false);
+            fitMapBounds();
+            showToast('Exibindo todos os estabelecimentos da busca no mapa.');
+        }
+
+        let isMining = false;
+        let miningTimerInterval = null;
+        let miningSeconds = 0;
+
+        function setMiningVisual(mining) {
+            isMining = mining;
+            const bar = document.getElementById('miningProgressBar');
+            if (bar) {
+                if (mining) bar.classList.remove('hidden');
+                else bar.classList.add('hidden');
+            }
+
+            if (centerMarker && centerMarker.getElement()) {
+                const centerEl = centerMarker.getElement().querySelector('.nw-pin-center');
+                if (centerEl) {
+                    if (mining) centerEl.classList.add('nw-pin-center-mining');
+                    else centerEl.classList.remove('nw-pin-center-mining');
+                }
+            }
+
+            if (radiusCircle) {
+                if (mining) {
+                    radiusCircle.setStyle({ color: '#E31E24', weight: 2, fillOpacity: 0.1 });
+                } else {
+                    radiusCircle.setStyle({ color: '#E31E24', weight: 1.5, fillOpacity: 0.04 });
+                }
+            }
+        }
+
+        function renderMiningLiveFeed(jobName, jobId) {
+            const container = document.getElementById('leadsListContainer');
+            if (!container) return;
+
+            document.getElementById('resultsHeaderTitle').textContent = jobName;
+            document.getElementById('resultsHeaderCount').innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin text-[#E31E24]"></i>';
+            document.getElementById('resultsHeaderSub').innerHTML = '<span class="inline-flex items-center gap-1.5 text-slate-800 font-semibold text-xs">' +
+                '<i data-lucide="radar" class="w-3.5 h-3.5 text-[#E31E24] animate-pulse"></i>' +
+                '<span>Varredura ativa no Google Maps...</span>' +
+            '</span>';
+
+            const actions = document.getElementById('resultsActions');
+            if (actions) actions.classList.add('hidden');
+            const clearBtn = document.getElementById('btnClearSelection');
+            if (clearBtn) clearBtn.classList.add('hidden');
+
+            container.innerHTML = '<div class="space-y-3">' +
+                '<!-- Card de Mineração Ativa -->' +
+                '<div class="bg-slate-900 text-white rounded-xl p-4 shadow-sm space-y-3 border border-slate-800">' +
+                    '<div class="flex items-center justify-between">' +
+                        '<div class="flex items-center gap-2">' +
+                            '<span class="relative flex h-3 w-3">' +
+                                '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>' +
+                                '<span class="relative inline-flex rounded-full h-3 w-3 bg-[#E31E24]"></span>' +
+                            '</span>' +
+                            '<h4 class="text-xs font-bold tracking-tight text-white">Robô Prospectando no Google Maps</h4>' +
+                        '</div>' +
+                        '<span class="font-mono text-xs font-semibold text-rose-300 bg-rose-950/70 px-2 py-0.5 rounded border border-rose-900/50" id="miningTimerBadge">00:00</span>' +
+                    '</div>' +
+                    '<p class="text-[11px] text-slate-300 leading-relaxed" id="miningStepDescription">' +
+                        'Conectando ao Google Maps e posicionando coordenadas...' +
+                    '</p>' +
+                    '<div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">' +
+                        '<div class="h-full bg-gradient-to-r from-[#E31E24] via-rose-500 to-[#E31E24] rounded-full mining-bar-anim w-full"></div>' +
+                    '</div>' +
+                    '<div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">' +
+                        '<span class="flex items-center gap-1 text-emerald-400 font-medium">' +
+                            '<i data-lucide="shield-check" class="w-3 h-3"></i>' +
+                            'Extração Automática Ativa' +
+                        '</span>' +
+                        '<button onclick="stopOrCancelJob(\'' + jobId + '\')" class="text-rose-400 hover:text-white underline cursor-pointer font-medium">' +
+                            'Interromper Busca' +
+                        '</button>' +
+                    '</div>' +
+                '</div>' +
+                '<!-- Cards Skeleton Shimmer -->' +
+                getSkeletonHtml('Mapeando primeiros estabelecimentos...') +
+                getSkeletonHtml('Coletando telefones e WhatsApp...') +
+                getSkeletonHtml('Verificando notas e avaliações...') +
+            '</div>';
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function startJobLiveTracking(jobId, jobName) {
+            if (liveTrackingInterval) clearInterval(liveTrackingInterval);
+            if (miningTimerInterval) clearInterval(miningTimerInterval);
+
+            currentJobId = jobId;
+            setMiningVisual(true);
+            miningSeconds = 0;
+
+            // Bloqueia e anima o botão de busca enquanto minera
+            const btn = document.getElementById('btnStartSearch');
+            const btnText = document.getElementById('btnStartSearchText');
+            if (btn && btnText) {
+                btn.disabled = true;
+                btn.classList.add('opacity-90', 'cursor-wait');
+                btnText.innerHTML = '<span class="inline-flex items-center gap-1.5"><i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Minerando...</span>';
+            }
+
+            renderMiningLiveFeed(jobName, jobId);
+
+            const steps = [
+                { limit: 5, text: 'Conectando ao Google Maps e navegando pelas coordenadas...' },
+                { limit: 14, text: 'Identificando estabelecimentos comerciais e notas de avaliação...' },
+                { limit: 25, text: 'Extraindo telefones comerciais, WhatsApp verificado e horários...' },
+                { limit: 999, text: 'Consolidando dados e organizando listagem final...' }
+            ];
+
+            miningTimerInterval = setInterval(function() {
+                miningSeconds++;
+                const min = String(Math.floor(miningSeconds / 60)).padStart(2, '0');
+                const sec = String(miningSeconds % 60).padStart(2, '0');
+                
+                const badge = document.getElementById('miningTimerBadge');
+                if (badge) badge.textContent = min + ':' + sec;
+
+                const stepEl = document.getElementById('miningStepDescription');
+                if (stepEl) {
+                    const currentStep = steps.find(function(s) { return miningSeconds <= s.limit; }) || steps[steps.length - 1];
+                    stepEl.textContent = currentStep.text;
+                }
+            }, 1000);
+
+            // Polling dinâmico resiliente: checa status sem travar a tela
+            liveTrackingInterval = setInterval(async function() {
+                try {
+                    const resp = await fetch('/api/portal/jobs/' + encodeURIComponent(jobId) + '/status');
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+
+                    // Se a extração terminou com sucesso ou já há dados no arquivo
+                    if (data.status === 'ok' || data.count > 0) {
+                        clearInterval(liveTrackingInterval);
+                        clearInterval(miningTimerInterval);
+                        liveTrackingInterval = null;
+                        miningTimerInterval = null;
+                        setMiningVisual(false);
+
+                        // Restaura o botão de busca
+                        if (btn && btnText) {
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-90', 'cursor-wait');
+                            btnText.textContent = 'Buscar';
+                        }
+
+                        // Carrega os dados reais na tela instantaneamente (sem precisar de F5)
+                        await viewJobOnMap(jobId, jobName, false);
+                        fitMapBounds();
+                        loadJobs(false);
+                        showToast('Mineração concluída! ' + filteredLeads.length + ' estabelecimentos identificados.');
+                    } else if (data.status === 'failed' || data.status === 'canceled') {
+                        clearInterval(liveTrackingInterval);
+                        clearInterval(miningTimerInterval);
+                        liveTrackingInterval = null;
+                        miningTimerInterval = null;
+                        setMiningVisual(false);
+
+                        if (btn && btnText) {
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-90', 'cursor-wait');
+                            btnText.textContent = 'Buscar';
+                        }
+                        showToast('A pesquisa foi cancelada ou interrompida.');
+                        loadJobs(false);
+                        clearCurrentSelection();
+                    }
+                } catch (e) {
+                    // Erro temporário de rede: NÃO aborta o polling, continua tentando
+                    console.warn('Polling status temporariamente indisponível, tentando novamente...', e);
+                }
+            }, 1500);
+        }
+
+        async function viewJobOnMap(id, name, isSilent) {
+            currentJobId = id;
+            try {
+                const resp = await fetch('/api/portal/jobs/' + encodeURIComponent(id) + '/leads');
+                const data = await resp.json();
+                rawLoadedLeads = data.leads || [];
+                
+                if (data.radius_km) {
+                    currentJobRadiusKm = data.radius_km;
+                    const sel = document.getElementById('selectRadius');
+                    if (sel) {
+                        const rStr = String(Math.round(data.radius_km));
+                        const opt = Array.from(sel.options).find(function(o) { return o.value === rStr; });
+                        if (opt) {
+                            sel.value = rStr;
+                        } else if (data.radius_km > 30) {
+                            sel.value = '50';
+                        }
+                    }
+                } else {
+                    currentJobRadiusKm = parseFloat(document.getElementById('selectRadius').value) || 15;
+                }
+
+                if (data.center_lat && data.center_lon && !isSilent) {
+                    setCenterMarker(data.center_lat, data.center_lon);
+                    document.getElementById('geoLat').value = data.center_lat;
+                    document.getElementById('geoLon').value = data.center_lon;
+                    updateRadiusVisual();
+                } else if ((!data.center_lat || !data.center_lon) && rawLoadedLeads.length > 0 && !isSilent) {
+                    const validCoords = rawLoadedLeads.filter(function(l) { return l.latitude && l.longitude; });
+                    if (validCoords.length > 0) {
+                        const avgLat = validCoords.reduce(function(acc, l) { return acc + l.latitude; }, 0) / validCoords.length;
+                        const avgLon = validCoords.reduce(function(acc, l) { return acc + l.longitude; }, 0) / validCoords.length;
+                        setCenterMarker(avgLat, avgLon);
+                        updateRadiusVisual();
+                        const filterCheck = document.getElementById('filterStrictRadius');
+                        if (filterCheck) filterCheck.checked = false;
+                    }
+                }
+
+                // Se a busca tiver muitos registros espalhados (ex: busca por Estado como Minas Gerais),
+                // desativa o corte restrito de raio automaticamente para não ocultar os leads de outras cidades
+                if (rawLoadedLeads.length > 0) {
+                    const outsideCount = rawLoadedLeads.filter(function(l) {
+                        return l.distance_km !== null && l.distance_km !== undefined && l.distance_km > (currentJobRadiusKm * 1.3);
+                    }).length;
+                    if (outsideCount > 0 && outsideCount >= (rawLoadedLeads.length * 0.25)) {
+                        const filterCheck = document.getElementById('filterStrictRadius');
+                        if (filterCheck) filterCheck.checked = false;
+                    }
+                }
+
+                document.getElementById('resultsHeaderTitle').textContent = name;
+                const actions = document.getElementById('resultsActions');
+                if (actions) {
+                    actions.classList.remove('hidden');
+                    actions.classList.add('flex');
+                }
+                const clearBtn = document.getElementById('btnClearSelection');
+                if (clearBtn) clearBtn.classList.remove('hidden');
+
+                document.getElementById('btnDownloadCsv').href = '/api/v1/jobs/' + encodeURIComponent(id) + '/download';
+
+                applyFiltersAndRender(isSilent);
+            } catch (e) {
+                if (!isSilent) showToast('Erro ao carregar dados: ' + e.message);
+            }
+        }
+
+        function applyFiltersAndRender(isSilent) {
+            const strictRadius = document.getElementById('filterStrictRadius').checked;
+            const userRadius = parseFloat(document.getElementById('selectRadius').value) || 15;
+            const maxRadius = Math.max(userRadius, currentJobRadiusKm || 15);
+
+            filteredLeads = rawLoadedLeads.filter(function(lead) {
+                if (!strictRadius) return true;
+                if (lead.distance_km !== null && lead.distance_km !== undefined) {
+                    return lead.distance_km <= (maxRadius * 1.3);
+                }
+                const targetCity = document.getElementById('inputCity').value.toLowerCase();
+                const leadCity = (lead.city || '').toLowerCase();
+                if (!targetCity.includes('curitiba') && (leadCity.includes('curitiba') || (lead.address || '').toLowerCase().includes('curitiba - pr'))) {
+                    return false;
+                }
+                return true;
+            });
+
+            // Ordena com as empresas mais avaliadas no topo
+            filteredLeads.sort(function(a, b) {
+                return (b.review_count || 0) - (a.review_count || 0);
+            });
+
+            document.getElementById('resultsHeaderCount').textContent = filteredLeads.length;
+            document.getElementById('resultsHeaderSub').textContent = filteredLeads.length + (filteredLeads.length === 1 ? ' registro verificado' : ' registros verificados');
+
+            renderLeadsFeed(filteredLeads);
+            renderMapMarkers(filteredLeads, isSilent);
+        }
+
+        function getSkeletonHtml(statusText) {
+            return '<div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-2xs space-y-2.5">' +
+                '<div class="flex items-start justify-between gap-3">' +
+                    '<div class="flex items-start gap-2.5 min-w-0 flex-1">' +
+                        '<div class="w-6 h-6 rounded bg-slate-200 shimmer-placeholder shrink-0"></div>' +
+                        '<div class="space-y-1.5 flex-1 min-w-0">' +
+                            '<div class="h-3.5 bg-slate-200 rounded shimmer-placeholder w-3/4"></div>' +
+                            '<div class="flex gap-2">' +
+                                '<div class="h-2.5 bg-slate-200 rounded shimmer-placeholder w-20"></div>' +
+                                '<div class="h-2.5 bg-slate-200 rounded shimmer-placeholder w-14"></div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="w-12 h-12 rounded-lg bg-slate-200 shimmer-placeholder shrink-0"></div>' +
+                '</div>' +
+                '<div class="h-2.5 bg-slate-200 rounded shimmer-placeholder w-1/2"></div>' +
+                (statusText ? '<div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">' +
+                    '<span class="flex items-center gap-1.5"><i data-lucide="loader-2" class="w-3 h-3 text-[#E31E24] animate-spin"></i>' + statusText + '</span>' +
+                '</div>' : '') +
+            '</div>';
+        }
+
+        function renderLeadsFeed(leads) {
+            const container = document.getElementById('leadsListContainer');
+            if (!leads || leads.length === 0) {
+                if (isMining) {
+                    container.innerHTML = '<div class="space-y-2">' +
+                        getSkeletonHtml('Consultando o primeiro lote de estabelecimentos...') +
+                        getSkeletonHtml() +
+                        getSkeletonHtml() +
+                    '</div>';
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+
+                // Se houver empresas na extração, mas o filtro de raio filtrou todas elas:
+                if (rawLoadedLeads && rawLoadedLeads.length > 0) {
+                    const userRadius = parseFloat(document.getElementById('selectRadius').value) || 15;
+                    const maxRadius = Math.max(userRadius, currentJobRadiusKm || 15);
+                    container.innerHTML = '<div class="bg-amber-50 border border-amber-200 rounded-xl p-5 text-center space-y-3">' +
+                        '<div class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto font-bold text-xs">' + rawLoadedLeads.length + '</div>' +
+                        '<div>' +
+                            '<p class="text-xs font-bold text-slate-900">' + rawLoadedLeads.length + ' estabelecimentos encontrados estão fora do raio de ' + maxRadius + ' km.</p>' +
+                            '<p class="text-[11px] text-slate-600 mt-0.5">Esta pesquisa cobriu uma região mais abrangente ou cidades vizinhas.</p>' +
+                        '</div>' +
+                        '<button onclick="disableRadiusFilterAndRefresh()" class="px-3.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors cursor-pointer inline-flex items-center gap-1.5 shadow-xs">' +
+                            '<i data-lucide="eye" class="w-3.5 h-3.5"></i>' +
+                            '<span>Exibir todos os ' + rawLoadedLeads.length + ' estabelecimentos no mapa</span>' +
+                        '</button>' +
+                    '</div>';
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+
+                container.innerHTML = '<div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 space-y-2.5">' +
+                    '<i data-lucide="inbox" class="w-6 h-6 mx-auto text-slate-300"></i>' +
+                    '<p class="text-xs font-medium text-slate-700">Nenhum registro encontrado nesta extração.</p>' +
+                    '<p class="text-[11px] text-slate-400">Inicie uma nova busca ou selecione outra extração do histórico.</p>' +
+                    '<div class="flex items-center justify-center gap-2 pt-1">' +
+                        '<button onclick="toggleHistoryDrawer()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-white text-xs font-semibold hover:bg-slate-900 cursor-pointer">' +
+                            'Histórico' +
+                        '</button>' +
+                        '<button onclick="clearCurrentSelection()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50 cursor-pointer">' +
+                            'Limpar Tela' +
+                        '</button>' +
+                    '</div>' +
+                '</div>';
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            let cardsHtml = leads.map(function(item, idx) {
+                const num = idx + 1;
+                const hasWa = !!item.whatsapp_url;
+                const hasMail = !!item.emails;
+                const hasThumb = !!item.thumbnail;
+                const distanceBadge = item.distance_km !== null && item.distance_km !== undefined
+                    ? '<span class="text-[11px] font-medium text-slate-500">' + item.distance_km + ' km</span>'
+                    : '';
+
+                const ratingBadge = item.review_rating
+                    ? '<span class="inline-flex items-center gap-1 text-slate-800 font-bold text-xs"><i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-500"></i>' + item.review_rating + '<span class="text-slate-400 font-normal text-[11px]">(' + item.review_count + ')</span></span>'
+                    : '<span class="text-slate-400 text-[11px]">Sem avaliações</span>';
+
+                return '<div id="lead-card-' + idx + '" class="lead-card bg-white rounded-xl p-3.5 shadow-2xs space-y-2.5 cursor-default" onmouseenter="highlightMarker(' + idx + ')" onmouseleave="unhighlightMarker(' + idx + ')">' +
+                    '<div class="flex items-start justify-between gap-3">' +
+                        '<div class="flex items-start gap-2.5 min-w-0 flex-1">' +
+                            '<span class="w-6 h-6 rounded bg-slate-900 text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">' + num + '</span>' +
+                            '<div class="min-w-0 flex-1">' +
+                                '<h3 class="font-bold text-xs text-slate-900 leading-snug truncate hover:text-[#E31E24] transition-colors cursor-pointer" onclick="openGmbCard(' + idx + ')" title="' + (item.title || '') + '">' + (item.title || 'Empresa') + '</h3>' +
+                                '<div class="flex items-center gap-2 mt-1 flex-wrap">' +
+                                    '<span class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">' + (item.category || 'Empresa') + '</span>' +
+                                    ratingBadge +
+                                    (distanceBadge ? '<span class="text-slate-300">·</span>' + distanceBadge : '') +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        (hasThumb ?
+                            '<img src="' + item.thumbnail + '" alt="Foto" class="w-12 h-12 rounded-lg object-cover border border-slate-200 shrink-0 cursor-pointer hover:opacity-90 transition-opacity" onclick="openGmbCard(' + idx + ')" title="Visualizar ficha">' :
+                            ''
+                        ) +
+                    '</div>' +
+
+                    // Location
+                    '<div class="flex items-center gap-1.5 text-[11px] text-slate-500 truncate">' +
+                        '<i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>' +
+                        '<span class="truncate">' + (item.location_summary || item.address || 'Endereço não disponível') + '</span>' +
+                    '</div>' +
+
+                    // Actions
+                    '<div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 flex-wrap text-xs">' +
+                        '<div class="flex items-center gap-1.5">' +
+                            (hasWa ?
+                                '<a href="' + item.whatsapp_url + '" target="_blank" class="px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-semibold flex items-center gap-1.5 border border-emerald-200 transition-colors">' +
+                                    '<i data-lucide="message-square" class="w-3 h-3 text-emerald-600"></i>' +
+                                    '<span>WhatsApp</span>' +
+                                '</a>' :
+                                (item.phone ? '<span class="text-[11px] text-slate-700 font-semibold">' + item.phone + '</span>' : '')
+                            ) +
+                            (hasMail ?
+                                '<a href="mailto:' + item.emails + '" class="p-1 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900" title="' + item.emails + '">' +
+                                    '<i data-lucide="mail" class="w-3.5 h-3.5"></i>' +
+                                '</a>' : ''
+                            ) +
+                        '</div>' +
+
+                        '<div class="flex items-center gap-1.5">' +
+                            '<a href="' + (function() {
+                                const kw = extractSearchKeywords(item.title, item.city || item.address);
+                                return 'https://www.google.com/search?q=' + encodeURIComponent(kw.cleanTitle + ' ' + kw.city + ' CNPJ socios');
+                            })() + '" target="_blank" class="px-2 py-1 rounded-md border border-slate-200 hover:border-slate-400 text-slate-700 hover:text-slate-900 text-[11px] font-semibold flex items-center gap-1 transition-colors" title="Localizar CNPJ, Sócios e Administradores no Google / Receita">' +
+                                '<i data-lucide="user-check" class="w-3 h-3 text-[#E31E24]"></i>' +
+                                '<span>Sócios</span>' +
+                            '</a>' +
+                            '<button onclick="importLeadFromFeed(' + idx + ')" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-[#E31E24] hover:text-white text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer" title="Adicionar ao CRM">' +
+                                '<i data-lucide="plus" class="w-3 h-3"></i>' +
+                                '<span>CRM</span>' +
+                            '</button>' +
+                            '<button onclick="openGmbCard(' + idx + ')" class="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer">' +
+                                '<span>Detalhes</span>' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            if (isMining) {
+                cardsHtml += getSkeletonHtml('Consultando próximos estabelecimentos no raio...');
+            }
+
+            container.innerHTML = cardsHtml;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderMapMarkers(leads, isSilent) {
+            leadsLayer.clearLayers();
+            markerMap = {};
+            const bounds = [];
+
+            leads.forEach(function(item, idx) {
+                const lat = parseFloat(item.latitude || item.lat);
+                const lon = parseFloat(item.longitude || item.lon);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    bounds.push([lat, lon]);
+                    const num = idx + 1;
+                    const icon = L.divIcon({
+                        className: '',
+                        html: '<div id="pin-' + idx + '" class="nw-pin">' + num + '</div>',
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14],
+                        popupAnchor: [0, -14]
+                    });
+
+                    const ratingTxt = item.review_rating ? item.review_rating + ' (' + item.review_count + ' avaliações)' : 'Sem avaliações';
+                    const thumbHtml = item.thumbnail ? '<img src="' + item.thumbnail + '" style="width:100%;height:100px;object-fit:cover;border-radius:10px 10px 0 0;" />' : '';
+
+                    const popup = '<div style="min-width:240px;max-width:280px;font-family:inherit;">' +
+                        thumbHtml +
+                        '<div style="padding:10px 12px;">' +
+                            '<span style="background:#F1F5F9;color:#475569;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;">' + (item.category || 'Empresa') + '</span>' +
+                            '<h4 style="font-size:13px;font-weight:700;color:#0F172A;margin:4px 0 2px 0;">' + (item.title || 'Empresa') + '</h4>' +
+                            '<p style="font-size:11px;font-weight:600;color:#D97706;margin:0 0 3px 0;">' + ratingTxt + '</p>' +
+                            '<p style="font-size:11px;color:#64748B;margin:0 0 8px 0;">' + (item.location_summary || item.address || '') + '</p>' +
+                            '<div style="display:flex;gap:6px;margin-top:6px;">' +
+                                '<button onclick="openGmbCard(' + idx + ')" style="flex:1;background:#0F172A;color:#fff;font-weight:600;font-size:11px;padding:6px;border-radius:6px;border:none;cursor:pointer;">Ver Detalhes</button>' +
+                                (item.whatsapp_url ? '<a href="' + item.whatsapp_url + '" target="_blank" style="background:#059669;color:#fff;font-weight:600;font-size:11px;padding:6px 10px;border-radius:6px;text-decoration:none;">WhatsApp</a>' : '') +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+
+                    const m = L.marker([lat, lon], { icon: icon }).bindPopup(popup).addTo(leadsLayer);
+                    m.on('click', function() {
+                        scrollCardIntoView(idx);
+                    });
+                    markerMap[idx] = m;
+                }
+            });
+
+            if (bounds.length > 0 && !isSilent) {
+                map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+            }
+        }
+
+        function extractSearchKeywords(title, location) {
+            let t = (title || '').trim();
+            // Remove sufixos de estado (ex: "MG", "PR", "SP") e pontuações
+            t = t.replace(/\s+(MG|PR|SP|RJ|SC|RS|BA|GO|DF|ES|MT|MS|CE|PE|PA|MA|PB|RN|AL|PI|SE|TO|RO|AC|AP|RR|AM)$/i, '');
+            t = t.replace(/\s*[-–—|/].*$/, '').trim();
+            t = t.replace(/[^\w\s\u00C0-\u00FF]/gi, ' ').replace(/\s+/g, ' ').trim();
+
+            let loc = (location || '').replace(/[^\w\s\u00C0-\u00FF]/gi, ' ').replace(/\s+/g, ' ').trim();
+            loc = loc.replace(/\s+(MG|PR|SP|RJ|SC|RS|BA|GO|DF|ES|MT|MS|CE|PE|PA|MA|PB|RN|AL|PI|SE|TO|RO|AC|AP|RR|AM)$/i, '').trim();
+
+            return {
+                cleanTitle: t,
+                city: loc
+            };
+        }
+
+        function openGmbCard(idx) {
+            const item = filteredLeads[idx];
+            if (!item) return;
+            currentGmbLead = item;
+
+            document.getElementById('gmbTitle').textContent = item.title || 'Empresa';
+            document.getElementById('gmbCategory').textContent = item.category || 'Empresa';
+
+            // Cover Image
+            const coverWrapper = document.getElementById('gmbCoverWrapper');
+            const coverImg = document.getElementById('gmbCoverImg');
+            if (item.thumbnail) {
+                coverImg.src = item.thumbnail;
+                coverWrapper.classList.remove('hidden');
+            } else {
+                coverWrapper.classList.add('hidden');
+            }
+
+            // Ratings
+            document.getElementById('gmbRatingVal').textContent = item.review_rating || '5.0';
+            document.getElementById('gmbReviewsCount').textContent = '(' + (item.review_count || 0) + ' avaliações no Google)';
+
+            // Address & Contacts
+            document.getElementById('gmbAddress').textContent = item.location_summary || item.address || 'Endereço não disponível';
+            
+            const phoneRow = document.getElementById('gmbPhoneRow');
+            if (item.phone) {
+                document.getElementById('gmbPhone').textContent = item.phone;
+                phoneRow.classList.remove('hidden');
+            } else {
+                phoneRow.classList.add('hidden');
+            }
+
+            const emailRow = document.getElementById('gmbEmailRow');
+            if (item.emails) {
+                document.getElementById('gmbEmail').textContent = item.emails;
+                emailRow.classList.remove('hidden');
+            } else {
+                emailRow.classList.add('hidden');
+            }
+
+            const siteRow = document.getElementById('gmbSiteRow');
+            if (item.website) {
+                const siteLink = document.getElementById('gmbWebsite');
+                siteLink.href = item.website;
+                siteLink.textContent = item.website.replace('https://', '').replace('http://', '').split('/')[0];
+                siteRow.classList.remove('hidden');
+            } else {
+                siteRow.classList.add('hidden');
+            }
+
+            // Horários
+            const hoursContainer = document.getElementById('gmbHoursContainer');
+            const hoursList = document.getElementById('gmbHoursList');
+            hoursList.innerHTML = '';
+            if (item.open_hours && typeof item.open_hours === 'object' && Object.keys(item.open_hours).length > 0) {
+                hoursContainer.classList.remove('hidden');
+                const daysOrder = ['segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado', 'domingo'];
+                daysOrder.forEach(function(day) {
+                    const times = item.open_hours[day] || ['-'];
+                    const dayLabel = day.charAt(0).toUpperCase() + day.slice(1, 3);
+                    hoursList.innerHTML += '<div class="flex items-center justify-between p-1 bg-white rounded border border-slate-200">' +
+                        '<span class="font-semibold text-slate-700 capitalize">' + dayLabel + ':</span>' +
+                        '<span class="font-medium text-slate-800">' + times.join(', ') + '</span>' +
+                    '</div>';
+                });
+            } else {
+                hoursContainer.classList.add('hidden');
+            }
+
+            // Reviews de clientes
+            const reviewsBlock = document.getElementById('gmbReviewsBlock');
+            const reviewsList = document.getElementById('gmbReviewsList');
+            reviewsList.innerHTML = '';
+            if (item.user_reviews && item.user_reviews.length > 0) {
+                reviewsBlock.classList.remove('hidden');
+                reviewsList.innerHTML = item.user_reviews.map(function(r) {
+                    const pic = r.ProfilePicture || 'https://lh3.googleusercontent.com/a/default-user=s40-p';
+                    const name = r.Name || 'Cliente';
+                    const stars = r.Rating ? r.Rating + ' estrelas' : '5 estrelas';
+                    const text = r.Description || r.Text || 'Excelente atendimento.';
+                    return '<div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-start gap-2.5">' +
+                        '<img src="' + pic + '" class="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-200" onerror="this.src=\'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '\'">' +
+                        '<div class="min-w-0 flex-1">' +
+                            '<div class="flex items-center justify-between">' +
+                                '<h5 class="font-bold text-slate-900 text-[11px] truncate">' + name + '</h5>' +
+                                '<span class="text-[10px] text-slate-400 font-medium">' + stars + '</span>' +
+                            '</div>' +
+                            '<p class="text-[11px] text-slate-600 mt-0.5 line-clamp-3">"' + text + '"</p>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            } else {
+                reviewsBlock.classList.add('hidden');
+            }
+
+            const mapsLink = document.getElementById('gmbMapsLink');
+            mapsLink.href = item.google_maps_url || ('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.title + ' ' + (item.location_summary || '')));
+
+            const waBtn = document.getElementById('gmbWaBtn');
+            if (item.whatsapp_url) {
+                waBtn.href = item.whatsapp_url;
+                waBtn.classList.remove('hidden');
+            } else {
+                waBtn.classList.add('hidden');
+            }
+
+            // Higienização semântica de termos para busca assertiva de CNPJ e Sócios
+            const terms = extractSearchKeywords(item.title, item.city || item.address);
+            
+            // 1. Google CNPJ & Sócios (Sem aspas rígidas - encontra 100% das vezes pelo algoritmo de relevância)
+            const googleQsaUrl = 'https://www.google.com/search?q=' + encodeURIComponent(terms.cleanTitle + ' ' + terms.city + ' CNPJ socios');
+            // 2. CNPJ.biz com o nome higienizado (sem sufixos que travam a busca)
+            const cnpjBizUrl = 'https://cnpj.biz/procura/' + encodeURIComponent(terms.cleanTitle);
+            // 3. Casa dos Dados sem aspas restritivas
+            const casaDadosUrl = 'https://www.google.com/search?q=' + encodeURIComponent('site:casadosdados.com.br ' + terms.cleanTitle + ' ' + terms.city);
+            // 4. LinkedIn Decisores
+            const linkedinUrl = 'https://www.google.com/search?q=' + encodeURIComponent('site:linkedin.com/in ' + terms.cleanTitle + ' ' + terms.city + ' (proprietario OR socio OR diretor OR fundador)');
+
+            const qsaLink = document.getElementById('gmbGoogleQsaLink');
+            if (qsaLink) qsaLink.href = googleQsaUrl;
+            const cnpjLink = document.getElementById('gmbCnpjBizLink');
+            if (cnpjLink) cnpjLink.href = cnpjBizUrl;
+            const casaLink = document.getElementById('gmbCasaDadosLink');
+            if (casaLink) casaLink.href = casaDadosUrl;
+            const lkLink = document.getElementById('gmbLinkedinLink');
+            if (lkLink) lkLink.href = linkedinUrl;
+
+            const modal = document.getElementById('gmbModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeGmbModal() {
+            const modal = document.getElementById('gmbModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function scrollCardIntoView(idx) {
+            document.querySelectorAll('.lead-card').forEach(function(c) { c.classList.remove('active-card'); });
+            const card = document.getElementById('lead-card-' + idx);
+            if (card) {
+                card.classList.add('active-card');
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function highlightMarker(idx) {
+            const el = document.getElementById('pin-' + idx);
+            if (el) el.classList.add('nw-pin-highlight');
+        }
+
+        function unhighlightMarker(idx) {
+            const el = document.getElementById('pin-' + idx);
+            if (el) el.classList.remove('nw-pin-highlight');
+        }
+
+        function fitMapBounds() {
+            const bounds = [];
+            filteredLeads.forEach(function(item) {
+                const lat = parseFloat(item.latitude || item.lat);
+                const lon = parseFloat(item.longitude || item.lon);
+                if (!isNaN(lat) && !isNaN(lon)) bounds.push([lat, lon]);
+            });
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+            }
+        }
+
+        async function importLeadsToCrm(leadsList) {
+            if (!leadsList || leadsList.length === 0) {
+                showToast('Nenhum registro para importar.');
+                return;
+            }
+
+            const count = leadsList.length;
+            const btn = document.getElementById('btnImportCrm');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Importando...';
+            }
+
+            try {
+                const resp = await fetch('http://localhost:5000/api/prospecting/import-scraper', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leads: leadsList })
+                });
+
+                if (resp.status === 401 || resp.status === 403) {
+                    showToast('Faça login no CRM em localhost:5000 para sincronizar.');
+                    window.open('http://localhost:5000/login', '_blank');
+                    return;
+                }
+
+                const result = await resp.json();
+                if (result.success) {
+                    const d = result.data || {};
+                    showToast(`${d.imported_count || count} leads adicionados ao CRM.`);
+                } else {
+                    throw new Error(result.error || 'Erro na importação');
+                }
+            } catch (err) {
+                showToast('Erro ao sincronizar com CRM: ' + err.message);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="plus" class="w-3.5 h-3.5"></i><span>Importar no CRM</span>';
+                    if (window.lucide) lucide.createIcons();
+                }
+            }
+        }
+
+        async function importSingleLeadToCrm() {
+            if (!currentGmbLead) return;
+            await importLeadsToCrm([currentGmbLead]);
+        }
+
+        async function importLeadFromFeed(idx) {
+            const lead = filteredLeads[idx];
+            if (!lead) return;
+            await importLeadsToCrm([lead]);
+        }
+    </script>
+</body>
+</html>

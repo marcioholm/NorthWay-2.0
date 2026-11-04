@@ -189,12 +189,15 @@
   </div>
 </div>
 <script>
+let currentBudgetId = {{ budget_id if budget_id else 'null' }};
+const savedBudgetData = {{ budget.data | tojson if budget and budget.data else 'null' }};
 
 async function saveBudget() {
   const btn = document.getElementById('saveBtn');
   btn.disabled = true; btn.innerHTML = '<span class="animate-spin mr-2">...</span> Salvando';
   try {
     const data = {
+      budget_id: currentBudgetId,
       quoteNum: document.getElementById('quoteNum').value,
       quoteDate: document.getElementById('quoteDate').value,
       cliName: document.getElementById('cliName').value,
@@ -819,7 +822,46 @@ async function exportHTML() {
   }
 }
 
-addRow(); addRow(); addRow();
+function initBudgetForm() {
+  if (savedBudgetData) {
+    if (savedBudgetData.quoteNum) document.getElementById('quoteNum').value = savedBudgetData.quoteNum;
+    if (savedBudgetData.quoteDate) document.getElementById('quoteDate').value = savedBudgetData.quoteDate;
+    if (savedBudgetData.cliName) document.getElementById('cliName').value = savedBudgetData.cliName;
+    if (savedBudgetData.cliDoc) document.getElementById('cliDoc').value = savedBudgetData.cliDoc;
+    if (savedBudgetData.cliContact) document.getElementById('cliContact').value = savedBudgetData.cliContact;
+    if (savedBudgetData.cliPhone) document.getElementById('cliPhone').value = savedBudgetData.cliPhone;
+    if (savedBudgetData.cliAddr) document.getElementById('cliAddr').value = savedBudgetData.cliAddr;
+    if (savedBudgetData.billingCycle) document.getElementById('billingCycle').value = savedBudgetData.billingCycle;
+    if (savedBudgetData.discountPct) document.getElementById('discountPct').value = savedBudgetData.discountPct;
+    if (savedBudgetData.discountVal) document.getElementById('discountVal').value = savedBudgetData.discountVal;
+    if (savedBudgetData.installments) document.getElementById('installments').value = savedBudgetData.installments;
+    if (savedBudgetData.obsText) document.getElementById('obsText').value = savedBudgetData.obsText;
+    if (savedBudgetData.validity) document.getElementById('validity').value = savedBudgetData.validity;
+
+    tbody.innerHTML = '';
+    if (Array.isArray(savedBudgetData.items) && savedBudgetData.items.length > 0) {
+      savedBudgetData.items.forEach(it => {
+        addRow(it.desc || '', it.qty || '1', it.price || '');
+      });
+    } else {
+      addRow(); addRow(); addRow();
+    }
+    recalc();
+
+    // Se a URL pediu auto_pdf=true, dispara o download do PDF automaticamente
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auto_pdf') === 'true') {
+      setTimeout(() => {
+        exportPDF();
+      }, 600);
+    }
+  } else {
+    tbody.innerHTML = '';
+    addRow(); addRow(); addRow();
+  }
+}
+
+initBudgetForm();
 </script>
 </div>
 {% endblock %}

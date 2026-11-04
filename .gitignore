@@ -30,6 +30,7 @@ northway_crm/seed_crm_data.py
 scratch/
 northway_crm/scratch/
 northway_crm/check_*.py
+scraper_data/
 
 # UI Redesign Screenshots
 docs/ui-*/

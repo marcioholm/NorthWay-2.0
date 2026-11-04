@@ -13,7 +13,12 @@ commercial_bp = Blueprint('commercial', __name__)
 def budget_generator():
     if not current_user.company_id:
         return "Unauthorized", 403
-    return render_template('commercial/budget_generator.html')
+    budget_id = request.args.get('id', type=int)
+    budget = None
+    if budget_id:
+        from models import Budget
+        budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first()
+    return render_template('commercial/budget_generator.html', budget=budget, budget_id=budget_id)
 
 @commercial_bp.route('/commercial/performance')
 @login_required
@@ -192,6 +197,17 @@ def save_budget():
             pass
 
         data = request.json
+        budget_id = data.get('budget_id') or data.get('id')
+        if budget_id:
+            budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first()
+            if budget:
+                budget.quote_num = data.get('quoteNum')
+                budget.client_name = data.get('cliName')
+                budget.total_value = data.get('totalValue', 0.0)
+                budget.data = data
+                db.session.commit()
+                return jsonify({'success': True, 'budget_id': budget.id, 'updated': True})
+
         budget = Budget(
             company_id=current_user.company_id,
             user_id=current_user.id,
@@ -207,6 +223,25 @@ def save_budget():
         db.session.rollback()
         print(f"Error saving budget: {e}")
         return jsonify({'error': str(e)}), 500
+
+@commercial_bp.route('/commercial/api/budgets/<int:budget_id>', methods=['GET'])
+@login_required
+def get_budget(budget_id):
+    if not current_user.company_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    from models import Budget
+    budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first()
+    if not budget:
+        return jsonify({'error': 'Not found'}), 404
+    return jsonify({
+        'id': budget.id,
+        'quote_num': budget.quote_num,
+        'client_name': budget.client_name,
+        'total_value': budget.total_value,
+        'status': budget.status,
+        'data': budget.data,
+        'created_at': budget.created_at.isoformat() if budget.created_at else None
+    })
 
 @commercial_bp.route('/commercial/api/budgets/<int:budget_id>', methods=['DELETE'])
 @login_required

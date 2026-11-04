@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#B91C1C"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bgGrad)"/>
+  <!-- Borda Sutil -->
+  <rect width="126" height="126" x="1" y="1" rx="27" fill="none" stroke="#334155" stroke-width="2"/>
+  <!-- N Stylized NorthWay -->
+  <path d="M38 92 V36 L72 74 V36 H90 V92 L56 54 V92 Z" fill="url(#redGrad)"/>
+  <!-- Sparkle Decisor -->
+  <circle cx="94" cy="34" r="5" fill="#10B981"/>
+</svg>
+

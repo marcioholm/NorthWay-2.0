@@ -1363,19 +1363,22 @@ def search_places():
     min_rating = request.args.get('min_rating', type=float)
     min_reviews = request.args.get('min_reviews', type=int)
     pagetoken = request.args.get('pagetoken')
+    lat = request.args.get('lat', type=float)
+    lng = request.args.get('lng', type=float)
 
     if not query and not pagetoken:
-        return api_response(success=False, error='Query or pagetoken is required', status=400)
+        return api_response(success=False, error='Informe um termo de busca.', status=400)
 
     from models import Integration
     integration = Integration.query.filter_by(company_id=current_user.company_id, service='google_maps').first()
     api_key = integration.api_key if integration and integration.is_active else None
 
     if not api_key:
-        return api_response(success=False, error='API Key not configured', status=500)
+        return api_response(success=False, error='Chave de API do Google Maps não configurada. Use o modo Robô Extrator (Scraper) sem custo de API!', status=500)
 
     all_results = []
     next_page_token = None
+    center_coords = {'lat': lat, 'lng': lng} if (lat is not None and lng is not None) else None
 
     try:
         import time
@@ -1385,7 +1388,8 @@ def search_places():
             url = "https://maps.googleapis.com/maps/api/place/textsearch/json"
             params = {
                 'pagetoken': pagetoken,
-                'key': api_key
+                'key': api_key,
+                'language': 'pt-BR'
             }
             time.sleep(0.5)
             response = requests.get(url, params=params, timeout=10)
@@ -1407,7 +1411,10 @@ def search_places():
                     'language': 'pt-BR'
                 }
 
-                if radius and current_city:
+                if lat is not None and lng is not None:
+                    params['location'] = f"{lat},{lng}"
+                    params['radius'] = (radius or 10) * 1000
+                elif radius and current_city:
                     geo_url = "https://maps.googleapis.com/maps/api/geocode/json"
                     geo_params = {'address': f"{current_city}, {state or ''}, Brasil", 'key': api_key}
                     geo_resp = requests.get(geo_url, params=geo_params).json()
@@ -1415,10 +1422,9 @@ def search_places():
                         loc = geo_resp['results'][0]['geometry']['location']
                         params['location'] = f"{loc['lat']},{loc['lng']}"
                         params['radius'] = radius * 1000
+                        if not center_coords:
+                            center_coords = {'lat': loc['lat'], 'lng': loc['lng']}
 
-                # Paginação lazy: retorna 1 página por vez com next_page_token.
-                # O frontend chama novamente com pagetoken para carregar mais resultados.
-                # Isso evita timeout no Vercel (max 30s por função serverless).
                 city_token = None
                 page_count = 0
                 while page_count < 1:
@@ -1436,7 +1442,6 @@ def search_places():
                     all_results.extend(data.get('results', []))
                     city_token = data.get('next_page_token')
 
-                    # Capturar o token da primeira cidade para o Load More
                     if city_token and not next_page_token:
                         next_page_token = city_token
 
@@ -1444,8 +1449,6 @@ def search_places():
                     if not city_token:
                         break
 
-        # Para múltiplas cidades, desabilitar o "Load More" pois o token
-        # só se refere à primeira cidade
         if city and ',' in city:
             next_page_token = None
 
@@ -1462,6 +1465,12 @@ def search_places():
 
             place_id = place.get('place_id')
             is_duplicate = place_id in existing_place_ids
+            loc = place.get('geometry', {}).get('location', {})
+            p_lat = loc.get('lat')
+            p_lng = loc.get('lng')
+
+            if not center_coords and p_lat is not None and p_lng is not None:
+                center_coords = {'lat': p_lat, 'lng': p_lng}
 
             final_results.append({
                 'place_id': place_id,
@@ -1472,13 +1481,16 @@ def search_places():
                 'types': place.get('types', []),
                 'is_duplicate': is_duplicate,
                 'phone': place.get('formatted_phone_number'),
-                'website': place.get('website')
+                'website': place.get('website'),
+                'lat': p_lat,
+                'lng': p_lng
             })
 
         return api_response(data={
             'results': final_results,
             'count': len(final_results),
-            'next_page_token': next_page_token
+            'next_page_token': next_page_token,
+            'center': center_coords
         })
 
     except Exception as e:
@@ -1576,17 +1588,26 @@ def delete_favorite(fav_id):
 @prospecting_bp.route('/api/prospecting/history')
 @login_required
 def get_import_history():
+    from models import PipelineStage
     history = Lead.query.filter(
         Lead.company_id == current_user.company_id,
         Lead.google_place_id != None
     ).order_by(Lead.created_at.desc()).limit(50).all()
+
+    stage_ids = {l.pipeline_stage_id for l in history if l.pipeline_stage_id}
+    stages_map = {}
+    if stage_ids:
+        stages = PipelineStage.query.filter(PipelineStage.id.in_(stage_ids)).all()
+        stages_map = {s.id: s.name for s in stages}
 
     return jsonify({
         'success': True,
         'data': [{
             'id': l.id,
             'name': l.name,
-            'imported_at': l.created_at.isoformat() if l.created_at else None
+            'created_at': l.created_at.strftime('%d/%m/%Y %H:%M') if l.created_at else 'Recente',
+            'imported_at': l.created_at.isoformat() if l.created_at else None,
+            'stage': stages_map.get(l.pipeline_stage_id, 'Importado')
         } for l in history]
     })
 
@@ -1709,6 +1730,7 @@ def import_lead():
 
             with db.session.begin_nested():
                 name_val = p.get('name') or 'Sem Nome'
+                email_val = p.get('email')
                 new_lead = Lead(
                     name=name_val[:100],
                     company_id=current_user.company_id,
@@ -1716,17 +1738,19 @@ def import_lead():
                     status='new',
                     pipeline_id=target_pipeline_id,
                     pipeline_stage_id=target_stage_id,
-                    source='google_maps',
+                    source=p.get('source') or 'google_maps',
                     phone=phone[:50] if phone else None,
+                    whatsapp=phone[:50] if phone else None,
+                    email=email_val[:120] if email_val else None,
                     website=website[:200] if website else None,
                     address=p.get('formatted_address')[:255] if p.get('formatted_address') else None,
-                    google_place_id=place_id[:100] if place_id else None,
+                    google_place_id=str(place_id)[:100] if place_id else None,
                     gmb_rating=p.get('rating', 0),
                     gmb_reviews=p.get('user_ratings_total', 0),
                     gmb_photos=p.get('gmb_photos', 0),
                     gmb_link=p.get('gmb_link'),
-                    gmb_types=p.get('gmb_types'),
-                    notes=f"Importado via Google Maps em {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}",
+                    gmb_types=p.get('gmb_types') or p.get('types'),
+                    notes=f"Importado via Prospecção Ativa em {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}",
                     prospecting_status=ProspectingStatus.NOVO,
                     prospecting_campaign_id=campaign.id if campaign else None
                 )
@@ -1749,6 +1773,519 @@ def import_lead():
         'duplicate_count': duplicate_count,
         'errors': errors
     })
+
+
+from extensions import csrf
+
+@prospecting_bp.route('/api/prospecting/import-scraper', methods=['POST'])
+@login_required
+@csrf.exempt
+def import_scraper():
+    """
+    Importa leads extraídos pelo Google Maps Scraper (JSON ou CSV).
+    Aceita arquivo enviado via multipart/form-data ('file') ou payload JSON ('leads').
+    """
+    import json
+    import csv
+    import io
+    from models import Pipeline, PipelineStage
+
+    allowed, err_msg = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=err_msg, status=403)
+
+    raw_items = []
+    target_stage_id = request.form.get('stage_id') or (request.json.get('stage_id') if request.is_json else None)
+    campaign_id = request.form.get('campaign_id') or (request.json.get('campaign_id') if request.is_json else None)
+
+    # 1. Arquivo enviado via upload (JSON ou CSV)
+    if 'file' in request.files:
+        uploaded_file = request.files['file']
+        if not uploaded_file or uploaded_file.filename == '':
+            return api_response(success=False, error='Nenhum arquivo enviado', status=400)
+        
+        filename = uploaded_file.filename.lower()
+        content = uploaded_file.read().decode('utf-8', errors='ignore')
+
+        if filename.endswith('.json'):
+            try:
+                parsed = json.loads(content)
+                if isinstance(parsed, list):
+                    raw_items = parsed
+                elif isinstance(parsed, dict):
+                    raw_items = parsed.get('results') or parsed.get('data') or parsed.get('items') or [parsed]
+            except json.JSONDecodeError:
+                # Pode ser Newline-Delimited JSON (NDJSON)
+                for line in content.splitlines():
+                    line = line.strip()
+                    if line:
+                        try:
+                            raw_items.append(json.loads(line))
+                        except Exception:
+                            pass
+        else:
+            # Processar CSV
+            try:
+                delimiter = ';' if content.count(';') > content.count(',') else ','
+                reader = csv.DictReader(io.StringIO(content), delimiter=delimiter)
+                raw_items = list(reader)
+            except Exception as e:
+                return api_response(success=False, error=f'Erro ao processar CSV: {str(e)}', status=400)
+
+    # 2. Payload JSON direto
+    elif request.is_json:
+        data = request.json
+        raw_items = data.get('leads') or data.get('places') or []
+    else:
+        return api_response(success=False, error='Envie um arquivo JSON/CSV ou uma lista de leads', status=400)
+
+    if not raw_items:
+        return api_response(success=False, error='Nenhum lead encontrado no arquivo ou dados enviados', status=400)
+
+    # Resolver Pipeline e Estágio de destino
+    target_pipeline_id = None
+    if target_stage_id:
+        try:
+            target_stage_id = int(target_stage_id)
+            s = PipelineStage.query.join(Pipeline, PipelineStage.pipeline_id == Pipeline.id)\
+                .filter(PipelineStage.id == target_stage_id, Pipeline.company_id == current_user.company_id)\
+                .first()
+            if s:
+                target_pipeline_id = s.pipeline_id
+            else:
+                target_stage_id = None
+        except (ValueError, TypeError):
+            target_stage_id = None
+
+    if not target_pipeline_id:
+        default_p = Pipeline.query.filter_by(company_id=current_user.company_id).first()
+        if default_p:
+            target_pipeline_id = default_p.id
+            first_s = PipelineStage.query.filter_by(pipeline_id=default_p.id).order_by(PipelineStage.order).first()
+            if first_s:
+                target_stage_id = first_s.id
+
+    campaign = None
+    if campaign_id:
+        try:
+            campaign = ProspectingCampaign.query.filter_by(id=int(campaign_id), company_id=current_user.company_id).first()
+        except Exception:
+            pass
+
+    imported_count = 0
+    duplicate_count = 0
+    errors = []
+    new_lead_ids = []
+
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+
+        name = item.get('title') or item.get('name') or item.get('Nome') or ''
+        name = str(name).strip()
+        if not name:
+            continue
+
+        # IDs e Links
+        place_id = item.get('place_id') or item.get('data_id') or item.get('cid') or item.get('input_id')
+        gmb_link = item.get('link') or item.get('reviews_link')
+        
+        # Telefone
+        phone = item.get('phone') or item.get('telefone') or item.get('Telefone') or ''
+        phone = str(phone).strip() if phone else None
+
+        # Website
+        website = item.get('web_site') or item.get('website') or item.get('Site') or ''
+        website = str(website).strip() if website else None
+
+        # Email (extraído do scraper se flag -email foi usada)
+        email = None
+        raw_emails = item.get('emails') or item.get('email')
+        if isinstance(raw_emails, list) and raw_emails:
+            email = str(raw_emails[0]).strip()
+        elif isinstance(raw_emails, str) and raw_emails.strip():
+            # Pode ser lista separada por vírgula no CSV
+            email = raw_emails.split(',')[0].strip()
+
+        # Endereço
+        address = item.get('address') or item.get('endereco') or ''
+        if not address and isinstance(item.get('complete_address'), dict):
+            ca = item.get('complete_address')
+            parts = [ca.get('street'), ca.get('borough'), ca.get('city'), ca.get('state')]
+            address = ', '.join([p for p in parts if p])
+
+        # Avaliações e Rating
+        try:
+            rating = float(item.get('review_rating') or item.get('rating') or 0.0)
+        except (ValueError, TypeError):
+            rating = 0.0
+
+        try:
+            reviews_count = int(item.get('review_count') or item.get('user_ratings_total') or 0)
+        except (ValueError, TypeError):
+            reviews_count = 0
+
+        # Categorias / Tipos
+        gmb_types = item.get('categories')
+        if not gmb_types and item.get('category'):
+            gmb_types = [item.get('category')]
+        elif isinstance(gmb_types, str):
+            gmb_types = [c.strip() for c in gmb_types.split(',') if c.strip()]
+
+        # Verificação de duplicata por place_id
+        if place_id:
+            existing = Lead.query.filter_by(company_id=current_user.company_id, google_place_id=str(place_id)).first()
+            if existing:
+                duplicate_count += 1
+                continue
+
+        # Verificação de duplicata por telefone
+        if phone:
+            phone_clean = ''.join(filter(str.isdigit, phone))
+            if len(phone_clean) >= 8:
+                existing_phone = Lead.query.filter(
+                    Lead.company_id == current_user.company_id,
+                    db.or_(
+                        Lead.phone.contains(phone_clean[-8:]),
+                        Lead.whatsapp.contains(phone_clean[-8:])
+                    )
+                ).first()
+                if existing_phone:
+                    duplicate_count += 1
+                    continue
+
+        try:
+            with db.session.begin_nested():
+                new_lead = Lead(
+                    name=name[:100],
+                    company_id=current_user.company_id,
+                    assigned_to_id=current_user.id,
+                    status='new',
+                    pipeline_id=target_pipeline_id,
+                    pipeline_stage_id=target_stage_id,
+                    source='google_maps_scraper',
+                    phone=phone[:50] if phone else None,
+                    whatsapp=phone[:50] if phone else None,
+                    email=email[:120] if email else None,
+                    website=website[:200] if website else None,
+                    address=address[:255] if address else None,
+                    google_place_id=str(place_id)[:100] if place_id else None,
+                    gmb_rating=rating,
+                    gmb_reviews=reviews_count,
+                    gmb_link=gmb_link[:500] if gmb_link else None,
+                    gmb_types=gmb_types if isinstance(gmb_types, list) else None,
+                    notes=f"Importado via Google Maps Scraper em {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}",
+                    prospecting_status=ProspectingStatus.NOVO,
+                    prospecting_campaign_id=campaign.id if campaign else None
+                )
+                db.session.add(new_lead)
+                db.session.flush()
+                new_lead_ids.append(new_lead.id)
+            imported_count += 1
+        except Exception as e:
+            errors.append(f"Erro em '{name}': {str(e)}")
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return api_response(success=False, error=f"Erro ao salvar leads: {str(e)}", status=500)
+
+    return api_response(data={
+        'imported_count': imported_count,
+        'duplicate_count': duplicate_count,
+        'total_processed': len(raw_items),
+        'lead_ids': new_lead_ids,
+        'errors': errors[:10]
+    })
+
+
+def _normalize_scraper_items(raw_items, company_id):
+    """Converte itens brutos do Google Maps Scraper (JSON/CSV) para o formato do Mapa e Grade do CRM."""
+    existing_place_ids = {
+        str(l.google_place_id) for l in Lead.query.filter_by(company_id=company_id).filter(Lead.google_place_id != None).all()
+    }
+    normalized = []
+    center_coords = None
+
+    for idx, item in enumerate(raw_items):
+        if not isinstance(item, dict):
+            continue
+        name = item.get('title') or item.get('name') or item.get('Nome') or ''
+        name = str(name).strip()
+        if not name:
+            continue
+
+        place_id = str(item.get('place_id') or item.get('data_id') or item.get('cid') or item.get('input_id') or f"scraper_{idx}_{abs(hash(name)) % 1000000}")
+        gmb_link = item.get('link') or item.get('reviews_link') or ''
+        phone = str(item.get('phone') or item.get('telefone') or item.get('Telefone') or '').strip() or None
+        website = str(item.get('web_site') or item.get('website') or item.get('Site') or '').strip() or None
+
+        email = None
+        raw_emails = item.get('emails') or item.get('email')
+        if isinstance(raw_emails, list) and raw_emails:
+            email = str(raw_emails[0]).strip()
+        elif isinstance(raw_emails, str) and raw_emails.strip():
+            email = raw_emails.split(',')[0].strip()
+
+        address = item.get('address') or item.get('endereco') or item.get('formatted_address') or ''
+        if not address and isinstance(item.get('complete_address'), dict):
+            ca = item.get('complete_address')
+            parts = [ca.get('street'), ca.get('borough'), ca.get('city'), ca.get('state')]
+            address = ', '.join([p for p in parts if p])
+
+        try:
+            rating = float(item.get('review_rating') or item.get('rating') or 0.0)
+        except (ValueError, TypeError):
+            rating = 0.0
+
+        try:
+            reviews_count = int(item.get('review_count') or item.get('user_ratings_total') or 0)
+        except (ValueError, TypeError):
+            reviews_count = 0
+
+        lat = None
+        lng = None
+        try:
+            raw_lat = item.get('latitude') or item.get('lat')
+            raw_lng = item.get('longitude') or item.get('longtitude') or item.get('lon') or item.get('lng')
+            if raw_lat is not None and raw_lng is not None and str(raw_lat).strip() != '' and str(raw_lng).strip() != '':
+                lat = float(raw_lat)
+                lng = float(raw_lng)
+                if not center_coords:
+                    center_coords = {'lat': lat, 'lng': lng}
+        except (ValueError, TypeError):
+            pass
+
+        gmb_types = item.get('categories') or item.get('types')
+        if not gmb_types and item.get('category'):
+            gmb_types = [item.get('category')]
+        elif isinstance(gmb_types, str):
+            gmb_types = [c.strip() for c in gmb_types.split(',') if c.strip()]
+        if not isinstance(gmb_types, list) or not gmb_types:
+            gmb_types = ['Empresa']
+
+        normalized.append({
+            'place_id': place_id,
+            'name': name,
+            'formatted_address': address,
+            'rating': rating,
+            'user_ratings_total': reviews_count,
+            'types': gmb_types,
+            'is_duplicate': place_id in existing_place_ids,
+            'phone': phone,
+            'email': email,
+            'website': website,
+            'gmb_link': gmb_link,
+            'lat': lat,
+            'lng': lng,
+            'source': 'google_maps_scraper'
+        })
+
+    return normalized, center_coords
+
+
+@prospecting_bp.route('/api/prospecting/scraper/jobs', methods=['GET', 'POST'])
+@login_required
+@csrf.exempt
+def scraper_jobs():
+    """Gerencia tarefas do Google Maps Scraper (em Português) via API local ou banco SQLite local."""
+    import os
+    import json
+    import sqlite3
+
+    allowed, err_msg = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=err_msg, status=403)
+
+    scraper_url = os.environ.get('MAPS_SCRAPER_URL', 'http://localhost:8080')
+
+    if request.method == 'POST':
+        data = request.json or {}
+        name = (data.get('name') or 'Busca Prospecção NorthWay').strip()
+        raw_keywords = data.get('keywords') or []
+        if isinstance(raw_keywords, str):
+            keywords = [k.strip() for k in raw_keywords.splitlines() if k.strip()]
+        else:
+            keywords = [str(k).strip() for k in raw_keywords if str(k).strip()]
+
+        if not keywords:
+            return api_response(success=False, error='Informe pelo menos uma palavra-chave ou nicho para buscar.', status=400)
+
+        payload = {
+            'name': name,
+            'keywords': keywords,
+            'lang': data.get('lang', 'pt'),
+            'zoom': int(data.get('zoom', 15)),
+            'lat': str(data.get('lat', '') or ''),
+            'lon': str(data.get('lng') or data.get('lon') or ''),
+            'fast_mode': bool(data.get('fast_mode', False)),
+            'radius': int(float(data.get('radius_km', 10)) * 1000),
+            'depth': int(data.get('depth', 3)),
+            'email': bool(data.get('email', True)),
+            'max_time': int(data.get('max_time', 1200)),
+            'proxies': []
+        }
+
+        try:
+            resp = requests.post(f"{scraper_url}/api/v1/jobs", json=payload, timeout=5)
+            if resp.status_code in (200, 201):
+                return api_response(data=resp.json())
+            return api_response(success=False, error=f"Scraper retornou status {resp.status_code}: {resp.text}", status=400)
+        except Exception:
+            return api_response(
+                success=False,
+                error='O motor do Scraper local não está ativo na porta 8080. Execute ./scripts/start_maps_scraper.sh no terminal para iniciá-lo.',
+                status=503
+            )
+
+    # GET: listar jobs
+    jobs_list = []
+    scraper_online = False
+    status_pt = {
+        'pending': 'Na Fila',
+        'working': 'Extraindo...',
+        'ok': 'Concluído',
+        'failed': 'Erro',
+        'aborted': 'Cancelado'
+    }
+
+    try:
+        resp = requests.get(f"{scraper_url}/api/v1/jobs", timeout=2)
+        if resp.status_code == 200:
+            scraper_online = True
+            raw_jobs = resp.json() or []
+            for j in raw_jobs:
+                st = str(j.get('Status') or j.get('status') or 'pending').lower()
+                jobs_list.append({
+                    'id': j.get('ID') or j.get('id'),
+                    'name': j.get('Name') or j.get('name') or 'Extração',
+                    'status': st,
+                    'status_label': status_pt.get(st, st.capitalize()),
+                    'date': j.get('Date') or j.get('created_at') or ''
+                })
+    except Exception:
+        scraper_online = False
+
+    # Fallback: ler de scraper_data/jobs.db e arquivos locais se o container estiver offline ou vazio
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    scraper_dir = os.path.join(project_root, 'scraper_data')
+    if not jobs_list and os.path.exists(os.path.join(scraper_dir, 'jobs.db')):
+        try:
+            conn = sqlite3.connect(os.path.join(scraper_dir, 'jobs.db'))
+            cur = conn.cursor()
+            cur.execute("SELECT id, name, status, created_at FROM jobs ORDER BY created_at DESC LIMIT 30")
+            for row in cur.fetchall():
+                st = str(row[2] or 'pending').lower()
+                jobs_list.append({
+                    'id': row[0],
+                    'name': row[1],
+                    'status': st,
+                    'status_label': status_pt.get(st, st.capitalize()),
+                    'date': str(row[3] or '')
+                })
+            conn.close()
+        except Exception:
+            pass
+
+    # Também listar arquivos JSON/CSV salvos em scraper_data/
+    local_files = []
+    if os.path.isdir(scraper_dir):
+        for fname in sorted(os.listdir(scraper_dir), reverse=True):
+            if fname.endswith(('.json', '.csv')):
+                fpath = os.path.join(scraper_dir, fname)
+                local_files.append({
+                    'filename': fname,
+                    'size_kb': round(os.path.getsize(fpath) / 1024, 1)
+                })
+
+    return api_response(data={
+        'online': scraper_online,
+        'jobs': jobs_list,
+        'local_files': local_files
+    })
+
+
+@prospecting_bp.route('/api/prospecting/scraper/jobs/<job_id>', methods=['DELETE'])
+@login_required
+@csrf.exempt
+def delete_scraper_job(job_id):
+    import os
+    scraper_url = os.environ.get('MAPS_SCRAPER_URL', 'http://localhost:8080')
+    try:
+        requests.delete(f"{scraper_url}/api/v1/jobs/{job_id}", timeout=4)
+        return api_response(success=True)
+    except Exception as e:
+        return api_response(success=False, error=str(e), status=500)
+
+
+@prospecting_bp.route('/api/prospecting/scraper/jobs/<job_id>/results', methods=['GET'])
+@login_required
+def get_scraper_job_results(job_id):
+    """Carrega os resultados de uma tarefa do Scraper (ou arquivo local) para exibir no Mapa e Grade."""
+    import os
+    import csv
+    import io
+    import json
+
+    allowed, err_msg = check_prospecting_access()
+    if not allowed:
+        return api_response(success=False, error=err_msg, status=403)
+
+    scraper_url = os.environ.get('MAPS_SCRAPER_URL', 'http://localhost:8080')
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    scraper_dir = os.path.join(project_root, 'scraper_data')
+
+    content = None
+    is_json = job_id.lower().endswith('.json')
+
+    # 1. Tentar arquivo local em scraper_data
+    safe_name = os.path.basename(job_id)
+    for candidate in [safe_name, f"{safe_name}.csv", f"{safe_name}.json"]:
+        cand_path = os.path.join(scraper_dir, candidate)
+        if os.path.isfile(cand_path):
+            with open(cand_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+            is_json = candidate.lower().endswith('.json')
+            break
+
+    # 2. Tentar API do container
+    if content is None:
+        try:
+            resp = requests.get(f"{scraper_url}/api/v1/jobs/{job_id}/download", timeout=10)
+            if resp.status_code == 200:
+                content = resp.content.decode('utf-8', errors='ignore')
+                is_json = False
+        except Exception as e:
+            return api_response(success=False, error=f"Não foi possível obter resultados da tarefa: {str(e)}", status=500)
+
+    if not content:
+        return api_response(success=False, error='Nenhum resultado disponível para esta tarefa ainda.', status=404)
+
+    raw_items = []
+    if is_json:
+        try:
+            parsed = json.loads(content)
+            raw_items = parsed if isinstance(parsed, list) else (parsed.get('results') or parsed.get('data') or [parsed])
+        except Exception:
+            for line in content.splitlines():
+                if line.strip():
+                    try:
+                        raw_items.append(json.loads(line.strip()))
+                    except Exception:
+                        pass
+    else:
+        delimiter = ';' if content.count(';') > content.count(',') else ','
+        reader = csv.DictReader(io.StringIO(content), delimiter=delimiter)
+        raw_items = list(reader)
+
+    normalized, center_coords = _normalize_scraper_items(raw_items, current_user.company_id)
+    return api_response(data={
+        'results': normalized,
+        'count': len(normalized),
+        'center': center_coords
+    })
+
 
 
 @prospecting_bp.route('/api/prospecting/backfill-phones', methods=['POST'])

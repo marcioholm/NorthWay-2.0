@@ -33,12 +33,16 @@
         </thead>
         <tbody>
           {% for budget in budgets %}
-          <tr class="group">
+          <tr class="group hover:bg-[var(--nw-shell)] transition-colors">
             <td>
-              <span class="font-mono text-xs font-semibold text-[var(--nw-brand)]">{{ budget.quote_num or '-' }}</span>
+              <a href="/commercial/budget_generator?id={{ budget.id }}" class="font-mono text-xs font-bold text-[var(--nw-brand)] hover:underline flex items-center gap-1.5" title="Abrir e visualizar orçamento">
+                <span>{{ budget.quote_num or '-' }}</span>
+              </a>
             </td>
             <td>
-              <span class="font-semibold text-sm text-[var(--nw-text-1)]">{{ budget.client_name or '-' }}</span>
+              <a href="/commercial/budget_generator?id={{ budget.id }}" class="font-semibold text-sm text-[var(--nw-text-1)] hover:text-[var(--nw-brand)] transition-colors block" title="Abrir proposta">
+                {{ budget.client_name or '-' }}
+              </a>
             </td>
             <td>
               <span class="text-sm text-[var(--nw-text-2)]">{{ budget.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
@@ -47,14 +51,22 @@
               <span class="font-bold text-sm text-emerald-600">R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}</span>
             </td>
             <td class="text-center">
-              <span class="nw-chip text-[10px] {{ 'nw-chip-won' if budget.status == 'aprovado' else ('nw-chip-draft' if budget.status == 'rascunho' else 'nw-chip-open') }}">
+              <span class="nw-chip text-[10px] {{ 'nw-chip-won' if budget.status == 'aprovado' else ('nw-chip-draft' if budget.status == 'rascunho' or budget.status == 'draft' else 'nw-chip-open') }}">
                 {{ budget.status | title }}
               </span>
             </td>
             <td class="text-right">
-              <button class="nw-icon-btn text-rose-500 hover:text-rose-700" onclick="deleteBudget({{ budget.id }})" title="Excluir">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
+              <div class="flex items-center justify-end gap-1.5">
+                <a href="/commercial/budget_generator?id={{ budget.id }}" class="nw-icon-btn text-slate-600 hover:text-[var(--nw-brand)] hover:bg-slate-100" title="Visualizar / Editar Orçamento">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </a>
+                <a href="/commercial/budget_generator?id={{ budget.id }}&auto_pdf=true" class="nw-icon-btn text-slate-600 hover:text-emerald-600 hover:bg-emerald-50" title="Baixar Proposta em PDF">
+                  <i data-lucide="file-down" class="w-4 h-4"></i>
+                </a>
+                <button class="nw-icon-btn text-rose-500 hover:text-rose-700 hover:bg-rose-50" onclick="deleteBudget({{ budget.id }})" title="Excluir">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
             </td>
           </tr>
           {% else %}

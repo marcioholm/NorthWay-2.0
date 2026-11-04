@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>NorthWay Lead Copilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --nw-red: #E31E24;
+      --nw-red-hover: #C31419;
+      --nw-red-light: #FEF2F2;
+      --nw-red-border: #FCA5A5;
+      
+      --slate-900: #0F172A;
+      --slate-800: #1E293B;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748B;
+      --slate-400: #94A3B8;
+      --slate-300: #CBD5E1;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
+      --slate-50: #F8FAFC;
+      
+      --emerald-600: #059669;
+      --emerald-500: #10B981;
+      --emerald-50: #ECFDF5;
+      --emerald-border: #A7F3D0;
+      
+      --amber-500: #F59E0B;
+      --amber-50: #FFFBEB;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      width: 410px;
+      background: #FFFFFF;
+      color: var(--slate-900);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-x: hidden;
+    }
+
+    /* Top App Bar */
+    .top-bar {
+      background: var(--slate-900);
+      color: #FFFFFF;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-logo span.red {
+      color: var(--nw-red);
+    }
+
+    .brand-badge {
+      font-size: 9px;
+      font-weight: 700;
+      background: rgba(227, 30, 36, 0.15);
+      color: #FCA5A5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(227, 30, 36, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .site-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .site-pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald-500);
+      box-shadow: 0 0 8px var(--emerald-500);
+    }
+
+    /* Main Container */
+    .app-body {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #F8FAFC;
+    }
+
+    /* Score Card / Radar */
+    .enrich-score-card {
+      background: #FFFFFF;
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .score-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .score-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--slate-700);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-reset-draft {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--nw-red);
+      background: var(--nw-red-light);
+      border: 1px solid var(--nw-red-border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+
+    .btn-reset-draft:hover {
+      background: #FEE2E2;
+    }
+
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .badge-chip {
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      color: var(--slate-500);
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      padding: 5px 2px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .badge-chip .chip-icon {
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .badge-chip.active {
+      background: var(--emerald-50);
+      border-color: var(--emerald-border);
+      color: var(--emerald-600);
+      font-weight: 700;
+    }
+
+    /* Section Cards */
+    .form-section {
+      background: #FFFFFF;
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--slate-800);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-label svg {
+      color: var(--nw-red);
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-row > div {
+      flex: 1;
+    }
+
+    label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--slate-500);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--slate-900);
+      background: #FFFFFF;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--nw-red);
+      box-shadow: 0 0 0 3px rgba(227, 30, 36, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 44px;
+      line-height: 1.4;
+    }
+
+    /* Custom Switch / Selector for Meta Ads */
+    .ads-toggle-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .toggle-chip {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      background: var(--slate-50);
+      color: var(--slate-600);
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .toggle-chip.active-green {
+      background: var(--emerald-50);
+      border-color: var(--emerald-600);
+      color: var(--emerald-600);
+      font-weight: 700;
+    }
+
+    .toggle-chip.active-red {
+      background: var(--nw-red-light);
+      border-color: var(--nw-red);
+      color: var(--nw-red);
+      font-weight: 700;
+    }
+
+    /* Actions Panel */
+    .actions-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-main {
+      width: 100%;
+      background: var(--nw-red);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(227, 30, 36, 0.28);
+      transition: all 0.15s ease;
+    }
+
+    .btn-main:hover {
+      background: var(--nw-red-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(227, 30, 36, 0.35);
+    }
+
+    .btn-main:active {
+      transform: translateY(0);
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .btn-sub {
+      background: #FFFFFF;
+      border: 1px solid var(--slate-200);
+      color: var(--slate-700);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 7px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-sub:hover {
+      background: var(--slate-100);
+      border-color: var(--slate-300);
+      color: var(--slate-900);
+    }
+
+    /* Footer Stats Bar */
+    .footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px 12px 16px;
+      font-size: 11px;
+      color: var(--slate-500);
+      background: #F8FAFC;
+      border-top: 1px solid var(--slate-200);
+    }
+
+    .leads-counter-pill {
+      background: #FFFFFF;
+      border: 1px solid var(--slate-200);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    .leads-counter-pill strong {
+      color: var(--nw-red);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-link {
+      color: var(--slate-600);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .footer-link:hover {
+      color: var(--nw-red);
+    }
+
+    /* Floating Toast Notification */
+    #toastBar {
+      position: fixed;
+      top: 54px;
+      left: 12px;
+      right: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      z-index: 100;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    #toastBar.success {
+      display: flex;
+      background: #064E3B;
+      color: #A7F3D0;
+      border: 1px solid #059669;
+    }
+
+    #toastBar.error {
+      display: flex;
+      background: #7F1D1D;
+      color: #FECACA;
+      border: 1px solid #DC2626;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Bar -->
+  <header class="top-bar">
+    <div class="brand-box">
+      <div class="brand-logo">
+        NORTH<span class="red">WAY</span>
+      </div>
+      <span class="brand-badge">Copilot</span>
+    </div>
+
+    <div class="site-pill" id="currentSiteLabel">
+      <span class="dot"></span>
+      <span id="siteNameTxt">Detectando...</span>
+    </div>
+  </header>
+
+  <!-- Toast Notifier -->
+  <div id="toastBar">
+    <span id="toastIcon">✨</span>
+    <span id="toastMessage">Dados atualizados com sucesso!</span>
+  </div>
+
+  <div class="app-body">
+
+    <!-- Card 1: Score & Progresso de Enriquecimento -->
+    <div class="enrich-score-card">
+      <div class="score-header">
+        <span class="score-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          Status do Lead Atual
+        </span>
+        <button id="btnResetDraft" class="btn-reset-draft" title="Iniciar nova empresa do zero">
+          <span>🔄 Nova Empresa</span>
+        </button>
+      </div>
+
+      <div class="badge-grid">
+        <div id="badgeCnpj" class="badge-chip">
+          <span class="chip-icon">📄</span>
+          <span>CNPJ</span>
+        </div>
+        <div id="badgeSocios" class="badge-chip">
+          <span class="chip-icon">👥</span>
+          <span>Sócios</span>
+        </div>
+        <div id="badgeContact" class="badge-chip">
+          <span class="chip-icon">📞</span>
+          <span>Contato</span>
+        </div>
+        <div id="badgeAds" class="badge-chip">
+          <span class="chip-icon">📢</span>
+          <span>Meta Ads</span>
+        </div>
+        <div id="badgeInsta" class="badge-chip">
+          <span class="chip-icon">📸</span>
+          <span>Instagram</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Dados Cadastrais & Empresa -->
+    <div class="form-section">
+      <div class="section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+        <span>Empresa & Cadastro</span>
+      </div>
+
+      <div class="input-group">
+        <label for="companyName">Razão Social / Nome Fantasia</label>
+        <input type="text" id="companyName" placeholder="Ex: Prana Solar Servicos Eletricos LTDA">
+      </div>
+
+      <div class="input-row">
+        <div>
+          <label for="cnpj">CNPJ</label>
+          <input type="text" id="cnpj" placeholder="34.909.433/0001-86">
+        </div>
+        <div>
+          <label for="cityState">Cidade - UF</label>
+          <input type="text" id="cityState" placeholder="Lagoa Santa - MG">
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Tomadores de Decisão (QSA) & Contatos -->
+    <div class="form-section">
+      <div class="section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Sócios & Contatos Diretos</span>
+      </div>
+
+      <div class="input-group">
+        <label for="socios">Sócios & Administradores (QSA)</label>
+        <input type="text" id="socios" placeholder="Ex: Lucas Rafael Lima (Sócio-Administrador)">
+      </div>
+
+      <div class="input-row">
+        <div>
+          <label for="phone">Telefone / WhatsApp</label>
+          <input type="text" id="phone" placeholder="(31) 98765-4321">
+        </div>
+        <div>
+          <label for="email">E-mail Comercial</label>
+          <input type="email" id="email" placeholder="contato@empresa.com.br">
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Maturidade de Marketing (Ads & Social) -->
+    <div class="form-section">
+      <div class="section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span>Marketing & Presença Digital</span>
+      </div>
+
+      <div class="input-row">
+        <div>
+          <label>Anúncios Ativos (Meta)?</label>
+          <div class="ads-toggle-group">
+            <div id="btnAdsYes" class="toggle-chip">🟢 Sim</div>
+            <div id="btnAdsNo" class="toggle-chip">⚪ Não</div>
+          </div>
+        </div>
+        <div>
+          <label for="adCount">Qtd Criativos</label>
+          <input type="number" id="adCount" placeholder="Ex: 3" min="0">
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div>
+          <label for="instagram">Instagram</label>
+          <input type="text" id="instagram" placeholder="@pranasolarenergia">
+        </div>
+        <div>
+          <label for="instagramFollowers">Seguidores</label>
+          <input type="text" id="instagramFollowers" placeholder="Ex: 12.4k">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="notes">Anotações do SDR</label>
+        <textarea id="notes" placeholder="Ex: Empresa investindo em criativos de vídeo, abordar focado em conversão"></textarea>
+      </div>
+    </div>
+
+    <!-- Painel de Ações Principais -->
+    <div class="actions-panel">
+      <button id="btnSaveLead" class="btn-main" title="Salva a empresa na planilha e zera para a próxima">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        <span>Concluir Empresa & Salvar</span>
+      </button>
+
+      <div class="btn-grid">
+        <button id="btnCopyTsv" class="btn-sub" title="Copia linha formatada para colar (Ctrl+V) no Sheets">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span>Copiar p/ Sheets</span>
+        </button>
+
+        <button id="btnExportCsv" class="btn-sub" title="Baixa arquivo CSV com todos os leads">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <span>Baixar CSV</span>
+        </button>
+      </div>
+
+      <div class="btn-grid">
+        <button id="btnSendToCrm" class="btn-sub" title="Envia para o NorthWay CRM (localhost:5000)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          <span>Enviar ao CRM</span>
+        </button>
+
+        <button id="btnClearQueue" class="btn-sub" style="color: #94A3B8;" title="Limpar lista salva">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span>Limpar Lista</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer Stats -->
+  <footer class="footer-bar">
+    <div class="leads-counter-pill">
+      Leads salvos: <strong id="leadCountBadge">0</strong>
+    </div>
+
+    <div class="footer-links">
+      <a id="linkPortal" class="footer-link" href="http://localhost:8080" target="_blank">
+        <span>Portal Maps ↗</span>
+      </a>
+      <a id="linkCrm" class="footer-link" href="http://localhost:5000" target="_blank">
+        <span>CRM ↗</span>
+      </a>
+    </div>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

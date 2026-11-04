@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "NorthWay Lead Copilot",
+  "version": "1.2.0",
+  "description": "Enriquecedor de leads B2B: extraia sócios, anúncios Meta e Instagram com 1 clique para sua planilha ou CRM.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.cnpj.biz/*",
+    "https://*.casadosdados.com.br/*",
+    "https://*.facebook.com/ads/library/*",
+    "https://*.instagram.com/*",
+    "http://localhost:5000/*",
+    "http://127.0.0.1:5000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "NorthWay Lead Copilot",
+    "default_icon": "icon128.png"
+  },
+  "icons": {
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.cnpj.biz/*",
+        "https://*.casadosdados.com.br/*",
+        "https://*.facebook.com/ads/library/*",
+        "https://*.instagram.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
