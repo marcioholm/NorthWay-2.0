@@ -35,12 +35,12 @@
           {% for budget in budgets %}
           <tr class="group hover:bg-[var(--nw-shell)] transition-colors">
             <td>
-              <a href="/commercial/budget_generator?id={{ budget.id }}" class="font-mono text-xs font-bold text-[var(--nw-brand)] hover:underline flex items-center gap-1.5" title="Abrir e visualizar orçamento">
+              <a href="/commercial/budgets/{{ budget.id }}/view" class="font-mono text-xs font-bold text-[var(--nw-brand)] hover:underline flex items-center gap-1.5" title="Visualizar proposta comercial">
                 <span>{{ budget.quote_num or '-' }}</span>
               </a>
             </td>
             <td>
-              <a href="/commercial/budget_generator?id={{ budget.id }}" class="font-semibold text-sm text-[var(--nw-text-1)] hover:text-[var(--nw-brand)] transition-colors block" title="Abrir proposta">
+              <a href="/commercial/budgets/{{ budget.id }}/view" class="font-semibold text-sm text-[var(--nw-text-1)] hover:text-[var(--nw-brand)] transition-colors block" title="Visualizar proposta comercial">
                 {{ budget.client_name or '-' }}
               </a>
             </td>
@@ -57,11 +57,14 @@
             </td>
             <td class="text-right">
               <div class="flex items-center justify-end gap-1.5">
-                <a href="/commercial/budget_generator?id={{ budget.id }}" class="nw-icon-btn text-slate-600 hover:text-[var(--nw-brand)] hover:bg-slate-100" title="Visualizar / Editar Orçamento">
+                <a href="/commercial/budgets/{{ budget.id }}/view" class="nw-icon-btn text-slate-600 hover:text-[var(--nw-brand)] hover:bg-slate-100" title="Visualizar Proposta Comercial">
                   <i data-lucide="eye" class="w-4 h-4"></i>
                 </a>
-                <a href="/commercial/budget_generator?id={{ budget.id }}&auto_pdf=true" class="nw-icon-btn text-slate-600 hover:text-emerald-600 hover:bg-emerald-50" title="Baixar Proposta em PDF">
-                  <i data-lucide="file-down" class="w-4 h-4"></i>
+                <a href="/commercial/budgets/{{ budget.id }}/view?print=true" target="_blank" class="nw-icon-btn text-slate-600 hover:text-emerald-600 hover:bg-emerald-50" title="Imprimir / Salvar em PDF">
+                  <i data-lucide="printer" class="w-4 h-4"></i>
+                </a>
+                <a href="/commercial/budget_generator?id={{ budget.id }}" class="nw-icon-btn text-slate-600 hover:text-blue-600 hover:bg-blue-50" title="Editar Formulário do Orçamento">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
                 </a>
                 <button class="nw-icon-btn text-rose-500 hover:text-rose-700 hover:bg-rose-50" onclick="deleteBudget({{ budget.id }})" title="Excluir">
                   <i data-lucide="trash-2" class="w-4 h-4"></i>

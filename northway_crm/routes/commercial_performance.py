@@ -183,6 +183,16 @@ def budget_history():
     budgets = Budget.query.filter_by(company_id=current_user.company_id).order_by(Budget.created_at.desc()).all()
     return render_template('commercial/budget_history.html', budgets=budgets)
 
+@commercial_bp.route('/commercial/budgets/<int:budget_id>/view')
+@commercial_bp.route('/commercial/budgets/<int:budget_id>/print')
+@login_required
+def view_budget(budget_id):
+    if not current_user.company_id:
+        return "Unauthorized", 403
+    from models import Budget
+    budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first_or_404()
+    return render_template('commercial/budget_view.html', budget=budget)
+
 @commercial_bp.route('/commercial/api/budgets', methods=['POST'])
 @login_required
 def save_budget():
