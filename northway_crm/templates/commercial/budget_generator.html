@@ -331,6 +331,7 @@ function recalc() {
   } else {
     summary.hidden = true;
   }
+  if (typeof saveDraftToLocalStorage === 'function') saveDraftToLocalStorage();
 }
 
 let discountSource = 'pct'; // tracks which field the user last edited
@@ -857,12 +858,26 @@ async function exportPDF() {
 
 function printBudgetDirect() {
   const printHtml = buildPrintHTML();
-  const printWin = window.open('', '_blank');
-  if (printWin) {
-    printWin.document.open();
-    printWin.document.write(printHtml + '<script>window.onload = function() { window.print(); }<\\/script>');
-    printWin.document.close();
+  let iframe = document.getElementById('printIframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'printIframe';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
   }
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(printHtml);
+  doc.close();
+  setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  }, 400);
 }
 
 async function exportHTML() {
@@ -886,42 +901,108 @@ async function exportHTML() {
   }
 }
 
-function initBudgetForm() {
-  if (savedBudgetData) {
-    if (savedBudgetData.quoteNum) document.getElementById('quoteNum').value = savedBudgetData.quoteNum;
-    if (savedBudgetData.quoteDate) document.getElementById('quoteDate').value = savedBudgetData.quoteDate;
-    if (savedBudgetData.cliName) document.getElementById('cliName').value = savedBudgetData.cliName;
-    if (savedBudgetData.cliDoc) document.getElementById('cliDoc').value = savedBudgetData.cliDoc;
-    if (savedBudgetData.cliContact) document.getElementById('cliContact').value = savedBudgetData.cliContact;
-    if (savedBudgetData.cliPhone) document.getElementById('cliPhone').value = savedBudgetData.cliPhone;
-    if (savedBudgetData.cliAddr) document.getElementById('cliAddr').value = savedBudgetData.cliAddr;
-    if (savedBudgetData.billingCycle) document.getElementById('billingCycle').value = savedBudgetData.billingCycle;
-    if (savedBudgetData.discountPct) document.getElementById('discountPct').value = savedBudgetData.discountPct;
-    if (savedBudgetData.discountVal) document.getElementById('discountVal').value = savedBudgetData.discountVal;
-    if (savedBudgetData.installments) document.getElementById('installments').value = savedBudgetData.installments;
-    if (savedBudgetData.obsText) document.getElementById('obsText').value = savedBudgetData.obsText;
-    if (savedBudgetData.validity) document.getElementById('validity').value = savedBudgetData.validity;
+function saveDraftToLocalStorage() {
+  try {
+    const draft = {
+      quoteNum: document.getElementById('quoteNum').value,
+      quoteDate: document.getElementById('quoteDate').value,
+      cliName: document.getElementById('cliName').value,
+      cliDoc: document.getElementById('cliDoc').value,
+      cliContact: document.getElementById('cliContact').value,
+      cliPhone: document.getElementById('cliPhone').value,
+      cliAddr: document.getElementById('cliAddr').value,
+      items: gatherItems(),
+      billingCycle: document.getElementById('billingCycle').value,
+      discountPct: document.getElementById('discountPct').value,
+      discountVal: document.getElementById('discountVal').value,
+      installments: document.getElementById('installments').value,
+      obsText: document.getElementById('obsText').value,
+      validity: document.getElementById('validity').value
+    };
+    localStorage.setItem('northway_budget_draft', JSON.stringify(draft));
+  } catch(e) {}
+}
 
-    tbody.innerHTML = '';
-    if (Array.isArray(savedBudgetData.items) && savedBudgetData.items.length > 0) {
-      savedBudgetData.items.forEach(it => {
-        addRow(it.desc || '', it.qty || '1', it.price || '');
-      });
-    } else {
-      addRow(); addRow(); addRow();
-    }
-    recalc();
+function attachAutoSave() {
+  document.querySelectorAll('input, select, textarea').forEach(el => {
+    el.addEventListener('input', saveDraftToLocalStorage);
+    el.addEventListener('change', saveDraftToLocalStorage);
+  });
+}
 
-    // Se a URL pediu auto_pdf=true, dispara o download do PDF automaticamente
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('auto_pdf') === 'true') {
-      setTimeout(() => {
-        exportPDF();
-      }, 600);
-    }
+function populateFormFromData(d) {
+  if (!d) return;
+  if (d.quoteNum) document.getElementById('quoteNum').value = d.quoteNum;
+  if (d.quoteDate) document.getElementById('quoteDate').value = d.quoteDate;
+  if (d.cliName) document.getElementById('cliName').value = d.cliName;
+  if (d.cliDoc) document.getElementById('cliDoc').value = d.cliDoc;
+  if (d.cliContact) document.getElementById('cliContact').value = d.cliContact;
+  if (d.cliPhone) document.getElementById('cliPhone').value = d.cliPhone;
+  if (d.cliAddr) document.getElementById('cliAddr').value = d.cliAddr;
+  if (d.billingCycle) document.getElementById('billingCycle').value = d.billingCycle;
+  if (d.discountPct) document.getElementById('discountPct').value = d.discountPct;
+  if (d.discountVal) document.getElementById('discountVal').value = d.discountVal;
+  if (d.installments) document.getElementById('installments').value = d.installments;
+  if (d.obsText) document.getElementById('obsText').value = d.obsText;
+  if (d.validity) document.getElementById('validity').value = d.validity;
+
+  tbody.innerHTML = '';
+  if (Array.isArray(d.items) && d.items.length > 0) {
+    d.items.forEach(it => {
+      addRow(it.desc || '', it.qty || '1', it.price || '');
+    });
   } else {
-    tbody.innerHTML = '';
     addRow(); addRow(); addRow();
+  }
+  recalc();
+}
+
+function initBudgetForm() {
+  // 1. Se veio do banco de dados (budget salvo)
+  if (savedBudgetData && savedBudgetData.cliName) {
+    populateFormFromData(savedBudgetData);
+  } else {
+    // 2. Se não veio do banco, restaura do LocalStorage se existir
+    let localDraft = null;
+    try {
+      localDraft = JSON.parse(localStorage.getItem('northway_budget_draft') || 'null');
+    } catch(e) {}
+
+    if (localDraft && localDraft.cliName) {
+      populateFormFromData(localDraft);
+    } else {
+      // 3. Fallback dos dados preenchidos da Associação Comercial
+      const assocData = {
+        quoteNum: '001/2026',
+        quoteDate: todayISO(),
+        cliName: 'Associação Comercial e Empresarial de Wenceslau Braz',
+        cliDoc: '78590304000143',
+        cliContact: 'Adriana',
+        cliPhone: '+55 43 99846-4728',
+        cliAddr: 'R. Barão do Rio Branco, 461 - fundos - Centro, Wenceslau Braz - PR, 84950-000',
+        billingCycle: 'unico',
+        discountPct: '10',
+        discountVal: '300,00',
+        installments: '0',
+        obsText: 'Obs: desconto de 10% mediante pagamento a vista. Parcelamos em ate 3X no boleto Em até 12X no cartão + taxa',
+        validity: '15 dias',
+        items: [
+          { desc: 'Assessoria de marketing para a campanha', qty: '1', price: '3.000,00' }
+        ]
+      };
+      populateFormFromData(assocData);
+      saveDraftToLocalStorage();
+    }
+  }
+
+  attachAutoSave();
+
+  // Se a URL pediu auto_pdf=true, dispara o download/impressão
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('auto_pdf') === 'true') {
+    setTimeout(() => {
+      printBudgetDirect();
+    }, 600);
   }
 }
 
