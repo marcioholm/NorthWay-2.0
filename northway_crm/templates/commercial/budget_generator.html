@@ -23,6 +23,10 @@
         <i data-lucide="save" class="w-4 h-4"></i>
         <span>Salvar Orçamento</span>
       </button>
+      <button id="printBtn" onclick="printBudgetDirect()" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5 flex items-center gap-2" title="Abrir proposta para impressão ou salvar em PDF nativo">
+        <i data-lucide="printer" class="w-4 h-4"></i>
+        <span>Imprimir Proposta</span>
+      </button>
       <button id="exportBtn" onclick="exportPDF()" class="nw-btn nw-btn-accent text-xs py-2 px-3.5 flex items-center gap-2">
         <i data-lucide="file-down" class="w-4 h-4"></i>
         <span>Baixar PDF</span>
@@ -387,10 +391,20 @@ function resetForm() {
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;box-shadow:0 10px 25px rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px;transition:opacity 0.2s ease;';
+    document.body.appendChild(t);
+  }
+  t.innerHTML = '<span>✨ ' + (msg || '') + '</span>';
+  t.style.opacity = '1';
+  t.style.display = 'flex';
+  setTimeout(() => {
+    t.style.opacity = '0';
+    setTimeout(() => { t.style.display = 'none'; }, 250);
+  }, 3000);
 }
 
 function gatherItems() {
@@ -526,10 +540,10 @@ function loadScript(url) {
 }
 
 async function ensureJsPDF() {
-  if (typeof jspdf !== 'undefined') return true;
+  if (typeof window.jspdf !== 'undefined' || typeof window.jsPDF !== 'undefined') return true;
   try {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js');
-    return typeof jspdf !== 'undefined';
+    return typeof window.jspdf !== 'undefined' || typeof window.jsPDF !== 'undefined';
   } catch(e) {
     console.error('jsPDF load error:', e);
     return false;
@@ -537,16 +551,22 @@ async function ensureJsPDF() {
 }
 
 async function exportPDF() {
+  const btn = document.getElementById('exportBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF...'; }
+
   const loaded = await ensureJsPDF();
-  if (!loaded) {
-    showToast('Não foi possível carregar a biblioteca de PDF.');
+  const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
+
+  if (!loaded || !jsPDFClass) {
+    // Fallback: abre a visualização para salvar como PDF via impressão nativa
+    showToast('Abrindo proposta para impressão / salvar em PDF...');
+    printBudgetDirect();
+    if (btn) { btn.disabled = false; btn.textContent = 'Baixar PDF'; }
     return;
   }
-  const btn = document.getElementById('exportBtn');
-  btn.disabled = true; btn.textContent = 'Gerando PDF...';
+
   try {
-    const { jsPDF } = jspdf;
-    const pdf = new jsPDF('p','mm','a4');
+    const pdf = new jsPDFClass('p','mm','a4');
     const W = 210, H = 297, ML = 20, MR = 20, MT = 20;
     const cw = W - ML - MR;
     let y = MT;
@@ -784,20 +804,30 @@ async function exportPDF() {
     setFont('normal', 8, [113,112,110]);
     pdf.text('{{ current_user.company.name | replace("\'", "\\\'") }}', sigX + 27.5, y + 15, {align:'center'});
 
-    // --- Save PDF ---
-    const pdfBlob = pdf.output('blob');
+    // --- Save PDF usando método nativo do jsPDF ---
     const numClean = num.replace(/\//g, '-');
     const cliName = cli.name.trim();
     const filename = 'orcamento-' + numClean + (cliName ? '-' + cliName.replace(/\s+/g, '_') : '') + '.pdf';
-    const url = URL.createObjectURL(pdfBlob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
-    showToast('PDF salvo!');
+    
+    // Método oficial e robusto do jsPDF
+    pdf.save(filename);
+    showToast('PDF baixado com sucesso!');
   } catch(e) {
-    console.error(e); showToast('Erro ao gerar PDF: ' + (e && e.message || 'tente novamente'));
+    console.error('Erro na exportação jsPDF:', e);
+    showToast('Tentando gerar via impressão do navegador...');
+    printBudgetDirect();
   } finally {
-    btn.disabled = false; btn.textContent = 'Baixar PDF';
+    if (btn) { btn.disabled = false; btn.textContent = 'Baixar PDF'; }
+  }
+}
+
+function printBudgetDirect() {
+  const printHtml = buildPrintHTML();
+  const printWin = window.open('', '_blank');
+  if (printWin) {
+    printWin.document.open();
+    printWin.document.write(printHtml + '<script>window.onload = function() { window.print(); }<\\/script>');
+    printWin.document.close();
   }
 }
 
