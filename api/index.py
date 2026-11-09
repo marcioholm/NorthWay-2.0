@@ -89,19 +89,26 @@ def get_app():
         print(f"🔥 BOOT ERROR: {e}")
         traceback.print_exc()
         
-        error_details = str(e) + "\n\n" + traceback.format_exc()
-        
         @error_app.route('/', defaults={'path': ''})
         @error_app.route('/<path:path>')
         def boot_error(path):
-            return f"""
-            <div style="font-family: sans-serif; padding: 40px; line-height: 1.6; max-width: 800px; margin: 0 auto;">
-                <h1 style="color: #e53e3e;">🔥 Boot Error</h1>
-                <p>The application failed to start correctly. Error details:</p>
-                <div style="background: #f7fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; overflow-x: auto;">
-                    <pre style="font-size: 13px; margin: 0; color: #b91c1c; white-space: pre-wrap;">{error_details}</pre>
+            return """
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Sistema Temporariamente Indisponível - NorthWay</title>
+            </head>
+            <body style="margin: 0; background-color: #0A0A0A; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; box-sizing: border-box;">
+                <div style="max-width: 480px; text-align: center;">
+                    <div style="font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px;">NORTH<span style="color: #FA0102;">WAY</span></div>
+                    <h1 style="font-size: 20px; font-weight: 700; color: #F1F5F9; margin-top: 24px; margin-bottom: 12px;">Sistema Temporariamente Indisponível</h1>
+                    <p style="font-size: 14px; color: #94A3B8; line-height: 1.6; margin-bottom: 24px;">Estamos realizando uma atualização no servidor. Por favor, recarregue a página ou tente novamente em alguns instantes.</p>
+                    <a href="javascript:location.reload()" style="display: inline-block; background-color: #FA0102; color: #FFFFFF; text-decoration: none; font-size: 13px; font-weight: 600; padding: 10px 24px; border-radius: 8px;">Recarregar Página</a>
                 </div>
-            </div>
+            </body>
+            </html>
             """, 500
         return error_app
 

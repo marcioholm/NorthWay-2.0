@@ -4,7 +4,6 @@ from models import db, Lead, Company, Pipeline, PipelineStage
 from datetime import datetime
 import json
 import logging
-from fpdf import FPDF
 
 diagnostic_raiox_bp = Blueprint('diagnostic_raiox', __name__)
 logger = logging.getLogger(__name__)
@@ -21,6 +20,7 @@ def generate_raiox_pdf_bytes(nome, empresa, score_total, nivel, stars, pillars_d
     """
     Gera o PDF formatado do Raio-X de Escala Digital com fpdf2
     """
+    from fpdf import FPDF
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()

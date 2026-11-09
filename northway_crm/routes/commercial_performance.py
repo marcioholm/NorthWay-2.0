@@ -5,7 +5,6 @@ from models import db, User, Contract, CommissionSnapshot, AccountsPayable
 from datetime import datetime
 from sqlalchemy import func, extract
 from decimal import Decimal
-from fpdf import FPDF
 
 commercial_bp = Blueprint('commercial', __name__)
 
@@ -43,6 +42,7 @@ def ensure_budget_data(budget):
         }
 
 def generate_budget_pdf_bytes(budget, company, user):
+    from fpdf import FPDF
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()

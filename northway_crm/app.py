@@ -888,15 +888,21 @@ Sitemap: {base_url}/sitemap.xml
                     app.register_blueprint(bp)
             except Exception as e:
                 error_msg = f"❌ Failed to load blueprint {var_name} from {module_path}: {e}"
+                logger.error(error_msg, exc_info=True)
                 print(error_msg)
-                # Fallback log for Vercel
-                with open('/tmp/blueprint_error.log', 'a') as f:
-                    f.write(error_msg + "\n")
-                raise
+                try:
+                    with open('/tmp/blueprint_error.log', 'a') as f:
+                        f.write(error_msg + "\n")
+                except Exception:
+                    pass
+                continue
                 
         # --- REGISTRO EXPLÍCITO: internal_api_bp com prefixo /internal ---
-        from routes.internal_api import internal_api_bp
-        app.register_blueprint(internal_api_bp, url_prefix='/internal')
+        try:
+            from routes.internal_api import internal_api_bp
+            app.register_blueprint(internal_api_bp, url_prefix='/internal')
+        except Exception as e:
+            logger.error(f"Failed to register internal_api_bp: {e}")
 
         # --- CSRF EXEMPTIONS (M2M Webhooks, Cron, JWT Extension, REST API) ---
         try:
