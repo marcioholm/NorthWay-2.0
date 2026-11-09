@@ -25,12 +25,13 @@ class EmailService:
     }
 
     @staticmethod
-    def send_email(to, subject, template=None, context=None, html_content=None, company_id=None, user_id=None):
+    def send_email(to, subject, template=None, context=None, html_content=None, company_id=None, user_id=None, attachments=None):
         """
         Main entry point for sending emails.
         :param to: List of recipients or single email string.
         :param subject: Email subject.
         :param template: (Optional) EMAIL_TEMPLATES Enum member.
+        :param attachments: (Optional) List of dicts with filename and content.
         """
         api_key = os.getenv('RESEND_API_KEY')
         if not api_key:
@@ -85,6 +86,8 @@ class EmailService:
                 "subject": subject,
                 "html": html_content,
             }
+            if attachments:
+                params["attachments"] = attachments
             
             response = resend.Emails.send(params)
             

@@ -553,11 +553,6 @@ function buildPrintHTML() {
   '<div style="font-size:11px;color:#64748B">{{ current_user.company.name | replace("\'", "\\\'") }}</div></div></div>'+
   '</body></html>';
 }
-  '<div class="ft"><div style="font-size:12px;color:#71706E">Validade: '+esc(valid)+' a partir da data de emissão.</div>'+
-  '<div class="sa"><div class="sl2"></div><div style="font-size:12px;font-weight:600">{{ current_user.name | replace("\'", "\\\'") }}</div>'+
-  '<div style="font-size:11px;color:#71706E">{{ current_user.company.name | replace("\'", "\\\'") }}</div></div></div>'+
-  '</body></html>';
-}
 
 function esc(s) {
   if (!s) return '';

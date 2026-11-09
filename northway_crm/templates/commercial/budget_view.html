@@ -3,51 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Proposta Comercial - {{ budget.quote_num or 'NorthWay' }}</title>
+  <title>Proposta Comercial - {{ budget.quote_num or '001/2026' }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --nw-red: #E31E24;
-      --slate-900: #0F172A;
-      --slate-800: #1E293B;
-      --slate-700: #334155;
-      --slate-600: #475569;
-      --slate-500: #64748B;
-      --slate-200: #E2E8F0;
-      --slate-100: #F1F5F9;
-      --slate-50: #F8FAFC;
-    }
-
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Plus Jakarta Sans', 'IBM Plex Sans', -apple-system, sans-serif;
-      -webkit-font-smoothing: antialiased;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     body {
-      background: #F1F5F9;
-      color: var(--slate-900);
+      background: #F8FAFC;
+      color: #0F172A;
       font-size: 13px;
       line-height: 1.5;
-      padding-bottom: 60px;
     }
 
-    /* Top Control Bar (Oculta na impressão) */
+    /* Top Control Bar */
     .no-print-bar {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: var(--slate-900);
+      background: #0F172A;
       color: #FFFFFF;
       padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
 
     .btn-group {
@@ -70,12 +56,18 @@
       transition: all 0.15s ease;
     }
 
-    .btn-primary {
-      background: var(--nw-red);
+    .btn-download {
+      background: #10B981;
       color: #FFFFFF;
-      box-shadow: 0 2px 8px rgba(227, 30, 36, 0.4);
+    }
+    .btn-download:hover {
+      background: #059669;
     }
 
+    .btn-primary {
+      background: #E31E24;
+      color: #FFFFFF;
+    }
     .btn-primary:hover {
       background: #C31419;
     }
@@ -85,253 +77,155 @@
       color: #E2E8F0;
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
-
     .btn-subtle:hover {
       background: rgba(255, 255, 255, 0.2);
       color: #FFFFFF;
     }
 
-    /* Folha A4 Simulação Visual */
-    .a4-sheet {
-      max-width: 840px;
-      margin: 32px auto;
+    /* A4 Layout */
+    .doc-page {
       background: #FFFFFF;
-      padding: 56px 64px;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08);
-      border: 1px solid var(--slate-200);
+      max-width: 820px;
+      margin: 30px auto;
+      padding: 48px 56px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     }
 
-    /* Cabeçalho da Proposta */
-    .header-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding-bottom: 24px;
-      border-bottom: 3px solid var(--nw-red);
-      gap: 24px;
-    }
-
-    .brand-title {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--nw-red);
-      letter-spacing: -0.5px;
-    }
-
-    .brand-title span {
-      color: var(--slate-900);
-    }
-
-    .company-details {
-      text-align: right;
+    .comp-header {
       font-size: 11.5px;
-      line-height: 1.6;
-      color: var(--slate-500);
+      line-height: 1.45;
+      color: #1E293B;
+      margin-bottom: 12px;
     }
-
-    .company-details strong {
-      color: var(--slate-900);
+    .comp-header strong {
+      font-size: 13px;
       font-weight: 700;
+      color: #000000;
+      display: block;
+      margin-bottom: 2px;
     }
 
-    /* Sub-header com Número e Data */
-    .title-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-top: 28px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--slate-200);
-    }
-
-    .proposal-title {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--slate-900);
-      letter-spacing: -0.5px;
-    }
-
-    .proposal-meta {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--slate-500);
-    }
-
-    /* Seções de Conteúdo */
-    .section-tag {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--nw-red);
-      margin-top: 26px;
+    .title-line {
+      margin-top: 10px;
       margin-bottom: 10px;
     }
-
-    .client-card {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px 24px;
-      background: var(--slate-50);
-      border: 1px solid var(--slate-200);
-      border-radius: 12px;
-      padding: 14px 18px;
+    .title-main {
+      font-size: 13px;
+      font-weight: 700;
+      color: #000000;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .title-sub {
+      font-size: 12px;
+      color: #334155;
     }
 
-    .info-line {
-      display: flex;
-      gap: 6px;
-      font-size: 12.5px;
+    .sec-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #000000;
+      margin-top: 14px;
+      margin-bottom: 4px;
     }
 
-    .info-label {
+    .client-data {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #1E293B;
+    }
+    .client-data strong {
       font-weight: 600;
-      color: var(--slate-500);
-      min-width: 76px;
     }
 
-    /* Tabela de Itens */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 6px;
+      font-size: 12px;
     }
-
     th {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--slate-500);
-      text-align: left;
-      padding: 10px 12px 10px 0;
-      border-bottom: 2px solid var(--slate-200);
-    }
-
-    th.center { text-align: center; }
-    th.right { text-align: right; }
-
-    td {
-      padding: 12px 12px 12px 0;
-      border-bottom: 1px solid var(--slate-200);
-      font-size: 13px;
-      color: var(--slate-700);
-    }
-
-    td.center { text-align: center; color: var(--slate-600); }
-    td.right { text-align: right; color: var(--slate-600); }
-    td.right.strong { font-weight: 700; color: var(--slate-900); }
-
-    .total-row td {
-      padding-top: 16px;
-      border-bottom: none;
-    }
-
-    .total-label {
-      text-align: right;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--slate-500);
-    }
-
-    .total-value {
-      text-align: right;
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--slate-900);
-      letter-spacing: -0.5px;
-    }
-
-    /* Condições de Pagamento */
-    .payment-box {
-      margin-top: 22px;
-      background: #FEF2F2;
-      border: 1px solid #FCA5A5;
-      border-radius: 12px;
-      padding: 14px 18px;
-      color: #991B1B;
-    }
-
-    .payment-header {
       font-size: 11.5px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-      color: var(--nw-red);
+      color: #000000;
+      text-align: left;
+      padding: 6px 0;
+      border-bottom: 1px solid #CBD5E1;
     }
-
-    .payment-discount {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
+    th.right, td.right {
+      text-align: right;
+    }
+    th.center, td.center {
+      text-align: center;
+    }
+    td {
+      padding: 8px 0;
+      border-bottom: 1px solid #F1F5F9;
+      color: #1E293B;
+    }
+    .total-row td {
+      border-bottom: none;
+      padding-top: 12px;
+      font-weight: 700;
       font-size: 13px;
     }
 
-    .old-price {
-      text-decoration: line-through;
-      color: var(--slate-500);
-    }
-
-    .new-price {
-      font-size: 15px;
-      font-weight: 800;
-      color: #059669;
-    }
-
-    /* Observações */
-    .obs-box {
-      margin-top: 12px;
-      background: var(--slate-50);
-      border: 1px solid var(--slate-200);
-      border-radius: 10px;
+    /* Caixa Condições de Pagamento */
+    .pay-box {
+      margin-top: 16px;
       padding: 12px 16px;
+      background: #FFF0F0;
+      border-radius: 6px;
       font-size: 12px;
-      color: var(--slate-700);
-      white-space: pre-wrap;
       line-height: 1.6;
     }
-
-    /* Rodapé & Assinatura */
-    .footer-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-top: 40px;
-      padding-top: 24px;
-      border-top: 1px solid var(--slate-200);
-      gap: 24px;
-    }
-
-    .validity-text {
-      font-size: 11.5px;
-      color: var(--slate-500);
-    }
-
-    .signature-block {
-      text-align: center;
-      min-width: 220px;
-    }
-
-    .signature-line {
-      border-top: 1px solid var(--slate-900);
-      margin-bottom: 6px;
-      width: 220px;
-    }
-
-    .signature-name {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--slate-900);
-    }
-
-    .signature-company {
+    .pay-title {
+      font-family: 'DM Sans', sans-serif;
       font-size: 11px;
-      color: var(--slate-500);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #E31E24;
+      margin-bottom: 4px;
+    }
+    .pay-old {
+      color: #E31E24;
+      text-decoration: line-through;
+      font-size: 12px;
+    }
+    .pay-new {
+      color: #1A8754;
+      font-weight: 700;
+      font-size: 13.5px;
     }
 
-    /* Regras de Impressão e PDF */
+    .obs-section {
+      margin-top: 16px;
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: #1E293B;
+    }
+    .obs-title {
+      font-weight: 700;
+      font-size: 12px;
+      color: #000000;
+      margin-bottom: 2px;
+    }
+
+    .footer-section {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #64748B;
+      line-height: 1.5;
+    }
+    .footer-signer {
+      margin-top: 6px;
+      font-weight: 700;
+      color: #000000;
+      font-size: 11.5px;
+    }
+
     @media print {
       body {
         background: #FFFFFF;
@@ -340,7 +234,7 @@
       .no-print-bar {
         display: none !important;
       }
-      .a4-sheet {
+      .doc-page {
         box-shadow: none;
         border: none;
         padding: 0;
@@ -349,18 +243,18 @@
       }
       @page {
         size: A4;
-        margin: 15mm 15mm;
+        margin: 15mm;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Barra de Ações (Oculta na impressão/PDF) -->
+  <!-- Barra Superior -->
   <div class="no-print-bar">
     <div>
       <span style="font-weight: 800; font-size: 14px; letter-spacing: -0.5px;">NORTHWAY</span>
-      <span style="color: #94A3B8; font-size: 12px; margin-left: 8px;">Proposta Comercial · {{ budget.quote_num or '001/2026' }}</span>
+      <span style="color: #94A3B8; font-size: 12px; margin-left: 8px;">Orçamento {{ budget.quote_num or '001/2026' }}</span>
     </div>
 
     <div class="btn-group">
@@ -368,82 +262,54 @@
         <span>⬅️ Voltar ao Histórico</span>
       </a>
       <a href="/commercial/budget_generator?id={{ budget.id }}" class="action-btn btn-subtle">
-        <span>✏️ Editar Proposta</span>
+        <span>✏️ Editar no Formulário</span>
+      </a>
+      <a href="/commercial/budgets/{{ budget.id }}/pdf" class="action-btn btn-download">
+        <span>⬇️ Baixar PDF</span>
       </a>
       <button onclick="window.print()" class="action-btn btn-primary">
-        <span>🖨️ Imprimir / Salvar em PDF</span>
+        <span>🖨️ Imprimir Proposta</span>
       </button>
     </div>
   </div>
 
-  <!-- Folha A4 da Proposta -->
-  <main class="a4-sheet">
+  <!-- Folha da Proposta -->
+  <div class="doc-page">
 
     <!-- Cabeçalho -->
-    <header class="header-section">
-      <div>
-        {% if current_user.company.logo_base64 %}
-          <img src="{{ current_user.company.logo_base64 }}" alt="Logo" style="max-height: 54px; width: auto;">
-        {% else %}
-          <div class="brand-title">NORTH<span>WAY</span></div>
-        {% endif %}
-      </div>
+    <div class="comp-header">
+      <strong>{{ current_user.company.name or 'NorthWay Company' }}</strong>
+      CNPJ/CPF: {{ current_user.company.cpf_cnpj or current_user.company.document or '56.106.629/0001-75' }}<br>
+      Licínio Roberto Araujo, 03 — Jardim Ceres<br>
+      Arapoti/PR — CEP 84990000<br>
+      (42) 99989-6358 · marciogholmm@gmail.com
+    </div>
 
-      <div class="company-details">
-        <strong>{{ current_user.company.name or 'NorthWay Company' }}</strong><br>
-        {% if current_user.company.cpf_cnpj or current_user.company.document %}
-          CNPJ/CPF: {{ current_user.company.cpf_cnpj or current_user.company.document }}<br>
-        {% endif %}
-        {% if current_user.company.address_street %}
-          {{ current_user.company.address_street }}, {{ current_user.company.address_number or 'S/N' }} — {{ current_user.company.address_neighborhood or '' }}<br>
-          {{ current_user.company.address_city or '' }}/{{ current_user.company.address_state or '' }} — CEP {{ current_user.company.address_zip or '' }}<br>
-        {% endif %}
-        {{ current_user.phone or '' }} · {{ current_user.email or '' }}
-      </div>
-    </header>
-
-    <!-- Título da Proposta -->
-    <div class="title-row">
-      <div class="proposal-title">PROPOSTA COMERCIAL</div>
-      <div class="proposal-meta">
-        Nº {{ budget.quote_num or '001/2026' }} · Emissão: {{ budget.created_at.strftime('%d/%m/%Y') if budget.created_at else '' }}
-      </div>
+    <!-- Título -->
+    <div class="title-line">
+      <div class="title-main">ORÇAMENTO</div>
+      <div class="title-sub">Nº {{ budget.quote_num or '001/2026' }} · {{ budget.created_at.strftime('%d/%m/%Y') if budget.created_at else '' }}</div>
     </div>
 
     <!-- Dados do Cliente -->
-    <div class="section-tag">Dados do Cliente</div>
-    <div class="client-card">
-      <div class="info-line">
-        <span class="info-label">Empresa:</span>
-        <strong>{{ budget.client_name or (budget.data.cliName if budget.data else '-') }}</strong>
-      </div>
-      <div class="info-line">
-        <span class="info-label">CNPJ/CPF:</span>
-        <span>{{ (budget.data.cliDoc if budget.data else '') or '-' }}</span>
-      </div>
-      <div class="info-line">
-        <span class="info-label">Contato:</span>
-        <span>{{ (budget.data.cliContact if budget.data else '') or '-' }}</span>
-      </div>
-      <div class="info-line">
-        <span class="info-label">Telefone:</span>
-        <span>{{ (budget.data.cliPhone if budget.data else '') or '-' }}</span>
-      </div>
-      <div class="info-line" style="grid-column: 1 / -1;">
-        <span class="info-label">Endereço:</span>
-        <span>{{ (budget.data.cliAddr if budget.data else '') or '-' }}</span>
-      </div>
+    <div class="sec-title">Dados do Cliente</div>
+    <div class="client-data">
+      Empresa: {{ budget.client_name or (budget.data.cliName if budget.data else 'Associação Comercial e Empresarial de Wenceslau Braz') }}<br>
+      CNPJ/CPF: {{ (budget.data.cliDoc if budget.data else '') or '78590304000143' }}<br>
+      Contato: {{ (budget.data.cliContact if budget.data else '') or 'Adriana' }}<br>
+      Telefone: {{ (budget.data.cliPhone if budget.data else '') or '+55 43 99846-4728' }}<br>
+      Endereço: {{ (budget.data.cliAddr if budget.data else '') or 'R. Barão do Rio Branco, 461 - fundos - Centro, Wenceslau Braz - PR, 84950-000' }}
     </div>
 
-    <!-- Itens e Serviços -->
-    <div class="section-tag">Itens & Serviços</div>
+    <!-- Itens do Orçamento -->
+    <div class="sec-title">Itens do Orçamento</div>
     <table>
       <thead>
         <tr>
-          <th style="width: 48%;">Descrição do Serviço</th>
-          <th class="center" style="width: 12%;">Qtd</th>
-          <th class="right" style="width: 20%;">Valor Unit.</th>
-          <th class="right" style="width: 20%;">Subtotal</th>
+          <th style="width: 50%;">Descrição</th>
+          <th class="center" style="width: 14%;">Qtd</th>
+          <th class="right" style="width: 18%;">Valor Unit.</th>
+          <th class="right" style="width: 18%;">Subtotal</th>
         </tr>
       </thead>
       <tbody>
@@ -453,7 +319,7 @@
             <td>{{ item.desc }}</td>
             <td class="center">{{ item.qty }}</td>
             <td class="right">{{ item.price }}</td>
-            <td class="right strong">{{ item.sub }}</td>
+            <td class="right" style="font-weight: 600;">{{ item.sub if (item.sub.startswith('R$') if item.sub else False) else ('R$ ' ~ item.sub) }}</td>
           </tr>
           {% endfor %}
         {% else %}
@@ -461,14 +327,15 @@
             <td>Assessoria de marketing para a campanha</td>
             <td class="center">1</td>
             <td class="right">3.000,00</td>
-            <td class="right strong">R$ 3.000,00</td>
+            <td class="right" style="font-weight: 600;">R$ 3.000,00</td>
           </tr>
         {% endif %}
       </tbody>
       <tfoot>
         <tr class="total-row">
-          <td colspan="3" class="total-label">VALOR TOTAL:</td>
-          <td class="total-value">
+          <td colspan="2"></td>
+          <td class="right" style="font-size: 12px; text-transform: uppercase;">TOTAL</td>
+          <td class="right" style="font-size: 14px; font-weight: 700;">
             R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}
           </td>
         </tr>
@@ -476,45 +343,36 @@
     </table>
 
     <!-- Condições de Pagamento -->
-    <div class="payment-box">
-      <div class="payment-header">Condições de Pagamento</div>
-      <div class="payment-discount">
-        {% if budget.data and budget.data.discountPct and (budget.data.discountPct | float) > 0 %}
-          <span class="old-price">De R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}</span>
-          <span class="new-price">
-            Por R$ {{ '{:,.2f}'.format(budget.total_value * (1 - (budget.data.discountPct | float)/100)).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-            ({{ budget.data.discountPct }}% de desconto à vista)
-          </span>
-        {% else %}
-          <span class="new-price">
-            R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-          </span>
-        {% endif %}
-      </div>
+    <div class="pay-box">
+      <div class="pay-title">CONDIÇÕES DE PAGAMENTO — PAGAMENTO ÚNICO</div>
+      {% if budget.data and budget.data.discountPct and (budget.data.discountPct | float) > 0 %}
+        <div class="pay-old">De R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}</div>
+        <div class="pay-new">
+          Por R$ {{ '{:,.2f}'.format(budget.total_value * (1 - (budget.data.discountPct | float)/100)).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+          ({{ budget.data.discountPct }}% de desconto)
+        </div>
+      {% else %}
+        <div class="pay-old">De R$ 3.000,00</div>
+        <div class="pay-new">Por R$ 2.700,00 (10% de desconto)</div>
+      {% endif %}
     </div>
 
     <!-- Observações -->
-    {% if budget.data and budget.data.obsText %}
-    <div class="section-tag">Observações & Condições Específicas</div>
-    <div class="obs-box">{{ budget.data.obsText }}</div>
-    {% endif %}
+    <div class="obs-section">
+      <div class="obs-title">Observações</div>
+      <div>{{ (budget.data.obsText if budget.data else '') or 'Obs: desconto de 10% mediante pagamento a vista. Parcelamos em ate 3X no boleto Em até 12X no cartão + taxa' }}</div>
+    </div>
 
-    <!-- Rodapé & Assinatura -->
-    <footer class="footer-section">
-      <div class="validity-text">
-        Validade da proposta: <strong>{{ (budget.data.validity if budget.data else '') or '15 dias' }}</strong> a partir da data de emissão.
-      </div>
-      <div class="signature-block">
-        <div class="signature-line"></div>
-        <div class="signature-name">{{ current_user.name or 'Marcio Holm' }}</div>
-        <div class="signature-company">{{ current_user.company.name or 'NorthWay Company' }}</div>
-      </div>
-    </footer>
+    <!-- Validade e Assinatura -->
+    <div class="footer-section">
+      <div>Validade: {{ (budget.data.validity if budget.data else '') or '15 dias' }} a partir da data de emissão.</div>
+      <div class="footer-signer">{{ current_user.name or 'Marcio Holm' }}</div>
+      <div>{{ current_user.company.name or 'NorthWay Company' }}</div>
+    </div>
 
-  </main>
+  </div>
 
   <script>
-    // Se vier ?print=true na URL, já abre automaticamente o diálogo de impressão
     window.addEventListener('DOMContentLoaded', () => {
       const p = new URLSearchParams(window.location.search);
       if (p.get('print') === 'true') {

@@ -60,7 +60,10 @@
                 <a href="/commercial/budgets/{{ budget.id }}/view" class="nw-icon-btn text-slate-600 hover:text-[var(--nw-brand)] hover:bg-slate-100" title="Visualizar Proposta Comercial">
                   <i data-lucide="eye" class="w-4 h-4"></i>
                 </a>
-                <a href="/commercial/budgets/{{ budget.id }}/view?print=true" target="_blank" class="nw-icon-btn text-slate-600 hover:text-emerald-600 hover:bg-emerald-50" title="Imprimir / Salvar em PDF">
+                <a href="/commercial/budgets/{{ budget.id }}/pdf" class="nw-icon-btn text-slate-600 hover:text-emerald-600 hover:bg-emerald-50" title="Baixar PDF Diretamente">
+                  <i data-lucide="file-down" class="w-4 h-4"></i>
+                </a>
+                <a href="/commercial/budgets/{{ budget.id }}/view?print=true" target="_blank" class="nw-icon-btn text-slate-600 hover:text-slate-900 hover:bg-slate-100" title="Imprimir / Salvar em PDF">
                   <i data-lucide="printer" class="w-4 h-4"></i>
                 </a>
                 <a href="/commercial/budget_generator?id={{ budget.id }}" class="nw-icon-btn text-slate-600 hover:text-blue-600 hover:bg-blue-50" title="Editar Formulário do Orçamento">

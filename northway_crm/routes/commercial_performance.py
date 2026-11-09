@@ -1,12 +1,235 @@
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, make_response
 from flask_login import login_required, current_user
 from models import db, User, Contract, CommissionSnapshot, AccountsPayable
 from datetime import datetime
 from sqlalchemy import func, extract
 from decimal import Decimal
+from fpdf import FPDF
 
 commercial_bp = Blueprint('commercial', __name__)
+
+def clean_pdf_text(s):
+    if not s:
+        return ''
+    return str(s).replace('—', '-').replace('–', '-').replace('·', '-').replace('"', '"').replace("'", "'").encode('latin-1', 'replace').decode('latin-1')
+
+def ensure_budget_data(budget):
+    if not budget.data:
+        is_assoc = 'Associação' in (budget.client_name or '') or 'Wenceslau' in (budget.client_name or '')
+        budget.data = {
+            'quoteNum': budget.quote_num or '001/2026',
+            'quoteDate': budget.created_at.strftime('%Y-%m-%d') if budget.created_at else datetime.now().strftime('%Y-%m-%d'),
+            'cliName': budget.client_name or ('Associação Comercial e Empresarial de Wenceslau Braz' if is_assoc else 'Cliente'),
+            'cliDoc': '78590304000143' if is_assoc else '',
+            'cliContact': 'Adriana' if is_assoc else '',
+            'cliPhone': '+55 43 99846-4728' if is_assoc else '',
+            'cliAddr': 'R. Barão do Rio Branco, 461 - fundos - Centro, Wenceslau Braz - PR, 84950-000' if is_assoc else '',
+            'billingCycle': 'unico',
+            'discountPct': '10',
+            'discountVal': str(round((budget.total_value or 3000) * 0.1, 2)).replace('.', ','),
+            'installments': '0',
+            'obsText': 'Obs: desconto de 10% mediante pagamento a vista. Parcelamos em ate 3X no boleto Em até 12X no cartão + taxa',
+            'validity': '15 dias',
+            'items': [
+                {
+                    'desc': 'Assessoria de marketing para a campanha',
+                    'qty': '1',
+                    'price': '{:,.2f}'.format(budget.total_value or 3000).replace(',', 'X').replace('.', ',').replace('X', '.'),
+                    'sub': 'R$ {:,.2f}'.format(budget.total_value or 3000).replace(',', 'X').replace('.', ',').replace('X', '.')
+                }
+            ],
+            'totalValue': budget.total_value or 3000
+        }
+
+def generate_budget_pdf_bytes(budget, company, user):
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    
+    W = 210
+    ML = 20
+    MR = 20
+    cw = W - ML - MR
+    y = 16
+    
+    # 1. Cabeçalho da Empresa
+    pdf.set_font('helvetica', 'B', 12)
+    pdf.set_text_color(20, 20, 20)
+    pdf.set_xy(ML, y)
+    comp_name = clean_pdf_text(getattr(company, 'name', 'NorthWay Company') or 'NorthWay Company')
+    pdf.cell(100, 5, comp_name, ln=True)
+    
+    pdf.set_font('helvetica', '', 8.5)
+    pdf.set_text_color(80, 80, 80)
+    
+    doc = clean_pdf_text(getattr(company, 'cpf_cnpj', '') or getattr(company, 'document', '') or '56.106.629/0001-75')
+    pdf.set_x(ML)
+    pdf.cell(100, 4.5, f'CNPJ/CPF: {doc}', ln=True)
+    
+    pdf.set_x(ML)
+    pdf.cell(100, 4.5, 'Licínio Roberto Araujo, 03 - Jardim Ceres', ln=True)
+    
+    pdf.set_x(ML)
+    pdf.cell(100, 4.5, 'Arapoti/PR - CEP 84990000', ln=True)
+    
+    pdf.set_x(ML)
+    pdf.cell(100, 4.5, '(42) 99989-6358 - marciogholmm@gmail.com', ln=True)
+    
+    y = pdf.get_y() + 4
+    pdf.set_draw_color(227, 30, 36)
+    pdf.set_line_width(0.7)
+    pdf.line(ML, y, W - MR, y)
+    
+    # 2. ORÇAMENTO
+    y += 5
+    pdf.set_xy(ML, y)
+    pdf.set_font('helvetica', 'B', 14)
+    pdf.set_text_color(20, 20, 20)
+    pdf.cell(90, 7, 'ORÇAMENTO', ln=False)
+    
+    quote_num = clean_pdf_text(getattr(budget, 'quote_num', '001/2026') or '001/2026')
+    created_str = budget.created_at.strftime('%d/%m/%Y') if getattr(budget, 'created_at', None) else datetime.now().strftime('%d/%m/%Y')
+    pdf.set_font('helvetica', '', 9.5)
+    pdf.set_text_color(80, 80, 80)
+    pdf.cell(cw - 90, 7, f'Nº {quote_num} · {created_str}', align='R', ln=True)
+    
+    # 3. Dados do Cliente
+    y = pdf.get_y() + 3
+    pdf.set_xy(ML, y)
+    pdf.set_font('helvetica', 'B', 9.5)
+    pdf.set_text_color(20, 20, 20)
+    pdf.cell(cw, 5.5, 'Dados do Cliente', ln=True)
+    
+    b_data = getattr(budget, 'data', {}) or {}
+    cli_name = clean_pdf_text(b_data.get('cliName') or getattr(budget, 'client_name', 'Associação Comercial e Empresarial de Wenceslau Braz'))
+    cli_doc = clean_pdf_text(b_data.get('cliDoc') or '78590304000143')
+    cli_contact = clean_pdf_text(b_data.get('cliContact') or 'Adriana')
+    cli_phone = clean_pdf_text(b_data.get('cliPhone') or '+55 43 99846-4728')
+    cli_addr = clean_pdf_text(b_data.get('cliAddr') or 'R. Barão do Rio Branco, 461 - fundos - Centro, Wenceslau Braz - PR, 84950-000')
+    
+    pdf.set_font('helvetica', '', 8.5)
+    pdf.set_text_color(40, 40, 40)
+    
+    pdf.set_x(ML)
+    pdf.cell(cw, 4.5, f'Empresa: {cli_name}', ln=True)
+    pdf.set_x(ML)
+    pdf.cell(cw, 4.5, f'CNPJ/CPF: {cli_doc}', ln=True)
+    pdf.set_x(ML)
+    pdf.cell(cw, 4.5, f'Contato: {cli_contact}', ln=True)
+    pdf.set_x(ML)
+    pdf.cell(cw, 4.5, f'Telefone: {cli_phone}', ln=True)
+    pdf.set_x(ML)
+    pdf.cell(cw, 4.5, f'Endereço: {cli_addr}', ln=True)
+    
+    # 4. Itens do Orçamento
+    y = pdf.get_y() + 4
+    pdf.set_xy(ML, y)
+    pdf.set_font('helvetica', 'B', 9.5)
+    pdf.set_text_color(20, 20, 20)
+    pdf.cell(cw, 5.5, 'Itens do Orçamento', ln=True)
+    
+    # Header tabela
+    pdf.set_font('helvetica', 'B', 8.5)
+    pdf.set_text_color(80, 80, 80)
+    col_desc_w = cw * 0.52
+    col_qty_w = cw * 0.12
+    col_val_w = cw * 0.18
+    col_sub_w = cw * 0.18
+    
+    pdf.set_x(ML)
+    pdf.cell(col_desc_w, 5, 'Descrição', ln=False)
+    pdf.cell(col_qty_w, 5, 'Qtd', align='C', ln=False)
+    pdf.cell(col_val_w, 5, 'Valor Unit.', align='R', ln=False)
+    pdf.cell(col_sub_w, 5, 'Subtotal', align='R', ln=True)
+    
+    pdf.set_draw_color(220, 220, 220)
+    pdf.set_line_width(0.3)
+    pdf.line(ML, pdf.get_y(), W - MR, pdf.get_y())
+    
+    items = b_data.get('items') or [{'desc': 'Assessoria de marketing para a campanha', 'qty': '1', 'price': '3.000,00', 'sub': 'R$ 3.000,00'}]
+    pdf.set_font('helvetica', '', 8.5)
+    pdf.set_text_color(30, 30, 30)
+    
+    for it in items:
+        desc = clean_pdf_text(it.get('desc', ''))
+        qty = clean_pdf_text(str(it.get('qty', '1')))
+        price = clean_pdf_text(str(it.get('price', '')))
+        sub = clean_pdf_text(str(it.get('sub', price)))
+        if not sub.startswith('R$') and sub: sub = f'R$ {sub}'
+        
+        pdf.set_x(ML)
+        pdf.cell(col_desc_w, 6, desc, ln=False)
+        pdf.cell(col_qty_w, 6, qty, align='C', ln=False)
+        pdf.cell(col_val_w, 6, price, align='R', ln=False)
+        pdf.cell(col_sub_w, 6, sub, align='R', ln=True)
+        pdf.line(ML, pdf.get_y(), W - MR, pdf.get_y())
+    
+    # TOTAL
+    tot_val = getattr(budget, 'total_value', 3000.0) or 3000.0
+    tot_str = f'R$ {tot_val:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+    pdf.set_font('helvetica', 'B', 9)
+    pdf.set_text_color(20, 20, 20)
+    pdf.set_x(ML)
+    pdf.cell(col_desc_w + col_qty_w, 7, '', ln=False)
+    pdf.cell(col_val_w, 7, 'TOTAL', align='R', ln=False)
+    pdf.cell(col_sub_w, 7, tot_str, align='R', ln=True)
+    
+    # 5. Condições de Pagamento (Box Rosa)
+    y = pdf.get_y() + 4
+    pdf.set_fill_color(255, 240, 240)
+    pdf.rect(ML, y, cw, 18, 'F')
+    
+    pdf.set_xy(ML + 4, y + 2.5)
+    pdf.set_font('helvetica', 'B', 8)
+    pdf.set_text_color(227, 30, 36)
+    pdf.cell(cw - 8, 4, 'CONDIÇÕES DE PAGAMENTO - PAGAMENTO ÚNICO', ln=True)
+    
+    pdf.set_x(ML + 4)
+    pdf.set_font('helvetica', '', 8)
+    pdf.set_text_color(227, 30, 36)
+    pdf.cell(24, 4, f'De {tot_str}', ln=False)
+    # Strikethrough
+    pdf.set_draw_color(227, 30, 36)
+    pdf.line(ML + 4, y + 8.5, ML + 26, y + 8.5)
+    
+    disc_val = tot_val * 0.9
+    disc_str = f'R$ {disc_val:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+    pdf.set_xy(ML + 4, y + 10.5)
+    pdf.set_font('helvetica', 'B', 8.5)
+    pdf.set_text_color(26, 135, 84)
+    pdf.cell(cw - 8, 4, f'Por {disc_str} (10% de desconto)', ln=True)
+    
+    # 6. Observações
+    y = y + 22
+    pdf.set_xy(ML, y)
+    pdf.set_font('helvetica', 'B', 9)
+    pdf.set_text_color(20, 20, 20)
+    pdf.cell(cw, 5, 'Observações', ln=True)
+    
+    obs_text = clean_pdf_text(b_data.get('obsText') or 'Obs: desconto de 10% mediante pagamento a vista. Parcelamos em ate 3X no boleto Em até 12X no cartão + taxa')
+    pdf.set_font('helvetica', '', 8)
+    pdf.set_text_color(60, 60, 60)
+    pdf.set_x(ML)
+    pdf.multi_cell(cw, 4, obs_text)
+    
+    pdf.set_font('helvetica', '', 7.5)
+    pdf.set_text_color(100, 100, 100)
+    pdf.set_x(ML)
+    pdf.cell(cw, 5, 'Validade: 15 dias a partir da data de emissão.', ln=True)
+    
+    pdf.set_font('helvetica', 'B', 8)
+    pdf.set_text_color(20, 20, 20)
+    pdf.set_x(ML)
+    user_name = clean_pdf_text(getattr(user, 'name', 'Marcio Holm') or 'Marcio Holm')
+    pdf.cell(cw, 4, user_name, ln=True)
+    
+    pdf.set_font('helvetica', '', 7.5)
+    pdf.set_text_color(100, 100, 100)
+    pdf.set_x(ML)
+    pdf.cell(cw, 4, comp_name, ln=True)
+    
+    return bytes(pdf.output())
 
 @commercial_bp.route('/commercial/budget_generator')
 @login_required
@@ -18,6 +241,8 @@ def budget_generator():
     if budget_id:
         from models import Budget
         budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first()
+        if budget:
+            ensure_budget_data(budget)
     return render_template('commercial/budget_generator.html', budget=budget, budget_id=budget_id)
 
 @commercial_bp.route('/commercial/performance')
@@ -191,7 +416,27 @@ def view_budget(budget_id):
         return "Unauthorized", 403
     from models import Budget
     budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first_or_404()
+    ensure_budget_data(budget)
     return render_template('commercial/budget_view.html', budget=budget)
+
+@commercial_bp.route('/commercial/budgets/<int:budget_id>/pdf')
+@login_required
+def download_budget_pdf(budget_id):
+    if not current_user.company_id:
+        return "Unauthorized", 403
+    from models import Budget
+    budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first_or_404()
+    ensure_budget_data(budget)
+    
+    pdf_bytes = generate_budget_pdf_bytes(budget, current_user.company, current_user)
+    num_clean = (budget.quote_num or '001-2026').replace('/', '-')
+    cli_clean = (budget.client_name or 'cliente').replace(' ', '_').replace('/', '_')
+    filename = f"orcamento-{num_clean}-{cli_clean}.pdf"
+    
+    response = make_response(pdf_bytes)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 @commercial_bp.route('/commercial/api/budgets', methods=['POST'])
 @login_required
