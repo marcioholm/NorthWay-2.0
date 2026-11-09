@@ -352,13 +352,29 @@ class Lead(db.Model):
     partners_json = db.Column(db.Text, nullable=True) # List of partners
     enrichment_history = db.Column(db.Text, nullable=True) # Log of updates
     
-    # Diagnostic Data (New)
+    # Diagnostic Data (New & v2)
     diagnostic_status = db.Column(db.String(20), default='pending') # pending, done
     diagnostic_score = db.Column(db.Float, nullable=True)
     diagnostic_stars = db.Column(db.Float, nullable=True)
     diagnostic_classification = db.Column(db.String(50), nullable=True)
     diagnostic_date = db.Column(db.DateTime, nullable=True)
-    diagnostic_pillars = db.Column(db.JSON, nullable=True) # Breakdown {"Atrair": 10, ...}
+    diagnostic_pillars = db.Column(db.JSON, nullable=True) # Breakdown
+    
+    # Raio-X NorthWay v2
+    origem = db.Column(db.String(100), nullable=True)
+    faixa_faturamento = db.Column(db.String(50), nullable=True)
+    funcionarios = db.Column(db.String(50), nullable=True)
+    respostas = db.Column(db.JSON, nullable=True)
+    nota_atrair = db.Column(db.Float, nullable=True)
+    nota_engajar = db.Column(db.Float, nullable=True)
+    nota_vender = db.Column(db.Float, nullable=True)
+    nota_reter = db.Column(db.Float, nullable=True)
+    nota_gestao = db.Column(db.Float, nullable=True)
+    indice_maturidade = db.Column(db.Float, nullable=True)
+    gargalo = db.Column(db.String(50), nullable=True)
+    ponto_fraco = db.Column(db.Integer, nullable=True)
+    consentimento = db.Column(db.Boolean, default=False, nullable=True)
+    consentimento_em = db.Column(db.DateTime, nullable=True)
     estimated_value = db.Column(db.Numeric(12, 2), default=0.0)
 
     # Lead Loss Tracking

@@ -40,6 +40,22 @@ def sync_database():
                             conn.rollback()
                             results.append(f"⚠️ Failed {table_name}.{col_name}: {e}")
 
+            # Raio-X v2 Columns in Lead
+            add_column_if_missing("lead", "origem", "VARCHAR(100)")
+            add_column_if_missing("lead", "faixa_faturamento", "VARCHAR(50)")
+            add_column_if_missing("lead", "funcionarios", "VARCHAR(50)")
+            add_column_if_missing("lead", "respostas", "JSONB" if is_postgres else "TEXT")
+            add_column_if_missing("lead", "nota_atrair", "FLOAT")
+            add_column_if_missing("lead", "nota_engajar", "FLOAT")
+            add_column_if_missing("lead", "nota_vender", "FLOAT")
+            add_column_if_missing("lead", "nota_reter", "FLOAT")
+            add_column_if_missing("lead", "nota_gestao", "FLOAT")
+            add_column_if_missing("lead", "indice_maturidade", "FLOAT")
+            add_column_if_missing("lead", "gargalo", "VARCHAR(50)")
+            add_column_if_missing("lead", "ponto_fraco", "INTEGER")
+            add_column_if_missing("lead", "consentimento", "BOOLEAN DEFAULT FALSE")
+            add_column_if_missing("lead", "consentimento_em", "TIMESTAMP")
+
             # 2. Table Creation (Postgres/SQLite aware)
             def create_table_if_missing(table_name, psql_ddl, sqlite_ddl=None):
                 if not inspector.has_table(table_name):
