@@ -396,11 +396,11 @@
       </div>
 
       <div class="company-details">
-        <strong>{{ current_user.company.name or 'NorthWay Company' }}</strong><br>
-        {% if current_user.company.cpf_cnpj or current_user.company.document %}
+        <strong>{{ (current_user.company.name if current_user.company else '') or 'NorthWay Company' }}</strong><br>
+        {% if current_user.company and (current_user.company.cpf_cnpj or current_user.company.document) %}
           CNPJ/CPF: {{ current_user.company.cpf_cnpj or current_user.company.document }}<br>
         {% endif %}
-        {% if current_user.company.address_street %}
+        {% if current_user.company and current_user.company.address_street %}
           {{ current_user.company.address_street }}, {{ current_user.company.address_number or 'S/N' }} — {{ current_user.company.address_neighborhood or '' }}<br>
           {{ current_user.company.address_city or '' }}/{{ current_user.company.address_state or '' }} — CEP {{ current_user.company.address_zip or '' }}<br>
         {% endif %}
@@ -475,7 +475,7 @@
         <tr class="total-row">
           <td colspan="3" class="total-label">VALOR TOTAL:</td>
           <td class="total-value">
-            R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+            R$ {{ '{:,.2f}'.format(budget.total_value or 0).replace(',', 'X').replace('.', ',').replace('X', '.') }}
           </td>
         </tr>
       </tfoot>
@@ -486,14 +486,14 @@
       <div class="payment-header">Condições de Pagamento</div>
       <div class="payment-discount">
         {% if budget.data and budget.data is mapping and budget.data.get('discountPct') and (budget.data.get('discountPct') | float) > 0 %}
-          <span class="old-price">De R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}</span>
+          <span class="old-price">De R$ {{ '{:,.2f}'.format(budget.total_value or 0).replace(',', 'X').replace('.', ',').replace('X', '.') }}</span>
           <span class="new-price">
-            Por R$ {{ '{:,.2f}'.format(budget.total_value * (1 - (budget.data.get('discountPct') | float)/100)).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+            Por R$ {{ '{:,.2f}'.format((budget.total_value or 0) * (1 - (budget.data.get('discountPct') | float)/100)).replace(',', 'X').replace('.', ',').replace('X', '.') }}
             ({{ budget.data.get('discountPct') }}% de desconto à vista)
           </span>
         {% else %}
           <span class="new-price">
-            R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+            R$ {{ '{:,.2f}'.format(budget.total_value or 0).replace(',', 'X').replace('.', ',').replace('X', '.') }}
           </span>
         {% endif %}
       </div>
@@ -513,7 +513,7 @@
       <div class="signature-block">
         <div class="signature-line"></div>
         <div class="signature-name">{{ current_user.name or 'Marcio Holm' }}</div>
-        <div class="signature-company">{{ current_user.company.name or 'NorthWay Company' }}</div>
+        <div class="signature-company">{{ (current_user.company.name if current_user.company else '') or 'NorthWay Company' }}</div>
       </div>
     </footer>
 

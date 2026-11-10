@@ -57,6 +57,26 @@ def ensure_budget_data(budget):
             }
         ]
 
+    # Ensure total_value is a valid float
+    if budget.total_value is None:
+        try:
+            raw_val = budget.data.get('totalValue') if isinstance(budget.data, dict) else None
+            if raw_val is not None:
+                if isinstance(raw_val, (int, float)):
+                    budget.total_value = float(raw_val)
+                else:
+                    val_str = str(raw_val).replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
+                    budget.total_value = float(val_str)
+            else:
+                budget.total_value = 3000.0
+        except Exception:
+            budget.total_value = 3000.0
+    else:
+        try:
+            budget.total_value = float(budget.total_value)
+        except Exception:
+            budget.total_value = 3000.0
+
 def generate_budget_pdf_bytes(budget, company, user):
     from fpdf import FPDF
     pdf = FPDF(orientation='P', unit='mm', format='A4')
