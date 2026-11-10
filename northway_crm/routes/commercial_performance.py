@@ -424,6 +424,9 @@ def view_budget(budget_id):
 def download_budget_pdf(budget_id):
     if not current_user.company_id:
         return "Unauthorized", 403
+    if request.args.get('raw') != '1':
+        from flask import redirect, url_for
+        return redirect(url_for('commercial.view_budget', budget_id=budget_id, print='true'))
     from models import Budget
     budget = Budget.query.filter_by(id=budget_id, company_id=current_user.company_id).first_or_404()
     ensure_budget_data(budget)

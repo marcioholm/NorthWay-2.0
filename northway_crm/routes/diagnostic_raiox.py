@@ -244,6 +244,223 @@ def calculate_raiox_v2(respostas_list):
         'eixos': eixos_resultado
     }
 
+def clean_pdf_text(s):
+    if not s:
+        return ''
+    rep = {
+        '—': '-', '–': '-', '·': '-', '“': '"', '”': '"', '‘': "'", '’': "'",
+        'ã': 'a', 'á': 'a', 'à': 'a', 'â': 'a', 'é': 'e', 'ê': 'e', 'í': 'i',
+        'ó': 'o', 'ô': 'o', 'õ': 'o', 'ú': 'u', 'ü': 'u', 'ç': 'c',
+        'Ã': 'A', 'Á': 'A', 'À': 'A', 'Â': 'A', 'É': 'E', 'Ê': 'E', 'Í': 'I',
+        'Ó': 'O', 'Ô': 'O', 'Õ': 'O', 'Ú': 'U', 'Ç': 'C'
+    }
+    res = str(s)
+    for k, v in rep.items():
+        res = res.replace(k, v)
+    return res.encode('latin-1', 'replace').decode('latin-1')
+
+def generate_raiox_v2_pdf_bytes(nome, empresa, resultado, faixa_faturamento, funcionarios):
+    """
+    Gera o PDF formatado do Raio-X NorthWay v2 (5 eixos da metodologia)
+    com fpdf2 (import tardio para resiliência).
+    """
+    from fpdf import FPDF
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    
+    W = 210
+    ML = 16
+    MR = 16
+    cw = W - ML - MR
+    
+    # 1. Top accent line (vermelho NorthWay #FA0102)
+    pdf.set_fill_color(250, 1, 2)
+    pdf.rect(0, 0, W, 6, 'F')
+    
+    # 2. Header (fundo escuro #050505)
+    pdf.set_fill_color(5, 5, 5)
+    pdf.rect(0, 6, W, 22, 'F')
+    
+    pdf.set_xy(ML, 10)
+    pdf.set_font('helvetica', 'B', 14)
+    pdf.set_text_color(255, 255, 255)
+    pdf.cell(100, 12, 'NORTHWAY  |  RAIO-X DE MATURIDADE', align='L')
+    
+    pdf.set_font('helvetica', '', 9)
+    pdf.set_text_color(180, 180, 180)
+    pdf.cell(cw - 100, 12, datetime.now().strftime('%d/%m/%Y'), align='R')
+    pdf.ln(18)
+    
+    # 3. Informações da Empresa / Contato
+    pdf.set_xy(ML, 32)
+    pdf.set_font('helvetica', 'B', 9)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(cw, 5, 'DADOS DO DIAGNOSTICO')
+    pdf.ln(6)
+    
+    pdf.set_fill_color(248, 250, 252)
+    pdf.set_draw_color(226, 232, 240)
+    info_y = pdf.get_y()
+    pdf.rect(ML, info_y, cw, 22, 'DF')
+    
+    pdf.set_xy(ML + 4, info_y + 3)
+    pdf.set_font('helvetica', 'B', 8.5)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(50, 5, 'EMPRESA:')
+    pdf.cell(50, 5, 'RESPONSAVEL:')
+    pdf.cell(40, 5, 'FATURAMENTO:')
+    pdf.cell(38, 5, 'EQUIPE:')
+    pdf.ln(5)
+    
+    pdf.set_x(ML + 4)
+    pdf.set_font('helvetica', 'B', 9.5)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(50, 6, clean_pdf_text(empresa or 'Nao informada')[:24])
+    pdf.cell(50, 6, clean_pdf_text(nome or 'Cliente')[:24])
+    pdf.cell(40, 6, clean_pdf_text(faixa_faturamento or 'Nao informado')[:18])
+    pdf.cell(38, 6, clean_pdf_text(funcionarios or 'Nao informado')[:16])
+    pdf.ln(12)
+    
+    # 4. Cards de Score Geral
+    card_y = pdf.get_y()
+    card_w = (cw - 8) / 2
+    
+    # Card Índice
+    pdf.set_fill_color(241, 245, 249)
+    pdf.set_draw_color(203, 213, 225)
+    pdf.rect(ML, card_y, card_w, 24, 'DF')
+    
+    pdf.set_xy(ML, card_y + 3)
+    pdf.set_font('helvetica', 'B', 8)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(card_w, 4, 'INDICE DE MATURIDADE GERAL', align='C')
+    pdf.ln(5)
+    pdf.set_x(ML)
+    pdf.set_font('helvetica', 'B', 15)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(card_w, 8, f"{resultado.get('indice_formatado', '0')}/10", align='C')
+    
+    # Card Gargalo
+    gx = ML + card_w + 8
+    pdf.set_fill_color(254, 242, 242)
+    pdf.set_draw_color(252, 165, 165)
+    pdf.rect(gx, card_y, card_w, 24, 'DF')
+    
+    pdf.set_xy(gx, card_y + 3)
+    pdf.set_font('helvetica', 'B', 8)
+    pdf.set_text_color(227, 30, 36)
+    pdf.cell(card_w, 4, 'PRINCIPAL GARGALO IDENTIFICADO', align='C')
+    pdf.ln(5)
+    pdf.set_x(gx)
+    pdf.set_font('helvetica', 'B', 13)
+    pdf.set_text_color(227, 30, 36)
+    gargalo_str = clean_pdf_text(f"{resultado.get('gargalo_nome', '').upper()} ({resultado.get('gargalo_nota_formatada', '0')}/10)")
+    pdf.cell(card_w, 8, gargalo_str, align='C')
+    
+    pdf.set_xy(ML, card_y + 28)
+    
+    # 5. Desempenho por Eixo
+    pdf.set_font('helvetica', 'B', 10)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(cw, 6, 'DESEMPENHO NOS 5 EIXOS METODOLOGICOS')
+    pdf.ln(8)
+    
+    eixos = resultado.get('eixos', [])
+    for e in eixos:
+        ey = pdf.get_y()
+        pdf.set_font('helvetica', 'B', 9)
+        pdf.set_text_color(30, 41, 59)
+        pdf.cell(32, 5, clean_pdf_text(e['nome']))
+        
+        pdf.set_font('helvetica', 'B', 8.5)
+        pdf.cell(20, 5, f"{e['nota_formatada']}/10", align='R')
+        
+        sit = e.get('situacao', '')
+        if 'Critico' in sit:
+            pdf.set_text_color(227, 30, 36)
+        elif 'construcao' in sit:
+            pdf.set_text_color(217, 119, 6)
+        else:
+            pdf.set_text_color(22, 163, 74)
+        pdf.cell(36, 5, f"  [{clean_pdf_text(sit)}]", align='L')
+        
+        # Barra de progresso
+        bar_x = ML + 92
+        bar_w = cw - 92
+        pdf.set_fill_color(226, 232, 240)
+        pdf.rect(bar_x, ey + 1.2, bar_w, 3, 'F')
+        
+        pct = max(0, min(100, e.get('percentual', 0)))
+        fill_w = (bar_w * pct) / 100.0
+        if fill_w > 0:
+            if 'Critico' in sit:
+                pdf.set_fill_color(250, 1, 2)
+            elif 'construcao' in sit:
+                pdf.set_fill_color(245, 158, 11)
+            else:
+                pdf.set_fill_color(16, 185, 129)
+            pdf.rect(bar_x, ey + 1.2, fill_w, 3, 'F')
+            
+        pdf.ln(6.5)
+        
+    pdf.ln(4)
+    
+    # 6. Card Destacado do Gargalo & Ação Prioritária
+    callout_y = pdf.get_y()
+    pdf.set_fill_color(255, 241, 242)
+    pdf.set_draw_color(254, 205, 211)
+    
+    empresa_str = clean_pdf_text(empresa or 'Sua Empresa')
+    gargalo_nome_str = clean_pdf_text(resultado.get('gargalo_nome', ''))
+    title_box = f"{empresa_str}: o foco agora e {gargalo_nome_str}"
+    
+    pdf.rect(ML, callout_y, cw, 42, 'DF')
+    pdf.set_xy(ML + 5, callout_y + 4)
+    pdf.set_font('helvetica', 'B', 11)
+    pdf.set_text_color(190, 18, 60)
+    pdf.cell(cw - 10, 5, title_box)
+    pdf.ln(7)
+    
+    # Ponto Fraco
+    pdf.set_x(ML + 5)
+    pdf.set_font('helvetica', 'B', 8.5)
+    pdf.set_text_color(136, 19, 55)
+    pdf.cell(cw - 10, 4, f"Ponto Fraco Identificado (Questao {resultado.get('ponto_fraco_num', '')}):")
+    pdf.ln(4.5)
+    pdf.set_x(ML + 5)
+    pdf.set_font('helvetica', '', 8)
+    pdf.set_text_color(51, 65, 85)
+    pf_txt = clean_pdf_text(resultado.get('ponto_fraco_pergunta', ''))
+    pdf.multi_cell(cw - 10, 4, pf_txt)
+    pdf.ln(2)
+    
+    # Ação Prioritária
+    pdf.set_x(ML + 5)
+    pdf.set_font('helvetica', 'B', 8.5)
+    pdf.set_text_color(136, 19, 55)
+    pdf.cell(cw - 10, 4, "Acao Prioritaria Recomendada:")
+    pdf.ln(4.5)
+    pdf.set_x(ML + 5)
+    pdf.set_font('helvetica', 'B', 8)
+    pdf.set_text_color(15, 23, 42)
+    acao_txt = clean_pdf_text(resultado.get('acao_prioritaria', ''))
+    pdf.multi_cell(cw - 10, 4, acao_txt)
+    
+    # 7. Rodapé
+    pdf.set_xy(ML, 268)
+    pdf.set_draw_color(226, 232, 240)
+    pdf.line(ML, 266, W - MR, 266)
+    pdf.set_font('helvetica', 'I', 7.5)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(cw, 4, clean_pdf_text('Este Raio-X e uma autoavaliacao. Ele aponta onde olhar primeiro; o diagnostico completo considera tambem numeros, processos e contexto.'), align='C')
+    pdf.ln(4)
+    pdf.set_font('helvetica', 'B', 7.5)
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(cw, 4, 'NorthWay Company - Metodologia de Aceleracao Comercial - northwaycompany.com.br', align='C')
+    
+    return bytes(pdf.output())
+
 def ensure_raiox_v2_columns():
     """
     Garante de forma resiliente que as colunas da v2 do Raio-X existam no banco.
@@ -452,11 +669,86 @@ def submit():
         resultado['whatsapp_url'] = wa_url
         resultado['empresa'] = empresa
         resultado['nome'] = nome
-        
+
+        # 6. Enviar PDF do Raio-X v2 por E-mail via Resend
+        if email:
+            try:
+                from services.email_service import EmailService
+                pdf_bytes = generate_raiox_v2_pdf_bytes(
+                    nome=nome or 'Cliente',
+                    empresa=empresa or 'Sua Empresa',
+                    resultado=resultado,
+                    faixa_faturamento=faixa_faturamento or 'Não informado',
+                    funcionarios=funcionarios or 'Não informado'
+                )
+
+                email_html = f"""
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; color: #0F172A; background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 12px;">
+                    <div style="border-bottom: 3px solid #FA0102; padding-bottom: 16px; margin-bottom: 24px;">
+                        <h2 style="color: #FA0102; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">NORTHWAY</h2>
+                        <p style="margin: 4px 0 0 0; color: #64748B; font-size: 13px;">Raio-X de Maturidade Comercial</p>
+                    </div>
+                    
+                    <p style="font-size: 16px; font-weight: 700; margin-bottom: 12px;">Olá, {nome or 'Empreendedor'}!</p>
+                    
+                    <p style="font-size: 14px; line-height: 1.6; color: #334155;">
+                        Seu diagnóstico pelo <strong>Raio-X NorthWay v2</strong> foi concluído com sucesso. Abaixo está o resumo da avaliação da sua empresa ({empresa or 'Sua Empresa'}):
+                    </p>
+                    
+                    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 18px; margin: 20px 0;">
+                        <div style="margin-bottom: 10px;">
+                            <span style="font-size: 13px; color: #64748B; font-weight: 600;">Índice Geral de Maturidade:</span>
+                            <strong style="font-size: 16px; color: #0F172A; margin-left: 6px;">{resultado.get('indice_formatado', '0')} / 10</strong>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <span style="font-size: 13px; color: #64748B; font-weight: 600;">Principal Gargalo Identificado:</span>
+                            <strong style="font-size: 15px; color: #FA0102; margin-left: 6px;">{gargalo_nome} ({gargalo_nota_formatada}/10)</strong>
+                        </div>
+                        <div style="margin-bottom: 10px; font-size: 13px; color: #334155;">
+                            <strong>Ponto Fraco (Questão {resultado.get('ponto_fraco_num', '')}):</strong> {resultado.get('ponto_fraco_pergunta', '')}
+                        </div>
+                        <div style="font-size: 13px; color: #334155;">
+                            <strong>Ação Prioritária:</strong> {resultado.get('acao_prioritaria', '')}
+                        </div>
+                    </div>
+                    
+                    <p style="font-size: 14px; line-height: 1.6; color: #334155;">
+                        Anexamos a este e-mail o seu <strong>Relatório Completo em PDF</strong> com as notas detalhadas dos 5 eixos metodológicos (Atrair, Engajar, Vender, Reter e Gestão).
+                    </p>
+                    
+                    <div style="text-align: center; margin: 28px 0;">
+                        <a href="{wa_url}" style="background-color: #25D366; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block;">
+                            Conversar com a NorthWay no WhatsApp
+                        </a>
+                    </div>
+                    
+                    <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #E2E8F0; font-size: 12px; color: #94A3B8; text-align: center;">
+                        NorthWay Company · northwaycompany.com.br
+                    </div>
+                </div>
+                """
+
+                filename_clean = (empresa or 'NorthWay').replace(' ', '_').replace('/', '_')
+                attachments = [{
+                    "filename": f"RaioX-NorthWay-{filename_clean}.pdf",
+                    "content": list(pdf_bytes)
+                }]
+
+                EmailService.send_email(
+                    to=[email],
+                    subject=f"Seu Raio-X NorthWay está pronto | {empresa or nome} (Índice {resultado.get('indice_formatado', '0')}/10)",
+                    html_content=email_html,
+                    company_id=company_id,
+                    attachments=attachments
+                )
+                logger.info(f"E-mail com PDF do Raio-X v2 disparado via Resend para {email}")
+            except Exception as email_err:
+                logger.error(f"Erro ao enviar e-mail com PDF via Resend: {email_err}")
+
         # Armazena na sessão caso o usuário queira recarregar
         session['raiox_resultado'] = resultado
 
-        # 6. Retorno em JSON para renderização instantânea na mesma página
+        # 7. Retorno em JSON para renderização instantânea na mesma página
         return jsonify({
             'status': 'success',
             'resultado': resultado

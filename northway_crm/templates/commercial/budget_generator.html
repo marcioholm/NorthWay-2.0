@@ -17,17 +17,17 @@
       <p class="text-sm text-[var(--nw-text-2)] mt-1">Preencha os dados abaixo para gerar um novo orçamento.</p>
     </div>
     <div class="flex items-center gap-2.5 flex-wrap">
-      <a href="/commercial/budgets" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">Cancelar</a>
-      <button onclick="resetForm()" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">Limpar Formulário</button>
-      <button id="saveBtn" onclick="saveBudget()" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5 flex items-center gap-2">
+      <a href="/commercial/budgets" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">Voltar aos Orçamentos</a>
+      <button type="button" onclick="resetForm()" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5">Limpar Formulário</button>
+      <button type="button" id="saveBtn" onclick="saveBudget(false)" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5 flex items-center gap-2">
         <i data-lucide="save" class="w-4 h-4"></i>
         <span>Salvar Orçamento</span>
       </button>
-      <button id="printBtn" onclick="printBudgetDirect()" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5 flex items-center gap-2" title="Abrir proposta para impressão ou salvar em PDF nativo">
+      <button type="button" id="printBtn" onclick="openProposalView(true)" class="nw-btn nw-btn-subtle text-xs py-2 px-3.5 flex items-center gap-2" title="Abrir proposta para impressão ou salvar em PDF">
         <i data-lucide="printer" class="w-4 h-4"></i>
         <span>Imprimir Proposta</span>
       </button>
-      <button id="exportBtn" onclick="exportPDF()" class="nw-btn nw-btn-accent text-xs py-2 px-3.5 flex items-center gap-2">
+      <button type="button" id="exportBtn" onclick="openProposalView(true)" class="nw-btn nw-btn-accent text-xs py-2 px-3.5 flex items-center gap-2" title="Salvar e Baixar PDF">
         <i data-lucide="file-down" class="w-4 h-4"></i>
         <span>Baixar PDF</span>
       </button>
@@ -196,9 +196,12 @@
 let currentBudgetId = {{ budget_id if budget_id else 'null' }};
 const savedBudgetData = {{ budget.data | tojson if budget and budget.data else 'null' }};
 
-async function saveBudget() {
+async function saveBudget(redirect = false) {
   const btn = document.getElementById('saveBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="animate-spin mr-2">...</span> Salvando';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="animate-spin mr-2">...</span> Salvando';
+  }
   try {
     const data = {
       budget_id: currentBudgetId,
@@ -226,16 +229,66 @@ async function saveBudget() {
     });
     
     if (res.ok) {
-      alert('Orçamento salvo com sucesso!');
-      window.location.href = '/commercial/budgets';
+      const respData = await res.json();
+      currentBudgetId = respData.budget_id;
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', '/commercial/budget_generator?id=' + currentBudgetId);
+      }
+      saveDraftToLocalStorage();
+      if (redirect) {
+        window.location.href = '/commercial/budgets';
+      } else {
+        showToast('Orçamento salvo com sucesso!');
+      }
+      return currentBudgetId;
     } else {
       const err = await res.json();
-      alert('Erro: ' + (err.error || 'Falha ao salvar'));
+      alert('Erro: ' + (err.error || 'Falha ao salvar orçamento'));
+      return null;
     }
   } catch(e) {
-    alert('Erro de conexão ao salvar.');
+    console.error('Erro ao salvar orçamento:', e);
+    showToast('Erro de conexão ao salvar.');
+    return null;
   } finally {
-    btn.disabled = false; btn.textContent = 'Salvar Orçamento';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i><span>Salvar Orçamento</span>';
+      if (window.lucide) lucide.createIcons();
+    }
+  }
+}
+
+async function openProposalView(withPrint = true) {
+  const printBtn = document.getElementById('printBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) { exportBtn.disabled = true; exportBtn.textContent = 'Carregando...'; }
+  if (printBtn) { printBtn.disabled = true; }
+  
+  try {
+    const budgetId = await saveBudget(false);
+    if (budgetId) {
+      const targetUrl = '/commercial/budgets/' + budgetId + '/view' + (withPrint ? '?print=true' : '');
+      const win = window.open(targetUrl, '_blank');
+      if (!win) {
+        window.location.href = targetUrl;
+      }
+    } else {
+      printBudgetDirect();
+    }
+  } catch(e) {
+    console.error('openProposalView error:', e);
+    printBudgetDirect();
+  } finally {
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.innerHTML = '<i data-lucide="file-down" class="w-4 h-4"></i><span>Baixar PDF</span>';
+    }
+    if (printBtn) {
+      printBtn.disabled = false;
+      printBtn.innerHTML = '<i data-lucide="printer" class="w-4 h-4"></i><span>Imprimir Proposta</span>';
+    }
+    if (window.lucide) lucide.createIcons();
   }
 }
 
