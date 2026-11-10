@@ -47,7 +47,9 @@ def test_integrations_webhook_timing_safe_verification(client, monkeypatch):
 def test_internal_api_without_key_fails_closed(client, monkeypatch):
     """Rotas protegidas por @require_internal_auth devem retornar 401 se CRM_INTERNAL_API_KEY não estiver configurada."""
     monkeypatch.delenv('CRM_INTERNAL_API_KEY', raising=False)
+    monkeypatch.delenv('INTERNAL_API_KEY', raising=False)
     client.application.config['CRM_INTERNAL_API_KEY'] = None
+    client.application.config['INTERNAL_API_KEY'] = None
 
     response = client.post('/internal/tenant/ai-credential', json={'tenant_id': 1, 'provider': 'openai'}, headers={'Authorization': 'Bearer some-key'})
     assert response.status_code == 401

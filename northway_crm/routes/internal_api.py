@@ -31,17 +31,18 @@ def model_to_dict(obj):
 def require_internal_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth_header = request.headers.get('Authorization', '')
-        expected_key = os.environ.get('CRM_INTERNAL_API_KEY', '')
+        expected_key = os.environ.get('INTERNAL_API_KEY') or os.environ.get('CRM_INTERNAL_API_KEY', '')
 
         if not expected_key:
             return jsonify({'success': False, 'error': 'Internal API key not configured'}), 401
 
-        if not auth_header.startswith('Bearer '):
-            return jsonify({'success': False, 'error': 'Missing or invalid Authorization header'}), 401
+        provided_key = request.headers.get('X-Internal-API-Key')
+        if not provided_key:
+            auth_header = request.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                provided_key = auth_header[7:].strip()
 
-        token = auth_header[7:]
-        if not hmac.compare_digest(str(token), str(expected_key)):
+        if not provided_key or not hmac.compare_digest(str(provided_key), str(expected_key)):
             return jsonify({'success': False, 'error': 'Invalid API key'}), 401
 
         return f(*args, **kwargs)
@@ -1491,4 +1492,122 @@ def import_leads_internal():
         'duplicate_count': duplicate_count,
         'lead_ids': new_lead_ids,
         'errors': errors
+    })
+
+
+@internal_api_bp.route('/raiox/abandonados', methods=['GET'])
+@require_internal_auth
+def get_raiox_abandonados():
+    """
+    Retorna leads que iniciaram o Raio-X mas abandonaram antes de concluir.
+    Para disparo de mensagens de recuperação pelo n8n.
+    """
+    try:
+        minutos = request.args.get('minutos', 30, type=int)
+        limit = min(request.args.get('limit', 10, type=int), 100)
+    except (ValueError, TypeError):
+        minutos = 30
+        limit = 10
+
+    agora = datetime.utcnow()
+    limite_recente = agora - timedelta(minutes=minutos)
+    limite_antigo = agora - timedelta(hours=48)
+
+    from utils.phone import normalize_phone
+
+    query = (
+        Lead.query
+        .filter(Lead.raiox_status == 'parcial_iniciou')
+        .filter(Lead.raiox_atualizado_em < limite_recente)
+        .filter(Lead.raiox_atualizado_em > limite_antigo)
+        .filter((Lead.opt_out == False) | (Lead.opt_out.is_(None)))
+        .filter(Lead.raiox_recuperacao_em.is_(None))
+        .filter(Lead.phone.isnot(None))
+        .order_by(Lead.raiox_atualizado_em.desc())
+    )
+
+    candidates = query.limit(limit * 2).all()
+    results = []
+
+    for l in candidates:
+        norm_phone = normalize_phone(l.phone or l.whatsapp)
+        if len(norm_phone) < 10:
+            continue
+
+        token = l.raiox_token or ''
+        results.append({
+            'id': l.id,
+            'token': token,
+            'nome': l.name or '',
+            'whatsapp': norm_phone,
+            'empresa': l.raiox_empresa or l.legal_name or '',
+            'raiox_ultima_pergunta': l.raiox_ultima_pergunta or 0,
+            'raiox_atualizado_em': l.raiox_atualizado_em.isoformat() if l.raiox_atualizado_em else None,
+            'url_retomada': f"https://crm.northwaycompany.com.br/raiox?retomar={token}"
+        })
+        if len(results) >= limit:
+            break
+
+    return jsonify({
+        'success': True,
+        'count': len(results),
+        'leads': results
+    })
+
+
+@internal_api_bp.route('/raiox/whatsapp-status', methods=['POST'])
+@require_internal_auth
+def post_raiox_whatsapp_status():
+    """
+    Recebe do n8n o status do WhatsApp automático enviado ao lead.
+    Atualiza lead e cria registro de Interaction no histórico.
+    """
+    data = request.json or {}
+    lead_id = data.get('lead_id')
+    status = (data.get('status') or '').strip().lower()
+    tipo = (data.get('tipo') or '').strip().lower()
+    detalhe = data.get('detalhe')
+
+    if not lead_id or not status or not tipo:
+        return jsonify({'success': False, 'error': 'lead_id, status e tipo são obrigatórios'}), 400
+
+    if status not in ['enviado', 'erro', 'respondido']:
+        return jsonify({'success': False, 'error': f"status inválido: {status}"}), 400
+
+    if tipo not in ['conclusao', 'abandono']:
+        return jsonify({'success': False, 'error': f"tipo inválido: {tipo}"}), 400
+
+    lead = Lead.query.get(lead_id)
+    if not lead:
+        return jsonify({'success': False, 'error': 'Lead não encontrado'}), 404
+
+    agora = datetime.utcnow()
+    lead.raiox_whatsapp_status = status
+    lead.raiox_whatsapp_em = agora
+
+    if tipo == 'abandono' and status == 'enviado':
+        lead.raiox_recuperacao_em = agora
+
+    if tipo == 'conclusao':
+        content_desc = f"WhatsApp automático de conclusão ({status}) via n8n"
+    else:
+        content_desc = f"Tentativa de recuperação de abandono (parou na pergunta {lead.raiox_ultima_pergunta or 0}) - Status: {status}"
+    if detalhe:
+        content_desc += f" · Detalhe: {detalhe}"
+
+    interaction = Interaction(
+        company_id=lead.company_id,
+        lead_id=lead.id,
+        type='whatsapp_auto',
+        content=content_desc,
+        created_at=agora
+    )
+    db.session.add(interaction)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'lead_id': lead.id,
+        'status': status,
+        'tipo': tipo
     })

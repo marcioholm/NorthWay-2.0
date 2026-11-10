@@ -422,7 +422,7 @@ def create_app(test_config=None):
             
             # EXEMPTIONS: Always allow access to maintenance and auth routes
             # This is critical to recover from DB errors
-            exempt_paths = ['/sys_admin', '/forms/public', '/admin/run-initial-migrations', '/emergency-migration', '/debug_schema', '/master/migrate-integrations']
+            exempt_paths = ['/sys_admin', '/forms/public', '/admin/run-initial-migrations', '/emergency-migration', '/debug_schema', '/master/migrate-integrations', '/internal', '/raiox', '/privacidade']
             if any(request.path.startswith(p) for p in exempt_paths):
                 return
 
@@ -430,7 +430,8 @@ def create_app(test_config=None):
                                 'billing.asaas_webhook', 'billing.payment_pending',
                                 'auth.suspended_account', 'master.revert_access',
                                 'master.sync_schema', 'diagnostic_raiox.index', 
-                                'diagnostic_raiox.submit', 'diagnostic_raiox.resultado']
+                                'diagnostic_raiox.submit', 'diagnostic_raiox.resultado',
+                                'diagnostic_raiox.progresso', 'diagnostic_raiox.privacidade']
             if request.endpoint in exempt_endpoints:
                 return
 
@@ -953,8 +954,9 @@ Sitemap: {base_url}/sitemap.xml
             pass
 
         try:
-            from routes.diagnostic_raiox import submit as diagnostic_raiox_submit
+            from routes.diagnostic_raiox import submit as diagnostic_raiox_submit, progresso as diagnostic_raiox_progresso
             csrf.exempt(diagnostic_raiox_submit)
+            csrf.exempt(diagnostic_raiox_progresso)
         except Exception:
             pass
 

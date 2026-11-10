@@ -13,6 +13,7 @@ ALLOWED_PUBLIC_ENDPOINTS = {
     'billing.asaas_webhook',
     'dashboard.index',
     'diagnostic_raiox.index',
+    'diagnostic_raiox.privacidade',
     'docs.ebook_institutional',
     'docs.playbook_dia_das_maes_marka_moveis',
     'evolution_webhook.evolution_webhook',

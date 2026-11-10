@@ -56,6 +56,23 @@ def sync_database():
             add_column_if_missing("lead", "consentimento", "BOOLEAN DEFAULT FALSE")
             add_column_if_missing("lead", "consentimento_em", "TIMESTAMP")
 
+            # Raio-X Progressive Capture, UTMs and n8n
+            add_column_if_missing("lead", "raiox_token", "VARCHAR(100)")
+            add_column_if_missing("lead", "raiox_status", "VARCHAR(50)")
+            add_column_if_missing("lead", "raiox_ultima_pergunta", "INTEGER")
+            add_column_if_missing("lead", "raiox_respostas_parciais", "JSONB" if is_postgres else "TEXT")
+            add_column_if_missing("lead", "raiox_atualizado_em", "TIMESTAMP")
+            add_column_if_missing("lead", "utm_source", "VARCHAR(255)")
+            add_column_if_missing("lead", "utm_medium", "VARCHAR(255)")
+            add_column_if_missing("lead", "utm_campaign", "VARCHAR(255)")
+            add_column_if_missing("lead", "utm_content", "VARCHAR(255)")
+            add_column_if_missing("lead", "utm_term", "VARCHAR(255)")
+            add_column_if_missing("lead", "fbclid", "VARCHAR(255)")
+            add_column_if_missing("lead", "raiox_whatsapp_status", "VARCHAR(30)")
+            add_column_if_missing("lead", "raiox_whatsapp_em", "TIMESTAMP")
+            add_column_if_missing("lead", "raiox_recuperacao_em", "TIMESTAMP")
+            add_column_if_missing("lead", "opt_out", "BOOLEAN DEFAULT FALSE")
+
             # 2. Table Creation (Postgres/SQLite aware)
             def create_table_if_missing(table_name, psql_ddl, sqlite_ddl=None):
                 if not inspector.has_table(table_name):
