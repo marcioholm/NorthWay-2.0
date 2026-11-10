@@ -14,7 +14,14 @@ def clean_pdf_text(s):
     return str(s).replace('—', '-').replace('–', '-').replace('·', '-').replace('"', '"').replace("'", "'").encode('latin-1', 'replace').decode('latin-1')
 
 def ensure_budget_data(budget):
-    if not budget.data:
+    import json
+    if isinstance(budget.data, str):
+        try:
+            budget.data = json.loads(budget.data)
+        except Exception:
+            budget.data = None
+
+    if not budget.data or not isinstance(budget.data, dict):
         is_assoc = 'Associação' in (budget.client_name or '') or 'Wenceslau' in (budget.client_name or '')
         budget.data = {
             'quoteNum': budget.quote_num or '001/2026',
@@ -40,6 +47,15 @@ def ensure_budget_data(budget):
             ],
             'totalValue': budget.total_value or 3000
         }
+    elif isinstance(budget.data, dict) and not budget.data.get('items'):
+        budget.data['items'] = [
+            {
+                'desc': 'Assessoria de marketing para a campanha',
+                'qty': '1',
+                'price': '{:,.2f}'.format(budget.total_value or 3000).replace(',', 'X').replace('.', ',').replace('X', '.'),
+                'sub': 'R$ {:,.2f}'.format(budget.total_value or 3000).replace(',', 'X').replace('.', ',').replace('X', '.')
+            }
+        ]
 
 def generate_budget_pdf_bytes(budget, company, user):
     from fpdf import FPDF

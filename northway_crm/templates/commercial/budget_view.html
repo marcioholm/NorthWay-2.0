@@ -415,23 +415,23 @@
     <div class="client-card">
       <div class="info-line">
         <span class="info-label">Empresa:</span>
-        <strong>{{ budget.client_name or (budget.data.cliName if budget.data else '-') }}</strong>
+        <strong>{{ budget.client_name or (budget.data.get('cliName') if (budget.data and budget.data is mapping) else '-') }}</strong>
       </div>
       <div class="info-line">
         <span class="info-label">CNPJ/CPF:</span>
-        <span>{{ (budget.data.cliDoc if budget.data else '') or '-' }}</span>
+        <span>{{ (budget.data.get('cliDoc') if (budget.data and budget.data is mapping) else '') or '-' }}</span>
       </div>
       <div class="info-line">
         <span class="info-label">Contato:</span>
-        <span>{{ (budget.data.cliContact if budget.data else '') or '-' }}</span>
+        <span>{{ (budget.data.get('cliContact') if (budget.data and budget.data is mapping) else '') or '-' }}</span>
       </div>
       <div class="info-line">
         <span class="info-label">Telefone:</span>
-        <span>{{ (budget.data.cliPhone if budget.data else '') or '-' }}</span>
+        <span>{{ (budget.data.get('cliPhone') if (budget.data and budget.data is mapping) else '') or '-' }}</span>
       </div>
       <div class="info-line" style="grid-column: 1 / -1;">
         <span class="info-label">Endereço:</span>
-        <span>{{ (budget.data.cliAddr if budget.data else '') or '-' }}</span>
+        <span>{{ (budget.data.get('cliAddr') if (budget.data and budget.data is mapping) else '') or '-' }}</span>
       </div>
     </div>
 
@@ -447,8 +447,8 @@
         </tr>
       </thead>
       <tbody>
-        {% if budget.data and budget.data.items %}
-          {% for item in budget.data.items %}
+        {% if budget.data and budget.data is mapping and budget.data.get('items') %}
+          {% for item in budget.data.get('items') %}
           <tr>
             <td>{{ item.desc }}</td>
             <td class="center">{{ item.qty }}</td>
@@ -479,11 +479,11 @@
     <div class="payment-box">
       <div class="payment-header">Condições de Pagamento</div>
       <div class="payment-discount">
-        {% if budget.data and budget.data.discountPct and (budget.data.discountPct | float) > 0 %}
+        {% if budget.data and budget.data is mapping and budget.data.get('discountPct') and (budget.data.get('discountPct') | float) > 0 %}
           <span class="old-price">De R$ {{ '{:,.2f}'.format(budget.total_value).replace(',', 'X').replace('.', ',').replace('X', '.') }}</span>
           <span class="new-price">
-            Por R$ {{ '{:,.2f}'.format(budget.total_value * (1 - (budget.data.discountPct | float)/100)).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-            ({{ budget.data.discountPct }}% de desconto à vista)
+            Por R$ {{ '{:,.2f}'.format(budget.total_value * (1 - (budget.data.get('discountPct') | float)/100)).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+            ({{ budget.data.get('discountPct') }}% de desconto à vista)
           </span>
         {% else %}
           <span class="new-price">
@@ -494,15 +494,15 @@
     </div>
 
     <!-- Observações -->
-    {% if budget.data and budget.data.obsText %}
+    {% if budget.data and budget.data is mapping and budget.data.get('obsText') %}
     <div class="section-tag">Observações & Condições Específicas</div>
-    <div class="obs-box">{{ budget.data.obsText }}</div>
+    <div class="obs-box">{{ budget.data.get('obsText') }}</div>
     {% endif %}
 
     <!-- Rodapé & Assinatura -->
     <footer class="footer-section">
       <div class="validity-text">
-        Validade da proposta: <strong>{{ (budget.data.validity if budget.data else '') or '15 dias' }}</strong> a partir da data de emissão.
+        Validade da proposta: <strong>{{ (budget.data.get('validity') if (budget.data and budget.data is mapping) else '') or '15 dias' }}</strong> a partir da data de emissão.
       </div>
       <div class="signature-block">
         <div class="signature-line"></div>
