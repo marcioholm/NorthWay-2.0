@@ -382,10 +382,16 @@
     <!-- Cabeçalho -->
     <header class="header-section">
       <div>
-        {% if current_user.company.logo_base64 %}
-          <img src="{{ current_user.company.logo_base64 }}" alt="Logo" style="max-height: 54px; width: auto;">
+        {% if current_user.company.logo_base64 and current_user.company.logo_base64.startswith('data:') %}
+          <img src="{{ current_user.company.logo_base64 }}" alt="{{ current_user.company.name or 'NorthWay' }}" style="height: 52px; width: auto; object-fit: contain;" onerror="this.src='/static/images/logo.png'">
+        {% elif current_user.company.logo_base64 and current_user.company.logo_base64.startswith('http') %}
+          <img src="{{ current_user.company.logo_base64 }}" alt="{{ current_user.company.name or 'NorthWay' }}" style="height: 52px; width: auto; object-fit: contain;" onerror="this.src='/static/images/logo.png'">
+        {% elif current_user.company.logo_base64 %}
+          <img src="data:image/png;base64,{{ current_user.company.logo_base64 }}" alt="{{ current_user.company.name or 'NorthWay' }}" style="height: 52px; width: auto; object-fit: contain;" onerror="this.src='/static/images/logo.png'">
+        {% elif current_user.company.logo_filename %}
+          <img src="{{ url_for('static', filename='uploads/company/' ~ current_user.company.logo_filename) }}" alt="{{ current_user.company.name or 'NorthWay' }}" style="height: 52px; width: auto; object-fit: contain;" onerror="this.src='/static/images/logo.png'">
         {% else %}
-          <div class="brand-title">NORTH<span>WAY</span></div>
+          <img src="{{ url_for('static', filename='images/logo.png') }}" alt="NorthWay Company" style="height: 52px; width: auto; object-fit: contain;">
         {% endif %}
       </div>
 
