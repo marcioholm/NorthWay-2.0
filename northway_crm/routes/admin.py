@@ -562,9 +562,9 @@ def run_initial_migrations():
     
     try:
         # 1. Infer Dialect
-        # Read from config to be safe
-        db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
-        is_postgres = 'postgresql' in db_uri.lower()
+        # Read from config or env or engine to be safe
+        db_uri = str(current_app.config.get('SQLALCHEMY_DATABASE_URI') or os.environ.get('DATABASE_URL') or getattr(db.engine, 'url', ''))
+        is_postgres = 'postgres' in db_uri.lower()
         is_sqlite = 'sqlite' in db_uri.lower()
         
         results.append(f"DB Dialect Detected: {'PostgreSQL' if is_postgres else 'SQLite' if is_sqlite else 'Unknown'}")
@@ -617,6 +617,33 @@ def run_initial_migrations():
             except Exception as e:
                 results.append(f"❌ Error drive_folder_template: {e}")
 
+            # 3. Add Raio-X v2 columns to lead
+            raiox_cols = [
+                ("origem", "VARCHAR(100)"),
+                ("faixa_faturamento", "VARCHAR(50)"),
+                ("funcionarios", "VARCHAR(50)"),
+                ("respostas", "JSONB" if is_postgres else "TEXT"),
+                ("nota_atrair", "FLOAT"),
+                ("nota_engajar", "FLOAT"),
+                ("nota_vender", "FLOAT"),
+                ("nota_reter", "FLOAT"),
+                ("nota_gestao", "FLOAT"),
+                ("indice_maturidade", "FLOAT"),
+                ("gargalo", "VARCHAR(50)"),
+                ("ponto_fraco", "INTEGER"),
+                ("consentimento", "BOOLEAN DEFAULT FALSE"),
+                ("consentimento_em", "TIMESTAMP")
+            ]
+            for c_name, c_type in raiox_cols:
+                try:
+                    if is_postgres:
+                        conn.execute(text(f'ALTER TABLE "lead" ADD COLUMN IF NOT EXISTS {c_name} {c_type}'))
+                    else:
+                        conn.execute(text(f'ALTER TABLE "lead" ADD COLUMN {c_name} {c_type}'))
+                    results.append(f"✅ Lead column {c_name} verified")
+                except Exception as ce:
+                    results.append(f"ℹ️ Lead column {c_name}: {ce}")
+
             conn.commit()
             
         return f"<h1>Migration Results</h1><pre>" + "\n".join(results) + "</pre><p><a href='/admin/dashboard'>Back to Dashboard</a></p>", 200
@@ -624,6 +651,7 @@ def run_initial_migrations():
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
+        return f"<h1>Migration Error</h1><pre>{e}\n\n{tb}</pre><p><a href='/'>Voltar</a></p>", 500
 
 @admin_bp.route('/admin/fix-task-schema')
 @login_required

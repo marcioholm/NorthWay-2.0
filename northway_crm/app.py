@@ -971,13 +971,17 @@ Sitemap: {base_url}/sitemap.xml
                 return jsonify({
                     'success': False,
                     'error': 'Erro Interno do Servidor (500)',
-                    'message': 'Tente novamente. Se o problema persistir, contate o suporte.'
+                    'message': error_msg if (getattr(current_user, 'is_authenticated', False) or request.args.get('debug') == '1') else 'Tente novamente. Se o problema persistir, contate o suporte.'
                 }), 500
+            
+            show_details = getattr(current_user, 'is_authenticated', False) or request.args.get('debug') == '1'
+            details_content = f"{error_msg}\n\n{tb}" if show_details else "Erro registrado. Contate o suporte."
+            
             return f"""
             <div style="font-family: sans-serif; padding: 40px; border: 2px solid red; margin: 20px;">
                 <h1 style="color: red;">❌ Internal Server Error (500)</h1>
                 <p>The server encountered an error and could not complete your request.</p>
-                <pre style="background: #f4f4f4; padding: 15px; overflow: auto;">Erro registrado. Contate o suporte.</pre>
+                <pre style="background: #f4f4f4; padding: 15px; overflow: auto; white-space: pre-wrap;">{details_content}</pre>
             </div>
             """, 500
 
