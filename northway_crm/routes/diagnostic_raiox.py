@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 from flask_login import login_required, current_user
 from models import db, Lead, Company, Pipeline, PipelineStage
+from extensions import limiter
 from datetime import datetime
 import json
 import logging
 import os
+import uuid
 import urllib.parse
 from sqlalchemy import text, or_
+from utils.phone import normalize_phone
 
 diagnostic_raiox_bp = Blueprint('diagnostic_raiox', __name__)
 logger = logging.getLogger(__name__)
@@ -482,7 +485,23 @@ def ensure_raiox_v2_columns():
             ("gargalo", "VARCHAR(50)"),
             ("ponto_fraco", "INTEGER"),
             ("consentimento", "BOOLEAN DEFAULT FALSE"),
-            ("consentimento_em", "TIMESTAMP")
+            ("consentimento_em", "TIMESTAMP"),
+            ("raiox_token", "VARCHAR(100)"),
+            ("raiox_status", "VARCHAR(50)"),
+            ("raiox_ultima_pergunta", "INTEGER"),
+            ("raiox_respostas_parciais", "JSONB" if is_postgres else "TEXT"),
+            ("raiox_atualizado_em", "TIMESTAMP"),
+            ("utm_source", "VARCHAR(255)"),
+            ("utm_medium", "VARCHAR(255)"),
+            ("utm_campaign", "VARCHAR(255)"),
+            ("utm_content", "VARCHAR(255)"),
+            ("utm_term", "VARCHAR(255)"),
+            ("fbclid", "VARCHAR(255)"),
+            ("meta_event_id", "VARCHAR(100)"),
+            ("raiox_whatsapp_status", "VARCHAR(30)"),
+            ("raiox_whatsapp_em", "TIMESTAMP"),
+            ("raiox_recuperacao_em", "TIMESTAMP"),
+            ("opt_out", "BOOLEAN DEFAULT FALSE")
         ]
         with db.engine.connect() as conn:
             for col_name, col_type in cols:
@@ -494,6 +513,15 @@ def ensure_raiox_v2_columns():
                     conn.commit()
                 except Exception:
                     conn.rollback()
+
+            try:
+                if is_postgres:
+                    conn.execute(text('CREATE INDEX IF NOT EXISTS ix_lead_raiox_token ON "lead" (raiox_token)'))
+                else:
+                    conn.execute(text('CREATE INDEX IF NOT EXISTS ix_lead_raiox_token ON "lead" (raiox_token)'))
+                conn.commit()
+            except Exception:
+                conn.rollback()
 
             # Limpeza de leads de teste (Critério de aceite)
             try:
@@ -508,20 +536,199 @@ def ensure_raiox_v2_columns():
 # Rotas
 # -------------------------------------------------------------------------
 
+def dispatch_n8n_raiox_webhook(lead, payload):
+    """
+    Dispara webhook de conclusão do Raio-X para o n8n de forma assíncrona.
+    """
+    webhook_url = os.environ.get('N8N_RAIOX_WEBHOOK_URL')
+    if not webhook_url:
+        logger.info("[N8N_RAIOX] N8N_RAIOX_WEBHOOK_URL não configurada. Webhook não disparado.")
+        return
+
+    import threading
+    from flask import current_app
+    app = current_app._get_current_object()
+
+    def _worker(flask_app, tenant_id, lead_id, url, data):
+        with flask_app.app_context():
+            try:
+                from utils.webhooks import send_outbound_webhook
+                send_outbound_webhook(tenant_id, lead_id, 'raiox_concluido', url, data, timeout=5, max_retries=1)
+                logger.info(f"[N8N_RAIOX] Webhook concluído disparado para lead {lead_id}")
+            except Exception as e:
+                logger.warning(f"[N8N_RAIOX] Erro ao enviar webhook para n8n: {e}")
+
+    threading.Thread(target=_worker, args=(app, lead.company_id or 1, lead.id, webhook_url, payload), daemon=True).start()
+
+
+@diagnostic_raiox_bp.route('/privacidade', methods=['GET'])
+def privacidade():
+    """
+    Página de transparência e Política de Privacidade do Raio-X
+    """
+    return render_template('legal/privacy.html')
+
+
 @diagnostic_raiox_bp.route('/raiox', methods=['GET'])
 def index():
     """
     Renderiza a Landing Page / Funil do Raio-X NorthWay v2
+    Suporta retomada com ?retomar=<token>
     """
     ensure_raiox_v2_columns()
     origem = request.args.get('origem', 'direto')
+    retomar_token = request.args.get('retomar')
+    resume_data = None
+    if retomar_token:
+        lead = Lead.query.filter_by(raiox_token=retomar_token).first()
+        if lead and lead.raiox_status != 'concluido':
+            resume_data = {
+                'token': lead.raiox_token,
+                'nome': lead.name or '',
+                'email': lead.email or '',
+                'whatsapp': lead.phone or lead.whatsapp or '',
+                'empresa': lead.raiox_empresa or lead.legal_name or '',
+                'quantidade_funcionarios': lead.funcionarios or '',
+                'faturamento_mensal': lead.faixa_faturamento or '',
+                'origem': lead.origem or 'direto',
+                'respostas': lead.raiox_respostas_parciais or [],
+                'ultima_pergunta': lead.raiox_ultima_pergunta or 0
+            }
+
     whatsapp_number = os.environ.get('NORTHWAY_WHATSAPP', '5542999896358').replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
     return render_template(
         'forms/raiox_funnel.html',
         origem=origem,
         whatsapp_number=whatsapp_number,
-        questions=RAIOX_QUESTIONS
+        questions=RAIOX_QUESTIONS,
+        resume_data=resume_data
     )
+
+
+@diagnostic_raiox_bp.route('/raiox/progresso', methods=['POST'])
+@limiter.limit("30 per minute")
+def progresso():
+    """
+    Captura progressiva do Raio-X NorthWay.
+    Salva/atualiza o lead à medida que preenche dados ou responde perguntas.
+    """
+    try:
+        ensure_raiox_v2_columns()
+        data = request.json or {}
+        token = (data.get('token') or '').strip()
+        if not token:
+            return jsonify({'status': 'error', 'message': 'Token obrigatório'}), 400
+
+        etapa = str(data.get('etapa') or '').strip()
+        lead_info = data.get('lead_info') or {}
+        answers = data.get('answers')
+
+        nome = (lead_info.get('nome') or '').strip()
+        email = (lead_info.get('email') or '').strip().lower()
+        raw_whatsapp = (lead_info.get('whatsapp') or '').strip()
+        whatsapp = normalize_phone(raw_whatsapp)
+        empresa = (lead_info.get('empresa') or '').strip()
+        funcionarios = lead_info.get('quantidade_funcionarios')
+        faixa_faturamento = lead_info.get('faturamento_mensal')
+        origem = (lead_info.get('origem') or request.args.get('origem') or lead_info.get('utm_source') or 'direto').strip()
+
+        # UTMs e Meta Event ID
+        utm_source = lead_info.get('utm_source')
+        utm_medium = lead_info.get('utm_medium')
+        utm_campaign = lead_info.get('utm_campaign')
+        utm_content = lead_info.get('utm_content')
+        utm_term = lead_info.get('utm_term')
+        fbclid = lead_info.get('fbclid')
+        meta_event_id = (data.get('event_id') or lead_info.get('event_id') or f"lead_{uuid.uuid4().hex[:16]}").strip()
+
+        company_id = 1
+        company = Company.query.first()
+        if company:
+            company_id = company.id
+
+        lead = Lead.query.filter_by(raiox_token=token, company_id=company_id).first()
+        if not lead and email:
+            lead = Lead.query.filter_by(email=email, company_id=company_id).first()
+        if not lead and whatsapp:
+            lead = Lead.query.filter_by(whatsapp=whatsapp, company_id=company_id).first()
+            if not lead:
+                lead = Lead.query.filter_by(phone=whatsapp, company_id=company_id).first()
+
+        is_new = False
+        if not lead:
+            lead = Lead(
+                company_id=company_id,
+                source='Raio-X Digital (parcial)',
+                pipeline_id=None,
+                pipeline_stage_id=None,
+                raiox_token=token,
+                raiox_status='parcial_dados'
+            )
+            is_new = True
+
+        # Atualiza apenas campos fornecidos e preenchidos (nunca apaga campo preenchido)
+        if token and not lead.raiox_token:
+            lead.raiox_token = token
+        if nome:
+            lead.name = nome
+        if email:
+            lead.email = email
+        if whatsapp:
+            lead.whatsapp = whatsapp
+            lead.phone = whatsapp
+        if empresa:
+            lead.legal_name = empresa
+        if funcionarios:
+            lead.funcionarios = str(funcionarios)
+            lead.company_size = str(funcionarios)
+        if faixa_faturamento:
+            lead.faixa_faturamento = str(faixa_faturamento)
+        if origem and (not lead.origem or lead.origem == 'direto'):
+            lead.origem = origem
+
+        # UTMs e Meta Event ID
+        if utm_source: lead.utm_source = utm_source
+        if utm_medium: lead.utm_medium = utm_medium
+        if utm_campaign: lead.utm_campaign = utm_campaign
+        if utm_content: lead.utm_content = utm_content
+        if utm_term: lead.utm_term = utm_term
+        if fbclid: lead.fbclid = fbclid
+        if meta_event_id: lead.meta_event_id = meta_event_id
+
+        # Atualização de status e etapa
+        agora = datetime.utcnow()
+        lead.raiox_atualizado_em = agora
+
+        if etapa == 'iniciou':
+            lead.consentimento = True
+            lead.consentimento_em = agora
+            if lead.raiox_status != 'concluido':
+                lead.raiox_status = 'parcial_iniciou'
+        elif etapa == 'dados':
+            if not lead.raiox_status:
+                lead.raiox_status = 'parcial_dados'
+        else:
+            # Pergunta respondida
+            try:
+                q_num = int(etapa)
+                lead.raiox_ultima_pergunta = max(lead.raiox_ultima_pergunta or 0, q_num)
+                if lead.raiox_status != 'concluido':
+                    lead.raiox_status = 'parcial_iniciou'
+            except ValueError:
+                pass
+
+        if answers is not None and isinstance(answers, list):
+            lead.raiox_respostas_parciais = answers
+
+        if is_new:
+            db.session.add(lead)
+
+        db.session.commit()
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Erro em /raiox/progresso: {e}")
+        return jsonify({'status': 'ok'}), 200
 
 
 @diagnostic_raiox_bp.route('/raiox/submit', methods=['POST'])
@@ -534,22 +741,30 @@ def submit():
     try:
         ensure_raiox_v2_columns()
         data = request.json or {}
+        token = (data.get('token') or '').strip()
         
         # 1. Dados do Lead
         lead_info = data.get('lead_info', {})
         nome = (lead_info.get('nome') or '').strip()
         email = (lead_info.get('email') or '').strip().lower()
-        whatsapp = (lead_info.get('whatsapp') or '').strip()
+        raw_whatsapp = (lead_info.get('whatsapp') or '').strip()
+        whatsapp = normalize_phone(raw_whatsapp)
         empresa = (lead_info.get('empresa') or '').strip()
         funcionarios = lead_info.get('quantidade_funcionarios')
         faixa_faturamento = lead_info.get('faturamento_mensal')
-        origem = (lead_info.get('origem') or request.args.get('origem') or 'direto').strip()
-        consentimento = bool(lead_info.get('consentimento', False))
-        
-        # Validação obrigatória de consentimento
-        if not consentimento:
-            return jsonify({'status': 'error', 'message': 'O consentimento para uso dos dados é obrigatório.'}), 400
+        origem = (lead_info.get('origem') or request.args.get('origem') or lead_info.get('utm_source') or 'direto').strip()
 
+        # UTMs e Meta Event ID
+        utm_source = lead_info.get('utm_source')
+        utm_medium = lead_info.get('utm_medium')
+        utm_campaign = lead_info.get('utm_campaign')
+        utm_content = lead_info.get('utm_content')
+        utm_term = lead_info.get('utm_term')
+        fbclid = lead_info.get('fbclid')
+        meta_event_id = (data.get('event_id') or lead_info.get('event_id') or f"lead_{uuid.uuid4().hex[:16]}").strip()
+        
+        # Consentimento é implícito ao iniciar o diagnóstico
+        consentimento = True
         consentimento_em = datetime.utcnow()
 
         # 2. Extração das Respostas (20 inteiros de 0 a 3)
@@ -587,36 +802,38 @@ def submit():
             if company:
                 company_id = company.id
         
-        # Localiza lead existente ou cria novo
+        # Localiza lead existente: primeiro por token, depois email, depois whatsapp
         lead = None
-        if email:
+        if token:
+            lead = Lead.query.filter_by(raiox_token=token, company_id=company_id).first()
+        if not lead and email:
             lead = Lead.query.filter_by(email=email, company_id=company_id).first()
         if not lead and whatsapp:
             lead = Lead.query.filter_by(whatsapp=whatsapp, company_id=company_id).first()
+            if not lead:
+                lead = Lead.query.filter_by(phone=whatsapp, company_id=company_id).first()
             
         is_new = False
         if not lead:
-            lead = Lead(company_id=company_id)
+            lead = Lead(company_id=company_id, raiox_token=token)
             is_new = True
+
+        primeira_conclusao = (lead.raiox_status != 'concluido')
             
-            default_pipeline = Pipeline.query.filter_by(company_id=company_id).first()
-            if default_pipeline:
-                lead.pipeline_id = default_pipeline.id
-                first_stage = PipelineStage.query.filter_by(pipeline_id=default_pipeline.id).order_by(PipelineStage.order).first()
-                if first_stage:
-                    lead.pipeline_stage_id = first_stage.id
-            
-        lead.name = nome
-        lead.email = email
-        lead.whatsapp = whatsapp
-        lead.phone = whatsapp
-        lead.legal_name = empresa
+        if nome: lead.name = nome
+        if email: lead.email = email
+        if whatsapp:
+            lead.whatsapp = whatsapp
+            lead.phone = whatsapp
+        if empresa: lead.legal_name = empresa
+        if token: lead.raiox_token = token
         
         # Novos campos v2
-        lead.origem = origem
-        lead.faixa_faturamento = faixa_faturamento
-        lead.funcionarios = funcionarios
-        lead.company_size = funcionarios
+        if origem: lead.origem = origem
+        if faixa_faturamento: lead.faixa_faturamento = str(faixa_faturamento)
+        if funcionarios:
+            lead.funcionarios = str(funcionarios)
+            lead.company_size = str(funcionarios)
         lead.respostas = respostas_list
         lead.nota_atrair = notas['atrair']
         lead.nota_engajar = notas['engajar']
@@ -627,7 +844,21 @@ def submit():
         lead.gargalo = gargalo
         lead.ponto_fraco = ponto_fraco
         lead.consentimento = consentimento
-        lead.consentimento_em = consentimento_em
+        lead.consentimento_em = lead.consentimento_em or consentimento_em
+
+        # UTMs e Meta Event ID
+        if utm_source: lead.utm_source = utm_source
+        if utm_medium: lead.utm_medium = utm_medium
+        if utm_campaign: lead.utm_campaign = utm_campaign
+        if utm_content: lead.utm_content = utm_content
+        if utm_term: lead.utm_term = utm_term
+        if fbclid: lead.fbclid = fbclid
+        if meta_event_id: lead.meta_event_id = meta_event_id
+
+        # Status do Raio-X
+        lead.raiox_status = 'concluido'
+        lead.raiox_ultima_pergunta = 20
+        lead.raiox_atualizado_em = datetime.utcnow()
 
         # Campos legados preservados para compatibilidade
         lead.source = 'Raio-X Digital'
@@ -647,20 +878,69 @@ def submit():
         
         tags = [f"Gargalo {gargalo_nome}", f"Índice {str(indice).replace('.', ',')}", f"Origem {origem}", "Raio-X v2"]
         lead.interest = ", ".join(tags)
+
+        # Se for primeira conclusão, aloca estágio no pipeline e executa automações
+        if primeira_conclusao:
+            lead.source = 'Raio-X Digital'
+            if not lead.pipeline_stage_id:
+                default_pipeline = Pipeline.query.filter_by(company_id=company_id).first()
+                if default_pipeline:
+                    lead.pipeline_id = default_pipeline.id
+                    first_stage = PipelineStage.query.filter_by(pipeline_id=default_pipeline.id).order_by(PipelineStage.order).first()
+                    if first_stage:
+                        lead.pipeline_stage_id = first_stage.id
         
         if is_new:
             db.session.add(lead)
             
         db.session.commit()
         
-        # Disparo de automações para novo lead
-        if is_new and lead.pipeline_stage_id:
+        # Disparo de automações para primeira conclusão
+        if primeira_conclusao and lead.pipeline_stage_id:
             try:
                 from tasks_utils import generate_tasks_for_stage, process_funnel_automations
                 generate_tasks_for_stage(lead.id, lead.pipeline_stage_id)
                 process_funnel_automations(lead.id, lead.pipeline_stage_id)
             except Exception as e:
                 logger.error(f"Erro ao disparar automações de estágio: {e}")
+
+            # Disparo de webhook para o n8n
+            try:
+                payload_n8n = {
+                    "event": "raiox_concluido",
+                    "lead_id": lead.id,
+                    "token": lead.raiox_token,
+                    "nome": lead.name,
+                    "email": lead.email,
+                    "whatsapp": lead.phone or lead.whatsapp,
+                    "empresa": lead.raiox_empresa,
+                    "porte": lead.raiox_porte,
+                    "faturamento": lead.raiox_faturamento,
+                    "origem": lead.raiox_origem,
+                    "utms": {
+                        "source": lead.utm_source,
+                        "medium": lead.utm_medium,
+                        "campaign": lead.utm_campaign,
+                        "content": lead.utm_content,
+                        "term": lead.utm_term,
+                        "fbclid": lead.fbclid
+                    },
+                    "meta_event_id": lead.meta_event_id,
+                    "score_geral": lead.raiox_score_geral,
+                    "scores_eixos": {
+                        "atrair": lead.raiox_score_atrair,
+                        "engajar": lead.raiox_score_engajar,
+                        "vender": lead.raiox_score_vender,
+                        "reter": lead.raiox_score_reter,
+                        "gestao": lead.raiox_score_gestao
+                    },
+                    "gargalo_principal": lead.raiox_gargalo_principal,
+                    "respostas": lead.raiox_respostas,
+                    "concluido_em": datetime.utcnow().isoformat()
+                }
+                dispatch_n8n_raiox_webhook(lead, payload_n8n)
+            except Exception as e:
+                logger.warning(f"Erro ao preparar payload n8n: {e}")
 
         # 5. Gerar Link do WhatsApp
         whatsapp_number = os.environ.get('NORTHWAY_WHATSAPP', '5542999896358').replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
@@ -669,6 +949,7 @@ def submit():
         resultado['whatsapp_url'] = wa_url
         resultado['empresa'] = empresa
         resultado['nome'] = nome
+        resultado['event_id'] = meta_event_id
 
         # 6. Enviar PDF do Raio-X v2 por E-mail via Resend
         if email:
@@ -728,36 +1009,30 @@ def submit():
                 </div>
                 """
 
-                filename_clean = (empresa or 'NorthWay').replace(' ', '_').replace('/', '_')
-                attachments = [{
-                    "filename": f"RaioX-NorthWay-{filename_clean}.pdf",
-                    "content": list(pdf_bytes)
-                }]
-
                 EmailService.send_email(
-                    to=[email],
-                    subject=f"Seu Raio-X NorthWay está pronto | {empresa or nome} (Índice {resultado.get('indice_formatado', '0')}/10)",
+                    to_email=email,
+                    subject=f"Seu Raio-X NorthWay: {empresa or 'Diagnóstico de Escala Digital'}",
                     html_content=email_html,
-                    company_id=company_id,
-                    attachments=attachments
+                    pdf_bytes=pdf_bytes,
+                    pdf_filename=f"Raio-X-NorthWay-{nome or 'Diagnostico'}.pdf"
                 )
-                logger.info(f"E-mail com PDF do Raio-X v2 disparado via Resend para {email}")
-            except Exception as email_err:
-                logger.error(f"Erro ao enviar e-mail com PDF via Resend: {email_err}")
+            except Exception as mail_err:
+                logger.warning(f"Não foi possível despachar e-mail do Raio-X via Resend: {mail_err}")
 
-        # Armazena na sessão caso o usuário queira recarregar
         session['raiox_resultado'] = resultado
 
         # 7. Retorno em JSON para renderização instantânea na mesma página
         return jsonify({
             'status': 'success',
-            'resultado': resultado
+            'resultado': resultado,
+            'event_id': meta_event_id
         })
         
     except Exception as e:
         logger.error(f"Erro ao processar Raio-X v2: {e}", exc_info=True)
         db.session.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
 
 
 @diagnostic_raiox_bp.route('/raiox/resultado', methods=['GET'])
@@ -775,13 +1050,35 @@ def resultado():
 @login_required
 def leads_list():
     """
-    Lista todos os leads que fizeram o Raio-X Digital
+    Lista todos os leads que fizeram o Raio-X Digital (concluídos e abandonados).
+    Filtro por status: todos, concluidos, abandonados.
     """
-    leads = (Lead.query
-             .filter(Lead.source == 'Raio-X Digital')
-             .filter(Lead.diagnostic_status == 'done')
-             .order_by(Lead.diagnostic_date.desc())
-             .all())
+    status_filter = request.args.get('status', 'todos').lower()
+
+    query = Lead.query.filter(
+        or_(
+            Lead.source.in_(['Raio-X Digital', 'Raio-X Digital (parcial)']),
+            Lead.raiox_token.isnot(None),
+            Lead.raiox_status.isnot(None)
+        )
+    )
+
+    if status_filter == 'concluidos':
+        query = query.filter(
+            or_(
+                Lead.raiox_status == 'concluido',
+                (Lead.source == 'Raio-X Digital') & (Lead.diagnostic_status == 'done')
+            )
+        )
+    elif status_filter == 'abandonados':
+        query = query.filter(
+            or_(
+                Lead.raiox_status.in_(['parcial_dados', 'parcial_iniciou']),
+                Lead.source == 'Raio-X Digital (parcial)'
+            )
+        )
+
+    leads = query.order_by(Lead.created_at.desc()).all()
 
     clean_leads = []
     for l in leads:
@@ -789,7 +1086,7 @@ def leads_list():
             l.diagnostic_pillars = {k: v for k, v in l.diagnostic_pillars.items() if not k.startswith('_')}
         clean_leads.append(l)
 
-    return render_template('forms/raiox_leads.html', leads=clean_leads)
+    return render_template('forms/raiox_leads.html', leads=clean_leads, current_status=status_filter)
 
 
 @diagnostic_raiox_bp.route('/raiox/report/<int:lead_id>', methods=['GET'])

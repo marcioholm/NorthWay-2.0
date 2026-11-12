@@ -375,6 +375,24 @@ class Lead(db.Model):
     ponto_fraco = db.Column(db.Integer, nullable=True)
     consentimento = db.Column(db.Boolean, default=False, nullable=True)
     consentimento_em = db.Column(db.DateTime, nullable=True)
+
+    # Raio-X Captura Progressiva, UTMs & n8n
+    raiox_token = db.Column(db.String(100), index=True, nullable=True)
+    raiox_status = db.Column(db.String(50), nullable=True) # parcial_dados, parcial_iniciou, concluido
+    raiox_ultima_pergunta = db.Column(db.Integer, nullable=True)
+    raiox_respostas_parciais = db.Column(db.JSON, nullable=True)
+    raiox_atualizado_em = db.Column(db.DateTime, nullable=True)
+    utm_source = db.Column(db.String(255), nullable=True)
+    utm_medium = db.Column(db.String(255), nullable=True)
+    utm_campaign = db.Column(db.String(255), nullable=True)
+    utm_content = db.Column(db.String(255), nullable=True)
+    utm_term = db.Column(db.String(255), nullable=True)
+    fbclid = db.Column(db.String(255), nullable=True)
+    meta_event_id = db.Column(db.String(100), nullable=True)
+    raiox_whatsapp_status = db.Column(db.String(30), nullable=True) # enviado, erro, respondido
+    raiox_whatsapp_em = db.Column(db.DateTime, nullable=True)
+    raiox_recuperacao_em = db.Column(db.DateTime, nullable=True)
+    opt_out = db.Column(db.Boolean, default=False, nullable=True)
     estimated_value = db.Column(db.Numeric(12, 2), default=0.0)
 
     # Lead Loss Tracking
@@ -454,6 +472,55 @@ class Lead(db.Model):
     def is_original(self):
         """Check if this lead is the original (not a duplicate)."""
         return not self.is_duplicate
+
+    # Raio-X Property Aliases
+    @property
+    def raiox_empresa(self):
+        return self.legal_name or ''
+
+    @property
+    def raiox_porte(self):
+        return self.funcionarios or ''
+
+    @property
+    def raiox_faturamento(self):
+        return self.faixa_faturamento or ''
+
+    @property
+    def raiox_origem(self):
+        return self.origem or 'direto'
+
+    @property
+    def raiox_score_geral(self):
+        return self.indice_maturidade
+
+    @property
+    def raiox_score_atrair(self):
+        return self.nota_atrair
+
+    @property
+    def raiox_score_engajar(self):
+        return self.nota_engajar
+
+    @property
+    def raiox_score_vender(self):
+        return self.nota_vender
+
+    @property
+    def raiox_score_reter(self):
+        return self.nota_reter
+
+    @property
+    def raiox_score_gestao(self):
+        return self.nota_gestao
+
+    @property
+    def raiox_gargalo_principal(self):
+        return self.gargalo
+
+    @property
+    def raiox_respostas(self):
+        return self.respostas
 
 
 class DriveFolderTemplate(db.Model):

@@ -64,8 +64,8 @@ try:
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-except ImportError as e:
-    # We ignore ImportErrors here as these are just for the builder
+except Exception as e:
+    # We ignore ImportErrors/InitErrors here as these are just for the builder
     # but we print it to stderr for debugging in Vercel logs if needed
     print(f"⚠️ Dummy import failed: {e}")
     pass

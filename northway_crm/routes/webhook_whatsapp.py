@@ -175,8 +175,11 @@ def evolution_webhook():
                     db.session.commit()
                     current_app.logger.info(f"Successfully saved message {message_id}")
                     
-                    # Se for uma mensagem de entrada, verificar se o lead está em campanha de prospecção ativa
+                    # Se for uma mensagem de entrada, verificar opt-out e campanhas de prospecção
                     if direction == 'in':
+                        import unicodedata
+                        raw_norm = unicodedata.normalize('NFKD', (content or '').strip().lower()).encode('ASCII', 'ignore').decode('utf-8').strip()
+
                         lead = None
                         if conv.lead_id:
                             from models import Lead
@@ -186,13 +189,45 @@ def evolution_webhook():
                             clean_jid_phone = ''.join(filter(str.isdigit, jid_phone))
                             if clean_jid_phone:
                                 from models import Lead
+                                from utils.phone import phone_variants
+                                variants = phone_variants(clean_jid_phone)
                                 lead = Lead.query.filter(
                                     Lead.company_id == company_id,
-                                    Lead.phone.endswith(clean_jid_phone[-8:])
+                                    db.or_(
+                                        Lead.phone.in_(variants),
+                                        Lead.whatsapp.in_(variants),
+                                        Lead.phone.endswith(clean_jid_phone[-8:])
+                                    )
                                 ).first()
                                 if lead:
                                     conv.lead_id = lead.id
                                     db.session.commit()
+
+                        # 3.4.1 Tratamento de Opt-out (SAIR, PARAR, PARE)
+                        if raw_norm in ('sair', 'parar', 'pare'):
+                            if lead:
+                                lead.opt_out = True
+                                from models import Interaction
+                                interaction = Interaction(
+                                    company_id=company_id,
+                                    lead_id=lead.id,
+                                    type='whatsapp_auto',
+                                    content="Lead solicitou cancelamento de mensagens (opt-out)",
+                                    created_at=datetime.utcnow()
+                                )
+                                db.session.add(interaction)
+                                db.session.commit()
+                                current_app.logger.info(f"Opt-out registrado para lead {lead.id}")
+
+                            # Responde confirmação via WhatsApp
+                            try:
+                                optout_reply = "Tudo bem! Você não receberá mais mensagens automáticas da NorthWay. Se precisar de algo no futuro, estamos por aqui."
+                                EvolutionService.send_text(instance.instance_name, remote_jid, optout_reply)
+                            except Exception as opt_err:
+                                current_app.logger.warning(f"Erro ao enviar confirmação de opt-out: {opt_err}")
+
+                            # Interrompe o fluxo (não trata como resposta comercial nem envia para a NORA)
+                            continue
 
                         if lead and lead.prospecting_status in ('contatado', 'sent', 'approved'):
                             lead.prospecting_status = 'respondeu'

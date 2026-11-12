@@ -17,6 +17,12 @@
                         <span class="nw-chip nw-chip-info">
                             {{ lead.status }}
                         </span>
+                        {% if lead.opt_out %}
+                        <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700 border border-red-300 flex items-center gap-1">
+                            <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                            ⛔ Não contatar
+                        </span>
+                        {% endif %}
                     </div>
                     <p class="text-xs text-[var(--nw-text-2)] mt-1">{{ lead.email }} &bull; {{ lead.phone }}</p>
                 </div>
@@ -87,7 +93,7 @@
                         class="py-3 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
                         <i data-lucide="building-2" class="w-4 h-4"></i> Empresa & CNPJ
                     </button>
-                    {% if lead.source == 'Raio-X Digital' and lead.diagnostic_status == 'done' %}
+                    {% if lead.source in ['Raio-X Digital', 'Raio-X Digital (parcial)'] or lead.raiox_token or lead.raiox_status %}
                     <button type="button" onclick="switchPageTab('raiox')" id="tab-page-raiox"
                         class="py-3 px-1 text-sm font-bold text-gray-500 hover:text-gray-900 border-b-2 border-transparent transition-colors flex items-center gap-2">
                         <i data-lucide="activity" class="w-4 h-4"></i> Raio-X Digital
@@ -461,8 +467,81 @@
                 </div>
 
                 <!-- Tab: Raio-X Digital -->
-                {% if lead.source == 'Raio-X Digital' and lead.diagnostic_status == 'done' %}
+                {% if lead.source in ['Raio-X Digital', 'Raio-X Digital (parcial)'] or lead.raiox_token or lead.raiox_status %}
                 <div id="content-page-raiox" class="hidden space-y-6 pt-6">
+                    <!-- Bloco de Status do Raio-X, Recuperação e UTMs -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+                        <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-gray-100">
+                            <div class="flex items-center gap-3">
+                                <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                                    <i data-lucide="activity" class="w-4 h-4 text-northway-red"></i>
+                                    Status do Diagnóstico
+                                </h3>
+                                {% if lead.raiox_status == 'concluido' or (lead.source == 'Raio-X Digital' and lead.diagnostic_status == 'done') %}
+                                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-green-100 text-green-700 border border-green-200 flex items-center gap-1">
+                                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Concluído
+                                </span>
+                                {% else %}
+                                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300 flex items-center gap-1">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5"></i> Parou na pergunta {{ lead.raiox_ultima_pergunta or 0 }}/20
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            {% if lead.raiox_token and lead.raiox_status != 'concluido' %}
+                            <div>
+                                <button type="button" 
+                                        onclick="navigator.clipboard.writeText('https://crm.northwaycompany.com.br/raiox?retomar={{ lead.raiox_token }}'); alert('Link de retomada copiado com sucesso!');"
+                                        class="nw-btn nw-btn-subtle text-xs flex items-center gap-1.5">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                    <span>Copiar link de retomada</span>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block mb-1">WhatsApp Automático</span>
+                                {% if lead.raiox_whatsapp_status %}
+                                    <span class="font-bold {% if lead.raiox_whatsapp_status == 'enviado' %}text-green-700{% elif lead.raiox_whatsapp_status == 'erro' %}text-red-700{% else %}text-blue-700{% endif %}">
+                                        {{ lead.raiox_whatsapp_status|capitalize }}
+                                    </span>
+                                    {% if lead.raiox_whatsapp_em %}
+                                    <span class="text-gray-400 block text-[10px]">{{ lead.raiox_whatsapp_em.strftime('%d/%m/%Y %H:%M') }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-gray-400">Não enviado</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block mb-1">Mensagem de Recuperação</span>
+                                {% if lead.raiox_recuperacao_em %}
+                                    <span class="font-bold text-green-700">Enviada</span>
+                                    <span class="text-gray-400 block text-[10px]">{{ lead.raiox_recuperacao_em.strftime('%d/%m/%Y %H:%M') }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">Ainda não disparada</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block mb-1">Última Atualização</span>
+                                <span class="font-medium text-gray-800">
+                                    {{ lead.raiox_atualizado_em.strftime('%d/%m/%Y %H:%M') if lead.raiox_atualizado_em else (lead.updated_at.strftime('%d/%m/%Y %H:%M') if lead.updated_at else '—') }}
+                                </span>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <span class="text-[10px] text-gray-500 uppercase font-bold block mb-1">Campanha / UTMs</span>
+                                <div class="text-gray-700 truncate" title="{{ lead.utm_source or 'direto' }} / {{ lead.utm_campaign or '-' }}">
+                                    <strong>{{ lead.utm_source or lead.origem or 'direto' }}</strong>
+                                    {% if lead.utm_campaign %}<span class="text-gray-400"> · {{ lead.utm_campaign }}</span>{% endif %}
+                                    {% if lead.utm_medium %}<span class="text-gray-400"> ({{ lead.utm_medium }})</span>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Dados Coletados no Diagnóstico -->
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                         <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2 flex items-center gap-2">
