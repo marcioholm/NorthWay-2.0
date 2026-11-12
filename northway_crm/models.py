@@ -388,6 +388,7 @@ class Lead(db.Model):
     utm_content = db.Column(db.String(255), nullable=True)
     utm_term = db.Column(db.String(255), nullable=True)
     fbclid = db.Column(db.String(255), nullable=True)
+    meta_event_id = db.Column(db.String(100), nullable=True)
     raiox_whatsapp_status = db.Column(db.String(30), nullable=True) # enviado, erro, respondido
     raiox_whatsapp_em = db.Column(db.DateTime, nullable=True)
     raiox_recuperacao_em = db.Column(db.DateTime, nullable=True)

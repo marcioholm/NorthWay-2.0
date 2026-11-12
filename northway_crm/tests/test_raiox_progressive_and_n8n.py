@@ -19,6 +19,16 @@ def test_privacidade_public_endpoint(client):
     assert b"Pol\xc3\xadtica de Privacidade" in resp.data or b"Privacidade" in resp.data
 
 
+def test_meta_pixel_rendered_on_raiox_page(client):
+    """Garante que o código base do Meta Pixel com ID correto está presente em /raiox"""
+    resp = client.get('/raiox')
+    assert resp.status_code == 200
+    assert b"2336445306916882" in resp.data
+    assert b"fbq('init', '2336445306916882')" in resp.data
+    assert b"fbq('track', 'PageView')" in resp.data
+    assert b"https://www.facebook.com/tr?id=2336445306916882" in resp.data
+
+
 def test_progresso_create_and_update(client, app):
     """Testa captura parcial via /raiox/progresso: criação e atualização"""
     with app.app_context():
@@ -158,6 +168,8 @@ def test_submit_primeira_conclusao_vs_reenvio(client, app):
             assert lead.raiox_status == 'concluido'
             assert lead.source == 'Raio-X Digital'
             assert lead.pipeline_stage_id is not None
+            assert lead.meta_event_id is not None
+        assert resp.json.get('event_id') is not None
 
     # Reenvio do teste com o mesmo token
     with patch('routes.diagnostic_raiox.dispatch_n8n_raiox_webhook') as mock_webhook_re:

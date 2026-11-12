@@ -5,6 +5,25 @@
     {% include 'includes/favicon.html' %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Raio-X de Escala Digital — NorthWay</title>
+
+    <!-- Meta Pixel Code -->
+    <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '2336445306916882');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=2336445306916882&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -638,12 +657,16 @@
                 async submitDiagnostic() {
                     this.isSubmitting = true;
                     
+                    const metaEventId = 'raiox_' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '_' + Math.random().toString(36).substring(2, 9)));
+
                     const payload = {
                         token: this.token,
+                        event_id: metaEventId,
                         lead_info: {
                             ...this.lead,
                             ...this.utms,
-                            origem: this.origem
+                            origem: this.origem,
+                            event_id: metaEventId
                         },
                         answers: this.answers
                     };
@@ -663,6 +686,20 @@
                             this.resultado = result.resultado;
                             this.step = 'resultado';
                             this.isSubmitting = false;
+
+                            // Disparo do evento 'Lead' da Meta SOMENTE após o backend responder OK
+                            try {
+                                const finalEventId = result.event_id || (result.resultado && result.resultado.event_id) || metaEventId;
+                                if (typeof fbq === 'function') {
+                                    fbq('track', 'Lead', {
+                                        content_name: 'Raio X NorthWay',
+                                        content_category: 'diagnostico'
+                                    }, { eventID: finalEventId });
+                                }
+                            } catch (metaErr) {
+                                console.warn('Meta Pixel tracking error:', metaErr);
+                            }
+
                             setTimeout(() => lucide.createIcons(), 50);
                         } else {
                             alert('Ocorreu um erro: ' + (result.message || 'Falha ao processar'));

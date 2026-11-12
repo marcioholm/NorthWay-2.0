@@ -6,6 +6,7 @@ from datetime import datetime
 import json
 import logging
 import os
+import uuid
 import urllib.parse
 from sqlalchemy import text, or_
 from utils.phone import normalize_phone
@@ -496,6 +497,7 @@ def ensure_raiox_v2_columns():
             ("utm_content", "VARCHAR(255)"),
             ("utm_term", "VARCHAR(255)"),
             ("fbclid", "VARCHAR(255)"),
+            ("meta_event_id", "VARCHAR(100)"),
             ("raiox_whatsapp_status", "VARCHAR(30)"),
             ("raiox_whatsapp_em", "TIMESTAMP"),
             ("raiox_recuperacao_em", "TIMESTAMP"),
@@ -630,13 +632,14 @@ def progresso():
         faixa_faturamento = lead_info.get('faturamento_mensal')
         origem = (lead_info.get('origem') or request.args.get('origem') or lead_info.get('utm_source') or 'direto').strip()
 
-        # UTMs
+        # UTMs e Meta Event ID
         utm_source = lead_info.get('utm_source')
         utm_medium = lead_info.get('utm_medium')
         utm_campaign = lead_info.get('utm_campaign')
         utm_content = lead_info.get('utm_content')
         utm_term = lead_info.get('utm_term')
         fbclid = lead_info.get('fbclid')
+        meta_event_id = (data.get('event_id') or lead_info.get('event_id') or f"lead_{uuid.uuid4().hex[:16]}").strip()
 
         company_id = 1
         company = Company.query.first()
@@ -683,13 +686,14 @@ def progresso():
         if origem and (not lead.origem or lead.origem == 'direto'):
             lead.origem = origem
 
-        # UTMs
+        # UTMs e Meta Event ID
         if utm_source: lead.utm_source = utm_source
         if utm_medium: lead.utm_medium = utm_medium
         if utm_campaign: lead.utm_campaign = utm_campaign
         if utm_content: lead.utm_content = utm_content
         if utm_term: lead.utm_term = utm_term
         if fbclid: lead.fbclid = fbclid
+        if meta_event_id: lead.meta_event_id = meta_event_id
 
         # Atualização de status e etapa
         agora = datetime.utcnow()
@@ -750,13 +754,14 @@ def submit():
         faixa_faturamento = lead_info.get('faturamento_mensal')
         origem = (lead_info.get('origem') or request.args.get('origem') or lead_info.get('utm_source') or 'direto').strip()
 
-        # UTMs
+        # UTMs e Meta Event ID
         utm_source = lead_info.get('utm_source')
         utm_medium = lead_info.get('utm_medium')
         utm_campaign = lead_info.get('utm_campaign')
         utm_content = lead_info.get('utm_content')
         utm_term = lead_info.get('utm_term')
         fbclid = lead_info.get('fbclid')
+        meta_event_id = (data.get('event_id') or lead_info.get('event_id') or f"lead_{uuid.uuid4().hex[:16]}").strip()
         
         # Consentimento é implícito ao iniciar o diagnóstico
         consentimento = True
@@ -841,13 +846,14 @@ def submit():
         lead.consentimento = consentimento
         lead.consentimento_em = lead.consentimento_em or consentimento_em
 
-        # UTMs
+        # UTMs e Meta Event ID
         if utm_source: lead.utm_source = utm_source
         if utm_medium: lead.utm_medium = utm_medium
         if utm_campaign: lead.utm_campaign = utm_campaign
         if utm_content: lead.utm_content = utm_content
         if utm_term: lead.utm_term = utm_term
         if fbclid: lead.fbclid = fbclid
+        if meta_event_id: lead.meta_event_id = meta_event_id
 
         # Status do Raio-X
         lead.raiox_status = 'concluido'
@@ -919,6 +925,7 @@ def submit():
                         "term": lead.utm_term,
                         "fbclid": lead.fbclid
                     },
+                    "meta_event_id": lead.meta_event_id,
                     "score_geral": lead.raiox_score_geral,
                     "scores_eixos": {
                         "atrair": lead.raiox_score_atrair,
@@ -942,6 +949,7 @@ def submit():
         resultado['whatsapp_url'] = wa_url
         resultado['empresa'] = empresa
         resultado['nome'] = nome
+        resultado['event_id'] = meta_event_id
 
         # 6. Enviar PDF do Raio-X v2 por E-mail via Resend
         if email:
@@ -1016,7 +1024,8 @@ def submit():
         # 7. Retorno em JSON para renderização instantânea na mesma página
         return jsonify({
             'status': 'success',
-            'resultado': resultado
+            'resultado': resultado,
+            'event_id': meta_event_id
         })
         
     except Exception as e:

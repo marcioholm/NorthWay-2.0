@@ -68,6 +68,7 @@ def sync_database():
             add_column_if_missing("lead", "utm_content", "VARCHAR(255)")
             add_column_if_missing("lead", "utm_term", "VARCHAR(255)")
             add_column_if_missing("lead", "fbclid", "VARCHAR(255)")
+            add_column_if_missing("lead", "meta_event_id", "VARCHAR(100)")
             add_column_if_missing("lead", "raiox_whatsapp_status", "VARCHAR(30)")
             add_column_if_missing("lead", "raiox_whatsapp_em", "TIMESTAMP")
             add_column_if_missing("lead", "raiox_recuperacao_em", "TIMESTAMP")
