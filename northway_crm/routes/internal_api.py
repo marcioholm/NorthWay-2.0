@@ -1645,3 +1645,63 @@ def raiox_debug():
         'webhook_url_masked': (webhook_url[:30] + '...') if webhook_url else None,
         'recent_leads': leads
     })
+
+
+@internal_api_bp.route('/raiox/reprocess-lead', methods=['POST'])
+@require_internal_auth
+def raiox_reprocess_lead():
+    """Reprocessa um lead do Raio-X para a empresa/pipeline corretos e redispara o webhook n8n"""
+    from routes.diagnostic_raiox import get_raiox_company_and_pipeline, dispatch_n8n_raiox_webhook
+    data = request.json or {}
+    lead_id = data.get('lead_id')
+    lead = Lead.query.get(lead_id)
+    if not lead:
+        return jsonify({'success': False, 'error': 'Lead not found'}), 404
+
+    target_cid, target_pid, target_sid = get_raiox_company_and_pipeline()
+    lead.company_id = target_cid
+    lead.pipeline_id = target_pid
+    lead.pipeline_stage_id = target_sid
+    db.session.commit()
+
+    payload_n8n = {
+        "event": "raiox_concluido",
+        "lead_id": lead.id,
+        "token": lead.raiox_token,
+        "nome": lead.name,
+        "email": lead.email,
+        "whatsapp": lead.phone or lead.whatsapp,
+        "empresa": lead.raiox_empresa,
+        "porte": lead.raiox_porte,
+        "faturamento": lead.raiox_faturamento,
+        "origem": lead.raiox_origem,
+        "utms": {
+            "source": lead.utm_source,
+            "medium": lead.utm_medium,
+            "campaign": lead.utm_campaign,
+            "content": lead.utm_content,
+            "term": lead.utm_term,
+            "fbclid": lead.fbclid
+        },
+        "meta_event_id": lead.meta_event_id,
+        "score_geral": lead.raiox_score_geral,
+        "scores_eixos": {
+            "atrair": lead.raiox_score_atrair,
+            "engajar": lead.raiox_score_engajar,
+            "vender": lead.raiox_score_vender,
+            "reter": lead.raiox_score_reter,
+            "gestao": lead.raiox_score_gestao
+        },
+        "gargalo_principal": lead.raiox_gargalo_principal,
+        "respostas": lead.raiox_respostas,
+        "concluido_em": datetime.utcnow().isoformat()
+    }
+    dispatch_n8n_raiox_webhook(lead, payload_n8n)
+    return jsonify({
+        'success': True,
+        'lead_id': lead.id,
+        'company_id': lead.company_id,
+        'pipeline_id': lead.pipeline_id,
+        'pipeline_stage_id': lead.pipeline_stage_id,
+        'dispatched': True
+    })

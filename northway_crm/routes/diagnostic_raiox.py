@@ -548,10 +548,39 @@ def dispatch_n8n_raiox_webhook(lead, payload):
 
     try:
         from utils.webhooks import send_outbound_webhook
-        send_outbound_webhook(lead.company_id or 1, lead.id, 'raiox_concluido', webhook_url, payload, timeout=4, max_retries=1)
+        send_outbound_webhook(lead.company_id or 35, lead.id, 'raiox_concluido', webhook_url, payload, timeout=4, max_retries=1)
         logger.info(f"[N8N_RAIOX] Webhook concluído disparado para lead {lead.id}")
     except Exception as e:
         logger.warning(f"[N8N_RAIOX] Erro ao enviar webhook para n8n: {e}")
+
+
+def get_raiox_company_and_pipeline():
+    """
+    Retorna a empresa oficial NorthWay e o primeiro estágio do seu Funil de Vendas.
+    Prioriza a NorthWay Company (ID 35).
+    """
+    company = (
+        Company.query.filter_by(id=35).first()
+        or Company.query.filter(Company.name.ilike('%NorthWay Company%')).first()
+        or Company.query.filter(Company.name.ilike('%NorthWay%')).first()
+        or Company.query.first()
+    )
+    company_id = company.id if company else 35
+
+    pipeline = (
+        Pipeline.query.filter_by(company_id=company_id, name='Funil de Vendas').first()
+        or Pipeline.query.filter_by(company_id=company_id).first()
+        or Pipeline.query.first()
+    )
+    pipeline_id = pipeline.id if pipeline else None
+
+    stage_id = None
+    if pipeline:
+        first_stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order.asc()).first()
+        if first_stage:
+            stage_id = first_stage.id
+
+    return company_id, pipeline_id, stage_id
 
 
 @diagnostic_raiox_bp.route('/privacidade', methods=['GET'])
@@ -634,12 +663,7 @@ def progresso():
         fbclid = lead_info.get('fbclid')
         meta_event_id = (data.get('event_id') or lead_info.get('event_id') or f"lead_{uuid.uuid4().hex[:16]}").strip()
 
-        default_p = Pipeline.query.first()
-        company_id = default_p.company_id if default_p else 1
-        if not default_p:
-            company = Company.query.first()
-            if company:
-                company_id = company.id
+        company_id, _, _ = get_raiox_company_and_pipeline()
 
         lead = Lead.query.filter_by(raiox_token=token).first()
         if not lead and email:
@@ -790,12 +814,7 @@ def submit():
         ponto_fraco = resultado['ponto_fraco_num']
 
         # 4. Salvar no CRM
-        default_p = Pipeline.query.first()
-        company_id = default_p.company_id if default_p else 1
-        if not default_p:
-            company = Company.query.first()
-            if company:
-                company_id = company.id
+        company_id, _, _ = get_raiox_company_and_pipeline()
         
         # Localiza lead existente: primeiro por token, depois email, depois whatsapp
         lead = None
@@ -877,16 +896,10 @@ def submit():
         # Se for primeira conclusão, aloca estágio no pipeline e executa automações
         if primeira_conclusao:
             lead.source = 'Raio-X Digital'
-            if not lead.pipeline_stage_id:
-                default_pipeline = Pipeline.query.filter_by(company_id=lead.company_id).first()
-                if not default_pipeline:
-                    default_pipeline = Pipeline.query.first()
-                if default_pipeline:
-                    lead.company_id = default_pipeline.company_id
-                    lead.pipeline_id = default_pipeline.id
-                    first_stage = PipelineStage.query.filter_by(pipeline_id=default_pipeline.id).order_by(PipelineStage.order.asc()).first()
-                    if first_stage:
-                        lead.pipeline_stage_id = first_stage.id
+            target_cid, target_pid, target_sid = get_raiox_company_and_pipeline()
+            lead.company_id = target_cid
+            lead.pipeline_id = target_pid
+            lead.pipeline_stage_id = target_sid
         
         if is_new:
             db.session.add(lead)
