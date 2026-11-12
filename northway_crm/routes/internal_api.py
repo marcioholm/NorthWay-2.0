@@ -1503,14 +1503,21 @@ def get_raiox_abandonados():
     Para disparo de mensagens de recuperação pelo n8n.
     """
     try:
-        minutos = request.args.get('minutos', 30, type=int)
-        limit = min(request.args.get('limit', 10, type=int), 100)
+        segundos = request.args.get('segundos', type=int)
+        minutos = request.args.get('minutos', type=int)
+        limit = min(request.args.get('limit', 15, type=int), 100)
+        if segundos is not None:
+            tempo_inatividade = timedelta(seconds=max(segundos, 10))
+        elif minutos is not None:
+            tempo_inatividade = timedelta(minutes=max(minutos, 1))
+        else:
+            tempo_inatividade = timedelta(minutes=2)
     except (ValueError, TypeError):
-        minutos = 30
-        limit = 10
+        tempo_inatividade = timedelta(minutes=2)
+        limit = 15
 
     agora = datetime.utcnow()
-    limite_recente = agora - timedelta(minutes=minutos)
+    limite_recente = agora - tempo_inatividade
     limite_antigo = agora - timedelta(hours=48)
 
     from utils.phone import normalize_phone
