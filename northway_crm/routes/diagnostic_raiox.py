@@ -538,27 +538,20 @@ def ensure_raiox_v2_columns():
 
 def dispatch_n8n_raiox_webhook(lead, payload):
     """
-    Dispara webhook de conclusão do Raio-X para o n8n de forma assíncrona.
+    Dispara webhook de conclusão do Raio-X para o n8n.
+    Executa de forma direta e resiliente com timeout curto (evita congelamento em Serverless/Vercel).
     """
     webhook_url = os.environ.get('N8N_RAIOX_WEBHOOK_URL')
     if not webhook_url:
-        logger.info("[N8N_RAIOX] N8N_RAIOX_WEBHOOK_URL não configurada. Webhook não disparado.")
+        logger.warning("[N8N_RAIOX] N8N_RAIOX_WEBHOOK_URL não configurada. Webhook não disparado.")
         return
 
-    import threading
-    from flask import current_app
-    app = current_app._get_current_object()
-
-    def _worker(flask_app, tenant_id, lead_id, url, data):
-        with flask_app.app_context():
-            try:
-                from utils.webhooks import send_outbound_webhook
-                send_outbound_webhook(tenant_id, lead_id, 'raiox_concluido', url, data, timeout=5, max_retries=1)
-                logger.info(f"[N8N_RAIOX] Webhook concluído disparado para lead {lead_id}")
-            except Exception as e:
-                logger.warning(f"[N8N_RAIOX] Erro ao enviar webhook para n8n: {e}")
-
-    threading.Thread(target=_worker, args=(app, lead.company_id or 1, lead.id, webhook_url, payload), daemon=True).start()
+    try:
+        from utils.webhooks import send_outbound_webhook
+        send_outbound_webhook(lead.company_id or 1, lead.id, 'raiox_concluido', webhook_url, payload, timeout=4, max_retries=1)
+        logger.info(f"[N8N_RAIOX] Webhook concluído disparado para lead {lead.id}")
+    except Exception as e:
+        logger.warning(f"[N8N_RAIOX] Erro ao enviar webhook para n8n: {e}")
 
 
 @diagnostic_raiox_bp.route('/privacidade', methods=['GET'])
@@ -641,18 +634,20 @@ def progresso():
         fbclid = lead_info.get('fbclid')
         meta_event_id = (data.get('event_id') or lead_info.get('event_id') or f"lead_{uuid.uuid4().hex[:16]}").strip()
 
-        company_id = 1
-        company = Company.query.first()
-        if company:
-            company_id = company.id
+        default_p = Pipeline.query.first()
+        company_id = default_p.company_id if default_p else 1
+        if not default_p:
+            company = Company.query.first()
+            if company:
+                company_id = company.id
 
-        lead = Lead.query.filter_by(raiox_token=token, company_id=company_id).first()
+        lead = Lead.query.filter_by(raiox_token=token).first()
         if not lead and email:
-            lead = Lead.query.filter_by(email=email, company_id=company_id).first()
+            lead = Lead.query.filter_by(email=email).first()
         if not lead and whatsapp:
-            lead = Lead.query.filter_by(whatsapp=whatsapp, company_id=company_id).first()
+            lead = Lead.query.filter_by(whatsapp=whatsapp).first()
             if not lead:
-                lead = Lead.query.filter_by(phone=whatsapp, company_id=company_id).first()
+                lead = Lead.query.filter_by(phone=whatsapp).first()
 
         is_new = False
         if not lead:
@@ -795,9 +790,9 @@ def submit():
         ponto_fraco = resultado['ponto_fraco_num']
 
         # 4. Salvar no CRM
-        company_id = 1 
-        company = Company.query.get(company_id)
-        if not company:
+        default_p = Pipeline.query.first()
+        company_id = default_p.company_id if default_p else 1
+        if not default_p:
             company = Company.query.first()
             if company:
                 company_id = company.id
@@ -805,13 +800,13 @@ def submit():
         # Localiza lead existente: primeiro por token, depois email, depois whatsapp
         lead = None
         if token:
-            lead = Lead.query.filter_by(raiox_token=token, company_id=company_id).first()
+            lead = Lead.query.filter_by(raiox_token=token).first()
         if not lead and email:
-            lead = Lead.query.filter_by(email=email, company_id=company_id).first()
+            lead = Lead.query.filter_by(email=email).first()
         if not lead and whatsapp:
-            lead = Lead.query.filter_by(whatsapp=whatsapp, company_id=company_id).first()
+            lead = Lead.query.filter_by(whatsapp=whatsapp).first()
             if not lead:
-                lead = Lead.query.filter_by(phone=whatsapp, company_id=company_id).first()
+                lead = Lead.query.filter_by(phone=whatsapp).first()
             
         is_new = False
         if not lead:
@@ -883,10 +878,13 @@ def submit():
         if primeira_conclusao:
             lead.source = 'Raio-X Digital'
             if not lead.pipeline_stage_id:
-                default_pipeline = Pipeline.query.filter_by(company_id=company_id).first()
+                default_pipeline = Pipeline.query.filter_by(company_id=lead.company_id).first()
+                if not default_pipeline:
+                    default_pipeline = Pipeline.query.first()
                 if default_pipeline:
+                    lead.company_id = default_pipeline.company_id
                     lead.pipeline_id = default_pipeline.id
-                    first_stage = PipelineStage.query.filter_by(pipeline_id=default_pipeline.id).order_by(PipelineStage.order).first()
+                    first_stage = PipelineStage.query.filter_by(pipeline_id=default_pipeline.id).order_by(PipelineStage.order.asc()).first()
                     if first_stage:
                         lead.pipeline_stage_id = first_stage.id
         

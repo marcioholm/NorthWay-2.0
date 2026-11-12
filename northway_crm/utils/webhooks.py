@@ -21,7 +21,7 @@ def send_outbound_webhook(tenant_id, lead_id, action, webhook_url, payload, time
     Sends an outbound webhook to n8n with retry logic, 60s timeout, X-Internal-API-Key header, and audit logging.
     """
     # Header with API key
-    internal_key = os.environ.get('CRM_INTERNAL_API_KEY', '')
+    internal_key = os.environ.get('INTERNAL_API_KEY') or os.environ.get('CRM_INTERNAL_API_KEY', '')
     headers = {
         'Content-Type': 'application/json',
         'X-Internal-API-Key': internal_key

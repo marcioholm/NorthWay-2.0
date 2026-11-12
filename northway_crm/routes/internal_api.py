@@ -1611,3 +1611,37 @@ def post_raiox_whatsapp_status():
         'status': status,
         'tipo': tipo
     })
+
+
+@internal_api_bp.route('/raiox/debug', methods=['GET'])
+@require_internal_auth
+def raiox_debug():
+    """Diagnóstico do estado do Raio-X, pipelines e leads recentes"""
+    from models import Company, Pipeline, PipelineStage, User
+    companies = [{'id': c.id, 'name': c.name} for c in Company.query.all()]
+    pipelines = [{'id': p.id, 'name': p.name, 'company_id': p.company_id} for p in Pipeline.query.all()]
+    users = [{'id': u.id, 'name': u.name, 'email': u.email, 'company_id': u.company_id} for u in User.query.limit(10).all()]
+    leads = [{
+        'id': l.id,
+        'name': l.name,
+        'email': l.email,
+        'phone': l.phone,
+        'company_id': l.company_id,
+        'pipeline_id': l.pipeline_id,
+        'pipeline_stage_id': l.pipeline_stage_id,
+        'raiox_status': l.raiox_status,
+        'source': l.source,
+        'created_at': l.created_at.isoformat() if l.created_at else None
+    } for l in Lead.query.order_by(Lead.id.desc()).limit(10).all()]
+
+    webhook_url = os.environ.get('N8N_RAIOX_WEBHOOK_URL')
+
+    return jsonify({
+        'success': True,
+        'companies': companies,
+        'pipelines': pipelines,
+        'users': users,
+        'webhook_url_configured': bool(webhook_url),
+        'webhook_url_masked': (webhook_url[:30] + '...') if webhook_url else None,
+        'recent_leads': leads
+    })
