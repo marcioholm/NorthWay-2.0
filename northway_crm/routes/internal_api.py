@@ -1506,14 +1506,14 @@ def get_raiox_abandonados():
         segundos = request.args.get('segundos', type=int)
         minutos = request.args.get('minutos', type=int)
         limit = min(request.args.get('limit', 15, type=int), 100)
-        if segundos is not None:
-            tempo_inatividade = timedelta(seconds=max(segundos, 10))
-        elif minutos is not None:
+        if minutos is not None:
             tempo_inatividade = timedelta(minutes=max(minutos, 1))
+        elif segundos is not None:
+            tempo_inatividade = timedelta(seconds=max(segundos, 10))
         else:
-            tempo_inatividade = timedelta(minutes=2)
+            tempo_inatividade = timedelta(minutes=30)
     except (ValueError, TypeError):
-        tempo_inatividade = timedelta(minutes=2)
+        tempo_inatividade = timedelta(minutes=30)
         limit = 15
 
     agora = datetime.utcnow()
