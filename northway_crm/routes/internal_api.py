@@ -1739,6 +1739,12 @@ def raiox_reprocess_lead():
     if not lead:
         return jsonify({'success': False, 'error': 'Lead not found'}), 404
 
+    if lead.raiox_status != 'concluido':
+        return jsonify({
+            'success': False,
+            'error': f'Lead ID {lead.id} ({lead.name}) não concluiu o Raio-X (status atual: "{lead.raiox_status}"). O webhook de conclusão só é enviado para leads concluídos.'
+        }), 400
+
     target_cid, target_pid, target_sid = get_raiox_company_and_pipeline()
     lead.company_id = target_cid
     lead.pipeline_id = target_pid
