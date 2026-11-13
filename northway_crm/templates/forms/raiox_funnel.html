@@ -276,7 +276,7 @@
 
                 <!-- 4 Opções da Escala -->
                 <div class="space-y-3">
-                    <template x-for="option in answerOptions" :key="option.value">
+                    <template x-for="option in (q.opcoes || answerOptions)" :key="option.value">
                         <label class="option-card block w-full rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5 cursor-pointer flex items-center gap-3.5 sm:gap-4 relative overflow-hidden"
                                :class="{'selected': answers[idx] === option.value}">
                             <input type="radio" :name="`q_${idx}`" :value="option.value" class="sr-only" 

@@ -21,106 +21,226 @@ RAIOX_QUESTIONS = [
     # ATRAIR (1-4)
     {
         "id": 1, "eixo": "atrair", "eixo_nome": "Atrair",
-        "pergunta": "Sua empresa sabe exatamente quem é o cliente ideal e onde ele está?",
+        "pergunta": "Você sabe quem é o seu cliente ideal?",
+        "opcoes": [
+            {"value": 0, "label": "Não, atendo quem aparecer"},
+            {"value": 1, "label": "Tenho uma ideia, mas nunca coloquei no papel"},
+            {"value": 2, "label": "Sei bem: perfil, região e o que ele procura"},
+            {"value": 3, "label": "Sei e uso isso para decidir onde e como divulgar"},
+        ],
         "acao": "Escreva em uma página quem é o seu cliente ideal: perfil, problema que quer resolver e onde procura solução. Use isso como base de toda a divulgação do mês."
     },
     {
         "id": 2, "eixo": "atrair", "eixo_nome": "Atrair",
-        "pergunta": "Sua marca é facilmente encontrada no Google (busca e mapa)?",
+        "pergunta": "Quando alguém procura sua empresa no Google, encontra?",
+        "opcoes": [
+            {"value": 0, "label": "Não aparece, ou não sei"},
+            {"value": 1, "label": "Aparece, mas com informação desatualizada ou sem fotos"},
+            {"value": 2, "label": "Aparece com perfil completo (endereço, horário, fotos)"},
+            {"value": 3, "label": "Perfil completo e com avaliações recentes respondidas"},
+        ],
         "acao": "Crie ou atualize o Perfil da Empresa no Google (endereço, horário, fotos, telefone) e peça avaliação a 5 clientes satisfeitos."
     },
     {
         "id": 3, "eixo": "atrair", "eixo_nome": "Atrair",
-        "pergunta": "Sua empresa divulga com frequência planejada, seja com conteúdo ou anúncios?",
+        "pergunta": "Com que frequência sua empresa divulga (posts ou anúncios)?",
+        "opcoes": [
+            {"value": 0, "label": "Quase nunca"},
+            {"value": 1, "label": "Quando sobra tempo, sem regularidade"},
+            {"value": 2, "label": "Toda semana, com frequência definida"},
+            {"value": 3, "label": "Toda semana, com calendário, e acompanho o resultado"},
+        ],
         "acao": "Monte um calendário de 4 semanas com 2 ações de divulgação por semana e cumpra até o fim do mês."
     },
     {
         "id": 4, "eixo": "atrair", "eixo_nome": "Atrair",
         "pergunta": "Você sabe de onde vêm os seus novos clientes?",
+        "opcoes": [
+            {"value": 0, "label": "Não sei"},
+            {"value": 1, "label": "Tenho um palpite (\"acho que é pelo Instagram\")"},
+            {"value": 2, "label": "Pergunto ou anoto a origem da maioria"},
+            {"value": 3, "label": "Anoto a origem de todos e sei quantos cada canal traz"},
+        ],
         "acao": "Pergunte a todo cliente novo \"como você conheceu a gente?\" e registre a resposta por 30 dias."
     },
     # ENGAJAR (5-8)
     {
         "id": 5, "eixo": "engajar", "eixo_nome": "Engajar",
-        "pergunta": "Sua empresa possui um diferencial claro e comunica isso?",
+        "pergunta": "Está claro na sua divulgação por que o cliente deve escolher você e não o concorrente?",
+        "opcoes": [
+            {"value": 0, "label": "Não sei explicar meu diferencial"},
+            {"value": 1, "label": "Sei explicar, mas não aparece na divulgação"},
+            {"value": 2, "label": "Aparece na divulgação de vez em quando"},
+            {"value": 3, "label": "Aparece sempre, e os clientes repetem esse motivo"},
+        ],
         "acao": "Escreva em uma frase por que o cliente deveria comprar de você e não do concorrente. Use essa frase na bio, no atendimento e nos conteúdos."
     },
     {
         "id": 6, "eixo": "engajar", "eixo_nome": "Engajar",
-        "pergunta": "Sua comunicação gera autoridade (bastidores, explicações, provas), e não só ofertas?",
+        "pergunta": "Além de ofertas, você publica coisas que fazem o cliente confiar em você? (bastidores, explicações, resultados de clientes)",
+        "opcoes": [
+            {"value": 0, "label": "Só publico ofertas e preços, ou não publico"},
+            {"value": 1, "label": "De vez em quando"},
+            {"value": 2, "label": "Toda semana"},
+            {"value": 3, "label": "Toda semana, e sei quais conteúdos trazem mais contatos"},
+        ],
         "acao": "Publique por semana pelo menos 1 conteúdo de bastidor, explicação ou prova de resultado, sem oferta."
     },
     {
         "id": 7, "eixo": "engajar", "eixo_nome": "Engajar",
-        "pergunta": "Sua empresa coleta e mostra depoimentos ou avaliações de clientes?",
+        "pergunta": "Sua empresa mostra depoimentos ou avaliações de clientes?",
+        "opcoes": [
+            {"value": 0, "label": "Não"},
+            {"value": 1, "label": "Tenho alguns, mas quase não uso"},
+            {"value": 2, "label": "Peço e publico com frequência"},
+            {"value": 3, "label": "Peço a todo cliente e tenho avaliações recentes no Google e nas redes"},
+        ],
         "acao": "Peça avaliação a 10 clientes satisfeitos e publique as que forem autorizadas."
     },
     {
         "id": 8, "eixo": "engajar", "eixo_nome": "Engajar",
-        "pergunta": "Existe uma lista organizada de contatos e interessados para manter relacionamento?",
+        "pergunta": "Você guarda os contatos de clientes e interessados para falar com eles depois?",
+        "opcoes": [
+            {"value": 0, "label": "Não guardo"},
+            {"value": 1, "label": "Ficam espalhados no celular e no WhatsApp"},
+            {"value": 2, "label": "Tenho uma lista organizada (planilha ou sistema)"},
+            {"value": 3, "label": "Lista organizada, e mando novidades com frequência"},
+        ],
         "acao": "Organize todos os interessados em uma lista única (etiquetas do WhatsApp Business ou planilha), com data e o que pediram."
     },
     # VENDER (9-12)
     {
         "id": 9, "eixo": "vender", "eixo_nome": "Vender",
-        "pergunta": "Quando um lead chega, existe processo definido?",
+        "pergunta": "Quando alguém pede orçamento ou informação, existe um passo a passo de atendimento?",
+        "opcoes": [
+            {"value": 0, "label": "Não, cada um atende do seu jeito"},
+            {"value": 1, "label": "Existe na minha cabeça, mas não está escrito"},
+            {"value": 2, "label": "Existe e está escrito (roteiro, mensagens prontas)"},
+            {"value": 3, "label": "Está escrito, todos seguem, e eu acompanho"},
+        ],
         "acao": "Escreva o passo a passo do atendimento, do primeiro contato ao fechamento, e siga em todos os atendimentos do mês."
     },
     {
         "id": 10, "eixo": "vender", "eixo_nome": "Vender",
-        "pergunta": "O tempo de resposta ao lead é rápido?",
+        "pergunta": "Quanto tempo vocês levam para responder um novo contato?",
+        "opcoes": [
+            {"value": 0, "label": "Mais de um dia, ou às vezes nem respondemos"},
+            {"value": 1, "label": "Algumas horas"},
+            {"value": 2, "label": "Menos de 1 hora, no horário comercial"},
+            {"value": 3, "label": "Poucos minutos, e eu acompanho esse tempo"},
+        ],
         "acao": "Defina horários fixos para responder mensagens e um prazo máximo de resposta. Cumpra por 30 dias."
     },
     {
         "id": 11, "eixo": "vender", "eixo_nome": "Vender",
-        "pergunta": "Existe follow-up estruturado?",
+        "pergunta": "Se a pessoa não fecha na hora, alguém volta a falar com ela?",
+        "opcoes": [
+            {"value": 0, "label": "Não, esperamos ela voltar"},
+            {"value": 1, "label": "Às vezes, quando lembramos"},
+            {"value": 2, "label": "Sim, sempre voltamos a falar em dias combinados"},
+            {"value": 3, "label": "Sim, com datas definidas, anotando o resultado de cada retorno"},
+        ],
         "acao": "Reserve 15 minutos por dia para retomar contato com quem pediu orçamento ou informação e não fechou."
     },
     {
         "id": 12, "eixo": "vender", "eixo_nome": "Vender",
-        "pergunta": "Existe CRM ou sistema de gestão de leads?",
+        "pergunta": "Onde fica anotado quem pediu orçamento e em que etapa cada um está?",
+        "opcoes": [
+            {"value": 0, "label": "Em lugar nenhum, fica na memória"},
+            {"value": 1, "label": "Só nas conversas do WhatsApp"},
+            {"value": 2, "label": "Numa planilha ou caderno organizado"},
+            {"value": 3, "label": "Num sistema de vendas (CRM) que toda a equipe atualiza"},
+        ],
         "acao": "Registre todo lead numa planilha ou CRM com etapa e data do próximo contato. Comece simples."
     },
     # RETER (13-16)
     {
         "id": 13, "eixo": "reter", "eixo_nome": "Reter",
-        "pergunta": "Sua empresa entra em contato com o cliente depois da compra?",
+        "pergunta": "Depois da venda, sua empresa volta a falar com o cliente?",
+        "opcoes": [
+            {"value": 0, "label": "Não"},
+            {"value": 1, "label": "Só se ele chamar ou tiver problema"},
+            {"value": 2, "label": "Sim, para saber se ficou satisfeito"},
+            {"value": 3, "label": "Sim, em datas planejadas, e anotamos o retorno"},
+        ],
         "acao": "Crie uma mensagem de pós-venda e envie a todo cliente de 3 a 7 dias depois da compra."
     },
     {
         "id": 14, "eixo": "reter", "eixo_nome": "Reter",
-        "pergunta": "Existe alguma ação para estimular a recompra?",
+        "pergunta": "Você faz alguma ação para o cliente comprar de novo?",
+        "opcoes": [
+            {"value": 0, "label": "Não"},
+            {"value": 1, "label": "Às vezes mando uma promoção"},
+            {"value": 2, "label": "Tenho ações frequentes (lembretes, ofertas para quem já comprou)"},
+            {"value": 3, "label": "Ações frequentes, e sei quantos clientes voltaram por causa delas"},
+        ],
         "acao": "Crie uma ação simples de recompra (lembrete de reposição, benefício para cliente da casa) e teste durante o mês."
     },
     {
         "id": 15, "eixo": "reter", "eixo_nome": "Reter",
-        "pergunta": "Sua empresa pede indicação de forma ativa?",
+        "pergunta": "Você pede para seus clientes indicarem sua empresa?",
+        "opcoes": [
+            {"value": 0, "label": "Não peço"},
+            {"value": 1, "label": "Peço de vez em quando"},
+            {"value": 2, "label": "Peço para todo cliente satisfeito"},
+            {"value": 3, "label": "Peço sempre, e controlo quem indicou quem (com ou sem benefício)"},
+        ],
         "acao": "Peça indicação a cada cliente satisfeito, usando sempre a mesma frase simples."
     },
     {
         "id": 16, "eixo": "reter", "eixo_nome": "Reter",
-        "pergunta": "Você sabe quantos clientes voltaram a comprar nos últimos meses?",
+        "pergunta": "Você sabe quantos clientes voltaram a comprar nos últimos 3 meses?",
+        "opcoes": [
+            {"value": 0, "label": "Não faço ideia"},
+            {"value": 1, "label": "Tenho uma noção"},
+            {"value": 2, "label": "Consigo levantar esse número se precisar"},
+            {"value": 3, "label": "Sei o número e acompanho todo mês"},
+        ],
         "acao": "Levante quantos clientes compraram mais de uma vez nos últimos 6 meses. Esse é o seu ponto de partida."
     },
     # GESTÃO (17-20)
     {
         "id": 17, "eixo": "gestao", "eixo_nome": "Gestão",
-        "pergunta": "Você sabe se o negócio deu lucro no mês passado, depois de pagar tudo, inclusive você?",
+        "pergunta": "Você sabe se a empresa deu lucro no mês passado, depois de pagar tudo, inclusive o seu salário?",
+        "opcoes": [
+            {"value": 0, "label": "Não sei"},
+            {"value": 1, "label": "Tenho uma ideia pelo saldo da conta"},
+            {"value": 2, "label": "Sei, faço essa conta todo mês"},
+            {"value": 3, "label": "Sei, e comparo com os meses anteriores para tomar decisões"},
+        ],
         "acao": "Preencha a DRE dos últimos 3 meses, incluindo o pró-labore, e veja se o negócio está acima do ponto de equilíbrio."
     },
     {
         "id": 18, "eixo": "gestao", "eixo_nome": "Gestão",
-        "pergunta": "Sua empresa tem metas de vendas definidas e acompanhadas?",
+        "pergunta": "Sua empresa tem meta de vendas?",
+        "opcoes": [
+            {"value": 0, "label": "Não temos meta"},
+            {"value": 1, "label": "Tenho um valor na cabeça"},
+            {"value": 2, "label": "Temos meta mensal definida"},
+            {"value": 3, "label": "Meta mensal definida e acompanhada toda semana"},
+        ],
         "acao": "Defina a meta de vendas do mês de trás para frente (lucro → faturamento → vendas → atendimentos) e confira toda semana."
     },
     {
         "id": 19, "eixo": "gestao", "eixo_nome": "Gestão",
-        "pergunta": "Você acompanha métricas comerciais (atendimentos, conversão, ticket médio)?",
+        "pergunta": "Você acompanha os números de vendas: quantos pediram orçamento, quantos compraram e o valor médio de cada venda?",
+        "opcoes": [
+            {"value": 0, "label": "Não acompanho"},
+            {"value": 1, "label": "Só sei o total vendido"},
+            {"value": 2, "label": "Acompanho alguns desses números"},
+            {"value": 3, "label": "Acompanho todos, todo mês"},
+        ],
         "acao": "Registre por 30 dias cada atendimento e se virou venda. No fim do mês, calcule conversão e ticket médio."
     },
     {
         "id": 20, "eixo": "gestao", "eixo_nome": "Gestão",
-        "pergunta": "Sua empresa possui rastreamento de dados (Pixel, Analytics)?",
+        "pergunta": "Seu site ou seus anúncios medem quantas pessoas visitam e entram em contato? (ex.: Pixel do Facebook, Google Analytics)",
+        "opcoes": [
+            {"value": 0, "label": "Não tenho site nem anúncio, ou não sei"},
+            {"value": 1, "label": "Tenho, mas não sei se mede"},
+            {"value": 2, "label": "Mede, está instalado"},
+            {"value": 3, "label": "Mede, e eu olho os números para tomar decisões"},
+        ],
         "acao": "Instale o Pixel da Meta e o Google Analytics no site ou na página de vendas e confira se registram visitas."
     }
 ]
