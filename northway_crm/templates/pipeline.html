@@ -8,14 +8,15 @@
                 <h1 class="nw-h1">Funil:</h1>
 
                 <!-- Pipeline Switcher -->
-                <div class="relative group">
-                    <button class="flex items-center gap-1.5 nw-h1 text-[var(--nw-accent)] hover:opacity-80 transition-opacity">
+                <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                    <button type="button" @click="open = !open" class="flex items-center gap-1.5 nw-h1 text-[var(--nw-accent)] hover:opacity-80 transition-opacity">
                         <span>{{ active_pipeline.name }}</span>
-                        <i data-lucide="chevron-down" class="w-6 h-6"></i>
+                        <i data-lucide="chevron-down" class="w-5 h-5 sm:w-6 sm:h-6 transition-transform" :class="{'rotate-180': open}"></i>
                     </button>
 
                     <!-- Dropdown -->
-                    <div class="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[var(--nw-border)] hidden group-hover:block z-50 p-2 space-y-1">
+                    <div x-show="open" x-transition.origin.top.left style="display: none;"
+                         class="absolute left-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-xl border border-[var(--nw-border)] z-50 p-2 space-y-1">
                         {% for p in pipelines %}
                         <a href="{{ url_for('leads.pipeline', pipeline_id=p.id) }}"
                             class="block px-3.5 py-2 rounded-xl text-sm transition-colors {{ 'bg-red-50 text-[var(--nw-accent)] font-semibold' if p.id == active_pipeline.id else 'text-[var(--nw-text-2)] hover:bg-[var(--nw-shell)] hover:text-[var(--nw-ink)]' }}">
@@ -126,7 +127,7 @@
     </header>
 
     <!-- Kanban Board Columns -->
-    <div class="flex gap-5 overflow-x-auto pb-6 items-start">
+    <div class="nw-kanban-board flex gap-4 sm:gap-5 overflow-x-auto pb-6 items-start">
         {% for stage in stages %}
         <div class="nw-kanban-col pipeline-column flex-shrink-0 w-80 max-h-[calc(100vh-14rem)] flex flex-col"
             data-stage-id="{{ stage.id }}">

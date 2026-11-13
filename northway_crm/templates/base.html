@@ -53,6 +53,63 @@
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--nw-border);
         }
+
+        /* Mobile Responsiveness Fixes */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+        .nw-shell-card {
+            min-width: 0;
+        }
+        .nw-shell-card > main {
+            min-width: 0;
+        }
+        @media (max-width: 639px) {
+            .nw-shell-container {
+                padding: 8px 6px !important;
+            }
+            .nw-shell-card {
+                padding: 14px 12px !important;
+                border-radius: 20px !important;
+            }
+            .nw-h1 {
+                font-size: 26px !important;
+                line-height: 1.15 !important;
+            }
+            .nw-nav {
+                max-width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .nw-nav::-webkit-scrollbar {
+                display: none;
+            }
+            .nw-table thead th,
+            .nw-table tbody td {
+                padding: 10px 12px !important;
+                font-size: 13px !important;
+            }
+            .nw-kanban-board {
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            .nw-kanban-col {
+                width: 84vw !important;
+                max-width: 320px !important;
+                scroll-snap-align: start;
+            }
+            #notification-dropdown {
+                width: calc(100vw - 2rem) !important;
+                max-width: 320px !important;
+            }
+        }
+        @media (hover: none) {
+            .pipeline-column .opacity-0 {
+                opacity: 1 !important;
+            }
+        }
     </style>
     {% block head %}{% endblock %}
 </head>
@@ -166,7 +223,7 @@
         <div class="nw-shell-card flex flex-col">
             
             <!-- Top Navigation Header inside the Shell Card -->
-            <header class="relative z-40 flex items-center justify-between gap-4 pb-6 border-b border-[var(--nw-border)] mb-7 flex-wrap lg:flex-nowrap">
+            <header class="relative z-40 flex items-center justify-between gap-2.5 sm:gap-4 pb-4 lg:pb-6 border-b border-[var(--nw-border)] mb-5 lg:mb-7">
                 
                 <!-- Left: Logo & Main Navigation Pills -->
                 <div class="flex items-center gap-3 xl:gap-5 flex-wrap">
@@ -513,7 +570,7 @@
             {% endwith %}
 
             <!-- Main Content Area -->
-            <main class="flex-1 w-full focus:outline-none">
+            <main class="flex-1 w-full min-w-0 focus:outline-none">
     {% else %}
     <!-- Minimal / Auth View Shell -->
     <div class="w-full min-h-screen flex flex-col">
