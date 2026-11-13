@@ -536,22 +536,56 @@ def ensure_raiox_v2_columns():
 # Rotas
 # -------------------------------------------------------------------------
 
+N8N_RAIOX_PRODUCTION_WEBHOOK = "https://n8n.vps11962.panel.icontainer.work/webhook/raiox-concluido"
+
+def get_n8n_raiox_webhook_url():
+    """
+    Retorna a URL oficial de webhook do n8n para conclusão do Raio-X.
+    Prioriza https://n8n.vps11962.panel.icontainer.work/webhook/raiox-concluido e rejeita
+    URLs de teste (/webhook-test/) ou domínios não resolvidos.
+    """
+    try:
+        from models import IntegrationWebhook
+        wh = IntegrationWebhook.query.filter_by(company_id=35, name='raiox_concluido').first()
+        if wh and wh.url and 'webhook' in wh.url and 'webhook-test' not in wh.url and 'northwaycompany.co' not in wh.url:
+            return wh.url.strip()
+    except Exception:
+        pass
+
+    env_url = (os.environ.get('N8N_RAIOX_WEBHOOK_URL') or '').strip()
+    if env_url and 'webhook-test' not in env_url and 'northwaycompany.co' not in env_url:
+        return env_url
+
+    return N8N_RAIOX_PRODUCTION_WEBHOOK
+
 def dispatch_n8n_raiox_webhook(lead, payload):
     """
-    Dispara webhook de conclusão do Raio-X para o n8n.
-    Executa de forma direta e resiliente com timeout curto (evita congelamento em Serverless/Vercel).
+    Dispara webhook de conclusão do Raio-X para o n8n no backend.
+    Executa de forma síncrona com timeout de 5s para garantir entrega em ambiente Serverless (Vercel).
+    Registra status HTTP, URL de destino e resposta detalhada nos logs e no banco.
     """
-    webhook_url = os.environ.get('N8N_RAIOX_WEBHOOK_URL')
-    if not webhook_url:
-        logger.warning("[N8N_RAIOX] N8N_RAIOX_WEBHOOK_URL não configurada. Webhook não disparado.")
-        return
+    webhook_url = get_n8n_raiox_webhook_url()
+    logger.info(f"[N8N_RAIOX] Iniciando disparo de webhook para lead_id={lead.id} na URL: {webhook_url}")
 
     try:
         from utils.webhooks import send_outbound_webhook
-        send_outbound_webhook(lead.company_id or 35, lead.id, 'raiox_concluido', webhook_url, payload, timeout=4, max_retries=1)
-        logger.info(f"[N8N_RAIOX] Webhook concluído disparado para lead {lead.id}")
+        success, resp_payload, err_msg = send_outbound_webhook(
+            tenant_id=lead.company_id or 35,
+            lead_id=lead.id,
+            action='raiox_concluido',
+            webhook_url=webhook_url,
+            payload=payload,
+            timeout=5,
+            max_retries=2
+        )
+        if success:
+            logger.info(f"[N8N_RAIOX] SUCESSO HTTP: Webhook entregue com sucesso ao n8n para lead {lead.id}. Resposta: {resp_payload}")
+        else:
+            logger.error(f"[N8N_RAIOX] ERRO ao entregar webhook n8n para lead {lead.id}. Erro: {err_msg} | Resposta: {resp_payload}")
+        return success, resp_payload, err_msg
     except Exception as e:
-        logger.warning(f"[N8N_RAIOX] Erro ao enviar webhook para n8n: {e}")
+        logger.error(f"[N8N_RAIOX] EXCEÇÃO inesperada ao disparar webhook para n8n: {e}", exc_info=True)
+        return False, None, str(e)
 
 
 def get_raiox_company_and_pipeline():
@@ -915,19 +949,20 @@ def submit():
             except Exception as e:
                 logger.error(f"Erro ao disparar automações de estágio: {e}")
 
-            # Disparo de webhook para o n8n
+        # Disparo de webhook de conclusão para o n8n no backend
+        if primeira_conclusao:
             try:
                 payload_n8n = {
                     "event": "raiox_concluido",
                     "lead_id": lead.id,
                     "token": lead.raiox_token,
-                    "nome": lead.name,
-                    "email": lead.email,
-                    "whatsapp": lead.phone or lead.whatsapp,
-                    "empresa": lead.raiox_empresa,
-                    "porte": lead.raiox_porte,
-                    "faturamento": lead.raiox_faturamento,
-                    "origem": lead.raiox_origem,
+                    "nome": lead.name or nome or '',
+                    "email": lead.email or email or '',
+                    "whatsapp": lead.phone or lead.whatsapp or whatsapp or '',
+                    "empresa": lead.raiox_empresa or empresa or '',
+                    "porte": lead.raiox_porte or funcionarios or '',
+                    "faturamento": lead.raiox_faturamento or faixa_faturamento or '',
+                    "origem": lead.raiox_origem or origem or 'direto',
                     "utms": {
                         "source": lead.utm_source,
                         "medium": lead.utm_medium,
@@ -936,22 +971,22 @@ def submit():
                         "term": lead.utm_term,
                         "fbclid": lead.fbclid
                     },
-                    "meta_event_id": lead.meta_event_id,
-                    "score_geral": lead.raiox_score_geral,
+                    "meta_event_id": lead.meta_event_id or meta_event_id,
+                    "score_geral": lead.raiox_score_geral if lead.raiox_score_geral is not None else indice,
                     "scores_eixos": {
-                        "atrair": lead.raiox_score_atrair,
-                        "engajar": lead.raiox_score_engajar,
-                        "vender": lead.raiox_score_vender,
-                        "reter": lead.raiox_score_reter,
-                        "gestao": lead.raiox_score_gestao
+                        "atrair": lead.raiox_score_atrair if lead.raiox_score_atrair is not None else notas['atrair'],
+                        "engajar": lead.raiox_score_engajar if lead.raiox_score_engajar is not None else notas['engajar'],
+                        "vender": lead.raiox_score_vender if lead.raiox_score_vender is not None else notas['vender'],
+                        "reter": lead.raiox_score_reter if lead.raiox_score_reter is not None else notas['reter'],
+                        "gestao": lead.raiox_score_gestao if lead.raiox_score_gestao is not None else notas['gestao']
                     },
-                    "gargalo_principal": lead.raiox_gargalo_principal,
-                    "respostas": lead.raiox_respostas,
+                    "gargalo_principal": lead.raiox_gargalo_principal or gargalo,
+                    "respostas": lead.raiox_respostas or respostas_list,
                     "concluido_em": datetime.utcnow().isoformat()
                 }
                 dispatch_n8n_raiox_webhook(lead, payload_n8n)
             except Exception as e:
-                logger.warning(f"Erro ao preparar payload n8n: {e}")
+                logger.error(f"[N8N_RAIOX] Erro crítico ao preparar ou disparar webhook n8n: {e}", exc_info=True)
 
         # 5. Gerar Link do WhatsApp
         whatsapp_number = os.environ.get('NORTHWAY_WHATSAPP', '5542999896358').replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '')

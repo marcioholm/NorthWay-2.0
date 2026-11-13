@@ -1518,23 +1518,32 @@ def get_raiox_abandonados():
 
     agora = datetime.utcnow()
     limite_recente = agora - tempo_inatividade
-    limite_antigo = agora - timedelta(hours=48)
+    limite_antigo = agora - timedelta(days=7)
 
     from utils.phone import normalize_phone
 
+    # Query rigorosa para recuperação de abandonos:
+    # 1. Não concluiu o Raio-X
+    # 2. Nunca recebeu disparo de abandono (raiox_recuperacao_em is None e raiox_whatsapp_status is None)
+    # 3. No máximo 7 dias atrás (e respeitando tempo mínimo de inatividade)
+    # 4. Sem opt-out
     query = (
         Lead.query
-        .filter(Lead.raiox_status == 'parcial_iniciou')
-        .filter(Lead.raiox_atualizado_em < limite_recente)
-        .filter(Lead.raiox_atualizado_em > limite_antigo)
-        .filter((Lead.opt_out == False) | (Lead.opt_out.is_(None)))
+        .filter(Lead.raiox_status.in_(['parcial_iniciou', 'parcial_dados']))
+        .filter(Lead.raiox_status != 'concluido')
+        .filter(Lead.indice_maturidade.is_(None))
         .filter(Lead.raiox_recuperacao_em.is_(None))
+        .filter(Lead.raiox_whatsapp_status.is_(None))
+        .filter((Lead.opt_out == False) | (Lead.opt_out.is_(None)))
         .filter(Lead.phone.isnot(None))
+        .filter(Lead.raiox_atualizado_em < limite_recente)
+        .filter(Lead.raiox_atualizado_em >= limite_antigo)
         .order_by(Lead.raiox_atualizado_em.desc())
     )
 
     candidates = query.limit(limit * 2).all()
     results = []
+    dispatched_leads = []
 
     for l in candidates:
         norm_phone = normalize_phone(l.phone or l.whatsapp)
@@ -1552,8 +1561,19 @@ def get_raiox_abandonados():
             'raiox_atualizado_em': l.raiox_atualizado_em.isoformat() if l.raiox_atualizado_em else None,
             'url_retomada': f"https://crm.northwaycompany.com.br/raiox?retomar={token}"
         })
+        # Proteção atômica: marca abandono_disparo_em imediatamente no banco
+        l.raiox_recuperacao_em = agora
+        dispatched_leads.append(l)
+
         if len(results) >= limit:
             break
+
+    if dispatched_leads:
+        try:
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"[RAIOX_ABANDONADOS] Erro ao gravar raiox_recuperacao_em: {e}")
+            db.session.rollback()
 
     return jsonify({
         'success': True,
@@ -1592,7 +1612,7 @@ def post_raiox_whatsapp_status():
     lead.raiox_whatsapp_status = status
     lead.raiox_whatsapp_em = agora
 
-    if tipo == 'abandono' and status == 'enviado':
+    if tipo == 'abandono':
         lead.raiox_recuperacao_em = agora
 
     if tipo == 'conclusao':
@@ -1624,7 +1644,7 @@ def post_raiox_whatsapp_status():
 @require_internal_auth
 def raiox_debug():
     """Diagnóstico do estado do Raio-X, pipelines e leads recentes"""
-    from models import Company, Pipeline, PipelineStage, User
+    from models import Company, Pipeline, PipelineStage, User, CRMWebhookLog, IntegrationWebhook
     companies = [{'id': c.id, 'name': c.name} for c in Company.query.all()]
     pipelines = [{'id': p.id, 'name': p.name, 'company_id': p.company_id} for p in Pipeline.query.all()]
     users = [{'id': u.id, 'name': u.name, 'email': u.email, 'company_id': u.company_id} for u in User.query.limit(10).all()]
@@ -1641,16 +1661,70 @@ def raiox_debug():
         'created_at': l.created_at.isoformat() if l.created_at else None
     } for l in Lead.query.order_by(Lead.id.desc()).limit(10).all()]
 
-    webhook_url = os.environ.get('N8N_RAIOX_WEBHOOK_URL')
+    webhook_db = IntegrationWebhook.query.filter_by(company_id=35, name='raiox_concluido').first()
+    webhook_url_env = os.environ.get('N8N_RAIOX_WEBHOOK_URL')
+    active_webhook_url = (webhook_db.url if webhook_db and webhook_db.url else None) or webhook_url_env
+
+    recent_logs = []
+    try:
+        logs = CRMWebhookLog.query.order_by(CRMWebhookLog.created_at.desc()).limit(5).all()
+        for log in logs:
+            recent_logs.append({
+                'id': log.id,
+                'lead_id': log.lead_id,
+                'action': log.action,
+                'webhook_url': log.webhook_url,
+                'status_code': log.status_code,
+                'success': log.success,
+                'error_message': log.error_message,
+                'created_at': log.created_at.isoformat() if log.created_at else None
+            })
+    except Exception as e:
+        recent_logs = [{'error': str(e)}]
 
     return jsonify({
         'success': True,
         'companies': companies,
         'pipelines': pipelines,
         'users': users,
-        'webhook_url_configured': bool(webhook_url),
-        'webhook_url_masked': (webhook_url[:30] + '...') if webhook_url else None,
-        'recent_leads': leads
+        'webhook_url_env': webhook_url_env,
+        'webhook_url_db': webhook_db.url if webhook_db else None,
+        'active_webhook_url': active_webhook_url,
+        'recent_leads': leads,
+        'recent_webhook_logs': recent_logs
+    })
+
+
+@internal_api_bp.route('/raiox/set-webhook-url', methods=['POST'])
+@require_internal_auth
+def raiox_set_webhook_url():
+    """Define ou atualiza a URL do webhook de conclusão do Raio-X diretamente no banco"""
+    from models import IntegrationWebhook
+    data = request.json or {}
+    url = (data.get('url') or '').strip()
+    if not url or not url.startswith('http'):
+        return jsonify({'success': False, 'error': 'URL inválida'}), 400
+
+    webhook = IntegrationWebhook.query.filter_by(company_id=35, name='raiox_concluido').first()
+    if not webhook:
+        webhook = IntegrationWebhook(
+            company_id=35,
+            name='raiox_concluido',
+            url=url,
+            events=['raiox_concluido'],
+            status='active',
+            secret='nw_raiox_secret'
+        )
+        db.session.add(webhook)
+    else:
+        webhook.url = url
+        webhook.status = 'active'
+
+    db.session.commit()
+    return jsonify({
+        'success': True,
+        'active_webhook_url': webhook.url,
+        'message': 'URL do webhook Raio-X atualizada com sucesso no banco de dados'
     })
 
 

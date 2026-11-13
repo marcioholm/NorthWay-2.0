@@ -59,11 +59,11 @@ def send_outbound_webhook(tenant_id, lead_id, action, webhook_url, payload, time
             if response.status_code in [200, 202]:
                 success = True
                 error_message = None
-                logger.info(f"[OUTBOUND_WEBHOOK] Success on attempt {attempt + 1}!")
+                logger.info(f"[OUTBOUND_WEBHOOK] Sucesso HTTP {response.status_code} na tentativa {attempt + 1}! Resposta: {response.text[:300]}")
                 break
             else:
                 error_message = f"Status {response.status_code}: {response.text[:200]}"
-                logger.warning(f"[OUTBOUND_WEBHOOK] Attempt {attempt + 1} failed: {error_message}")
+                logger.warning(f"[OUTBOUND_WEBHOOK] Tentativa {attempt + 1} falhou com HTTP {response.status_code}: {error_message}")
         except requests.exceptions.RequestException as e:
             error_message = str(e)
             status_code = None
