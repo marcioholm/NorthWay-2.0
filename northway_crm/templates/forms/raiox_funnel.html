@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    {% include 'includes/favicon.html' %}
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Raio-X de Escala Digital — NorthWay</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Raio-X NorthWay | Diagnóstico Comercial em 1 Minuto</title>
+  <meta name="description" content="Descubra em 1 minuto onde está o maior gargalo da sua empresa e receba o plano de ação no WhatsApp." />
 
-    <!-- Meta Pixel Code -->
-    <script>
+  <!-- Meta Pixel Code -->
+  <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -18,701 +18,1213 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '2336445306916882');
     fbq('track', 'PageView');
-    </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=2336445306916882&ev=PageView&noscript=1"
-    /></noscript>
-    <!-- End Meta Pixel Code -->
+    fbq('track', 'ViewContent');
+  </script>
+  <noscript>
+    <img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=2336445306916882&ev=PageView&noscript=1" />
+  </noscript>
+  <!-- End Meta Pixel Code -->
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'Inter', 'sans-serif'],
-                        body: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        northway: {
-                            red: '#fa0102',
-                            bg: '#050505',
-                            dark: '#0a0a0a',
-                            gray: '#171717',
-                            light: '#262626'
-                        }
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.3s ease-out forwards',
-                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(16px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            background-color: #050505;
-            color: #ffffff;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(250, 1, 2, 0.08), transparent 30%),
-                radial-gradient(circle at 90% 70%, rgba(250, 1, 2, 0.05), transparent 30%);
-            background-attachment: fixed;
-            overflow-x: hidden;
-            width: 100%;
-        }
-        
-        .glass-panel {
-            background: rgba(15, 15, 15, 0.75);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-        }
-        
-        .nw-input {
-            background: rgba(30, 30, 30, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: white;
-            transition: all 0.2s ease;
-        }
-        
-        .nw-input:focus {
-            outline: none;
-            border-color: #fa0102;
-            box-shadow: 0 0 0 2px rgba(250, 1, 2, 0.25);
-            background: rgba(35, 35, 35, 0.9);
-        }
-        
-        select option {
-            background-color: #121212;
-            color: white;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-        .option-card {
-            transition: all 0.18s ease;
-        }
-        .option-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(250, 1, 2, 0.4);
-            background: rgba(255, 255, 255, 0.06);
-        }
-        .option-card.selected {
-            border-color: #fa0102;
-            background: rgba(250, 1, 2, 0.12);
-            box-shadow: 0 0 20px rgba(250, 1, 2, 0.2);
-        }
+  <style>
+    :root {
+      --red: #FA0102;
+      --red-dark: #D60001;
+      --red-soft: #FFF1F2;
+      --red-border: #FECDD3;
+      --ink: #0F172A;
+      --ink-2: #334155;
+      --muted: #64748B;
+      --line: #E2E8F0;
+      --bg: #F6F7FB;
+      --card: #FFFFFF;
+      --ok: #10B981;
+      --ok-soft: #ECFDF5;
+      --warn: #F59E0B;
+      --warn-soft: #FFFBEB;
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 12px 32px rgba(15, 23, 42, 0.08);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
 
-        [x-cloak] { display: none !important; }
-        
-        .progress-bar-fill {
-            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-    </style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(250, 1, 2, 0.06) 0%, transparent 42%),
+        radial-gradient(circle at 10% 100%, rgba(15, 23, 42, 0.04) 0%, transparent 45%),
+        var(--bg);
+      color: var(--ink);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      max-width: 580px;
+      margin: 0 auto;
+      padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+    }
+
+    /* Header */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 2px 14px;
+      gap: 12px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .brand-mark {
+      width: 11px;
+      height: 11px;
+      border-radius: 3px;
+      background: var(--red);
+      box-shadow: 0 0 0 4px rgba(250, 1, 2, 0.14);
+      flex-shrink: 0;
+    }
+
+    .step-pill {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-2);
+      background: #FFFFFF;
+      border: 1px solid var(--line);
+      padding: 5px 11px;
+      border-radius: 999px;
+      box-shadow: var(--shadow-sm);
+      white-space: nowrap;
+    }
+
+    /* Progress bar */
+    .progress-track {
+      height: 5px;
+      background: #E2E8F0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--red), #FF4D4E);
+      border-radius: 999px;
+      transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Resume banner */
+    .resume-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      color: #92400E;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      animation: fadeUp 0.28s ease both;
+    }
+
+    .resume-banner button {
+      background: transparent;
+      border: none;
+      color: #B45309;
+      font-weight: 700;
+      font-size: 12px;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    /* Main Card */
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      box-shadow: var(--shadow-md);
+      animation: fadeUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @media (min-width: 480px) {
+      .card {
+        padding: 30px 28px;
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--red);
+      background: var(--red-soft);
+      border: 1px solid var(--red-border);
+      padding: 5px 11px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+
+    .area-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      background: #F1F5F9;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: clamp(22px, 5.2vw, 27px);
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin: 0 0 8px;
+      color: var(--ink);
+    }
+
+    h2 {
+      font-size: clamp(19px, 4.5vw, 22px);
+      line-height: 1.28;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      margin: 0 0 18px;
+      color: var(--ink);
+    }
+
+    .sub {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--muted);
+      margin: 0 0 20px;
+    }
+
+    /* Choice buttons */
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .choice-btn {
+      width: 100%;
+      text-align: left;
+      background: #FFFFFF;
+      border: 1.5px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 15px 16px;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.38;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.14s ease, border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+      position: relative;
+    }
+
+    .choice-btn:hover {
+      border-color: #CBD5E1;
+      background: #F8FAFC;
+    }
+
+    .choice-btn:active {
+      transform: scale(0.985);
+    }
+
+    .choice-btn.selected {
+      border-color: var(--red);
+      background: var(--red-soft);
+      box-shadow: 0 0 0 3px rgba(250, 1, 2, 0.12);
+    }
+
+    .choice-emoji {
+      font-size: 22px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .choice-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .choice-title {
+      display: block;
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 15.5px;
+    }
+
+    .choice-desc {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .choice-letter {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #F1F5F9;
+      color: var(--ink-2);
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background-color 0.16s ease, color 0.16s ease;
+    }
+
+    .choice-btn.selected .choice-letter {
+      background: var(--red);
+      color: #FFFFFF;
+    }
+
+    /* Back button */
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 18px;
+    }
+
+    .btn-back {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-back:hover {
+      color: var(--ink);
+    }
+
+    /* Data Capture Teaser */
+    .teaser-box {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      color: #FFFFFF;
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .teaser-box::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+      transform: translateX(-100%);
+      animation: shimmer 2.6s infinite;
+    }
+
+    @keyframes shimmer {
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    .teaser-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94A3B8;
+      margin-bottom: 4px;
+    }
+
+    .teaser-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .teaser-blur {
+      font-size: 28px;
+      font-weight: 800;
+      color: #FFFFFF;
+      filter: blur(7px);
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    /* Form fields */
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-2);
+      margin-bottom: 6px;
+    }
+
+    .opt-tag {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .field input {
+      width: 100%;
+      padding: 14px 15px;
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 16px; /* Prevents iOS Safari zoom */
+      font-weight: 500;
+      color: var(--ink);
+      background: #FFFFFF;
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .field input:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(250, 1, 2, 0.1);
+    }
+
+    .form-error {
+      background: var(--red-soft);
+      border: 1px solid var(--red-border);
+      color: #9F1239;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--red);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 20px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 20px rgba(250, 1, 2, 0.25);
+      transition: background-color 0.16s ease, transform 0.14s ease;
+      text-decoration: none;
+      margin-top: 6px;
+    }
+
+    .btn-primary:hover {
+      background: var(--red-dark);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.985);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .privacy-note {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin: 12px 0 0;
+      line-height: 1.4;
+    }
+
+    /* Result Screen */
+    .score-hero {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 18px;
+    }
+
+    .ring-wrap {
+      position: relative;
+      width: 96px;
+      height: 96px;
+      flex-shrink: 0;
+    }
+
+    .ring-svg {
+      width: 96px;
+      height: 96px;
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: #E2E8F0;
+      stroke-width: 8;
+    }
+
+    .ring-val {
+      fill: none;
+      stroke: var(--red);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 251.2;
+      stroke-dashoffset: 251.2;
+      transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .ring-num {
+      font-size: 25px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .ring-den {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .score-meta h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .status-pill {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    .status-critico { background: var(--red-soft); color: #BE123C; }
+    .status-construcao { background: var(--warn-soft); color: #B45309; }
+    .status-saudavel { background: var(--ok-soft); color: #047857; }
+
+    .geral-highlight {
+      background: #FFF7ED;
+      border: 1px solid #FED7AA;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #9A3412;
+    }
+
+    .urgent-card {
+      background: #FEF2F2;
+      border: 1.5px solid #FECACA;
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+
+    .urgent-tag {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--red);
+      margin-bottom: 6px;
+    }
+
+    .urgent-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 0 0 8px;
+      line-height: 1.35;
+    }
+
+    .urgent-action {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--ink-2);
+      margin: 0;
+    }
+
+    .answers-list {
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      margin-bottom: 18px;
+    }
+
+    .answers-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+
+    .ans-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px dashed #E2E8F0;
+      font-size: 13.5px;
+    }
+
+    .ans-row:last-child {
+      border-bottom: none;
+    }
+
+    .ans-name {
+      font-weight: 600;
+      color: var(--ink-2);
+    }
+
+    .ans-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-wa {
+      background: #16A34A;
+      box-shadow: 0 8px 20px rgba(22, 163, 74, 0.24);
+    }
+
+    .btn-wa:hover {
+      background: #15803D;
+    }
+
+    .btn-ghost {
+      width: 100%;
+      background: transparent;
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink-2);
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-ghost:hover {
+      background: #F8FAFC;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: auto;
+      padding-top: 18px;
+    }
+
+    .footer a {
+      color: var(--muted);
+      text-decoration: underline;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-northway-red selection:text-white" x-data="diagnosticFunnel()">
-
-    <!-- Header / Progress Bar -->
-    <header class="fixed top-0 w-full z-50 glass-panel border-b border-white/5">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <img src="{{ url_for('static', filename='images/logo-white.png') }}" onerror="this.src='https://crm.northwaycompany.com.br/static/images/logo-white.png'" alt="NorthWay" class="h-7 sm:h-8">
-            </div>
-            
-            <!-- Progress Tracker (Desktop) -->
-            <div class="flex-1 max-w-md ml-6 sm:ml-8 hidden sm:block" x-show="step > 0 && step <= 20" x-transition.opacity>
-                <div class="flex justify-between text-xs text-gray-400 font-medium mb-1.5">
-                    <span x-text="stepName()"></span>
-                    <span x-text="Math.round(progress) + '%'"></span>
-                </div>
-                <div class="h-1.5 w-full bg-northway-light rounded-full overflow-hidden">
-                    <div class="h-full bg-northway-red progress-bar-fill shadow-[0_0_10px_#fa0102]" :style="`width: ${progress}%`"></div>
-                </div>
-            </div>
-            
-            <div class="text-xs sm:text-sm text-gray-400 font-medium" x-show="step <= 20">
-                <span x-show="step === 0" class="hidden sm:inline"><i data-lucide="timer" class="w-4 h-4 inline-block mr-1 mb-0.5"></i>Leva menos de 3 minutos</span>
-                <span x-show="step > 0 && step <= 20" x-text="`Eixo ${currentEixoIndex()}/5`"></span>
-            </div>
-
-            <div class="text-xs sm:text-sm text-gray-400 font-medium" x-show="step === 'resultado'">
-                <span class="text-northway-red font-semibold">Diagnóstico Concluído</span>
-            </div>
-        </div>
-
-        <!-- Mobile Progress Bar -->
-        <div class="h-1 w-full bg-northway-light sm:hidden" x-show="step > 0 && step <= 20">
-            <div class="h-full bg-northway-red progress-bar-fill" :style="`width: ${progress}%`"></div>
-        </div>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span>Raio-X NorthWay</span>
+      </div>
+      <span class="step-pill" id="stepPill">Pergunta 1 de 6</span>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col items-center justify-center pt-24 sm:pt-28 pb-16 px-4 max-w-full">
-        
-        <!-- ==================== STEP 0: CADASTRO ==================== -->
-        <div x-show="step === 0" x-transition:enter="animation-fade-in" class="w-full max-w-2xl">
-            <!-- Aviso sutil de retomada -->
-            <div x-show="resumed" class="mb-4 text-center bg-white/5 border border-white/10 text-xs text-gray-300 py-1.5 px-4 rounded-full max-w-sm mx-auto" x-cloak>
-                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block mr-1.5 animate-pulse"></span>
-                Continuando de onde você parou.
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="resume-banner" id="resumeBanner" style="display: none;">
+      <span>Continuando de onde você parou</span>
+      <button type="button" onclick="resetFlow()">Recomeçar</button>
+    </div>
+
+    <main id="app"></main>
+
+    <footer class="footer">
+      NorthWay Company · <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a>
+    </footer>
+  </div>
+
+  <script>
+    const Q = {{ v3_questions | tojson }};
+    const PATHS = {{ v3_paths | tojson }};
+    const RESUME_FROM_SERVER = {{ resume_data | tojson }};
+    const DEFAULT_ORIGEM = {{ origem | tojson }};
+    const STORAGE_KEY = 'nw_raiox_v3_progress';
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+    const PATH_CARDS = [
+      { key: 'marketing', emoji: '📣', title: 'Atrair clientes', desc: 'Pouca gente chega até mim' },
+      { key: 'comercial', emoji: '🤝', title: 'Vender', desc: 'As pessoas chegam, mas não fecham' },
+      { key: 'gestao', emoji: '📊', title: 'Organizar a empresa', desc: 'Números, metas e lucro' },
+      { key: 'geral', emoji: '🤔', title: 'Não sei dizer', desc: 'Quero descobrir onde está o gargalo' }
+    ];
+
+    const LETTERS = ['A', 'B', 'C', 'D'];
+
+    function newToken() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'rx_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+    }
+
+    function getUtms() {
+      const p = new URLSearchParams(window.location.search);
+      return {
+        origem: p.get('origem') || p.get('utm_source') || DEFAULT_ORIGEM || 'direto',
+        utm_source: p.get('utm_source') || null,
+        utm_medium: p.get('utm_medium') || null,
+        utm_campaign: p.get('utm_campaign') || null,
+        utm_content: p.get('utm_content') || null,
+        utm_term: p.get('utm_term') || null,
+        fbclid: p.get('fbclid') || null
+      };
+    }
+
+    const utms = getUtms();
+
+    let state = {
+      token: newToken(),
+      step: 'inicio', // inicio | q | dados | res
+      path: null,
+      i: 0,
+      ans: {},
+      resumed: false,
+      resultado: null
+    };
+
+    function trackPixel(type, name, params, extra) {
+      if (typeof window.fbq !== 'function') return;
+      try {
+        if (type === 'track') {
+          window.fbq('track', name, params || {}, extra || undefined);
+        } else {
+          window.fbq('trackCustom', name, params || {});
+        }
+      } catch (_) {}
+    }
+
+    function saveLocal() {
+      try {
+        if (state.step === 'res') {
+          localStorage.removeItem(STORAGE_KEY);
+          return;
+        }
+        const payload = {
+          token: state.token,
+          path: state.path,
+          step: state.step,
+          i: state.i,
+          ans: state.ans,
+          updatedAt: Date.now()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (_) {}
+    }
+
+    function clearLocal() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (_) {}
+    }
+
+    function postProgress(etapa, leadInfo) {
+      try {
+        fetch('/raiox/progresso', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          keepalive: true,
+          body: JSON.stringify({
+            token: state.token,
+            path: state.path,
+            etapa: etapa,
+            answers: state.ans,
+            lead_info: Object.assign({}, utms, leadInfo || {})
+          })
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    function restoreProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          const fresh = saved && saved.updatedAt && (Date.now() - saved.updatedAt <= SEVEN_DAYS_MS);
+          if (fresh && saved.path && PATHS[saved.path] && (saved.step === 'q' || saved.step === 'dados')) {
+            state.token = saved.token || state.token;
+            state.path = saved.path;
+            state.step = saved.step;
+            state.i = Number.isInteger(saved.i) ? saved.i : 0;
+            state.ans = saved.ans || {};
+            state.resumed = true;
+            return;
+          }
+          if (!fresh) clearLocal();
+        }
+      } catch (_) {
+        clearLocal();
+      }
+
+      if (RESUME_FROM_SERVER && RESUME_FROM_SERVER.token) {
+        state.token = RESUME_FROM_SERVER.token;
+      }
+    }
+
+    function updateChrome() {
+      const pill = document.getElementById('stepPill');
+      const fill = document.getElementById('progressFill');
+      const banner = document.getElementById('resumeBanner');
+
+      banner.style.display = state.resumed && state.step !== 'res' ? 'flex' : 'none';
+
+      if (state.step === 'inicio') {
+        pill.textContent = 'Pergunta 1 de 6';
+        fill.style.width = '14%';
+      } else if (state.step === 'q') {
+        const num = state.i + 2;
+        pill.textContent = `Pergunta ${num} de 6`;
+        fill.style.width = `${Math.round((num / 6) * 84)}%`;
+      } else if (state.step === 'dados') {
+        pill.textContent = 'Último passo';
+        fill.style.width = '94%';
+      } else {
+        pill.textContent = 'Diagnóstico pronto';
+        fill.style.width = '100%';
+      }
+    }
+
+    function esc(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function render() {
+      updateChrome();
+      const app = document.getElementById('app');
+
+      if (state.step === 'inicio') {
+        app.innerHTML = `
+          <section class="card">
+            <span class="eyebrow">6 perguntas · 1 minuto · resultado no WhatsApp</span>
+            <h1>Hoje, onde está a maior dificuldade da sua empresa?</h1>
+            <p class="sub">Toque na opção que mais representa o seu momento agora.</p>
+            <div class="choices">
+              ${PATH_CARDS.map(c => `
+                <button type="button" class="choice-btn" data-path="${c.key}" onclick="pickPath('${c.key}', this)">
+                  <span class="choice-emoji">${c.emoji}</span>
+                  <span class="choice-text">
+                    <span class="choice-title">${c.title}</span>
+                    <span class="choice-desc">${c.desc}</span>
+                  </span>
+                </button>
+              `).join('')}
+            </div>
+          </section>
+        `;
+        return;
+      }
+
+      if (state.step === 'q') {
+        const ids = PATHS[state.path].ids;
+        const qid = String(ids[state.i]);
+        const q = Q[qid];
+        const prevVal = state.ans[qid];
+
+        app.innerHTML = `
+          <section class="card">
+            <span class="area-badge">${esc(q.area)} · ${state.i + 1} de ${ids.length}</span>
+            <h2>${esc(q.pergunta)}</h2>
+            <div class="choices">
+              ${q.opcoes.map((opt, val) => `
+                <button type="button" class="choice-btn ${prevVal === val ? 'selected' : ''}" onclick="pickAnswer('${qid}', ${val}, this)">
+                  <span class="choice-letter">${LETTERS[val]}</span>
+                  <span class="choice-text">${esc(opt)}</span>
+                </button>
+              `).join('')}
+            </div>
+            <div class="nav-row">
+              <button type="button" class="btn-back" onclick="goBack()">← Voltar</button>
+            </div>
+          </section>
+        `;
+        return;
+      }
+
+      if (state.step === 'dados') {
+        app.innerHTML = `
+          <section class="card">
+            <div class="teaser-box">
+              <div>
+                <div class="teaser-label">Nota calculada</div>
+                <div class="teaser-title">Seu diagnóstico + plano de ação estão prontos</div>
+              </div>
+              <div class="teaser-blur">6,4</div>
             </div>
 
-            <div class="text-center mb-8 sm:mb-10 animate-slide-up">
-                <div class="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs sm:text-sm font-medium text-gray-300 mb-5">
-                    <span class="w-2 h-2 rounded-full bg-northway-red mr-2 animate-pulse"></span>
-                    Diagnóstico Estratégico Oficial
+            <h1>Pronto! Para onde enviamos seu resultado?</h1>
+            <p class="sub">Você vê a nota e o ponto mais urgente aqui na tela e recebe também no WhatsApp.</p>
+
+            <form id="leadForm" onsubmit="submitLead(event)" novalidate>
+              <div id="formError" class="form-error"></div>
+
+              <div class="field">
+                <label for="fNome">Seu nome</label>
+                <input id="fNome" type="text" autocomplete="name" placeholder="Ex.: João Silva" required />
+              </div>
+
+              <div class="field">
+                <label for="fWhats">WhatsApp</label>
+                <input id="fWhats" type="tel" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" oninput="maskTel(this)" required />
+              </div>
+
+              <div class="field">
+                <label for="fEmpresa">Nome da empresa <span class="opt-tag">(opcional)</span></label>
+                <input id="fEmpresa" type="text" autocomplete="organization" placeholder="Ex.: Clínica Vida" />
+              </div>
+
+              <button type="submit" class="btn-primary" id="submitBtn">Ver meu resultado →</button>
+              <p class="privacy-note">Seus dados estão seguros. Não enviamos spam.</p>
+            </form>
+
+            <div class="nav-row">
+              <button type="button" class="btn-back" onclick="goBack()">← Voltar</button>
+            </div>
+          </section>
+        `;
+        return;
+      }
+
+      if (state.step === 'res' && state.resultado) {
+        const r = state.resultado;
+        const notaNum = Number(r.nota || 0);
+        const circ = 251.2;
+        const offset = circ - (Math.max(0, Math.min(10, notaNum)) / 10) * circ;
+
+        let statusClass = 'status-saudavel';
+        let statusText = 'Saudável';
+        let ringColor = '#10B981';
+        if (notaNum < 4) {
+          statusClass = 'status-critico';
+          statusText = 'Crítico — ação imediata';
+          ringColor = '#FA0102';
+        } else if (notaNum < 7) {
+          statusClass = 'status-construcao';
+          statusText = 'Em construção';
+          ringColor = '#F59E0B';
+        }
+
+        const isGeral = r.caminho === 'geral';
+
+        app.innerHTML = `
+          <section class="card">
+            <div class="score-hero">
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 96 96">
+                  <circle class="ring-bg" cx="48" cy="48" r="40"></circle>
+                  <circle class="ring-val" id="scoreRing" cx="48" cy="48" r="40" style="stroke:${ringColor};"></circle>
+                </svg>
+                <div class="ring-center">
+                  <span class="ring-num">${esc(r.nota_formatada)}</span>
+                  <span class="ring-den">de 10</span>
                 </div>
-                <h1 class="text-3xl sm:text-5xl font-black tracking-tight mb-4 leading-tight">
-                    RAIO-X DE <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500">ESCALA DIGITAL</span>
-                </h1>
-                <p class="text-base sm:text-lg text-gray-400 max-w-xl mx-auto leading-relaxed">
-                    Avalie os 5 eixos da metodologia NorthWay e descubra exatamente onde focar para destravar o crescimento do seu negócio.
-                </p>
+              </div>
+              <div class="score-meta">
+                <span class="status-pill ${statusClass}">${statusText}</span>
+                <h3>${isGeral ? 'Diagnóstico Geral' : 'Área: ' + esc(r.area_nome)}</h3>
+                <p class="sub" style="margin:0;">Baseado nas suas 5 respostas deste caminho.</p>
+              </div>
             </div>
 
-            <div class="glass-panel rounded-2xl p-5 sm:p-9 animate-slide-up" style="animation-delay: 0.1s;">
-                <form @submit.prevent="nextStep(0)" class="space-y-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
-                        
-                        <!-- Nome -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs sm:text-sm font-medium text-gray-300 ml-1">Nome Completo</label>
-                            <input type="text" x-model="lead.nome" @blur="onFieldBlur()" @change="onFieldBlur()" required class="w-full nw-input rounded-xl px-4 py-3 text-sm sm:text-base" placeholder="Seu nome">
-                        </div>
+            ${isGeral ? `
+              <div class="geral-highlight">
+                <strong>Área com menor nota: ${esc(r.gargalo_nome)}</strong> — essa é a área prioritária sugerida para a sua devolutiva gratuita.
+              </div>
+            ` : ''}
 
-                        <!-- E-mail -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs sm:text-sm font-medium text-gray-300 ml-1">E-mail</label>
-                            <input type="email" x-model="lead.email" @blur="onFieldBlur()" @change="onFieldBlur()" required class="w-full nw-input rounded-xl px-4 py-3 text-sm sm:text-base" placeholder="voce@empresa.com">
-                        </div>
-
-                        <!-- WhatsApp com Máscara -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs sm:text-sm font-medium text-gray-300 ml-1">WhatsApp</label>
-                            <input type="tel" x-model="lead.whatsapp" @input="formatWhatsApp($event)" @blur="onFieldBlur()" @change="onFieldBlur()" required class="w-full nw-input rounded-xl px-4 py-3 text-sm sm:text-base" placeholder="(00) 00000-0000">
-                        </div>
-
-                        <!-- Nome da Empresa -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs sm:text-sm font-medium text-gray-300 ml-1">Nome da Empresa</label>
-                            <input type="text" x-model="lead.empresa" @blur="onFieldBlur()" @change="onFieldBlur()" required class="w-full nw-input rounded-xl px-4 py-3 text-sm sm:text-base" placeholder="Sua empresa">
-                        </div>
-
-                        <!-- Funcionários -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs sm:text-sm font-medium text-gray-300 ml-1">Quantidade de Funcionários</label>
-                            <select x-model="lead.quantidade_funcionarios" @change="onFieldBlur()" required class="w-full nw-input rounded-xl px-4 py-3 appearance-none text-sm sm:text-base">
-                                <option value="" disabled selected>Selecione</option>
-                                <option value="1-5">1 a 5</option>
-                                <option value="6-20">6 a 20</option>
-                                <option value="21-50">21 a 50</option>
-                                <option value="50+">Mais de 50</option>
-                            </select>
-                        </div>
-
-                        <!-- Faixas de Faturamento Atualizadas -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs sm:text-sm font-medium text-gray-300 ml-1">Faturamento Mensal Estimado</label>
-                            <select x-model="lead.faturamento_mensal" @change="onFieldBlur()" required class="w-full nw-input rounded-xl px-4 py-3 appearance-none text-sm sm:text-base">
-                                <option value="" disabled selected>Selecione uma faixa</option>
-                                <option value="0-10k">Até R$ 10 mil</option>
-                                <option value="10k-30k">R$ 10 a 30 mil</option>
-                                <option value="30k-50k">R$ 30 a 50 mil</option>
-                                <option value="50k-100k">R$ 50 a 100 mil</option>
-                                <option value="100k-200k">R$ 100 a 200 mil</option>
-                                <option value="200k+">Acima de R$ 200 mil</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="pt-3">
-                        <button type="submit" 
-                                class="w-full bg-northway-red text-white font-bold text-base sm:text-lg rounded-xl py-4 transition-all hover:bg-red-700 active:scale-[0.98] shadow-[0_0_20px_rgba(250,1,2,0.35)] hover:shadow-[0_0_30px_rgba(250,1,2,0.55)] flex justify-center items-center gap-2">
-                            <span>Iniciar Diagnóstico</span>
-                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-
-                    <!-- Aviso de transparência com link para /privacidade -->
-                    <p class="text-center text-xs text-gray-400 pt-2 leading-relaxed">
-                        Ao iniciar, você recebe o resultado por e-mail e WhatsApp. Seus dados ficam só com a NorthWay. <a href="/privacidade" target="_blank" class="underline text-gray-300 hover:text-white">Política de privacidade</a>
-                    </p>
-                </form>
-            </div>
-        </div>
-
-        <!-- ==================== STEPS 1-20: AS 20 PERGUNTAS ==================== -->
-        <template x-for="(q, idx) in questions" :key="q.id">
-            <div x-show="step === idx + 1" x-transition:enter="animation-slide-up" class="w-full max-w-2xl" x-cloak>
-                
-                <div class="mb-6 sm:mb-8 text-left">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-northway-red/10 border border-northway-red/30 text-northway-red font-bold text-xs uppercase tracking-wider">
-                            <span x-text="q.eixo_nome"></span>
-                        </div>
-                        <div class="text-sm font-semibold text-gray-500 font-mono">
-                            <span class="text-white text-base" x-text="String(idx + 1).padStart(2, '0')"></span>/20
-                        </div>
-                    </div>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white leading-snug" x-text="q.pergunta"></h2>
-                </div>
-
-                <!-- 4 Opções da Escala -->
-                <div class="space-y-3">
-                    <template x-for="option in (q.opcoes || answerOptions)" :key="option.value">
-                        <label class="option-card block w-full rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5 cursor-pointer flex items-center gap-3.5 sm:gap-4 relative overflow-hidden"
-                               :class="{'selected': answers[idx] === option.value}">
-                            <input type="radio" :name="`q_${idx}`" :value="option.value" class="sr-only" 
-                                   @change="selectAnswer(idx, option.value)">
-                            
-                            <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
-                                 :class="answers[idx] === option.value ? 'border-northway-red' : 'border-gray-500'">
-                                <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-northway-red transition-transform scale-0"
-                                     :class="answers[idx] === option.value ? 'scale-100' : ''"></div>
-                            </div>
-                            
-                            <div class="flex-1 pr-2">
-                                <span class="text-sm sm:text-base font-medium text-gray-300" 
-                                      :class="answers[idx] === option.value ? 'text-white font-semibold' : ''" 
-                                      x-text="option.label"></span>
-                            </div>
-                        </label>
-                    </template>
-                </div>
-
-                <!-- Botões de Navegação -->
-                <div class="mt-8 sm:mt-10 flex items-center justify-between">
-                    <button @click="prevStep()" class="flex items-center gap-1.5 text-xs sm:text-sm text-gray-400 hover:text-white transition-colors py-2.5 px-3.5 rounded-lg hover:bg-white/5">
-                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                        <span>Voltar</span>
-                    </button>
-                    
-                    <button @click="nextStep(idx + 1)" 
-                            class="bg-white text-black font-bold text-xs sm:text-sm rounded-xl px-6 sm:px-8 py-3 sm:py-3.5 transition-all hover:bg-gray-200 active:scale-95 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
-                            :disabled="answers[idx] === null">
-                        <span x-text="idx === 19 ? 'Ver Resultado' : 'Próxima'"></span>
-                        <i data-lucide="arrow-right" class="w-4 h-4" x-show="idx < 19"></i>
-                        <i data-lucide="check-circle" class="w-4 h-4" x-show="idx === 19"></i>
-                    </button>
-                </div>
-            </div>
-        </template>
-        
-        <!-- ==================== TELA DE RESULTADO (MESMA PÁGINA) ==================== -->
-        <div x-show="step === 'resultado' && resultado" x-transition:enter="animation-fade-in" class="w-full max-w-2xl py-4" x-cloak>
-            
-            <!-- 1. Título: [Empresa]: o foco agora é [gargalo] -->
-            <div class="text-center mb-8 animate-slide-up">
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-gray-400 mb-4 uppercase tracking-wider">
-                    <span>Resultado do Diagnóstico</span>
-                </div>
-                <h1 class="text-2xl sm:text-4xl font-black text-white leading-tight">
-                    <span x-text="resultado?.empresa || 'Sua Empresa'"></span>: o foco agora é 
-                    <span class="text-northway-red" x-text="resultado?.gargalo_nome"></span>
-                </h1>
+            <div class="urgent-card">
+              <div class="urgent-tag">Ponto mais urgente · ${esc(r.urgente_area)}</div>
+              <p class="urgent-title">${esc(r.urgente_pergunta)}</p>
+              <p class="urgent-action"><strong>Ação recomendada:</strong> ${esc(r.acao_prioritaria)}</p>
             </div>
 
-            <!-- 2. Índice de Maturidade (0 a 10) -->
-            <div class="glass-panel rounded-2xl p-6 sm:p-8 mb-6 text-center animate-slide-up" style="animation-delay: 0.1s;">
-                <p class="text-xs sm:text-sm uppercase tracking-wider font-semibold text-gray-400 mb-2">Índice de Maturidade Geral</p>
-                <div class="flex items-baseline justify-center gap-2">
-                    <span class="text-5xl sm:text-6xl font-black text-white tracking-tight" x-text="resultado?.indice_formatado"></span>
-                    <span class="text-xl sm:text-2xl font-bold text-gray-500">/ 10</span>
-                </div>
-                <p class="text-xs sm:text-sm text-gray-400 mt-2 max-w-md mx-auto">
-                    Média ponderada da maturidade comercial e operacional da empresa nos 5 eixos.
-                </p>
+            <div class="answers-list">
+              <p class="answers-title">Resumo das suas respostas</p>
+              ${(r.detalhes || []).map(d => {
+                let bClass = 'status-saudavel';
+                let bTxt = 'Forte';
+                if (d.valor === 0) { bClass = 'status-critico'; bTxt = 'Crítico'; }
+                else if (d.valor === 1) { bClass = 'status-construcao'; bTxt = 'Inicial'; }
+                else if (d.valor === 2) { bClass = 'status-construcao'; bTxt = 'Bom'; }
+                return `
+                  <div class="ans-row">
+                    <span class="ans-name">${esc(d.curto)}</span>
+                    <span class="ans-badge ${bClass}">${bTxt} (${d.valor}/3)</span>
+                  </div>
+                `;
+              }).join('')}
             </div>
 
-            <!-- 3. Uma barra por eixo com nota e situação -->
-            <div class="glass-panel rounded-2xl p-5 sm:p-7 mb-6 animate-slide-up" style="animation-delay: 0.15s;">
-                <h3 class="text-xs uppercase tracking-wider font-bold text-gray-400 mb-4">Maturidade por Eixo</h3>
-                
-                <div class="space-y-4">
-                    <template x-for="eixo in resultado?.eixos" :key="eixo.key">
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between text-xs sm:text-sm">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-white text-sm sm:text-base" x-text="eixo.nome"></span>
-                                    <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold"
-                                          :class="eixo.badge_bg + ' ' + eixo.badge_text"
-                                          x-text="eixo.situacao"></span>
-                                </div>
-                                <span class="font-bold text-white font-mono text-sm sm:text-base" x-text="eixo.nota_formatada + '/10'"></span>
-                            </div>
-                            
-                            <!-- Barra de Progresso com cor dinâmica -->
-                            <div class="h-2.5 w-full bg-northway-light rounded-full overflow-hidden">
-                                <div class="h-full rounded-full transition-all duration-700"
-                                     :style="`width: ${eixo.percentual}%; background-color: ${eixo.cor};`"></div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
+            <a class="btn-primary btn-wa" href="${esc(r.whatsapp_url)}" target="_blank" rel="noopener">
+              Falar no WhatsApp sobre meu diagnóstico →
+            </a>
+            <button type="button" class="btn-ghost" onclick="resetFlow()">Refazer diagnóstico</button>
+          </section>
+        `;
 
-            <!-- 4. Card Destacado do Gargalo -->
-            <div class="rounded-2xl p-6 sm:p-7 mb-7 border-2 border-northway-red/40 bg-gradient-to-b from-northway-red/10 via-black/60 to-black/80 shadow-[0_0_30px_rgba(250,1,2,0.15)] animate-slide-up" style="animation-delay: 0.2s;">
-                <div class="flex items-center gap-2 text-northway-red font-bold text-xs uppercase tracking-wider mb-2">
-                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
-                    <span>Principal Gargalo: <span x-text="resultado?.gargalo_nome"></span></span>
-                </div>
-                
-                <!-- Ponto Fraco (Texto da Pergunta) -->
-                <div class="mb-4">
-                    <span class="text-xs text-gray-400 font-medium">Ponto fraco identificado:</span>
-                    <p class="text-white font-semibold text-base sm:text-lg mt-1" x-text="resultado?.ponto_fraco_pergunta"></p>
-                </div>
-
-                <!-- Ação Prioritária (Ação do Ponto Fraco) -->
-                <div class="p-4 rounded-xl bg-white/5 border border-white/10">
-                    <span class="text-xs text-northway-red font-bold uppercase tracking-wider block mb-1">Ação Prioritária Recomendada:</span>
-                    <p class="text-gray-200 text-xs sm:text-sm leading-relaxed" x-text="resultado?.acao_prioritaria"></p>
-                </div>
-            </div>
-
-            <!-- 5. Botão Principal: WhatsApp -->
-            <div class="space-y-4 mb-8 animate-slide-up" style="animation-delay: 0.25s;">
-                <a :href="resultado?.whatsapp_url" target="_blank"
-                   class="w-full bg-northway-red text-white font-bold text-base sm:text-lg rounded-xl py-4 px-6 transition-all hover:bg-red-700 active:scale-[0.98] shadow-[0_0_25px_rgba(250,1,2,0.4)] hover:shadow-[0_0_35px_rgba(250,1,2,0.6)] flex justify-center items-center gap-2.5 text-center">
-                    <i data-lucide="message-circle" class="w-5 h-5 shrink-0"></i>
-                    <span>Conversar com a NorthWay sobre o resultado</span>
-                </a>
-            </div>
-
-            <!-- 6. Rodapé -->
-            <div class="text-center text-xs text-gray-500 leading-relaxed px-4 pt-4 border-t border-white/5">
-                <p>Este Raio-X é uma autoavaliação. Ele aponta onde olhar primeiro; o diagnóstico completo considera também números, processos e contexto.</p>
-            </div>
-
-        </div>
-
-        <!-- Loading State -->
-        <div x-show="isSubmitting" class="fixed inset-0 z-[100] bg-northway-bg/95 backdrop-blur-md flex flex-col items-center justify-center p-4 text-center" x-cloak>
-            <div class="w-16 h-16 sm:w-20 sm:h-20 border-4 border-northway-red/30 border-t-northway-red rounded-full animate-spin mb-6"></div>
-            <h3 class="text-xl sm:text-2xl font-bold text-white mb-2">Processando Diagnóstico...</h3>
-            <p class="text-gray-400 text-xs sm:text-sm animate-pulse max-w-sm">Calculando notas dos 5 eixos e identificando a prioridade estratégica.</p>
-        </div>
-
-    </main>
-
-    <script>
-        document.addEventListener('alpine:init', () => {
-            lucide.createIcons();
-            
-            Alpine.data('diagnosticFunnel', () => ({
-                step: 0,
-                progress: 0,
-                isSubmitting: false,
-                origem: '{{ origem or "direto" }}',
-                token: null,
-                utms: {},
-                resumed: false,
-                _lastProgressSent: null,
-                _debounceTimer: null,
-                
-                lead: {
-                    nome: '',
-                    email: '',
-                    whatsapp: '',
-                    empresa: '',
-                    quantidade_funcionarios: '',
-                    faturamento_mensal: '',
-                    origem: '{{ origem or "direto" }}'
-                },
-                
-                answerOptions: [
-                    { value: 0, label: '0 — Não fazemos' },
-                    { value: 1, label: '1 — Fazemos às vezes' },
-                    { value: 2, label: '2 — Fazemos com consistência' },
-                    { value: 3, label: '3 — Fazemos com consistência e medimos o resultado' }
-                ],
-                
-                // 20 Perguntas Exatas da Metodologia NorthWay v2
-                questions: {{ questions | tojson | safe }},
-                
-                // Array de 20 respostas (inicializado com null)
-                answers: Array(20).fill(null),
-                
-                resultado: null,
-                
-                init() {
-                    // 1. Token de sessão
-                    let savedToken = null;
-                    try {
-                        savedToken = localStorage.getItem('raiox_token');
-                    } catch (e) {}
-
-                    if (!savedToken) {
-                        savedToken = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('raiox_' + Math.random().toString(36).substring(2) + Date.now());
-                        try {
-                            localStorage.setItem('raiox_token', savedToken);
-                        } catch (e) {}
-                    }
-                    this.token = savedToken;
-
-                    // 2. UTMs e Origem
-                    const urlParams = new URLSearchParams(window.location.search);
-                    let utms = {};
-                    try {
-                        const storedUtms = localStorage.getItem('raiox_utms');
-                        if (storedUtms) utms = JSON.parse(storedUtms);
-                    } catch (e) {}
-
-                    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'];
-                    utmKeys.forEach(k => {
-                        if (urlParams.has(k)) {
-                            utms[k] = urlParams.get(k);
-                        }
-                    });
-
-                    try {
-                        localStorage.setItem('raiox_utms', JSON.stringify(utms));
-                    } catch (e) {}
-                    this.utms = utms;
-
-                    this.origem = urlParams.get('origem') || utms.utm_source || '{{ origem or "direto" }}';
-                    this.lead.origem = this.origem;
-
-                    // 3. Retomada se vier do servidor via ?retomar=<token>
-                    const resumeData = {{ resume_data | tojson if resume_data else 'null' }};
-                    if (resumeData) {
-                        this.token = resumeData.token || this.token;
-                        try { localStorage.setItem('raiox_token', this.token); } catch (e) {}
-                        if (resumeData.nome) this.lead.nome = resumeData.nome;
-                        if (resumeData.email) this.lead.email = resumeData.email;
-                        if (resumeData.whatsapp) this.lead.whatsapp = resumeData.whatsapp;
-                        if (resumeData.empresa) this.lead.empresa = resumeData.empresa;
-                        if (resumeData.quantidade_funcionarios) this.lead.quantidade_funcionarios = resumeData.quantidade_funcionarios;
-                        if (resumeData.faturamento_mensal) this.lead.faturamento_mensal = resumeData.faturamento_mensal;
-                        if (resumeData.origem) this.lead.origem = resumeData.origem;
-
-                        if (Array.isArray(resumeData.respostas) && resumeData.respostas.length > 0) {
-                            for (let i = 0; i < Math.min(20, resumeData.respostas.length); i++) {
-                                this.answers[i] = resumeData.respostas[i];
-                            }
-                        }
-
-                        let nextUnanswered = 1;
-                        for (let i = 0; i < 20; i++) {
-                            if (this.answers[i] === null) {
-                                nextUnanswered = i + 1;
-                                break;
-                            }
-                        }
-                        this.step = nextUnanswered;
-                        this.resumed = true;
-                    }
-                    
-                    this.$watch('step', value => {
-                        this.updateProgress();
-                        setTimeout(() => lucide.createIcons(), 50);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    });
-                    this.updateProgress();
-                },
-
-                formatWhatsApp(e) {
-                    let v = e.target.value.replace(/\D/g, '').slice(0, 11);
-                    if (v.length > 10) {
-                        v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
-                    } else if (v.length > 6) {
-                        v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
-                    } else if (v.length > 2) {
-                        v = v.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
-                    } else if (v.length > 0) {
-                        v = v.replace(/^(\d*)$/, '($1');
-                    }
-                    this.lead.whatsapp = v;
-                },
-
-                onFieldBlur() {
-                    clearTimeout(this._debounceTimer);
-                    this._debounceTimer = setTimeout(() => {
-                        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.lead.email || '');
-                        const rawPhone = (this.lead.whatsapp || '').replace(/\D/g, '');
-                        const phoneValid = rawPhone.length === 10 || rawPhone.length === 11;
-                        const nameValid = (this.lead.nome || '').trim().length >= 2;
-
-                        if (emailValid || phoneValid || nameValid) {
-                            this.sendProgress('dados');
-                        }
-                    }, 800);
-                },
-
-                sendProgress(etapa) {
-                    const payload = {
-                        token: this.token,
-                        etapa: etapa,
-                        lead_info: {
-                            ...this.lead,
-                            ...this.utms,
-                            origem: this.origem
-                        },
-                        answers: this.answers
-                    };
-
-                    const strPayload = JSON.stringify(payload);
-                    if (this._lastProgressSent === strPayload) {
-                        return;
-                    }
-                    this._lastProgressSent = strPayload;
-
-                    try {
-                        if (navigator.sendBeacon) {
-                            const blob = new Blob([strPayload], { type: 'application/json' });
-                            navigator.sendBeacon('/raiox/progresso', blob);
-                        } else {
-                            fetch('/raiox/progresso', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: strPayload,
-                                keepalive: true
-                            }).catch(() => {});
-                        }
-                    } catch (e) {
-                        // ignora erros para não travar o usuário
-                    }
-                },
-                
-                updateProgress() {
-                    if (this.step === 0) {
-                        this.progress = 0;
-                    } else if (typeof this.step === 'number' && this.step <= 20) {
-                        this.progress = ((this.step - 1) / 20) * 100;
-                    } else {
-                        this.progress = 100;
-                    }
-                },
-                
-                stepName() {
-                    if (this.step === 0) return 'Informações Básicas';
-                    if (typeof this.step === 'number' && this.step >= 1 && this.step <= 20) {
-                        return this.questions[this.step - 1].eixo_nome;
-                    }
-                    return 'Diagnóstico';
-                },
-                
-                currentEixoIndex() {
-                    if (this.step === 0) return 0;
-                    if (this.step <= 4) return 1;
-                    if (this.step <= 8) return 2;
-                    if (this.step <= 12) return 3;
-                    if (this.step <= 16) return 4;
-                    return 5;
-                },
-                
-                selectAnswer(questionIdx, value) {
-                    this.answers[questionIdx] = value;
-                    this.sendProgress(questionIdx + 1);
-                    // Auto-avanço sutil para melhor experiência
-                    setTimeout(() => {
-                        this.nextStep(questionIdx + 1);
-                    }, 350);
-                },
-                
-                nextStep(currentStep) {
-                    if (currentStep === 0) {
-                        const form = document.querySelector('form');
-                        if (form && !form.checkValidity()) {
-                            form.reportValidity();
-                            return;
-                        }
-                        this.sendProgress('iniciou');
-                        this.step = 1;
-                    } else if (currentStep < 20) {
-                        if (this.answers[currentStep - 1] !== null) {
-                            this.step++;
-                        }
-                    } else if (currentStep === 20) {
-                        this.submitDiagnostic();
-                    }
-                },
-                
-                prevStep() {
-                    if (this.step === 'resultado') {
-                        this.step = 20;
-                    } else if (this.step > 0) {
-                        this.step--;
-                    }
-                },
-                
-                async submitDiagnostic() {
-                    this.isSubmitting = true;
-                    
-                    const metaEventId = 'raiox_' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '_' + Math.random().toString(36).substring(2, 9)));
-
-                    const payload = {
-                        token: this.token,
-                        event_id: metaEventId,
-                        lead_info: {
-                            ...this.lead,
-                            ...this.utms,
-                            origem: this.origem,
-                            event_id: metaEventId
-                        },
-                        answers: this.answers
-                    };
-                    
-                    try {
-                        const response = await fetch('/raiox/submit', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.status === 'success' && result.resultado) {
-                            this.resultado = result.resultado;
-                            this.step = 'resultado';
-                            this.isSubmitting = false;
-
-                            // Disparo do evento 'Lead' da Meta SOMENTE após o backend responder OK
-                            try {
-                                const finalEventId = result.event_id || (result.resultado && result.resultado.event_id) || metaEventId;
-                                if (typeof fbq === 'function') {
-                                    fbq('track', 'Lead', {
-                                        content_name: 'Raio X NorthWay',
-                                        content_category: 'diagnostico'
-                                    }, { eventID: finalEventId });
-                                }
-                            } catch (metaErr) {
-                                console.warn('Meta Pixel tracking error:', metaErr);
-                            }
-
-                            setTimeout(() => lucide.createIcons(), 50);
-                        } else {
-                            alert('Ocorreu um erro: ' + (result.message || 'Falha ao processar'));
-                            this.isSubmitting = false;
-                        }
-                    } catch (error) {
-                        console.error('Submit error:', error);
-                        alert('Falha na conexão. Tente novamente.');
-                        this.isSubmitting = false;
-                    }
-                }
-            }));
+        requestAnimationFrame(() => {
+          const ring = document.getElementById('scoreRing');
+          if (ring) ring.style.strokeDashoffset = String(offset);
         });
-    </script>
+      }
+    }
+
+    function pickPath(pathKey, btn) {
+      if (btn) btn.classList.add('selected');
+      state.path = pathKey;
+      state.step = 'q';
+      state.i = 0;
+      state.ans = {};
+      state.resumed = false;
+      saveLocal();
+      trackPixel('trackCustom', 'RaioXInicio', { caminho: pathKey });
+      postProgress('inicio');
+      setTimeout(render, 220);
+    }
+
+    function pickAnswer(qid, val, btn) {
+      if (btn) btn.classList.add('selected');
+      state.ans[qid] = val;
+      const num = state.i + 1;
+      postProgress('p' + num);
+
+      setTimeout(() => {
+        const ids = PATHS[state.path].ids;
+        if (state.i + 1 < ids.length) {
+          state.i += 1;
+          saveLocal();
+          render();
+        } else {
+          state.step = 'dados';
+          saveLocal();
+          trackPixel('trackCustom', 'RaioXPerguntas', { caminho: state.path });
+          postProgress('dados');
+          render();
+        }
+      }, 240);
+    }
+
+    function goBack() {
+      if (state.step === 'dados') {
+        state.step = 'q';
+        state.i = PATHS[state.path].ids.length - 1;
+      } else if (state.step === 'q') {
+        if (state.i > 0) {
+          state.i -= 1;
+        } else {
+          state.step = 'inicio';
+          state.path = null;
+        }
+      }
+      saveLocal();
+      render();
+    }
+
+    function resetFlow() {
+      clearLocal();
+      state = {
+        token: newToken(),
+        step: 'inicio',
+        path: null,
+        i: 0,
+        ans: {},
+        resumed: false,
+        resultado: null
+      };
+      postProgress('abriu');
+      render();
+    }
+
+    function maskTel(input) {
+      let d = input.value.replace(/\D/g, '').slice(0, 11);
+      if (d.length > 10) {
+        d = d.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+      } else if (d.length > 6) {
+        d = d.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+      } else if (d.length > 2) {
+        d = d.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+      }
+      input.value = d;
+    }
+
+    async function submitLead(e) {
+      e.preventDefault();
+      const errEl = document.getElementById('formError');
+      const btn = document.getElementById('submitBtn');
+      const nome = (document.getElementById('fNome').value || '').trim();
+      const whatsRaw = (document.getElementById('fWhats').value || '').trim();
+      const whatsDigits = whatsRaw.replace(/\D/g, '');
+      const empresa = (document.getElementById('fEmpresa').value || '').trim();
+
+      errEl.style.display = 'none';
+
+      if (!nome) {
+        errEl.textContent = 'Por favor, informe seu nome.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (whatsDigits.length < 10) {
+        errEl.textContent = 'Por favor, informe um WhatsApp válido com DDD.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      const eventId = 'lead_' + state.token.replace(/[^a-zA-Z0-9]/g, '').slice(0, 16);
+      btn.disabled = true;
+      btn.textContent = 'Calculando resultado...';
+
+      try {
+        const res = await fetch('/raiox/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            version: 'v3',
+            token: state.token,
+            path: state.path,
+            event_id: eventId,
+            answers: state.ans,
+            lead_info: Object.assign({}, utms, {
+              nome: nome,
+              whatsapp: whatsRaw,
+              empresa: empresa
+            })
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') {
+          throw new Error(data.message || 'Erro ao enviar diagnóstico.');
+        }
+
+        trackPixel('track', 'Lead', {}, { eventID: data.resultado.event_id || eventId });
+        clearLocal();
+        state.resultado = data.resultado;
+        state.step = 'res';
+        state.resumed = false;
+        render();
+      } catch (err) {
+        errEl.textContent = err.message || 'Não foi possível concluir. Tente novamente.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Ver meu resultado →';
+      }
+    }
+
+    restoreProgress();
+    if (!state.resumed) {
+      postProgress('abriu');
+    }
+    render();
+  </script>
 </body>
 </html>

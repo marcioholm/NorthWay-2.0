@@ -245,6 +245,348 @@ RAIOX_QUESTIONS = [
     }
 ]
 
+RAIOX_V3_QUESTIONS = {
+    "1": {
+        "id": 1,
+        "area": "Atrair",
+        "eixo": "atrair",
+        "curto": "Cliente ideal",
+        "pergunta": "Você sabe quem é o seu cliente ideal?",
+        "opcoes": [
+            "Não, atendo quem aparecer",
+            "Tenho uma ideia, mas nunca coloquei no papel",
+            "Sei bem: perfil, região e o que ele procura",
+            "Sei e uso isso para decidir onde e como divulgar",
+        ],
+        "acao": "Escreva em uma página quem é o cliente que mais dá lucro e menos dá trabalho, o que ele procura e onde costuma estar. Use isso para ajustar sua comunicação e seus anúncios.",
+    },
+    "2": {
+        "id": 2,
+        "area": "Atrair",
+        "eixo": "atrair",
+        "curto": "Presença no Google",
+        "pergunta": "Quando alguém procura sua empresa no Google, encontra?",
+        "opcoes": [
+            "Não aparece, ou não sei",
+            "Aparece, mas com informação desatualizada ou sem fotos",
+            "Aparece com perfil completo (endereço, horário, fotos)",
+            "Perfil completo e com avaliações recentes respondidas",
+        ],
+        "acao": "Atualize hoje o Perfil da Empresa no Google: fotos recentes, horário, endereço, WhatsApp e link para contato. Peça avaliação para os próximos 10 clientes atendidos.",
+    },
+    "3": {
+        "id": 3,
+        "area": "Atrair",
+        "eixo": "atrair",
+        "curto": "Frequência de divulgação",
+        "pergunta": "Com que frequência sua empresa divulga (posts ou anúncios)?",
+        "opcoes": [
+            "Quase nunca",
+            "Quando sobra tempo, sem regularidade",
+            "Toda semana, com frequência definida",
+            "Toda semana, com calendário, e acompanho o resultado",
+        ],
+        "acao": "Defina uma rotina mínima semanal de divulgação (posts + oferta clara com chamada para o WhatsApp) e acompanhe quantas conversas chegam por semana.",
+    },
+    "4": {
+        "id": 4,
+        "area": "Atrair",
+        "eixo": "atrair",
+        "curto": "Origem dos clientes",
+        "pergunta": "Você sabe de onde vêm os seus novos clientes?",
+        "opcoes": [
+            "Não sei",
+            "Tenho um palpite (\"acho que é pelo Instagram\")",
+            "Pergunto ou anoto a origem da maioria",
+            "Anoto a origem de todos e sei quantos cada canal traz",
+        ],
+        "acao": "Passe a perguntar e anotar em todo atendimento: 'Como nos encontrou?' (Instagram, Google, Indicação, Anúncio). Em 30 dias você saberá onde investir com segurança.",
+    },
+    "7": {
+        "id": 7,
+        "area": "Engajar",
+        "eixo": "engajar",
+        "curto": "Prova social",
+        "pergunta": "Sua empresa mostra depoimentos ou avaliações de clientes?",
+        "opcoes": [
+            "Não",
+            "Tenho alguns, mas quase não uso",
+            "Peço e publico com frequência",
+            "Peço a todo cliente e tenho avaliações recentes no Google e nas redes",
+        ],
+        "acao": "Envie uma mensagem curta logo após a entrega pedindo uma avaliação no Google e publique 1 depoimento por semana nos stories e no perfil.",
+    },
+    "9": {
+        "id": 9,
+        "area": "Vender",
+        "eixo": "vender",
+        "curto": "Passo a passo de atendimento",
+        "pergunta": "Quando alguém pede orçamento, existe um passo a passo de atendimento?",
+        "opcoes": [
+            "Não, cada um atende do seu jeito",
+            "Existe na minha cabeça, mas não está escrito",
+            "Existe e está escrito (roteiro, mensagens prontas)",
+            "Está escrito, todos seguem, e eu acompanho",
+        ],
+        "acao": "Escreva um roteiro simples de 4 passos (saudação + 3 perguntas para entender a necessidade + apresentação de valor + proposta com prazo) para toda a equipe seguir.",
+    },
+    "10": {
+        "id": 10,
+        "area": "Vender",
+        "eixo": "vender",
+        "curto": "Tempo de resposta",
+        "pergunta": "Quanto tempo vocês levam para responder um novo contato?",
+        "opcoes": [
+            "Mais de um dia, ou às vezes nem respondemos",
+            "Algumas horas",
+            "Menos de 1 hora, no horário comercial",
+            "Poucos minutos, e eu acompanho esse tempo",
+        ],
+        "acao": "Defina a meta de responder todo novo lead em até 10 minutos no horário comercial e ative mensagem automática imediata fora do expediente.",
+    },
+    "11": {
+        "id": 11,
+        "area": "Vender",
+        "eixo": "vender",
+        "curto": "Follow-up de orçamento",
+        "pergunta": "Se a pessoa não fecha na hora, alguém volta a falar com ela?",
+        "opcoes": [
+            "Não, esperamos ela voltar",
+            "Às vezes, quando lembramos",
+            "Sim, sempre voltamos a falar em dias combinados",
+            "Sim, com datas definidas, anotando o resultado de cada retorno",
+        ],
+        "acao": "Crie uma regra fixa de retorno: 1 dia, 3 dias e 7 dias após o orçamento enviado, sempre com uma pergunta útil — sem isso você perde vendas já quase fechadas.",
+    },
+    "12": {
+        "id": 12,
+        "area": "Vender",
+        "eixo": "vender",
+        "curto": "Controle de orçamentos",
+        "pergunta": "Onde fica anotado quem pediu orçamento e em que etapa cada um está?",
+        "opcoes": [
+            "Em lugar nenhum, fica na memória",
+            "Só nas conversas do WhatsApp",
+            "Numa planilha ou caderno organizado",
+            "Num sistema de vendas (CRM) que toda a equipe atualiza",
+        ],
+        "acao": "Centralize todos os orçamentos em um funil simples (Novo → Em conversa → Proposta enviada → Fechado/Perdido) com data de próximo contato.",
+    },
+    "13": {
+        "id": 13,
+        "area": "Reter",
+        "eixo": "reter",
+        "curto": "Pós-venda",
+        "pergunta": "Depois da venda, sua empresa volta a falar com o cliente?",
+        "opcoes": [
+            "Não",
+            "Só se ele chamar ou tiver problema",
+            "Sim, para saber se ficou satisfeito e oferecer algo novo",
+            "Sim, em datas planejadas, e sei quantos voltam a comprar",
+        ],
+        "acao": "Coloque um lembrete automático para 7 dias após a venda perguntando como foi a experiência e 60–90 dias para oferecer recompra ou indicação.",
+    },
+    "17": {
+        "id": 17,
+        "area": "Gestão",
+        "eixo": "gestao",
+        "curto": "Lucro real do mês",
+        "pergunta": "Você sabe se a empresa deu lucro no mês passado, depois de pagar tudo, inclusive o seu salário?",
+        "opcoes": [
+            "Não sei",
+            "Tenho uma ideia pelo saldo da conta",
+            "Sei, faço essa conta todo mês",
+            "Sei, e comparo com os meses anteriores para tomar decisões",
+        ],
+        "acao": "Feche um DRE simples todo dia 5: tudo o que entrou menos custos, despesas fixas e seu pró-labore. Só assim você enxerga o lucro real.",
+    },
+    "18": {
+        "id": 18,
+        "area": "Gestão",
+        "eixo": "gestao",
+        "curto": "Meta de vendas",
+        "pergunta": "Sua empresa tem meta de vendas?",
+        "opcoes": [
+            "Não temos meta",
+            "Tenho um valor na cabeça",
+            "Temos meta mensal definida",
+            "Meta mensal definida e acompanhada toda semana",
+        ],
+        "acao": "Defina a meta de faturamento do mês dividida por semana e acompanhe toda segunda-feira quanto já foi vendido e quanto falta.",
+    },
+    "19": {
+        "id": 19,
+        "area": "Gestão",
+        "eixo": "gestao",
+        "curto": "Números de vendas",
+        "pergunta": "Você acompanha os números de vendas: quantos pediram orçamento, quantos compraram e o valor médio de cada venda?",
+        "opcoes": [
+            "Não acompanho",
+            "Só sei o total vendido",
+            "Acompanho alguns desses números",
+            "Acompanho todos, todo mês",
+        ],
+        "acao": "Anote semanalmente apenas 3 números: quantos orçamentos chegaram, quantos fecharam e o ticket médio. Com eles você sabe onde está o gargalo do caixa.",
+    },
+    "21": {
+        "id": 21,
+        "area": "Gestão",
+        "eixo": "gestao",
+        "curto": "Separação PF/PJ",
+        "pergunta": "O dinheiro da empresa e o seu dinheiro pessoal ficam separados?",
+        "opcoes": [
+            "Não, é tudo junto",
+            "Tenho conta da empresa, mas misturo bastante",
+            "Separado, e eu tiro um valor fixo por mês",
+            "Separado, com pró-labore fixo e controle de entradas e saídas",
+        ],
+        "acao": "Abra (ou passe a usar só) uma conta da empresa para tudo o que entra e sai do negócio e defina um pró-labore fixo mensal para você. Sem isso, não dá para saber se a empresa dá lucro.",
+    },
+    "22": {
+        "id": 22,
+        "area": "Gestão",
+        "eixo": "gestao",
+        "curto": "Formação de preço",
+        "pergunta": "Como você define o preço do que vende?",
+        "opcoes": [
+            "Copio o preço do concorrente ou chuto",
+            "Custo mais uma porcentagem, sem considerar despesas fixas",
+            "Calculo com custos, despesas e impostos",
+            "Calculo com custos, despesas, impostos e a margem de lucro que eu quero",
+        ],
+        "acao": "Liste custo do produto/serviço, despesas fixas do mês, impostos e taxas. Calcule o preço mínimo que cobre tudo e acrescente a margem desejada. Revise os 5 itens que você mais vende.",
+    },
+}
+
+RAIOX_V3_PATHS = {
+    "marketing": {
+        "key": "marketing",
+        "label": "Atrair clientes",
+        "area": "Marketing",
+        "eixo": "atrair",
+        "ids": [1, 2, 3, 4, 7],
+    },
+    "comercial": {
+        "key": "comercial",
+        "label": "Vender",
+        "area": "Comercial",
+        "eixo": "vender",
+        "ids": [10, 9, 11, 12, 13],
+    },
+    "gestao": {
+        "key": "gestao",
+        "label": "Organizar a empresa",
+        "area": "Gestão",
+        "eixo": "gestao",
+        "ids": [17, 21, 18, 19, 22],
+    },
+    "geral": {
+        "key": "geral",
+        "label": "Diagnóstico Geral",
+        "area": "Geral",
+        "eixo": "geral",
+        "ids": [4, 7, 10, 13, 17],
+    },
+}
+
+
+def calculate_raiox_v3(path_key, raw_answers):
+    """
+    Calcula o resultado do Raio-X v3 (1 + 5 perguntas).
+    Nota da área = soma / 15 * 10 (1 casa decimal).
+    """
+    path = RAIOX_V3_PATHS.get(path_key) or RAIOX_V3_PATHS["geral"]
+    q_ids = path["ids"]
+
+    ans_map = {}
+    if isinstance(raw_answers, dict):
+        for qid in q_ids:
+            val = raw_answers.get(str(qid), raw_answers.get(qid, 0))
+            ans_map[str(qid)] = max(0, min(3, safe_int(val, 0)))
+    elif isinstance(raw_answers, list):
+        for idx, qid in enumerate(q_ids):
+            val = raw_answers[idx] if idx < len(raw_answers) else 0
+            ans_map[str(qid)] = max(0, min(3, safe_int(val, 0)))
+    else:
+        for qid in q_ids:
+            ans_map[str(qid)] = 0
+
+    soma = sum(ans_map[str(qid)] for qid in q_ids)
+    nota = round((soma / 15.0) * 10.0, 1)
+    nota_formatada = f"{nota:.1f}".replace(".", ",")
+
+    # Ponto mais urgente: pergunta com menor nota (empate: primeira na ordem do caminho)
+    urg_qid = min(q_ids, key=lambda qid: ans_map[str(qid)])
+    urg_q = RAIOX_V3_QUESTIONS[str(urg_qid)]
+
+    # Calcula notas por eixo quando disponíveis
+    eixos_vals = {"atrair": [], "engajar": [], "vender": [], "reter": [], "gestao": []}
+    detalhes = []
+    for qid in q_ids:
+        q = RAIOX_V3_QUESTIONS[str(qid)]
+        val = ans_map[str(qid)]
+        eixos_vals[q["eixo"]].append(val)
+        detalhes.append({
+            "id": qid,
+            "curto": q["curto"],
+            "area": q["area"],
+            "eixo": q["eixo"],
+            "pergunta": q["pergunta"],
+            "valor": val,
+            "resposta": q["opcoes"][val],
+        })
+
+    notas_eixos = {}
+    for eixo_k, vals in eixos_vals.items():
+        if vals:
+            notas_eixos[eixo_k] = round((sum(vals) / (3.0 * len(vals))) * 10.0, 1)
+        else:
+            notas_eixos[eixo_k] = None
+
+    if path["key"] == "geral":
+        gargalo_eixo = urg_q["eixo"]
+        gargalo_nome = urg_q["area"]
+        gargalo_nota = notas_eixos.get(gargalo_eixo) if notas_eixos.get(gargalo_eixo) is not None else nota
+    else:
+        gargalo_eixo = path["eixo"]
+        gargalo_nome = path["area"]
+        gargalo_nota = nota
+
+    gargalo_nota_formatada = f"{gargalo_nota:.1f}".replace(".", ",")
+
+    return {
+        "version": "v3",
+        "caminho": path["key"],
+        "caminho_label": path["label"],
+        "area_nome": path["area"],
+        "soma": soma,
+        "nota": nota,
+        "nota_formatada": nota_formatada,
+        "indice": nota,
+        "indice_formatado": nota_formatada,
+        "notas": {
+            "atrair": notas_eixos["atrair"] if notas_eixos["atrair"] is not None else 0.0,
+            "engajar": notas_eixos["engajar"] if notas_eixos["engajar"] is not None else 0.0,
+            "vender": notas_eixos["vender"] if notas_eixos["vender"] is not None else 0.0,
+            "reter": notas_eixos["reter"] if notas_eixos["reter"] is not None else 0.0,
+            "gestao": notas_eixos["gestao"] if notas_eixos["gestao"] is not None else 0.0,
+        },
+        "gargalo": gargalo_eixo,
+        "gargalo_nome": gargalo_nome,
+        "gargalo_nota": gargalo_nota,
+        "gargalo_nota_formatada": gargalo_nota_formatada,
+        "ponto_fraco_num": urg_qid,
+        "urgente_id": urg_qid,
+        "urgente_curto": urg_q["curto"],
+        "urgente_area": urg_q["area"],
+        "urgente_pergunta": urg_q["pergunta"],
+        "urgente_valor": ans_map[str(urg_qid)],
+        "ponto_fraco_pergunta": urg_q["pergunta"],
+        "acao_prioritaria": urg_q["acao"],
+        "respostas_dict": ans_map,
+        "detalhes": detalhes,
+    }
+
 def safe_int(val, default=0):
     try:
         if val is None or val == '':
@@ -643,6 +985,33 @@ def ensure_raiox_v2_columns():
             except Exception:
                 conn.rollback()
 
+            # Tabela de sessões anônimas do funil Raio-X v3
+            try:
+                pk_def = "SERIAL PRIMARY KEY" if is_postgres else "INTEGER PRIMARY KEY AUTOINCREMENT"
+                conn.execute(text(f"""
+                    CREATE TABLE IF NOT EXISTS raiox_sessions (
+                        id {pk_def},
+                        session_token VARCHAR(100) UNIQUE NOT NULL,
+                        caminho VARCHAR(30),
+                        etapa_maxima VARCHAR(30) DEFAULT 'abriu',
+                        etapa_ordem INTEGER DEFAULT 0,
+                        respostas_json TEXT,
+                        lead_id INTEGER,
+                        origem VARCHAR(100),
+                        utm_source VARCHAR(255),
+                        utm_medium VARCHAR(255),
+                        utm_campaign VARCHAR(255),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.execute(text('CREATE INDEX IF NOT EXISTS ix_raiox_sessions_created_at ON raiox_sessions (created_at)'))
+                conn.execute(text('CREATE INDEX IF NOT EXISTS ix_raiox_sessions_etapa ON raiox_sessions (etapa_maxima)'))
+                conn.commit()
+            except Exception as ex_sess:
+                logger.warning(f"ensure_raiox_v2_columns raiox_sessions: {ex_sess}")
+                conn.rollback()
+
             # Limpeza de leads de teste (Critério de aceite)
             try:
                 conn.execute(text("DELETE FROM \"lead\" WHERE email = 'teste.claude@exemplo.com' OR name = 'TESTE Claude - apagar'"))
@@ -651,6 +1020,123 @@ def ensure_raiox_v2_columns():
                 conn.rollback()
     except Exception as e:
         logger.warning(f"ensure_raiox_v2_columns: {e}")
+
+
+RAIOX_SESSION_STAGE_ORDER = {
+    'abriu': 0,
+    'inicio': 1,
+    'iniciou': 1,
+    'p1': 2,
+    'p2': 3,
+    'p3': 4,
+    'p4': 5,
+    'p5': 6,
+    'dados': 7,
+    'concluido': 8,
+}
+
+
+def upsert_raiox_session(
+    token,
+    caminho=None,
+    etapa=None,
+    answers=None,
+    lead_id=None,
+    origem=None,
+    utm_source=None,
+    utm_medium=None,
+    utm_campaign=None,
+):
+    """
+    Registra/atualiza o progresso anônimo da sessão no funil Raio-X.
+    Mantém sempre a etapa mais avançada atingida (etapa_maxima / etapa_ordem).
+    """
+    if not token:
+        return
+    try:
+        etapa_norm = (str(etapa or 'abriu').strip().lower()) or 'abriu'
+        if etapa_norm in RAIOX_SESSION_STAGE_ORDER:
+            etapa_ordem = RAIOX_SESSION_STAGE_ORDER[etapa_norm]
+            if etapa_norm == 'iniciou':
+                etapa_norm = 'inicio'
+        else:
+            # Fallback para etapas numéricas (v2)
+            try:
+                q_n = int(etapa_norm)
+                etapa_norm = f"p{q_n}" if q_n <= 5 else "dados"
+                etapa_ordem = min(6, max(1, q_n + 1))
+            except ValueError:
+                etapa_norm = 'abriu'
+                etapa_ordem = 0
+
+        respostas_str = json.dumps(answers, ensure_ascii=False) if answers is not None else None
+        agora = datetime.utcnow()
+
+        row = db.session.execute(
+            text("SELECT id, etapa_ordem, etapa_maxima, caminho, respostas_json, lead_id FROM raiox_sessions WHERE session_token = :tok"),
+            {"tok": token},
+        ).fetchone()
+
+        if not row:
+            db.session.execute(
+                text("""
+                    INSERT INTO raiox_sessions (
+                        session_token, caminho, etapa_maxima, etapa_ordem,
+                        respostas_json, lead_id, origem, utm_source, utm_medium, utm_campaign,
+                        created_at, updated_at
+                    ) VALUES (
+                        :tok, :caminho, :etapa, :ordem,
+                        :resp, :lead_id, :origem, :us, :um, :uc,
+                        :agora, :agora
+                    )
+                """),
+                {
+                    "tok": token,
+                    "caminho": caminho,
+                    "etapa": etapa_norm,
+                    "ordem": etapa_ordem,
+                    "resp": respostas_str,
+                    "lead_id": lead_id,
+                    "origem": origem,
+                    "us": utm_source,
+                    "um": utm_medium,
+                    "uc": utm_campaign,
+                    "agora": agora,
+                },
+            )
+        else:
+            curr_ordem = row[1] if row[1] is not None else 0
+            new_etapa = etapa_norm if etapa_ordem >= curr_ordem else row[2]
+            new_ordem = max(curr_ordem, etapa_ordem)
+            new_caminho = caminho or row[3]
+            new_resp = respostas_str if respostas_str is not None else row[4]
+            new_lead_id = lead_id if lead_id is not None else row[5]
+
+            db.session.execute(
+                text("""
+                    UPDATE raiox_sessions
+                    SET caminho = :caminho,
+                        etapa_maxima = :etapa,
+                        etapa_ordem = :ordem,
+                        respostas_json = :resp,
+                        lead_id = :lead_id,
+                        updated_at = :agora
+                    WHERE session_token = :tok
+                """),
+                {
+                    "tok": token,
+                    "caminho": new_caminho,
+                    "etapa": new_etapa,
+                    "ordem": new_ordem,
+                    "resp": new_resp,
+                    "lead_id": new_lead_id,
+                    "agora": agora,
+                },
+            )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.warning(f"upsert_raiox_session: {e}")
 
 # -------------------------------------------------------------------------
 # Rotas
@@ -777,16 +1263,19 @@ def index():
         origem=origem,
         whatsapp_number=whatsapp_number,
         questions=RAIOX_QUESTIONS,
+        v3_questions=RAIOX_V3_QUESTIONS,
+        v3_paths=RAIOX_V3_PATHS,
         resume_data=resume_data
     )
 
 
 @diagnostic_raiox_bp.route('/raiox/progresso', methods=['POST'])
-@limiter.limit("30 per minute")
+@limiter.limit("60 per minute")
 def progresso():
     """
     Captura progressiva do Raio-X NorthWay.
-    Salva/atualiza o lead à medida que preenche dados ou responde perguntas.
+    Sempre registra a sessão anônima em raiox_sessions.
+    Só cria/atualiza Lead no CRM quando há WhatsApp ou Nome+E-mail.
     """
     try:
         ensure_raiox_v2_columns()
@@ -796,6 +1285,7 @@ def progresso():
             return jsonify({'status': 'error', 'message': 'Token obrigatório'}), 400
 
         etapa = str(data.get('etapa') or '').strip()
+        caminho = (data.get('path') or data.get('caminho') or '').strip() or None
         lead_info = data.get('lead_info') or {}
         answers = data.get('answers')
 
@@ -817,6 +1307,18 @@ def progresso():
         fbclid = lead_info.get('fbclid')
         meta_event_id = (data.get('event_id') or lead_info.get('event_id') or f"lead_{uuid.uuid4().hex[:16]}").strip()
 
+        # Sempre grava progresso anônimo da sessão (sem exigir dados pessoais)
+        upsert_raiox_session(
+            token=token,
+            caminho=caminho,
+            etapa=etapa or 'abriu',
+            answers=answers,
+            origem=origem,
+            utm_source=utm_source,
+            utm_medium=utm_medium,
+            utm_campaign=utm_campaign,
+        )
+
         company_id, _, _ = get_raiox_company_and_pipeline()
 
         lead = Lead.query.filter_by(raiox_token=token).first()
@@ -827,10 +1329,16 @@ def progresso():
             if not lead:
                 lead = Lead.query.filter_by(phone=whatsapp).first()
 
+        # Só cria novo Lead quando o usuário já informou WhatsApp (ou Nome + Email)
+        has_contact = bool(whatsapp) or bool(nome and email)
+        if not lead and not has_contact:
+            return jsonify({'status': 'ok', 'session_only': True})
+
         is_new = False
         if not lead:
             lead = Lead(
                 company_id=company_id,
+                name=nome or (f"Lead {whatsapp}" if whatsapp else "Lead Raio-X"),
                 source='Raio-X Digital (parcial)',
                 pipeline_id=None,
                 pipeline_stage_id=None,
@@ -940,32 +1448,62 @@ def submit():
         consentimento = True
         consentimento_em = datetime.utcnow()
 
-        # 2. Extração das Respostas (20 inteiros de 0 a 3)
+        # 2. Detectar versão (v3 = 1+5 perguntas ou v2 = 20 perguntas)
         raw_answers = data.get('answers')
-        respostas_list = []
-        
-        if isinstance(raw_answers, list):
-            respostas_list = [safe_int(x, 0) for x in raw_answers]
-        elif isinstance(raw_answers, dict):
-            # Ordem exata dos 5 eixos
-            for e_key in ['atrair', 'engajar', 'vender', 'reter', 'gestao']:
-                sub_arr = raw_answers.get(e_key, [])
-                for val in sub_arr:
-                    respostas_list.append(safe_int(val, 0))
-        
-        # Garantir exatamente 20 respostas
-        while len(respostas_list) < 20:
-            respostas_list.append(0)
-        respostas_list = respostas_list[:20]
+        path_key = (data.get('path') or data.get('caminho') or '').strip().lower()
+        is_v3 = (
+            data.get('version') == 'v3'
+            or path_key in RAIOX_V3_PATHS
+            or (
+                isinstance(raw_answers, dict)
+                and any(str(k) in RAIOX_V3_QUESTIONS for k in raw_answers.keys())
+            )
+        )
 
-        # 3. Cálculo das Notas e Gargalo
-        resultado = calculate_raiox_v2(respostas_list)
-        notas = resultado['notas']
-        indice = resultado['indice']
-        gargalo = resultado['gargalo']
-        gargalo_nome = resultado['gargalo_nome']
-        gargalo_nota_formatada = resultado['gargalo_nota_formatada']
-        ponto_fraco = resultado['ponto_fraco_num']
+        if is_v3:
+            if path_key not in RAIOX_V3_PATHS:
+                path_key = 'geral'
+            if not nome or not whatsapp:
+                return jsonify({'status': 'error', 'message': 'Nome e WhatsApp são obrigatórios.'}), 400
+            resultado = calculate_raiox_v3(path_key, raw_answers)
+            respostas_storage = {
+                'version': 'v3',
+                'path': path_key,
+                'answers': resultado['respostas_dict'],
+            }
+            notas = resultado['notas']
+            indice = resultado['nota']
+            gargalo = resultado['gargalo']
+            gargalo_nome = resultado['gargalo_nome']
+            gargalo_nota_formatada = resultado['gargalo_nota_formatada']
+            ponto_fraco = resultado['ponto_fraco_num']
+            respostas_list = [d['valor'] for d in resultado['detalhes']]
+        else:
+            # Extração das Respostas v2 (20 inteiros de 0 a 3)
+            respostas_list = []
+
+            if isinstance(raw_answers, list):
+                respostas_list = [safe_int(x, 0) for x in raw_answers]
+            elif isinstance(raw_answers, dict):
+                # Ordem exata dos 5 eixos
+                for e_key in ['atrair', 'engajar', 'vender', 'reter', 'gestao']:
+                    sub_arr = raw_answers.get(e_key, [])
+                    for val in sub_arr:
+                        respostas_list.append(safe_int(val, 0))
+
+            # Garantir exatamente 20 respostas
+            while len(respostas_list) < 20:
+                respostas_list.append(0)
+            respostas_list = respostas_list[:20]
+
+            resultado = calculate_raiox_v2(respostas_list)
+            respostas_storage = respostas_list
+            notas = resultado['notas']
+            indice = resultado['indice']
+            gargalo = resultado['gargalo']
+            gargalo_nome = resultado['gargalo_nome']
+            gargalo_nota_formatada = resultado['gargalo_nota_formatada']
+            ponto_fraco = resultado['ponto_fraco_num']
 
         # 4. Salvar no CRM
         company_id, _, _ = get_raiox_company_and_pipeline()
@@ -1002,7 +1540,7 @@ def submit():
         if funcionarios:
             lead.funcionarios = str(funcionarios)
             lead.company_size = str(funcionarios)
-        lead.respostas = respostas_list
+        lead.respostas = respostas_storage
         lead.nota_atrair = notas['atrair']
         lead.nota_engajar = notas['engajar']
         lead.nota_vender = notas['vender']
@@ -1025,14 +1563,14 @@ def submit():
 
         # Status do Raio-X
         lead.raiox_status = 'concluido'
-        lead.raiox_ultima_pergunta = 20
+        lead.raiox_ultima_pergunta = 5 if is_v3 else 20
         lead.raiox_atualizado_em = datetime.utcnow()
 
         # Campos legados preservados para compatibilidade
         lead.source = 'Raio-X Digital'
         lead.diagnostic_status = 'done'
         lead.diagnostic_score = indice
-        lead.diagnostic_classification = gargalo.capitalize()
+        lead.diagnostic_classification = gargalo_nome
         lead.diagnostic_date = datetime.utcnow()
         lead.diagnostic_stars = round((indice / 10.0) * 5.0, 1)
         lead.diagnostic_pillars = {
@@ -1041,10 +1579,19 @@ def submit():
             'Vender': notas['vender'],
             'Reter': notas['reter'],
             'Gestão': notas['gestao'],
-            '_respostas': respostas_list
+            '_respostas': respostas_storage
         }
-        
-        tags = [f"Gargalo {gargalo_nome}", f"Índice {str(indice).replace('.', ',')}", f"Origem {origem}", "Raio-X v2"]
+
+        if is_v3:
+            tags = [
+                f"Caminho {resultado['caminho_label']}",
+                f"Nota {resultado['nota_formatada']}",
+                f"Urgente Q{resultado['urgente_id']}",
+                f"Origem {origem}",
+                "Raio-X v3",
+            ]
+        else:
+            tags = [f"Gargalo {gargalo_nome}", f"Índice {str(indice).replace('.', ',')}", f"Origem {origem}", "Raio-X v2"]
         lead.interest = ", ".join(tags)
 
         # Se for primeira conclusão, aloca estágio no pipeline e executa automações
@@ -1059,6 +1606,19 @@ def submit():
             db.session.add(lead)
             
         db.session.commit()
+
+        if token:
+            upsert_raiox_session(
+                token=token,
+                caminho=path_key if is_v3 else None,
+                etapa='concluido',
+                answers=respostas_storage,
+                lead_id=lead.id,
+                origem=origem,
+                utm_source=utm_source,
+                utm_medium=utm_medium,
+                utm_campaign=utm_campaign,
+            )
         
         # Disparo de automações para primeira conclusão
         if primeira_conclusao and lead.pipeline_stage_id:
@@ -1102,6 +1662,11 @@ def submit():
                     },
                     "gargalo_principal": lead.raiox_gargalo_principal or gargalo,
                     "respostas": lead.raiox_respostas or respostas_list,
+                    "versao": "v3" if is_v3 else "v2",
+                    "caminho": resultado.get("caminho") if is_v3 else None,
+                    "caminho_label": resultado.get("caminho_label") if is_v3 else None,
+                    "ponto_urgente": resultado.get("urgente_curto") if is_v3 else None,
+                    "acao_recomendada": resultado.get("acao_prioritaria"),
                     "concluido_em": datetime.utcnow().isoformat()
                 }
                 dispatch_n8n_raiox_webhook(lead, payload_n8n)

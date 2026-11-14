@@ -1582,6 +1582,59 @@ def get_raiox_abandonados():
     })
 
 
+@internal_api_bp.route('/raiox/funil-abandono', methods=['GET'])
+@require_internal_auth
+def get_raiox_funil_abandono():
+    """
+    Consulta simples que mostra quantas sessões anônimas pararam em cada tela por dia.
+    Parâmetro opcional: ?dias=30 (padrão 30, máx 365).
+    """
+    try:
+        from routes.diagnostic_raiox import ensure_raiox_v2_columns
+        ensure_raiox_v2_columns()
+    except Exception:
+        pass
+
+    try:
+        dias = int(request.args.get('dias', 30))
+    except (TypeError, ValueError):
+        dias = 30
+    dias = max(1, min(dias, 365))
+    from sqlalchemy import text
+    corte = datetime.utcnow() - timedelta(days=dias)
+
+    rows = db.session.execute(
+        text("""
+            SELECT DATE(created_at) AS dia,
+                   etapa_maxima,
+                   COUNT(*) AS total
+            FROM raiox_sessions
+            WHERE created_at >= :corte
+            GROUP BY DATE(created_at), etapa_maxima
+            ORDER BY dia DESC, MIN(etapa_ordem) ASC
+        """),
+        {"corte": corte},
+    ).fetchall()
+
+    por_dia_map = {}
+    totais_etapa = {}
+    for dia_val, etapa, total in rows:
+        dia_str = str(dia_val)
+        count_int = int(total or 0)
+        if dia_str not in por_dia_map:
+            por_dia_map[dia_str] = {"dia": dia_str, "total": 0, "etapas": {}}
+        por_dia_map[dia_str]["etapas"][etapa] = count_int
+        por_dia_map[dia_str]["total"] += count_int
+        totais_etapa[etapa] = totais_etapa.get(etapa, 0) + count_int
+
+    return jsonify({
+        "success": True,
+        "dias": dias,
+        "totais_etapa": totais_etapa,
+        "por_dia": list(por_dia_map.values()),
+    })
+
+
 @internal_api_bp.route('/raiox/whatsapp-status', methods=['POST'])
 @require_internal_auth
 def post_raiox_whatsapp_status():
