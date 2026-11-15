@@ -393,6 +393,9 @@ class Lead(db.Model):
     raiox_whatsapp_em = db.Column(db.DateTime, nullable=True)
     raiox_recuperacao_em = db.Column(db.DateTime, nullable=True)
     opt_out = db.Column(db.Boolean, default=False, nullable=True)
+    raiox_completo_respostas = db.Column(db.JSON, nullable=True)
+    raiox_completo_em = db.Column(db.DateTime, nullable=True)
+    raiox_completo_por = db.Column(db.Integer, nullable=True)
     estimated_value = db.Column(db.Numeric(12, 2), default=0.0)
 
     # Lead Loss Tracking

@@ -110,11 +110,20 @@
                                 <i data-lucide="user" class="w-4 h-4 text-[var(--nw-brand)]"></i>
                                 Informações do Lead
                             </h3>
-                            <button type="submit" form="lead-info-form"
-                                class="nw-btn nw-btn-accent text-xs">
-                                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                            <div class="flex items-center gap-2">
+                                {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('diagnostic_raiox.completo', lead_id=lead.id) }}"
+                                    class="nw-btn nw-btn-subtle text-xs">
+                                    <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
+                                    <span>Fazer diagnóstico completo</span>
+                                </a>
+                                {% endif %}
+                                <button type="submit" form="lead-info-form"
+                                    class="nw-btn nw-btn-accent text-xs">
+                                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
                                 <span>Salvar</span>
-                            </button>
+                                </button>
+                            </div>
                         </div>
                         <form id="lead-info-form" action="{{ url_for('leads.update_lead_info', id=lead.id) }}" method="POST">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -488,16 +497,37 @@
                                 {% endif %}
                             </div>
 
-                            {% if lead.raiox_token and lead.raiox_status != 'concluido' %}
-                            <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                {% if current_user.is_authenticated %}
+                                <a href="{{ url_for('diagnostic_raiox.completo', lead_id=lead.id) }}"
+                                   class="nw-btn nw-btn-accent text-xs flex items-center gap-1.5">
+                                    <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
+                                    <span>Fazer diagnóstico completo</span>
+                                </a>
+                                {% if lead.raiox_completo_em %}
+                                <a href="{{ url_for('diagnostic_raiox.report', lead_id=lead.id, tipo='completo') }}" target="_blank"
+                                   class="nw-btn nw-btn-subtle text-xs flex items-center gap-1.5">
+                                    <i data-lucide="file-bar-chart" class="w-3.5 h-3.5"></i>
+                                    <span>Ver relatório completo</span>
+                                </a>
+                                {% endif %}
+                                {% if lead.raiox_token and lead.raiox_status == 'concluido' %}
+                                <a href="{{ url_for('diagnostic_raiox.pdf_v3_public', token=lead.raiox_token) }}" target="_blank"
+                                   class="nw-btn nw-btn-subtle text-xs flex items-center gap-1.5">
+                                    <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                                    <span>Baixar PDF inicial</span>
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                                {% if lead.raiox_token and lead.raiox_status != 'concluido' %}
                                 <button type="button" 
                                         onclick="navigator.clipboard.writeText('https://crm.northwaycompany.com.br/raiox?retomar={{ lead.raiox_token }}'); alert('Link de retomada copiado com sucesso!');"
                                         class="nw-btn nw-btn-subtle text-xs flex items-center gap-1.5">
                                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                                     <span>Copiar link de retomada</span>
                                 </button>
+                                {% endif %}
                             </div>
-                            {% endif %}
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">

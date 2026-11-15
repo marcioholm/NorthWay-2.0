@@ -6,7 +6,12 @@
         },
         {
             "src": "api/index.py",
-            "use": "@vercel/python"
+            "use": "@vercel/python",
+            "config": {
+                "includeFiles": [
+                    "northway_crm/static/images/logo-white.png"
+                ]
+            }
         }
     ],
     "routes": [

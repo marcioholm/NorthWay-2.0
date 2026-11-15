@@ -45,6 +45,28 @@
             {{ lead.legal_name or lead.name }} — Raio-X Digital
         </p>
         <div class="flex items-center gap-2">
+            {% if resultado_v2 %}
+            <a href="{{ url_for('diagnostic_raiox.completo', lead_id=lead.id) }}"
+                class="text-xs font-bold text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                Editar respostas
+            </a>
+            <a href="{{ url_for('diagnostic_raiox.report_pdf', lead_id=lead.id) }}" target="_blank"
+                class="bg-northway-red text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Baixar PDF (5 eixos)
+            </a>
+            {% elif resultado_v3 %}
+            <a href="{{ url_for('diagnostic_raiox.completo', lead_id=lead.id) }}"
+                class="bg-northway-red text-white text-sm font-bold px-4 py-1.5 rounded-lg hover:bg-red-700 transition-colors">
+                Fazer diagnóstico completo
+            </a>
+            {% if lead.raiox_token %}
+            <a href="{{ url_for('diagnostic_raiox.pdf_v3_public', token=lead.raiox_token) }}" target="_blank"
+                class="text-xs font-bold text-gray-700 hover:text-gray-900 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+                Baixar PDF inicial
+            </a>
+            {% endif %}
+            {% else %}
             <a href="?mode={% if mode == 'simple' %}complete{% else %}simple{% endif %}&lead_id={{ lead.id }}"
                 class="text-xs font-bold text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                 {% if mode == 'simple' %}Visão Completa{% else %}Visão Simples{% endif %}
@@ -54,10 +76,151 @@
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
                 Baixar PDF
             </button>
+            {% endif %}
         </div>
     </div>
 
     <div class="max-w-4xl mx-auto px-6" style="padding-top: 56px;">
+
+        {% if resultado_v2 %}
+        <!-- Header v2 Completo (5 Eixos) -->
+        <div class="text-center py-5 border-b border-gray-200">
+            <h1 class="text-xl font-bold text-gray-900">Raio-X de Maturidade Comercial (5 Eixos)</h1>
+            <p class="text-gray-500 text-xs">Relatório Completo — {{ lead.legal_name or lead.raiox_empresa or lead.name }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4 border-b border-gray-100 text-xs">
+            <div><span class="text-gray-400 uppercase font-bold block">Empresa</span><span class="font-bold">{{ lead.legal_name or lead.raiox_empresa or '—' }}</span></div>
+            <div><span class="text-gray-400 uppercase font-bold block">Responsável</span><span class="font-bold">{{ lead.name or '—' }}</span></div>
+            <div><span class="text-gray-400 uppercase font-bold block">Data</span><span>{{ (lead.raiox_completo_em or lead.diagnostic_date).strftime('%d/%m/%Y') if (lead.raiox_completo_em or lead.diagnostic_date) else '—' }}</span></div>
+            <div><span class="text-gray-400 uppercase font-bold block">Principal Gargalo</span>
+                <span class="font-bold text-red-600">{{ resultado_v2.gargalo_nome }} ({{ resultado_v2.gargalo_nota_formatada }}/10)</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 py-5 items-center">
+            <div class="md:col-span-2 flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div class="score-circle mb-2" style="--p: {{ (resultado_v2.indice / 10) * 360 }}deg;">
+                    <div class="relative z-10 text-center">
+                        <span class="text-2xl font-black text-gray-900">{{ resultado_v2.indice_formatado }}</span>
+                        <span class="block text-[9px] text-gray-400 uppercase font-bold">/ 10</span>
+                    </div>
+                </div>
+                <p class="text-xs font-bold text-gray-900">Índice Geral de Maturidade</p>
+            </div>
+            <div class="md:col-span-3" style="height: 220px;">
+                <canvas id="radarChartV2"></canvas>
+            </div>
+        </div>
+
+        <div class="space-y-3 py-4 border-t border-gray-100">
+            <h2 class="text-sm font-bold text-gray-900">Desempenho nos 5 Eixos</h2>
+            {% for e in resultado_v2.eixos %}
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="font-semibold text-gray-800">{{ e.nome }} <span class="text-[11px] font-normal text-gray-500">({{ e.situacao }})</span></span>
+                    <span class="font-bold text-gray-700">{{ e.nota_formatada }}/10</span>
+                </div>
+                <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full {% if e.nota < 4 %}bg-red-500{% elif e.nota < 7 %}bg-yellow-500{% else %}bg-green-500{% endif %}" style="width: {{ e.percentual }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="my-5 p-4 rounded-xl bg-red-50 border border-red-200">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-red-700 mb-1">Ponto Mais Urgente (Questão {{ resultado_v2.ponto_fraco_num }})</p>
+            <p class="text-sm font-bold text-gray-900 mb-2">{{ resultado_v2.ponto_fraco_pergunta }}</p>
+            <p class="text-xs text-gray-700"><strong>Ação recomendada:</strong> {{ resultado_v2.acao_prioritaria }}</p>
+        </div>
+
+        <div class="border-t border-gray-200 pt-5 mt-5 pb-8">
+            <h2 class="text-sm font-bold text-gray-900 mb-4">Respostas das 20 Perguntas</h2>
+            <div class="space-y-2">
+                {% for q in questions %}
+                {% set val = respostas_20[loop.index0] %}
+                {% set opt_label = q.opcoes[val].label if q.opcoes and val < q.opcoes|length else '' %}
+                <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/70">
+                    <div class="ans {% if val == 0 %}bg-red-200 text-red-800{% elif val == 1 %}bg-orange-200 text-orange-800{% elif val == 2 %}bg-yellow-200 text-yellow-800{% else %}bg-green-200 text-green-800{% endif %}">
+                        {{ val }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <span class="text-[10px] font-bold uppercase text-gray-400">{{ q.eixo_nome }} · Questão {{ q.id }}</span>
+                        <p class="text-xs font-semibold text-gray-900 leading-snug">{{ q.pergunta }}</p>
+                        <span class="text-[11px] text-gray-600">{{ opt_label }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <script>
+            new Chart(document.getElementById('radarChartV2'), {
+                type: 'radar',
+                data: {
+                    labels: [{% for e in resultado_v2.eixos %}'{{ e.nome }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                    datasets: [{
+                        label: 'Nota',
+                        data: [{% for e in resultado_v2.eixos %}{{ e.nota }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                        backgroundColor: 'rgba(250,1,2,0.12)',
+                        borderColor: '#fa0102',
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#fa0102',
+                        borderWidth: 2,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { min: 0, max: 10, ticks: { stepSize: 2, font: { size: 9 } } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        </script>
+        {% elif resultado_v3 %}
+        <div class="text-center py-5 border-b border-gray-200">
+            <h1 class="text-xl font-bold text-gray-900">Raio-X Inicial (1 + 5 Perguntas)</h1>
+            <p class="text-gray-500 text-xs">{{ lead.legal_name or lead.raiox_empresa or lead.name }} · Caminho: {{ resultado_v3.caminho_label }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4 border-b border-gray-100 text-xs">
+            <div><span class="text-gray-400 uppercase font-bold block">Empresa</span><span class="font-bold">{{ lead.legal_name or lead.raiox_empresa or '—' }}</span></div>
+            <div><span class="text-gray-400 uppercase font-bold block">Responsável</span><span class="font-bold">{{ lead.name or '—' }}</span></div>
+            <div><span class="text-gray-400 uppercase font-bold block">Nota ({{ resultado_v3.area_nome }})</span><span class="font-bold text-gray-900">{{ resultado_v3.nota_formatada }}/10</span></div>
+            <div><span class="text-gray-400 uppercase font-bold block">Área Sugerida</span><span class="font-bold text-red-600">{{ resultado_v3.gargalo_nome }}</span></div>
+        </div>
+
+        <div class="my-5 p-4 rounded-xl bg-red-50 border border-red-200">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-red-700 mb-1">Ponto Mais Urgente · {{ resultado_v3.urgente_area }}</p>
+            <p class="text-sm font-bold text-gray-900 mb-2">{{ resultado_v3.urgente_pergunta }}</p>
+            <p class="text-xs text-gray-700"><strong>Ação recomendada:</strong> {{ resultado_v3.acao_prioritaria }}</p>
+        </div>
+
+        <div class="border-t border-gray-200 pt-5 mt-5 pb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-sm font-bold text-gray-900">Respostas do Raio-X Inicial</h2>
+                <a href="{{ url_for('diagnostic_raiox.completo', lead_id=lead.id) }}"
+                    class="bg-northway-red text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                    Fazer diagnóstico completo
+                </a>
+            </div>
+            <div class="space-y-2">
+                {% for d in resultado_v3.detalhes %}
+                <div class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 bg-gray-50/70">
+                    <div class="ans {% if d.valor == 0 %}bg-red-200 text-red-800{% elif d.valor == 1 %}bg-orange-200 text-orange-800{% elif d.valor == 2 %}bg-yellow-200 text-yellow-800{% else %}bg-green-200 text-green-800{% endif %}">
+                        {{ d.valor }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <span class="text-[10px] font-bold uppercase text-gray-400">{{ d.area }} · {{ d.curto }}</span>
+                        <p class="text-xs font-semibold text-gray-900 leading-snug">{{ d.pergunta }}</p>
+                        <span class="text-[11px] text-gray-600">{{ d.resposta }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
 
         <!-- Header -->
         <div class="text-center py-5 border-b border-gray-200">
@@ -290,6 +453,7 @@
             }
         });
     </script>
+    {% endif %}
 
 </body>
 </html>

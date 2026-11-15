@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session, Response
 from flask_login import login_required, current_user
 from models import db, Lead, Company, Pipeline, PipelineStage
 from extensions import limiter
 from datetime import datetime
 import json
 import logging
+import math
 import os
 import uuid
 import urllib.parse
@@ -926,6 +927,267 @@ def generate_raiox_v2_pdf_bytes(nome, empresa, resultado, faixa_faturamento, fun
     
     return bytes(pdf.output())
 
+
+def _pdf_txt(s):
+    """Mantém acentos (latin-1) e troca só o que a fonte padrão não tem."""
+    if s is None:
+        return ''
+    rep = {'—': '-', '–': '-', '·': '-', '•': '-', '…': '...', '“': '"', '”': '"',
+           '‘': "'", '’': "'", '→': '>', '\xa0': ' '}
+    res = str(s)
+    for k, v in rep.items():
+        res = res.replace(k, v)
+    return res.encode('latin-1', 'ignore').decode('latin-1')
+
+
+def generate_raiox_v3_pdf_bytes(nome, empresa, resultado, whatsapp_url=None):
+    """
+    Gera o PDF de uma página do Raio X v3 (1 + 5 perguntas).
+    """
+    from fpdf import FPDF
+
+    r = resultado or {}
+    nota = float(r.get('nota') or 0)
+    nota_fmt = r.get('nota_formatada') or f"{nota:.1f}".replace('.', ',')
+    caminho = (r.get('caminho') or '').lower()
+    geral = caminho == 'geral'
+    area_nome = r.get('area_nome') or r.get('caminho_label') or 'Diagnóstico'
+    detalhes = r.get('detalhes') or []
+    urg_id = r.get('urgente_id')
+    urg = next((d for d in detalhes if d.get('id') == urg_id), None) or {}
+    urg_titulo = r.get('urgente_curto') or urg.get('curto') or ''
+    urg_resposta = urg.get('resposta') or ''
+    urg_valor = urg.get('valor', r.get('urgente_valor', 0)) or 0
+    acao = r.get('acao_prioritaria') or ''
+    primeiro_nome = (nome or '').strip().split(' ')[0]
+
+    INK = (26, 26, 26)
+    MUTED = (95, 91, 85)
+    LINE = (221, 216, 207)
+    PAPER = (244, 242, 238)
+    RED = (232, 25, 26)
+    RED_SOFT = (252, 233, 232)
+    RED_DARK = (185, 19, 20)
+    AMBER = (217, 138, 0)
+    AMBER_SOFT = (255, 241, 214)
+    GREEN = (30, 122, 70)
+    GREEN_SOFT = (221, 243, 229)
+    WHITE = (255, 255, 255)
+
+    if nota < 4:
+        nivel, cor, cor_soft, cor_txt = 'Precisa de atenção', RED, RED_SOFT, RED_DARK
+    elif nota < 7:
+        nivel, cor, cor_soft, cor_txt = 'Em construção', AMBER, AMBER_SOFT, (150, 92, 0)
+    else:
+        nivel, cor, cor_soft, cor_txt = 'Bem estruturado', GREEN, GREEN_SOFT, GREEN
+
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
+    pdf.set_auto_page_break(auto=False)
+    pdf.add_page()
+    W, ML = 210, 18
+    cw = W - 2 * ML
+
+    def font(style='', size=10, color=INK):
+        pdf.set_font('helvetica', style, size)
+        pdf.set_text_color(*color)
+
+    def box(x, y, w, h, fill, border=None, radius=3):
+        pdf.set_fill_color(*fill)
+        if border:
+            pdf.set_draw_color(*border)
+            pdf.set_line_width(0.3)
+        pdf.rect(x, y, w, h, style='DF' if border else 'F', round_corners=True, corner_radius=radius)
+
+    def lines(text_str, w, style, size):
+        pdf.set_font('helvetica', style, size)
+        return pdf.multi_cell(w, 5, _pdf_txt(text_str), align='L', dry_run=True, output='LINES')
+
+    def paragraph(x, y, w, text_str, style, size, color, lh):
+        font(style, size, color)
+        pdf.set_xy(x, y)
+        pdf.multi_cell(w, lh, _pdf_txt(text_str), align='L', new_x='LEFT', new_y='NEXT')
+        return pdf.get_y()
+
+    def eyebrow(x, y, text_str, color):
+        font('B', 7.5, color)
+        pdf.set_char_spacing(0.6)
+        pdf.set_xy(x, y)
+        pdf.cell(0, 4, _pdf_txt(text_str.upper()))
+        pdf.set_char_spacing(0)
+
+    # Cabeçalho
+    pdf.set_fill_color(*INK)
+    pdf.rect(0, 0, W, 26, 'F')
+    pdf.set_fill_color(*RED)
+    pdf.rect(0, 26, W, 1.4, 'F')
+
+    logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static', 'images', 'logo-white.png')
+    try:
+        if not os.path.exists(logo):
+            raise FileNotFoundError(logo)
+        pdf.image(logo, x=ML, y=8.8, h=8.5)
+    except Exception:
+        font('B', 15, WHITE)
+        pdf.set_xy(ML, 8)
+        pdf.cell(60, 10, 'NORTHWAY')
+
+    font('B', 8, WHITE)
+    pdf.set_char_spacing(0.6)
+    pdf.set_xy(W - ML - 80, 8.5)
+    pdf.cell(80, 4.5, _pdf_txt('RAIO X - DIAGNÓSTICO'), align='R')
+    pdf.set_char_spacing(0)
+    font('', 8.5, (190, 186, 180))
+    pdf.set_xy(W - ML - 80, 14)
+    pdf.cell(80, 4.5, datetime.now().strftime('%d/%m/%Y'), align='R')
+
+    # Título
+    y = 36
+    eyebrow(ML, y, 'Visão geral' if geral else f'Área avaliada: {area_nome}', RED)
+    titulo = f'{primeiro_nome}, este é o seu Raio X' if primeiro_nome else 'Este é o seu Raio X'
+    y = paragraph(ML, y + 6, cw, titulo, 'B', 22, INK, 9.5)
+    if empresa:
+        y = paragraph(ML, y + 1, cw, empresa, '', 11, MUTED, 5.5)
+    y += 5
+
+    # Nota
+    card_h = 40
+    box(ML, y, cw, card_h, PAPER, radius=4)
+    cx, cy, rad = ML + 27, y + card_h / 2, 15.5
+
+    def arc(frac, color, width):
+        pdf.set_draw_color(*color)
+        pdf.set_line_width(width)
+        steps = max(2, int(140 * frac))
+        pts = []
+        for i in range(steps + 1):
+            a = -math.pi / 2 + 2 * math.pi * frac * i / steps
+            pts.append((cx + rad * math.cos(a), cy + rad * math.sin(a)))
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+            pdf.line(x1, y1, x2, y2)
+        return pts
+
+    arc(1, LINE, 3.4)
+    frac = max(0.0, min(1.0, nota / 10.0))
+    if frac > 0.005:
+        pts = arc(frac, cor, 3.4)
+        pdf.set_fill_color(*cor)
+        for px, py in (pts[0], pts[-1]):
+            pdf.ellipse(px - 1.7, py - 1.7, 3.4, 3.4, 'F')
+
+    font('B', 22, INK)
+    wn = pdf.get_string_width(nota_fmt)
+    font('', 8.5, MUTED)
+    wd = pdf.get_string_width('/10')
+    x0 = cx - (wn + wd + 0.6) / 2
+    font('B', 22, INK)
+    pdf.set_xy(x0, cy - 5)
+    pdf.cell(wn, 10, nota_fmt)
+    font('', 8.5, MUTED)
+    pdf.set_xy(x0 + wn + 0.6, cy - 1.2)
+    pdf.cell(wd, 5, '/10')
+
+    tx = ML + 54
+    tw = cw - 54 - 8
+    font('B', 8.5, cor_txt)
+    pw = pdf.get_string_width(_pdf_txt(nivel)) + 7
+    box(tx, y + 7, pw, 6.5, cor_soft, radius=3.2)
+    pdf.set_xy(tx, y + 7)
+    pdf.cell(pw, 6.5, _pdf_txt(nivel), align='C')
+
+    if geral:
+        frase_t = f'Sua área mais fraca hoje: {r.get("gargalo_nome") or urg.get("area") or ""}'
+        frase_d = 'Nota calculada com uma pergunta de cada área: Atrair, Engajar, Vender, Reter e Gestão.'
+    else:
+        frase_t = f'Nota em {area_nome}'
+        frase_d = 'Calculada com base nas suas 5 respostas. Quanto mais perto de 10, mais estruturada está essa área.'
+    yy = paragraph(tx, y + 16.5, tw, frase_t, 'B', 13, INK, 6)
+    paragraph(tx, yy + 1, tw, frase_d, '', 9.5, MUTED, 4.8)
+    y += card_h + 6
+
+    # Ponto mais urgente
+    pad = 8
+    iw = cw - 2 * pad
+    h_tit = len(lines(urg_titulo, iw, 'B', 15)) * 7
+    h_resp = len(lines(f'Você respondeu: "{urg_resposta}"', iw, '', 10)) * 5 if urg_resposta else 0
+    h_acao = len(lines(acao, iw - 12, '', 10.5)) * 5.4
+    box_acao_h = 6 + 4 + 2.5 + h_acao + 6
+    bloco_h = pad + 4 + 4 + h_tit + (2 + h_resp if h_resp else 0) + 6 + box_acao_h + pad
+    box(ML, y, cw, bloco_h, INK, radius=4)
+    yy = y + pad
+    eyebrow(ML + pad, yy, 'Próximo passo' if urg_valor >= 3 else 'Ponto mais urgente', (255, 138, 138))
+    yy = paragraph(ML + pad, yy + 8, iw, urg_titulo, 'B', 15, WHITE, 7)
+    if urg_resposta:
+        yy = paragraph(ML + pad, yy + 2, iw, f'Você respondeu: "{urg_resposta}"', '', 10, (207, 202, 194), 5)
+    yy += 6
+    box(ML + pad, yy, iw, box_acao_h, (42, 42, 42), radius=3)
+    eyebrow(ML + pad + 6, yy + 6, 'O que fazer primeiro', (255, 138, 138))
+    paragraph(ML + pad + 6, yy + 12.5, iw - 12, acao, '', 10.5, WHITE, 5.4)
+    y += bloco_h + 7
+
+    # Respostas
+    font('B', 10, MUTED)
+    pdf.set_xy(ML, y)
+    pdf.cell(cw, 5, 'Suas respostas')
+    y += 7
+    cta_h = 23
+    cta_y = 297 - 18 - cta_h
+    n_rows = max(1, len(detalhes))
+    row_h = max(7.5, min(11.5, (cta_y - 4 - y) / n_rows))
+    duas_linhas = row_h >= 10
+    pip_w, pip_h, pip_gap = 7, 2.6, 1.6
+    pips_w = 3 * pip_w + 2 * pip_gap
+    for d in detalhes:
+        is_urg = d.get('id') == urg_id and urg_valor < 3
+        rotulo = d.get('area') if geral else d.get('curto')
+        font('B', 10.5, RED_DARK if is_urg else INK)
+        pdf.set_xy(ML, y)
+        pdf.cell(cw - pips_w - 6, 5, _pdf_txt(rotulo or ''))
+        if duas_linhas:
+            resp = lines(d.get('resposta') or '', cw - pips_w - 6, '', 9)
+            resp_txt = (resp[0] + ('...' if len(resp) > 1 else '')) if resp else ''
+            font('', 9, MUTED)
+            pdf.set_xy(ML, y + 4.8)
+            pdf.cell(cw - pips_w - 6, 4.5, resp_txt)
+        px = ML + cw - pips_w
+        for n in (1, 2, 3):
+            on = (d.get('valor') or 0) >= n
+            pdf.set_fill_color(*((RED if is_urg else INK) if on else LINE))
+            pdf.rect(px + (n - 1) * (pip_w + pip_gap), y + (3.4 if duas_linhas else 1.3), pip_w, pip_h, 'F',
+                     round_corners=True, corner_radius=1.3)
+        y += row_h
+        pdf.set_draw_color(*LINE)
+        pdf.set_line_width(0.2)
+        pdf.line(ML, y - 1.4, ML + cw, y - 1.4)
+
+    # Devolutiva
+    y = cta_y
+    box(ML, y, cw, cta_h, RED_SOFT, radius=4)
+    font('B', 12, INK)
+    pdf.set_xy(ML + 8, y + 4.5)
+    pdf.cell(cw - 16, 6, _pdf_txt('Quer ver o resto do diagnóstico?'))
+    paragraph(ML + 8, y + 11, cw - 62, 'Na devolutiva gratuita, um especialista da NorthWay olha suas respostas '
+              'com você e mostra as outras áreas da empresa.', '', 9.5, MUTED, 4.6)
+    bw, bh = 40, 10
+    bx, by = ML + cw - bw - 7, y + (cta_h - bh) / 2
+    box(bx, by, bw, bh, RED, radius=3)
+    font('B', 9.5, WHITE)
+    pdf.set_xy(bx, by)
+    pdf.cell(bw, bh, 'Chamar no WhatsApp', align='C', link=whatsapp_url or 'https://wa.me/5542999896358')
+
+    # Rodapé
+    pdf.set_draw_color(*LINE)
+    pdf.set_line_width(0.2)
+    pdf.line(ML, 283, W - ML, 283)
+    font('', 7.5, MUTED)
+    pdf.set_xy(ML, 285)
+    pdf.cell(cw, 4, _pdf_txt('Este Raio X é uma autoavaliação. Ele aponta onde olhar primeiro; '
+                             'o diagnóstico completo considera também números, processos e contexto.'), align='C')
+    font('B', 7.5, INK)
+    pdf.set_xy(ML, 289.2)
+    pdf.cell(cw, 4, _pdf_txt('NorthWay Assessoria de Marketing - A gente não acha. A gente mede.'), align='C')
+
+    return bytes(pdf.output())
+
 def ensure_raiox_v2_columns():
     """
     Garante de forma resiliente que as colunas da v2 do Raio-X existam no banco.
@@ -963,7 +1225,10 @@ def ensure_raiox_v2_columns():
             ("raiox_whatsapp_status", "VARCHAR(30)"),
             ("raiox_whatsapp_em", "TIMESTAMP"),
             ("raiox_recuperacao_em", "TIMESTAMP"),
-            ("opt_out", "BOOLEAN DEFAULT FALSE")
+            ("opt_out", "BOOLEAN DEFAULT FALSE"),
+            ("raiox_completo_respostas", "JSONB" if is_postgres else "TEXT"),
+            ("raiox_completo_em", "TIMESTAMP"),
+            ("raiox_completo_por", "INTEGER")
         ]
         with db.engine.connect() as conn:
             for col_name, col_type in cols:
@@ -1629,6 +1894,8 @@ def submit():
             except Exception as e:
                 logger.error(f"Erro ao disparar automações de estágio: {e}")
 
+        pdf_url_public = url_for('diagnostic_raiox.pdf_v3_public', token=lead.raiox_token, _external=True) if (is_v3 and lead.raiox_token) else None
+
         # Disparo de webhook de conclusão para o n8n no backend
         if primeira_conclusao:
             try:
@@ -1667,6 +1934,7 @@ def submit():
                     "caminho_label": resultado.get("caminho_label") if is_v3 else None,
                     "ponto_urgente": resultado.get("urgente_curto") if is_v3 else None,
                     "acao_recomendada": resultado.get("acao_prioritaria"),
+                    "pdf_url": pdf_url_public,
                     "concluido_em": datetime.utcnow().isoformat()
                 }
                 dispatch_n8n_raiox_webhook(lead, payload_n8n)
@@ -1678,21 +1946,30 @@ def submit():
         wa_text = f"Olá! Sou {nome or 'um empreendedor'}, da {empresa or 'minha empresa'}. Fiz o Raio-X e meu principal gargalo é {gargalo_nome} ({gargalo_nota_formatada}/10). Quero entender os próximos passos."
         wa_url = f"https://wa.me/{whatsapp_number}?text={urllib.parse.quote(wa_text)}"
         resultado['whatsapp_url'] = wa_url
+        resultado['pdf_url'] = url_for('diagnostic_raiox.pdf_v3_public', token=lead.raiox_token) if (is_v3 and lead.raiox_token) else None
         resultado['empresa'] = empresa
         resultado['nome'] = nome
         resultado['event_id'] = meta_event_id
 
-        # 6. Enviar PDF do Raio-X v2 por E-mail via Resend
+        # 6. Enviar PDF do Raio-X por E-mail via Resend
         if email:
             try:
                 from services.email_service import EmailService
-                pdf_bytes = generate_raiox_v2_pdf_bytes(
-                    nome=nome or 'Cliente',
-                    empresa=empresa or 'Sua Empresa',
-                    resultado=resultado,
-                    faixa_faturamento=faixa_faturamento or 'Não informado',
-                    funcionarios=funcionarios or 'Não informado'
-                )
+                if is_v3:
+                    pdf_bytes = generate_raiox_v3_pdf_bytes(
+                        nome=nome or 'Cliente',
+                        empresa=empresa or '',
+                        resultado=resultado,
+                        whatsapp_url=wa_url
+                    )
+                else:
+                    pdf_bytes = generate_raiox_v2_pdf_bytes(
+                        nome=nome or 'Cliente',
+                        empresa=empresa or 'Sua Empresa',
+                        resultado=resultado,
+                        faixa_faturamento=faixa_faturamento or 'Não informado',
+                        funcionarios=funcionarios or 'Não informado'
+                    )
 
                 email_html = f"""
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; color: #0F172A; background-color: #ffffff; border: 1px solid #E2E8F0; border-radius: 12px;">
@@ -1820,23 +2097,224 @@ def leads_list():
     return render_template('forms/raiox_leads.html', leads=clean_leads, current_status=status_filter)
 
 
+@diagnostic_raiox_bp.route('/raiox/completo/<int:lead_id>', methods=['GET', 'POST'])
+@login_required
+def completo(lead_id):
+    """
+    Formulário interno das 20 perguntas (5 eixos) para o consultor preencher na reunião.
+    Pré-preenche respostas que o lead já deu no Raio-X v3 (mesmos IDs).
+    Salva em campos separados sem sobrescrever o diagnóstico inicial e sem disparar webhooks.
+    """
+    ensure_raiox_v2_columns()
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+
+    if request.method == 'POST':
+        data = request.json or {}
+        raw_answers = data.get('answers')
+        respostas_list = []
+
+        if isinstance(raw_answers, dict):
+            for q in RAIOX_QUESTIONS:
+                qid = q['id']
+                val = raw_answers.get(str(qid), raw_answers.get(qid, 0))
+                respostas_list.append(max(0, min(3, safe_int(val, 0))))
+        elif isinstance(raw_answers, list):
+            for idx in range(len(RAIOX_QUESTIONS)):
+                val = raw_answers[idx] if idx < len(raw_answers) else 0
+                respostas_list.append(max(0, min(3, safe_int(val, 0))))
+        else:
+            return jsonify({'status': 'error', 'message': 'Respostas inválidas'}), 400
+
+        lead.raiox_completo_respostas = respostas_list
+        lead.raiox_completo_em = datetime.utcnow()
+        lead.raiox_completo_por = current_user.id
+        db.session.commit()
+
+        return jsonify({
+            'status': 'success',
+            'redirect_url': url_for('diagnostic_raiox.report', lead_id=lead.id, tipo='completo')
+        })
+
+    # GET: monta pré-preenchimento a partir do v3 (se existir) e depois do completo (se já salvo)
+    prefill = {}
+    inicial_ids = set()
+
+    raw_init = lead.raiox_respostas
+    if isinstance(raw_init, str):
+        try:
+            raw_init = json.loads(raw_init)
+        except Exception:
+            raw_init = None
+
+    if isinstance(raw_init, dict) and isinstance(raw_init.get('answers'), dict):
+        for k, v in raw_init['answers'].items():
+            qid = safe_int(k, 0)
+            if 1 <= qid <= 20:
+                prefill[qid] = max(0, min(3, safe_int(v, 0)))
+                inicial_ids.add(qid)
+    elif isinstance(raw_init, list) and len(raw_init) == 20:
+        for idx, q in enumerate(RAIOX_QUESTIONS):
+            prefill[q['id']] = max(0, min(3, safe_int(raw_init[idx], 0)))
+            inicial_ids.add(q['id'])
+
+    raw_comp = lead.raiox_completo_respostas
+    if isinstance(raw_comp, str):
+        try:
+            raw_comp = json.loads(raw_comp)
+        except Exception:
+            raw_comp = None
+
+    if isinstance(raw_comp, list) and len(raw_comp) == 20:
+        for idx, q in enumerate(RAIOX_QUESTIONS):
+            prefill[q['id']] = max(0, min(3, safe_int(raw_comp[idx], 0)))
+
+    return render_template(
+        'forms/raiox_completo.html',
+        lead=lead,
+        questions=RAIOX_QUESTIONS,
+        prefill=prefill,
+        inicial_ids=list(inicial_ids)
+    )
+
+
+def _get_complete_20_answers(lead):
+    """Extrai lista de 20 respostas completas (nunca calcula v2 com respostas faltando)."""
+    for raw in (lead.raiox_completo_respostas, lead.raiox_respostas):
+        parsed = raw
+        if isinstance(parsed, str):
+            try:
+                parsed = json.loads(parsed)
+            except Exception:
+                parsed = None
+        if isinstance(parsed, list) and len(parsed) == 20:
+            return [max(0, min(3, safe_int(x, 0))) for x in parsed]
+    return None
+
+
+def _extract_v3_result(lead):
+    """Reconstrói o dicionário resultado v3 a partir das respostas salvas do lead."""
+    raw = lead.raiox_respostas
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except Exception:
+            raw = None
+    if isinstance(raw, dict) and raw.get('version') == 'v3' and isinstance(raw.get('answers'), dict) and raw['answers']:
+        path_key = raw.get('path') or 'geral'
+        return calculate_raiox_v3(path_key, raw['answers'])
+    return None
+
+
+@diagnostic_raiox_bp.route('/raiox/pdf/<token>', methods=['GET'])
+def pdf_v3_public(token):
+    """
+    Rota pública pelo raiox_token do lead (sem expor lead_id) que gera e devolve o PDF v3.
+    Responde 404 para token inválido ou sem diagnóstico v3.
+    """
+    ensure_raiox_v2_columns()
+    clean_tok = (token or '').strip()
+    if not clean_tok:
+        return jsonify({'status': 'error', 'message': 'Não encontrado'}), 404
+
+    lead = Lead.query.filter_by(raiox_token=clean_tok).first()
+    if not lead:
+        return jsonify({'status': 'error', 'message': 'Não encontrado'}), 404
+
+    resultado_v3 = _extract_v3_result(lead)
+    if not resultado_v3:
+        return jsonify({'status': 'error', 'message': 'PDF v3 não disponível para este token'}), 404
+
+    whatsapp_number = os.environ.get('NORTHWAY_WHATSAPP', '5542999896358').replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
+    wa_text = f"Olá! Sou {lead.name or 'um empreendedor'}. Fiz o Raio-X ({resultado_v3.get('gargalo_nome')}) e quero conversar sobre minha devolutiva."
+    wa_url = f"https://wa.me/{whatsapp_number}?text={urllib.parse.quote(wa_text)}"
+
+    pdf_bytes = generate_raiox_v3_pdf_bytes(
+        nome=lead.name or 'Cliente',
+        empresa=lead.legal_name or lead.raiox_empresa or '',
+        resultado=resultado_v3,
+        whatsapp_url=wa_url,
+    )
+    return Response(
+        pdf_bytes,
+        mimetype='application/pdf',
+        headers={
+            'Content-Disposition': f'inline; filename="Raio-X-NorthWay-{clean_tok[:8]}.pdf"'
+        },
+    )
+
+
 @diagnostic_raiox_bp.route('/raiox/report/<int:lead_id>', methods=['GET'])
 @login_required
 def report(lead_id):
     """
-    Relatório administrativo do lead no CRM
+    Relatório administrativo do lead no CRM:
+    - Se tem raiox_completo_respostas (ou 20 respostas v2), mostra relatório completo de 5 eixos.
+    - Se só tem inicial v3, mostra resultado v3 com botão 'Fazer diagnóstico completo'.
     """
-    mode = request.args.get('mode', 'simple')
+    mode = request.args.get('mode', 'complete')
     lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
-    if lead.source != 'Raio-X Digital' or lead.diagnostic_status != 'done':
+
+    respostas_20 = _get_complete_20_answers(lead)
+    resultado_v2 = calculate_raiox_v2(respostas_20) if respostas_20 else None
+    resultado_v3 = None if resultado_v2 else _extract_v3_result(lead)
+
+    if not resultado_v2 and not resultado_v3 and (lead.source != 'Raio-X Digital' or lead.diagnostic_status != 'done'):
         return redirect(url_for('diagnostic_raiox.leads_list'))
 
     return render_template(
         'forms/raiox_report.html',
         lead=lead,
         questions=RAIOX_QUESTIONS,
-        mode=mode
+        mode=mode,
+        resultado_v2=resultado_v2,
+        resultado_v3=resultado_v3,
+        respostas_20=respostas_20
     )
+
+
+@diagnostic_raiox_bp.route('/raiox/report/<int:lead_id>/pdf', methods=['GET'])
+@login_required
+def report_pdf(lead_id):
+    """
+    Gera e baixa o PDF do lead:
+    - 5 eixos (generate_raiox_v2_pdf_bytes) se completo;
+    - v3 (generate_raiox_v3_pdf_bytes) se só inicial v3.
+    """
+    ensure_raiox_v2_columns()
+    lead = Lead.query.filter_by(id=lead_id, company_id=current_user.company_id).first_or_404()
+    respostas_20 = _get_complete_20_answers(lead)
+    if respostas_20:
+        resultado_v2 = calculate_raiox_v2(respostas_20)
+        pdf_bytes = generate_raiox_v2_pdf_bytes(
+            nome=lead.name or 'Cliente',
+            empresa=lead.legal_name or lead.raiox_empresa or 'Sua Empresa',
+            resultado=resultado_v2,
+            faixa_faturamento=lead.faixa_faturamento or lead.raiox_faturamento or 'Não informado',
+            funcionarios=lead.funcionarios or lead.raiox_porte or 'Não informado'
+        )
+        return Response(
+            pdf_bytes,
+            mimetype='application/pdf',
+            headers={'Content-Disposition': f'inline; filename="Raio-X-Completo-{lead.id}.pdf"'}
+        )
+
+    resultado_v3 = _extract_v3_result(lead)
+    if resultado_v3:
+        whatsapp_number = os.environ.get('NORTHWAY_WHATSAPP', '5542999896358').replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
+        wa_url = f"https://wa.me/{whatsapp_number}"
+        pdf_bytes = generate_raiox_v3_pdf_bytes(
+            nome=lead.name or 'Cliente',
+            empresa=lead.legal_name or lead.raiox_empresa or '',
+            resultado=resultado_v3,
+            whatsapp_url=wa_url,
+        )
+        return Response(
+            pdf_bytes,
+            mimetype='application/pdf',
+            headers={'Content-Disposition': f'inline; filename="Raio-X-Inicial-{lead.id}.pdf"'}
+        )
+
+    return redirect(url_for('diagnostic_raiox.completo', lead_id=lead.id))
 
 
 @diagnostic_raiox_bp.route('/raiox/<int:lead_id>/delete', methods=['POST'])

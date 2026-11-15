@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Diagnóstico Completo — {{ lead.name or 'Lead' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+            <a href="{{ url_for('leads.lead_details', id=lead.id) }}" class="text-xs font-semibold text-gray-500 hover:text-gray-800 inline-flex items-center gap-1 mb-2">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                Voltar para o lead
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">Diagnóstico Completo (20 perguntas)</h1>
+            <p class="text-sm text-gray-500 mt-1">
+                {{ lead.name or 'Sem nome' }}{% if lead.legal_name or lead.raiox_empresa %} · {{ lead.legal_name or lead.raiox_empresa }}{% endif %}
+            </p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg px-4 py-2 text-right">
+            <span class="text-[11px] font-bold text-gray-400 uppercase block">Progresso</span>
+            <span class="text-sm font-bold text-gray-900" id="progressCount">0 / 20</span>
+        </div>
+    </div>
+
+    {% if lead.raiox_completo_em %}
+    <div class="bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-xs font-medium mb-6 flex flex-wrap items-center justify-between gap-2">
+        <span>Diagnóstico completo já registrado em {{ lead.raiox_completo_em.strftime('%d/%m/%Y %H:%M') }}. Você pode revisar e salvar alterações abaixo.</span>
+        <a href="{{ url_for('diagnostic_raiox.report', lead_id=lead.id, tipo='completo') }}" class="font-bold underline">Ver relatório atual</a>
+    </div>
+    {% endif %}
+
+    <div class="bg-blue-50 border border-blue-200 text-blue-900 rounded-lg px-4 py-3 text-xs mb-6">
+        As perguntas que o cliente já respondeu no Raio-X inicial vêm pré-selecionadas e podem ser ajustadas durante a reunião. Ao concluir, nenhum webhook ou mensagem automática será disparado — o envio ao cliente é manual.
+    </div>
+
+    <form id="completoForm" class="space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {% set ns = namespace(last_eixo='') %}
+        {% for q in questions %}
+            {% if q.eixo_nome != ns.last_eixo %}
+                {% if not loop.first %}</div></div>{% endif %}
+                {% set ns.last_eixo = q.eixo_nome %}
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="bg-gray-50 border-b border-gray-200 px-5 py-3 flex items-center justify-between">
+                        <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">{{ q.eixo_nome }}</h2>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+            {% endif %}
+
+            <div class="p-5 question-block" data-qid="{{ q.id }}">
+                <div class="flex flex-wrap items-start justify-between gap-2 mb-3">
+                    <p class="text-sm font-semibold text-gray-900">
+                        <span class="text-northway-red font-bold mr-1">{{ q.id }}.</span> {{ q.pergunta }}
+                    </p>
+                    {% if q.id in inicial_ids %}
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                        Respondido no inicial
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {% for opt in q.opcoes %}
+                    {% set checked = (prefill.get(q.id) == opt.value) %}
+                    <label class="flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors opt-label {% if checked %}border-northway-red bg-red-50/60{% else %}border-gray-200 hover:bg-gray-50{% endif %}">
+                        <input type="radio"
+                               name="q_{{ q.id }}"
+                               value="{{ opt.value }}"
+                               {% if checked %}checked{% endif %}
+                               onchange="updateSelection(this)"
+                               class="mt-0.5 text-northway-red focus:ring-northway-red" />
+                        <span class="text-xs text-gray-800 leading-snug">
+                            <strong class="text-gray-500 mr-1">{{ opt.value }}</strong> {{ opt.label }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if loop.last %}</div></div>{% endif %}
+        {% endfor %}
+
+        <div id="formError" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm font-medium"></div>
+
+        <div class="flex flex-wrap items-center justify-end gap-3 pt-2">
+            <a href="{{ url_for('leads.lead_details', id=lead.id) }}" class="px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                Cancelar
+            </a>
+            <button type="submit" id="saveBtn" class="bg-northway-red text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:bg-red-700 transition-colors">
+                Salvar diagnóstico completo e ver relatório
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    lucide.createIcons();
+
+    function updateProgress() {
+        const blocks = document.querySelectorAll('.question-block');
+        let answered = 0;
+        blocks.forEach(b => {
+            if (b.querySelector('input[type="radio"]:checked')) answered++;
+        });
+        document.getElementById('progressCount').textContent = answered + ' / ' + blocks.length;
+    }
+
+    function updateSelection(input) {
+        const block = input.closest('.question-block');
+        block.querySelectorAll('.opt-label').forEach(lbl => {
+            lbl.classList.remove('border-northway-red', 'bg-red-50/60');
+            lbl.classList.add('border-gray-200');
+        });
+        const active = input.closest('.opt-label');
+        active.classList.remove('border-gray-200');
+        active.classList.add('border-northway-red', 'bg-red-50/60');
+        updateProgress();
+    }
+
+    document.getElementById('completoForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const errEl = document.getElementById('formError');
+        const btn = document.getElementById('saveBtn');
+        errEl.classList.add('hidden');
+
+        const answers = {};
+        const blocks = document.querySelectorAll('.question-block');
+        let firstMissing = null;
+
+        blocks.forEach(b => {
+            const qid = b.getAttribute('data-qid');
+            const checked = b.querySelector('input[type="radio"]:checked');
+            if (!checked && !firstMissing) {
+                firstMissing = b;
+            } else if (checked) {
+                answers[qid] = parseInt(checked.value, 10);
+            }
+        });
+
+        if (firstMissing) {
+            errEl.textContent = 'Responda todas as 20 perguntas antes de salvar o diagnóstico completo.';
+            errEl.classList.remove('hidden');
+            firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Salvando...';
+
+        try {
+            const res = await fetch('{{ url_for("diagnostic_raiox.completo", lead_id=lead.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ answers })
+            });
+            const data = await res.json();
+            if (!res.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Erro ao salvar diagnóstico completo.');
+            }
+            window.location.href = data.redirect_url;
+        } catch (err) {
+            errEl.textContent = err.message;
+            errEl.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = 'Salvar diagnóstico completo e ver relatório';
+        }
+    });
+
+    updateProgress();
+</script>
+{% endblock %}
+

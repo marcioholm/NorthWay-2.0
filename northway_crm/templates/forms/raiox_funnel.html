@@ -1208,6 +1208,7 @@
               <a class="btn-primary btn-wa" href="${esc(r.whatsapp_url)}" target="_blank" rel="noopener">
                 Falar no WhatsApp sobre meu diagnóstico ${ICONS.arrowRight}
               </a>
+              ${r.pdf_url ? `<a class="btn-ghost" style="text-align:center;text-decoration:none;" href="${esc(r.pdf_url)}" target="_blank" rel="noopener">Baixar meu diagnóstico em PDF</a>` : ''}
               <button type="button" class="btn-ghost" onclick="resetFlow()">Refazer diagnóstico</button>
             </div>
           </section>
