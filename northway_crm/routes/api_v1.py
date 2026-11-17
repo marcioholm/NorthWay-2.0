@@ -78,11 +78,13 @@ def create_lead():
                     }), 200
 
     try:
-        try:
-            from routes.diagnostic_raiox import ensure_raiox_v2_columns
-            ensure_raiox_v2_columns()
-        except Exception:
-            pass
+        if not getattr(create_lead, '_cols_ensured', False):
+            try:
+                from routes.diagnostic_raiox import ensure_raiox_v2_columns
+                ensure_raiox_v2_columns()
+            except Exception:
+                pass
+            create_lead._cols_ensured = True
 
         full_address = (data.get('address') or '').strip()
         city_val = (data.get('city') or '').strip()

@@ -1316,7 +1316,7 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                         headers={"Content-Type": "application/json", "X-API-Key": cfg["crm_api_key"]},
                         method="POST",
                     )
-                    with urllib.request.urlopen(req, timeout=10, context=get_ssl_context()) as resp:
+                    with urllib.request.urlopen(req, timeout=25, context=get_ssl_context()) as resp:
                         r_data = json.loads(resp.read().decode("utf-8"))
                         crm_id = (r_data.get("data") or {}).get("id")
                         if r_data.get("duplicate"):
