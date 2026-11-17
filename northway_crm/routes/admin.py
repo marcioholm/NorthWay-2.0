@@ -386,21 +386,23 @@ def settings_integrations():
 def create_crm_api_key():
     if not current_user.company_id:
         return jsonify({'success': False, 'error': 'Empresa não identificada'}), 403
-    from services.integrations_service import IntegrationsService
-    data = request.get_json(silent=True) or request.form or {}
-    name = (data.get('name') or 'Prospector / Integração').strip()[:80]
-    raw_key, key_obj = IntegrationsService.generate_api_key(
-        company_id=current_user.company_id,
-        name=name,
-        scopes=['leads:read', 'leads:write']
-    )
-    return jsonify({
-        'success': True,
-        'raw_key': raw_key,
-        'id': key_obj.id,
-        'name': key_obj.name,
-        'key_prefix': key_obj.key_prefix
-    })
+    try:
+        from services.integrations_service import IntegrationsService
+        data = request.get_json(silent=True) or request.form or {}
+        name = (data.get('name') or 'Prospector / Integração').strip()[:80]
+        raw_key = IntegrationsService.generate_api_key(
+            company_id=current_user.company_id,
+            name=name,
+            scopes=['leads:read', 'leads:write']
+        )
+        return jsonify({
+            'success': True,
+            'raw_key': raw_key,
+            'name': name,
+            'key_prefix': raw_key[:10]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @admin_bp.route('/settings/integrations/api-key/<int:key_id>/revoke', methods=['POST'])
