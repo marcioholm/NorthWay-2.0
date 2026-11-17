@@ -226,6 +226,7 @@ def ensure_drafts_table():
             cargo TEXT,
             phone TEXT,
             whatsapp TEXT,
+            decisor_whatsapp TEXT,
             email TEXT,
             cnpj TEXT,
             instagram TEXT,
@@ -240,6 +241,10 @@ def ensure_drafts_table():
             updated_at INTEGER DEFAULT (CAST(strftime('%s', 'now') AS INT))
         )
     """)
+    try:
+        cur.execute("ALTER TABLE prospecting_drafts ADD COLUMN decisor_whatsapp TEXT")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 
@@ -256,52 +261,194 @@ def list_drafts():
     return rows
 
 
+def normalize_company_name(name):
+    """Normaliza razão social/nome fantasia removendo sufixos societários e acentos para match."""
+    if not name:
+        return ""
+    s = str(name).lower().strip()
+    repl = {"á": "a", "à": "a", "ã": "a", "â": "a", "é": "e", "ê": "e", "í": "i", "ó": "o", "ô": "o", "õ": "o", "ú": "u", "ç": "c"}
+    for k, v in repl.items():
+        s = s.replace(k, v)
+    s = re.sub(r"[^a-z0-9\s]", " ", s)
+    stop = {"ltda", "me", "epp", "eireli", "sa", "s", "a", "cia", "comercio", "servicos", "servico", "solucoes", "grupo"}
+    tokens = [t for t in s.split() if t and t not in stop]
+    return " ".join(tokens)
+
+
+def find_matching_draft(cur, data):
+    """Procura rascunho existente por CNPJ, telefone ou nome normalizado da empresa."""
+    cur.execute("SELECT * FROM prospecting_drafts WHERE status != 'enviado_crm' ORDER BY updated_at DESC")
+    cols = [d[0] for d in cur.description]
+    rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+    if not rows:
+        return None
+
+    in_cnpj = re.sub(r"\D", "", str(data.get("cnpj") or ""))
+    in_phone = re.sub(r"\D", "", str(data.get("whatsapp") or data.get("phone") or ""))
+    in_tail = in_phone[-10:] if len(in_phone) >= 10 else ""
+    in_name = normalize_company_name(data.get("empresa") or "")
+
+    for row in rows:
+        r_cnpj = re.sub(r"\D", "", str(row.get("cnpj") or ""))
+        if in_cnpj and r_cnpj and in_cnpj == r_cnpj:
+            return row
+
+    for row in rows:
+        for pcol in ("whatsapp", "phone"):
+            r_phone = re.sub(r"\D", "", str(row.get(pcol) or ""))
+            if in_tail and len(r_phone) >= 10 and r_phone[-10:] == in_tail:
+                return row
+
+    if in_name and len(in_name) >= 4:
+        for row in rows:
+            r_name = normalize_company_name(row.get("empresa") or "")
+            if not r_name:
+                continue
+            if in_name == r_name or (len(in_name) >= 6 and (in_name in r_name or r_name in in_name)):
+                return row
+    return None
+
+
 def upsert_draft(data):
     ensure_drafts_table()
-    lk = (data.get("lead_key") or "").strip()
-    if not lk:
-        lk = compute_lead_key({"title": data.get("empresa"), "phone": data.get("phone"), "city": data.get("city")})
+    explicit_key = (data.get("lead_key") or "").strip()
     db_path = os.path.join(DATA_DIR, "jobs.db")
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
-    cur.execute("SELECT lead_key FROM prospecting_drafts WHERE lead_key = ?", (lk,))
-    exists = cur.fetchone() is not None
-    fields = (
-        data.get("empresa") or "",
-        data.get("decisor") or "",
-        data.get("cargo") or "",
-        data.get("phone") or "",
-        data.get("whatsapp") or data.get("phone") or "",
-        data.get("email") or "",
-        data.get("cnpj") or "",
-        data.get("instagram") or "",
-        data.get("website") or "",
-        data.get("address") or "",
-        data.get("city") or "",
-        data.get("state") or "",
-        data.get("category") or "",
-        int(data.get("opportunity_score") or 0),
-        data.get("notes") or "",
-        data.get("status") or "rascunho",
-    )
-    if exists:
+
+    existing = None
+    merged = False
+    if explicit_key:
+        cur.execute("SELECT * FROM prospecting_drafts WHERE lead_key = ?", (explicit_key,))
+        row = cur.fetchone()
+        if row:
+            cols = [d[0] for d in cur.description]
+            existing = dict(zip(cols, row))
+        lk = explicit_key
+    else:
+        existing = find_matching_draft(cur, data)
+        if existing:
+            lk = existing["lead_key"]
+            merged = True
+        else:
+            lk = compute_lead_key({"title": data.get("empresa"), "phone": data.get("phone"), "city": data.get("city")})
+
+    if existing and not explicit_key:
+        # Merge inteligente (extensão -> card já existente do Maps): preserva endereço completo e soma dados novos
+        new_phone = (data.get("phone") or "").strip()
+        new_wa = (data.get("whatsapp") or new_phone).strip()
+        old_phone = (existing.get("phone") or "").strip()
+        old_wa = (existing.get("whatsapp") or "").strip()
+
+        # Se veio celular novo diferente do número do Maps, guarda em WhatsApp Decisor (quando há decisor) ou WhatsApp Empresa
+        old_dec_wa = (existing.get("decisor_whatsapp") or "").strip()
+        final_phone = old_phone or new_phone
+        final_wa = old_wa
+        final_dec_wa = old_dec_wa
+
+        in_num = new_wa or new_phone
+        if in_num:
+            in_dig = re.sub(r"\D", "", in_num)
+            old_p_dig = re.sub(r"\D", "", old_phone)
+            old_w_dig = re.sub(r"\D", "", old_wa)
+            if (data.get("decisor") or "").strip() and in_dig not in (old_p_dig, old_w_dig):
+                final_dec_wa = in_num
+            elif not final_wa:
+                final_wa = in_num
+            elif in_dig != old_w_dig and not final_dec_wa:
+                final_dec_wa = in_num
+
+        old_addr = (existing.get("address") or "").strip()
+        new_addr = (data.get("address") or "").strip()
+        final_addr = old_addr if len(old_addr) >= len(new_addr) else new_addr
+
+        old_notes = (existing.get("notes") or "").strip()
+        new_notes = (data.get("notes") or "").strip()
+        final_notes = " | ".join([old_notes] + [p for p in (new_notes,) if p and p not in old_notes]) if old_notes else new_notes
+
+        fields = (
+            existing.get("empresa") or data.get("empresa") or "",
+            data.get("decisor") or existing.get("decisor") or "",
+            data.get("cargo") or existing.get("cargo") or "",
+            final_phone,
+            final_wa,
+            data.get("decisor_whatsapp") or final_dec_wa,
+            data.get("email") or existing.get("email") or "",
+            data.get("cnpj") or existing.get("cnpj") or "",
+            data.get("instagram") or existing.get("instagram") or "",
+            data.get("website") or existing.get("website") or "",
+            final_addr,
+            existing.get("city") or data.get("city") or "",
+            existing.get("state") or data.get("state") or "",
+            existing.get("category") or data.get("category") or "",
+            int(existing.get("opportunity_score") or data.get("opportunity_score") or 0),
+            final_notes,
+            existing.get("status") or data.get("status") or "rascunho",
+        )
         cur.execute("""
             UPDATE prospecting_drafts
-            SET empresa=?, decisor=?, cargo=?, phone=?, whatsapp=?, email=?, cnpj=?, instagram=?,
+            SET empresa=?, decisor=?, cargo=?, phone=?, whatsapp=?, decisor_whatsapp=?, email=?, cnpj=?, instagram=?,
+                website=?, address=?, city=?, state=?, category=?, opportunity_score=?, notes=?, status=?,
+                updated_at=CAST(strftime('%s', 'now') AS INT)
+            WHERE lead_key=?
+        """, fields + (lk,))
+    elif existing:
+        fields = (
+            data.get("empresa") or "",
+            data.get("decisor") or "",
+            data.get("cargo") or "",
+            data.get("phone") or "",
+            data.get("whatsapp") or "",
+            data.get("decisor_whatsapp") or "",
+            data.get("email") or "",
+            data.get("cnpj") or "",
+            data.get("instagram") or "",
+            data.get("website") or "",
+            data.get("address") or "",
+            data.get("city") or "",
+            data.get("state") or "",
+            data.get("category") or "",
+            int(data.get("opportunity_score") or 0),
+            data.get("notes") or "",
+            data.get("status") or "rascunho",
+        )
+        cur.execute("""
+            UPDATE prospecting_drafts
+            SET empresa=?, decisor=?, cargo=?, phone=?, whatsapp=?, decisor_whatsapp=?, email=?, cnpj=?, instagram=?,
                 website=?, address=?, city=?, state=?, category=?, opportunity_score=?, notes=?, status=?,
                 updated_at=CAST(strftime('%s', 'now') AS INT)
             WHERE lead_key=?
         """, fields + (lk,))
     else:
+        fields = (
+            data.get("empresa") or "",
+            data.get("decisor") or "",
+            data.get("cargo") or "",
+            data.get("phone") or "",
+            data.get("whatsapp") or "",
+            data.get("decisor_whatsapp") or "",
+            data.get("email") or "",
+            data.get("cnpj") or "",
+            data.get("instagram") or "",
+            data.get("website") or "",
+            data.get("address") or "",
+            data.get("city") or "",
+            data.get("state") or "",
+            data.get("category") or "",
+            int(data.get("opportunity_score") or 0),
+            data.get("notes") or "",
+            data.get("status") or "rascunho",
+        )
         cur.execute("""
             INSERT INTO prospecting_drafts (
-                empresa, decisor, cargo, phone, whatsapp, email, cnpj, instagram,
+                empresa, decisor, cargo, phone, whatsapp, decisor_whatsapp, email, cnpj, instagram,
                 website, address, city, state, category, opportunity_score, notes, status, lead_key
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, fields + (lk,))
+
     conn.commit()
     conn.close()
-    return lk
+    return lk, merged
 
 
 def delete_draft(lead_key=None, clear_sent=False):
@@ -895,7 +1042,7 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
             buf = io.StringIO()
             writer = csv.writer(buf, delimiter=";")
             writer.writerow([
-                "Empresa", "Decisor", "Cargo", "Telefone", "WhatsApp",
+                "Empresa", "Decisor", "Cargo", "Tel. Fixo", "WhatsApp Empresa", "WhatsApp Decisor",
                 "E-mail", "CNPJ", "Instagram", "Site", "Endereço",
                 "Cidade", "UF", "Categoria", "Score", "Status", "Observações"
             ])
@@ -906,6 +1053,7 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                     d.get("cargo") or "",
                     d.get("phone") or "",
                     d.get("whatsapp") or "",
+                    d.get("decisor_whatsapp") or "",
                     d.get("email") or "",
                     d.get("cnpj") or "",
                     d.get("instagram") or "",
@@ -1070,8 +1218,8 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                 payload = json.loads(body.decode("utf-8"))
             except Exception:
                 payload = {}
-            lk = upsert_draft(payload)
-            self._send_json({"success": True, "lead_key": lk})
+            lk, merged = upsert_draft(payload)
+            self._send_json({"success": True, "lead_key": lk, "merged": merged})
             return
 
         if self.path == "/api/portal/drafts/delete":
@@ -1108,9 +1256,15 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                 cargo_nome = (item.get("cargo") or "").strip()
                 ig = (item.get("instagram") or "").strip()
                 custom_notes = (item.get("notes") or "").strip()
+                decisor_wa = (item.get("decisor_whatsapp") or "").strip()
+                empresa_wa = (item.get("whatsapp") or "").strip()
+                fixo_tel = (item.get("phone") or "").strip()
                 desc_parts = [
                     f"Empresa: {empresa_nome}",
                     f"Decisor: {decisor_nome}" + (f" ({cargo_nome})" if cargo_nome else "") if decisor_nome else None,
+                    f"Tel. Fixo: {fixo_tel}" if fixo_tel else None,
+                    f"WhatsApp Empresa: {empresa_wa}" if empresa_wa else None,
+                    f"WhatsApp Decisor: {decisor_wa}" if decisor_wa else None,
                     f"Instagram: {ig}" if ig else None,
                     f"Observações: {custom_notes}" if custom_notes else None,
                     f"Score Oportunidade: {item.get('opportunity_score', 0)}/10 ({', '.join(item.get('opportunity_reasons') or [])})",
@@ -1124,8 +1278,8 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                 lead_body = {
                     "name": decisor_nome or empresa_nome,
                     "legal_name": empresa_nome,
-                    "phone": item.get("phone") or "",
-                    "whatsapp": item.get("whatsapp") or item.get("phone") or "",
+                    "phone": fixo_tel or empresa_wa or decisor_wa or "",
+                    "whatsapp": decisor_wa or empresa_wa or fixo_tel or "",
                     "email": first_mail,
                     "website": item.get("website") or None,
                     "address": item.get("address") or None,

@@ -355,7 +355,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (res.ok) {
-        showToast('🚀', 'Enviado para a Fila de Preparação (8080)!', 'success');
+        const resData = await res.json().catch(() => ({}));
+        if (resData.merged) {
+          showToast('🔗', 'Mesclado ao lead já existente na Fila (8080)!', 'success');
+        } else {
+          showToast('🚀', 'Enviado para a Fila de Preparação (8080)!', 'success');
+        }
       } else {
         const errData = await res.json().catch(() => ({}));
         showToast('❌', errData.error || 'Erro ao salvar na Fila.', 'error');

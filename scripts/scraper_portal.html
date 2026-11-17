@@ -517,7 +517,9 @@
                             <th class="p-2.5">Empresa</th>
                             <th class="p-2.5">Decisor / Sócio</th>
                             <th class="p-2.5">Cargo</th>
-                            <th class="p-2.5">WhatsApp / Tel</th>
+                            <th class="p-2.5">Tel. Fixo</th>
+                            <th class="p-2.5">WhatsApp Empresa</th>
+                            <th class="p-2.5">WhatsApp Decisor</th>
                             <th class="p-2.5">E-mail</th>
                             <th class="p-2.5">CNPJ</th>
                             <th class="p-2.5">Instagram / Site</th>
@@ -2362,7 +2364,7 @@
             const tbody = document.getElementById('draftsTableBody');
             if (!tbody) return;
             if (!draftsCache.length) {
-                tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">Nenhum lead na fila ainda. Clique em <strong>+ Fila</strong> nos cards do mapa ou em <strong>Novo lead manual</strong>.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" class="p-8 text-center text-slate-400">Nenhum lead na fila ainda. Clique em <strong>+ Fila</strong> nos cards do mapa ou em <strong>Novo lead manual</strong>.</td></tr>';
                 return;
             }
             tbody.innerHTML = draftsCache.map(function(d, idx) {
@@ -2372,7 +2374,9 @@
                     '<td class="p-2"><input type="text" value="' + escHtml(d.empresa) + '" onchange="updateDraftField(' + idx + ', \'empresa\', this.value)" class="w-36 p-1.5 border border-slate-200 rounded text-xs font-semibold"></td>' +
                     '<td class="p-2"><input type="text" value="' + escHtml(d.decisor) + '" placeholder="Nome do sócio" onchange="updateDraftField(' + idx + ', \'decisor\', this.value)" class="w-32 p-1.5 border border-slate-200 rounded text-xs"></td>' +
                     '<td class="p-2"><input type="text" value="' + escHtml(d.cargo) + '" placeholder="Ex: Sócio" onchange="updateDraftField(' + idx + ', \'cargo\', this.value)" class="w-24 p-1.5 border border-slate-200 rounded text-xs"></td>' +
-                    '<td class="p-2"><input type="text" value="' + escHtml(d.whatsapp || d.phone) + '" placeholder="(44) 99999-9999" onchange="updateDraftField(' + idx + ', \'whatsapp\', this.value)" class="w-32 p-1.5 border border-slate-200 rounded text-xs font-mono"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.phone) + '" placeholder="(44) 3000-0000" onchange="updateDraftField(' + idx + ', \'phone\', this.value)" class="w-28 p-1.5 border border-slate-200 rounded text-xs font-mono"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.whatsapp) + '" placeholder="(44) 99999-9999" onchange="updateDraftField(' + idx + ', \'whatsapp\', this.value)" class="w-28 p-1.5 border border-slate-200 rounded text-xs font-mono"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.decisor_whatsapp) + '" placeholder="(44) 99999-9999" onchange="updateDraftField(' + idx + ', \'decisor_whatsapp\', this.value)" class="w-28 p-1.5 border border-emerald-200 bg-emerald-50/30 rounded text-xs font-mono"></td>' +
                     '<td class="p-2"><input type="text" value="' + escHtml(d.email) + '" placeholder="email@empresa.com" onchange="updateDraftField(' + idx + ', \'email\', this.value)" class="w-36 p-1.5 border border-slate-200 rounded text-xs"></td>' +
                     '<td class="p-2"><div class="flex items-center gap-1"><input type="text" value="' + escHtml(d.cnpj) + '" placeholder="00.000.000/0001-00" onchange="updateDraftField(' + idx + ', \'cnpj\', this.value)" class="w-32 p-1.5 border border-slate-200 rounded text-xs font-mono"><button type="button" onclick="lookupDraftCnpj(' + idx + ')" class="px-1.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-700 cursor-pointer" title="Buscar Sócios na Receita">QSA</button></div></td>' +
                     '<td class="p-2"><input type="text" value="' + escHtml(d.instagram || d.website) + '" placeholder="@instagram ou site" onchange="updateDraftField(' + idx + ', \'instagram\', this.value)" class="w-32 p-1.5 border border-slate-200 rounded text-xs"></td>' +
@@ -2390,7 +2394,6 @@
             const d = draftsCache[idx];
             if (!d) return;
             d[field] = val;
-            if (field === 'whatsapp') d.phone = val;
             await fetch('/api/portal/drafts/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
