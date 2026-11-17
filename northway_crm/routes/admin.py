@@ -384,6 +384,7 @@ def settings_integrations():
 
 @admin_bp.route('/settings/integrations/api-key', methods=['POST'])
 def create_crm_api_key():
+    from flask import jsonify
     if not current_user.company_id:
         return jsonify({'success': False, 'error': 'Empresa não identificada'}), 403
     try:
