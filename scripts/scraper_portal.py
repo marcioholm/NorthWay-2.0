@@ -11,6 +11,7 @@ import math
 import os
 import re
 import sqlite3
+import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -23,6 +24,17 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(PROJECT_ROOT, "scraper_data")
 HTML_FILE_PATH = os.path.join(os.path.dirname(__file__), "scraper_portal.html")
 CONFIG_FILE_PATH = os.path.join(DATA_DIR, "portal_config.json")
+
+
+def get_ssl_context():
+    """Garante certificados CA válidos no macOS (Python.org) usando certifi ou /etc/ssl/cert.pem."""
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        if os.path.exists("/etc/ssl/cert.pem"):
+            return ssl.create_default_context(cafile="/etc/ssl/cert.pem")
+        return ssl.create_default_context()
 
 
 def load_crm_config():
@@ -1024,7 +1036,7 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                     f"{cfg['crm_url']}/api/v1/pipelines",
                     headers={"X-API-Key": cfg["crm_api_key"]},
                 )
-                with urllib.request.urlopen(req, timeout=8) as resp:
+                with urllib.request.urlopen(req, timeout=8, context=get_ssl_context()) as resp:
                     data = json.loads(resp.read().decode("utf-8"))
                     self._send_json(data)
             except urllib.error.HTTPError as e:
@@ -1304,7 +1316,7 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                         headers={"Content-Type": "application/json", "X-API-Key": cfg["crm_api_key"]},
                         method="POST",
                     )
-                    with urllib.request.urlopen(req, timeout=10) as resp:
+                    with urllib.request.urlopen(req, timeout=10, context=get_ssl_context()) as resp:
                         r_data = json.loads(resp.read().decode("utf-8"))
                         crm_id = (r_data.get("data") or {}).get("id")
                         if r_data.get("duplicate"):

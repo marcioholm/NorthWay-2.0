@@ -2592,7 +2592,11 @@
                 closeCrmModal();
                 applyFiltersAndRender(true);
                 loadDrafts();
-                showToast('CRM: ' + res.created + ' novos, ' + res.duplicates + ' já existiam' + (res.errors ? ', ' + res.errors + ' erros' : '') + '.');
+                if (res.errors && res.error_details && res.error_details.length) {
+                    showToast('Erro ao enviar: ' + res.error_details[0]);
+                } else {
+                    showToast('CRM: ' + res.created + ' novos, ' + res.duplicates + ' já existiam' + (res.errors ? ', ' + res.errors + ' erros' : '') + '.');
+                }
             } catch (e) {
                 showToast(e.message || 'Erro ao enviar para o CRM.');
             } finally {
