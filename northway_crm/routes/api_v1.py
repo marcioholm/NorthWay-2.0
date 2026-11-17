@@ -64,20 +64,26 @@ def create_lead():
         digits = re.sub(r'\D', '', raw_phone)
         tail = digits[-10:] if len(digits) >= 10 else digits
         if tail:
-            candidates = Lead.query.filter(
+            candidates = db.session.query(Lead.id, Lead.name, Lead.phone).filter(
                 Lead.company_id == g.company_id,
                 Lead.phone.isnot(None)
             ).all()
-            for existing in candidates:
-                ex_digits = re.sub(r'\D', '', existing.phone or '')
+            for ex_id, ex_name, ex_phone in candidates:
+                ex_digits = re.sub(r'\D', '', ex_phone or '')
                 if ex_digits and (ex_digits == digits or (len(ex_digits) >= 10 and ex_digits[-10:] == tail)):
                     return jsonify({
                         "success": True,
                         "duplicate": True,
-                        "data": {"id": existing.id, "name": existing.name}
+                        "data": {"id": ex_id, "name": ex_name}
                     }), 200
 
     try:
+        try:
+            from routes.diagnostic_raiox import ensure_raiox_v2_columns
+            ensure_raiox_v2_columns()
+        except Exception:
+            pass
+
         full_address = (data.get('address') or '').strip()
         city_val = (data.get('city') or '').strip()
         state_val = (data.get('state') or '').strip()
@@ -94,11 +100,15 @@ def create_lead():
             website=data.get('website'),
             address=full_address or None,
             cnpj=data.get('cnpj'),
+            gmb_link=data.get('gmb_link'),
+            gmb_rating=data.get('gmb_rating'),
+            gmb_reviews=data.get('gmb_reviews'),
+            google_place_id=data.get('google_place_id'),
             pipeline_id=data.get('pipeline_id'),
             pipeline_stage_id=data.get('pipeline_stage_id'),
             source=data.get('source', 'API'),
             status=data.get('status', 'novo'),
-            description=data.get('description'),
+            notes=data.get('notes') or data.get('description'),
             created_at=get_now_br()
         )
         db.session.add(new_lead)
@@ -131,10 +141,13 @@ def update_lead(id):
     data = request.json
     fields_updated = []
     
-    for field in ['name', 'email', 'phone', 'status', 'description']:
+    for field in ['name', 'email', 'phone', 'status', 'notes']:
         if field in data:
             setattr(lead, field, data[field])
             fields_updated.append(field)
+    if 'description' in data and 'notes' not in data:
+        lead.notes = data['description']
+        fields_updated.append('notes')
             
     if fields_updated:
         db.session.commit()

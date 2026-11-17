@@ -1250,6 +1250,7 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
             stage_id = payload.get("pipeline_stage_id") or cfg.get("default_stage_id")
 
             created, duplicates, errors = 0, 0, 0
+            error_details = []
             for item in leads_to_send:
                 empresa_nome = item.get("empresa") or item.get("title") or "Empresa sem nome"
                 decisor_nome = (item.get("decisor") or "").strip()
@@ -1275,6 +1276,7 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                 ]
                 raw_mail = item.get("email") or item.get("emails") or ""
                 first_mail = raw_mail.split(",")[0].strip() or None
+                notes_txt = "\n".join([p for p in desc_parts if p])
                 lead_body = {
                     "name": decisor_nome or empresa_nome,
                     "legal_name": empresa_nome,
@@ -1286,10 +1288,13 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                     "city": item.get("city") or None,
                     "state": item.get("state") or None,
                     "cnpj": item.get("cnpj") or None,
+                    "gmb_link": item.get("google_maps_url") or None,
+                    "gmb_rating": float(item["review_rating"]) if item.get("review_rating") else None,
+                    "gmb_reviews": int(item["review_count"]) if item.get("review_count") else None,
                     "pipeline_id": int(pipeline_id) if pipeline_id else None,
                     "pipeline_stage_id": int(stage_id) if stage_id else None,
                     "source": "Google Maps Prospector",
-                    "description": "\n".join([p for p in desc_parts if p]),
+                    "notes": notes_txt,
                     "dedupe": True,
                 }
                 try:
@@ -1299,7 +1304,7 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                         headers={"Content-Type": "application/json", "X-API-Key": cfg["crm_api_key"]},
                         method="POST",
                     )
-                    with urllib.request.urlopen(req, timeout=8) as resp:
+                    with urllib.request.urlopen(req, timeout=10) as resp:
                         r_data = json.loads(resp.read().decode("utf-8"))
                         crm_id = (r_data.get("data") or {}).get("id")
                         if r_data.get("duplicate"):
@@ -1308,21 +1313,28 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                             created += 1
                         if item.get("lead_key"):
                             mark_lead_memory(item["lead_key"], "enviado_crm", crm_lead_id=crm_id, title=empresa_nome, phone=item.get("phone", ""))
-                            # Atualiza rascunho se existir na fila
                             ensure_drafts_table()
                             db_path = os.path.join(DATA_DIR, "jobs.db")
                             conn = sqlite3.connect(db_path)
                             conn.execute("UPDATE prospecting_drafts SET status = 'enviado_crm' WHERE lead_key = ?", (item["lead_key"],))
                             conn.commit()
                             conn.close()
-                except Exception:
+                except urllib.error.HTTPError as he:
                     errors += 1
+                    try:
+                        error_details.append(f"HTTP {he.code}: {he.read().decode('utf-8', errors='ignore')[:180]}")
+                    except Exception:
+                        error_details.append(f"HTTP {he.code}")
+                except Exception as ex:
+                    errors += 1
+                    error_details.append(str(ex)[:180])
 
             self._send_json({
                 "success": True,
                 "created": created,
                 "duplicates": duplicates,
                 "errors": errors,
+                "error_details": error_details[:5],
             })
             return
 
