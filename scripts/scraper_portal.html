@@ -197,6 +197,22 @@
             </div>
         </header>
 
+        <!-- Abas Principais -->
+        <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+            <button type="button" id="btnTabDiscover" onclick="switchMainTab('discover')"
+                    class="px-3.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="map" class="w-3.5 h-3.5"></i>
+                <span>Mapa &amp; Descoberta</span>
+            </button>
+            <button type="button" id="btnTabDrafts" onclick="switchMainTab('drafts')"
+                    class="px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="table-2" class="w-3.5 h-3.5 text-[#E31E24]"></i>
+                <span>Fila de Preparação (CRM)</span>
+                <span id="draftsTabCount" class="px-1.5 py-0.5 rounded bg-red-50 text-[#E31E24] text-[10px] font-bold">0</span>
+            </button>
+        </div>
+
+        <div id="tabDiscoverView" class="space-y-3">
         <!-- Search Controls Toolbar -->
         <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-xs space-y-2.5">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
@@ -413,6 +429,33 @@
                     <div id="miningProgressBar" class="h-1 w-full bg-slate-100 rounded-full overflow-hidden hidden">
                         <div class="h-full w-1/3 bg-[#E31E24] rounded-full mining-bar-anim"></div>
                     </div>
+
+                    <!-- Filtros Comerciais Rápidos & Ordenação -->
+                    <div id="quickFilterBar" class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <label class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer select-none">
+                                <input type="checkbox" id="qfWhats" onchange="applyFiltersAndRender()" class="rounded border-slate-300 text-[#E31E24] focus:ring-0">
+                                <span>Só WhatsApp</span>
+                            </label>
+                            <label class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer select-none">
+                                <input type="checkbox" id="qfNoSite" onchange="applyFiltersAndRender()" class="rounded border-slate-300 text-[#E31E24] focus:ring-0">
+                                <span>Sem site</span>
+                            </label>
+                            <label class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer select-none">
+                                <input type="checkbox" id="qfLowRev" onchange="applyFiltersAndRender()" class="rounded border-slate-300 text-[#E31E24] focus:ring-0">
+                                <span>&lt; 20 aval.</span>
+                            </label>
+                            <label class="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-700 font-medium cursor-pointer select-none">
+                                <input type="checkbox" id="qfHideDone" checked onchange="applyFiltersAndRender()" class="rounded border-slate-300 text-[#E31E24] focus:ring-0">
+                                <span>Ocultar enviados</span>
+                            </label>
+                        </div>
+                        <select id="qfSort" onchange="applyFiltersAndRender()" class="px-2 py-1 rounded-md border border-slate-200 bg-white text-slate-700 font-semibold focus:outline-none">
+                            <option value="score">Ordenar: Oportunidade</option>
+                            <option value="reviews">Ordenar: Mais avaliações</option>
+                            <option value="distance">Ordenar: Mais próximos</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Feed Scrollable -->
@@ -436,6 +479,102 @@
                             <span>Enquadrar</span>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Aba 2: Fila de Preparação (Planilha editável pré-CRM) -->
+        <div id="tabDraftsView" class="hidden space-y-3">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900">Fila de Preparação para o CRM</h2>
+                    <p class="text-[11px] text-slate-500">Complete decisor, e-mail, CNPJ, Instagram e observações nas linhas abaixo. Tudo é salvo automaticamente.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="addManualDraft()" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Novo lead manual</span>
+                    </button>
+                    <a href="/api/portal/drafts/export" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Exportar CSV</span>
+                    </a>
+                    <button type="button" onclick="clearSentDrafts()" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 text-xs font-medium cursor-pointer">
+                        Limpar enviados
+                    </button>
+                    <button type="button" onclick="sendDraftsToCrm()" class="px-3.5 py-1.5 rounded-lg bg-[#E31E24] hover:bg-[#C31419] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                        <span>Enviar fila ao CRM</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-xl shadow-xs overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs min-w-[1150px]">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase">
+                            <th class="p-2.5">Empresa</th>
+                            <th class="p-2.5">Decisor / Sócio</th>
+                            <th class="p-2.5">Cargo</th>
+                            <th class="p-2.5">WhatsApp / Tel</th>
+                            <th class="p-2.5">E-mail</th>
+                            <th class="p-2.5">CNPJ</th>
+                            <th class="p-2.5">Instagram / Site</th>
+                            <th class="p-2.5">Endereço Completo</th>
+                            <th class="p-2.5">Observações</th>
+                            <th class="p-2.5 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="draftsTableBody" class="divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Enviar / Configurar CRM -->
+    <div id="crmModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-[1200] hidden items-center justify-center p-3 md:p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-200">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Enviar para o NorthWay CRM</h3>
+                    <p id="crmModalCount" class="text-[11px] text-slate-500">0 leads selecionados</p>
+                </div>
+                <button onclick="closeCrmModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="p-4 space-y-3 text-xs">
+                <div id="crmConfigBox" class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-700">Conexão com o CRM</span>
+                        <span id="crmConnBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">Verificando...</span>
+                    </div>
+                    <input type="text" id="crmUrlInput" placeholder="https://crm.northwaycompany.com.br" class="w-full p-2 border border-slate-200 rounded-lg bg-white text-xs">
+                    <input type="password" id="crmKeyInput" placeholder="Cole sua API Key do CRM (Configurações > API)" class="w-full p-2 border border-slate-200 rounded-lg bg-white text-xs">
+                    <button type="button" onclick="saveCrmConfigAndLoad()" class="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-semibold cursor-pointer">
+                        Salvar conexão e carregar funis
+                    </button>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block font-semibold text-slate-700">Funil de Vendas</label>
+                    <select id="crmPipelineSelect" onchange="onCrmPipelineChange()" class="w-full p-2 border border-slate-200 rounded-lg bg-white text-xs font-medium">
+                        <option value="">Padrão do CRM</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block font-semibold text-slate-700">Etapa Inicial</label>
+                    <select id="crmStageSelect" class="w-full p-2 border border-slate-200 rounded-lg bg-white text-xs font-medium">
+                        <option value="">Primeira etapa</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onclick="closeCrmModal()" class="px-3 py-2 rounded-lg border border-slate-200 text-slate-600 font-semibold cursor-pointer">Cancelar</button>
+                    <button type="button" id="btnConfirmSendCrm" onclick="confirmSendToCrm()" class="px-4 py-2 rounded-lg bg-[#E31E24] hover:bg-[#C31419] text-white font-bold cursor-pointer">
+                        Enviar agora (com deduplicação)
+                    </button>
                 </div>
             </div>
         </div>
@@ -1611,10 +1750,21 @@
 
         function applyFiltersAndRender(isSilent) {
             const strictRadius = document.getElementById('filterStrictRadius').checked;
+            const qfWhats = document.getElementById('qfWhats') ? document.getElementById('qfWhats').checked : false;
+            const qfNoSite = document.getElementById('qfNoSite') ? document.getElementById('qfNoSite').checked : false;
+            const qfLowRev = document.getElementById('qfLowRev') ? document.getElementById('qfLowRev').checked : false;
+            const qfHideDone = document.getElementById('qfHideDone') ? document.getElementById('qfHideDone').checked : false;
+            const qfSort = document.getElementById('qfSort') ? document.getElementById('qfSort').value : 'score';
+
             const userRadius = parseFloat(document.getElementById('selectRadius').value) || 15;
             const maxRadius = Math.max(userRadius, currentJobRadiusKm || 15);
 
             filteredLeads = rawLoadedLeads.filter(function(lead) {
+                if (qfWhats && !lead.whatsapp_url) return false;
+                if (qfNoSite && !lead.no_real_site) return false;
+                if (qfLowRev && (lead.review_count || 0) >= 20) return false;
+                if (qfHideDone && (lead.memory_status === 'enviado_crm' || lead.memory_status === 'descartado')) return false;
+
                 if (!strictRadius) return true;
                 if (lead.distance_km !== null && lead.distance_km !== undefined) {
                     return lead.distance_km <= (maxRadius * 1.3);
@@ -1627,8 +1777,18 @@
                 return true;
             });
 
-            // Ordena com as empresas mais avaliadas no topo
             filteredLeads.sort(function(a, b) {
+                if (qfSort === 'distance') {
+                    const da = (a.distance_km !== null && a.distance_km !== undefined) ? a.distance_km : 9999;
+                    const db = (b.distance_km !== null && b.distance_km !== undefined) ? b.distance_km : 9999;
+                    return da - db;
+                }
+                if (qfSort === 'reviews') {
+                    return (b.review_count || 0) - (a.review_count || 0);
+                }
+                const sa = a.opportunity_score || 0;
+                const sb = b.opportunity_score || 0;
+                if (sb !== sa) return sb - sa;
                 return (b.review_count || 0) - (a.review_count || 0);
             });
 
@@ -1723,14 +1883,34 @@
                     ? '<span class="inline-flex items-center gap-1 text-slate-800 font-bold text-xs"><i data-lucide="star" class="w-3.5 h-3.5 fill-amber-400 text-amber-500"></i>' + item.review_rating + '<span class="text-slate-400 font-normal text-[11px]">(' + item.review_count + ')</span></span>'
                     : '<span class="text-slate-400 text-[11px]">Sem avaliações</span>';
 
+                const oppScore = item.opportunity_score || 0;
+                const oppCls = oppScore >= 7 ? 'bg-red-50 text-[#E31E24] border-red-200' : (oppScore >= 4 ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200');
+                const oppLabel = oppScore >= 7 ? 'Quente' : (oppScore >= 4 ? 'Morno' : 'Baixo');
+                const oppBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ' + oppCls + '" title="' + ((item.opportunity_reasons || []).join(' · ')) + '">Oportunidade ' + oppScore + '/10 · ' + oppLabel + '</span>';
+
+                let memBadge = '';
+                if (item.memory_status === 'enviado_crm') {
+                    memBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">No CRM</span>';
+                } else if (item.memory_status === 'abordado') {
+                    memBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Abordado</span>';
+                } else if (item.is_duplicate_across_jobs) {
+                    memBadge = '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">Já extraído antes</span>';
+                }
+
+                const reasonsHtml = (item.opportunity_reasons || []).slice(0, 3).map(function(r) {
+                    return '<span class="text-[10px] text-slate-600 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">' + r + '</span>';
+                }).join('');
+
                 return '<div id="lead-card-' + idx + '" class="lead-card bg-white rounded-xl p-3.5 shadow-2xs space-y-2.5 cursor-default" onmouseenter="highlightMarker(' + idx + ')" onmouseleave="unhighlightMarker(' + idx + ')">' +
                     '<div class="flex items-start justify-between gap-3">' +
                         '<div class="flex items-start gap-2.5 min-w-0 flex-1">' +
                             '<span class="w-6 h-6 rounded bg-slate-900 text-white text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">' + num + '</span>' +
                             '<div class="min-w-0 flex-1">' +
                                 '<h3 class="font-bold text-xs text-slate-900 leading-snug truncate hover:text-[#E31E24] transition-colors cursor-pointer" onclick="openGmbCard(' + idx + ')" title="' + (item.title || '') + '">' + (item.title || 'Empresa') + '</h3>' +
-                                '<div class="flex items-center gap-2 mt-1 flex-wrap">' +
+                                '<div class="flex items-center gap-1.5 mt-1 flex-wrap">' +
                                     '<span class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">' + (item.category || 'Empresa') + '</span>' +
+                                    oppBadge +
+                                    memBadge +
                                     ratingBadge +
                                     (distanceBadge ? '<span class="text-slate-300">·</span>' + distanceBadge : '') +
                                 '</div>' +
@@ -1743,20 +1923,24 @@
                         ) +
                     '</div>' +
 
+                    (reasonsHtml ? '<div class="flex items-center gap-1 flex-wrap">' + reasonsHtml + '</div>' : '') +
+
                     // Location
-                    '<div class="flex items-center gap-1.5 text-[11px] text-slate-500 truncate">' +
+                    '<div class="flex items-center gap-1.5 text-[11px] text-slate-600 truncate" title="' + (item.address || item.location_summary || '') + '">' +
                         '<i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>' +
-                        '<span class="truncate">' + (item.location_summary || item.address || 'Endereço não disponível') + '</span>' +
+                        '<span class="truncate">' + (item.address || item.location_summary || 'Endereço não disponível') + '</span>' +
                     '</div>' +
+
+                    '<div id="enrich-box-' + idx + '" class="hidden text-[11px] bg-slate-50 border border-slate-200 rounded-lg p-2 space-y-1"></div>' +
 
                     // Actions
                     '<div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 flex-wrap text-xs">' +
                         '<div class="flex items-center gap-1.5">' +
                             (hasWa ?
-                                '<a href="' + item.whatsapp_url + '" target="_blank" class="px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-semibold flex items-center gap-1.5 border border-emerald-200 transition-colors">' +
+                                '<button type="button" onclick="openWhatsappHook(' + idx + ')" class="px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-semibold flex items-center gap-1.5 border border-emerald-200 transition-colors cursor-pointer">' +
                                     '<i data-lucide="message-square" class="w-3 h-3 text-emerald-600"></i>' +
                                     '<span>WhatsApp</span>' +
-                                '</a>' :
+                                '</button>' :
                                 (item.phone ? '<span class="text-[11px] text-slate-700 font-semibold">' + item.phone + '</span>' : '')
                             ) +
                             (hasMail ?
@@ -1766,15 +1950,19 @@
                             ) +
                         '</div>' +
 
-                        '<div class="flex items-center gap-1.5">' +
-                            '<a href="' + (function() {
-                                const kw = extractSearchKeywords(item.title, item.city || item.address);
-                                return 'https://www.google.com/search?q=' + encodeURIComponent(kw.cleanTitle + ' ' + kw.city + ' CNPJ socios');
-                            })() + '" target="_blank" class="px-2 py-1 rounded-md border border-slate-200 hover:border-slate-400 text-slate-700 hover:text-slate-900 text-[11px] font-semibold flex items-center gap-1 transition-colors" title="Localizar CNPJ, Sócios e Administradores no Google / Receita">' +
+                        '<div class="flex items-center gap-1.5 flex-wrap">' +
+                            '<button type="button" onclick="enrichLeadInline(' + idx + ')" class="px-2 py-1 rounded-md border border-slate-200 hover:border-slate-400 text-slate-700 hover:text-slate-900 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer" title="Buscar Instagram, CNPJ e Sócios">' +
                                 '<i data-lucide="user-check" class="w-3 h-3 text-[#E31E24]"></i>' +
-                                '<span>Sócios</span>' +
-                            '</a>' +
-                            '<button onclick="importLeadFromFeed(' + idx + ')" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-[#E31E24] hover:text-white text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer" title="Adicionar ao CRM">' +
+                                '<span>Decisor</span>' +
+                            '</button>' +
+                            '<button type="button" onclick="markLeadStatus(' + idx + ', \'descartado\')" class="px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-100 text-slate-500 text-[11px] font-medium cursor-pointer" title="Ocultar / descartar lead">' +
+                                '<span>Descartar</span>' +
+                            '</button>' +
+                            '<button type="button" onclick="addToDrafts(' + idx + ')" class="px-2 py-1 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer" title="Enviar para a Fila de Preparação">' +
+                                '<i data-lucide="list-plus" class="w-3 h-3"></i>' +
+                                '<span>+ Fila</span>' +
+                            '</button>' +
+                            '<button onclick="importLeadFromFeed(' + idx + ')" class="px-2 py-1 rounded-md bg-slate-100 hover:bg-[#E31E24] hover:text-white text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer" title="Adicionar direto ao CRM">' +
                                 '<i data-lucide="plus" class="w-3 h-3"></i>' +
                                 '<span>CRM</span>' +
                             '</button>' +
@@ -1822,7 +2010,7 @@
                             '<span style="background:#F1F5F9;color:#475569;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;">' + (item.category || 'Empresa') + '</span>' +
                             '<h4 style="font-size:13px;font-weight:700;color:#0F172A;margin:4px 0 2px 0;">' + (item.title || 'Empresa') + '</h4>' +
                             '<p style="font-size:11px;font-weight:600;color:#D97706;margin:0 0 3px 0;">' + ratingTxt + '</p>' +
-                            '<p style="font-size:11px;color:#64748B;margin:0 0 8px 0;">' + (item.location_summary || item.address || '') + '</p>' +
+                            '<p style="font-size:11px;color:#64748B;margin:0 0 8px 0;">' + (item.address || item.location_summary || '') + '</p>' +
                             '<div style="display:flex;gap:6px;margin-top:6px;">' +
                                 '<button onclick="openGmbCard(' + idx + ')" style="flex:1;background:#0F172A;color:#fff;font-weight:600;font-size:11px;padding:6px;border-radius:6px;border:none;cursor:pointer;">Ver Detalhes</button>' +
                                 (item.whatsapp_url ? '<a href="' + item.whatsapp_url + '" target="_blank" style="background:#059669;color:#fff;font-weight:600;font-size:11px;padding:6px 10px;border-radius:6px;text-decoration:none;">WhatsApp</a>' : '') +
@@ -1882,7 +2070,7 @@
             document.getElementById('gmbReviewsCount').textContent = '(' + (item.review_count || 0) + ' avaliações no Google)';
 
             // Address & Contacts
-            document.getElementById('gmbAddress').textContent = item.location_summary || item.address || 'Endereço não disponível';
+            document.getElementById('gmbAddress').textContent = item.address || item.location_summary || 'Endereço não disponível';
             
             const phoneRow = document.getElementById('gmbPhoneRow');
             if (item.phone) {
@@ -2030,48 +2218,383 @@
             }
         }
 
+        let pendingCrmLeads = [];
+        let crmPipelinesCache = [];
+
+        async function markLeadStatus(idx, status) {
+            const item = filteredLeads[idx];
+            if (!item || !item.lead_key) return;
+            try {
+                await fetch('/api/portal/leads/mark', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lead_key: item.lead_key,
+                        status: status,
+                        title: item.title || '',
+                        phone: item.phone || ''
+                    })
+                });
+                item.memory_status = status;
+                applyFiltersAndRender(true);
+                showToast(status === 'descartado' ? 'Lead descartado da fila.' : 'Status atualizado.');
+            } catch (e) {
+                showToast('Erro ao atualizar status.');
+            }
+        }
+
+        function openWhatsappHook(idx) {
+            const item = filteredLeads[idx];
+            if (!item || !item.whatsapp_url) return;
+            const nome = item.title || 'sua empresa';
+            const local = item.borough || item.city || 'sua região';
+            let gancho = 'vi o perfil de vocês no Google em ' + local + ' e notei algumas oportunidades claras para atrair mais clientes todos os dias.';
+            if (item.no_real_site) {
+                gancho = 'vi o perfil da ' + nome + ' no Google em ' + local + ' e notei que vocês ainda estão sem um site próprio de conversão para capturar quem pesquisa pelo serviço na região.';
+            } else if ((item.review_count || 0) < 20) {
+                gancho = 'vi a ' + nome + ' no Google em ' + local + ' e percebi que vocês ainda têm poucas avaliações (' + (item.review_count || 0) + ') em comparação com o potencial de busca da região.';
+            }
+            const msg = 'Olá, tudo bem? Aqui é da NorthWay. ' + gancho + ' Posso te mostrar em 2 minutos o que encontramos?';
+            const sep = item.whatsapp_url.includes('?') ? '&' : '?';
+            window.open(item.whatsapp_url + sep + 'text=' + encodeURIComponent(msg), '_blank');
+            if (item.memory_status === 'novo') {
+                markLeadStatus(idx, 'abordado');
+            }
+        }
+
+        async function enrichLeadInline(idx) {
+            const item = filteredLeads[idx];
+            const box = document.getElementById('enrich-box-' + idx);
+            if (!item || !box) return;
+            box.classList.remove('hidden');
+            box.innerHTML = '<span class="text-slate-500">Consultando site, Instagram e CNPJ/Sócios...</span>';
+            try {
+                const urlParam = encodeURIComponent(item.website || '');
+                const resp = await fetch('/api/portal/enrich/site?url=' + urlParam);
+                const data = await resp.json();
+                if (data.instagram) item._instagram = data.instagram;
+                if (data.cnpj) item._cnpj = data.cnpj;
+                if (data.socios && data.socios.length > 0) item._decisor = data.socios[0].nome;
+                let html = '';
+                if (data.instagram) html += '<div><strong>Instagram:</strong> ' + data.instagram + '</div>';
+                if (data.cnpj) html += '<div><strong>CNPJ:</strong> ' + data.cnpj + (data.razao_social ? ' — ' + data.razao_social : '') + '</div>';
+                if (data.socios && data.socios.length > 0) {
+                    html += '<div><strong>Sócios (QSA):</strong> ' + data.socios.map(function(s) { return s.nome; }).join(', ') + '</div>';
+                }
+                if (!html) {
+                    const kw = extractSearchKeywords(item.title, item.city || item.address);
+                    const gUrl = 'https://www.google.com/search?q=' + encodeURIComponent(kw.cleanTitle + ' ' + kw.city + ' CNPJ socios');
+                    html = '<div class="flex items-center justify-between gap-2"><span class="text-slate-500">Sem CNPJ público no site.</span><a href="' + gUrl + '" target="_blank" class="text-[#E31E24] font-semibold underline">Buscar no Google</a></div>';
+                }
+                box.innerHTML = html;
+            } catch (e) {
+                box.innerHTML = '<span class="text-red-600">Falha ao consultar enriquecimento.</span>';
+            }
+        }
+
+        let draftsCache = [];
+
+        function switchMainTab(tab) {
+            const isDisc = tab === 'discover';
+            document.getElementById('tabDiscoverView').classList.toggle('hidden', !isDisc);
+            document.getElementById('tabDraftsView').classList.toggle('hidden', isDisc);
+            const bDisc = document.getElementById('btnTabDiscover');
+            const bDraft = document.getElementById('btnTabDrafts');
+            if (isDisc) {
+                bDisc.className = 'px-3.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer';
+                bDraft.className = 'px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 cursor-pointer';
+                if (window.map) setTimeout(function() { map.invalidateSize(); }, 100);
+            } else {
+                bDraft.className = 'px-3.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer';
+                bDisc.className = 'px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5 cursor-pointer';
+                loadDrafts();
+            }
+        }
+
+        async function loadDrafts() {
+            try {
+                const resp = await fetch('/api/portal/drafts');
+                const data = await resp.json();
+                draftsCache = data.drafts || [];
+                const pendingCnt = draftsCache.filter(function(d) { return d.status !== 'enviado_crm'; }).length;
+                const badge = document.getElementById('draftsTabCount');
+                if (badge) badge.textContent = pendingCnt;
+                renderDraftsTable();
+            } catch (e) {}
+        }
+
+        async function addToDrafts(idx) {
+            const item = filteredLeads[idx];
+            if (!item) return;
+            const payload = {
+                lead_key: item.lead_key,
+                empresa: item.title || '',
+                decisor: item._decisor || '',
+                cargo: item._decisor ? 'Sócio / Decisor' : '',
+                phone: item.phone || '',
+                whatsapp: item.phone || '',
+                email: (item.emails || '').split(',')[0].trim(),
+                cnpj: item._cnpj || '',
+                instagram: item._instagram || '',
+                website: item.website || '',
+                address: item.address || item.location_summary || '',
+                city: item.city || '',
+                state: item.state || '',
+                category: item.category || '',
+                opportunity_score: item.opportunity_score || 0,
+                notes: (item.opportunity_reasons || []).join(' · '),
+                status: item.memory_status === 'enviado_crm' ? 'enviado_crm' : 'rascunho'
+            };
+            await fetch('/api/portal/drafts/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            await loadDrafts();
+            showToast('Adicionado à Fila de Preparação (CRM).');
+        }
+
+        function escHtml(v) {
+            return String(v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function renderDraftsTable() {
+            const tbody = document.getElementById('draftsTableBody');
+            if (!tbody) return;
+            if (!draftsCache.length) {
+                tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">Nenhum lead na fila ainda. Clique em <strong>+ Fila</strong> nos cards do mapa ou em <strong>Novo lead manual</strong>.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = draftsCache.map(function(d, idx) {
+                const isSent = d.status === 'enviado_crm';
+                const rowBg = isSent ? 'bg-emerald-50/40' : 'bg-white';
+                return '<tr class="' + rowBg + '">' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.empresa) + '" onchange="updateDraftField(' + idx + ', \'empresa\', this.value)" class="w-36 p-1.5 border border-slate-200 rounded text-xs font-semibold"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.decisor) + '" placeholder="Nome do sócio" onchange="updateDraftField(' + idx + ', \'decisor\', this.value)" class="w-32 p-1.5 border border-slate-200 rounded text-xs"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.cargo) + '" placeholder="Ex: Sócio" onchange="updateDraftField(' + idx + ', \'cargo\', this.value)" class="w-24 p-1.5 border border-slate-200 rounded text-xs"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.whatsapp || d.phone) + '" placeholder="(44) 99999-9999" onchange="updateDraftField(' + idx + ', \'whatsapp\', this.value)" class="w-32 p-1.5 border border-slate-200 rounded text-xs font-mono"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.email) + '" placeholder="email@empresa.com" onchange="updateDraftField(' + idx + ', \'email\', this.value)" class="w-36 p-1.5 border border-slate-200 rounded text-xs"></td>' +
+                    '<td class="p-2"><div class="flex items-center gap-1"><input type="text" value="' + escHtml(d.cnpj) + '" placeholder="00.000.000/0001-00" onchange="updateDraftField(' + idx + ', \'cnpj\', this.value)" class="w-32 p-1.5 border border-slate-200 rounded text-xs font-mono"><button type="button" onclick="lookupDraftCnpj(' + idx + ')" class="px-1.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-700 cursor-pointer" title="Buscar Sócios na Receita">QSA</button></div></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.instagram || d.website) + '" placeholder="@instagram ou site" onchange="updateDraftField(' + idx + ', \'instagram\', this.value)" class="w-32 p-1.5 border border-slate-200 rounded text-xs"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.address) + '" placeholder="Rua, nº, bairro, cidade" onchange="updateDraftField(' + idx + ', \'address\', this.value)" class="w-48 p-1.5 border border-slate-200 rounded text-xs"></td>' +
+                    '<td class="p-2"><input type="text" value="' + escHtml(d.notes) + '" placeholder="Gancho / anotações" onchange="updateDraftField(' + idx + ', \'notes\', this.value)" class="w-40 p-1.5 border border-slate-200 rounded text-xs"></td>' +
+                    '<td class="p-2 text-right whitespace-nowrap space-x-1">' +
+                        (isSent ? '<span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Enviado</span>' : '<button type="button" onclick="sendSingleDraft(' + idx + ')" class="px-2 py-1 rounded bg-[#E31E24] text-white text-[10px] font-bold cursor-pointer">Enviar</button>') +
+                        '<button type="button" onclick="deleteDraftRow(' + idx + ')" class="px-2 py-1 rounded border border-slate-200 text-slate-500 hover:text-red-600 text-[10px] cursor-pointer">Excluir</button>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+        }
+
+        async function updateDraftField(idx, field, val) {
+            const d = draftsCache[idx];
+            if (!d) return;
+            d[field] = val;
+            if (field === 'whatsapp') d.phone = val;
+            await fetch('/api/portal/drafts/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(d)
+            });
+        }
+
+        async function lookupDraftCnpj(idx) {
+            const d = draftsCache[idx];
+            if (!d) return;
+            const resp = await fetch('/api/portal/enrich/site?url=' + encodeURIComponent(d.website || '') + '&cnpj=' + encodeURIComponent(d.cnpj || ''));
+            const data = await resp.json();
+            if (data.cnpj) d.cnpj = data.cnpj;
+            if (data.instagram && !d.instagram) d.instagram = data.instagram;
+            if (data.socios && data.socios.length > 0 && !d.decisor) {
+                d.decisor = data.socios[0].nome;
+                d.cargo = data.socios[0].qualificacao || 'Sócio';
+            }
+            await fetch('/api/portal/drafts/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(d)
+            });
+            renderDraftsTable();
+            showToast(data.socios && data.socios.length ? 'Sócio preenchido: ' + data.socios[0].nome : 'Consulta concluída.');
+        }
+
+        async function addManualDraft() {
+            const payload = {
+                lead_key: 'manual:' + Date.now(),
+                empresa: 'Nova Empresa',
+                decisor: '',
+                cargo: '',
+                phone: '',
+                whatsapp: '',
+                email: '',
+                cnpj: '',
+                instagram: '',
+                website: '',
+                address: '',
+                notes: '',
+                status: 'rascunho'
+            };
+            await fetch('/api/portal/drafts/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            await loadDrafts();
+        }
+
+        async function deleteDraftRow(idx) {
+            const d = draftsCache[idx];
+            if (!d) return;
+            await fetch('/api/portal/drafts/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lead_key: d.lead_key })
+            });
+            await loadDrafts();
+        }
+
+        async function clearSentDrafts() {
+            await fetch('/api/portal/drafts/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clear_sent: true })
+            });
+            await loadDrafts();
+        }
+
+        function sendSingleDraft(idx) {
+            const d = draftsCache[idx];
+            if (!d) return;
+            importLeadsToCrm([d]);
+        }
+
+        function sendDraftsToCrm() {
+            const pending = draftsCache.filter(function(d) { return d.status !== 'enviado_crm'; });
+            if (!pending.length) {
+                showToast('Não há rascunhos pendentes para enviar.');
+                return;
+            }
+            importLeadsToCrm(pending);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadDrafts);
+
         async function importLeadsToCrm(leadsList) {
             if (!leadsList || leadsList.length === 0) {
                 showToast('Nenhum registro para importar.');
                 return;
             }
+            pendingCrmLeads = leadsList;
+            const modal = document.getElementById('crmModal');
+            document.getElementById('crmModalCount').textContent = leadsList.length + (leadsList.length === 1 ? ' lead selecionado' : ' leads selecionados');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            await loadCrmConfigAndPipelines();
+        }
 
-            const count = leadsList.length;
-            const btn = document.getElementById('btnImportCrm');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Importando...';
-            }
+        function closeCrmModal() {
+            const modal = document.getElementById('crmModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
 
+        async function loadCrmConfigAndPipelines() {
+            const badge = document.getElementById('crmConnBadge');
             try {
-                const resp = await fetch('http://localhost:5000/api/prospecting/import-scraper', {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ leads: leadsList })
-                });
+                const cfgResp = await fetch('/api/portal/crm/config');
+                const cfg = await cfgResp.json();
+                document.getElementById('crmUrlInput').value = cfg.crm_url || 'https://crm.northwaycompany.com.br';
+                if (cfg.has_api_key) {
+                    badge.textContent = 'Conectado (' + cfg.api_key_masked + ')';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800';
+                    await loadCrmPipelines(cfg.default_pipeline_id, cfg.default_stage_id);
+                } else {
+                    badge.textContent = 'API Key pendente';
+                    badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800';
+                }
+            } catch (e) {
+                badge.textContent = 'Erro';
+            }
+        }
 
-                if (resp.status === 401 || resp.status === 403) {
-                    showToast('Faça login no CRM em localhost:5000 para sincronizar.');
-                    window.open('http://localhost:5000/login', '_blank');
+        async function saveCrmConfigAndLoad() {
+            const crm_url = document.getElementById('crmUrlInput').value.trim();
+            const crm_api_key = document.getElementById('crmKeyInput').value.trim();
+            const payload = { crm_url: crm_url };
+            if (crm_api_key) payload.crm_api_key = crm_api_key;
+            await fetch('/api/portal/crm/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            document.getElementById('crmKeyInput').value = '';
+            await loadCrmConfigAndPipelines();
+        }
+
+        async function loadCrmPipelines(defPipeId, defStageId) {
+            const pSel = document.getElementById('crmPipelineSelect');
+            try {
+                const resp = await fetch('/api/portal/crm/pipelines');
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    showToast(data.error || 'Não foi possível carregar funis do CRM.');
                     return;
                 }
+                crmPipelinesCache = data.data || [];
+                pSel.innerHTML = '<option value="">Sem funil específico</option>' + crmPipelinesCache.map(function(p) {
+                    return '<option value="' + p.id + '"' + (String(defPipeId) === String(p.id) ? ' selected' : '') + '>' + p.name + '</option>';
+                }).join('');
+                onCrmPipelineChange(defStageId);
+            } catch (e) {
+                showToast('Erro ao buscar funis do CRM.');
+            }
+        }
 
-                const result = await resp.json();
-                if (result.success) {
-                    const d = result.data || {};
-                    showToast(`${d.imported_count || count} leads adicionados ao CRM.`);
-                } else {
-                    throw new Error(result.error || 'Erro na importação');
+        function onCrmPipelineChange(defStageId) {
+            const pid = document.getElementById('crmPipelineSelect').value;
+            const sSel = document.getElementById('crmStageSelect');
+            const pipe = crmPipelinesCache.find(function(p) { return String(p.id) === String(pid); });
+            const stages = pipe ? (pipe.stages || []) : [];
+            sSel.innerHTML = '<option value="">Etapa padrão</option>' + stages.map(function(s) {
+                return '<option value="' + s.id + '"' + (String(defStageId) === String(s.id) ? ' selected' : '') + '>' + s.name + '</option>';
+            }).join('');
+        }
+
+        async function confirmSendToCrm() {
+            const btn = document.getElementById('btnConfirmSendCrm');
+            const pipeline_id = document.getElementById('crmPipelineSelect').value || null;
+            const pipeline_stage_id = document.getElementById('crmStageSelect').value || null;
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            try {
+                await fetch('/api/portal/crm/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ default_pipeline_id: pipeline_id, default_stage_id: pipeline_stage_id })
+                });
+                const resp = await fetch('/api/portal/crm/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        leads: pendingCrmLeads,
+                        pipeline_id: pipeline_id,
+                        pipeline_stage_id: pipeline_stage_id
+                    })
+                });
+                const res = await resp.json();
+                if (!resp.ok || !res.success) {
+                    throw new Error(res.error || 'Erro ao enviar para o CRM');
                 }
-            } catch (err) {
-                showToast('Erro ao sincronizar com CRM: ' + err.message);
+                pendingCrmLeads.forEach(function(item) { item.memory_status = 'enviado_crm'; });
+                closeCrmModal();
+                applyFiltersAndRender(true);
+                loadDrafts();
+                showToast('CRM: ' + res.created + ' novos, ' + res.duplicates + ' já existiam' + (res.errors ? ', ' + res.errors + ' erros' : '') + '.');
+            } catch (e) {
+                showToast(e.message || 'Erro ao enviar para o CRM.');
             } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i data-lucide="plus" class="w-3.5 h-3.5"></i><span>Importar no CRM</span>';
-                    if (window.lucide) lucide.createIcons();
-                }
+                btn.disabled = false;
+                btn.textContent = 'Enviar agora (com deduplicação)';
             }
         }
 

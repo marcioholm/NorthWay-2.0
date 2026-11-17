@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify, g
-from models import db, Lead, Interaction, Integration, Contact
+from models import db, Lead, Interaction, Integration, Contact, Pipeline
 from middleware.api_auth import api_key_required
 from services.integrations_service import IntegrationsService
 from utils import get_now_br
 import json
+import re
 
 api_v1_bp = Blueprint('api_v1', __name__, url_prefix='/api/v1')
 
@@ -34,20 +35,67 @@ def list_leads():
         } for l in leads]
     })
 
+@api_v1_bp.route('/pipelines', methods=['GET'])
+@api_key_required(required_scopes=['leads:read'])
+def list_pipelines():
+    """Lists sales pipelines and stages for the company."""
+    pipelines = Pipeline.query.filter_by(company_id=g.company_id).order_by(Pipeline.id.asc()).all()
+    data = []
+    for p in pipelines:
+        stages = sorted(list(p.stages), key=lambda s: (s.order or 0, s.id))
+        data.append({
+            "id": p.id,
+            "name": p.name,
+            "stages": [{"id": s.id, "name": s.name, "order": s.order} for s in stages]
+        })
+    return jsonify({"success": True, "data": data})
+
+
 @api_v1_bp.route('/leads', methods=['POST'])
 @api_key_required(required_scopes=['leads:write'])
 def create_lead():
-    """Creates a new lead."""
+    """Creates a new lead (with optional deduplication by normalized phone)."""
     data = request.json
     if not data or not data.get('name'):
         return jsonify({"success": False, "error": "Nome é obrigatório"}), 400
-        
+
+    raw_phone = (data.get('phone') or '').strip()
+    if data.get('dedupe') and raw_phone:
+        digits = re.sub(r'\D', '', raw_phone)
+        tail = digits[-10:] if len(digits) >= 10 else digits
+        if tail:
+            candidates = Lead.query.filter(
+                Lead.company_id == g.company_id,
+                Lead.phone.isnot(None)
+            ).all()
+            for existing in candidates:
+                ex_digits = re.sub(r'\D', '', existing.phone or '')
+                if ex_digits and (ex_digits == digits or (len(ex_digits) >= 10 and ex_digits[-10:] == tail)):
+                    return jsonify({
+                        "success": True,
+                        "duplicate": True,
+                        "data": {"id": existing.id, "name": existing.name}
+                    }), 200
+
     try:
+        full_address = (data.get('address') or '').strip()
+        city_val = (data.get('city') or '').strip()
+        state_val = (data.get('state') or '').strip()
+        if not full_address and (city_val or state_val):
+            full_address = " - ".join([p for p in (city_val, state_val) if p])
+
         new_lead = Lead(
             company_id=g.company_id,
             name=data.get('name'),
+            legal_name=data.get('legal_name') or data.get('company_name') or None,
             email=data.get('email'),
-            phone=data.get('phone'),
+            phone=raw_phone or None,
+            whatsapp=data.get('whatsapp') or raw_phone or None,
+            website=data.get('website'),
+            address=full_address or None,
+            cnpj=data.get('cnpj'),
+            pipeline_id=data.get('pipeline_id'),
+            pipeline_stage_id=data.get('pipeline_stage_id'),
             source=data.get('source', 'API'),
             status=data.get('status', 'novo'),
             description=data.get('description'),
@@ -64,7 +112,8 @@ def create_lead():
         })
         
         return jsonify({
-            "success": True, 
+            "success": True,
+            "duplicate": False,
             "data": {"id": new_lead.id}
         }), 201
     except Exception as e:

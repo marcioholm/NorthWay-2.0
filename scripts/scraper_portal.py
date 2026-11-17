@@ -22,6 +22,340 @@ ENGINE_URL = os.environ.get("SCRAPER_ENGINE_URL", "http://localhost:8081")
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DATA_DIR = os.path.join(PROJECT_ROOT, "scraper_data")
 HTML_FILE_PATH = os.path.join(os.path.dirname(__file__), "scraper_portal.html")
+CONFIG_FILE_PATH = os.path.join(DATA_DIR, "portal_config.json")
+
+
+def load_crm_config():
+    cfg = {
+        "crm_url": os.environ.get("NORTHWAY_CRM_URL", "https://crm.northwaycompany.com.br"),
+        "crm_api_key": os.environ.get("NORTHWAY_CRM_API_KEY", ""),
+        "default_pipeline_id": None,
+        "default_stage_id": None,
+    }
+    if os.path.isfile(CONFIG_FILE_PATH):
+        try:
+            with open(CONFIG_FILE_PATH, "r", encoding="utf-8") as f:
+                saved = json.load(f)
+                if isinstance(saved, dict):
+                    for k in ("crm_url", "crm_api_key", "default_pipeline_id", "default_stage_id"):
+                        if saved.get(k) is not None and saved.get(k) != "":
+                            cfg[k] = saved[k]
+        except Exception:
+            pass
+    cfg["crm_url"] = str(cfg["crm_url"]).rstrip("/")
+    return cfg
+
+
+def save_crm_config(data):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    curr = load_crm_config()
+    for k in ("crm_url", "crm_api_key", "default_pipeline_id", "default_stage_id"):
+        if k in data:
+            curr[k] = data[k]
+    curr["crm_url"] = str(curr.get("crm_url") or "https://crm.northwaycompany.com.br").rstrip("/")
+    with open(CONFIG_FILE_PATH, "w", encoding="utf-8") as f:
+        json.dump(curr, f, ensure_ascii=False, indent=2)
+    return curr
+
+
+def ensure_memory_table():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    db_path = os.path.join(DATA_DIR, "jobs.db")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS prospecting_memory (
+            lead_key TEXT PRIMARY KEY,
+            title TEXT,
+            phone TEXT,
+            status TEXT DEFAULT 'novo',
+            crm_lead_id INTEGER,
+            first_job_id TEXT,
+            seen_count INTEGER DEFAULT 1,
+            updated_at INTEGER DEFAULT (CAST(strftime('%s', 'now') AS INT))
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def compute_lead_key(item):
+    cid = str(item.get("cid") or item.get("place_id") or "").strip()
+    if cid:
+        return f"cid:{cid}"
+    digits = re.sub(r"\D", "", str(item.get("phone") or ""))
+    if len(digits) >= 10:
+        return f"tel:{digits[-10:]}"
+    title = re.sub(r"\s+", " ", str(item.get("title") or "").strip().lower())
+    city = re.sub(r"\s+", " ", str(item.get("city") or "").strip().lower())
+    return f"name:{title}|{city}"
+
+
+def get_memory_map(keys):
+    if not keys:
+        return {}
+    ensure_memory_table()
+    db_path = os.path.join(DATA_DIR, "jobs.db")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    placeholders = ",".join("?" for _ in keys)
+    cur.execute(
+        f"SELECT lead_key, status, crm_lead_id, first_job_id, seen_count FROM prospecting_memory WHERE lead_key IN ({placeholders})",
+        list(keys),
+    )
+    out = {}
+    for lk, st, crm_id, first_job, seen_cnt in cur.fetchall():
+        out[lk] = {
+            "status": st or "novo",
+            "crm_lead_id": crm_id,
+            "first_job_id": first_job,
+            "seen_count": seen_cnt or 1,
+        }
+    conn.close()
+    return out
+
+
+def record_seen_leads(leads, job_id):
+    if not leads:
+        return
+    ensure_memory_table()
+    db_path = os.path.join(DATA_DIR, "jobs.db")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    for item in leads:
+        lk = item.get("lead_key")
+        if not lk:
+            continue
+        cur.execute("SELECT first_job_id, seen_count FROM prospecting_memory WHERE lead_key = ?", (lk,))
+        row = cur.fetchone()
+        if not row:
+            cur.execute(
+                "INSERT INTO prospecting_memory (lead_key, title, phone, status, first_job_id, seen_count) VALUES (?, ?, ?, 'novo', ?, 1)",
+                (lk, item.get("title") or "", item.get("phone") or "", str(job_id)),
+            )
+        elif row[0] and str(row[0]) != str(job_id):
+            cur.execute(
+                "UPDATE prospecting_memory SET seen_count = seen_count + 1, updated_at = CAST(strftime('%s', 'now') AS INT) WHERE lead_key = ?",
+                (lk,),
+            )
+    conn.commit()
+    conn.close()
+
+
+def mark_lead_memory(lead_key, status, crm_lead_id=None, title="", phone=""):
+    ensure_memory_table()
+    db_path = os.path.join(DATA_DIR, "jobs.db")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT lead_key FROM prospecting_memory WHERE lead_key = ?", (lead_key,))
+    if cur.fetchone():
+        if crm_lead_id is not None:
+            cur.execute(
+                "UPDATE prospecting_memory SET status = ?, crm_lead_id = ?, updated_at = CAST(strftime('%s', 'now') AS INT) WHERE lead_key = ?",
+                (status, crm_lead_id, lead_key),
+            )
+        else:
+            cur.execute(
+                "UPDATE prospecting_memory SET status = ?, updated_at = CAST(strftime('%s', 'now') AS INT) WHERE lead_key = ?",
+                (status, lead_key),
+            )
+    else:
+        cur.execute(
+            "INSERT INTO prospecting_memory (lead_key, title, phone, status, crm_lead_id) VALUES (?, ?, ?, ?, ?)",
+            (lead_key, title, phone, status, crm_lead_id),
+        )
+    conn.commit()
+    conn.close()
+
+
+def compute_opportunity_score(item):
+    """Calcula Score de Oportunidade Comercial (0..10) para abordagem NorthWay."""
+    score = 0
+    reasons = []
+
+    site = (item.get("website") or "").lower()
+    social_only_domains = ("instagram.com", "linktr.ee", "wa.me", "api.whatsapp.com", "facebook.com", "bit.ly")
+    no_real_site = (not site) or any(d in site for d in social_only_domains)
+    item["no_real_site"] = no_real_site
+    if no_real_site:
+        score += 3
+        reasons.append("Sem site próprio" if not site else "Usa só rede social/link")
+
+    rev_count = int(item.get("review_count") or 0)
+    if rev_count < 20:
+        score += 2
+        reasons.append(f"Poucas avaliações ({rev_count})")
+        if rev_count < 5:
+            score += 1
+
+    try:
+        rating_val = float(item.get("review_rating")) if item.get("review_rating") else None
+    except Exception:
+        rating_val = None
+    if rating_val is not None and rating_val < 4.3:
+        score += 2
+        reasons.append(f"Nota {rating_val:.1f} (< 4,3)")
+
+    if item.get("whatsapp_url"):
+        score += 2
+        reasons.append("WhatsApp ativo")
+
+    reviews = item.get("user_reviews") or []
+    unanswered = any(not (r.get("reply_text_original") or r.get("ResponseFromOwnerText")) for r in reviews if isinstance(r, dict))
+    if reviews and unanswered:
+        score += 1
+        reasons.append("Avaliações sem resposta")
+
+    score = min(10, score)
+    level = "quente" if score >= 7 else ("morno" if score >= 4 else "frio")
+    item["opportunity_score"] = score
+    item["opportunity_level"] = level
+    item["opportunity_reasons"] = reasons
+
+
+def ensure_drafts_table():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    db_path = os.path.join(DATA_DIR, "jobs.db")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS prospecting_drafts (
+            lead_key TEXT PRIMARY KEY,
+            empresa TEXT,
+            decisor TEXT,
+            cargo TEXT,
+            phone TEXT,
+            whatsapp TEXT,
+            email TEXT,
+            cnpj TEXT,
+            instagram TEXT,
+            website TEXT,
+            address TEXT,
+            city TEXT,
+            state TEXT,
+            category TEXT,
+            opportunity_score INTEGER DEFAULT 0,
+            notes TEXT,
+            status TEXT DEFAULT 'rascunho',
+            updated_at INTEGER DEFAULT (CAST(strftime('%s', 'now') AS INT))
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
+def list_drafts():
+    ensure_drafts_table()
+    db_path = os.path.join(DATA_DIR, "jobs.db")
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM prospecting_drafts ORDER BY updated_at DESC")
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+
+def upsert_draft(data):
+    ensure_drafts_table()
+    lk = (data.get("lead_key") or "").strip()
+    if not lk:
+        lk = compute_lead_key({"title": data.get("empresa"), "phone": data.get("phone"), "city": data.get("city")})
+    db_path = os.path.join(DATA_DIR, "jobs.db")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT lead_key FROM prospecting_drafts WHERE lead_key = ?", (lk,))
+    exists = cur.fetchone() is not None
+    fields = (
+        data.get("empresa") or "",
+        data.get("decisor") or "",
+        data.get("cargo") or "",
+        data.get("phone") or "",
+        data.get("whatsapp") or data.get("phone") or "",
+        data.get("email") or "",
+        data.get("cnpj") or "",
+        data.get("instagram") or "",
+        data.get("website") or "",
+        data.get("address") or "",
+        data.get("city") or "",
+        data.get("state") or "",
+        data.get("category") or "",
+        int(data.get("opportunity_score") or 0),
+        data.get("notes") or "",
+        data.get("status") or "rascunho",
+    )
+    if exists:
+        cur.execute("""
+            UPDATE prospecting_drafts
+            SET empresa=?, decisor=?, cargo=?, phone=?, whatsapp=?, email=?, cnpj=?, instagram=?,
+                website=?, address=?, city=?, state=?, category=?, opportunity_score=?, notes=?, status=?,
+                updated_at=CAST(strftime('%s', 'now') AS INT)
+            WHERE lead_key=?
+        """, fields + (lk,))
+    else:
+        cur.execute("""
+            INSERT INTO prospecting_drafts (
+                empresa, decisor, cargo, phone, whatsapp, email, cnpj, instagram,
+                website, address, city, state, category, opportunity_score, notes, status, lead_key
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, fields + (lk,))
+    conn.commit()
+    conn.close()
+    return lk
+
+
+def delete_draft(lead_key=None, clear_sent=False):
+    ensure_drafts_table()
+    db_path = os.path.join(DATA_DIR, "jobs.db")
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    if clear_sent:
+        cur.execute("DELETE FROM prospecting_drafts WHERE status = 'enviado_crm'")
+    elif lead_key:
+        cur.execute("DELETE FROM prospecting_drafts WHERE lead_key = ?", (lead_key,))
+    conn.commit()
+    conn.close()
+
+
+def enrich_site_and_cnpj(site_url="", cnpj_input=""):
+    """Extrai @instagram e CNPJ do site e consulta sócios (QSA) na BrasilAPI."""
+    out = {"instagram": None, "cnpj": None, "razao_social": None, "socios": []}
+    raw_cnpj = re.sub(r"\D", "", cnpj_input or "")
+
+    if site_url and site_url.startswith("http"):
+        try:
+            req = urllib.request.Request(site_url, headers={"User-Agent": "Mozilla/5.0 NorthWayProspector/2.0"})
+            with urllib.request.urlopen(req, timeout=4) as resp:
+                html = resp.read(180000).decode("utf-8", errors="ignore")
+            ig = re.search(r"instagram\.com/([a-zA-Z0-9._]{2,30})", html, re.I)
+            if ig and ig.group(1).lower() not in ("p", "reel", "explore", "stories", "share"):
+                out["instagram"] = "@" + ig.group(1)
+            if not raw_cnpj:
+                m_cnpj = re.search(r"\b(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})\b", html)
+                if m_cnpj:
+                    raw_cnpj = re.sub(r"\D", "", m_cnpj.group(1))
+        except Exception:
+            pass
+
+    if len(raw_cnpj) == 14:
+        out["cnpj"] = f"{raw_cnpj[:2]}.{raw_cnpj[2:5]}.{raw_cnpj[5:8]}/{raw_cnpj[8:12]}-{raw_cnpj[12:]}"
+        try:
+            req = urllib.request.Request(
+                f"https://brasilapi.com.br/api/cnpj/v1/{raw_cnpj}",
+                headers={"User-Agent": "NorthWayProspector/2.0"},
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                cdata = json.loads(resp.read().decode("utf-8"))
+                out["razao_social"] = cdata.get("razao_social") or cdata.get("nome_fantasia")
+                qsa = cdata.get("qsa") or []
+                out["socios"] = [
+                    {"nome": s.get("nome_socio"), "qualificacao": s.get("qualificacao_socio")}
+                    for s in qsa if s.get("nome_socio")
+                ][:5]
+        except Exception:
+            pass
+
+    return out
 
 
 def haversine_km(lat1, lon1, lat2, lon2):
@@ -101,6 +435,7 @@ def sanitize_lead(lead, center_lat=None, center_lon=None):
     state = item.get("state") or ""
     borough = item.get("borough") or ""
     street = item.get("street") or ""
+    postal_code = item.get("postal_code") or ""
 
     if comp_raw and isinstance(comp_raw, str):
         try:
@@ -110,6 +445,7 @@ def sanitize_lead(lead, center_lat=None, center_lon=None):
                 state = state or comp.get("state") or ""
                 borough = borough or comp.get("borough") or ""
                 street = street or comp.get("street") or ""
+                postal_code = postal_code or comp.get("postal_code") or ""
         except Exception:
             pass
 
@@ -117,9 +453,18 @@ def sanitize_lead(lead, center_lat=None, center_lon=None):
     item["state"] = state
     item["borough"] = borough
     item["street"] = street
+    item["postal_code"] = postal_code
+
+    raw_addr = (item.get("address") or "").strip()
+    if not raw_addr or (street and street.lower() not in raw_addr.lower()):
+        city_state = " - ".join([p for p in (city, state) if p])
+        addr_parts = [p for p in (street, borough, city_state, postal_code) if p]
+        if addr_parts:
+            raw_addr = ", ".join(addr_parts)
+    item["address"] = raw_addr
 
     location_parts = [p for p in [borough, city, state] if p]
-    item["location_summary"] = " · ".join(location_parts) if location_parts else (item.get("address") or "")
+    item["location_summary"] = " · ".join(location_parts) if location_parts else raw_addr
 
     # Avaliações
     rating = item.get("rating") or item.get("review_rating")
@@ -172,6 +517,9 @@ def sanitize_lead(lead, center_lat=None, center_lon=None):
             item["distance_km"] = haversine_km(center_lat, center_lon, lat, lon)
     except Exception:
         pass
+
+    item["lead_key"] = compute_lead_key(item)
+    compute_opportunity_score(item)
 
     return item
 
@@ -305,10 +653,21 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    def _send_cors_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._send_cors_headers()
+        self.end_headers()
+
     def _send_json(self, data, status=200):
         raw = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
+        self._send_cors_headers()
         self.send_header("Content-Length", str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)
@@ -496,6 +855,87 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
             self._send_json({"uf": uf, "cities": cities, "count": len(cities)})
             return
 
+        if self.path == "/api/portal/crm/config":
+            cfg = load_crm_config()
+            masked = ("***" + cfg["crm_api_key"][-6:]) if cfg.get("crm_api_key") else ""
+            self._send_json({
+                "crm_url": cfg["crm_url"],
+                "has_api_key": bool(cfg.get("crm_api_key")),
+                "api_key_masked": masked,
+                "default_pipeline_id": cfg.get("default_pipeline_id"),
+                "default_stage_id": cfg.get("default_stage_id"),
+            })
+            return
+
+        if self.path == "/api/portal/crm/pipelines":
+            cfg = load_crm_config()
+            if not cfg.get("crm_api_key"):
+                self._send_json({"success": False, "error": "Configure a API Key do CRM primeiro."}, status=400)
+                return
+            try:
+                req = urllib.request.Request(
+                    f"{cfg['crm_url']}/api/v1/pipelines",
+                    headers={"X-API-Key": cfg["crm_api_key"]},
+                )
+                with urllib.request.urlopen(req, timeout=8) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    self._send_json(data)
+            except urllib.error.HTTPError as e:
+                self._send_json({"success": False, "error": f"CRM retornou HTTP {e.code}"}, status=e.code)
+            except Exception as e:
+                self._send_json({"success": False, "error": str(e)}, status=502)
+            return
+
+        if self.path == "/api/portal/drafts":
+            self._send_json({"success": True, "drafts": list_drafts()})
+            return
+
+        if self.path == "/api/portal/drafts/export":
+            drafts = list_drafts()
+            buf = io.StringIO()
+            writer = csv.writer(buf, delimiter=";")
+            writer.writerow([
+                "Empresa", "Decisor", "Cargo", "Telefone", "WhatsApp",
+                "E-mail", "CNPJ", "Instagram", "Site", "Endereço",
+                "Cidade", "UF", "Categoria", "Score", "Status", "Observações"
+            ])
+            for d in drafts:
+                writer.writerow([
+                    d.get("empresa") or "",
+                    d.get("decisor") or "",
+                    d.get("cargo") or "",
+                    d.get("phone") or "",
+                    d.get("whatsapp") or "",
+                    d.get("email") or "",
+                    d.get("cnpj") or "",
+                    d.get("instagram") or "",
+                    d.get("website") or "",
+                    d.get("address") or "",
+                    d.get("city") or "",
+                    d.get("state") or "",
+                    d.get("category") or "",
+                    d.get("opportunity_score") or 0,
+                    d.get("status") or "rascunho",
+                    d.get("notes") or "",
+                ])
+            csv_bytes = ("\ufeff" + buf.getvalue()).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/csv; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="northway-fila-prospeccao.csv"')
+            self.send_header("Content-Length", str(len(csv_bytes)))
+            self.end_headers()
+            self.wfile.write(csv_bytes)
+            return
+
+        if self.path.startswith("/api/portal/enrich/site"):
+            parsed = urllib.parse.urlparse(self.path)
+            qs = urllib.parse.parse_qs(parsed.query)
+            site_url = qs.get("url", [""])[0]
+            cnpj_in = qs.get("cnpj", [""])[0]
+            res = enrich_site_and_cnpj(site_url=site_url, cnpj_input=cnpj_in)
+            self._send_json({"success": True, **res})
+            return
+
         if self.path.startswith("/api/portal/jobs/") and self.path.endswith("/leads"):
             job_id = urllib.parse.unquote(self.path.split("/api/portal/jobs/")[1].rsplit("/leads", 1)[0])
             content = None
@@ -538,6 +978,14 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
                     raw_leads = list(csv.DictReader(io.StringIO(content), delimiter=delim))
 
                 leads = [sanitize_lead(r, center_lat, center_lon) for r in raw_leads]
+                record_seen_leads(leads, job_id)
+                mem_map = get_memory_map([l["lead_key"] for l in leads])
+                for l in leads:
+                    mem = mem_map.get(l["lead_key"], {})
+                    l["memory_status"] = mem.get("status", "novo")
+                    l["crm_lead_id"] = mem.get("crm_lead_id")
+                    l["seen_count"] = mem.get("seen_count", 1)
+                    l["is_duplicate_across_jobs"] = (mem.get("first_job_id") is not None and str(mem.get("first_job_id")) != str(job_id))
 
             self._send_json({
                 "leads": leads,
@@ -588,6 +1036,142 @@ class ScraperPortalHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         # Exclusão em Lote
+        if self.path == "/api/portal/crm/config":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b"{}"
+            try:
+                payload = json.loads(body.decode("utf-8"))
+            except Exception:
+                payload = {}
+            saved = save_crm_config(payload)
+            self._send_json({"success": True, "crm_url": saved["crm_url"], "has_api_key": bool(saved.get("crm_api_key"))})
+            return
+
+        if self.path == "/api/portal/leads/mark":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b"{}"
+            try:
+                payload = json.loads(body.decode("utf-8"))
+            except Exception:
+                payload = {}
+            lk = payload.get("lead_key")
+            st = payload.get("status") or "novo"
+            if not lk:
+                self._send_json({"success": False, "error": "lead_key obrigatório"}, status=400)
+                return
+            mark_lead_memory(lk, st, title=payload.get("title", ""), phone=payload.get("phone", ""))
+            self._send_json({"success": True, "lead_key": lk, "status": st})
+            return
+
+        if self.path == "/api/portal/drafts/save":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b"{}"
+            try:
+                payload = json.loads(body.decode("utf-8"))
+            except Exception:
+                payload = {}
+            lk = upsert_draft(payload)
+            self._send_json({"success": True, "lead_key": lk})
+            return
+
+        if self.path == "/api/portal/drafts/delete":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b"{}"
+            try:
+                payload = json.loads(body.decode("utf-8"))
+            except Exception:
+                payload = {}
+            delete_draft(lead_key=payload.get("lead_key"), clear_sent=bool(payload.get("clear_sent")))
+            self._send_json({"success": True})
+            return
+
+        if self.path == "/api/portal/crm/send":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length) if length > 0 else b"{}"
+            try:
+                payload = json.loads(body.decode("utf-8"))
+            except Exception:
+                payload = {}
+            cfg = load_crm_config()
+            if not cfg.get("crm_api_key"):
+                self._send_json({"success": False, "error": "Configure a API Key do CRM antes de enviar."}, status=400)
+                return
+
+            leads_to_send = payload.get("leads") or []
+            pipeline_id = payload.get("pipeline_id") or cfg.get("default_pipeline_id")
+            stage_id = payload.get("pipeline_stage_id") or cfg.get("default_stage_id")
+
+            created, duplicates, errors = 0, 0, 0
+            for item in leads_to_send:
+                empresa_nome = item.get("empresa") or item.get("title") or "Empresa sem nome"
+                decisor_nome = (item.get("decisor") or "").strip()
+                cargo_nome = (item.get("cargo") or "").strip()
+                ig = (item.get("instagram") or "").strip()
+                custom_notes = (item.get("notes") or "").strip()
+                desc_parts = [
+                    f"Empresa: {empresa_nome}",
+                    f"Decisor: {decisor_nome}" + (f" ({cargo_nome})" if cargo_nome else "") if decisor_nome else None,
+                    f"Instagram: {ig}" if ig else None,
+                    f"Observações: {custom_notes}" if custom_notes else None,
+                    f"Score Oportunidade: {item.get('opportunity_score', 0)}/10 ({', '.join(item.get('opportunity_reasons') or [])})",
+                    f"Categoria: {item.get('category') or 'Empresa'}",
+                    f"Avaliações Google: {item.get('review_rating') or '-'} ({item.get('review_count') or 0})" if item.get("review_rating") or item.get("review_count") else None,
+                    f"Site: {item.get('website') or 'Não informado'}",
+                    f"Google Maps: {item.get('google_maps_url') or ''}" if item.get("google_maps_url") else None,
+                ]
+                raw_mail = item.get("email") or item.get("emails") or ""
+                first_mail = raw_mail.split(",")[0].strip() or None
+                lead_body = {
+                    "name": decisor_nome or empresa_nome,
+                    "legal_name": empresa_nome,
+                    "phone": item.get("phone") or "",
+                    "whatsapp": item.get("whatsapp") or item.get("phone") or "",
+                    "email": first_mail,
+                    "website": item.get("website") or None,
+                    "address": item.get("address") or None,
+                    "city": item.get("city") or None,
+                    "state": item.get("state") or None,
+                    "cnpj": item.get("cnpj") or None,
+                    "pipeline_id": int(pipeline_id) if pipeline_id else None,
+                    "pipeline_stage_id": int(stage_id) if stage_id else None,
+                    "source": "Google Maps Prospector",
+                    "description": "\n".join([p for p in desc_parts if p]),
+                    "dedupe": True,
+                }
+                try:
+                    req = urllib.request.Request(
+                        f"{cfg['crm_url']}/api/v1/leads",
+                        data=json.dumps(lead_body).encode("utf-8"),
+                        headers={"Content-Type": "application/json", "X-API-Key": cfg["crm_api_key"]},
+                        method="POST",
+                    )
+                    with urllib.request.urlopen(req, timeout=8) as resp:
+                        r_data = json.loads(resp.read().decode("utf-8"))
+                        crm_id = (r_data.get("data") or {}).get("id")
+                        if r_data.get("duplicate"):
+                            duplicates += 1
+                        else:
+                            created += 1
+                        if item.get("lead_key"):
+                            mark_lead_memory(item["lead_key"], "enviado_crm", crm_lead_id=crm_id, title=empresa_nome, phone=item.get("phone", ""))
+                            # Atualiza rascunho se existir na fila
+                            ensure_drafts_table()
+                            db_path = os.path.join(DATA_DIR, "jobs.db")
+                            conn = sqlite3.connect(db_path)
+                            conn.execute("UPDATE prospecting_drafts SET status = 'enviado_crm' WHERE lead_key = ?", (item["lead_key"],))
+                            conn.commit()
+                            conn.close()
+                except Exception:
+                    errors += 1
+
+            self._send_json({
+                "success": True,
+                "created": created,
+                "duplicates": duplicates,
+                "errors": errors,
+            })
+            return
+
         if self.path == "/api/portal/jobs/batch-delete":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length) if length > 0 else b"{}"

@@ -318,38 +318,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     showToast('📥', `${leads.length} leads exportados!`, 'success');
   });
 
-  // 9. Enviar ao CRM Local
+  // 9. Enviar para a Fila de Preparação do Prospector Local (localhost:8080)
   btnSendToCrm.addEventListener('click', async () => {
     const lead = getFormData();
-    if (!lead.companyName && !lead.phone) {
-      showToast('⚠️', 'Informe ao menos Razão Social ou Telefone.', 'error');
+    if (!lead.companyName && !lead.phone && !lead.cnpj) {
+      showToast('⚠️', 'Informe ao menos Empresa, CNPJ ou Telefone.', 'error');
       return;
     }
 
     try {
-      showToast('⏳', 'Enviando ao CRM...', 'success');
+      showToast('⏳', 'Enviando para Fila (8080)...', 'success');
+      const obsParts = [];
+      if (lead.hasAds) obsParts.push(`Meta Ads: Sim (${lead.adCount || '?'})`);
+      if (lead.instagramFollowers) obsParts.push(`Insta seg.: ${lead.instagramFollowers}`);
+      if (lead.notes) obsParts.push(lead.notes);
+      if (lead.sourceUrl) obsParts.push(`Fonte: ${lead.sourceUrl}`);
+
       const payload = {
-        name: lead.companyName,
-        company: lead.companyName,
+        empresa: lead.companyName || lead.instagram || lead.cnpj,
+        decisor: lead.socios,
+        cargo: lead.socios ? 'Sócio / Decisor' : '',
         phone: lead.phone,
+        whatsapp: lead.phone,
         email: lead.email,
-        notes: `CNPJ: ${lead.cnpj} | Sócios: ${lead.socios} | Meta Ads: ${lead.hasAds ? 'Sim ('+lead.adCount+')' : 'Não'} | Insta: ${lead.instagram} (${lead.instagramFollowers}) | Obs: ${lead.notes}`
+        cnpj: lead.cnpj,
+        instagram: lead.instagram,
+        address: lead.cityState,
+        notes: obsParts.join(' | '),
+        status: 'rascunho'
       };
 
-      const res = await fetch('http://localhost:5000/api/leads', {
+      const res = await fetch('http://localhost:8080/api/portal/drafts/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       if (res.ok) {
-        showToast('🚀', 'Lead adicionado ao NorthWay CRM!', 'success');
+        showToast('🚀', 'Enviado para a Fila de Preparação (8080)!', 'success');
       } else {
         const errData = await res.json().catch(() => ({}));
-        showToast('❌', errData.error || 'Erro na resposta do CRM.', 'error');
+        showToast('❌', errData.error || 'Erro ao salvar na Fila.', 'error');
       }
     } catch (err) {
-      showToast('⚠️', 'CRM indisponível em localhost:5000.', 'error');
+      showToast('⚠️', 'Portal indisponível em localhost:8080.', 'error');
     }
   });
 

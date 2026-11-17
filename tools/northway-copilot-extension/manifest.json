@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "NorthWay Lead Copilot",
-  "version": "1.2.0",
-  "description": "Enriquecedor de leads B2B: extraia sócios, anúncios Meta e Instagram com 1 clique para sua planilha ou CRM.",
+  "version": "1.3.0",
+  "description": "Enriquecedor de leads B2B: extraia sócios, anúncios Meta e Instagram com 1 clique para sua Fila do Prospector ou CRM.",
   "permissions": [
     "activeTab",
     "storage",
@@ -13,6 +13,8 @@
     "https://*.casadosdados.com.br/*",
     "https://*.facebook.com/ads/library/*",
     "https://*.instagram.com/*",
+    "http://localhost:8080/*",
+    "http://127.0.0.1:8080/*",
     "http://localhost:5000/*",
     "http://127.0.0.1:5000/*"
   ],
