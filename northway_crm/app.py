@@ -905,6 +905,14 @@ Sitemap: {base_url}/sitemap.xml
         except Exception as e:
             logger.error(f"Failed to register internal_api_bp: {e}")
 
+        # --- GARANTIR COLUNAS RAIO-X NO STARTUP ---
+        try:
+            with app.app_context():
+                from routes.diagnostic_raiox import ensure_raiox_v2_columns
+                ensure_raiox_v2_columns()
+        except Exception as e:
+            logger.warning(f"Startup ensure_raiox_v2_columns: {e}")
+
         # --- CSRF EXEMPTIONS (M2M Webhooks, Cron, JWT Extension, REST API) ---
         try:
             from routes.webhook_whatsapp import evolution_webhook_bp
