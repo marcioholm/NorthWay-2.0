@@ -17,6 +17,92 @@
         <p class="text-gray-500">Conecte ferramentas para turbinar sua operação.</p>
     </div>
 
+    <!-- API Pública do CRM (/api/v1) -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">
+        <div class="p-6 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-50 text-northway-red rounded-full flex items-center justify-center">
+                    <i data-lucide="key-round" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">API do CRM (<span class="font-mono text-sm">/api/v1/leads</span>)</h2>
+                    <p class="text-xs text-gray-500">Gere sua <code class="font-mono bg-gray-100 px-1 rounded">X-API-Key</code> individual para enviar leads do Prospector e automações para a sua empresa.</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="flex flex-wrap gap-2">
+                <input type="text" id="newApiKeyName" placeholder="Ex.: Prospector Local" value="Prospector Local"
+                    class="flex-1 min-w-[200px] border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-northway-red">
+                <button type="button" onclick="generateCrmApiKey()" id="btnGenApiKey"
+                    class="bg-northway-red hover:bg-red-700 text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                    Gerar Nova API Key
+                </button>
+            </div>
+
+            <div id="newApiKeyBox" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-2">
+                <p class="text-xs font-bold text-emerald-800">Chave gerada! Copie agora e cole no Prospector (ela não será exibida novamente):</p>
+                <div class="flex items-center gap-2">
+                    <code id="newApiKeyValue" class="flex-1 bg-white px-3 py-2 rounded border border-emerald-300 text-xs font-mono text-gray-900 select-all"></code>
+                    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('newApiKeyValue').textContent); this.textContent='Copiado!';"
+                        class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-3 py-2 rounded-lg cursor-pointer">
+                        Copiar
+                    </button>
+                </div>
+            </div>
+
+            {% if api_keys %}
+            <div class="divide-y divide-gray-100 border border-gray-200 rounded-lg">
+                {% for k in api_keys %}
+                <div class="px-4 py-3 flex items-center justify-between gap-3 text-xs">
+                    <div>
+                        <span class="font-bold text-gray-900">{{ k.name }}</span>
+                        <span class="font-mono text-gray-500 ml-2">{{ k.key_prefix }}••••••••</span>
+                        <span class="ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold {% if k.status == 'active' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                            {{ 'Ativa' if k.status == 'active' else 'Revogada' }}
+                        </span>
+                    </div>
+                    {% if k.status == 'active' %}
+                    <form action="{{ url_for('admin.revoke_crm_api_key', key_id=k.id) }}" method="POST" onsubmit="return confirm('Revogar esta chave?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="text-red-600 hover:text-red-800 font-semibold">Revogar</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+    async function generateCrmApiKey() {
+        const btn = document.getElementById('btnGenApiKey');
+        const name = (document.getElementById('newApiKeyName').value || 'Prospector Local').trim();
+        btn.disabled = true;
+        btn.textContent = 'Gerando...';
+        try {
+            const resp = await fetch('{{ url_for("admin.create_crm_api_key") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ name })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) throw new Error(data.error || 'Erro ao gerar chave');
+            document.getElementById('newApiKeyValue').textContent = data.raw_key;
+            document.getElementById('newApiKeyBox').classList.remove('hidden');
+        } catch (e) {
+            alert(e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Gerar Nova API Key';
+        }
+    }
+    </script>
+
     <!-- Google Drive Integration Card -->
     {% if company.has_feature('google_drive') or company.has_feature('drive') %}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 overflow-hidden">

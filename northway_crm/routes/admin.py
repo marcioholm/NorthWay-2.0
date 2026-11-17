@@ -372,12 +372,47 @@ def settings_integrations():
         return redirect(url_for('admin.settings_integrations'))
 
     # Strict filter
+    from models import IntegrationApiKey
     integrations = Integration.query.filter(Integration.company_id == current_user.company_id).all()
     integrations_map = {i.service: i for i in integrations}
     
     whatsapp_instances = WhatsappInstance.query.filter_by(company_id=current_user.company_id).all()
+    api_keys = IntegrationApiKey.query.filter_by(company_id=current_user.company_id).order_by(IntegrationApiKey.created_at.desc()).all()
         
-    return render_template('settings_integrations.html', company=current_user.company, integrations_map=integrations_map, whatsapp_instances=whatsapp_instances)
+    return render_template('settings_integrations.html', company=current_user.company, integrations_map=integrations_map, whatsapp_instances=whatsapp_instances, api_keys=api_keys)
+
+
+@admin_bp.route('/settings/integrations/api-key', methods=['POST'])
+def create_crm_api_key():
+    if not current_user.company_id:
+        return jsonify({'success': False, 'error': 'Empresa não identificada'}), 403
+    from services.integrations_service import IntegrationsService
+    data = request.get_json(silent=True) or request.form or {}
+    name = (data.get('name') or 'Prospector / Integração').strip()[:80]
+    raw_key, key_obj = IntegrationsService.generate_api_key(
+        company_id=current_user.company_id,
+        name=name,
+        scopes=['leads:read', 'leads:write']
+    )
+    return jsonify({
+        'success': True,
+        'raw_key': raw_key,
+        'id': key_obj.id,
+        'name': key_obj.name,
+        'key_prefix': key_obj.key_prefix
+    })
+
+
+@admin_bp.route('/settings/integrations/api-key/<int:key_id>/revoke', methods=['POST'])
+def revoke_crm_api_key(key_id):
+    if not current_user.company_id:
+        abort(403)
+    from models import db, IntegrationApiKey
+    key_obj = IntegrationApiKey.query.filter_by(id=key_id, company_id=current_user.company_id).first_or_404()
+    key_obj.status = 'revoked'
+    db.session.commit()
+    flash('Chave de API revogada.', 'success')
+    return redirect(url_for('admin.settings_integrations'))
 
 @admin_bp.route('/settings/integrations/delete/<service>', methods=['POST'])
 def delete_integration(service):
