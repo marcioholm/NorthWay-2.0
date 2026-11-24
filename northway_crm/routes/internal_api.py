@@ -4,9 +4,9 @@ import time
 import requests
 from flask import Blueprint, request, jsonify
 from functools import wraps
-from models import db, Lead, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction, CrmConversation, CrmConversationMessage, CrmConversationMemory, CrmAiLog, CrmChannelIntegration, ProspectingBatch
+from models import db, Lead, Pipeline, PipelineStage, ProspectingCampaign, ProspectingMessage, ProspectingSetting, TenantAICredential, ProspectingIntegration, Interaction, CrmConversation, CrmConversationMessage, CrmConversationMemory, CrmAiLog, CrmChannelIntegration, ProspectingBatch
 from datetime import datetime, timedelta
-from utils.phone import phone_variants
+from utils.phone import phone_variants, normalize_phone
 import logging
 from constants import ProspectingStatus, IntentStatus, LeadChannel, MessageStatus, MessageType, NotificationType, IntegrationProvider
 
@@ -1844,4 +1844,266 @@ def raiox_reprocess_lead():
         'pipeline_id': lead.pipeline_id,
         'pipeline_stage_id': lead.pipeline_stage_id,
         'dispatched': True
+    })
+
+
+def ensure_lp_payback_columns():
+    """Garante de forma resiliente que as colunas da LP Payback existam na tabela lead."""
+    from sqlalchemy import text
+    try:
+        is_postgres = 'postgresql' in str(db.engine.url)
+        cols = [
+            ("lp_lead_id", "VARCHAR(64)"),
+            ("lp_status", "VARCHAR(40)"),
+            ("lp_bonus", "VARCHAR(40)"),
+            ("lp_desafio", "VARCHAR(200)"),
+            ("lp_calculadora", "JSONB" if is_postgres else "TEXT"),
+            ("lp_pagina", "VARCHAR(255)"),
+        ]
+        with db.engine.connect() as conn:
+            for col_name, col_type in cols:
+                try:
+                    if is_postgres:
+                        conn.execute(text(f'ALTER TABLE "lead" ADD COLUMN IF NOT EXISTS {col_name} {col_type}'))
+                    else:
+                        conn.execute(text(f'ALTER TABLE "lead" ADD COLUMN {col_name} {col_type}'))
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+            try:
+                conn.execute(text('CREATE INDEX IF NOT EXISTS ix_lead_lp_lead_id ON "lead" (lp_lead_id)'))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception as e:
+        logger.warning(f"ensure_lp_payback_columns: {e}")
+
+
+def _clean_str(val):
+    if val is None:
+        return None
+    s = str(val).strip()
+    return s if s else None
+
+
+def _build_lp_interaction_content(origem, status_lp, bonus, faturamento, desafio, calculadora):
+    lines = [
+        f"[LP Payback] Origem: {origem} | Status LP: {status_lp}",
+    ]
+    if bonus:
+        lines.append(f"Bônus escolhido: {bonus}")
+    if faturamento:
+        lines.append(f"Faturamento: {faturamento}")
+    if desafio:
+        lines.append(f"Maior desafio: {desafio}")
+    if isinstance(calculadora, dict) and calculadora:
+        calc_parts = []
+        if calculadora.get('verba_segura') is not None:
+            calc_parts.append(f"Verba segura: {calculadora.get('verba_segura')}")
+        if calculadora.get('cac_seguro') is not None:
+            calc_parts.append(f"CAC seguro: {calculadora.get('cac_seguro')}")
+        if calculadora.get('cac_max') is not None:
+            calc_parts.append(f"CAC máx: {calculadora.get('cac_max')}")
+        if calculadora.get('situacao'):
+            calc_parts.append(f"Situação: {calculadora.get('situacao')}")
+        if calc_parts:
+            lines.append("Calculadora: " + " | ".join(calc_parts))
+    return "\n".join(lines)
+
+
+@internal_api_bp.route('/leads/landing', methods=['POST'])
+@require_internal_auth
+def upsert_landing_lead():
+    """Cria ou atualiza lead vindo da Landing Page da Payback (via n8n) sem duplicar."""
+    ensure_lp_payback_columns()
+    data = request.json if isinstance(request.json, dict) else {}
+
+    raw_tenant = data.get('tenant_id')
+    try:
+        tenant_id = int(raw_tenant) if raw_tenant is not None else None
+    except (TypeError, ValueError):
+        tenant_id = None
+
+    origem = _clean_str(data.get('origem'))
+    lp_lead_id = _clean_str(data.get('lp_lead_id'))
+    status_lp = _clean_str(data.get('status_lp')) or 'completo'
+
+    nome = _clean_str(data.get('nome'))
+    whatsapp = _clean_str(data.get('whatsapp'))
+    email = _clean_str(data.get('email'))
+    empresa = _clean_str(data.get('empresa'))
+    cidade = _clean_str(data.get('cidade'))
+    faturamento = _clean_str(data.get('faturamento'))
+    desafio = _clean_str(data.get('desafio'))
+    bonus = _clean_str(data.get('bonus'))
+    calculadora = data.get('calculadora') if isinstance(data.get('calculadora'), dict) else None
+
+    utm_source = _clean_str(data.get('utm_source'))
+    utm_medium = _clean_str(data.get('utm_medium'))
+    utm_campaign = _clean_str(data.get('utm_campaign'))
+    utm_content = _clean_str(data.get('utm_content'))
+    fbclid = _clean_str(data.get('fbclid'))
+    pagina = _clean_str(data.get('pagina'))
+
+    if not tenant_id or not origem or not lp_lead_id:
+        return jsonify({'success': False, 'error': 'tenant_id, origem and lp_lead_id are required'}), 400
+
+    if not whatsapp and not email:
+        return jsonify({'success': False, 'error': 'whatsapp or email is required'}), 400
+
+    # 1. Buscar por lp_lead_id
+    lead = Lead.query.filter_by(company_id=tenant_id, lp_lead_id=lp_lead_id).first()
+
+    # 2. Buscar por WhatsApp usando phone_variants
+    if not lead and whatsapp:
+        variants = phone_variants(whatsapp)
+        if variants:
+            lead = Lead.query.filter(
+                Lead.company_id == tenant_id,
+                db.or_(
+                    Lead.whatsapp.in_(variants),
+                    Lead.phone.in_(variants),
+                    Lead.mobile_phone.in_(variants),
+                )
+            ).first()
+            if not lead:
+                variants_set = set(variants)
+                candidates = Lead.query.with_entities(
+                    Lead.id, Lead.whatsapp, Lead.phone, Lead.mobile_phone
+                ).filter(Lead.company_id == tenant_id).all()
+                for cid, cw, cp, cm in candidates:
+                    if (
+                        (cw and normalize_phone(cw) in variants_set)
+                        or (cp and normalize_phone(cp) in variants_set)
+                        or (cm and normalize_phone(cm) in variants_set)
+                    ):
+                        lead = db.session.get(Lead, cid)
+                        break
+
+    # 3. Buscar por e-mail (case-insensitive)
+    if not lead and email:
+        lead = Lead.query.filter(
+            Lead.company_id == tenant_id,
+            db.func.lower(Lead.email) == email.lower()
+        ).first()
+
+    created = False
+    if lead:
+        # Atualiza apenas campos preenchidos; mantém pipeline_stage_id, assigned_to_id e source original
+        if not lead.lp_lead_id:
+            lead.lp_lead_id = lp_lead_id
+        if not lead.source:
+            lead.source = origem[:50]
+        if not lead.origem:
+            lead.origem = origem[:100]
+        if nome:
+            lead.name = nome[:100]
+        if whatsapp:
+            lead.whatsapp = whatsapp[:50]
+            if not lead.phone:
+                lead.phone = whatsapp[:50]
+        if email:
+            lead.email = email[:120]
+        if empresa:
+            lead.legal_name = empresa[:200]
+        if cidade:
+            lead.address = cidade[:255]
+        if faturamento:
+            lead.faixa_faturamento = faturamento[:50]
+        if desafio:
+            lead.lp_desafio = desafio[:200]
+            if not lead.interest:
+                lead.interest = desafio[:100]
+        if bonus:
+            lead.lp_bonus = bonus[:40]
+        if status_lp:
+            lead.lp_status = status_lp[:40]
+        if calculadora:
+            lead.lp_calculadora = calculadora
+        if pagina:
+            lead.lp_pagina = pagina[:255]
+        if utm_source:
+            lead.utm_source = utm_source[:255]
+        if utm_medium:
+            lead.utm_medium = utm_medium[:255]
+        if utm_campaign:
+            lead.utm_campaign = utm_campaign[:255]
+        if utm_content:
+            lead.utm_content = utm_content[:255]
+        if fbclid:
+            lead.fbclid = fbclid[:255]
+    else:
+        created = True
+        pipeline = Pipeline.query.filter_by(company_id=tenant_id).first()
+        pipeline_id = None
+        stage_id = None
+        if pipeline:
+            pipeline_id = pipeline.id
+            first_stage = PipelineStage.query.filter_by(pipeline_id=pipeline.id).order_by(PipelineStage.order).first()
+            if first_stage:
+                stage_id = first_stage.id
+
+        lead = Lead(
+            company_id=tenant_id,
+            name=(nome or empresa or email or whatsapp)[:100],
+            phone=whatsapp[:50] if whatsapp else None,
+            whatsapp=whatsapp[:50] if whatsapp else None,
+            email=email[:120] if email else None,
+            legal_name=empresa[:200] if empresa else None,
+            address=cidade[:255] if cidade else None,
+            faixa_faturamento=faturamento[:50] if faturamento else None,
+            interest=desafio[:100] if desafio else None,
+            source=origem[:50],
+            origem=origem[:100],
+            pipeline_id=pipeline_id,
+            pipeline_stage_id=stage_id,
+            status='new',
+            utm_source=utm_source[:255] if utm_source else None,
+            utm_medium=utm_medium[:255] if utm_medium else None,
+            utm_campaign=utm_campaign[:255] if utm_campaign else None,
+            utm_content=utm_content[:255] if utm_content else None,
+            fbclid=fbclid[:255] if fbclid else None,
+            lp_lead_id=lp_lead_id[:64],
+            lp_status=status_lp[:40],
+            lp_bonus=bonus[:40] if bonus else None,
+            lp_desafio=desafio[:200] if desafio else None,
+            lp_calculadora=calculadora,
+            lp_pagina=pagina[:255] if pagina else None,
+        )
+        db.session.add(lead)
+        db.session.flush()
+
+    # Uma Interaction (type='landing_page') por status_lp por lead
+    content = _build_lp_interaction_content(
+        origem=origem,
+        status_lp=status_lp,
+        bonus=bonus or lead.lp_bonus,
+        faturamento=faturamento or lead.faixa_faturamento,
+        desafio=desafio or lead.lp_desafio,
+        calculadora=calculadora or lead.lp_calculadora,
+    )
+    status_marker = f"Status LP: {status_lp}"
+    existing_interaction = Interaction.query.filter(
+        Interaction.lead_id == lead.id,
+        Interaction.company_id == tenant_id,
+        Interaction.type == 'landing_page',
+        Interaction.content.contains(status_marker),
+    ).first()
+
+    if existing_interaction:
+        existing_interaction.content = content
+    else:
+        db.session.add(Interaction(
+            lead_id=lead.id,
+            company_id=tenant_id,
+            type='landing_page',
+            content=content,
+        ))
+
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'lead_id': lead.id,
+        'created': created,
     })

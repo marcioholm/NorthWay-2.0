@@ -398,6 +398,14 @@ class Lead(db.Model):
     raiox_completo_por = db.Column(db.Integer, nullable=True)
     estimated_value = db.Column(db.Numeric(12, 2), default=0.0)
 
+    # Landing Page Payback Fields
+    lp_lead_id = db.Column(db.String(64), index=True, nullable=True)
+    lp_status = db.Column(db.String(40), nullable=True)
+    lp_bonus = db.Column(db.String(40), nullable=True)
+    lp_desafio = db.Column(db.String(200), nullable=True)
+    lp_calculadora = db.Column(db.JSON, nullable=True)
+    lp_pagina = db.Column(db.String(255), nullable=True)
+
     # Lead Loss Tracking
     lost_reason = db.Column(db.String(500), nullable=True)
     lost_at_stage_name = db.Column(db.String(100), nullable=True)

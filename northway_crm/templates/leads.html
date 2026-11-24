@@ -99,6 +99,27 @@
                 </div>
             </div>
 
+            <!-- Source Filter -->
+            <div>
+                <label class="nw-meta block mb-1.5 font-bold uppercase tracking-wider text-[var(--nw-text-3)]">Origem</label>
+                <div class="nw-select">
+                    <select name="source" class="w-40">
+                        <option value="">Todas</option>
+                        {% set src_opts = distinct_sources if distinct_sources is defined else [] %}
+                        {% for src in src_opts %}
+                        <option value="{{ src }}" {% if request.args.get('source')==src %}selected{% endif %}>
+                            {{ src }}
+                        </option>
+                        {% endfor %}
+                        {% if 'lp-payback' not in src_opts %}
+                        <option value="lp-payback" {% if request.args.get('source')=='lp-payback' %}selected{% endif %}>
+                            lp-payback
+                        </option>
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+
             <!-- Owner Filter -->
             <div>
                 <label class="nw-meta block mb-1.5 font-bold uppercase tracking-wider text-[var(--nw-text-3)]">Responsável</label>
