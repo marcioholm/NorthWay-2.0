@@ -34,3 +34,4 @@ scraper_data/
 
 # UI Redesign Screenshots
 docs/ui-*/
+*.bak
