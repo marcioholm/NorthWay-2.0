@@ -185,7 +185,7 @@ def leads():
         .group_by(Lead.pipeline_stage_id).all()
     ) if pipeline else {}
 
-    return render_template('leads.html', leads=leads_list, pagination=pagination, users=users, stages=stages, pipelines=pipelines, stage_counts=stage_counts)
+    return render_template('leads.html', leads=leads_list, pagination=pagination, users=users, stages=stages, pipelines=pipelines, stage_counts=stage_counts, distinct_sources=[r[0] for r in db.session.query(Lead.source).filter(Lead.company_id == current_user.company_id, Lead.source.isnot(None), Lead.source != '').distinct().order_by(Lead.source).all()])
 
 @leads_bp.route('/leads/<int:id>')
 @login_required
